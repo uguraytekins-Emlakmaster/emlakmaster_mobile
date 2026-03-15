@@ -1,0 +1,8 @@
+#!/bin/sh
+# Git pre-commit: Commit öncesi hafif kontroller (isteğe bağlı).
+# Kurulum: scripts/shield/install_git_hooks.sh
+set -e
+cd "$(git rev-parse --show-toplevel)"
+# Sadece script izinleri; ağır işlem yapmıyoruz
+[ -x "scripts/shield/shield.sh" ] || chmod +x scripts/shield/shield.sh 2>/dev/null || true
+exit 0

@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // Yönetici: users.role super_admin, broker_owner, general_manager, office_manager, team_lead ise tüm veriyi görebilir.
+    function isManager() {
+      let u = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return u != null && u.data.role in ['super_admin', 'broker_owner', 'general_manager', 'office_manager', 'team_lead', 'manager', 'admin', 'owner'];
+    }
+    // Veri izolasyonu: danışman sadece kendi atanmış müşteri/çağrılarını görür; yönetici hepsini.
+    function isOwnAgentData(agentIdField) {
+      return agentIdField == request.auth.uid;
+    }
+
+    // -------------------------------------------------------------------------
+    // users: kullanıcı kendi dokümanını okuyabilir; yazma ileride admin
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /roles/{roleId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // agents: giriş yapmış herkes listeleyebilir (dashboard); yazma kendi id veya manager
+    // (İsteğe bağlı: sadece kendi agent doc'una yazma kısıtı eklenebilir.)
+    // -------------------------------------------------------------------------
+    match /agents/{agentId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (isOwnAgentData(agentId) || isManager());
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // customers: DATA SILOING – Danışman sadece assignedAgentId == auth.uid olanları görür; yönetici hepsini.
+    // Müşteri çalma / veri sızıntısı önlemi: başka danışmanın müşterisine istek atılırsa Firebase reddeder.
+    // -------------------------------------------------------------------------
+    match /customers/{customerId} {
+      allow read: if isSignedIn() && (isManager() || resource.data.assignedAgentId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.assignedAgentId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.assignedAgentId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // calls: danışman sadece kendi agentId'li çağrıları görür; yönetici hepsini
+    // -------------------------------------------------------------------------
+    match /calls/{docId} {
+      allow read: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.agentId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    match /deals/{docId} {
+      allow read: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.agentId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    match /call_summaries/{docId} {
+      allow read: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.agentId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // listings: giriş yapmış herkes okuyabilir; oluşturma/güncelleme ileride rol ile
+    // -------------------------------------------------------------------------
+    match /listings/{listingId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /news/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+    match /office_activity/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /audit_logs/{docId} {
+      allow read: if isManager();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // notes: danışman sadece kendi eklediği notlara (advisorId == uid) veya yönetici hepsine
+    match /notes/{noteId} {
+      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // tasks: danışman kendi görevleri (advisorId)
+    match /tasks/{taskId} {
+      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+    }
+
+    // visits: müşteriye bağlı; customer.assignedAgentId veya manager
+    match /visits/{visitId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    // offers: müşteriye bağlı
+    match /offers/{offerId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    // pipeline_items: danışman kendi pipeline
+    match /pipeline_items/{itemId} {
+      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow delete: if isSignedIn();
+    }
+
+    // analytics: yönetici okur
+    match /analytics_daily/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isManager();
+    }
+    match /analytics_monthly/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isManager();
+    }
+
+    // notifications: kullanıcı kendi bildirimleri (userId alanı varsa)
+    match /notifications/{docId} {
+      allow read: if isSignedIn() && (isManager() || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid);
+      allow delete: if isSignedIn();
+    }
+
+    // Diğer koleksiyonlar: sadece giriş zorunlu; yazma varsayılan kapalı (yukarıda tanımlanmayanlar)
+    match /{document=**} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+  }
+}

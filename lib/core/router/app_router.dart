@@ -1,0 +1,284 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/calls/call_screen.dart';
+import '../../features/calls/post_call_wizard.dart';
+import '../../features/manager_command_center/presentation/pages/command_center_page.dart';
+import '../../features/broker_command/presentation/pages/broker_command_page.dart';
+import '../../features/war_room/presentation/pages/war_room_page.dart';
+import '../../features/crm_customers/presentation/pages/customer_detail_page.dart';
+import '../../features/notifications/presentation/pages/notifications_center_page.dart';
+import '../../features/pipeline/presentation/pages/pipeline_kanban_page.dart';
+import '../../screens/listing_detail_page.dart';
+import '../../screens/role_based_shell.dart';
+
+/// go_router ile merkezi routing. Login router içinde; beyaz ekran önlenir.
+class AppRouter {
+  AppRouter._();
+
+  static const String routeLogin = '/login';
+
+  static String _userFriendlyErrorMessage(Object? error) {
+    if (error == null) return 'Sayfa yüklenemedi.';
+    final s = error.toString();
+    if (s.contains('permission-denied') || s.contains('Permission')) {
+      return 'Bu sayfaya erişim yetkiniz yok.';
+    }
+    if (s.contains('unavailable') || s.contains('network')) {
+      return 'Bağlantı kurulamadı. İnterneti kontrol edip tekrar deneyin.';
+    }
+    if (s.contains('not-found') || s.contains('404')) {
+      return 'Sayfa bulunamadı.';
+    }
+    return 'Bir hata oluştu. Lütfen ana sayfaya dönüp tekrar deneyin.';
+  }
+
+  static const String routeHome = '/';
+  static const String routeCall = '/call';
+  static const String routeCallSummary = '/call/summary';
+  static const String routeCommandCenter = '/command-center';
+  static const String routeWarRoom = '/war-room';
+  static const String routeResurrection = '/resurrection';
+  static const String routeBrokerCommand = '/broker-command';
+  static const String routeCustomerDetail = '/customer/:id';
+  static const String routeListingDetail = '/listing/:id';
+  static const String routePipeline = '/pipeline';
+  static const String routeNotifications = '/notifications';
+
+  static GoRouter create(Ref ref, Listenable refreshListenable) {
+    return GoRouter(
+      initialLocation: routeLogin,
+      debugLogDiagnostics: kDebugMode,
+      refreshListenable: refreshListenable,
+      redirect: (context, state) {
+        final user = ref.read(currentUserProvider).valueOrNull;
+        final path = state.uri.path;
+        if (user == null && path != routeLogin) return routeLogin;
+        if (user != null && path == routeLogin) return routeHome;
+        return null;
+      },
+      errorBuilder: (context, state) => _ErrorFallbackScreen(
+        message: _userFriendlyErrorMessage(state.error),
+      ),
+      routes: [
+        GoRoute(
+          path: routeLogin,
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: LoginPage(),
+          ),
+        ),
+        GoRoute(
+          path: routeHome,
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: _AuthShell(child: RoleBasedShellSelector()),
+          ),
+        ),
+        GoRoute(
+          path: routeCall,
+          pageBuilder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: CallScreen(
+                customerId: extra?['customerId'] as String?,
+                phone: extra?['phone'] as String?,
+              ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
+        ),
+        GoRoute(
+          path: routeCallSummary,
+          pageBuilder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: PostCallWizardScreen(
+                callDurationSec: extra?['durationSec'] as int?,
+                callOutcome: extra?['outcome'] as String?,
+                linkedCustomerId: extra?['customerId'] as String?,
+              ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
+        ),
+        GoRoute(
+          path: routeCommandCenter,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: const CommandCenterPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeWarRoom,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: const WarRoomPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeBrokerCommand,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: const BrokerCommandPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeCustomerDetail,
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: CustomerDetailPage(customerId: id),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
+        ),
+        GoRoute(
+          path: routeListingDetail,
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: ListingDetailPage(listingId: id),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
+        ),
+        GoRoute(
+          path: routePipeline,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: const PipelineKanbanPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeNotifications,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: const NotificationsCenterPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static final goRouterProvider = Provider<GoRouter>((ref) {
+    final refresh = ValueNotifier(0);
+    ref.listen(currentUserProvider, (_, __) => refresh.value++);
+    return AppRouter.create(ref, refresh);
+  });
+}
+
+/// Giriş yapılmış kullanıcı için: rol yüklenene kadar loading, sonra child.
+class _AuthShell extends ConsumerWidget {
+  const _AuthShell({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final roleAsync = ref.watch(currentRoleProvider);
+    return roleAsync.when(
+      loading: () => const _RouteLoadingScreen(),
+      error: (_, __) => const _RouteLoadingScreen(),
+      data: (_) => child,
+    );
+  }
+}
+
+class _RouteLoadingScreen extends StatelessWidget {
+  const _RouteLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: Color(0xFF0D1117),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Color(0xFF00FF41)),
+            SizedBox(height: 24),
+            Text(
+              'Yükleniyor...',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorFallbackScreen extends StatelessWidget {
+  const _ErrorFallbackScreen({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D1117),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 64,
+                color: Color(0xFF00FF41),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Bir şeyler ters gitti',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Lütfen tekrar deneyin veya ana sayfaya dönün.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: () => context.go(AppRouter.routeHome),
+                icon: const Icon(Icons.home_rounded),
+                label: const Text('Ana Sayfaya Dön'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF00FF41),
+                  foregroundColor: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

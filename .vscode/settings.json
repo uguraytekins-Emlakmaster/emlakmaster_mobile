@@ -1,0 +1,11 @@
+{
+  "dart.pubGlobalPubCachePath": "${workspaceFolder}/../../.pub-cache",
+  "terminal.integrated.env.osx": {
+    "PUB_CACHE": "${workspaceFolder}/../../.pub-cache"
+  },
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/.dart_tool/**": true,
+    "**/macos/Pods/**": true
+  }
+}
