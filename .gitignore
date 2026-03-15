@@ -43,8 +43,9 @@ app.*.map.json
 /android/app/release
 node_modules
 
-# Yedek / duplicate dosyalar (örn. ".flutter-plugins 2")
+# Yedek / duplicate dosyalar (örn. ".flutter-plugins 2", "Podfile 2.lock")
 * 2
+* 2*
 
 # Ortam değişkenleri (gizli bilgi içerebilir)
 .env
