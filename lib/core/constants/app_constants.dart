@@ -38,6 +38,8 @@ abstract final class AppConstants {
   static const String colDeals = 'deals';
   /// Harici ilan sitelerinden çekilen ilanlar (Market Pulse – son atılan ilanlar).
   static const String colExternalListings = 'external_listings';
+  /// Mülk Sağlık Karnesi: listing bazlı timeline (listings/{id}/property_vault).
+  static const String colPropertyVault = 'property_vault';
 
   /// SharedPreferences anahtarları
   static const String keyThemeMode = 'theme_mode';
@@ -65,4 +67,24 @@ abstract final class AppConstants {
   static const String docIntelligenceMeta = 'intelligence_meta';
   /// İlan kaynakları & ofis ayarları: şehir, ilçe, şirket adı, logo (colAppSettings altında).
   static const String docListingDisplaySettings = 'listing_display_settings';
+  /// War Room: aylık satış hedefi (ofis) (colAppSettings altında).
+  static const String docOfficeTargets = 'office_targets';
+
+  /// Stratejik alanlar (listings): Takas, Yatırım Radarı, Ses notu, AR/VR.
+  static const String fieldSwapCompatible = 'swap_compatible';
+  static const String fieldSwapCompatibilityScore = 'swap_compatibility_score';
+  static const String fieldSwapCompatibilityVerdict = 'swap_compatibility_verdict';
+  static const String fieldSwapCompatibilityUpdatedAt = 'swap_compatibility_updated_at';
+  static const String fieldInvestmentScore = 'investment_score';
+  static const String fieldInvestmentScoreUpdatedAt = 'investment_score_updated_at';
+  static const String fieldHotspotTags = 'hotspot_tags';
+  static const String fieldVoiceNoteSummary = 'voice_note_summary';
+  static const String fieldMedia360Urls = 'media_360_urls';
+  static const String fieldLidarScanId = 'lidar_scan_id';
+  static const String fieldPropertyVaultDocId = 'property_vault_doc_id';
+
+  /// Stratejik alanlar (customers/leads).
+  static const String fieldVoiceNoteSummaryUpdatedAt = 'voice_note_summary_updated_at';
+  static const String fieldIsVipInvestor = 'is_vip_investor';
+  static const String fieldInvestmentAlertEnabled = 'investment_alert_enabled';
 }

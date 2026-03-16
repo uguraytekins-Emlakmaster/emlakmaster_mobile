@@ -49,6 +49,10 @@ class CustomerEntity with EquatableMixin {
     this.callsCount = 0,
     this.visitsCount = 0,
     this.offersCount = 0,
+    this.voiceNoteSummary,
+    this.voiceNoteSummaryUpdatedAt,
+    this.isVipInvestor = false,
+    this.investmentAlertEnabled = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -71,6 +75,12 @@ class CustomerEntity with EquatableMixin {
   final int callsCount;
   final int visitsCount;
   final int offersCount;
+  /// Son sesli not özeti (Hands-Free CRM).
+  final String? voiceNoteSummary;
+  final DateTime? voiceNoteSummaryUpdatedAt;
+  /// Yatırım Radarı: VIP yatırımcı bildirimi.
+  final bool isVipInvestor;
+  final bool investmentAlertEnabled;
   final DateTime createdAt;
   final DateTime updatedAt;
 

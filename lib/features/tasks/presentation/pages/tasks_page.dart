@@ -19,7 +19,7 @@ class TasksPage extends ConsumerStatefulWidget {
 class _TasksPageState extends ConsumerState<TasksPage> {
   @override
   Widget build(BuildContext context) {
-    final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
+    final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return Scaffold(
       backgroundColor: DesignTokens.backgroundDark,
       appBar: AppBar(

@@ -10,10 +10,12 @@ abstract final class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: DesignTokens.backgroundDark,
       colorScheme: const ColorScheme.dark(
-        primary: DesignTokens.primary,
-        secondary: DesignTokens.secondary,
+        primary: DesignTokens.brandNavy,
+        secondary: DesignTokens.brandGold,
         surface: DesignTokens.surfaceDark,
         error: DesignTokens.danger,
+        onPrimary: DesignTokens.brandWhite,
+        onSecondary: Colors.black87,
         onError: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
@@ -37,10 +39,10 @@ abstract final class AppTheme {
       brightness: Brightness.light,
       scaffoldBackgroundColor: DesignTokens.backgroundLight,
       colorScheme: const ColorScheme.light(
-        primary: DesignTokens.primary,
-        secondary: DesignTokens.secondary,
-        error: DesignTokens.danger,
-        onPrimary: Colors.black,
+        primary: DesignTokens.brandNavy,
+        secondary: DesignTokens.brandGold,
+        surface: DesignTokens.surfaceLight,
+        onSecondary: Colors.black87,
         onSurface: DesignTokens.textPrimaryLight,
       ),
       appBarTheme: const AppBarTheme(

@@ -3,6 +3,9 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:emlakmaster_mobile/features/lead_temperature_engine/presentation/providers/lead_temperature_provider.dart';
+import 'package:emlakmaster_mobile/shared/models/lead_temperature.dart';
 import 'package:emlakmaster_mobile/shared/models/pipeline_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,7 +23,7 @@ class PipelineKanbanPage extends ConsumerStatefulWidget {
 class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
   @override
   Widget build(BuildContext context) {
-    final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
+    final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return Scaffold(
       backgroundColor: DesignTokens.backgroundDark,
       body: CustomScrollView(
@@ -525,7 +528,7 @@ class _StageColumn extends StatelessWidget {
   }
 }
 
-class _PipelineCard extends StatelessWidget {
+class _PipelineCard extends ConsumerWidget {
   const _PipelineCard({
     required this.data,
     required this.onTap,
@@ -536,8 +539,21 @@ class _PipelineCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onMoveStage;
 
+  static String _heatEmoji(LeadTemperatureLevel level) {
+    switch (level) {
+      case LeadTemperatureLevel.urgent:
+      case LeadTemperatureLevel.hot:
+        return '🔥';
+      case LeadTemperatureLevel.warm:
+      case LeadTemperatureLevel.reactivationCandidate:
+        return '🟡';
+      default:
+        return '⚪';
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -551,15 +567,22 @@ class _PipelineCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                data.customerName ?? 'Müşteri ${data.customerId.substring(0, data.customerId.length > 8 ? 8 : data.customerId.length)}...',
-                style: const TextStyle(
-                  color: DesignTokens.textPrimaryDark,
-                  fontWeight: FontWeight.w700,
-                  fontSize: DesignTokens.fontSizeMd,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      data.customerName ?? 'Müşteri ${data.customerId.length > 8 ? "${data.customerId.substring(0, 8)}..." : data.customerId}',
+                      style: const TextStyle(
+                        color: DesignTokens.textPrimaryDark,
+                        fontWeight: FontWeight.w700,
+                        fontSize: DesignTokens.fontSizeMd,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  _PipelineHeatChip(customerId: data.customerId),
+                ],
               ),
               if (data.value != null) ...[
                 const SizedBox(height: DesignTokens.space2),
@@ -594,6 +617,47 @@ class _PipelineCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PipelineHeatChip extends ConsumerWidget {
+  const _PipelineHeatChip({required this.customerId});
+  final String customerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final customerAsync = ref.watch(customerEntityByIdProvider(customerId));
+    return customerAsync.when(
+      data: (customer) {
+        if (customer == null) return const SizedBox.shrink();
+        final score = ref.watch(leadTemperatureForCustomerProvider(customer));
+        final emoji = _PipelineCard._heatEmoji(score.level);
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: DesignTokens.surfaceDarkElevated,
+            borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 2),
+              Text(
+                '${score.score.round()}',
+                style: const TextStyle(
+                  color: DesignTokens.textSecondaryDark,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

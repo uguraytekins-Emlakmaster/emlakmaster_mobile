@@ -1,8 +1,11 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
+import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/external_listings/domain/entities/external_listing_entity.dart';
@@ -107,8 +110,13 @@ class MarketPulsePanel extends ConsumerWidget {
                   ),
                 );
               }
+              final list = listings.take(10).toList();
               return Column(
-                children: listings.take(10).map((e) => _ListingTile(listing: e)).toList(),
+                children: List.generate(list.length, (i) => FadeInUp(
+                  duration: DesignTokens.durationNormal,
+                  delay: Duration(milliseconds: i * 60),
+                  child: _ListingTile(listing: list[i]),
+                )),
               );
             },
             loading: () => Padding(
@@ -166,21 +174,11 @@ class _FetchListingsNowButtonState extends ConsumerState<_FetchListingsNowButton
       await functions.httpsCallable('fetchListingsNow').call();
       if (mounted) {
         ref.invalidate(externalListingsStreamProvider);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('İlanlar güncelleniyor. Kısa süre içinde listelenecek.'),
-            backgroundColor: Color(0xFF00FF41),
-          ),
-        );
+        AppToaster.success(context, 'İlanlar güncelleniyor. Kısa süre içinde listelenecek.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Güncelleme başarısız: ${e.toString().split('\n').first}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppToaster.error(context, 'Güncelleme başarısız: ${e.toString().split('\n').first}');
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -225,28 +223,25 @@ class _ListingTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (listing.imageUrl != null && listing.imageUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: CachedNetworkImage(
-                  imageUrl: listing.imageUrl!,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => const SizedBox(
+              Hero(
+                tag: 'listing_${listing.id}',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: CachedNetworkImage(
+                    imageUrl: listing.imageUrl!,
                     width: 48,
                     height: 48,
-                    child: Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
-                      ),
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => ShimmerPlaceholder(
+                      width: 48,
+                      height: 48,
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  ),
-                  errorWidget: (_, __, ___) => const SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: Icon(Icons.home_rounded, color: DesignTokens.textTertiaryDark),
+                    errorWidget: (_, __, ___) => const SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Icon(Icons.home_rounded, color: DesignTokens.textTertiaryDark),
+                    ),
                   ),
                 ),
               )

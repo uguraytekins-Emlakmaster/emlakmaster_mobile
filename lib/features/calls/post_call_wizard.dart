@@ -180,6 +180,13 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             sentiment: sentimentToStorage(_extraction!.sentiment),
             fullSummary: _extraction!.fullSummary,
           );
+          if (_extraction!.fullSummary.isNotEmpty) {
+            await FirestoreService.saveNote(
+              customerId: customerId,
+              content: '📞 Çağrı özeti (AI): ${_extraction!.fullSummary}',
+              advisorId: agentId,
+            );
+          }
           await FirestoreService.incrementAgentStatsAfterSummary(
             agentId: agentId,
           );

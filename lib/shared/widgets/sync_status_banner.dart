@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/resilience/sync_status.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/widgets/app_toaster.dart';
 
 /// Son senkron / çevrimdışı göstergesi. Shell veya sayfa üstünde/altında kullanılır.
 class SyncStatusBanner extends ConsumerWidget {
@@ -26,16 +27,12 @@ class SyncStatusBanner extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           HapticFeedback.selectionClick();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isOffline
-                    ? 'İnternet yok. Veriler önbellekten gösteriliyor; bağlantı gelince otomatik güncellenecek.'
-                    : 'Son güncelleme: ${status.shortLabel}',
-              ),
-              backgroundColor: isOffline ? DesignTokens.warning : const Color(0xFF161B22),
-              behavior: SnackBarBehavior.floating,
-            ),
+          AppToaster.show(
+            context,
+            message: isOffline
+                ? 'İnternet yok. Veriler önbellekten gösteriliyor; bağlantı gelince otomatik güncellenecek.'
+                : 'Son güncelleme: ${status.shortLabel}',
+            type: isOffline ? ToastType.warning : ToastType.info,
           );
         },
         child: Container(

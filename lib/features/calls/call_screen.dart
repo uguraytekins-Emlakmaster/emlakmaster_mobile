@@ -8,7 +8,9 @@ import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/features/ai_sales_assistant/presentation/widgets/ai_sales_assistant_panel.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -143,7 +145,7 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const _ClientInfoHeader(),
+                _ClientInfoHeader(customerId: widget.customerId),
                 const SizedBox(height: 16),
                 _SiriWaveBars(isActive: !_isMuted),
                 const SizedBox(height: 8),
@@ -168,79 +170,7 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                    stream: FirestoreService.customerStream(widget.customerId ?? 'demoCustomer1'),
-                    builder: (context, snapshot) {
-                      String budget = 'Veri Bekleniyor...';
-                      String lastListing = 'Veri Bekleniyor...';
-                      String previousNote = 'Veri Bekleniyor...';
-
-                      if (snapshot.hasData && snapshot.data!.exists) {
-                        final data = snapshot.data!.data();
-                        if (data != null) {
-                          budget = (data['estimatedBudget'] as String?) ??
-                              (data['estimatedBudget'] as num?)?.toString() ??
-                              (data['budgetRange'] as String?) ??
-                              budget;
-                          lastListing =
-                              (data['lastListingTitle'] as String?) ??
-                              (data['lastCallSummary'] as String?) ??
-                              lastListing;
-                          previousNote =
-                              (data['previousNote'] as String?) ??
-                              (data['lastNextStepSuggestion'] as String?) ??
-                              previousNote;
-                        }
-                      }
-
-                      return _GlassPanel(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Akıllı Çağrı Özeti',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Bütçe, son görüntülenen ilan ve ajanda bilgisi burada.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.white70,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _InfoChip(
-                                    label: 'Tahmini Bütçe',
-                                    value: budget,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _InfoChip(
-                                    label: 'Son İlan',
-                                    value: lastListing,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            _InfoChip(
-                              label: 'Önceki Not',
-                              value: previousNote,
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                  child: AiSalesAssistantPanel(customerId: widget.customerId),
                 ),
                 const SizedBox(height: 32),
                 Padding(
@@ -530,96 +460,80 @@ class _SiriWaveBarsAnimatedState extends State<_SiriWaveBarsAnimated>
   }
 }
 
-class _ClientInfoHeader extends StatelessWidget {
-  const _ClientInfoHeader();
+class _ClientInfoHeader extends ConsumerWidget {
+  const _ClientInfoHeader({this.customerId});
+
+  final String? customerId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        const CircleAvatar(
-          radius: 40,
-          backgroundColor: Color(0xFF161B22),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Burak Yılmaz',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Potansiyel Alıcı • Premium',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: Colors.white70,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _GlassPanel extends StatelessWidget {
-  final Widget child;
-
-  const _GlassPanel({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withOpacity(0.06),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoChip({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withOpacity(0.06),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    if (customerId == null || customerId!.isEmpty) {
+      return Column(
         children: [
+          const CircleAvatar(radius: 40, backgroundColor: Color(0xFF161B22)),
+          const SizedBox(height: 12),
           Text(
-            label.toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: Colors.white60,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            style: theme.textTheme.bodySmall?.copyWith(
+            'Arama',
+            style: theme.textTheme.titleLarge?.copyWith(
               color: Colors.white,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            'Potansiyel Alıcı',
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+          ),
+        ],
+      );
+    }
+    final customerAsync = ref.watch(customerEntityByIdProvider(customerId!));
+    return customerAsync.when(
+      data: (customer) {
+        final name = customer?.fullName ?? 'Müşteri';
+        final initial = name.trim().isEmpty ? '?' : name.trim().substring(0, 1).toUpperCase();
+        return Column(
+          children: [
+            CircleAvatar(
+              radius: 40,
+              backgroundColor: const Color(0xFF161B22),
+              child: Text(
+                initial,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              name,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Potansiyel Alıcı • AI hazır',
+              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+            ),
+          ],
+        );
+      },
+      loading: () => Column(
+        children: [
+          const CircleAvatar(radius: 40, backgroundColor: Color(0xFF161B22)),
+          const SizedBox(height: 12),
+          Text('Yükleniyor...', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+        ],
+      ),
+      error: (_, __) => Column(
+        children: [
+          const CircleAvatar(radius: 40, backgroundColor: Color(0xFF161B22)),
+          const SizedBox(height: 12),
+          Text('Müşteri', style: theme.textTheme.titleLarge?.copyWith(color: Colors.white)),
         ],
       ),
     );

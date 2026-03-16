@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/features/daily_brief/presentation/widgets/dai
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
 import 'package:emlakmaster_mobile/features/missed_opportunities/presentation/widgets/missed_opportunities_panel.dart';
+import 'package:emlakmaster_mobile/features/region_demand_map/presentation/widgets/region_demand_map_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,6 +59,9 @@ class _BrokerCommandBody extends StatelessWidget {
           children: const [
             _SectionTitle(title: 'Piyasa sinyalleri'),
             MarketPulsePanel(),
+            SizedBox(height: 16),
+            _SectionTitle(title: 'Bölge talep haritası'),
+            RegionDemandMapPanel(),
             SizedBox(height: 16),
             _SectionTitle(title: 'Bugün keşfedilen fırsatlar'),
             DiscoveryPanel(),

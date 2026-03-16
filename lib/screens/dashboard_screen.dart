@@ -13,6 +13,7 @@ import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/
 import 'package:emlakmaster_mobile/features/hot_lead_radar/presentation/widgets/hot_lead_radar_panel.dart';
 import 'package:emlakmaster_mobile/features/missed_opportunities/presentation/widgets/missed_opportunities_panel.dart';
 import 'package:emlakmaster_mobile/features/opportunity_radar/presentation/widgets/opportunity_radar_widget.dart';
+import 'package:emlakmaster_mobile/features/region_demand_map/presentation/widgets/region_demand_map_panel.dart';
 import 'package:emlakmaster_mobile/widgets/top_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,6 +85,11 @@ class DashboardPage extends ConsumerWidget {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24),
                     child: DailyBriefPanel(),
+                  ),
+                  SizedBox(height: 16),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: RegionDemandMapPanel(),
                   ),
                   SizedBox(height: 16),
                   Padding(

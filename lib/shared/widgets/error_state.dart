@@ -46,7 +46,7 @@ class ErrorState extends StatelessWidget {
                 label: const Text('Tekrar Dene'),
                 style: FilledButton.styleFrom(
                   backgroundColor: DesignTokens.primary,
-                  foregroundColor: Colors.black,
+                  foregroundColor: DesignTokens.brandWhite,
                 ),
               ),
             ],

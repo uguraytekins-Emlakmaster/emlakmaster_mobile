@@ -1,11 +1,14 @@
 import 'dart:io';
 
 import 'package:emlakmaster_mobile/core/constants/turkish_cities.dart';
+import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/core/services/logo_storage_service.dart';
 import 'package:emlakmaster_mobile/features/listing_display/data/listing_display_settings_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_display/domain/entities/listing_display_settings_entity.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/providers/listing_display_settings_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -47,21 +50,14 @@ class _ListingDisplaySettingsSectionState
       await ListingDisplaySettingsRepository.set(
           settings.copyWith(logoUrl: url));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logo kaydedildi'),
-            backgroundColor: Color(0xFF00FF41),
-          ),
-        );
+        AppToaster.success(context, 'Logo kaydedildi');
       }
     } catch (e) {
       if (mounted) {
         final msg = e.toString().contains('storage') || e.toString().contains('Storage')
             ? 'Firebase Storage açılmamış olabilir. Konsoldan Storage\'ı başlatın.'
             : 'Logo yüklenemedi: $e';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
-        );
+        AppToaster.error(context, msg);
       }
     }
   }
@@ -150,12 +146,13 @@ class _ListingDisplaySettingsSectionState
                 leading: settings.logoUrl != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          settings.logoUrl!,
+                        child: CachedNetworkImage(
+                          imageUrl: settings.logoUrl!,
                           width: 40,
                           height: 40,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          placeholder: (_, __) => const ShimmerPlaceholder(width: 40, height: 40),
+                          errorWidget: (_, __, ___) =>
                               const Icon(Icons.business_rounded, color: Color(0xFF00FF41)),
                         ),
                       )

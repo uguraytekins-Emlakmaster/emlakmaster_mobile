@@ -11,6 +11,7 @@ enum AppRole {
   operations('operations', 'Operasyon Personeli'),
   financeInvestor('finance_investor', 'Finans / Yatırım'),
   investorPortal('investor_portal', 'Yatırımcı Portal'),
+  client('client', 'Müşteri'),
   guest('guest', 'Demo Kullanıcı');
 
   const AppRole(this.id, this.label);
@@ -55,6 +56,9 @@ enum AppRole {
       case 'investor_portal':
       case 'investor':
         return AppRole.investorPortal;
+      case 'client':
+      case 'müşteri':
+        return AppRole.client;
       default:
         return AppRole.values.firstWhere(
           (r) => r.id == n || r.id.replaceAll('_', '') == n.replaceAll('_', ''),
@@ -70,4 +74,14 @@ enum AppRole {
   bool get canViewAllCalls => isManagerTier || this == operations;
   bool get canViewInvestorIntelligence =>
       isAdminTier || this == financeInvestor || this == investorPortal;
+
+  /// Müşteri portalı: arama, favoriler, mesajlar, sanal tur.
+  bool get isClientTier => this == AppRole.client;
+
+  /// Danışman veya danışman-benzeri (agent, guest, investor vb.).
+  bool get isConsultantTier =>
+      this == agent ||
+      this == guest ||
+      this == financeInvestor ||
+      this == investorPortal;
 }

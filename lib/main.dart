@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/services/push_notification_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
+import 'package:emlakmaster_mobile/core/cache/app_cache_service.dart';
 import 'package:emlakmaster_mobile/core/services/sync_manager.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
@@ -77,14 +78,7 @@ Future<void> _runApp() async {
     );
   };
 
-  try {
-    SyncManager.init();
-  } catch (e, st) {
-    AppLogger.e('SyncManager init error', e, st);
-  }
-
-  await OnboardingStore.instance.warmUp();
-
+  // Ağır init'leri ilk frame sonrasına ertele — uygulama anında açılsın (No-Lag Rule).
   final themeIndex = await SettingsService.instance.getThemeModeIndex();
   runApp(
     ProviderScope(
@@ -96,11 +90,45 @@ Future<void> _runApp() async {
   );
 }
 
-class EmlakMasterApp extends ConsumerWidget {
+class EmlakMasterApp extends ConsumerStatefulWidget {
   const EmlakMasterApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EmlakMasterApp> createState() => _EmlakMasterAppState();
+}
+
+class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
+  static bool _deferredInitDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _runDeferredInit());
+  }
+
+  static Future<void> _runDeferredInit() async {
+    if (_deferredInitDone) return;
+    _deferredInitDone = true;
+    try {
+      SyncManager.init();
+    } catch (e, st) {
+      AppLogger.e('SyncManager init error', e, st);
+    }
+    try {
+      await OnboardingStore.instance.warmUp();
+    } catch (e, st) {
+      AppLogger.e('OnboardingStore warmUp error', e, st);
+    }
+    // Hive cache: ağır işlem ilk frame sonrası
+    try {
+      await AppCacheService.instance.ensureInit();
+    } catch (e, st) {
+      AppLogger.e('AppCacheService init error', e, st);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen(currentUserProvider, (_, next) {
       final uid = next.valueOrNull?.uid;
       if (uid != null && uid.isNotEmpty) {
@@ -137,7 +165,9 @@ class EmlakMasterApp extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  const ColoredBox(color: Color(0xFF0D1117)),
+                  ColoredBox(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                  ),
                   if (child != null) child,
                 ],
               ),

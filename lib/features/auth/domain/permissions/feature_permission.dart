@@ -71,9 +71,15 @@ abstract final class FeaturePermission {
       role.isManagerTier || role == AppRole.operations;
 
   /// Danışman paneli: kendi özeti, müşteriler, ilanlar, Magic Call, resurrection.
-  static bool seesConsultantPanel(AppRole role) =>
-      role == AppRole.agent ||
-      role == AppRole.guest ||
-      role == AppRole.financeInvestor ||
-      role == AppRole.investorPortal;
+  static bool seesConsultantPanel(AppRole role) => role.isConsultantTier;
+
+  /// Müşteri paneli: arama, favoriler, mesajlar, sanal tur, doğrudan iletişim.
+  static bool seesClientPanel(AppRole role) => role.isClientTier;
+
+  // ——— CLIENT-only permissions ———
+  static bool canSearchListings(AppRole role) =>
+      role.isClientTier || role.isConsultantTier || role.isManagerTier;
+  static bool canViewFavorites(AppRole role) => role.isClientTier;
+  static bool canViewOwnMessages(AppRole role) => role.isClientTier;
+  static bool canAccessVirtualTour(AppRole role) => role.isClientTier;
 }

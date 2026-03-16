@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'admin_shell.dart';
+import 'client_shell.dart';
 import 'consultant_shell.dart';
 
-/// Giriş sonrası rolüne göre Yönetici veya Danışman panelini gösterir.
-/// Yönetici: tam dashboard, War Room, çağrı merkezi, raporlar, ekonomi, ayarlar.
-/// Danışman: kendi özeti, müşteriler, ilanlar, Magic Call, takip, ayarlar.
+/// RBAC: Giriş sonrası rolüne göre Admin, Consultant veya Client paneli.
+/// - ADMIN: Dashboard, War Room, çağrı merkezi, raporlar, ekonomi, ayarlar.
+/// - CONSULTANT: Özetim, müşteriler, ilanlar, Magic Call, takip, ayarlar.
+/// - CLIENT: Arama, favoriler, mesajlar, sanal tur, profil.
 class RoleBasedShellSelector extends ConsumerWidget {
   const RoleBasedShellSelector({super.key});
 
@@ -17,7 +19,7 @@ class RoleBasedShellSelector extends ConsumerWidget {
     final role = ref.watch(displayRoleOrNullProvider);
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
     if (role == null) return const _ShellLoading();
-    // Yönetici kullanıcı panel tercihine göre; danışman her zaman danışman paneli.
+    if (FeaturePermission.seesClientPanel(role)) return const ClientShellPage();
     final forceConsultant = preferConsultant == true;
     final forceAdmin = preferConsultant == false;
     if (FeaturePermission.seesAdminPanel(role)) {

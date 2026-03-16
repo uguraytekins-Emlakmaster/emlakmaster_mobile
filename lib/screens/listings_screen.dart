@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -102,12 +104,14 @@ class ListingsPage extends StatelessWidget {
                       final priceStr = priceRaw is String
                           ? priceRaw
                           : (priceRaw as num?)?.toString() ?? '—';
-                      return _ListingCard(
-                        listingId: doc.id,
-                        imageUrl: d['imageUrl'] as String?,
-                        title: d['title'] as String? ?? 'İlan',
-                        price: priceStr,
-                        location: d['location'] as String? ?? d['district'] as String? ?? '—',
+                      return RepaintBoundary(
+                        child: _ListingCard(
+                          listingId: doc.id,
+                          imageUrl: d['imageUrl'] as String?,
+                          title: d['title'] as String? ?? 'İlan',
+                          price: priceStr,
+                          location: d['location'] as String? ?? d['district'] as String? ?? '—',
+                        ),
                       );
                     },
                   );
@@ -161,10 +165,16 @@ class _ListingCard extends StatelessWidget {
           AspectRatio(
             aspectRatio: 16 / 10,
             child: imageUrl != null && imageUrl!.isNotEmpty
-                ? Image.network(
-                    imageUrl!,
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholderImage(),
+                    placeholder: (_, __) => LayoutBuilder(
+                      builder: (context, c) => ShimmerPlaceholder(
+                        width: c.maxWidth,
+                        height: c.maxHeight,
+                      ),
+                    ),
+                    errorWidget: (_, __, ___) => _placeholderImage(),
                   )
                 : _placeholderImage(),
           ),

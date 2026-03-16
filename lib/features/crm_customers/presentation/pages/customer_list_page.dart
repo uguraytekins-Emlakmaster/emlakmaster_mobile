@@ -239,9 +239,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     itemBuilder: (context, index) {
                       final entity = _docToEntity(filtered[index]);
                       final isSelected = _selectedIds.contains(entity.id);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: DesignTokens.space3),
-                        child: CustomerCard(
+                      return RepaintBoundary(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: DesignTokens.space3),
+                          child: CustomerCard(
                           customer: entity,
                           onTap: () {
                             if (_selectionMode) {
@@ -258,6 +259,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           },
                           selectionMode: _selectionMode,
                           isSelected: isSelected,
+                        ),
                         ),
                       );
                     },

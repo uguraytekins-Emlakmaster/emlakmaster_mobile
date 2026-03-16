@@ -116,7 +116,8 @@ class FinanceChip extends StatelessWidget {
     return Container(
       width: 130,
       margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      constraints: const BoxConstraints(minHeight: 52),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white.withOpacity(0.04),
@@ -128,30 +129,33 @@ class FinanceChip extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.grey, fontSize: 11),
+            style: const TextStyle(color: Colors.grey, fontSize: 10),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontSize: 14,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
                 color: isUp ? const Color(0xFF00FF41) : Colors.redAccent,
-                size: 18,
+                size: 16,
               ),
               Text(
                 change,
                 style: TextStyle(
                   color: isUp ? const Color(0xFF00FF41) : Colors.redAccent,
-                  fontSize: 11,
+                  fontSize: 10,
                 ),
               ),
             ],

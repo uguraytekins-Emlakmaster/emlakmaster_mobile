@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+
+import '../../features/broker_command/presentation/pages/broker_command_page.dart' deferred as broker_command;
+import '../../features/manager_command_center/presentation/pages/command_center_page.dart' deferred as command_center;
+import '../../features/war_room/presentation/pages/war_room_page.dart' deferred as war_room;
+
+/// No-Lag Rule: Ağır modüller sadece ilgili sayfa açıldığında yüklenir (deferred loading).
+
+Widget _loadingScreen() {
+  return const Scaffold(
+    backgroundColor: Color(0xFF0D1117),
+    body: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(color: Color(0xFF00FF41)),
+          SizedBox(height: 24),
+          Text(
+            'Yükleniyor...',
+            style: TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// War Room sayfası — modül ilk açılışta yüklenir.
+class LazyWarRoomPage extends StatefulWidget {
+  const LazyWarRoomPage({super.key});
+
+  @override
+  State<LazyWarRoomPage> createState() => _LazyWarRoomPageState();
+}
+
+class _LazyWarRoomPageState extends State<LazyWarRoomPage> {
+  bool _loaded = false;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    war_room.loadLibrary().then((_) {
+      if (mounted) setState(() => _loaded = true);
+    }).catchError((e, st) {
+      if (mounted) setState(() => _error = e);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0D1117),
+        body: Center(
+          child: Text(
+            'Sayfa yüklenemedi.',
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
+    if (!_loaded) return _loadingScreen();
+    return war_room.WarRoomPage();
+  }
+}
+
+/// Broker Command sayfası — modül ilk açılışta yüklenir.
+class LazyBrokerCommandPage extends StatefulWidget {
+  const LazyBrokerCommandPage({super.key});
+
+  @override
+  State<LazyBrokerCommandPage> createState() => _LazyBrokerCommandPageState();
+}
+
+class _LazyBrokerCommandPageState extends State<LazyBrokerCommandPage> {
+  bool _loaded = false;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    broker_command.loadLibrary().then((_) {
+      if (mounted) setState(() => _loaded = true);
+    }).catchError((e, st) {
+      if (mounted) setState(() => _error = e);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0D1117),
+        body: Center(
+          child: Text(
+            'Sayfa yüklenemedi.',
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
+    if (!_loaded) return _loadingScreen();
+    return broker_command.BrokerCommandPage();
+  }
+}
+
+/// Command Center sayfası — modül ilk açılışta yüklenir.
+class LazyCommandCenterPage extends StatefulWidget {
+  const LazyCommandCenterPage({super.key});
+
+  @override
+  State<LazyCommandCenterPage> createState() => _LazyCommandCenterPageState();
+}
+
+class _LazyCommandCenterPageState extends State<LazyCommandCenterPage> {
+  bool _loaded = false;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    command_center.loadLibrary().then((_) {
+      if (mounted) setState(() => _loaded = true);
+    }).catchError((e, st) {
+      if (mounted) setState(() => _error = e);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0D1117),
+        body: Center(
+          child: Text(
+            'Sayfa yüklenemedi.',
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
+    if (!_loaded) return _loadingScreen();
+    return command_center.CommandCenterPage();
+  }
+}

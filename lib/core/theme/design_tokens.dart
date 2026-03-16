@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 
-/// Rainbow CRM / EmlakMaster design tokens.
-/// Apple/Stripe/Linear seviyesinde tutarlı, zamansız token seti.
+/// Rainbow Gayrimenkul / EmlakMaster design tokens.
+/// Premium: Lacivert (Navy), Altın (Gold), Beyaz (White) — güven veren marka paleti.
+/// Dark/Light mode ile uyumlu.
 abstract final class DesignTokens {
   DesignTokens._();
 
-  // ---------- Color (semantic)
-  static const Color primary = Color(0xFF00FF41);
-  static const Color primaryDark = Color(0xFF00CC34);
-  static const Color secondary = Color(0xFFFFD700);
-  static const Color accent = Color(0xFF00B4D8);
+  // ---------- Brand (Rainbow Gayrimenkul: Lacivert / Altın / Beyaz)
+  static const Color brandNavy = Color(0xFF1A237E);
+  static const Color brandNavyLight = Color(0xFF283593);
+  static const Color brandGold = Color(0xFFD4AF37);
+  static const Color brandGoldLight = Color(0xFFE8C547);
+  static const Color brandWhite = Color(0xFFFAFAFA);
 
-  static const Color success = Color(0xFF00FF41);
-  static const Color warning = Color(0xFFFFB020);
-  static const Color danger = Color(0xFFE53935);
-  static const Color info = Color(0xFF00B4D8);
+  // ---------- Color (semantic — premium tema ile uyumlu)
+  static const Color primary = Color(0xFF1A237E);
+  static const Color primaryDark = Color(0xFF0D1542);
+  static const Color secondary = Color(0xFFD4AF37);
+  static const Color accent = Color(0xFF283593);
+
+  static const Color success = Color(0xFF2E7D32);
+  static const Color warning = Color(0xFFF9A825);
+  static const Color danger = Color(0xFFC62828);
+  static const Color info = Color(0xFF1565C0);
 
   static const Color backgroundDark = Color(0xFF0D1117);
   static const Color surfaceDark = Color(0xFF161B22);
@@ -74,16 +82,20 @@ abstract final class DesignTokens {
   static const double elevation3 = 4;
   static const double elevation4 = 8;
 
+  // ---------- Breakpoints (adaptive: Web/Desktop vs Mobile)
+  /// Geniş ekran: sidebar navigation. Dar ekran: bottom nav.
+  static const double breakpointWide = 600;
+
   // ---------- Animation
   static const Duration durationFast = Duration(milliseconds: 150);
   static const Duration durationNormal = Duration(milliseconds: 280);
   static const Duration durationSlow = Duration(milliseconds: 400);
 
-  // ---------- Champion / Premium (görsel ödül seviyesi)
-  static const Color primaryGlow = Color(0xFF00FF41);
-  static List<Color> get gradientPrimary => [primary, primaryDark];
+  // ---------- Champion / Premium (Rainbow Gayrimenkul)
+  static const Color primaryGlow = Color(0xFFD4AF37);
+  static List<Color> get gradientPrimary => [brandNavy, brandNavyLight];
   static List<Color> get gradientCardBorder =>
-      [primary.withOpacity(0.4), accent.withOpacity(0.2)];
+      [brandGold.withOpacity(0.4), brandNavy.withOpacity(0.2)];
   static BoxDecoration cardChampion({
     bool withGlow = false,
     Color? borderColor,
@@ -97,13 +109,18 @@ abstract final class DesignTokens {
         boxShadow: withGlow
             ? [
                 BoxShadow(
-                  color: primary.withOpacity(0.12),
+                  color: brandGold.withOpacity(0.15),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
               ]
             : null,
       );
+  // Shimmer (görsel yükleme)
+  static Color get shimmerBase => surfaceDarkElevated;
+  static Color get shimmerHighlight => surfaceDark.withOpacity(0.5);
+  static Color get shimmerBaseLight => borderLight;
+  static Color get shimmerHighlightLight => surfaceLight;
   static const double championCardRadius = 16;
   static const double championButtonHeight = 52;
 }

@@ -29,7 +29,7 @@ class CustomerCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final temperatureLevel = ref.watch(leadTemperatureLevelProvider(customer));
+    final temperatureScore = ref.watch(leadTemperatureForCustomerProvider(customer));
     return Semantics(
       label: '${customer.fullName} müşteri kartı',
       button: true,
@@ -102,7 +102,7 @@ class CustomerCard extends ConsumerWidget {
                   if (customer.leadTemperature != null)
                     _TemperatureChip(value: customer.leadTemperature!)
                   else
-                    _LeadLevelChip(level: temperatureLevel),
+                    _LeadScoreChip(score: temperatureScore.score, level: temperatureScore.level),
                 ],
               ),
               if (customer.lastInteractionAt != null || customer.nextSuggestedAction != null) ...[
@@ -191,10 +191,25 @@ class _LastContactChip extends StatelessWidget {
   }
 }
 
-class _LeadLevelChip extends StatelessWidget {
-  const _LeadLevelChip({required this.level});
+/// Sıcaklık skoru + emoji: 🔥92 satın almaya çok yakın, 🟡55 araştırıyor, 🔵20 sadece bakıyor.
+class _LeadScoreChip extends StatelessWidget {
+  const _LeadScoreChip({required this.score, required this.level});
 
+  final double score;
   final LeadTemperatureLevel level;
+
+  static String _emoji(LeadTemperatureLevel level) {
+    switch (level) {
+      case LeadTemperatureLevel.urgent:
+      case LeadTemperatureLevel.hot:
+        return '🔥';
+      case LeadTemperatureLevel.warm:
+      case LeadTemperatureLevel.reactivationCandidate:
+        return '🟡';
+      default:
+        return '🔵';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,23 +222,30 @@ class _LeadLevelChip extends StatelessWidget {
         color = DesignTokens.success;
         break;
       case LeadTemperatureLevel.warm:
+      case LeadTemperatureLevel.reactivationCandidate:
         color = DesignTokens.warning;
         break;
-      case LeadTemperatureLevel.reactivationCandidate:
-        color = DesignTokens.info;
-        break;
       default:
-        color = DesignTokens.textTertiaryDark;
+        color = DesignTokens.info;
     }
+    final emoji = _emoji(level);
+    final scoreInt = score.round().clamp(0, 100);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
       ),
-      child: Text(
-        level.label,
-        style: TextStyle(color: color, fontSize: DesignTokens.fontSizeXs, fontWeight: FontWeight.w600),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 12)),
+          const SizedBox(width: 4),
+          Text(
+            '$scoreInt',
+            style: TextStyle(color: color, fontSize: DesignTokens.fontSizeXs, fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
+import 'package:emlakmaster_mobile/features/smart_matching_engine/presentation/providers/portfolio_match_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,6 +56,8 @@ class CustomerDetailPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _CustomerHeader(customerId: customerId),
+                    const SizedBox(height: DesignTokens.space5),
+                    _PortfolioMatchSection(customerId: customerId),
                     const SizedBox(height: DesignTokens.space5),
                     const Text(
                       'Zaman çizelgesi',
@@ -195,6 +198,79 @@ class CustomerDetailPage extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PortfolioMatchSection extends ConsumerWidget {
+  const _PortfolioMatchSection({required this.customerId});
+  final String customerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(topMatchedListingsForCustomerProvider(customerId));
+    return async.when(
+      data: (list) {
+        if (list.isEmpty) return const SizedBox.shrink();
+        return Container(
+          padding: const EdgeInsets.all(DesignTokens.space4),
+          decoration: BoxDecoration(
+            color: DesignTokens.surfaceDark,
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            border: Border.all(color: DesignTokens.primary.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.auto_awesome, size: 18, color: DesignTokens.primary),
+                  const SizedBox(width: DesignTokens.space2),
+                  Text(
+                    'Bu müşteri için uygun ${list.length} ilan bulundu.',
+                    style: const TextStyle(
+                      color: DesignTokens.textPrimaryDark,
+                      fontWeight: FontWeight.w600,
+                      fontSize: DesignTokens.fontSizeSm,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: DesignTokens.space3),
+              ...list.take(3).map((e) => Padding(
+                    padding: const EdgeInsets.only(bottom: DesignTokens.space2),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.home_rounded, size: 16, color: DesignTokens.textSecondaryDark),
+                        const SizedBox(width: DesignTokens.space2),
+                        Expanded(
+                          child: Text(
+                            e.title,
+                            style: const TextStyle(
+                              color: DesignTokens.textSecondaryDark,
+                              fontSize: DesignTokens.fontSizeXs,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '%${e.score.round()}',
+                          style: const TextStyle(
+                            color: DesignTokens.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: DesignTokens.fontSizeXs,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

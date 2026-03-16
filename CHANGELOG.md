@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.0.3] – 2025-03-15
+
+### Premium UI/UX ve efektler
+- **Shimmer**: İlan görselleri yüklenirken `ShimmerPlaceholder` (shimmer paketi) ile yükleme efekti.
+- **Hero animasyonları**: Market Pulse ilan kartlarında görsele `Hero` tag eklendi (detay sayfasına geçişte kullanılabilir).
+- **AnimateDo**: Market Pulse ilan listesinde `FadeInUp` ile sıralı giriş animasyonu.
+- **Etkileşimli butonlar**: `PressableScaleButton` — basıldığında hafif küçülme + haptic; Empty State aksiyonunda kullanıldı.
+- **Renk paleti (Rainbow Gayrimenkul)**: Lacivert (`#1A237E`), Altın (`#D4AF37`), Beyaz — `DesignTokens` ve `AppTheme` güncellendi. Dark/Light mode destekli.
+- **AppToaster**: Başarı/hata/uyarı/bilgi için tutarlı floating SnackBar (ikon + renk). Market Pulse, SyncStatusBanner, ayarlar logo mesajları buna taşındı.
+- **Empty State**: Premium illüstrasyon alanı (gradient daire + ikon), opsiyonel `illustration` widget.
+
+### Bağımlılıklar
+- `shimmer: ^3.0.0`
+- `animate_do: ^4.2.0`
+
+---
+
 ## [1.0.2] – 2025-03-15
 
 ### Eklenenler

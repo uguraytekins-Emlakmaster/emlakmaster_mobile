@@ -184,6 +184,36 @@ class FirestoreService {
         .snapshots();
   }
 
+  /// War Room Lead Pulse: son eklenen lead'ler (updatedAt desc fallback; index gerekebilir).
+  static Stream<QuerySnapshot<Map<String, dynamic>>> recentLeadsStream() async* {
+    await ensureInitialized();
+    if (!_initialized) yield* const Stream.empty();
+    try {
+      yield* FirebaseFirestore.instance
+          .collection('customers')
+          .orderBy('updatedAt', descending: true)
+          .limit(25)
+          .snapshots();
+    } catch (e) {
+      if (kDebugMode) debugPrint('recentLeadsStream: $e');
+      yield* const Stream.empty();
+    }
+  }
+
+  /// War Room: ofis aylık satış hedefi (app_settings/office_targets.monthlySalesTarget).
+  static Stream<int> officeMonthlyTargetStream() async* {
+    await ensureInitialized();
+    if (!_initialized) {
+      yield 10;
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection('app_settings')
+        .doc('office_targets')
+        .snapshots()
+        .map((s) => (s.data()?['monthlySalesTarget'] as num?)?.toInt() ?? 10);
+  }
+
   /// Müşteri verisini dinlemek için (örnek: customers/demoCustomer1)
   static Stream<DocumentSnapshot<Map<String, dynamic>>> customerStream(
       String customerId) async* {

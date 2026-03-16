@@ -61,27 +61,38 @@ class FinanceService {
     }
   }
 
-  /// Tek seferlik fetch (önbelleği günceller).
+  /// Tek seferlik fetch (önbelleği günceller). API yanıtı boş/hatalıysa güvenli varsayılan döner.
   static Future<FinanceRates> fetchLiveRates() async {
     try {
       final fxResp = await http.get(Uri.parse(_fxUrl));
       if (fxResp.statusCode != 200) {
         throw Exception('FX HTTP ${fxResp.statusCode}');
       }
-      final fxJson = jsonDecode(fxResp.body) as Map<String, dynamic>;
-      final fxRates = fxJson['rates'] as Map<String, dynamic>;
+      final fxBody = jsonDecode(fxResp.body);
+      final fxJson = fxBody is Map<String, dynamic> ? fxBody : null;
+      final fxRates = fxJson?['rates'];
+      if (fxRates is! Map<String, dynamic>) {
+        throw Exception('FX rates format invalid');
+      }
 
-      final usdTry = (fxRates['TRY'] as num).toDouble();
-      final eurTry = (fxRates['EUR'] as num).toDouble();
+      final usdTry = (fxRates['TRY'] is num)
+          ? (fxRates['TRY'] as num).toDouble()
+          : (_cache?.usdTry ?? 0.0);
+      final eurTry = (fxRates['EUR'] is num)
+          ? (fxRates['EUR'] as num).toDouble()
+          : (_cache?.eurTry ?? 0.0);
 
       double gramGoldTry = 0;
       try {
         final goldResp = await http.get(Uri.parse(_goldUrl));
         if (goldResp.statusCode == 200) {
-          final goldJson = jsonDecode(goldResp.body) as Map<String, dynamic>;
-          final goldRates = goldJson['rates'] as Map<String, dynamic>;
-          final xauTry = (goldRates['TRY'] as num).toDouble();
-          gramGoldTry = xauTry / 31.1035;
+          final goldBody = jsonDecode(goldResp.body);
+          final goldJson = goldBody is Map<String, dynamic> ? goldBody : null;
+          final goldRates = goldJson?['rates'];
+          if (goldRates is Map<String, dynamic> && goldRates['TRY'] is num) {
+            final xauTry = (goldRates['TRY'] as num).toDouble();
+            gramGoldTry = xauTry / 31.1035;
+          }
         }
       } catch (e) {
         if (kDebugMode) debugPrint('Gold price fetch error: $e');
@@ -90,12 +101,18 @@ class FinanceService {
       return FinanceRates(
         usdTry: usdTry,
         eurTry: eurTry,
-        gramGoldTry: gramGoldTry > 0 ? gramGoldTry : 0,
+        gramGoldTry: gramGoldTry > 0 ? gramGoldTry : (_cache?.gramGoldTry ?? 0),
         updatedAt: DateTime.now(),
       );
     } catch (e) {
       if (kDebugMode) debugPrint('FinanceService.fetchLiveRates error: $e');
-      rethrow;
+      if (_cache != null) return _cache!;
+      return FinanceRates(
+        usdTry: _cache?.usdTry ?? 0,
+        eurTry: _cache?.eurTry ?? 0,
+        gramGoldTry: _cache?.gramGoldTry ?? 0,
+        updatedAt: DateTime.now(),
+      );
     }
   }
 }

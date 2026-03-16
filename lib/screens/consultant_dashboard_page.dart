@@ -17,7 +17,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
-    final user = ref.watch(currentUserProvider).valueOrNull;
+    final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
     final greeting = user?.email != null
         ? 'Merhaba, ${user!.email!.split('@').first}'
         : 'Merhaba';
@@ -158,7 +158,7 @@ class _WeeklyGoalCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
+    final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return StreamBuilder<int>(
       stream: FirestoreService.agentWeeklyCallCountStream(uid),
       builder: (context, snap) {

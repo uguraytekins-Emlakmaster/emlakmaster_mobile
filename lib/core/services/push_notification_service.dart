@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 
 /// FCM push bildirimleri: izin, token, arka plan işleyici, token'ı Firestore'a yazma.
 /// Ayarlarda bildirimler kapalıysa izin istenmez ve token güncellenmez.
@@ -53,8 +54,10 @@ class PushNotificationService {
   }
 
   /// FCM token al ve [userId] varsa Firestore'da users/{userId}/fcmToken güncelle.
+  /// macOS ve web'de APNS/registration yok; sessizce atlanır.
   Future<void> refreshTokenAndSaveToFirestore(String? userId) async {
     if (userId == null || userId.isEmpty) return;
+    if (kIsWeb || defaultTargetPlatform == TargetPlatform.macOS) return;
     final enabled = await SettingsService.instance.getNotificationsEnabled();
     if (!enabled) return;
     try {

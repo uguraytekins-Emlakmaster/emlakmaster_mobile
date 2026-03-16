@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -75,10 +77,16 @@ class ListingDetailPage extends StatelessWidget {
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
                   background: imageUrl != null && imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholder(),
+                          placeholder: (_, __) => LayoutBuilder(
+                            builder: (context, c) => ShimmerPlaceholder(
+                              width: c.maxWidth > 0 ? c.maxWidth : 400,
+                              height: c.maxHeight > 0 ? c.maxHeight : 220,
+                            ),
+                          ),
+                          errorWidget: (_, __, ___) => _placeholder(),
                         )
                       : _placeholder(),
                 ),

@@ -10,9 +10,7 @@ import '../../screens/onboarding_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/calls/call_screen.dart';
 import '../../features/calls/post_call_wizard.dart';
-import '../../features/manager_command_center/presentation/pages/command_center_page.dart';
-import '../../features/broker_command/presentation/pages/broker_command_page.dart';
-import '../../features/war_room/presentation/pages/war_room_page.dart';
+import '../../core/lazy/deferred_dashboard_pages.dart';
 import '../../features/crm_customers/presentation/pages/customer_detail_page.dart';
 import '../../features/notifications/presentation/pages/notifications_center_page.dart';
 import '../../features/pipeline/presentation/pages/pipeline_kanban_page.dart';
@@ -25,6 +23,17 @@ class AppRouter {
 
   static const String routeLogin = '/login';
   static const String routeOnboarding = '/onboarding';
+
+  static bool _isStaffOnlyPath(String path) {
+    return path == routeCall ||
+        path.startsWith('$routeCall/') ||
+        path == routeCommandCenter ||
+        path == routeWarRoom ||
+        path == routeBrokerCommand ||
+        path == routePipeline ||
+        path == routeNotifications ||
+        path.startsWith('/customer/');
+  }
 
   static String _userFriendlyErrorMessage(Object? error) {
     if (error == null) return 'Sayfa yüklenemedi.';
@@ -66,6 +75,8 @@ class AppRouter {
         if (user == null && path == routeOnboarding) return null;
         if (user == null && path == routeLogin && !OnboardingStore.instance.completedSync) return routeOnboarding;
         if (user == null && path != routeLogin && path != routeOnboarding) return routeLogin;
+        final role = ref.read(displayRoleOrNullProvider);
+        if (user != null && role != null && role.isClientTier && _isStaffOnlyPath(path)) return routeHome;
         return null;
       },
       errorBuilder: (context, state) => _ErrorFallbackScreen(
@@ -134,7 +145,7 @@ class AppRouter {
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
-            child: const CommandCenterPage(),
+            child: const LazyCommandCenterPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
           ),
@@ -144,7 +155,7 @@ class AppRouter {
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
-            child: const WarRoomPage(),
+            child: const LazyWarRoomPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
           ),
@@ -154,7 +165,7 @@ class AppRouter {
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
-            child: const BrokerCommandPage(),
+            child: const LazyBrokerCommandPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
           ),
