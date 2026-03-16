@@ -36,6 +36,8 @@ abstract final class AppConstants {
   static const String colNews = 'news';
   static const String colOfficeActivity = 'office_activity';
   static const String colDeals = 'deals';
+  /// Harici ilan sitelerinden çekilen ilanlar (Market Pulse – son atılan ilanlar).
+  static const String colExternalListings = 'external_listings';
 
   /// SharedPreferences anahtarları
   static const String keyThemeMode = 'theme_mode';
@@ -61,4 +63,6 @@ abstract final class AppConstants {
   /// Diyarbakır piyasa ayarları dokümanı (colAppSettings altında).
   static const String docMarketSettings = 'market_settings';
   static const String docIntelligenceMeta = 'intelligence_meta';
+  /// İlan kaynakları & ofis ayarları: şehir, ilçe, şirket adı, logo (colAppSettings altında).
+  static const String docListingDisplaySettings = 'listing_display_settings';
 }

@@ -12,9 +12,10 @@ flutter run
 **Koruma kalkanı (önerilen):** Bağımlılıklar ve üretilmiş dosyalar otomatik kontrol/düzeltilir:
 
 ```bash
-./scripts/pub_get_with_fix.sh    # pub get + kalkan
-./scripts/run_with_shield.sh     # kalkan + flutter run
-./scripts/shield/shield.sh       # sadece kalkan
+./scripts/full_clean_and_prepare.sh  # tam temiz + pub get + shield + pod install (ilk kurulum / çökme sonrası)
+./scripts/pub_get_with_fix.sh        # pub get + kalkan
+./scripts/run_with_shield.sh         # kalkan + flutter run
+./scripts/shield/shield.sh           # sadece kalkan
 ```
 
 Detay: [scripts/shield/README.md](scripts/shield/README.md)

@@ -17,10 +17,10 @@ class SyncStatusBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(syncStatusProvider);
-    if (status.isOnline && status.lastSyncAt == null && !compact) {
-      return const SizedBox.shrink();
-    }
     final isOffline = !status.isOnline;
+    // Compact: sadece çevrimdışıyken bant göster. Normal: çevrimdışı veya son senkron bilgisi varsa göster.
+    if (compact && status.isOnline) return const SizedBox.shrink();
+    if (!compact && status.isOnline && status.lastSyncAt == null) return const SizedBox.shrink();
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -30,7 +30,7 @@ class SyncStatusBanner extends ConsumerWidget {
             SnackBar(
               content: Text(
                 isOffline
-                    ? 'İnternet bağlantısı yok. Veriler yerelde saklanıyor; bağlantı gelince otomatik senkronize edilecek.'
+                    ? 'İnternet yok. Veriler önbellekten gösteriliyor; bağlantı gelince otomatik güncellenecek.'
                     : 'Son güncelleme: ${status.shortLabel}',
               ),
               backgroundColor: isOffline ? DesignTokens.warning : const Color(0xFF161B22),
@@ -39,6 +39,7 @@ class SyncStatusBanner extends ConsumerWidget {
           );
         },
         child: Container(
+          width: double.infinity,
           padding: EdgeInsets.symmetric(
             horizontal: DesignTokens.space3,
             vertical: compact ? DesignTokens.space1 : DesignTokens.space2,
@@ -61,17 +62,15 @@ class SyncStatusBanner extends ConsumerWidget {
                 size: compact ? 14 : 16,
                 color: isOffline ? DesignTokens.warning : DesignTokens.primary,
               ),
-              if (!compact) ...[
-                const SizedBox(width: DesignTokens.space2),
-                Text(
-                  status.shortLabel,
-                  style: TextStyle(
-                    color: isOffline ? DesignTokens.warning : DesignTokens.textSecondaryDark,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+              SizedBox(width: compact ? DesignTokens.space2 : DesignTokens.space2),
+              Text(
+                isOffline ? 'İnternet yok. Veriler önbellekten gösteriliyor.' : status.shortLabel,
+                style: TextStyle(
+                  color: isOffline ? DesignTokens.warning : DesignTokens.textSecondaryDark,
+                  fontSize: compact ? 11 : 12,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
+              ),
             ],
           ),
         ),

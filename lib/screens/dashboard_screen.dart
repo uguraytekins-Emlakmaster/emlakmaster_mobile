@@ -1,5 +1,7 @@
+import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/dashboard_kpi_section.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/welcome_patron_overlay.dart';
+import 'package:emlakmaster_mobile/features/external_listings/presentation/providers/external_listings_provider.dart';
 import 'package:emlakmaster_mobile/widgets/bento_ai_news.dart';
 import 'package:emlakmaster_mobile/widgets/bento_analytics.dart';
 import 'package:emlakmaster_mobile/widgets/bento_saha_radar.dart';
@@ -18,6 +20,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
+  Future<void> _onRefresh(WidgetRef ref) async {
+    ref.invalidate(externalListingsStreamProvider);
+    ref.invalidate(marketHeatmapProvider);
+    ref.invalidate(discoveryItemsProvider);
+    ref.invalidate(dailyBriefProvider);
+    ref.invalidate(missedOpportunitiesProvider);
+    ref.invalidate(intelligenceRunTriggerProvider);
+    await Future.delayed(const Duration(milliseconds: 600));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     try {
@@ -28,11 +40,16 @@ class DashboardPage extends ConsumerWidget {
             width: size.width,
             height: size.height,
             color: const Color(0xFF0D1117),
-            child: const SingleChildScrollView(
-              padding: EdgeInsets.only(bottom: 120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+            child: RefreshIndicator(
+              onRefresh: () => _onRefresh(ref),
+              color: const Color(0xFF00FF41),
+              backgroundColor: const Color(0xFF161B22),
+              child: const SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.only(bottom: 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                   DashboardTopAppBar(),
                   SizedBox(height: 16),
                   DashboardKpiSection(),
@@ -91,7 +108,8 @@ class DashboardPage extends ConsumerWidget {
                       ],
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

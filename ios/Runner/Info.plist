@@ -50,5 +50,9 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ofis logosu seçmek için galeri erişimi gerekir.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Logo fotoğrafı çekmek için kamera erişimi gerekir.</string>
 </dict>
 </plist>

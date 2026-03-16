@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/services/push_notification_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
+import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/services/sync_manager.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
@@ -16,23 +17,27 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    await FirestoreService.ensureInitialized();
-    FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-    await PushNotificationService.instance.initialize();
-  } catch (e, st) {
-    AppLogger.e('Firebase init error', e, st);
-  }
-
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    AppLogger.e('FlutterError', details.exception, details.stack);
-    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-  };
-
+  // ensureInitialized ve runApp aynı zone'da olmalı (zone mismatch hatası önlemi)
   runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    try {
+      await FirestoreService.ensureInitialized();
+      FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      await PushNotificationService.instance.initialize();
+    } catch (e, st) {
+      AppLogger.e('Firebase init error', e, st);
+    }
+
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      final isOverflow = details.toString().contains('overflowed');
+      if (!isOverflow) {
+        AppLogger.e('FlutterError', details.exception, details.stack);
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      }
+    };
+
     await _runApp();
   }, (Object error, StackTrace stack) {
     AppLogger.e('Zone error (async)', error, stack);
@@ -77,6 +82,8 @@ Future<void> _runApp() async {
   } catch (e, st) {
     AppLogger.e('SyncManager init error', e, st);
   }
+
+  await OnboardingStore.instance.warmUp();
 
   final themeIndex = await SettingsService.instance.getThemeModeIndex();
   runApp(

@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
+import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -98,6 +99,8 @@ class SettingsPlaceholderPage extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             const _NotificationsSection(),
+            const SizedBox(height: 24),
+            const ListingDisplaySettingsSection(),
             const SizedBox(height: 24),
             if (user != null) ...[
               ListTile(

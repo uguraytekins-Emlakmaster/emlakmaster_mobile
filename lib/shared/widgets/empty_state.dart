@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/theme/design_tokens.dart';
 
@@ -57,7 +58,10 @@ class EmptyState extends StatelessWidget {
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: DesignTokens.space5),
               FilledButton.icon(
-                onPressed: onAction,
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  onAction!();
+                },
                 icon: const Icon(Icons.add_rounded, size: 20),
                 label: Text(actionLabel!),
                 style: FilledButton.styleFrom(

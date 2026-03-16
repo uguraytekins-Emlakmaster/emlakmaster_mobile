@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/theme/design_tokens.dart';
 
@@ -37,7 +38,10 @@ class ErrorState extends StatelessWidget {
             if (onRetry != null) ...[
               const SizedBox(height: DesignTokens.space5),
               FilledButton.icon(
-                onPressed: onRetry,
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  onRetry!();
+                },
                 icon: const Icon(Icons.refresh_rounded, size: 20),
                 label: const Text('Tekrar Dene'),
                 style: FilledButton.styleFrom(

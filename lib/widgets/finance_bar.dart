@@ -122,7 +122,9 @@ class FinanceChip extends StatelessWidget {
         color: Colors.white.withOpacity(0.04),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
@@ -137,7 +139,7 @@ class FinanceChip extends StatelessWidget {
               fontSize: 16,
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 4),
           Row(
             children: [
               Icon(

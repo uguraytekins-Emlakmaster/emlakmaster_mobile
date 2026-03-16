@@ -2,6 +2,8 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
+import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
+import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -75,13 +77,26 @@ class OpportunityRadarWidget extends ConsumerWidget {
                 )).toList(),
               );
             },
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary)),
+            loading: () => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                children: List.generate(3, (_) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      const SkeletonLoader(width: 18, height: 18, borderRadius: BorderRadius.all(Radius.circular(4))),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: SkeletonLoader(height: 13, width: double.infinity, borderRadius: BorderRadius.all(Radius.circular(4))),
+                      ),
+                    ],
+                  ),
+                )),
+              ),
             ),
-            error: (_, __) => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('Yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 12)),
+            error: (_, __) => ErrorState(
+              message: 'Fırsat radarı yüklenemedi.',
+              onRetry: () => ref.invalidate(resurrectionQueueProvider),
             ),
           ),
         ],

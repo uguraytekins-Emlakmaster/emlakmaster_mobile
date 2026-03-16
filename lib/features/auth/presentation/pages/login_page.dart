@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/design_tokens.dart';
 
@@ -35,6 +37,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _errorMessage = null;
     });
     if (!_formKey.currentState!.validate()) return;
+    HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
     try {
       await AuthService.instance.signInWithEmailAndPassword(
@@ -42,6 +45,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         password: _passwordController.text,
       );
       if (!mounted) return;
+      AnalyticsService.instance.logLogin(method: 'email');
       setState(() => _isLoading = false);
     } catch (e) {
       if (!mounted) return;
@@ -65,6 +69,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _googleIleGiris() async {
     if (_isLoading) return;
+    HapticFeedback.mediumImpact();
     setState(() {
       _errorMessage = null;
       _isLoading = true;
@@ -87,6 +92,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
       await FirebaseAuth.instance.signInWithCredential(credential);
       if (!mounted) return;
+      AnalyticsService.instance.logLogin(method: 'google');
       setState(() => _isLoading = false);
       // Router authStateChanges ile otomatik ana sayfaya yönlendirir.
     } catch (e) {

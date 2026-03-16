@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:emlakmaster_mobile/firebase_options.dart';
 
 /// Cache-first Firestore: önce önbellek (persistence), arayüz takılmaz.

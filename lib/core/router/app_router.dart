@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/analytics_service.dart';
+import '../services/onboarding_store.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../screens/onboarding_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/calls/call_screen.dart';
 import '../../features/calls/post_call_wizard.dart';
@@ -21,6 +24,7 @@ class AppRouter {
   AppRouter._();
 
   static const String routeLogin = '/login';
+  static const String routeOnboarding = '/onboarding';
 
   static String _userFriendlyErrorMessage(Object? error) {
     if (error == null) return 'Sayfa yüklenemedi.';
@@ -54,11 +58,14 @@ class AppRouter {
       initialLocation: routeLogin,
       debugLogDiagnostics: kDebugMode,
       refreshListenable: refreshListenable,
+      observers: [_AnalyticsRouteObserver()],
       redirect: (context, state) {
         final user = ref.read(currentUserProvider).valueOrNull;
         final path = state.uri.path;
-        if (user == null && path != routeLogin) return routeLogin;
-        if (user != null && path == routeLogin) return routeHome;
+        if (user != null && (path == routeLogin || path == routeOnboarding)) return routeHome;
+        if (user == null && path == routeOnboarding) return null;
+        if (user == null && path == routeLogin && !OnboardingStore.instance.completedSync) return routeOnboarding;
+        if (user == null && path != routeLogin && path != routeOnboarding) return routeLogin;
         return null;
       },
       errorBuilder: (context, state) => _ErrorFallbackScreen(
@@ -66,15 +73,27 @@ class AppRouter {
       ),
       routes: [
         GoRoute(
+          path: routeOnboarding,
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const OnboardingPage(),
+          ),
+        ),
+        GoRoute(
           path: routeLogin,
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: LoginPage(),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const LoginPage(),
           ),
         ),
         GoRoute(
           path: routeHome,
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: _AuthShell(child: RoleBasedShellSelector()),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const _AuthShell(child: RoleBasedShellSelector()),
           ),
         ),
         GoRoute(
@@ -83,6 +102,7 @@ class AppRouter {
             final extra = state.extra as Map<String, dynamic>?;
             return CustomTransitionPage<void>(
               key: state.pageKey,
+              name: state.matchedLocation,
               child: CallScreen(
                 customerId: extra?['customerId'] as String?,
                 phone: extra?['phone'] as String?,
@@ -98,6 +118,7 @@ class AppRouter {
             final extra = state.extra as Map<String, dynamic>?;
             return CustomTransitionPage<void>(
               key: state.pageKey,
+              name: state.matchedLocation,
               child: PostCallWizardScreen(
                 callDurationSec: extra?['durationSec'] as int?,
                 callOutcome: extra?['outcome'] as String?,
@@ -112,6 +133,7 @@ class AppRouter {
           path: routeCommandCenter,
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
+            name: state.matchedLocation,
             child: const CommandCenterPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
@@ -121,6 +143,7 @@ class AppRouter {
           path: routeWarRoom,
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
+            name: state.matchedLocation,
             child: const WarRoomPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
@@ -130,6 +153,7 @@ class AppRouter {
           path: routeBrokerCommand,
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
+            name: state.matchedLocation,
             child: const BrokerCommandPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
@@ -141,6 +165,7 @@ class AppRouter {
             final id = state.pathParameters['id'] ?? '';
             return CustomTransitionPage<void>(
               key: state.pageKey,
+              name: state.matchedLocation,
               child: CustomerDetailPage(customerId: id),
               transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                   FadeTransition(opacity: animation, child: child),
@@ -153,6 +178,7 @@ class AppRouter {
             final id = state.pathParameters['id'] ?? '';
             return CustomTransitionPage<void>(
               key: state.pageKey,
+              name: state.matchedLocation,
               child: ListingDetailPage(listingId: id),
               transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                   FadeTransition(opacity: animation, child: child),
@@ -163,6 +189,7 @@ class AppRouter {
           path: routePipeline,
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
+            name: state.matchedLocation,
             child: const PipelineKanbanPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
@@ -172,6 +199,7 @@ class AppRouter {
           path: routeNotifications,
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
+            name: state.matchedLocation,
             child: const NotificationsCenterPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
@@ -225,6 +253,17 @@ class _RouteLoadingScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _AnalyticsRouteObserver extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    final name = route.settings.name;
+    if (name != null && name.isNotEmpty) {
+      AnalyticsService.instance.logScreenView(screenName: name);
+    }
   }
 }
 
