@@ -16,8 +16,24 @@ import FirebaseCore
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    // flutter_contacts 1.x register aşamasında delegate.window!.rootViewController bekler;
+    // UIScene ile window sahne tarafında kalır — nil olunca fatal error.
+    synchronizeAppDelegateWindowForLegacyPlugins()
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     // Plugin yüklendi; optionsFromFIROptions apiKey yamasını kur (Dart decode crash önlemi).
     FirebaseConfigureGuardInstallCorePluginPatch()
+  }
+
+  /// Eski plugin'ler için AppDelegate.window'u sahne penceresine bağla.
+  private func synchronizeAppDelegateWindowForLegacyPlugins() {
+    if window != nil { return }
+    if #available(iOS 13.0, *) {
+      for case let windowScene as UIWindowScene in UIApplication.shared.connectedScenes {
+        if let w = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first {
+          window = w
+          return
+        }
+      }
+    }
   }
 }
