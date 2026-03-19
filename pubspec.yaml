@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.1+2
 
 environment:
-  sdk: ^3.5.0
+  sdk: ">=3.5.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -29,6 +29,8 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
 
   # Firebase (aynı dalga: firebase_core 3.15.x + auth/firestore 5.x, google_sign_in 6.x ile uyumlu)
@@ -42,6 +44,7 @@ dependencies:
   cloud_functions: ^5.2.0
   google_sign_in: ^6.2.2
   image_picker: ^1.1.2
+  image: ^4.2.0
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   animate_do: ^4.2.0
@@ -62,8 +65,14 @@ dependencies:
   logger: ^2.4.0
   url_launcher: ^6.2.5
   speech_to_text: ^7.0.0
+  flutter_contacts: ^1.1.9+2
+  permission_handler: ^11.3.1
+  call_log: ^4.0.0
 
   cupertino_icons: ^1.0.8
+  # Facebook girişi kapalıyken flutter_facebook_auth kullanılmamalı: iOS'ta FBSDK açılışta
+  # Info.plist'teki sahte token ile SIGABRT üretebilir. Tekrar açmak için paketi ekleyin ve
+  # doc/FACEBOOK_SIGNIN_SETUP.md + scripts/configure_facebook_app.sh kullanın.
 
 dev_dependencies:
   flutter_test:
@@ -89,10 +98,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/onboarding/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

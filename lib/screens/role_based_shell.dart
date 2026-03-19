@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
@@ -36,17 +37,18 @@ class _ShellLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF0D1117),
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: Color(0xFF00FF41)),
-            SizedBox(height: 24),
+            const AppLoading(),
+            const SizedBox(height: 24),
             Text(
               'Panel hazırlanıyor...',
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontSize: 14),
             ),
           ],
         ),

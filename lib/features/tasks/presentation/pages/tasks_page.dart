@@ -114,6 +114,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     100,
                   ),
                   itemCount: docs.length,
+                  cacheExtent: 300,
                   itemBuilder: (context, index) {
                     final doc = docs[index];
                     final d = doc.data();

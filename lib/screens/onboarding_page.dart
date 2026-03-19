@@ -1,11 +1,23 @@
+import 'dart:ui';
+
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 
-/// İlk açılışta 1–2 ekran; "Başla" ile tamamlanır, bir daha gösterilmez.
+/// Onboarding asset paths (PNG/WebP, 1600x1600 or 2048x2048). Omit file to use premium placeholder.
+const List<String> _onboardingImagePaths = [
+  'assets/onboarding/crm_dashboard.png',
+  'assets/onboarding/market_analytics.png',
+  'assets/onboarding/ai_insights.png',
+  'assets/onboarding/war_room.png',
+];
+
+/// İlk açılışta premium tanıtım; "Başla" ile tamamlanır, bir daha gösterilmez.
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
 
@@ -16,6 +28,29 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
+  static const List<_OnboardingSlideData> _slides = [
+    _OnboardingSlideData(
+      title: 'EmlakMaster\'a hoş geldiniz',
+      subtitle: 'Tek ekrandan tüm operasyonlarınızı yönetin: CRM dashboard, War Room, çağrı merkezi ve raporlar. Profesyonel gayrimenkul yönetimi artık elinizin altında.',
+      icon: Icons.dashboard_rounded,
+    ),
+    _OnboardingSlideData(
+      title: 'Market Pulse & ilanlar',
+      subtitle: 'Şehir seçin; sahibinden, emlakjet ve hepsi emlak ilanları otomatik çekilir. İlanları anlık güncelleyebilir, piyasa analitiği ile karar verebilirsiniz.',
+      icon: Icons.show_chart_rounded,
+    ),
+    _OnboardingSlideData(
+      title: 'Yapay zeka & analitik',
+      subtitle: 'AI destekli öngörüler, portföy eşleştirme ve raporlarla daha akıllı kararlar alın. Verileriniz güçlü görselleştirmelerle sunulur.',
+      icon: Icons.insights_rounded,
+    ),
+    _OnboardingSlideData(
+      title: 'War Room & ekip merkezi',
+      subtitle: 'Çağrı merkezi, müşteri takibi ve ekip koordinasyonu tek yerden. Gerçek zamanlı komuta merkezi ile her şeyi kontrol edin.',
+      icon: Icons.military_tech_rounded,
+    ),
+  ];
 
   @override
   void initState() {
@@ -46,105 +81,409 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (i) => setState(() => _currentPage = i),
-                children: [
-                  _OnboardingSlide(
-                    icon: Icons.dashboard_rounded,
-                    title: 'EmlakMaster\'a hoş geldiniz',
-                    subtitle: 'Tek ekrandan tüm operasyonlarınızı yönetin: dashboard, War Room, çağrı merkezi ve raporlar.',
-                  ),
-                  _OnboardingSlide(
-                    icon: Icons.show_chart_rounded,
-                    title: 'Market Pulse & ilanlar',
-                    subtitle: 'Şehir seçin; sahibinden, emlakjet ve hepsi emlak ilanları otomatik çekilir. İlanları anlık güncelleyebilirsiniz.',
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ...List.generate(2, (i) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _currentPage == i ? const Color(0xFF00FF41) : Colors.white24,
-                    ),
-                  )),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-              child: FilledButton(
-                onPressed: _complete,
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF00FF41),
-                  foregroundColor: Colors.black,
-                  minimumSize: const Size(double.infinity, 52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      backgroundColor: DesignTokens.backgroundDark,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              DesignTokens.backgroundDark,
+              DesignTokens.backgroundDark,
+              DesignTokens.primary.withOpacity(0.03),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (i) => setState(() => _currentPage = i),
+                  itemCount: _slides.length,
+                  itemBuilder: (context, index) {
+                    final slide = _slides[index];
+                    final imagePath = index < _onboardingImagePaths.length
+                        ? _onboardingImagePaths[index]
+                        : null;
+                    return _OnboardingSlide(
+                      key: ValueKey(index),
+                      data: slide,
+                      imagePath: imagePath,
+                      isActive: _currentPage == index,
+                    );
+                  },
                 ),
-                child: const Text('Başla', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               ),
+              _buildBottomIndicators(),
+              _buildButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomIndicators() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          _slides.length,
+          (i) => AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: _currentPage == i ? 24 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: _currentPage == i
+                  ? DesignTokens.primary
+                  : DesignTokens.textTertiaryDark.withOpacity(0.5),
+              boxShadow: _currentPage == i
+                  ? [
+                      BoxShadow(
+                        color: DesignTokens.primary.withOpacity(0.4),
+                        blurRadius: 8,
+                      ),
+                    ]
+                  : null,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _onNext() {
+    if (_currentPage >= _slides.length - 1) {
+      _complete();
+    } else {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  Widget _buildButton() {
+    final isLastPage = _currentPage >= _slides.length - 1;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+          boxShadow: [
+            BoxShadow(
+              color: DesignTokens.primary.withOpacity(0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: Semantics(
+          button: true,
+          label: isLastPage ? 'Onboardingi bitir ve başla' : 'Sonraki slayt',
+          child: FilledButton(
+            onPressed: _onNext,
+            style: FilledButton.styleFrom(
+              backgroundColor: DesignTokens.primary,
+              foregroundColor: DesignTokens.inputTextOnGold,
+              minimumSize: const Size(double.infinity, 56),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              ),
+            ),
+            child: Text(
+              isLastPage ? 'Başla' : 'İleri',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _OnboardingSlide extends StatelessWidget {
-  const _OnboardingSlide({
-    required this.icon,
+class _OnboardingSlideData {
+  const _OnboardingSlideData({
     required this.title,
     required this.subtitle,
+    required this.icon,
   });
 
-  final IconData icon;
   final String title;
   final String subtitle;
+  final IconData icon;
+}
+
+class _OnboardingSlide extends StatelessWidget {
+  const _OnboardingSlide({
+    super.key,
+    required this.data,
+    this.imagePath,
+    required this.isActive,
+  });
+
+  final _OnboardingSlideData data;
+  final String? imagePath;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 80, color: const Color(0xFF00FF41).withOpacity(0.9)),
-          const SizedBox(height: 32),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final minH = constraints.maxHeight;
+        final visualH = (minH * 0.38).clamp(220.0, 360.0);
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: minH),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FadeIn(
+                    duration: const Duration(milliseconds: 280),
+                    child: _buildVisualArea(context, visualH),
+                  ),
+                  const SizedBox(height: 28),
+                  FadeInUp(
+                    duration: const Duration(milliseconds: 280),
+                    delay: const Duration(milliseconds: 80),
+                    child: Text(
+                      data.title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: DesignTokens.textPrimaryDark,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  FadeInUp(
+                    duration: const Duration(milliseconds: 280),
+                    delay: const Duration(milliseconds: 120),
+                    child: Text(
+                      data.subtitle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: DesignTokens.textSecondaryDark,
+                        fontSize: 15,
+                        height: 1.45,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 15,
-              height: 1.4,
+        );
+      },
+    );
+  }
+
+  Widget _buildVisualArea(BuildContext context, double visualHeight) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
+        child: Container(
+          width: double.infinity,
+          height: visualHeight,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+            boxShadow: [
+              BoxShadow(
+                color: DesignTokens.primary.withOpacity(0.08),
+                blurRadius: 32,
+                offset: const Offset(0, 12),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+                spreadRadius: -4,
+              ),
+            ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                DesignTokens.surfaceDarkElevated,
+                DesignTokens.surfaceDark,
+                DesignTokens.primary.withOpacity(0.04),
+              ],
+            ),
+            border: Border.all(
+              color: DesignTokens.borderDark.withOpacity(0.8),
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+            child: _buildVisualContent(visualHeight),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisualContent(double height) {
+    if (imagePath != null && imagePath!.isNotEmpty) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            imagePath!,
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => _buildPlaceholderVisual(height),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  DesignTokens.surfaceDark.withOpacity(0.3),
+                ],
+              ),
             ),
           ),
         ],
+      );
+    }
+    return _buildPlaceholderVisual(height);
+  }
+
+  Widget _buildPlaceholderVisual(double height) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned(
+          top: -20,
+          child: Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  DesignTokens.primary.withOpacity(0.2),
+                  DesignTokens.primary.withOpacity(0.06),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: height * 0.22,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: DesignTokens.surfaceDark,
+              border: Border.all(
+                color: DesignTokens.primary.withOpacity(0.25),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: DesignTokens.primary.withOpacity(0.15),
+                  blurRadius: 24,
+                ),
+              ],
+            ),
+            child: Icon(
+              data.icon,
+              size: 48,
+              color: DesignTokens.primary.withOpacity(0.95),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 24,
+          top: height * 0.32,
+          child: const _FloatingCard(icon: Icons.analytics_rounded, label: 'Veri'),
+        ),
+        Positioned(
+          right: 20,
+          top: height * 0.38,
+          child: const _FloatingCard(icon: Icons.trending_up_rounded, label: 'Trend'),
+        ),
+        Positioned(
+          left: 32,
+          bottom: height * 0.22,
+          child: const _FloatingCard(icon: Icons.pie_chart_rounded, label: 'Rapor'),
+        ),
+        Positioned(
+          right: 28,
+          bottom: height * 0.28,
+          child: const _FloatingCard(icon: Icons.insights_rounded, label: 'AI'),
+        ),
+      ],
+    );
+  }
+}
+
+class _FloatingCard extends StatelessWidget {
+  const _FloatingCard({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeIn(
+      duration: const Duration(milliseconds: 320),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: DesignTokens.surfaceDark.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+          border: Border.all(color: DesignTokens.borderDark),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: DesignTokens.primary),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: DesignTokens.textSecondaryDark,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

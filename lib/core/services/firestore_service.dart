@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
-import 'package:emlakmaster_mobile/firebase_options.dart';
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/models/invite_doc.dart';
+import 'package:emlakmaster_mobile/core/models/team_doc.dart';
+import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 
 /// Cache-first Firestore: önce önbellek (persistence), arayüz takılmaz.
 /// Offline-first: veri cihazda saklanır; internet gelince otomatik senkronize edilir.
@@ -26,17 +29,10 @@ class FirestoreService {
     if (_initialized || _initStarted) return;
     _initStarted = true;
     try {
-      // Çift konfigürasyon addAppToAppDictionary crash'ine yol açar; yalnızca henüz yoksa başlat.
+      // Firebase yalnızca main.dart içinde initialize edilir; burada sadece store ayarları yapılır.
       if (Firebase.apps.isEmpty) {
-        try {
-          await Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          );
-        } catch (e) {
-          // Native tarafta zaten konfigüre edilmiş olabilir (plugin sırası); çökmemek için devam et.
-          if (Firebase.apps.isEmpty) rethrow;
-          if (kDebugMode) debugPrint('FirestoreService: Firebase zaten konfigüre (native).');
-        }
+        _initStarted = false;
+        return;
       }
       final store = FirebaseFirestore.instance;
       // Offline-first: sınırsız cache + persistence (web/mobile). Veri kaybı önlenir.
@@ -53,6 +49,7 @@ class FirestoreService {
       _initialized = true;
       if (kDebugMode) debugPrint('FirestoreService: Offline persistence enabled.');
     } catch (e) {
+      _initStarted = false; // Hata durumunda yeniden denemeye izin ver.
       if (kDebugMode) debugPrint('FirestoreService init: $e');
     }
   }
@@ -126,6 +123,178 @@ class FirestoreService {
         .collection('agents')
         .doc(agentId)
         .snapshots();
+  }
+
+  // ---------- Teams (flat team: name, managerId, memberIds) ----------
+  /// Tüm ekipler stream. Admin ekip yönetimi için.
+  static Stream<List<TeamDoc>> teamsStream() async* {
+    await ensureInitialized();
+    if (!_initialized) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colTeams)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => TeamDoc.fromFirestore(d.id, d.data()))
+            .whereType<TeamDoc>()
+            .toList());
+  }
+
+  /// Tek ekip dokümanı stream (detay sayfası için).
+  static Stream<TeamDoc?> teamDocStream(String teamId) async* {
+    await ensureInitialized();
+    if (!_initialized || teamId.isEmpty) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colTeams)
+        .doc(teamId)
+        .snapshots()
+        .map((snap) => snap.exists && snap.data() != null
+            ? TeamDoc.fromFirestore(snap.id, snap.data())
+            : null);
+  }
+
+  /// Yeni ekip oluşturur. Doc id döner.
+  static Future<String> createTeam({
+    required String name,
+    required String managerId,
+  }) async {
+    await ensureInitialized();
+    if (!_initialized) throw StateError('Firestore not initialized');
+    final col = FirebaseFirestore.instance.collection(AppConstants.colTeams);
+    final ref = col.doc();
+    final now = FieldValue.serverTimestamp();
+    await ref.set({
+      'name': name,
+      'managerId': managerId,
+      'memberIds': <String>[],
+      'createdAt': now,
+      'updatedAt': now,
+    });
+    return ref.id;
+  }
+
+  /// Ekip yöneticisini günceller; üyelerin managerId alanı bu fonksiyonla güncellenmez (tek tek assign ile).
+  static Future<void> updateTeamManager(String teamId, String managerId) async {
+    await ensureInitialized();
+    if (!_initialized || teamId.isEmpty) return;
+    await FirebaseFirestore.instance
+        .collection(AppConstants.colTeams)
+        .doc(teamId)
+        .update({
+      'managerId': managerId,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Danışmanı ekibe atar: users.teamId/managerId ve teams.memberIds senkron.
+  static Future<void> assignAgentToTeam(String agentId, String teamId) async {
+    await ensureInitialized();
+    if (!_initialized || agentId.isEmpty || teamId.isEmpty) return;
+    final teamRef = FirebaseFirestore.instance
+        .collection(AppConstants.colTeams)
+        .doc(teamId);
+    final teamSnap = await teamRef.get();
+    if (!teamSnap.exists || teamSnap.data() == null) return;
+    final managerId = teamSnap.data()!['managerId'] as String? ?? '';
+    await UserRepository.updateUserTeamFields(agentId, teamId, managerId);
+    await teamRef.update({
+      'memberIds': FieldValue.arrayUnion([agentId]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Danışmanı ekipten çıkarır: users.teamId/managerId null, teams.memberIds'den kaldırır.
+  static Future<void> removeAgentFromTeam(String agentId, String teamId) async {
+    await ensureInitialized();
+    if (!_initialized || agentId.isEmpty || teamId.isEmpty) return;
+    await UserRepository.updateUserTeamFields(agentId, null, null);
+    await FirebaseFirestore.instance
+        .collection(AppConstants.colTeams)
+        .doc(teamId)
+        .update({
+      'memberIds': FieldValue.arrayRemove([agentId]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // ---------- Invites (danışman daveti: ilk girişte rol ve ekip atanır) ----------
+  /// Davet oluşturur. Yönetici panelinden "Yeni Danışman" ile kaydedilir.
+  static Future<String> createInvite({
+    required String email,
+    required String role,
+    required String createdBy,
+    String? teamId,
+    String? name,
+  }) async {
+    await ensureInitialized();
+    if (!_initialized) throw StateError('Firestore not initialized');
+    final col = FirebaseFirestore.instance.collection(AppConstants.colInvites);
+    final ref = col.doc();
+    final now = FieldValue.serverTimestamp();
+    await ref.set({
+      'email': email.trim().toLowerCase(),
+      'role': role,
+      'createdBy': createdBy,
+      if (teamId != null && teamId.isNotEmpty) 'teamId': teamId,
+      if (name != null && name.isNotEmpty) 'name': name,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+    return ref.id;
+  }
+
+  /// E-posta ile bekleyen davet arar (ilk girişte kullanıcı doc oluşturulurken).
+  static Future<InviteDoc?> getInviteByEmail(String email) async {
+    await ensureInitialized();
+    if (!_initialized || email.trim().isEmpty) return null;
+    final normalized = email.trim().toLowerCase();
+    final snap = await FirebaseFirestore.instance
+        .collection(AppConstants.colInvites)
+        .where('email', isEqualTo: normalized)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    final doc = snap.docs.first;
+    return InviteDoc.fromFirestore(doc.id, doc.data());
+  }
+
+  /// Daveti siler (kullanıldıktan sonra veya iptal için).
+  static Future<void> deleteInvite(String inviteId) async {
+    await ensureInitialized();
+    if (!_initialized || inviteId.isEmpty) return;
+    await FirebaseFirestore.instance
+        .collection(AppConstants.colInvites)
+        .doc(inviteId)
+        .delete();
+  }
+
+  /// Danışman-tier kullanıcılar (agent, team_lead, office_manager, general_manager, broker_owner). Admin listesi için.
+  static Stream<List<UserDoc>> consultantsStream() async* {
+    await ensureInitialized();
+    if (!_initialized) {
+      yield* const Stream.empty();
+      return;
+    }
+    const consultantRoles = [
+      'agent',
+      'team_lead',
+      'office_manager',
+      'general_manager',
+      'broker_owner',
+    ];
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colUsers)
+        .where('role', whereIn: consultantRoles)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => UserDoc.fromFirestore(d.id, d.data()))
+            .whereType<UserDoc>()
+            .toList());
   }
 
   /// Bir çağrı kapandığında, ilgili agent dokümanına özet yazar ve metrikleri günceller.
@@ -282,6 +451,35 @@ class FirestoreService {
     );
   }
 
+  /// Rehber/aramadan gelen yeni kişiyi uygulamaya (customers) kaydeder.
+  /// assignedAgentId: giriş yapan danışman; source: 'rehber_aramasi' | 'uygulama'.
+  static Future<String> createCustomer({
+    required String assignedAgentId,
+    required String fullName,
+    required String primaryPhone,
+    String? email,
+    String? note,
+    String source = 'uygulama',
+  }) async {
+    await ensureInitialized();
+    if (!_initialized) throw StateError('Firestore not initialized');
+
+    final col = FirebaseFirestore.instance.collection('customers');
+    final ref = col.doc();
+    final now = FieldValue.serverTimestamp();
+    await ref.set({
+      'assignedAgentId': assignedAgentId,
+      'fullName': fullName,
+      'primaryPhone': primaryPhone,
+      if (email != null && email.isNotEmpty) 'email': email,
+      'source': source,
+      'createdAt': now,
+      'updatedAt': now,
+      if (note != null && note.isNotEmpty) 'lastCallSummary': note,
+    });
+    return ref.id;
+  }
+
   /// calls koleksiyonu (liste için); yönetici paneli vb. En yeni önce.
   static Stream<QuerySnapshot<Map<String, dynamic>>> callsStream() async* {
     await ensureInitialized();
@@ -296,6 +494,99 @@ class FirestoreService {
         .snapshots();
   }
 
+  /// Danışmana ait tüm çağrılar (gelen + giden), en yeni önce. Toplu SMS / CSV için.
+  static Stream<QuerySnapshot<Map<String, dynamic>>> callsByAdvisorStream(
+      String advisorId) async* {
+    await ensureInitialized();
+    if (!_initialized || advisorId.isEmpty) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .where('advisorId', isEqualTo: advisorId)
+        .orderBy('createdAt', descending: true)
+        .limit(500)
+        .snapshots();
+  }
+
+  /// Cihaz çağrı günlüğünden senkronize edilen kayıt (tekilleştirme için doc id verilir, merge).
+  static Future<void> setCallRecordFromDevice({
+    required String documentId,
+    required String advisorId,
+    required String direction,
+    required int timestampMillis,
+    int? durationSeconds,
+    String? phoneNumber,
+    String outcome = 'connected',
+  }) async {
+    await ensureInitialized();
+    if (!_initialized) return;
+    final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final dt = DateTime.fromMillisecondsSinceEpoch(timestampMillis);
+    final ts = Timestamp.fromDate(dt);
+    await col.doc(documentId).set({
+      'officeId': '',
+      'advisorId': advisorId,
+      'agentId': advisorId,
+      'direction': direction,
+      if (phoneNumber != null && phoneNumber.isNotEmpty) 'phoneNumber': phoneNumber,
+      'startedAt': ts,
+      'endedAt': ts,
+      if (durationSeconds != null) 'durationSec': durationSeconds,
+      'outcome': outcome,
+      'createdAt': ts,
+      'updatedAt': ts,
+      'source': 'device',
+    }, SetOptions(merge: true));
+  }
+
+  /// Arama bittiğinde danışmanın "Tüm Çağrılar" listesinde görünmesi için calls koleksiyonuna kayıt ekler.
+  static Future<void> createCallRecord({
+    required String advisorId,
+    required String direction,
+    required String outcome,
+    int? durationSeconds,
+    String? phoneNumber,
+    String? customerId,
+    String officeId = '',
+  }) async {
+    await ensureInitialized();
+    if (!_initialized) return;
+    final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final now = FieldValue.serverTimestamp();
+    await col.add({
+      'officeId': officeId,
+      'advisorId': advisorId,
+      'agentId': advisorId,
+      if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+      'direction': direction,
+      if (phoneNumber != null && phoneNumber.isNotEmpty) 'phoneNumber': phoneNumber,
+      'startedAt': now,
+      'endedAt': now,
+      if (durationSeconds != null) 'durationSec': durationSeconds,
+      'outcome': outcome,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+  }
+
+  /// Aynı veri, agentId alanı kullanılıyorsa (geriye uyumluluk).
+  static Stream<QuerySnapshot<Map<String, dynamic>>> callsByAgentIdStream(
+      String agentId) async* {
+    await ensureInitialized();
+    if (!_initialized || agentId.isEmpty) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .where('agentId', isEqualTo: agentId)
+        .orderBy('createdAt', descending: true)
+        .limit(500)
+        .snapshots();
+  }
+
   /// calls koleksiyonundaki döküman sayısı (Call Traffic için).
   static Stream<int> callsCountStream() async* {
     await ensureInitialized();
@@ -305,6 +596,36 @@ class FirestoreService {
     }
     yield* FirebaseFirestore.instance
         .collection('calls')
+        .snapshots()
+        .map((s) => s.docs.length);
+  }
+
+  /// Bugünkü çağrı sayısı (createdAt >= bugün 00:00). KPI "Çağrı" chip'i için anlamlı.
+  static Stream<int> todayCallsCountStream() async* {
+    await ensureInitialized();
+    if (!_initialized) {
+      yield 0;
+      return;
+    }
+    final startOfToday = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final startTs = Timestamp.fromDate(startOfToday);
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .where('createdAt', isGreaterThanOrEqualTo: startTs)
+        .snapshots()
+        .map((s) => s.docs.length);
+  }
+
+  /// Açık görev sayısı (done == false). KPI "Follow-up" için.
+  static Stream<int> openTasksCountStream() async* {
+    await ensureInitialized();
+    if (!_initialized) {
+      yield 0;
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colTasks)
+        .where('done', isEqualTo: false)
         .snapshots()
         .map((s) => s.docs.length);
   }

@@ -37,6 +37,13 @@ class AnalyticsService {
     } catch (_) {}
   }
 
+  /// Yeni kayıt (email veya google).
+  Future<void> logSignUp({String method = 'email'}) async {
+    try {
+      await _analytics.logSignUp(signUpMethod: method);
+    } catch (_) {}
+  }
+
   /// İlan detayına tıklandı (listing_id vb.).
   Future<void> logListingView({String? listingId, String? source}) async {
     final params = <String, Object>{};

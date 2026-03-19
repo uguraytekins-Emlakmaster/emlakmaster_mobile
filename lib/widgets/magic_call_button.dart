@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -16,7 +17,7 @@ class MagicCallButton extends StatelessWidget {
         height: 56,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          color: const Color(0xFF00FF41),
+          color: DesignTokens.primary,
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,

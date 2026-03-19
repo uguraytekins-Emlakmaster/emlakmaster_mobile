@@ -21,8 +21,8 @@ class BrokerCommandPage extends ConsumerWidget {
     final roleAsync = ref.watch(displayRoleProvider);
     return roleAsync.when(
       loading: () => const Scaffold(
-        backgroundColor: Color(0xFF0D1117),
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF00FF41))),
+        backgroundColor: DesignTokens.scaffoldDark,
+        body: Center(child: CircularProgressIndicator(color: DesignTokens.primary)),
       ),
       error: (_, __) => const UnauthorizedScreen(message: 'Rol yüklenemedi.'),
       data: (role) {

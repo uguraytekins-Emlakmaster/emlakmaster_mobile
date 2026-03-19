@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,7 +38,7 @@ class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF161B22),
+        backgroundColor: DesignTokens.surfaceDarkCard,
         title: const Row(
           children: [
             Text('🎉', style: TextStyle(fontSize: 28)),
@@ -70,7 +71,7 @@ class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tamam', style: TextStyle(color: Color(0xFF00FF41))),
+            child: const Text('Tamam', style: TextStyle(color: DesignTokens.primary)),
           ),
         ],
       ),

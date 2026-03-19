@@ -146,47 +146,176 @@ class CustomerDetailPage extends ConsumerWidget {
             const SizedBox(height: DesignTokens.space4),
             FilledButton.icon(
               onPressed: () async {
-                final content = controller.text.trim();
-                if (content.isEmpty) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('Lütfen not içeriği girin.'), backgroundColor: DesignTokens.danger),
-                  );
-                  return;
-                }
-                final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
-                if (uid.isEmpty) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('Giriş yapılmamış.'), backgroundColor: DesignTokens.danger),
-                  );
-                  return;
-                }
-                try {
-                  await runWithResilience(
-                    () => FirestoreService.saveNote(customerId: customerId, content: content, advisorId: uid),
-                    ref: ref as Ref<Object?>,
-                  );
-                  HapticFeedback.mediumImpact();
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
+                Future<void> attemptSave() async {
+                  final content = controller.text.trim();
+                  if (content.isEmpty) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(
-                        content: Text('Not kaydedildi.'),
-                        backgroundColor: DesignTokens.primary,
-                        behavior: SnackBarBehavior.floating,
+                      const SnackBar(content: Text('Lütfen not içeriği girin.'), backgroundColor: DesignTokens.danger),
+                    );
+                    return;
+                  }
+                  final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+                  if (uid.isEmpty) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      const SnackBar(content: Text('Giriş yapılmamış.'), backgroundColor: DesignTokens.danger),
+                    );
+                    return;
+                  }
+                  try {
+                    await runWithResilience(
+                      () => FirestoreService.saveNote(customerId: customerId, content: content, advisorId: uid),
+                      ref: ref as Ref<Object?>,
+                    );
+                    HapticFeedback.mediumImpact();
+                    if (ctx.mounted) {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(
+                          content: Text('Not kaydedildi.'),
+                          backgroundColor: DesignTokens.primary,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (!ctx.mounted) return;
+                    showModalBottomSheet<void>(
+                      context: ctx,
+                      useRootNavigator: true,
+                      isScrollControlled: true,
+                      backgroundColor: DesignTokens.surfaceDark,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
                       ),
+                      builder: (panelCtx) {
+                        return SafeArea(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              left: DesignTokens.space5,
+                              right: DesignTokens.space5,
+                              top: DesignTokens.space4,
+                              bottom: MediaQuery.viewInsetsOf(panelCtx).bottom + DesignTokens.space5,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const Text(
+                                  'Not kaydı',
+                                  style: TextStyle(
+                                    color: DesignTokens.primary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Kayıt şu an tamamlanamadı',
+                                  style: Theme.of(panelCtx).textTheme.titleMedium?.copyWith(
+                                        color: DesignTokens.textPrimaryDark,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '$e',
+                                  style: const TextStyle(
+                                    color: DesignTokens.textSecondaryDark,
+                                    fontSize: 12,
+                                    height: 1.35,
+                                  ),
+                                ),
+                                const SizedBox(height: DesignTokens.space5),
+                                const Text(
+                                  'Bu müşterinin kayıtlı notları',
+                                  style: TextStyle(
+                                    color: DesignTokens.textSecondaryDark,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  height: 140,
+                                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                                    stream: FirestoreService.notesByCustomerStream(customerId),
+                                    builder: (context, snap) {
+                                      final docs = snap.data?.docs ?? [];
+                                      if (snap.connectionState == ConnectionState.waiting && docs.isEmpty) {
+                                        return const Center(
+                                          child: SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: DesignTokens.primary,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      if (docs.isEmpty) {
+                                        return const Center(
+                                          child: Text(
+                                            'Henüz not yok — kayıt başarılı olunca burada görünür.',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: DesignTokens.textTertiaryDark,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      return ListView.separated(
+                                        itemCount: docs.length > 5 ? 5 : docs.length,
+                                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                        itemBuilder: (_, i) {
+                                          final c = docs[i].data()['content'] as String? ?? '—';
+                                          return Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: DesignTokens.backgroundDark,
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: DesignTokens.borderDark.withOpacity(0.5)),
+                                            ),
+                                            child: Text(
+                                              c,
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: DesignTokens.textSecondaryDark,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: DesignTokens.space5),
+                                FilledButton(
+                                  onPressed: () {
+                                    Navigator.pop(panelCtx);
+                                    attemptSave();
+                                  },
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: DesignTokens.primary,
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                  ),
+                                  child: const Text('Tekrar dene'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     );
                   }
-                } catch (e) {
-                  if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(
-                        content: Text('Kaydedilemedi: $e'),
-                        backgroundColor: DesignTokens.danger,
-                        action: SnackBarAction(label: 'Tekrar dene', onPressed: () {}),
-                      ),
-                    );
-                  }
                 }
+
+                await attemptSave();
               },
               icon: const Icon(Icons.check_rounded, size: 20),
               label: const Text('Kaydet'),
@@ -224,7 +353,7 @@ class _PortfolioMatchSection extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.auto_awesome, size: 18, color: DesignTokens.primary),
+                  const Icon(Icons.auto_awesome, size: 18, color: DesignTokens.primary),
                   const SizedBox(width: DesignTokens.space2),
                   Text(
                     'Bu müşteri için uygun ${list.length} ilan bulundu.',
@@ -304,7 +433,7 @@ class _CustomerHeader extends StatelessWidget {
                 SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00FF41)),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
                 ),
                 SizedBox(width: DesignTokens.space4),
                 Text('Yükleniyor...', style: TextStyle(color: Colors.white54)),

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -126,7 +127,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   children: [
                     Expanded(
                       child: Text(
-                        _selectionMode ? '${_selectedIds.length} seçildi' : 'Müşteriler',
+                        _selectionMode
+                            ? AppLocalizations.of(context).tArgs('n_selected', ['${_selectedIds.length}'])
+                            : AppLocalizations.of(context).t('title_customers'),
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: DesignTokens.textPrimaryDark,
                               fontWeight: FontWeight.w700,
@@ -139,23 +142,34 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           _selectionMode = false;
                           _selectedIds.clear();
                         }),
-                        child: const Text('İptal', style: TextStyle(color: DesignTokens.textSecondaryDark)),
+                        child: Text(AppLocalizations.of(context).t('cancel'), style: const TextStyle(color: DesignTokens.textSecondaryDark)),
                       ),
                       FilledButton.icon(
                         onPressed: _selectedIds.isEmpty ? null : () => _addSelectedToFollowUp(context, ref),
                         icon: const Icon(Icons.playlist_add_rounded, size: 18),
-                        label: Text('Takip listesine ekle (${_selectedIds.length})'),
+                        label: Text(AppLocalizations.of(context).tArgs('add_to_follow_up_count', ['${_selectedIds.length}'])),
                         style: FilledButton.styleFrom(
                           backgroundColor: DesignTokens.primary,
                           foregroundColor: Colors.black,
                         ),
                       ),
-                    ] else
+                    ] else ...[
                       TextButton.icon(
                         onPressed: () => setState(() => _selectionMode = true),
                         icon: const Icon(Icons.checklist_rounded, size: 20, color: DesignTokens.primary),
-                        label: const Text('Toplu işlem', style: TextStyle(color: DesignTokens.primary)),
+                        label: Text(AppLocalizations.of(context).t('bulk_action'), style: const TextStyle(color: DesignTokens.primary)),
                       ),
+                      const SizedBox(width: DesignTokens.space2),
+                      FilledButton.icon(
+                        onPressed: () => context.push(AppRouter.routeBulkCampaign),
+                        icon: const Icon(Icons.campaign_rounded, size: 18),
+                        label: Text(AppLocalizations.of(context).t('bulk_campaign')),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: DesignTokens.primary,
+                          foregroundColor: Colors.black,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -168,7 +182,6 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             ),
             const SliverPadding(padding: EdgeInsets.only(top: DesignTokens.space4)),
             SliverFillRemaining(
-              hasScrollBody: false,
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirestoreService.customersStream(),
                 builder: (context, snapshot) {
@@ -177,23 +190,23 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.all(24),
-                        child: CircularProgressIndicator(color: Color(0xFF00FF41)),
+                        child: CircularProgressIndicator(color: DesignTokens.primary),
                       ),
                     );
                   }
                   if (snapshot.hasError) {
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.error_outline_rounded,
+                            const Icon(Icons.error_outline_rounded,
                                 color: Colors.white54, size: 48),
-                            SizedBox(height: 12),
+                            const SizedBox(height: 12),
                             Text(
-                              'Müşteri listesi yüklenemedi.',
-                              style: TextStyle(
+                              AppLocalizations.of(context).t('customer_list_load_error'),
+                              style: const TextStyle(
                                 color: DesignTokens.textPrimaryDark,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -205,10 +218,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     );
                   }
                   final docs = snapshot.data?.docs ?? [];
+                  final entities = docs.map(_docToEntity).toList();
                   final filtered = _searchQuery.isEmpty
-                      ? docs
-                      : docs.where((d) {
-                          final e = _docToEntity(d);
+                      ? entities
+                      : entities.where((e) {
                           final q = _searchQuery;
                           final name = (e.fullName ?? '').toLowerCase();
                           final phone = (e.primaryPhone ?? '').replaceAll(RegExp(r'\s'), '');
@@ -217,27 +230,26 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           return name.contains(q) ||
                               email.contains(q) ||
                               phone.contains(queryNoSpaces) ||
-                              queryNoSpaces.isNotEmpty && phone.contains(queryNoSpaces);
+                              (queryNoSpaces.isNotEmpty && phone.contains(queryNoSpaces));
                         }).toList();
                   if (filtered.isEmpty) {
+                    final l10n = AppLocalizations.of(context);
                     return EmptyState(
                       icon: Icons.people_rounded,
-                      title: docs.isEmpty ? 'Müşteri listesi' : 'Sonuç yok',
+                      title: docs.isEmpty ? l10n.t('empty_customers_title') : l10n.t('empty_search_title'),
                       subtitle: docs.isEmpty
-                          ? 'Henüz müşteri kaydı yok. Çağrı özeti kaydedildikçe burada görünecek.'
-                          : '"$_searchQuery" aramasına uygun müşteri bulunamadı.',
-                      actionLabel: docs.isEmpty ? 'Müşteri ekle' : null,
+                          ? l10n.t('empty_customers_subtitle')
+                          : l10n.tArgs('empty_search_subtitle', [_searchQuery]),
+                      actionLabel: docs.isEmpty ? l10n.t('add_customer') : null,
                     );
                   }
                   return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
                     itemCount: filtered.length,
                     cacheExtent: 200,
                     semanticChildCount: filtered.length,
                     itemBuilder: (context, index) {
-                      final entity = _docToEntity(filtered[index]);
+                      final entity = filtered[index];
                       final isSelected = _selectedIds.contains(entity.id);
                       return RepaintBoundary(
                         child: Padding(
@@ -289,12 +301,12 @@ class _SearchBar extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
-        decoration: const InputDecoration(
-          hintText: 'Müşteri ara (isim, telefon, e-posta)',
-          hintStyle: TextStyle(color: DesignTokens.textTertiaryDark, fontSize: DesignTokens.fontSizeBase),
-          prefixIcon: Icon(Icons.search_rounded, color: DesignTokens.textTertiaryDark, size: 22),
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context).t('search_customers'),
+          hintStyle: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: DesignTokens.fontSizeBase),
+          prefixIcon: const Icon(Icons.search_rounded, color: DesignTokens.textTertiaryDark, size: 22),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 12),
         ),
         style: const TextStyle(color: Colors.white),
       ),

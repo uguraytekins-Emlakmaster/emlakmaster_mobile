@@ -1,11 +1,14 @@
 import 'dart:math' as math;
 
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -211,7 +214,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: DesignTokens.scaffoldDark,
       body: SafeArea(
         child: Stack(
           children: [
@@ -281,7 +284,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               Text(
                                 _saveError!,
                                 style: const TextStyle(
-                                  color: Color(0xFFE53935),
+                                  color: DesignTokens.danger,
                                   fontSize: 13,
                                 ),
                                 textAlign: TextAlign.center,
@@ -293,7 +296,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF00FF41),
+                                  backgroundColor: DesignTokens.primary,
                                   foregroundColor: Colors.black,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
@@ -321,6 +324,34 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                                           fontSize: 14,
                                         ),
                                       ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                String? name;
+                                String? phone;
+                                if (widget.linkedCustomerId != null) {
+                                  final c = await ref.read(
+                                    customerEntityByIdProvider(widget.linkedCustomerId!).future,
+                                  );
+                                  name = c?.fullName;
+                                  phone = c?.primaryPhone;
+                                }
+                                if (!context.mounted) return;
+                                showSaveContactSheet(
+                                  context,
+                                  initialName: name,
+                                  initialPhone: phone,
+                                  initialNote: _extraction?.fullSummary,
+                                  source: 'rehber_aramasi',
+                                );
+                              },
+                              icon: const Icon(Icons.contact_phone_rounded, size: 20),
+                              label: const Text('Rehbere ve uygulamaya kaydet (sesli / manuel)'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: DesignTokens.primary,
+                                side: const BorderSide(color: DesignTokens.primary),
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -374,7 +405,7 @@ class _SkippedAnalysisCard extends StatelessWidget {
               icon: const Icon(Icons.home_rounded, size: 20),
               label: const Text('Ana sayfaya dön'),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF00FF41),
+                backgroundColor: DesignTokens.primary,
                 foregroundColor: Colors.black,
               ),
             ),
@@ -431,7 +462,7 @@ class _AnalyzingProgressBar extends StatelessWidget {
         child: LinearProgressIndicator(
           value: value,
           backgroundColor: Colors.transparent,
-          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00FF41)),
+          valueColor: const AlwaysStoppedAnimation<Color>(DesignTokens.primary),
         ),
       ),
     );
@@ -573,9 +604,9 @@ class _ExtractionBentoGrid extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: const Color(0xFF00FF41).withOpacity(0.2),
+                    color: DesignTokens.primary.withOpacity(0.2),
                   ),
-                  child: Icon(e.icon, color: const Color(0xFF00FF41), size: 20),
+                  child: Icon(e.icon, color: DesignTokens.primary, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -629,15 +660,15 @@ class _NextStepCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: const Color(0xFF00FF41).withOpacity(0.12),
-        border: Border.all(color: const Color(0xFF00FF41).withOpacity(0.3)),
+        color: DesignTokens.primary.withOpacity(0.12),
+        border: Border.all(color: DesignTokens.primary.withOpacity(0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
             Icons.lightbulb_rounded,
-            color: Color(0xFF00FF41),
+            color: DesignTokens.primary,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -648,7 +679,7 @@ class _NextStepCard extends StatelessWidget {
                 Text(
                   'Sonraki Adım Önerisi',
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFF00FF41),
+                    color: DesignTokens.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

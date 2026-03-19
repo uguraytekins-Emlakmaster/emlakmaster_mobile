@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
 import 'package:flutter/services.dart';
@@ -26,11 +27,14 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
   @override
   Widget build(BuildContext context) {
     final roleAsync = ref.watch(displayRoleProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final loadingBg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
     return roleAsync.when(
-      loading: () => const Scaffold(
-        backgroundColor: Color(0xFF0D1117),
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF00FF41)),
+      loading: () => Scaffold(
+        backgroundColor: loadingBg,
+        body: const Center(
+          child: CircularProgressIndicator(color: DesignTokens.primary),
         ),
       ),
       error: (_, __) => const UnauthorizedScreen(
@@ -58,14 +62,27 @@ class _CommandCenterBody extends StatefulWidget {
 
 class _CommandCenterBodyState extends State<_CommandCenterBody> {
   late int _viewIndex;
+  String? _filterTeamId;
   String? _filterAgentId;
   String? _filterOutcome;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   List<QueryDocumentSnapshot<Map<String, dynamic>>>? _lastFilteredDocs;
+  List<String> _teamMemberIds = [];
 
   @override
   void initState() {
     super.initState();
     _viewIndex = widget._viewIndex;
+    _searchController.addListener(() => setState(() => _searchQuery = _searchController.text.trim()));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   static const Map<String, String> _outcomeLabels = {
@@ -76,14 +93,81 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
     'failed': 'Başarısız',
   };
 
+  Widget _buildSearchBar() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceCard = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              style: TextStyle(color: textPrimary, fontSize: 15),
+              decoration: InputDecoration(
+                hintText: 'Telefon, danışman, sonuç...',
+                hintStyle: TextStyle(color: textSecondary.withOpacity(0.7), fontSize: 14),
+                prefixIcon: Icon(Icons.search_rounded, color: DesignTokens.primary.withOpacity(0.9), size: 22),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear_rounded, size: 20, color: textSecondary),
+                        onPressed: () {
+                          _searchController.clear();
+                          _searchFocusNode.unfocus();
+                        },
+                        tooltip: 'Temizle',
+                      )
+                    : null,
+                filled: true,
+                fillColor: surfaceCard,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  borderSide: BorderSide(color: border.withOpacity(0.6)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  borderSide: const BorderSide(color: DesignTokens.primary, width: 1.2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
+          const SizedBox(width: DesignTokens.space2),
+          _TapShadowButton(
+            onPressed: () {
+              if (_searchQuery.isEmpty) {
+                _searchFocusNode.requestFocus();
+              }
+            },
+            icon: Icons.search_rounded,
+            label: 'Ara',
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
+    final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: bg,
       appBar: AppBar(
         title: const Text('Çağrı Merkezi'),
-        backgroundColor: DesignTokens.backgroundDark,
-        foregroundColor: DesignTokens.textPrimaryDark,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
+        foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         leading: ModalRoute.of(context)?.canPop == true
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
@@ -106,7 +190,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('CSV panoya kopyalandı. Excel\'e yapıştırabilirsiniz.'),
-                  backgroundColor: Color(0xFF00FF41),
+                  backgroundColor: DesignTokens.primary,
                 ),
               );
             },
@@ -132,11 +216,19 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
         child: Column(
           children: [
             _CommandCenterFilters(
+              filterTeamId: _filterTeamId,
               filterAgentId: _filterAgentId,
               filterOutcome: _filterOutcome,
+              teamMemberIds: _teamMemberIds,
+              onTeamChanged: (id, memberIds) => setState(() {
+                _filterTeamId = id;
+                _teamMemberIds = memberIds;
+                if (id != null) _filterAgentId = null;
+              }),
               onAgentChanged: (id) => setState(() => _filterAgentId = id),
               onOutcomeChanged: (outcome) => setState(() => _filterOutcome = outcome),
             ),
+            _buildSearchBar(),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirestoreService.callsStream(),
@@ -144,7 +236,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF00FF41)),
+                child: CircularProgressIndicator(color: DesignTokens.primary),
               );
             }
             if (snapshot.hasError) {
@@ -155,21 +247,21 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.error_outline_rounded,
-                          color: Colors.white54, size: 48),
+                          color: DesignTokens.textSecondaryDark, size: 48),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Çağrılar yüklenemedi.',
                         style: TextStyle(
-                          color: DesignTokens.textPrimaryDark,
+                          color: fg,
                           fontWeight: FontWeight.w600,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Lütfen tekrar deneyin.',
                         style: TextStyle(
-                          color: DesignTokens.textSecondaryDark,
+                          color: isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight,
                           fontSize: 13,
                         ),
                         textAlign: TextAlign.center,
@@ -189,15 +281,30 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               );
             }
             final docs = snapshot.data?.docs ?? [];
+            final q = _searchQuery.toLowerCase();
             final filtered = docs.where((d) {
               final data = d.data();
-              if (_filterAgentId != null &&
-                  (data['agentId'] as String? ?? '') != _filterAgentId) {
+              final agentId = data['agentId'] as String? ?? '';
+              if (_filterTeamId != null &&
+                  _teamMemberIds.isNotEmpty &&
+                  !_teamMemberIds.contains(agentId)) {
+                return false;
+              }
+              if (_filterAgentId != null && agentId != _filterAgentId) {
                 return false;
               }
               if (_filterOutcome != null &&
                   (data['outcome'] as String? ?? data['callOutcome'] as String?) != _filterOutcome) {
                 return false;
+              }
+              if (q.isNotEmpty) {
+                final id = d.id.toLowerCase();
+                final phone = ((data['phoneNumber'] ?? data['phone']) ?? '').toString().toLowerCase();
+                final outcomeRaw = data['outcome'] as String? ?? data['callOutcome'] as String? ?? '';
+                final outcomeLabel = outcomeRaw.isNotEmpty ? (_outcomeLabels[outcomeRaw] ?? outcomeRaw).toLowerCase() : '';
+                final matches = id.contains(q) || agentId.toLowerCase().contains(q) ||
+                    phone.contains(q) || outcomeLabel.contains(q);
+                if (!matches) return false;
               }
               return true;
             }).toList();
@@ -214,6 +321,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
             return ListView.builder(
               padding: const EdgeInsets.all(DesignTokens.space4),
               itemCount: filtered.length,
+              cacheExtent: 300,
               itemBuilder: (context, index) {
                 final doc = filtered[index];
                 final data = doc.data();
@@ -234,25 +342,30 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 } else if (createdAt != null) {
                   timeStr = createdAt.toString();
                 }
+                final cardTheme = Theme.of(context);
+                final cardIsDark = cardTheme.brightness == Brightness.dark;
+                final surface = cardIsDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+                final tp = cardIsDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+                final ts = cardIsDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
                 return Card(
                   margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-                  color: DesignTokens.surfaceDark,
+                  color: surface,
                   child: ListTile(
                     leading: const CircleAvatar(
-                      backgroundColor: Color(0xFF00FF41),
-                      child: Icon(Icons.call_rounded, color: Colors.black, size: 20),
+                      backgroundColor: DesignTokens.primary,
+                      child: Icon(Icons.call_rounded, color: DesignTokens.inputTextOnGold, size: 20),
                     ),
                     title: Text(
                       'Çağrı ${id.length > 8 ? id.substring(0, 8) : id}',
-                      style: const TextStyle(
-                        color: DesignTokens.textPrimaryDark,
+                      style: TextStyle(
+                        color: tp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     subtitle: Text(
                       'Danışman: $agentId · $durationStr · $outcomeStr · $timeStr',
-                      style: const TextStyle(
-                        color: DesignTokens.textSecondaryDark,
+                      style: TextStyle(
+                        color: ts,
                         fontSize: 12,
                       ),
                       maxLines: 2,
@@ -274,76 +387,203 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
 
 class _CommandCenterFilters extends StatelessWidget {
   const _CommandCenterFilters({
+    required this.filterTeamId,
     required this.filterAgentId,
     required this.filterOutcome,
+    required this.teamMemberIds,
+    required this.onTeamChanged,
     required this.onAgentChanged,
     required this.onOutcomeChanged,
   });
+  final String? filterTeamId;
   final String? filterAgentId;
   final String? filterOutcome;
+  final List<String> teamMemberIds;
+  final void Function(String? teamId, List<String> memberIds) onTeamChanged;
   final void Function(String?) onAgentChanged;
   final void Function(String?) onOutcomeChanged;
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirestoreService.agentsStream(),
-      builder: (context, agentSnap) {
-        final agents = agentSnap.data?.docs ?? [];
-        final agentIds = agents.map((d) => d.id).toList();
-        final agentNames = {
-          for (final d in agents) d.id: d.data()['displayName'] as String? ?? d.id,
-        };
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
-          decoration: const BoxDecoration(
-            color: DesignTokens.surfaceDark,
-            border: Border(bottom: BorderSide(color: DesignTokens.borderDark)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String?>(
-                    value: filterAgentId,
-                    isExpanded: true,
-                    hint: const Text('Danışman', style: TextStyle(color: Colors.white54, fontSize: 13)),
-                    dropdownColor: const Color(0xFF161B22),
-                    items: [
-                      const DropdownMenuItem(child: Text('Tümü', style: TextStyle(color: Colors.white))),
-                      ...agentIds.map((id) => DropdownMenuItem(
-                            value: id,
-                            child: Text(agentNames[id] ?? id, style: const TextStyle(color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          )),
-                    ],
-                    onChanged: (v) => onAgentChanged(v),
-                  ),
-                ),
+    return StreamBuilder<List<TeamDoc>>(
+      stream: FirestoreService.teamsStream(),
+      builder: (context, teamSnap) {
+        final teams = teamSnap.data ?? [];
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirestoreService.agentsStream(),
+          builder: (context, agentSnap) {
+            final agents = agentSnap.data?.docs ?? [];
+            var agentIds = agents.map((d) => d.id).toList();
+            if (filterTeamId != null && teamMemberIds.isNotEmpty) {
+              agentIds = agentIds.where((id) => teamMemberIds.contains(id)).toList();
+            }
+            final agentNames = {
+              for (final d in agents) d.id: d.data()['displayName'] as String? ?? d.id,
+            };
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
+            final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+            final surfaceCard = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+            final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+            final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+            final hintColor = theme.colorScheme.onSurface.withOpacity(0.7);
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
+              decoration: BoxDecoration(
+                color: surface,
+                border: Border(bottom: BorderSide(color: border)),
               ),
-              const SizedBox(width: DesignTokens.space3),
-              Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String?>(
-                    value: filterOutcome,
-                    isExpanded: true,
-                    hint: const Text('Sonuç', style: TextStyle(color: Colors.white54, fontSize: 13)),
-                    dropdownColor: const Color(0xFF161B22),
-                    items: const [
-                      DropdownMenuItem(child: Text('Tümü', style: TextStyle(color: Colors.white))),
-                      DropdownMenuItem(value: 'connected', child: Text('Bağlandı', style: TextStyle(color: Colors.white))),
-                      DropdownMenuItem(value: 'missed', child: Text('Cevapsız', style: TextStyle(color: Colors.white))),
-                      DropdownMenuItem(value: 'no_answer', child: Text('Cevap yok', style: TextStyle(color: Colors.white))),
-                      DropdownMenuItem(value: 'busy', child: Text('Meşgul', style: TextStyle(color: Colors.white))),
-                      DropdownMenuItem(value: 'failed', child: Text('Başarısız', style: TextStyle(color: Colors.white))),
-                    ],
-                    onChanged: (v) => onOutcomeChanged(v),
+              child: Row(
+                children: [
+                  if (teams.isNotEmpty)
+                    Expanded(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String?>(
+                          value: filterTeamId,
+                          isExpanded: true,
+                          hint: Text('Ekip', style: TextStyle(color: hintColor, fontSize: 13)),
+                          dropdownColor: surfaceCard,
+                          items: [
+                            DropdownMenuItem(child: Text('Tüm ekipler', style: TextStyle(color: textColor))),
+                            ...teams.map((t) => DropdownMenuItem(
+                                  value: t.id,
+                                  child: Text(t.name, style: TextStyle(color: textColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                )),
+                          ],
+                          onChanged: (v) {
+                            if (v == null) {
+                              onTeamChanged(null, <String>[]);
+                              return;
+                            }
+                            final t = teams.where((x) => x.id == v).toList();
+                            final memberIds = t.isEmpty ? <String>[] : t.first.memberIds;
+                            onTeamChanged(v, memberIds);
+                          },
+                        ),
+                      ),
+                    ),
+                  if (teams.isNotEmpty) const SizedBox(width: DesignTokens.space3),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String?>(
+                        value: filterAgentId,
+                        isExpanded: true,
+                        hint: Text('Danışman', style: TextStyle(color: hintColor, fontSize: 13)),
+                        dropdownColor: surfaceCard,
+                        items: [
+                          DropdownMenuItem(child: Text('Tümü', style: TextStyle(color: textColor))),
+                          ...agentIds.map((id) => DropdownMenuItem(
+                                value: id,
+                                child: Text(agentNames[id] ?? id, style: TextStyle(color: textColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              )),
+                        ],
+                        onChanged: (v) => onAgentChanged(v),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: DesignTokens.space3),
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String?>(
+                        value: filterOutcome,
+                        isExpanded: true,
+                        hint: Text('Sonuç', style: TextStyle(color: hintColor, fontSize: 13)),
+                        dropdownColor: surfaceCard,
+                        items: [
+                          DropdownMenuItem(child: Text('Tümü', style: TextStyle(color: textColor))),
+                          DropdownMenuItem(value: 'connected', child: Text('Bağlandı', style: TextStyle(color: textColor))),
+                          DropdownMenuItem(value: 'missed', child: Text('Cevapsız', style: TextStyle(color: textColor))),
+                          DropdownMenuItem(value: 'no_answer', child: Text('Cevap yok', style: TextStyle(color: textColor))),
+                          DropdownMenuItem(value: 'busy', child: Text('Meşgul', style: TextStyle(color: textColor))),
+                          DropdownMenuItem(value: 'failed', child: Text('Başarısız', style: TextStyle(color: textColor))),
+                        ],
+                        onChanged: (v) => onOutcomeChanged(v),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Tıklamada gölge efekti (iPhone benzeri). Kısa süreli animasyon, kasma yok.
+class _TapShadowButton extends StatefulWidget {
+  const _TapShadowButton({
+    required this.onPressed,
+    required this.icon,
+    this.label,
+  });
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String? label;
+
+  @override
+  State<_TapShadowButton> createState() => _TapShadowButtonState();
+}
+
+class _TapShadowButtonState extends State<_TapShadowButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceCard = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final borderColor = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.onPressed,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 80),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
+        decoration: BoxDecoration(
+          color: surfaceCard,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+          border: Border.all(
+            color: _pressed ? DesignTokens.primary.withOpacity(0.5) : borderColor,
+            width: _pressed ? 1.2 : 0.8,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(_pressed ? 0.35 : 0.2),
+              blurRadius: _pressed ? 4 : 8,
+              offset: Offset(0, _pressed ? 1 : 3),
+              spreadRadius: _pressed ? 0 : 0.5,
+            ),
+            if (!_pressed)
+              BoxShadow(
+                color: DesignTokens.primary.withOpacity(0.08),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(widget.icon, size: 20, color: DesignTokens.primary),
+            if (widget.label != null) ...[
+              const SizedBox(width: 6),
+              Text(
+                widget.label!,
+                style: const TextStyle(
+                  color: DesignTokens.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ],
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }

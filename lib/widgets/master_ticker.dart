@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 
@@ -23,7 +24,7 @@ class MasterTicker extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  color: const Color(0xFF00FF41),
+                  color: DesignTokens.primary,
                   child: const Text(
                     'OFFICE TICKER',
                     style: TextStyle(

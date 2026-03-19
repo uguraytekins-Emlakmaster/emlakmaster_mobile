@@ -1,3 +1,14 @@
+// speech_to_text gibi eklentiler flutter.compileSdkVersion kullanıyor; sadece :app dışındaki projelere enjekte et
+gradle.beforeProject { proj ->
+    if (proj.path != ":app" && proj != rootProject && !proj.hasProperty("flutter")) {
+        proj.ext.set("flutter", [
+            compileSdkVersion: 36,
+            ndkVersion: "25.1.8937393",
+            targetSdkVersion: 36
+        ])
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -11,6 +22,20 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+// AGP 8+ namespace: call_log plugin için namespace tanımı (duplicate configure crash / namespace hatası önlemi)
+subprojects { subproject ->
+    if (subproject.name == 'call_log') {
+        subproject.afterEvaluate {
+            if (subproject.plugins.hasPlugin('com.android.library')) {
+                subproject.android {
+                    if (namespace == null || namespace.isEmpty()) {
+                        namespace = 'sk.fourq.calllog'
+                    }
+                }
+            }
+        }
+    }
 }
 
 tasks.register("clean", Delete) {

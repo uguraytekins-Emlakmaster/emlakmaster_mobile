@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// Diyarbakır ilçe adlarına göre sembolik harita üzerinde x,y oranları (0-1).
@@ -39,8 +40,10 @@ class BentoSahaRadar extends StatelessWidget {
 
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+            boxShadow: DesignTokens.neomorphicEmbossDark,
+            color: DesignTokens.surfaceDark.withOpacity(0.6),
+            border: Border.all(color: DesignTokens.borderDark.withOpacity(0.6)),
           ),
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -56,32 +59,45 @@ class BentoSahaRadar extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 subtitle,
-                style: const TextStyle(color: Colors.grey, fontSize: 11),
+                style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                height: 160,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: const Color(0xFF161B22),
-                      border: Border.all(color: Colors.white.withOpacity(0.06)),
-                    ),
-                    child: snapshot.hasData
-                        ? CustomPaint(
-                            painter: DiyarbakirMapPainter(agents: withLocation),
-                            size: Size.infinite,
-                          )
-                        : const Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white70,
-                            ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 160,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                            color: DesignTokens.surfaceDark,
+                            border: Border.all(color: DesignTokens.antiqueGold.withOpacity(0.12)),
                           ),
+                          child: snapshot.hasData
+                              ? CustomPaint(
+                                  painter: DiyarbakirMapPainter(agents: withLocation),
+                                  size: Size.infinite,
+                                )
+                              : const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 56,
+                    height: 160,
+                    child: _HeatmapPulseChart(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -121,10 +137,10 @@ class DiyarbakirMapPainter extends CustomPainter {
     // İlçe isimleri için nokta pozisyonları; konumu olan danışmanları yeşil nokta yap
     const dotRadius = 6.0;
     final greenPaint = Paint()
-      ..color = const Color(0xFF00FF41)
+      ..color = DesignTokens.primary
       ..style = PaintingStyle.fill;
     final greenStroke = Paint()
-      ..color = const Color(0xFF00FF41).withOpacity(0.6)
+      ..color = DesignTokens.primary.withOpacity(0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
@@ -172,5 +188,100 @@ class DiyarbakirMapPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant DiyarbakirMapPainter oldDelegate) {
     return oldDelegate.agents != agents;
+  }
+}
+
+/// Heatmap Pulse: bölgede arama sıklığı trendi – Antique Gold çizgi grafik.
+class _HeatmapPulseChart extends StatefulWidget {
+  @override
+  State<_HeatmapPulseChart> createState() => _HeatmapPulseChartState();
+}
+
+class _HeatmapPulseChartState extends State<_HeatmapPulseChart> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  static const List<double> _trendValues = [0.3, 0.5, 0.45, 0.7, 0.6, 0.85, 0.75, 0.9, 0.8];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Arama',
+          style: TextStyle(
+            color: DesignTokens.antiqueGold.withOpacity(0.9),
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Expanded(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return CustomPaint(
+                painter: _PulseLinePainter(
+                  values: _trendValues,
+                  phase: _controller.value * 6.28,
+                ),
+                size: Size.infinite,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PulseLinePainter extends CustomPainter {
+  _PulseLinePainter({required this.values, this.phase = 0});
+  final List<double> values;
+  final double phase;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final w = size.width;
+    final h = size.height;
+    final stepX = w / (values.length - 1);
+    final path = Path();
+    for (var i = 0; i < values.length; i++) {
+      final x = i * stepX;
+      final y = h - (values[i] * h * 0.85) - 4;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    final paint = Paint()
+      ..color = DesignTokens.antiqueGold.withOpacity(0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PulseLinePainter oldDelegate) {
+    return oldDelegate.values != values || oldDelegate.phase != phase;
   }
 }

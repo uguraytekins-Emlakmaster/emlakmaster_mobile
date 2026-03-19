@@ -1,4 +1,3 @@
-import 'package:emlakmaster_mobile/features/voice_crm/domain/entities/voice_crm_intent.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/domain/usecases/extract_voice_crm_intent.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,6 +1,8 @@
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
+import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Danışman paneli – Takip: sessiz lead listesi (7/14/30+ gün), yeniden kazanım kuyruğu.
@@ -9,12 +11,20 @@ class ConsultantResurrectionPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
+    final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: DesignTokens.backgroundDark,
-        foregroundColor: DesignTokens.textPrimaryDark,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
+        foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         title: const Text('Takip listesi'),
         elevation: 0,
       ),
@@ -31,21 +41,21 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                     color: DesignTokens.primary.withOpacity(0.5),
                   ),
                   const SizedBox(height: DesignTokens.space4),
-                  const Text(
+                  Text(
                     'Şu an takip edilecek lead yok',
                     style: TextStyle(
-                      color: DesignTokens.textSecondaryDark,
+                      color: textSecondary,
                       fontSize: DesignTokens.fontSizeMd,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 32),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
                       '7 gün ve üzeri sessiz kalan müşteriler burada listelenir.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: DesignTokens.textTertiaryDark,
+                        color: textTertiary,
                         fontSize: DesignTokens.fontSizeSm,
                       ),
                     ),
@@ -57,6 +67,7 @@ class ConsultantResurrectionPage extends ConsumerWidget {
           return ListView.builder(
             padding: const EdgeInsets.all(DesignTokens.space4),
             itemCount: items.length,
+            cacheExtent: 300,
             itemBuilder: (context, index) {
               final e = items[index];
               final name = e.customerName ?? e.customerId;
@@ -65,9 +76,9 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: DesignTokens.space2),
                 padding: const EdgeInsets.all(DesignTokens.space4),
                 decoration: BoxDecoration(
-                  color: DesignTokens.surfaceDark,
+                  color: surface,
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  border: Border.all(color: DesignTokens.borderDark),
+                  border: Border.all(color: border),
                 ),
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -85,24 +96,31 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                   ),
                   title: Text(
                     name,
-                    style: const TextStyle(
-                      color: DesignTokens.textPrimaryDark,
+                    style: TextStyle(
+                      color: fg,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   subtitle: Text(
                     '$days gün sessiz',
-                    style: const TextStyle(
-                      color: DesignTokens.textSecondaryDark,
+                    style: TextStyle(
+                      color: textSecondary,
                       fontSize: DesignTokens.fontSizeSm,
                     ),
                   ),
-                  trailing: const Icon(
+                  trailing: Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 14,
-                    color: DesignTokens.textTertiaryDark,
+                    color: textTertiary,
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    showResurrectionLeadTopicSheet(
+                      context,
+                      topicTitle: 'Takip listesi',
+                      item: e,
+                    );
+                  },
                 ),
               );
             },
@@ -111,21 +129,32 @@ class ConsultantResurrectionPage extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(color: DesignTokens.primary),
         ),
-        error: (e, _) => const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: DesignTokens.danger,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Liste yüklenemedi.',
-                style: TextStyle(color: DesignTokens.textSecondaryDark),
-              ),
-            ],
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: DesignTokens.danger,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Liste yüklenemedi.',
+                  style: TextStyle(color: textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: () => ref.invalidate(resurrectionQueueProvider),
+                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                  label: const Text('Tekrar dene'),
+                  style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+                ),
+              ],
+            ),
           ),
         ),
       ),

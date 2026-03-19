@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 
@@ -49,7 +50,7 @@ class BentoAiNews extends StatelessWidget {
                 height: 40,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0xFF00FF41),
+                  color: DesignTokens.primary,
                 ),
                 child: const Icon(Icons.bolt_rounded, color: Colors.black, size: 22),
               ),
@@ -82,10 +83,73 @@ class BentoAiNews extends StatelessWidget {
               const SizedBox(width: 12),
               TextButton(
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF00FF41),
+                  foregroundColor: DesignTokens.primary,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  showModalBottomSheet<void>(
+                    context: context,
+                    backgroundColor: DesignTokens.surfaceDark,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (ctx) => SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.bolt_rounded, color: DesignTokens.primary, size: 28),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: MediaQuery.sizeOf(ctx).height * 0.45,
+                              ),
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  body,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: DesignTokens.primary,
+                                  foregroundColor: Colors.black,
+                                ),
+                                child: const Text('Anladım'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
                 child: const Text(
                   'Önerileri Gör',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),

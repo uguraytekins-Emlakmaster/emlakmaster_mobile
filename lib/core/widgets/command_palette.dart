@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +10,10 @@ import 'package:go_router/go_router.dart';
 /// Yazarken sayfa komutları ve müşteri araması yapar.
 class CommandPalette {
   static void show(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF161B22),
+      backgroundColor: ext.popoverBackground,
       isScrollControlled: true,
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.6,
@@ -69,6 +72,7 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final filteredActions = _query.isEmpty
         ? _actions
         : _actions.where((a) => a.label.toLowerCase().contains(_query)).toList();
@@ -96,13 +100,13 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
               focusNode: _focusNode,
               decoration: InputDecoration(
                 hintText: 'Sayfa veya müşteri ara...',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: const Icon(Icons.search_rounded, color: Colors.white70),
+                hintStyle: TextStyle(color: ext.foregroundMuted),
+                prefixIcon: Icon(Icons.search_rounded, color: ext.foregroundSecondary),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 filled: true,
-                fillColor: const Color(0xFF0D1117),
+                fillColor: ext.inputBackground,
               ),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: ext.inputForeground),
             ),
           ),
           Expanded(
@@ -111,7 +115,7 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 if (filteredActions.isNotEmpty) ...[
-                  const Text('Sayfalar', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text('Sayfalar', style: TextStyle(color: ext.foregroundMuted, fontSize: 12)),
                   const SizedBox(height: 8),
                   ...filteredActions.asMap().entries.map((e) => _ActionTile(
                         icon: e.value.icon,
@@ -121,7 +125,7 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
                   const SizedBox(height: 16),
                 ],
                 if (_query.length >= 2) ...[
-                  const Text('Müşteriler', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text('Müşteriler', style: TextStyle(color: ext.foregroundMuted, fontSize: 12)),
                   const SizedBox(height: 8),
                   StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                     stream: FirestoreService.customersStream(),
@@ -129,7 +133,7 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
                       if (!snapshot.hasData) {
                         return const Padding(
                           padding: EdgeInsets.all(16),
-                          child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Color(0xFF00FF41)))),
+                          child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: DesignTokens.primary))),
                         );
                       }
                       final docs = snapshot.data!.docs;
@@ -143,9 +147,9 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
                             (q.isNotEmpty && phone.replaceAll(RegExp(r'\D'), '').contains(q.replaceAll(RegExp(r'\D'), '')));
                       }).take(8).toList();
                       if (filtered.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('Müşteri bulunamadı', style: TextStyle(color: Colors.white54, fontSize: 13)),
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text('Müşteri bulunamadı', style: TextStyle(color: ext.foregroundMuted, fontSize: 13)),
                         );
                       }
                       return Column(
@@ -183,9 +187,10 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF00FF41)),
-      title: Text(label, style: const TextStyle(color: Colors.white)),
+      leading: Icon(icon, color: DesignTokens.primary),
+      title: Text(label, style: TextStyle(color: ext.popoverForeground)),
       onTap: onTap,
     );
   }

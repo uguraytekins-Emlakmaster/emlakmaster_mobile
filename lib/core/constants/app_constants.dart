@@ -4,12 +4,17 @@ abstract final class AppConstants {
 
   static const String appName = 'Rainbow CRM';
   static const String appShortName = 'EmlakMaster';
+  /// Uygulama sürümü (pubspec ile senkron tutulur)
+  static const String appVersion = '1.0.1+2';
 
   /// Firestore koleksiyon adları (spec ile uyumlu)
   static const String colUsers = 'users';
   static const String colRoles = 'roles';
   static const String colPermissions = 'permissions';
   static const String colAgents = 'agents';
+  static const String colTeams = 'teams';
+  /// Bekleyen davetler: email, role, teamId; ilk girişte users doc'a uygulanır.
+  static const String colInvites = 'invites';
   static const String colCustomers = 'customers';
   static const String colLeads = 'leads';
   static const String colCalls = 'calls';
@@ -46,6 +51,32 @@ abstract final class AppConstants {
   static const String keyNotificationsEnabled = 'notifications_enabled';
   static const String keyLocale = 'locale';
   static const String keyLastUserId = 'last_user_id';
+
+  /// Özellik bayrakları (ayarlardan aç/kapa) — tüm özellikler tek yerden yönetilir
+  static const String keyFeatureVoiceCrm = 'feature_voice_crm';
+  static const String keyFeatureContactSave = 'feature_contact_save';
+  static const String keyFeatureWarRoom = 'feature_war_room';
+  static const String keyFeatureMarketPulse = 'feature_market_pulse';
+  static const String keyFeatureDailyBrief = 'feature_daily_brief';
+  static const String keyFeaturePipeline = 'feature_pipeline';
+  static const String keyFeatureCommandCenter = 'feature_command_center';
+  static const String keyFeatureInvestorIntelligence = 'feature_investor_intelligence';
+  static const String keyFeatureAnalytics = 'feature_analytics';
+  static const String keyFeatureCrashlytics = 'feature_crashlytics';
+  static const String keyFeaturePushNotifications = 'feature_push_notifications';
+  static const String keyFeatureKpiBar = 'feature_kpi_bar';
+  static const String keyFeaturePortfolioMatch = 'feature_portfolio_match';
+  static const String keyFeatureCallSummary = 'feature_call_summary';
+  static const String keyFeatureTasks = 'feature_tasks';
+  static const String keyFeatureNotificationsCenter = 'feature_notifications_center';
+  static const String keyCompactDashboard = 'compact_dashboard';
+  static const String keyHapticFeedback = 'haptic_feedback';
+  static const String keySoundEffects = 'sound_effects';
+  /// Batarya tasarrufu: animasyonları azaltır, arka planda iş yükünü düşürür.
+  static const String keyPowerSaver = 'power_saver';
+
+  /// Giriş ekranında Facebook butonu gösterilsin mi? (Facebook Developer + credentials hazır olunca true yap.)
+  static const bool showFacebookLogin = false;
 
   /// Retry / timeout
   static const int maxRetries = 3;

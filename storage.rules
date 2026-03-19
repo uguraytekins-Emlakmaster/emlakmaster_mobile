@@ -1,4 +1,7 @@
 rules_version = '2';
+// Logo / listing display görselleri. Yazma: giriş yapmış herkes (boyut/tip kısıtlı).
+// İleride sadece yönetici yazabilsin istersen: custom claims (request.auth.token.role)
+// veya Cloud Function üzerinden yükleme kullanın.
 service firebase.storage {
   match /b/{bucket}/o {
     match /listing_display/{allPaths=**} {

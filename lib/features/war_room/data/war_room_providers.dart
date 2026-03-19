@@ -26,3 +26,13 @@ final officeMonthlyTargetProvider = StreamProvider<int>((ref) {
 final dealsCountProvider = StreamProvider<int>((ref) {
   return FirestoreService.dealsCountStream();
 });
+
+/// War Room: Seçili ekip filtresi (null = tüm ekipler).
+final warRoomSelectedTeamIdProvider = StateProvider<String?>((ref) => null);
+
+/// War Room: Seçili ekibin üye id listesi (Top Performers filtrelemesi için).
+final warRoomTeamMemberIdsProvider = StreamProvider<List<String>>((ref) {
+  final teamId = ref.watch(warRoomSelectedTeamIdProvider);
+  if (teamId == null || teamId.isEmpty) return Stream.value([]);
+  return FirestoreService.teamDocStream(teamId).map((t) => t?.memberIds ?? []);
+});

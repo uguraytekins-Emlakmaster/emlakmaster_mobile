@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/design_tokens.dart';
+import '../../core/widgets/app_loading.dart';
 import '../../features/broker_command/presentation/pages/broker_command_page.dart' deferred as broker_command;
 import '../../features/manager_command_center/presentation/pages/command_center_page.dart' deferred as command_center;
 import '../../features/war_room/presentation/pages/war_room_page.dart' deferred as war_room;
@@ -8,12 +10,12 @@ import '../../features/war_room/presentation/pages/war_room_page.dart' deferred 
 
 Widget _loadingScreen() {
   return const Scaffold(
-    backgroundColor: Color(0xFF0D1117),
+    backgroundColor: DesignTokens.scaffoldDark,
     body: Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: Color(0xFF00FF41)),
+          AppLoading(),
           SizedBox(height: 24),
           Text(
             'Yükleniyor...',
@@ -51,7 +53,7 @@ class _LazyWarRoomPageState extends State<LazyWarRoomPage> {
   Widget build(BuildContext context) {
     if (_error != null) {
       return const Scaffold(
-        backgroundColor: Color(0xFF0D1117),
+        backgroundColor: DesignTokens.scaffoldDark,
         body: Center(
           child: Text(
             'Sayfa yüklenemedi.',
@@ -91,7 +93,7 @@ class _LazyBrokerCommandPageState extends State<LazyBrokerCommandPage> {
   Widget build(BuildContext context) {
     if (_error != null) {
       return const Scaffold(
-        backgroundColor: Color(0xFF0D1117),
+        backgroundColor: DesignTokens.scaffoldDark,
         body: Center(
           child: Text(
             'Sayfa yüklenemedi.',
@@ -131,7 +133,7 @@ class _LazyCommandCenterPageState extends State<LazyCommandCenterPage> {
   Widget build(BuildContext context) {
     if (_error != null) {
       return const Scaffold(
-        backgroundColor: Color(0xFF0D1117),
+        backgroundColor: DesignTokens.scaffoldDark,
         body: Center(
           child: Text(
             'Sayfa yüklenemedi.',

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
 
-/// Görsel yüklenirken shimmer efekti. CachedNetworkImage placeholder ile kullanılır.
+/// Görsel yüklenirken shimmer efekti. Tema ile uyumlu (light/dark).
 class ShimmerPlaceholder extends StatelessWidget {
   const ShimmerPlaceholder({
     super.key,
@@ -18,19 +19,16 @@ class ShimmerPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? DesignTokens.shimmerBase : DesignTokens.shimmerBaseLight;
-    final highlightColor = isDark ? DesignTokens.shimmerHighlight : DesignTokens.shimmerHighlightLight;
-
+    final ext = AppThemeExtension.of(context);
     return Shimmer.fromColors(
-      baseColor: baseColor,
-      highlightColor: highlightColor,
+      baseColor: ext.shimmerBase,
+      highlightColor: ext.shimmerHighlight,
       period: const Duration(milliseconds: 1200),
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: ext.shimmerBase,
           borderRadius: borderRadius ?? BorderRadius.circular(DesignTokens.radiusSm),
         ),
       ),

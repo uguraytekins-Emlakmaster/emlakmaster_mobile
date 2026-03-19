@@ -16,7 +16,7 @@ final userDocStreamProvider =
   return UserRepository.userDocStream(uid);
 });
 
-/// İlk girişte users doc yoksa oluşturur: ilk kullanıcı super_admin, sonrakiler agent.
+/// İlk girişte users doc yoksa rol seçim ekranı gösterilir; doc burada oluşturulur (ensureUserDoc artık otomatik çağrılmaz).
 final ensureUserDocProvider =
     FutureProvider.autoDispose.family<void, String>((ref, uid) async {
   final user = ref.read(currentUserProvider).valueOrNull;
@@ -32,26 +32,30 @@ final ensureUserDocProvider =
   );
 });
 
-/// Firestore'dan gelen rol. Doc yoksa önce ensureUserDoc tetiklenir, loading döner; doc gelince rol döner.
+/// Firestore'dan gelen rol. Doc yoksa loading döner; doc null ise rol seçim ekranı gösterilir (ensureUserDoc tetiklenmez).
 final currentRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
   final userAsync = ref.watch(currentUserProvider);
   final user = userAsync.valueOrNull;
   if (user == null) return const AsyncValue.data(AppRole.guest);
   final docAsync = ref.watch(userDocStreamProvider(user.uid));
   return docAsync.when(
-    loading: () {
-      ref.read(ensureUserDocProvider(user.uid).future).ignore();
-      return const AsyncValue.loading();
-    },
+    loading: () => const AsyncValue.loading(),
     data: (doc) {
       if (doc != null) {
         return AsyncValue.data(AppRole.fromFirestoreRole(doc.role));
       }
-      ref.read(ensureUserDocProvider(user.uid).future).ignore();
-      return const AsyncValue.loading();
+      return const AsyncValue.data(AppRole.guest);
     },
     error: (e, st) => AsyncValue.error(e, st),
   );
+});
+
+/// İlk giriş: kullanıcı var ama Firestore users doc yok. Rol seçim sayfasına yönlendir.
+final needsRoleSelectionProvider = Provider<bool>((ref) {
+  final user = ref.watch(currentUserProvider).valueOrNull;
+  if (user == null) return false;
+  final docAsync = ref.watch(userDocStreamProvider(user.uid));
+  return docAsync.hasValue && docAsync.valueOrNull == null;
 });
 
 /// UI için: rol yüklü mü, hata mı, son rol değeri.

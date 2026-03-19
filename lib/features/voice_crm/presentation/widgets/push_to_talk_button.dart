@@ -75,9 +75,7 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
         pauseFor: const Duration(seconds: 5),
         localeId: 'tr_TR',
         listenOptions: stt.SpeechListenOptions(
-          partialResults: true,
           listenMode: stt.ListenMode.dictation,
-          cancelOnError: false,
         ),
       );
     } catch (_) {

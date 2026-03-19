@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Firebase / Google Sign-In: Web OAuth istemci ID (Dart [GoogleOAuthConstants] ile aynı). -->
+    <string name="default_web_client_id" translatable="false">572835725773-m7hqe81ad42nnk5dv6k7gq0oup7pksj1.apps.googleusercontent.com</string>
+    <!-- Facebook girişi kapalı; tekrar açılırsa scripts/configure_facebook_app.sh ile ekleyin. -->
+</resources>

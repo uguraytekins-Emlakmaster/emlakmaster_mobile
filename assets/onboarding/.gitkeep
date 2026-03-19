@@ -1,0 +1,12 @@
+# EmlakMaster onboarding assets
+# Add PNG or WebP images (1600x1600 or 2048x2048) for Retina/high-DPI.
+# If a file is missing, the app shows a premium placeholder with icon + floating cards.
+#
+# Expected filenames:
+#   crm_dashboard.png   - Dashboard / command center
+#   market_analytics.png - Market Pulse & listings
+#   ai_insights.png     - AI & analytics
+#   war_room.png        - War Room & call center
+#
+# Optimize for production: convert PNG to WebP (cwebp) or use Flutter's asset
+# compression to reduce first-load time. Current PNGs ~1–1.5 MB each.

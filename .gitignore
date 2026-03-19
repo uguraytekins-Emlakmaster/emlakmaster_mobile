@@ -5,9 +5,11 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -30,6 +32,9 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/release_iis/
+/iis_deploy_target/
+/iis_deploy_target_ps/
 
 # Symbolication related
 app.*.symbols
@@ -51,3 +56,6 @@ node_modules
 .env
 .env.local
 .env.*.local
+
+# Facebook Login (App ID / Client Token — git’e eklenmesin)
+scripts/facebook_credentials.txt

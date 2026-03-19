@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 
@@ -57,7 +58,7 @@ class BentoPowerAnalytics extends StatelessWidget {
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(6),
-                              color: const Color(0xFF00FF41).withOpacity(0.2),
+                              color: DesignTokens.primary.withOpacity(0.2),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -66,7 +67,7 @@ class BentoPowerAnalytics extends StatelessWidget {
                                   width: 5,
                                   height: 5,
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFF00FF41),
+                                    color: DesignTokens.primary,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -74,7 +75,7 @@ class BentoPowerAnalytics extends StatelessWidget {
                                 const Text(
                                   'Canlı',
                                   style: TextStyle(
-                                    color: Color(0xFF00FF41),
+                                    color: DesignTokens.primary,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -204,7 +205,7 @@ class _AnimatedDonut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isAlert ? Colors.redAccent : const Color(0xFF00FF41);
+    final borderColor = isAlert ? Colors.redAccent : DesignTokens.primary;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 400),

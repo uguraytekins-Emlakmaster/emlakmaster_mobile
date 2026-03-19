@@ -2,8 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>572835725773-8s71g3li2ful895gppeb6bvlbck09hkd.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.572835725773-8s71g3li2ful895gppeb6bvlbck09hkd</string>
 	<key>API_KEY</key>
-	<string>AIzaSyB068ls9KsjaHHESdkKNeqL8tnN4alDXXQ</string>
+	<string>AIzaSyDKdLUjaSD3aOcswit93mCcoz_VrO3HgWY</string>
 	<key>GCM_SENDER_ID</key>
 	<string>572835725773</string>
 	<key>PLIST_VERSION</key>
@@ -15,20 +19,16 @@
 	<key>STORAGE_BUCKET</key>
 	<string>emlak-master.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
-	<false/>
+	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
-	<false/>
+	<false></false>
 	<key>IS_APPINVITE_ENABLED</key>
-	<true/>
+	<true></true>
 	<key>IS_GCM_ENABLED</key>
-	<true/>
+	<true></true>
 	<key>IS_SIGNIN_ENABLED</key>
-	<true/>
+	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:572835725773:web:93531b623c67ce9392c484</string>
-	<key>CLIENT_ID</key>
-	<string>572835725773-93531b623c67ce9392c484.apps.googleusercontent.com</string>
-	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.572835725773-93531b623c67ce9392c484</string>
+	<string>1:572835725773:ios:9cc83a12d81b6aa392c484</string>
 </dict>
 </plist>

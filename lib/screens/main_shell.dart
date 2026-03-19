@@ -1,28 +1,33 @@
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/pages/customer_list_page.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
 import 'package:emlakmaster_mobile/screens/listings_screen.dart';
-import 'package:emlakmaster_mobile/screens/placeholder_pages.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class MainShellPage extends StatefulWidget {
+class MainShellPage extends ConsumerStatefulWidget {
   const MainShellPage({super.key});
 
   @override
-  State<MainShellPage> createState() => _MainShellPageState();
+  ConsumerState<MainShellPage> createState() => _MainShellPageState();
 }
 
-class _MainShellPageState extends State<MainShellPage> {
+class _MainShellPageState extends ConsumerState<MainShellPage> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
+  /// Kullanıcı dostu menü: Ana Sayfa, İlanlar, Müşteriler, Profil (en beğenilen sıra).
   static const List<_NavItem> _navItems = [
-    _NavItem(Icons.dashboard_rounded, 'Dashboard'),
+    _NavItem(Icons.home_rounded, 'Ana Sayfa'),
     _NavItem(Icons.home_work_rounded, 'İlanlar'),
     _NavItem(Icons.people_rounded, 'Müşteriler'),
-    _NavItem(Icons.settings_rounded, 'Ayarlar'),
+    _NavItem(Icons.person_rounded, 'Profil'),
   ];
 
   @override
@@ -46,8 +51,16 @@ class _MainShellPageState extends State<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
+    final surfaceColor = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final borderColor = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final navInactiveColor = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
+    final flags = ref.watch(featureFlagsProvider).valueOrNull;
+    final voiceCrmEnabled = flags?[AppConstants.keyFeatureVoiceCrm] ?? true;
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: bgColor,
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),
@@ -60,61 +73,64 @@ class _MainShellPageState extends State<MainShellPage> {
           DashboardPage(),
           ListingsPage(),
           CustomerListPage(),
-          SettingsPlaceholderPage(),
+          SettingsPage(),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _currentIndex == 0 ? const _MagicCallFab() : null,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF161B22),
-          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(_navItems.length, (i) {
-                final item = _navItems[i];
-                final isSelected = _currentIndex == i;
-                return Expanded(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _onNavTap(i),
-                      borderRadius: BorderRadius.circular(16),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              item.icon,
-                              size: 24,
-                              color: isSelected
-                                  ? const Color(0xFF00FF41)
-                                  : Colors.white54,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              item.label,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight:
-                                    isSelected ? FontWeight.w600 : FontWeight.w500,
+      floatingActionButton: _currentIndex == 0 && voiceCrmEnabled ? const _MagicCallFab() : null,
+      bottomNavigationBar: RepaintBoundary(
+        child: Container(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            border: Border(top: BorderSide(color: borderColor)),
+            boxShadow: isDark ? DesignTokens.neomorphicEmbossDark : null,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(_navItems.length, (i) {
+                  final item = _navItems[i];
+                  final isSelected = _currentIndex == i;
+                  return Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _onNavTap(i),
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                item.icon,
+                                size: 24,
                                 color: isSelected
-                                    ? const Color(0xFF00FF41)
-                                    : Colors.white54,
+                                    ? DesignTokens.antiqueGold
+                                    : navInactiveColor,
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                item.label,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight:
+                                      isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  color: isSelected
+                                      ? DesignTokens.antiqueGold
+                                      : navInactiveColor,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                }),
+              ),
             ),
           ),
         ),
@@ -146,17 +162,18 @@ class _MagicCallFab extends StatelessWidget {
           height: 56,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
-            color: const Color(0xFF00FF41),
+            color: DesignTokens.antiqueGold,
+            boxShadow: DesignTokens.neomorphicGlowAntiqueGold(intensity: 0.25),
           ),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.phone_in_talk_rounded, color: Colors.black, size: 22),
+              Icon(Icons.phone_in_talk_rounded, color: DesignTokens.inputTextOnGold, size: 22),
               SizedBox(width: 10),
               Text(
                 'Magic Call & AI Wizard',
                 style: TextStyle(
-                  color: Colors.black,
+                  color: DesignTokens.inputTextOnGold,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),

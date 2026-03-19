@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/theme/app_theme_extension.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/pressable_scale_button.dart';
 
@@ -26,8 +27,8 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final ext = AppThemeExtension.of(context);
+    final textColor = ext.foregroundSecondary;
     const primaryColor = DesignTokens.primary;
 
     return Center(

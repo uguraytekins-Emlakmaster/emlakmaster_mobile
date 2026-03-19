@@ -11,7 +11,10 @@ class UserDoc {
     required this.role,
     this.name,
     this.email,
+    this.avatarUrl,
     this.isActive = true,
+    this.teamId,
+    this.managerId,
     this.createdAt,
     this.updatedAt,
   });
@@ -20,7 +23,13 @@ class UserDoc {
   final String role;
   final String? name;
   final String? email;
+  final String? avatarUrl;
   final bool isActive;
+   /// Ekip kimliği (her danışman tek ekipte).
+  final String? teamId;
+
+  /// Bu kullanıcının bağlı olduğu yönetici / ekip lideri.
+  final String? managerId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -33,7 +42,10 @@ class UserDoc {
       role: role,
       name: data['name'] as String?,
       email: data['email'] as String?,
+      avatarUrl: data['avatarUrl'] as String?,
       isActive: data['isActive'] as bool? ?? true,
+      teamId: data['teamId'] as String?,
+      managerId: data['managerId'] as String?,
       createdAt: _parseTimestamp(data['createdAt']),
       updatedAt: _parseTimestamp(data['updatedAt']),
     );
@@ -69,10 +81,14 @@ class UserRepository {
   }
 
   /// users/{uid} stream (rol değişikliklerini dinlemek için).
+  /// İlk abonelikte geçici ağ/kural gecikmesi olabilir; bir kez yeniden dener.
   static Stream<UserDoc?> userDocStream(String uid) {
     return _store.collection(_usersCol).doc(uid).snapshots().map((snap) {
       if (!snap.exists || snap.data() == null) return null;
       return UserDoc.fromFirestore(uid, snap.data());
+    }).handleError((Object e, StackTrace st) {
+      if (kDebugMode) AppLogger.e('UserRepository.userDocStream($uid)', e, st);
+      Error.throwWithStackTrace(e, st);
     });
   }
 
@@ -83,6 +99,8 @@ class UserRepository {
     String? name,
     String? email,
     bool isActive = true,
+    String? teamId,
+    String? managerId,
   }) async {
     try {
       final ref = _store.collection(_usersCol).doc(uid);
@@ -93,12 +111,43 @@ class UserRepository {
         'name': name,
         'email': email,
         'isActive': isActive,
+        if (teamId != null) 'teamId': teamId,
+        if (managerId != null) 'managerId': managerId,
         'updatedAt': FieldValue.serverTimestamp(),
         if (existing == null) 'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       if (kDebugMode) AppLogger.d('UserRepository.setUserDoc: $uid role=$role');
     } catch (e, st) {
       if (kDebugMode) AppLogger.e('UserRepository.setUserDoc', e, st);
+      rethrow;
+    }
+  }
+
+  /// Sadece ekip alanlarını günceller (assign/remove agent from team). Null = alanı kaldır.
+  static Future<void> updateUserTeamFields(
+    String uid,
+    String? teamId,
+    String? managerId,
+  ) async {
+    try {
+      final ref = _store.collection(_usersCol).doc(uid);
+      final updates = <String, dynamic>{
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      if (teamId == null) {
+        updates['teamId'] = FieldValue.delete();
+      } else {
+        updates['teamId'] = teamId;
+      }
+      if (managerId == null) {
+        updates['managerId'] = FieldValue.delete();
+      } else {
+        updates['managerId'] = managerId;
+      }
+      await ref.update(updates);
+      if (kDebugMode) AppLogger.d('UserRepository.updateUserTeamFields: $uid teamId=$teamId');
+    } catch (e, st) {
+      if (kDebugMode) AppLogger.e('UserRepository.updateUserTeamFields', e, st);
       rethrow;
     }
   }

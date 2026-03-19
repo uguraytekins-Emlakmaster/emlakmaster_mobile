@@ -61,13 +61,13 @@ class MissedOpportunitiesPanel extends ConsumerWidget {
             loading: () => Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
-                children: List.generate(3, (_) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                children: List.generate(3, (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      const SkeletonLoader(width: 32, height: 32, borderRadius: BorderRadius.all(Radius.circular(16))),
-                      const SizedBox(width: 12),
-                      const Expanded(
+                      SkeletonLoader(width: 32, height: 32, borderRadius: BorderRadius.all(Radius.circular(16))),
+                      SizedBox(width: 12),
+                      Expanded(
                         child: SkeletonLoader(height: 12, width: double.infinity, borderRadius: BorderRadius.all(Radius.circular(4))),
                       ),
                     ],

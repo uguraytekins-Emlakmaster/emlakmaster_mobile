@@ -2,7 +2,29 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/design_tokens.dart';
 
-/// Üst KPI bar: bugün toplam çağrı, cevaplanan, lead, sıcak fırsat vb.
+/// Kısa AI önerisi (danışman KPI’sına göre).
+String _aiRecommendationFor(String label, String value) {
+  switch (label) {
+    case 'Çağrı':
+      return 'Günlük hedefe yaklaşmak için sabah erken saatlerde arama yoğunluğunu artırın.';
+    case 'Cevaplanan':
+      return 'Cevaplanan oranı yüksek; kaçırılan çağrıları takip listesine ekleyin.';
+    case 'Lead':
+      return 'Yeni lead’leri 24 saat içinde ilk temasla sıcak tutun.';
+    case 'Sıcak':
+      return 'Sıcak fırsatları bugün kapatmaya öncelik verin.';
+    case 'Follow-up':
+      return 'Bekleyen follow-up’ları hafta sonuna bırakmayın.';
+    case 'Aktif danışman':
+      return 'Ekip dağılımını dengelemek için boş slotları değerlendirin.';
+    case 'Görüşmede':
+      return 'Aktif görüşmeler bitince hızlı not alıp sonraki adımı planlayın.';
+    default:
+      return 'Bu metrik için performansı günlük hedeflerle karşılaştırın.';
+  }
+}
+
+/// Üst KPI bar: neomorphic chip’ler, Antique Gold hover glow, AI Coach ikonu.
 class KpiBar extends StatelessWidget {
   const KpiBar({
     super.key,
@@ -54,7 +76,7 @@ class KpiBar extends StatelessWidget {
   }
 }
 
-class _KpiChip extends StatelessWidget {
+class _KpiChip extends StatefulWidget {
   const _KpiChip({
     required this.label,
     required this.value,
@@ -68,54 +90,80 @@ class _KpiChip extends StatelessWidget {
   final bool highlight;
 
   @override
+  State<_KpiChip> createState() => _KpiChipState();
+}
+
+class _KpiChipState extends State<_KpiChip> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space3,
-        vertical: DesignTokens.space2,
-      ),
-      decoration: BoxDecoration(
-        color: highlight
-            ? DesignTokens.primary.withOpacity(0.15)
-            : DesignTokens.surfaceDark.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: highlight
-            ? Border.all(color: DesignTokens.primary.withOpacity(0.5))
-            : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 16,
-              color: highlight ? DesignTokens.primary : DesignTokens.textSecondaryDark,
-            ),
-            const SizedBox(width: DesignTokens.space1),
-          ],
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final active = _hover;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Tooltip(
+        message: _aiRecommendationFor(widget.label, widget.value),
+        preferBelow: false,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.space3,
+            vertical: DesignTokens.space2,
+          ),
+          decoration: DesignTokens.cardNeomorphic(hoverOrActive: active || widget.highlight),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: DesignTokens.fontSizeMd,
-                  color: highlight ? DesignTokens.primary : DesignTokens.textPrimaryDark,
+              if (widget.icon != null) ...[
+                Icon(
+                  widget.icon,
+                  size: 16,
+                  color: (active || widget.highlight)
+                      ? DesignTokens.antiqueGold
+                      : DesignTokens.textSecondaryDark,
                 ),
+                const SizedBox(width: DesignTokens.space1),
+              ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.value,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: DesignTokens.fontSizeMd,
+                      color: (active || widget.highlight)
+                          ? DesignTokens.antiqueGold
+                          : DesignTokens.textPrimaryDark,
+                      shadows: (active || widget.highlight)
+                          ? [
+                              Shadow(
+                                color: DesignTokens.antiqueGold.withOpacity(0.35),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
+                    ),
+                  ),
+                  Text(
+                    widget.label,
+                    style: TextStyle(
+                      fontSize: DesignTokens.fontSizeXs,
+                      color: active ? DesignTokens.antiqueGold.withOpacity(0.9) : DesignTokens.textTertiaryDark,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: DesignTokens.fontSizeXs,
-                  color: DesignTokens.textTertiaryDark,
-                ),
+              const SizedBox(width: DesignTokens.space1),
+              Icon(
+                Icons.auto_awesome,
+                size: 12,
+                color: DesignTokens.antiqueGold.withOpacity(0.7),
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -64,6 +64,17 @@ abstract final class FeaturePermission {
 
   /// Opportunity Radar / Voice of Market
   static bool canViewOpportunityRadar(AppRole role) =>
+      role.isManagerTier || role == AppRole.operations || role == AppRole.agent;
+
+  /// Danışman yönetimi: admin panelinden danışman listesi ve ayarlarını yönetme.
+  static bool canManageConsultants(AppRole role) =>
+      role.isManagerTier || role == AppRole.operations;
+
+  /// Ekip yönetimi: ekip oluşturma, ekip başı atama, üye yönetimi.
+  static bool canManageTeams(AppRole role) => role.isManagerTier;
+
+  /// Danışman davet etme: davet oluşturma, invites koleksiyonuna yazma.
+  static bool canInviteAgents(AppRole role) =>
       role.isManagerTier || role == AppRole.operations;
 
   /// Yönetici paneli: tam dashboard, War Room, çağrı merkezi, raporlar, sistem.

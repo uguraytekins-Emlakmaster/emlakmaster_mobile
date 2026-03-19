@@ -1,10 +1,14 @@
 import 'dart:ui';
 
+import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/features/war_room/data/war_room_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
 
 /// Full-screen Command Center: Lead Pulse, Top Performers, Market Ticker, Daily Target.
@@ -16,8 +20,14 @@ class WarRoomCommandCenter extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= _breakpointWide;
+    final gradientColors = isDark
+        ? [DesignTokens.backgroundDark, DesignTokens.primaryDark.withOpacity(0.4)]
+        : [DesignTokens.backgroundLight, DesignTokens.backgroundLight];
 
     return Container(
       width: double.infinity,
@@ -25,10 +35,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            DesignTokens.backgroundDark,
-            DesignTokens.primaryDark.withOpacity(0.4),
-          ],
+          colors: gradientColors,
         ),
       ),
       child: SafeArea(
@@ -40,7 +47,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
             ref.invalidate(officeMonthlyTargetProvider);
           },
           color: DesignTokens.brandGold,
-          backgroundColor: DesignTokens.surfaceDark,
+          backgroundColor: surface,
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -50,17 +57,19 @@ class WarRoomCommandCenter extends ConsumerWidget {
                     children: [
                       const Icon(Icons.military_tech_rounded, color: DesignTokens.brandGold, size: 28),
                       const SizedBox(width: 12),
-                      Text(
-                        'WAR ROOM',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: DesignTokens.brandWhite,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 2,
-                            ),
+                      Expanded(
+                        child: Text(
+                          'WAR ROOM',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: isDark ? DesignTokens.brandWhite : DesignTokens.textPrimaryLight,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 2,
+                              ),
+                        ),
                       ),
-                      const Spacer(),
+                      const _WarRoomTeamFilter(),
                       TextButton.icon(
-                        onPressed: () => context.push('/command-center'),
+                        onPressed: () => context.push(AppRouter.routeCommandCenter),
                         icon: const Icon(Icons.call_rounded, size: 18, color: DesignTokens.brandGold),
                         label: const Text('Çağrı Merkezi', style: TextStyle(color: DesignTokens.brandGold)),
                       ),
@@ -89,10 +98,10 @@ class WarRoomCommandCenter extends ConsumerWidget {
           childAspectRatio: 1.4,
         ),
         delegate: SliverChildListDelegate([
-          _LeadPulseCard(),
-          _TopPerformersCard(),
-          _MarketTickerCard(),
-          _DailyTargetCard(),
+          const _LeadPulseCard(),
+          const _TopPerformersCard(),
+          const _MarketTickerCard(),
+          const _DailyTargetCard(),
         ]),
       ),
     );
@@ -161,7 +170,7 @@ class _LeadPulseCard extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: DesignTokens.brandGold)),
-        error: (e, _) => Text('Lead pulse yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
+        error: (e, _) => const Text('Lead pulse yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
       ),
     );
   }
@@ -179,17 +188,31 @@ class _GlowingDotState extends State<_GlowingDot> with SingleTickerProviderState
   late AnimationController _controller;
   late Animation<double> _animation;
 
+  void _onPowerChange() {
+    if (!mounted) return;
+    if (AppLifecyclePowerService.shouldReduceMotion) {
+      _controller.stop();
+    } else {
+      _controller.repeat(reverse: true);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat(reverse: true);
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
     _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+    if (!AppLifecyclePowerService.shouldReduceMotion) {
+      _controller.repeat(reverse: true);
+    }
+    AppLifecyclePowerService.isInBackground.addListener(_onPowerChange);
   }
 
   @override
   void dispose() {
+    AppLifecyclePowerService.isInBackground.removeListener(_onPowerChange);
     _controller.dispose();
     super.dispose();
   }
@@ -210,9 +233,41 @@ class _GlowingDotState extends State<_GlowingDot> with SingleTickerProviderState
               BoxShadow(
                 color: DesignTokens.brandGold.withOpacity(_animation.value * 0.8),
                 blurRadius: 6,
-                spreadRadius: 0,
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WarRoomTeamFilter extends ConsumerWidget {
+  const _WarRoomTeamFilter();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final selectedId = ref.watch(warRoomSelectedTeamIdProvider);
+    return StreamBuilder<List<TeamDoc>>(
+      stream: FirestoreService.teamsStream(),
+      builder: (context, snap) {
+        final teams = snap.data ?? [];
+        if (teams.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String?>(
+              value: selectedId,
+              isDense: true,
+              hint: Text(l10n.t('label_team'), style: const TextStyle(color: DesignTokens.brandGold, fontSize: 12)),
+              dropdownColor: DesignTokens.surfaceDark,
+              items: [
+                DropdownMenuItem<String?>(child: Text(l10n.t('filter_all_teams'), style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: 12))),
+                ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: 12), overflow: TextOverflow.ellipsis))),
+              ],
+              onChanged: (v) => ref.read(warRoomSelectedTeamIdProvider.notifier).state = v,
+            ),
           ),
         );
       },
@@ -226,12 +281,16 @@ class _TopPerformersCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(agentsSnapshotProvider);
+    final teamMemberIds = ref.watch(warRoomTeamMemberIdsProvider).valueOrNull;
     return _GlassCard(
       title: 'Top Performers',
       icon: Icons.emoji_events_rounded,
       child: async.when(
         data: (snap) {
-          final agents = snap.docs.toList();
+          var agents = snap.docs.toList();
+          if (teamMemberIds != null && teamMemberIds.isNotEmpty) {
+            agents = agents.where((d) => teamMemberIds.contains(d.id)).toList();
+          }
           agents.sort((a, b) {
             final ac = a.data()['totalCalls'] as int? ?? 0;
             final bc = b.data()['totalCalls'] as int? ?? 0;
@@ -279,7 +338,7 @@ class _TopPerformersCard extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: DesignTokens.brandGold)),
-        error: (e, _) => Text('Yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
+        error: (e, _) => const Text('Yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
       ),
     );
   }
@@ -386,7 +445,7 @@ class _DailyTargetCard extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: DesignTokens.brandGold)),
-        error: (e, _) => Text('Hedef yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
+        error: (e, _) => const Text('Hedef yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
       ),
     );
   }
@@ -400,6 +459,10 @@ class _GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final titleColor = isDark ? DesignTokens.brandWhite : DesignTokens.textPrimaryLight;
     return ClipRRect(
       borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
       child: BackdropFilter(
@@ -408,15 +471,17 @@ class _GlassCard extends StatelessWidget {
           padding: const EdgeInsets.all(DesignTokens.space5),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            color: DesignTokens.surfaceDark.withOpacity(0.6),
+            color: surface.withOpacity(isDark ? 0.6 : 0.95),
             border: Border.all(color: DesignTokens.brandGold.withOpacity(0.25)),
-            boxShadow: [
-              BoxShadow(
-                color: DesignTokens.brandNavy.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            boxShadow: isDark
+                ? [
+                    BoxShadow(
+                      color: DesignTokens.brandNavy.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,8 +493,8 @@ class _GlassCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: DesignTokens.brandWhite,
+                    style: TextStyle(
+                      color: titleColor,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       letterSpacing: 0.5,

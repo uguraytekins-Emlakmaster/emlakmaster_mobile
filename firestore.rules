@@ -11,21 +11,42 @@ service cloud.firestore {
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
-    // Yönetici: users.role super_admin, broker_owner, general_manager, office_manager, team_lead ise tüm veriyi görebilir.
+    // Yönetici: users.role belirtilen rollerden biri ise tüm veriyi görebilir.
+    // Doküman yoksa veya role yoksa u.data/role null olur; null in [...] false döner, hata vermez.
     function isManager() {
       let u = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return u != null && u.data.role in ['super_admin', 'broker_owner', 'general_manager', 'office_manager', 'team_lead', 'manager', 'admin', 'owner'];
+      return u != null && u.data != null && u.data.role in ['super_admin', 'broker_owner', 'broker', 'general_manager', 'office_manager', 'team_lead', 'manager', 'admin', 'owner'];
     }
     // Veri izolasyonu: danışman sadece kendi atanmış müşteri/çağrılarını görür; yönetici hepsini.
     function isOwnAgentData(agentIdField) {
       return agentIdField == request.auth.uid;
     }
 
+    // Kullanıcı (owner) kendi profilinde yalnızca güvenli alanları değiştirebilir;
+    // role / isActive / teamId / managerId / createdAt değişimi sadece yönetici (yetki yükseltmesi önlenir).
+    function userOwnerUpdatePreservesPrivileges() {
+      let absent = '__absent__';
+      return request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.isActive == resource.data.isActive
+        && request.resource.data.get('teamId', absent) == resource.data.get('teamId', absent)
+        && request.resource.data.get('managerId', absent) == resource.data.get('managerId', absent)
+        && request.resource.data.get('createdAt', absent) == resource.data.get('createdAt', absent);
+    }
+
     // -------------------------------------------------------------------------
-    // users: kullanıcı kendi dokümanını okuyabilir; yazma ileride admin
+    // users: kullanıcı kendi dokümanını MUTLAKA okuyabilir (giriş sonrası rol yüklemesi için).
+    // isOwner önce kontrol edilir; böylece kendi dokümanı için isManager() get() çağrılmaz (döngü önlenir).
+    // Yönetici (isManager) tüm kullanıcıları görebilir ve alanları güncelleyebilir.
     // -------------------------------------------------------------------------
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isSignedIn() && (request.auth.uid == userId || isManager());
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.keys().hasAll(['uid', 'role']);
+      allow update: if isManager()
+        || (isOwner(userId) && userOwnerUpdatePreservesPrivileges());
+      allow delete: if false;
     }
 
     match /roles/{roleId} {
@@ -79,17 +100,19 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // listings: giriş yapmış herkes okuyabilir; oluşturma/güncelleme ileride rol ile
+    // listings: giriş yapmış herkes okuyabilir;
+    // oluşturma/güncelleme SADECE yönetici / ofis yetkilisi
     // -------------------------------------------------------------------------
     match /listings/{listingId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
+      allow create, update: if isSignedIn() && isManager();
       allow delete: if false;
     }
 
     match /app_settings/{docId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      // Uygulama ayarları sadece yönetici tarafından güncellenebilir.
+      allow write: if isSignedIn() && isManager();
     }
     match /external_listings/{docId} {
       allow read: if isSignedIn();
@@ -110,6 +133,18 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // teams: ekipler sadece yönetici tarafından okunur/yazılır.
+    match /teams/{teamId} {
+      allow read, write: if isSignedIn() && isManager();
+    }
+
+    // invites: davetler. Yönetici oluşturur/okur/siler; kullanıcı sadece kendi email'ine ait daveti okuyabilir (ilk girişte uygulama için).
+    match /invites/{inviteId} {
+      allow create: if isSignedIn() && isManager();
+      allow read: if isSignedIn() && (isManager() || resource.data.email == request.auth.token.email);
+      allow update, delete: if isSignedIn() && isManager();
+    }
+
     // notes: danışman sadece kendi eklediği notlara (advisorId == uid) veya yönetici hepsine
     match /notes/{noteId} {
       allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
@@ -126,16 +161,20 @@ service cloud.firestore {
       allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
     }
 
-    // visits: müşteriye bağlı; customer.assignedAgentId veya manager
+    // visits: danışman sadece kendi advisorId'li kayıtları görür/oluşturur/günceller; yönetici hepsini.
     match /visits/{visitId} {
-      allow read, create, update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
     }
 
-    // offers: müşteriye bağlı
+    // offers: danışman sadece kendi advisorId'li teklifleri görür/oluşturur/günceller; yönetici hepsini.
     match /offers/{offerId} {
-      allow read, create, update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
     }
 
     // pipeline_items: danışman kendi pipeline
@@ -143,7 +182,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
       allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
       allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow delete: if isSignedIn();
+      allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
     }
 
     // analytics: yönetici okur
@@ -159,9 +198,9 @@ service cloud.firestore {
     // notifications: kullanıcı kendi bildirimleri (userId alanı varsa)
     match /notifications/{docId} {
       allow read: if isSignedIn() && (isManager() || resource.data.userId == request.auth.uid);
-      allow create: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && (resource.data.userId == request.auth.uid);
-      allow delete: if isSignedIn();
+      allow delete: if isSignedIn() && (isManager() || resource.data.userId == request.auth.uid);
     }
 
     // Diğer koleksiyonlar: sadece giriş zorunlu; yazma varsayılan kapalı (yukarıda tanımlanmayanlar)

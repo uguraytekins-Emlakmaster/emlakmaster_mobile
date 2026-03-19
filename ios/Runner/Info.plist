@@ -45,6 +45,27 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
@@ -58,5 +79,27 @@
 	<string>Sesli not ve hands-free CRM için mikrofon erişimi gerekir.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Sesinizi metne çevirmek (teklif, hatırlatma, not) için konuşma tanıma gerekir.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Arama sonrası veya arama yaparken kişiyi rehbere kaydetmek için rehber erişimi gerekir.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>GIDClientID</key>
+	<string>572835725773-8s71g3li2ful895gppeb6bvlbck09hkd.apps.googleusercontent.com</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>googlechrome</string>
+		<string>googlechromes</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.572835725773-8s71g3li2ful895gppeb6bvlbck09hkd</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
@@ -15,13 +16,13 @@ class ListingDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: DesignTokens.scaffoldDark,
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirestoreService.listingDocStream(listingId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00FF41), strokeWidth: 2),
+              child: CircularProgressIndicator(color: DesignTokens.primary, strokeWidth: 2),
             );
           }
           if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
@@ -41,8 +42,8 @@ class ListingDetailPage extends StatelessWidget {
                     const SizedBox(height: 24),
                     TextButton.icon(
                       onPressed: () => context.pop(),
-                      icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF00FF41)),
-                      label: const Text('Geri', style: TextStyle(color: Color(0xFF00FF41))),
+                      icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
+                      label: const Text('Geri', style: TextStyle(color: DesignTokens.primary)),
                     ),
                   ],
                 ),
@@ -65,7 +66,7 @@ class ListingDetailPage extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                backgroundColor: const Color(0xFF0D1117),
+                backgroundColor: DesignTokens.scaffoldDark,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                   onPressed: () {
@@ -139,7 +140,7 @@ class ListingDetailPage extends StatelessWidget {
                       Text(
                         priceStr.contains('₺') ? priceStr : '$priceStr ₺',
                         style: const TextStyle(
-                          color: Color(0xFF00FF41),
+                          color: DesignTokens.primary,
                           fontWeight: FontWeight.w700,
                           fontSize: 22,
                         ),
@@ -176,7 +177,7 @@ class ListingDetailPage extends StatelessWidget {
 
   Widget _placeholder() {
     return Container(
-      color: const Color(0xFF161B22),
+      color: DesignTokens.surfaceDarkCard,
       child: Center(
         child: Icon(Icons.home_rounded, size: 64, color: Colors.white.withOpacity(0.2)),
       ),

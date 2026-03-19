@@ -61,13 +61,13 @@ class DailyBriefPanel extends ConsumerWidget {
             loading: () => Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
-                children: List.generate(3, (_) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                children: List.generate(3, (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      const SkeletonLoader(width: 20, height: 20, borderRadius: BorderRadius.all(Radius.circular(4))),
-                      const SizedBox(width: 12),
-                      const Expanded(
+                      SkeletonLoader(width: 20, height: 20, borderRadius: BorderRadius.all(Radius.circular(4))),
+                      SizedBox(width: 12),
+                      Expanded(
                         child: SkeletonLoader(height: 13, width: double.infinity, borderRadius: BorderRadius.all(Radius.circular(4))),
                       ),
                     ],

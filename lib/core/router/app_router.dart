@@ -3,16 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../theme/design_tokens.dart';
+import '../widgets/app_loading.dart';
 import '../services/analytics_service.dart';
 import '../services/onboarding_store.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/role_selection_page.dart';
 import '../../screens/onboarding_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/calls/call_screen.dart';
 import '../../features/calls/post_call_wizard.dart';
+import '../../features/calls/presentation/pages/consultant_calls_page.dart';
+import '../../screens/consultant_resurrection_page.dart';
 import '../../core/lazy/deferred_dashboard_pages.dart';
 import '../../features/crm_customers/presentation/pages/customer_detail_page.dart';
 import '../../features/notifications/presentation/pages/notifications_center_page.dart';
+import '../../features/campaigns/presentation/pages/bulk_campaign_page.dart';
 import '../../features/pipeline/presentation/pages/pipeline_kanban_page.dart';
 import '../../screens/listing_detail_page.dart';
 import '../../screens/role_based_shell.dart';
@@ -22,6 +29,7 @@ class AppRouter {
   AppRouter._();
 
   static const String routeLogin = '/login';
+  static const String routeRegister = '/register';
   static const String routeOnboarding = '/onboarding';
 
   static bool _isStaffOnlyPath(String path) {
@@ -31,6 +39,7 @@ class AppRouter {
         path == routeWarRoom ||
         path == routeBrokerCommand ||
         path == routePipeline ||
+        path == routeResurrection ||
         path == routeNotifications ||
         path.startsWith('/customer/');
   }
@@ -50,17 +59,21 @@ class AppRouter {
     return 'Bir hata oluştu. Lütfen ana sayfaya dönüp tekrar deneyin.';
   }
 
+  // Tüm route sabitleri aşağıda tek yerde. Yeni path eklerken mutlaka bu listeye + routes[] içine GoRoute ekleyin.
   static const String routeHome = '/';
+  static const String routeRoleSelection = '/role-selection';
   static const String routeCall = '/call';
   static const String routeCallSummary = '/call/summary';
+  static const String routeConsultantCalls = '/consultant/calls';
+  static const String routeResurrection = '/resurrection';
   static const String routeCommandCenter = '/command-center';
   static const String routeWarRoom = '/war-room';
-  static const String routeResurrection = '/resurrection';
   static const String routeBrokerCommand = '/broker-command';
   static const String routeCustomerDetail = '/customer/:id';
   static const String routeListingDetail = '/listing/:id';
   static const String routePipeline = '/pipeline';
   static const String routeNotifications = '/notifications';
+  static const String routeBulkCampaign = '/campaigns/bulk';
 
   static GoRouter create(Ref ref, Listenable refreshListenable) {
     return GoRouter(
@@ -69,15 +82,30 @@ class AppRouter {
       refreshListenable: refreshListenable,
       observers: [_AnalyticsRouteObserver()],
       redirect: (context, state) {
-        final user = ref.read(currentUserProvider).valueOrNull;
-        final path = state.uri.path;
-        if (user != null && (path == routeLogin || path == routeOnboarding)) return routeHome;
-        if (user == null && path == routeOnboarding) return null;
-        if (user == null && path == routeLogin && !OnboardingStore.instance.completedSync) return routeOnboarding;
-        if (user == null && path != routeLogin && path != routeOnboarding) return routeLogin;
-        final role = ref.read(displayRoleOrNullProvider);
-        if (user != null && role != null && role.isClientTier && _isStaffOnlyPath(path)) return routeHome;
-        return null;
+        try {
+          final user = ref.read(currentUserProvider).valueOrNull;
+          final path = state.uri.path;
+          final needsRole = ref.read(needsRoleSelectionProvider);
+          if (user != null && needsRole && path != routeRoleSelection) return routeRoleSelection;
+          if (user != null &&
+              (path == routeLogin || path == routeOnboarding || path == routeRegister)) {
+            return routeHome;
+          }
+          if (user != null && path == routeRoleSelection && !needsRole) return routeHome;
+          if (user == null && path == routeOnboarding) return null;
+          if (user == null && path == routeLogin && !OnboardingStore.instance.completedSync) return routeOnboarding;
+          if (user == null &&
+              path != routeLogin &&
+              path != routeOnboarding &&
+              path != routeRegister) {
+            return routeLogin;
+          }
+          final role = ref.read(displayRoleOrNullProvider);
+          if (user != null && role != null && role.isClientTier && _isStaffOnlyPath(path)) return routeHome;
+          return null;
+        } catch (_) {
+          return routeLogin;
+        }
       },
       errorBuilder: (context, state) => _ErrorFallbackScreen(
         message: _userFriendlyErrorMessage(state.error),
@@ -97,6 +125,22 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const LoginPage(),
+          ),
+        ),
+        GoRoute(
+          path: routeRegister,
+          pageBuilder: (context, state) => MaterialPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const RegisterPage(),
+          ),
+        ),
+        GoRoute(
+          path: routeRoleSelection,
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const RoleSelectionPage(),
           ),
         ),
         GoRoute(
@@ -139,6 +183,26 @@ class AppRouter {
                   FadeTransition(opacity: animation, child: child),
             );
           },
+        ),
+        GoRoute(
+          path: routeConsultantCalls,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const ConsultantCallsPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeResurrection,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const ConsultantResurrectionPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
         ),
         GoRoute(
           path: routeCommandCenter,
@@ -216,6 +280,16 @@ class AppRouter {
                 FadeTransition(opacity: animation, child: child),
           ),
         ),
+        GoRoute(
+          path: routeBulkCampaign,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const BulkCampaignPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
       ],
     );
   }
@@ -248,17 +322,18 @@ class _RouteLoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF0D1117),
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: DesignTokens.backgroundDark,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: Color(0xFF00FF41)),
-            SizedBox(height: 24),
+            const AppLoading(),
+            const SizedBox(height: 24),
             Text(
               'Yükleniyor...',
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontSize: 14),
             ),
           ],
         ),
@@ -285,8 +360,10 @@ class _ErrorFallbackScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: DesignTokens.backgroundDark,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -296,24 +373,21 @@ class _ErrorFallbackScreen extends StatelessWidget {
               const Icon(
                 Icons.error_outline_rounded,
                 size: 64,
-                color: Color(0xFF00FF41),
+                color: DesignTokens.primary,
               ),
               const SizedBox(height: 24),
               Text(
                 'Bir şeyler ters gitti',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Lütfen tekrar deneyin veya ana sayfaya dönün.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: onSurface.withOpacity(0.9), fontSize: 14),
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
@@ -321,8 +395,8 @@ class _ErrorFallbackScreen extends StatelessWidget {
                 icon: const Icon(Icons.home_rounded),
                 label: const Text('Ana Sayfaya Dön'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF00FF41),
-                  foregroundColor: Colors.black,
+                  backgroundColor: DesignTokens.primary,
+                  foregroundColor: DesignTokens.inputTextOnGold,
                 ),
               ),
             ],

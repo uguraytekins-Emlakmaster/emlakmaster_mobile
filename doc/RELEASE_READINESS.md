@@ -33,7 +33,7 @@ Gerçek auth sonrası `currentRoleProvider` Firestore `users/{uid}.role` ile bes
 
 ## Kalan Riskler
 
-1. **Auth:** Gerçek login yok; rol sabit (agent). Yayında Firebase Auth + users dokümanından rol okunmalı.
+1. **Auth:** E-posta/şifre + **Google ile giriş/kayıt** tüm platformlarda (Android, iOS, macOS) yapılandırıldı; Firebase’de Google açık. Rol Firestore `users/{uid}.role` ile okunuyor (currentRoleProvider, ensureUserDoc).
 2. **Firestore Rules:** `users/{uid}` içinde `role` alanı yoksa yönetici sayfaları açılmaz; ilk kurulumda admin kullanıcıya `role: 'office_manager'` vb. yazılmalı.
 3. **Tasks / Pipeline / Investor:** Bu modüller henüz tam bağlı değil; senaryo F, I, J kısmen placeholder.
 4. **Widget smoke test:** Tam uygulama testi Firebase init gerektirir; CI’da mock veya test env gerekebilir.
@@ -48,5 +48,10 @@ Gerçek auth sonrası `currentRoleProvider` Firestore `users/{uid}.role` ile bes
 - [x] Router debug log sadece debug modda
 - [x] Null/boş müşteri adı güvenli
 - [x] Permission + UnauthorizedScreen testleri
-- [ ] Gerçek auth ve rol atama (ürün kararı)
-- [ ] CI’da testlerin çalıştırılması (flutter test)
+- [x] Gerçek auth ve rol: Firebase Auth + users/{uid}.role (currentRoleProvider, ensureUserDoc)
+- [x] Firestore rules: users sadece isOwner; rol bu dokümanda
+- [x] KPI canlı: bugünkü çağrı, açık görev, agents
+- [x] Müşteri listesi: customersStream + arama + detay (timeline, notlar)
+- [x] Tüm testler geçiyor (28 test)
+- [x] CI: GitHub Actions (push/PR → main|master) flutter pub get, analyze, test; widget test Firebase test init
+- [x] Google Sign-In: Android, iOS, macOS ayarları uyumlu; Firebase Console’da Google etkin (doc/GOOGLE_SIGNIN_CHECKLIST.md)

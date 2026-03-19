@@ -3,16 +3,21 @@ import UIKit
 import FirebaseCore
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Firebase’i tek sefer yapılandır (duplicate-app crash önlemi: framework +load veya plugin sırasından bağımsız)
-    if FirebaseApp.app() == nil {
-      FirebaseApp.configure()
-    }
-    GeneratedPluginRegistrant.register(with: self)
+    // Duplicate FIRApp configure crash’ini önlemek için plugin kaydından önce guard kur.
+    FirebaseConfigureGuardInstall()
+    // Plist’ten tek seferlik configure (simulator’da nil apiKey decode crash’ını önlemek için).
+    FirebaseConfigureFromPlistIfNeeded()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // Plugin yüklendi; optionsFromFIROptions apiKey yamasını kur (Dart decode crash önlemi).
+    FirebaseConfigureGuardInstallCorePluginPatch()
   }
 }

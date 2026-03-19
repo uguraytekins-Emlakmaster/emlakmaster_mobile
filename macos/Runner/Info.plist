@@ -28,6 +28,8 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>GIDClientID</key>
+	<string>572835725773-8s71g3li2ful895gppeb6bvlbck09hkd.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -35,7 +37,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.572835725773-93531b623c67ce9392c484</string>
+				<string>com.googleusercontent.apps.572835725773-8s71g3li2ful895gppeb6bvlbck09hkd</string>
 			</array>
 			<key>CFBundleURLName</key>
 			<string>Google Sign-In</string>
@@ -49,5 +51,7 @@
 	<string>Ofis logosu seçmek için galeri erişimi gerekir.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Logo fotoğrafı çekmek için kamera erişimi gerekir.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Arama sonrası veya arama yaparken kişiyi rehbere kaydetmek için rehber erişimi gerekir.</string>
 </dict>
 </plist>

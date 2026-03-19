@@ -60,11 +60,14 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
             ),
           ),
           if (uid.isEmpty)
-            const SliverFillRemaining(
-              child: Center(
-                child: Text(
-                  'Giriş yapılmamış.',
-                  style: TextStyle(color: DesignTokens.textSecondaryDark),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: const Center(
+                  child: Text(
+                    'Giriş yapılmamış.',
+                    style: TextStyle(color: DesignTokens.textSecondaryDark),
+                  ),
                 ),
               ),
             )

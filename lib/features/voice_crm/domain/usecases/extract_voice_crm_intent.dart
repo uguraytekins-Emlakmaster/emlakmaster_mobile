@@ -25,7 +25,7 @@ class ExtractVoiceCrmIntent {
     // Yarın / 2 gün sonra / haftaya → hatırlatma
     final now = DateTime.now();
     if (RegExp(r'yarın|yârin').hasMatch(lower)) {
-      setReminderAt = DateTime(now.year, now.month, now.day + 1, 9, 0);
+      setReminderAt = DateTime(now.year, now.month, now.day + 1, 9);
     } else if (RegExp(r'2\s*gün|iki\s*gün').hasMatch(lower)) {
       setReminderAt = now.add(const Duration(days: 2));
     } else if (RegExp(r'haftaya|gelecek\s*hafta').hasMatch(lower)) {

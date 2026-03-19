@@ -34,7 +34,7 @@ class RegionDemandMapPanel extends ConsumerWidget {
     return async.when(
       data: (regions) {
         if (regions.isEmpty) {
-          return EmptyState(
+          return const EmptyState(
             icon: Icons.map_rounded,
             title: 'Bölge talep verisi yok',
             subtitle: 'Talep haritası güncellenince burada görünecek.',
@@ -65,7 +65,7 @@ class RegionDemandMapPanel extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: DesignTokens.space3),
-              Wrap(
+              const Wrap(
                 spacing: DesignTokens.space2,
                 runSpacing: DesignTokens.space2,
                 children: [

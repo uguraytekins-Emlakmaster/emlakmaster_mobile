@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
@@ -13,7 +15,7 @@ class ListingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: DesignTokens.scaffoldDark,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -21,7 +23,7 @@ class ListingsPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
               child: Text(
-                'İlan Portföyü',
+                AppLocalizations.of(context).t('title_listings'),
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -36,24 +38,24 @@ class ListingsPage extends StatelessWidget {
                       !snapshot.hasData) {
                     return const Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF00FF41),
+                        color: DesignTokens.primary,
                         strokeWidth: 2,
                       ),
                     );
                   }
                   if (snapshot.hasError) {
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(24),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.error_outline_rounded,
+                            const Icon(Icons.error_outline_rounded,
                                 size: 48, color: Colors.white54),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Text(
-                              'İlanlar yüklenemedi.',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                              AppLocalizations.of(context).t('listings_load_error'),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -63,6 +65,7 @@ class ListingsPage extends StatelessWidget {
 
                   final docs = snapshot.data?.docs ?? [];
                   if (docs.isEmpty) {
+                    final l10n = AppLocalizations.of(context);
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -73,17 +76,17 @@ class ListingsPage extends StatelessWidget {
                             color: Colors.white.withOpacity(0.3),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'Henüz ilan yok',
-                            style: TextStyle(
+                          Text(
+                            l10n.t('empty_listings'),
+                            style: const TextStyle(
                               color: Colors.white54,
                               fontSize: 16,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Firebase listings koleksiyonuna ilan ekleyin.',
-                            style: TextStyle(
+                          Text(
+                            l10n.t('empty_listings_sub'),
+                            style: const TextStyle(
                               color: Colors.white38,
                               fontSize: 12,
                             ),
@@ -96,6 +99,7 @@ class ListingsPage extends StatelessWidget {
                   return ListView.builder(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
                     itemCount: docs.length,
+                    cacheExtent: 400,
                     itemBuilder: (context, index) {
                       final doc = docs[index];
                       // ignore: dead_null_aware_expression -- data() nullable in some Firestore SDKs
@@ -108,7 +112,7 @@ class ListingsPage extends StatelessWidget {
                         child: _ListingCard(
                           listingId: doc.id,
                           imageUrl: d['imageUrl'] as String?,
-                          title: d['title'] as String? ?? 'İlan',
+                          title: d['title'] as String? ?? AppLocalizations.of(context).t('listing'),
                           price: priceStr,
                           location: d['location'] as String? ?? d['district'] as String? ?? '—',
                         ),
@@ -219,7 +223,7 @@ class _ListingCard extends StatelessWidget {
                 Text(
                   price.contains('₺') ? price : '$price ₺',
                   style: const TextStyle(
-                    color: Color(0xFF00FF41),
+                    color: DesignTokens.primary,
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
                   ),
@@ -237,7 +241,7 @@ class _ListingCard extends StatelessWidget {
 
   Widget _placeholderImage() {
     return Container(
-      color: const Color(0xFF161B22),
+      color: DesignTokens.surfaceDarkCard,
       child: Center(
         child: Icon(
           Icons.home_rounded,

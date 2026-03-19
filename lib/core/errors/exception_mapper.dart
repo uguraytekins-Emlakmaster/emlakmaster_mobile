@@ -52,6 +52,11 @@ abstract final class ExceptionMapper {
         return 'Çok fazla deneme. Lütfen daha sonra tekrar deneyin.';
       case 'network-request-failed':
         return 'İnternet bağlantınızı kontrol edin.';
+      case 'operation-not-allowed':
+        return 'Bu giriş yöntemi etkin değil. Lütfen yönetici ile iletişime geçin.';
+      case 'invalid-recipient':
+      case 'invalid-sender':
+        return 'E-posta yapılandırması hatalı. Lütfen yönetici ile iletişime geçin.';
       default:
         return 'Giriş yapılamadı. Lütfen tekrar deneyin.';
     }

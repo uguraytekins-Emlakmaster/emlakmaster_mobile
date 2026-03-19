@@ -1,5 +1,7 @@
-import 'dart:io';
-
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/platform/file_stub.dart'
+    if (dart.library.io) 'dart:io' as io;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:emlakmaster_mobile/core/constants/turkish_cities.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:flutter/services.dart';
@@ -43,8 +45,14 @@ class _ListingDisplaySettingsSectionState
         imageQuality: 85,
       );
       if (x == null || !mounted) return;
-      final file = File(x.path);
-      final url = await LogoStorageService.instance.uploadLogo(file);
+      final String url;
+      if (kIsWeb) {
+        final bytes = await x.readAsBytes();
+        url = await LogoStorageService.instance.uploadLogoBytes(bytes);
+      } else {
+        final file = io.File(x.path);
+        url = await LogoStorageService.instance.uploadLogo(file);
+      }
       final settings = ref.read(listingDisplaySettingsProvider).valueOrNull ??
           const ListingDisplaySettingsEntity();
       await ListingDisplaySettingsRepository.set(
@@ -64,6 +72,13 @@ class _ListingDisplaySettingsSectionState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final border = isDark ? DesignTokens.borderDark.withOpacity(0.5) : DesignTokens.borderLight;
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceVariant = onSurface.withOpacity(0.7);
+    final onSurfaceDim = onSurface.withOpacity(0.5);
     final async = ref.watch(listingDisplaySettingsProvider);
     return async.when(
       data: (settings) {
@@ -73,9 +88,9 @@ class _ListingDisplaySettingsSectionState
         }
         return Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF161B22),
+            color: surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white10),
+            border: Border.all(color: border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,10 +99,10 @@ class _ListingDisplaySettingsSectionState
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       'İlan kaynakları & ofis',
                       style: TextStyle(
-                        color: Colors.white54,
+                        color: onSurfaceVariant,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -95,45 +110,45 @@ class _ListingDisplaySettingsSectionState
                     const SizedBox(width: 6),
                     Tooltip(
                       message: 'Şehir seçince sahibinden, emlakjet ve hepsi emlak\'tan ilanlar otomatik çekilir.',
-                      child: Icon(Icons.info_outline_rounded, size: 16, color: Colors.white38),
+                      child: Icon(Icons.info_outline_rounded, size: 16, color: onSurfaceDim),
                     ),
                   ],
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.location_city_rounded, color: Color(0xFF00FF41)),
-                title: const Text('Şehir', style: TextStyle(color: Colors.white)),
+                leading: const Icon(Icons.location_city_rounded, color: DesignTokens.primary),
+                title: Text('Şehir', style: TextStyle(color: onSurface)),
                 subtitle: Text(
                   settings.cityName,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(color: onSurfaceVariant, fontSize: 12),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+                trailing: Icon(Icons.chevron_right_rounded, color: onSurfaceVariant),
                 onTap: () => _showCityPicker(context, ref, settings),
               ),
               ListTile(
-                leading: const Icon(Icons.map_rounded, color: Color(0xFF00FF41)),
-                title: const Text('İlçe', style: TextStyle(color: Colors.white)),
+                leading: const Icon(Icons.map_rounded, color: DesignTokens.primary),
+                title: Text('İlçe', style: TextStyle(color: onSurface)),
                 subtitle: Text(
                   settings.districtName ?? 'Tümü',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(color: onSurfaceVariant, fontSize: 12),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+                trailing: Icon(Icons.chevron_right_rounded, color: onSurfaceVariant),
                 onTap: () => _showDistrictPicker(context, ref, settings),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextField(
                   controller: _companyController,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: onSurface),
                   decoration: InputDecoration(
                     labelText: 'Şirket adı',
-                    labelStyle: const TextStyle(color: Colors.white54),
+                    labelStyle: TextStyle(color: onSurfaceVariant),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white24),
+                      borderSide: BorderSide(color: onSurfaceDim),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Color(0xFF00FF41)),
+                      borderSide: const BorderSide(color: DesignTokens.primary),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -153,16 +168,16 @@ class _ListingDisplaySettingsSectionState
                           fit: BoxFit.cover,
                           placeholder: (_, __) => const ShimmerPlaceholder(width: 40, height: 40),
                           errorWidget: (_, __, ___) =>
-                              const Icon(Icons.business_rounded, color: Color(0xFF00FF41)),
+                              const Icon(Icons.business_rounded, color: DesignTokens.primary),
                         ),
                       )
-                    : const Icon(Icons.business_rounded, color: Color(0xFF00FF41)),
-                title: const Text('Ofis logosu', style: TextStyle(color: Colors.white)),
-                subtitle: const Text(
+                    : const Icon(Icons.business_rounded, color: DesignTokens.primary),
+                title: Text('Ofis logosu', style: TextStyle(color: onSurface)),
+                subtitle: Text(
                   'Galeriden logo seçin (sahibinden/emlakjet bölge ile kullanılır)',
-                  style: TextStyle(color: Colors.white54, fontSize: 11),
+                  style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+                trailing: Icon(Icons.chevron_right_rounded, color: onSurfaceVariant),
                 onTap: _pickAndUploadLogo,
               ),
               const SizedBox(height: 8),
@@ -170,16 +185,16 @@ class _ListingDisplaySettingsSectionState
           ),
         );
       },
-      loading: () => const ListTile(
-        title: Text('İlan kaynakları & ofis', style: TextStyle(color: Colors.white)),
-        trailing: SizedBox(
+      loading: () => ListTile(
+        title: Text('İlan kaynakları & ofis', style: TextStyle(color: onSurface)),
+        trailing: const SizedBox(
           width: 24,
           height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00FF41)),
+          child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
         ),
       ),
       error: (e, _) => ListTile(
-        title: const Text('İlan kaynakları & ofis', style: TextStyle(color: Colors.white)),
+        title: Text('İlan kaynakları & ofis', style: TextStyle(color: onSurface)),
         subtitle: Text('Yüklenemedi: $e', style: const TextStyle(color: Colors.red, fontSize: 12)),
       ),
     );
@@ -192,18 +207,22 @@ class _ListingDisplaySettingsSectionState
 
   void _showCityPicker(
       BuildContext context, WidgetRef ref, ListingDisplaySettingsEntity settings) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetBg = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF161B22),
+      backgroundColor: sheetBg,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
                 'Şehir seçin',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 16),
               ),
             ),
             SizedBox(
@@ -215,8 +234,8 @@ class _ListingDisplaySettingsSectionState
                   final name = TurkishCities.cities[code]!;
                   final selected = code == settings.cityCode;
                   return ListTile(
-                    title: Text(name, style: const TextStyle(color: Colors.white)),
-                    trailing: selected ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41)) : null,
+                    title: Text(name, style: TextStyle(color: textColor)),
+                    trailing: selected ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
                     onTap: () async {
                       await ListingDisplaySettingsRepository.set(settings.copyWith(
                         cityCode: code,
@@ -237,25 +256,29 @@ class _ListingDisplaySettingsSectionState
 
   void _showDistrictPicker(
       BuildContext context, WidgetRef ref, ListingDisplaySettingsEntity settings) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetBg = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
     final districts = TurkishCities.districtsFor(settings.cityCode);
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF161B22),
+      backgroundColor: sheetBg,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
                 'İlçe seçin (opsiyonel)',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 16),
               ),
             ),
             ListTile(
-              title: const Text('Tümü', style: TextStyle(color: Colors.white)),
+              title: Text('Tümü', style: TextStyle(color: textColor)),
               trailing: settings.districtName == null
-                  ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41))
+                  ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
                   : null,
               onTap: () async {
                 await ListingDisplaySettingsRepository.set(
@@ -266,8 +289,8 @@ class _ListingDisplaySettingsSectionState
             ...districts.map((d) {
               final selected = settings.districtName == d;
               return ListTile(
-                title: Text(d, style: const TextStyle(color: Colors.white)),
-                trailing: selected ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41)) : null,
+                title: Text(d, style: TextStyle(color: textColor)),
+                trailing: selected ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
                 onTap: () async {
                   await ListingDisplaySettingsRepository.set(
                       settings.copyWith(districtName: d, districtCode: d));

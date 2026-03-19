@@ -36,7 +36,7 @@ class ListingMedia360Placeholder extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.panorama_photosphere_select_rounded, size: 20, color: DesignTokens.primary),
+              const Icon(Icons.panorama_photosphere_select_rounded, size: 20, color: DesignTokens.primary),
               const SizedBox(width: DesignTokens.space2),
               Text(
                 '360° & 3D',
@@ -56,7 +56,7 @@ class ListingMedia360Placeholder extends StatelessWidget {
             ),
           if (hasLidar) ...[
             if (has360) const SizedBox(height: DesignTokens.space2),
-            _Chip(label: 'Lidar tarama', url: null),
+            const _Chip(label: 'Lidar tarama'),
           ],
         ],
       ),

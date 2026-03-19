@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import '../../../../core/utils/last_contact_label.dart';
 import '../../../../features/lead_temperature_engine/presentation/providers/lead_temperature_provider.dart';
 import '../../../../shared/models/customer_models.dart';
@@ -103,6 +105,20 @@ class CustomerCard extends ConsumerWidget {
                     _TemperatureChip(value: customer.leadTemperature!)
                   else
                     _LeadScoreChip(score: temperatureScore.score, level: temperatureScore.level),
+                  if (!selectionMode)
+                    IconButton(
+                      icon: const Icon(Icons.contact_phone_outlined, size: 22),
+                      color: DesignTokens.textSecondaryDark,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        showSaveContactSheet(
+                          context,
+                          initialName: customer.fullName,
+                          initialPhone: customer.primaryPhone,
+                          initialEmail: customer.email,
+                        );
+                      },
+                    ),
                 ],
               ),
               if (customer.lastInteractionAt != null || customer.nextSuggestedAction != null) ...[

@@ -3,10 +3,13 @@
 ## 1. Firebase Auth
 
 - **Giriş:** Email + şifre (`AuthService.signInWithEmailAndPassword`).
+- **Kayıt:** Giriş ekranından **Kayıt ol** → `/register` (`AuthService.registerWithEmailAndPassword`) veya **Google ile devam et**. Sonrasında mevcut akış: Firestore’da `users/{uid}` yoksa **rol seçimi** (davet e-postası varsa otomatik atanır).
 - **Çıkış:** `AuthService.signOut()` (Ayarlar sayfasında "Çıkış yap").
 - **Session:** `authStateChanges` stream ile otomatik; sayfa yenilense bile giriş korunur.
 
 Firebase Console’da **Authentication → Sign-in method** içinde **Email/Password** etkin olmalı.
+
+**Şifremi unuttum:** Uygulama `sendPasswordResetEmail` ile sıfırlama bağlantısı gönderir. "Şifre sıfırlama şu an etkin değil" hatası alınıyorsa Console'da **Email/Password**'ü açıp kaydedin.
 
 ---
 
@@ -27,6 +30,8 @@ Her giriş yapan kullanıcı için doküman: `users/{uid}`
 **role değerleri:** `super_admin`, `broker`, `office_manager`, `team_lead`, `agent`, `operations`, `investor`
 
 Uygulama içinde `AppRole` enum’u ile eşlenir (örn. `broker` → `brokerOwner`, `investor` → `investorPortal`).
+
+**"Hesap bilgileriniz yüklenemedi" hatası:** Giriş başarılı olduğu halde Firestore’dan `users/{uid}` okunamıyorsa bu ekran çıkar. Sebepler: (1) Firestore kuralları güncel değil – `firestore.rules` değiştirildiyse mutlaka deploy edin: `firebase deploy --only firestore:rules`. (2) Kullanıcı dokümanı yok veya `role` alanı boş – rol seçim ekranına yönlendirilir veya yönetici Firestore’da `users/{uid}` oluşturup `role` atamalı. (3) Ağ / geçici hata – ekrandaki **Tekrar dene** ile stream yeniden başlatılır.
 
 ---
 

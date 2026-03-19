@@ -1,14 +1,15 @@
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
+import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart';
 import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../core/router/app_router.dart';
 
 /// Opportunity Radar: bugünün en sıcak lead'leri, at-risk deal'ler, gecikmiş follow-up, yeniden aktif lead'ler.
 class OpportunityRadarWidget extends ConsumerWidget {
@@ -73,20 +74,27 @@ class OpportunityRadarWidget extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: Text('${e.daysSilent} gün sessiz', style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11)),
-                  onTap: () {},
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    showResurrectionLeadTopicSheet(
+                      context,
+                      topicTitle: 'Fırsat radarı',
+                      item: e,
+                    );
+                  },
                 )).toList(),
               );
             },
             loading: () => Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
-                children: List.generate(3, (_) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                children: List.generate(3, (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      const SkeletonLoader(width: 18, height: 18, borderRadius: BorderRadius.all(Radius.circular(4))),
-                      const SizedBox(width: 12),
-                      const Expanded(
+                      SkeletonLoader(width: 18, height: 18, borderRadius: BorderRadius.all(Radius.circular(4))),
+                      SizedBox(width: 12),
+                      Expanded(
                         child: SkeletonLoader(height: 13, width: double.infinity, borderRadius: BorderRadius.all(Radius.circular(4))),
                       ),
                     ],

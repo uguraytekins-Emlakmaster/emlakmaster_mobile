@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
@@ -14,8 +15,13 @@ class CustomersPlaceholderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceVariant = onSurface.withOpacity(0.7);
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: bg,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -24,22 +30,22 @@ class CustomersPlaceholderPage extends StatelessWidget {
               Icon(
                 Icons.people_rounded,
                 size: 64,
-                color: Colors.white.withOpacity(0.3),
+                color: onSurfaceVariant,
               ),
               const SizedBox(height: 16),
               Text(
                 'Müşteriler',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
+                      color: onSurface,
                       fontWeight: FontWeight.w600,
                     ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'CRM entegrasyonu ile müşteri listesi burada görünecek.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white54,
+                  color: onSurfaceVariant,
                   fontSize: 14,
                 ),
               ),
@@ -67,38 +73,43 @@ class SettingsPlaceholderPage extends ConsumerWidget {
     final canBecomeAdmin = user != null &&
         (realRole == AppRole.agent || realRole == AppRole.guest);
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceVariant = onSurface.withOpacity(0.7);
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1117),
-        foregroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
+        foregroundColor: theme.appBarTheme.foregroundColor ?? onSurface,
         title: const Text('Ayarlar'),
       ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Text(
+            Text(
               'Görünüm',
               style: TextStyle(
-                color: Colors.white54,
+                color: onSurfaceVariant,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
-            const _ThemeSection(),
+            const ThemeSection(),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Bildirimler',
               style: TextStyle(
-                color: Colors.white54,
+                color: onSurfaceVariant,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
-            const _NotificationsSection(),
+            const NotificationsSection(),
             const SizedBox(height: 24),
             const ListingDisplaySettingsSection(),
             const SizedBox(height: 24),
@@ -107,34 +118,34 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                 leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
                 title: Text(
                   user.email ?? 'Giriş yapılmış',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: onSurface, fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
                   'Rol: ${override?.label ?? role.label}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(color: onSurfaceVariant, fontSize: 12),
                 ),
               ),
               const SizedBox(height: 16),
             ],
             if (canBecomeAdmin) ...[
-              const Text(
+              Text(
                 'Yetki',
                 style: TextStyle(
-                  color: Colors.white54,
+                  color: onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
               ListTile(
-                leading: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF00FF41)),
-                title: const Text(
+                leading: const Icon(Icons.admin_panel_settings_rounded, color: DesignTokens.primary),
+                title: Text(
                   'Yönetici yetkisi al',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: onSurface),
                 ),
-                subtitle: const Text(
+                subtitle: Text(
                   'Firestore\'da rolünüz broker_owner olarak güncellenir; yönetici ve danışman paneline geçebilirsiniz.',
-                  style: TextStyle(color: Colors.white54, fontSize: 11),
+                  style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 onTap: () async {
                   final u = user;
@@ -150,7 +161,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Yönetici yetkisi verildi. Panel yenileniyor...'),
-                          backgroundColor: Color(0xFF00FF41),
+                          backgroundColor: DesignTokens.primary,
                         ),
                       );
                     }
@@ -166,10 +177,10 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               const SizedBox(height: 24),
             ],
             if (isAdmin) ...[
-              const Text(
+              Text(
                 'Panel görünümü',
                 style: TextStyle(
-                  color: Colors.white54,
+                  color: onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -178,15 +189,15 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               ListTile(
                 leading: Icon(
                   Icons.dashboard_rounded,
-                  color: preferConsultant != true ? const Color(0xFF00FF41) : Colors.white54,
+                  color: preferConsultant != true ? DesignTokens.primary : onSurfaceVariant,
                 ),
-                title: const Text('Yönetici paneli', style: TextStyle(color: Colors.white)),
-                subtitle: const Text(
+                title: Text('Yönetici paneli', style: TextStyle(color: onSurface)),
+                subtitle: Text(
                   'Dashboard, War Room, Çağrı Merkezi, Ekonomi, Raporlar',
-                  style: TextStyle(color: Colors.white54, fontSize: 11),
+                  style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: preferConsultant != true
-                    ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41))
+                    ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
                     : null,
                 onTap: () {
                   ref.read(preferredConsultantPanelProvider.notifier).state = false;
@@ -195,15 +206,15 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               ListTile(
                 leading: Icon(
                   Icons.person_rounded,
-                  color: preferConsultant == true ? const Color(0xFF00FF41) : Colors.white54,
+                  color: preferConsultant == true ? DesignTokens.primary : onSurfaceVariant,
                 ),
-                title: const Text('Danışman paneli', style: TextStyle(color: Colors.white)),
-                subtitle: const Text(
+                title: Text('Danışman paneli', style: TextStyle(color: onSurface)),
+                subtitle: Text(
                   'Özetim, Müşterilerim, İlanlar, Takip, Magic Call',
-                  style: TextStyle(color: Colors.white54, fontSize: 11),
+                  style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: preferConsultant == true
-                    ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41))
+                    ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
                     : null,
                 onTap: () {
                   ref.read(preferredConsultantPanelProvider.notifier).state = true;
@@ -212,39 +223,39 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               const SizedBox(height: 24),
             ],
             if (canSwitchRole) ...[
-              const Text(
+              Text(
                 'Yönetici test',
                 style: TextStyle(
-                  color: Colors.white54,
+                  color: onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
               ListTile(
-                leading: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF00FF41)),
+                leading: const Icon(Icons.swap_horiz_rounded, color: DesignTokens.primary),
                 title: Text(
                   override != null
                       ? 'Rol: ${override.label} (geri al)'
                       : 'Rol değiştir (test)',
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: onSurface),
                 ),
                 onTap: () => _showRoleSwitcher(context, ref, override),
               ),
               const SizedBox(height: 24),
             ],
-            const Text(
+            Text(
               'Hesap',
               style: TextStyle(
-                color: Colors.white54,
+                color: onSurfaceVariant,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(Icons.logout_rounded, color: Color(0xFFE53935)),
-              title: const Text('Çıkış yap', style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.logout_rounded, color: DesignTokens.danger),
+              title: Text('Çıkış yap', style: TextStyle(color: onSurface)),
               onTap: () async {
                 await AuthService.instance.signOut();
               },
@@ -256,9 +267,13 @@ class SettingsPlaceholderPage extends ConsumerWidget {
   }
 
   void _showRoleSwitcher(BuildContext context, WidgetRef ref, AppRole? currentOverride) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetBg = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF161B22),
+      backgroundColor: sheetBg,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -267,14 +282,14 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               child: Text(
                 'Test için rol seç (sadece görünüm)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
               ),
             ),
             ...AppRole.values.map((r) {
               return ListTile(
-                title: Text(r.label, style: const TextStyle(color: Colors.white)),
+                title: Text(r.label, style: TextStyle(color: textColor)),
                 trailing: currentOverride == r
-                    ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41))
+                    ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
                     : null,
                 onTap: () {
                   ref.read(overrideRoleProvider.notifier).state =
@@ -291,72 +306,82 @@ class SettingsPlaceholderPage extends ConsumerWidget {
   }
 }
 
-class _ThemeSection extends ConsumerWidget {
-  const _ThemeSection();
+class ThemeSection extends ConsumerWidget {
+  const ThemeSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final border = isDark ? DesignTokens.borderDark.withOpacity(0.5) : DesignTokens.borderLight;
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceVariant = onSurface.withOpacity(0.7);
     final index = ref.watch(themeModeIndexProvider);
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF161B22),
+        color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: border),
       ),
       child: Column(
         children: [
           ListTile(
             leading: Icon(
               index == 0 ? Icons.brightness_auto_rounded : (index == 1 ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
-              color: const Color(0xFF00FF41),
+              color: DesignTokens.primary,
             ),
-            title: const Text('Tema', style: TextStyle(color: Colors.white)),
+            title: Text('Tema', style: TextStyle(color: onSurface)),
             subtitle: Text(
               index == 0 ? 'Sistem' : (index == 1 ? 'Açık' : 'Koyu'),
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+              style: TextStyle(color: onSurfaceVariant, fontSize: 12),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
-            onTap: () => _showThemePicker(context, ref, index),
+            trailing: Icon(Icons.chevron_right_rounded, color: onSurfaceVariant),
+            onTap: () => ThemeSection._showThemePicker(context, ref, currentIndex: index),
           ),
         ],
       ),
     );
   }
 
-  void _showThemePicker(BuildContext context, WidgetRef ref, int currentIndex) {
+  static void _showThemePicker(BuildContext context, WidgetRef ref, {required int currentIndex}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetBg = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF161B22),
+      backgroundColor: sheetBg,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
                 'Tema',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 16),
               ),
             ),
             ListTile(
-              title: const Text('Sistem', style: TextStyle(color: Colors.white)),
-              trailing: currentIndex == 0 ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41)) : null,
+              title: Text('Sistem', style: TextStyle(color: textColor)),
+              trailing: currentIndex == 0 ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
               onTap: () {
                 ref.read(themeModeIndexProvider.notifier).setThemeModeIndex(0);
                 Navigator.pop(ctx);
               },
             ),
             ListTile(
-              title: const Text('Açık', style: TextStyle(color: Colors.white)),
-              trailing: currentIndex == 1 ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41)) : null,
+              title: Text('Açık', style: TextStyle(color: textColor)),
+              trailing: currentIndex == 1 ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
               onTap: () {
                 ref.read(themeModeIndexProvider.notifier).setThemeModeIndex(1);
                 Navigator.pop(ctx);
               },
             ),
             ListTile(
-              title: const Text('Koyu', style: TextStyle(color: Colors.white)),
-              trailing: currentIndex == 2 ? const Icon(Icons.check_rounded, color: Color(0xFF00FF41)) : null,
+              title: Text('Koyu', style: TextStyle(color: textColor)),
+              trailing: currentIndex == 2 ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
               onTap: () {
                 ref.read(themeModeIndexProvider.notifier).setThemeModeIndex(2);
                 Navigator.pop(ctx);
@@ -370,39 +395,45 @@ class _ThemeSection extends ConsumerWidget {
   }
 }
 
-class _NotificationsSection extends ConsumerWidget {
-  const _NotificationsSection();
+class NotificationsSection extends ConsumerWidget {
+  const NotificationsSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
+    final border = isDark ? DesignTokens.borderDark.withOpacity(0.5) : DesignTokens.borderLight;
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceVariant = onSurface.withOpacity(0.7);
     final asyncEnabled = ref.watch(notificationsEnabledProvider);
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF161B22),
+        color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: border),
       ),
       child: asyncEnabled.when(
-        loading: () => const ListTile(
-          title: Text('Bildirimler', style: TextStyle(color: Colors.white)),
-          trailing: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00FF41))),
+        loading: () => ListTile(
+          title: Text('Bildirimler', style: TextStyle(color: onSurface)),
+          trailing: const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary)),
         ),
-        error: (_, __) => const ListTile(
-          title: Text('Bildirimler', style: TextStyle(color: Colors.white)),
-          subtitle: Text('Yüklenemedi', style: TextStyle(color: Colors.red, fontSize: 12)),
+        error: (_, __) => ListTile(
+          title: Text('Bildirimler', style: TextStyle(color: onSurface)),
+          subtitle: const Text('Yüklenemedi', style: TextStyle(color: Colors.red, fontSize: 12)),
         ),
         data: (enabled) => SwitchListTile(
           secondary: Icon(
             enabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
-            color: const Color(0xFF00FF41),
+            color: DesignTokens.primary,
           ),
-          title: const Text('Bildirimler', style: TextStyle(color: Colors.white)),
-          subtitle: const Text(
+          title: Text('Bildirimler', style: TextStyle(color: onSurface)),
+          subtitle: Text(
             'Push ve uygulama içi bildirimler',
-            style: TextStyle(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: onSurfaceVariant, fontSize: 12),
           ),
           value: enabled,
-          activeColor: const Color(0xFF00FF41),
+          activeColor: DesignTokens.primary,
           onChanged: (v) => ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
         ),
       ),

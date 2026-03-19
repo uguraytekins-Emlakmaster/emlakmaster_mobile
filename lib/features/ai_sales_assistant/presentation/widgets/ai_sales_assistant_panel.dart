@@ -108,13 +108,13 @@ class AiSalesAssistantPanel extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: const Color(0xFF00FF41).withOpacity(0.12),
-                    border: Border.all(color: const Color(0xFF00FF41).withOpacity(0.3)),
+                    color: DesignTokens.primary.withOpacity(0.12),
+                    border: Border.all(color: DesignTokens.primary.withOpacity(0.3)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.lightbulb_rounded, color: Color(0xFF00FF41), size: 18),
+                      const Icon(Icons.lightbulb_rounded, color: DesignTokens.primary, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -136,7 +136,7 @@ class AiSalesAssistantPanel extends ConsumerWidget {
             const SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00FF41)),
+              child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
             ),
             const SizedBox(width: 12),
             Text('Müşteri verisi yükleniyor...', style: _bodyStyle(context)),

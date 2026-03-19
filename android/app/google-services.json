@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "572835725773",
+    "project_id": "emlak-master",
+    "storage_bucket": "emlak-master.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:572835725773:android:27252e78a15a8fda92c484",
+        "android_client_info": {
+          "package_name": "com.example.emlakmaster_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "572835725773-t4q78hc99oahvv35t61lsbhg5abh298u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.emlakmaster_mobile",
+            "certificate_hash": "851a07870692cd72df05907f44866c8e22bb9bfe"
+          }
+        },
+        {
+          "client_id": "572835725773-m7hqe81ad42nnk5dv6k7gq0oup7pksj1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsQl8NkdQ22MiX2Xx5IxgNzYixrj2EqbQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "572835725773-m7hqe81ad42nnk5dv6k7gq0oup7pksj1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "572835725773-8s71g3li2ful895gppeb6bvlbck09hkd.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.emlakmasterMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

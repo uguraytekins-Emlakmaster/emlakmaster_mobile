@@ -71,7 +71,9 @@ enum AppRole {
       this == superAdmin || this == brokerOwner || this == generalManager;
   bool get isManagerTier =>
       isAdminTier || this == officeManager || this == teamLead;
-  bool get canViewAllCalls => isManagerTier || this == operations;
+  /// Tüm çağrıları görebilme (Call Center, global call logs).
+  /// İş gereği: sadece brokerOwner ve superAdmin seviyeleri.
+  bool get canViewAllCalls => this == superAdmin || this == brokerOwner;
   bool get canViewInvestorIntelligence =>
       isAdminTier || this == financeInvestor || this == investorPortal;
 

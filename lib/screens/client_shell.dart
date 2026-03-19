@@ -32,9 +32,9 @@ class _ClientShellPageState extends State<ClientShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       children: [
-        const SyncStatusBanner(compact: true),
+        SyncStatusBanner(compact: true),
         Expanded(
           child: AdaptiveShellScaffold(
             navItems: _navItems,

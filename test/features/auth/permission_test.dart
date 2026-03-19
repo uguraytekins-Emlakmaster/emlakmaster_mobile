@@ -8,8 +8,11 @@ void main() {
       test('superAdmin can view all calls', () {
         expect(FeaturePermission.canViewAllCalls(AppRole.superAdmin), isTrue);
       });
-      test('officeManager can view all calls', () {
-        expect(FeaturePermission.canViewAllCalls(AppRole.officeManager), isTrue);
+      test('brokerOwner can view all calls', () {
+        expect(FeaturePermission.canViewAllCalls(AppRole.brokerOwner), isTrue);
+      });
+      test('officeManager cannot view all calls (sadece broker)', () {
+        expect(FeaturePermission.canViewAllCalls(AppRole.officeManager), isFalse);
       });
       test('agent cannot view all calls', () {
         expect(FeaturePermission.canViewAllCalls(AppRole.agent), isFalse);
@@ -20,8 +23,8 @@ void main() {
       test('investorPortal cannot view all calls', () {
         expect(FeaturePermission.canViewAllCalls(AppRole.investorPortal), isFalse);
       });
-      test('operations can view all calls', () {
-        expect(FeaturePermission.canViewAllCalls(AppRole.operations), isTrue);
+      test('operations cannot view all calls (sadece broker)', () {
+        expect(FeaturePermission.canViewAllCalls(AppRole.operations), isFalse);
       });
     });
 
@@ -37,6 +40,33 @@ void main() {
     group('canViewCallCenter', () {
       test('agent can view call center (own)', () {
         expect(FeaturePermission.canViewCallCenter(AppRole.agent), isTrue);
+      });
+    });
+
+    group('canManageConsultants', () {
+      test('officeManager can manage consultants', () {
+        expect(FeaturePermission.canManageConsultants(AppRole.officeManager), isTrue);
+      });
+      test('teamLead can manage consultants', () {
+        expect(FeaturePermission.canManageConsultants(AppRole.teamLead), isTrue);
+      });
+      test('agent cannot manage consultants', () {
+        expect(FeaturePermission.canManageConsultants(AppRole.agent), isFalse);
+      });
+      test('operations can manage consultants', () {
+        expect(FeaturePermission.canManageConsultants(AppRole.operations), isTrue);
+      });
+    });
+
+    group('canManageTeams', () {
+      test('officeManager can manage teams', () {
+        expect(FeaturePermission.canManageTeams(AppRole.officeManager), isTrue);
+      });
+      test('teamLead can manage teams', () {
+        expect(FeaturePermission.canManageTeams(AppRole.teamLead), isTrue);
+      });
+      test('agent cannot manage teams', () {
+        expect(FeaturePermission.canManageTeams(AppRole.agent), isFalse);
       });
     });
   });

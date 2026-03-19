@@ -1,44 +1,47 @@
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/pages/command_center_page.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/features/war_room/presentation/pages/war_room_page.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
-import 'package:emlakmaster_mobile/screens/placeholder_pages.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:emlakmaster_mobile/screens/admin_pages.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Yönetici paneli: tam yetki. Web/Desktop: sidebar; Mobile: bottom nav.
-/// Dashboard | War Room | Çağrı Merkezi | Ekonomi | Raporlar | Ayarlar
-class AdminShellPage extends StatelessWidget {
+/// Yönetici paneli: tam yetki. Nav öğeleri ayarlardaki özellik bayraklarına göre gösterilir.
+class AdminShellPage extends ConsumerWidget {
   const AdminShellPage({super.key});
 
-  static const List<AdaptiveNavItem> _navItems = [
-    AdaptiveNavItem(Icons.dashboard_rounded, 'Dashboard'),
-    AdaptiveNavItem(Icons.military_tech_rounded, 'War Room'),
-    AdaptiveNavItem(Icons.call_rounded, 'Çağrı Merkezi'),
-    AdaptiveNavItem(Icons.trending_up_rounded, 'Ekonomi'),
-    AdaptiveNavItem(Icons.analytics_rounded, 'Raporlar'),
-    AdaptiveNavItem(Icons.settings_rounded, 'Ayarlar'),
-  ];
-
-  static const List<Widget> _pages = [
-    DashboardPage(),
-    WarRoomPage(),
-    CommandCenterPage(),
-    AdminEconomyPage(),
-    AdminReportsPage(),
-    SettingsPlaceholderPage(),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final flags = ref.watch(featureFlagsProvider).valueOrNull;
+    final warRoom = flags?[AppConstants.keyFeatureWarRoom] ?? true;
+    final commandCenter = flags?[AppConstants.keyFeatureCommandCenter] ?? true;
+    final navItems = <AdaptiveNavItem>[
+      const AdaptiveNavItem(Icons.dashboard_rounded, 'Dashboard'),
+      if (warRoom) const AdaptiveNavItem(Icons.military_tech_rounded, 'War Room'),
+      if (commandCenter) const AdaptiveNavItem(Icons.call_rounded, 'Çağrı Merkezi'),
+      const AdaptiveNavItem(Icons.trending_up_rounded, 'Ekonomi'),
+      const AdaptiveNavItem(Icons.analytics_rounded, 'Raporlar'),
+      const AdaptiveNavItem(Icons.settings_rounded, 'Ayarlar'),
+    ];
+    final pages = <Widget>[
+      const DashboardPage(),
+      if (warRoom) const WarRoomPage(),
+      if (commandCenter) const CommandCenterPage(),
+      const AdminEconomyPage(),
+      const AdminReportsPage(),
+      const SettingsPage(),
+    ];
     return Column(
       children: [
         const SyncStatusBanner(compact: true),
         Expanded(
           child: AdaptiveShellScaffold(
-            navItems: _navItems,
-            pages: _pages,
+            navItems: navItems,
+            pages: pages,
             title: 'Yönetici Paneli',
           ),
         ),

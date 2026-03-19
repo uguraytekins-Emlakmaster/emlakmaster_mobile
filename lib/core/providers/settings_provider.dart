@@ -6,6 +6,37 @@ import '../services/settings_service.dart';
 /// Başlangıçta main() içinde yüklenen tema indeksi (flash önlemek için).
 final initialThemeModeIndexProvider = Provider<int>((ref) => 2);
 
+/// Başlangıçta yüklenen dil kodu (tr/en).
+final initialLocaleProvider = FutureProvider<Locale>((ref) async {
+  final code = await SettingsService.instance.getLocaleLanguageCode();
+  return Locale(code);
+});
+
+/// Uygulama dili. Güncellemek için setLocale.
+final localeProvider = StateNotifierProvider<LocaleNotifier, AsyncValue<Locale>>((ref) {
+  return LocaleNotifier();
+});
+
+class LocaleNotifier extends StateNotifier<AsyncValue<Locale>> {
+  LocaleNotifier() : super(const AsyncValue.loading()) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final code = await SettingsService.instance.getLocaleLanguageCode();
+      state = AsyncValue.data(Locale(code));
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> setLocale(Locale locale) async {
+    await SettingsService.instance.setLocaleLanguageCode(locale.languageCode);
+    state = AsyncValue.data(locale);
+  }
+}
+
 /// Tema modu indeksi: 0=system, 1=light, 2=dark. Güncellemek için setThemeModeIndex.
 final themeModeIndexProvider =
     StateNotifierProvider<ThemeModeIndexNotifier, int>((ref) {

@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/finance_service.dart';
 import 'package:flutter/material.dart';
 
@@ -148,13 +149,13 @@ class FinanceChip extends StatelessWidget {
             children: [
               Icon(
                 isUp ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                color: isUp ? const Color(0xFF00FF41) : Colors.redAccent,
+                color: isUp ? DesignTokens.primary : Colors.redAccent,
                 size: 16,
               ),
               Text(
                 change,
                 style: TextStyle(
-                  color: isUp ? const Color(0xFF00FF41) : Colors.redAccent,
+                  color: isUp ? DesignTokens.primary : Colors.redAccent,
                   fontSize: 10,
                 ),
               ),

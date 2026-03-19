@@ -12,7 +12,8 @@ class WhatsAppLauncher {
   }
 
   /// Türkiye numarası için wa.me URL: 90 + 5XXXXXXXXX (baştaki 0 atılır).
-  static String urlForTurkishNumber(String phone) {
+  /// [message] verilirse sohbet önceden doldurulur (opsiyonel).
+  static String urlForTurkishNumber(String phone, {String? message}) {
     final digits = _digitsOnly(phone);
     if (digits.isEmpty) return '';
     String normalized = digits;
@@ -20,12 +21,17 @@ class WhatsAppLauncher {
     if (!normalized.startsWith('90') && normalized.length >= 10) {
       normalized = '90$normalized';
     }
-    return 'https://wa.me/$normalized';
+    var url = 'https://wa.me/$normalized';
+    if (message != null && message.trim().isNotEmpty) {
+      url += '?text=${Uri.encodeComponent(message.trim())}';
+    }
+    return url;
   }
 
-  /// WhatsApp'ı açar. Numara geçersizse false döner.
-  static Future<bool> openChat(String phone) async {
-    final uri = urlForTurkishNumber(phone);
+  /// WhatsApp'ı açar. [message] opsiyonel; sohbet kutusuna önceden doldurulur.
+  /// Numara geçersizse false döner.
+  static Future<bool> openChat(String phone, {String? message}) async {
+    final uri = urlForTurkishNumber(phone, message: message);
     if (uri.isEmpty) return false;
     try {
       final parsed = Uri.parse(uri);

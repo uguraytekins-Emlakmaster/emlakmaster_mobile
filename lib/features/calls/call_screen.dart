@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -33,13 +34,31 @@ class CallScreen extends ConsumerStatefulWidget {
   ConsumerState<CallScreen> createState() => _CallScreenState();
 }
 
-class _CallScreenState extends ConsumerState<CallScreen> {
+class _CallScreenState extends ConsumerState<CallScreen>
+    with SingleTickerProviderStateMixin {
   CallUIState _callState = CallUIState.connecting;
   bool _isMuted = false;
   bool _isSpeakerOn = false;
   bool _isKeypadOpen = false;
+  /// Sürükleme sırasında anlık değer (animasyonsuz); null = panel fraction kullan
+  double? _keypadDragValue;
   int _elapsedSeconds = 0;
   Timer? _ticker;
+  /// Numara girişi (Magic Call açıldığında numara yoksa)
+  String _dialDigits = '';
+  /// Arama ekranı: true = sadece numara gir / tuş takımı; false = arama simülasyonu
+  bool _isDialMode = false;
+  /// Tuş takımından basılan rakamlar (aramada DTMF gösterimi)
+  String _keypadDigits = '';
+  /// Sürükleme başlangıç Y ve fraction (drag callback için)
+  double _keypadDragStartY = 0;
+  double _keypadDragStartFraction = 0;
+
+  static const Duration _keypadSnapDuration = Duration(milliseconds: 280);
+  static const Curve _keypadSnapCurve = Curves.easeOutCubic;
+
+  late AnimationController _keypadPanelController;
+  late Animation<double> _keypadPanelAnimation;
 
   String get _agentId {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
@@ -50,8 +69,25 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   void initState() {
     super.initState();
     HapticFeedback.lightImpact();
+    _isDialMode = widget.phone == null && widget.customerId == null;
+    if (!_isDialMode) _dialDigits = widget.phone ?? '';
 
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+    _keypadPanelController = AnimationController(
+      vsync: this,
+      duration: _keypadSnapDuration,
+    );
+    _keypadPanelAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _keypadPanelController, curve: _keypadSnapCurve),
+    );
+    _keypadPanelController.addListener(() => setState(() {}));
+    _keypadPanelController.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed && _isKeypadOpen) {
+        setState(() => _isKeypadOpen = false);
+      }
+    });
+
+    if (!_isDialMode) {
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       if (_callState != CallUIState.connected) return;
       setState(() {
@@ -73,12 +109,223 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         () => FirestoreService.setAgentStatus(agentId: agentId, status: 'Görüşmede'),
       ));
     });
+    }
+  }
+
+  void _startCallWithDialNumber() {
+    final number = _dialDigits.replaceAll(RegExp(r'\s'), '').trim();
+    if (number.isEmpty) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _isDialMode = false;
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        if (_callState != CallUIState.connected) return;
+        setState(() => _elapsedSeconds++);
+      });
+    });
+    Future<void>.delayed(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      setState(() => _callState = CallUIState.connected);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final agentId = _agentId;
+      unawaited(runWithResilience(
+        ref: ref as Ref<Object?>,
+        () => FirestoreService.setAgentStatus(agentId: agentId, status: 'Görüşmede'),
+      ));
+    });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    _keypadPanelController.dispose();
     super.dispose();
+  }
+
+  void _openKeypadPanel() {
+    setState(() => _isKeypadOpen = true);
+    _keypadPanelController.forward(from: 0);
+  }
+
+  void _closeKeypadPanel() {
+    _keypadPanelController.reverse();
+  }
+
+  void _onKeypadDragStart(DragStartDetails details) {
+    _keypadDragStartY = details.globalPosition.dy;
+    _keypadDragStartFraction = _keypadDragValue ?? _keypadPanelAnimation.value;
+  }
+
+  void _onKeypadDragUpdate(DragUpdateDetails details, double sheetHeight) {
+    final delta = details.globalPosition.dy - _keypadDragStartY;
+    final newFraction = (_keypadDragStartFraction - delta / sheetHeight).clamp(0.0, 1.0);
+    setState(() => _keypadDragValue = newFraction);
+  }
+
+  void _onKeypadDragEnd(double sheetHeight) {
+    final current = _keypadDragValue ?? _keypadPanelAnimation.value;
+    setState(() => _keypadDragValue = null);
+    if (current < 0.5) {
+      _keypadPanelController.value = current;
+      _keypadPanelController.reverse();
+    } else {
+      _keypadPanelController.value = current;
+      _keypadPanelController.forward();
+    }
+  }
+
+  static const double _keypadSheetMaxFraction = 0.48;
+
+  Widget _buildDraggableKeypadSheet(double screenHeight) {
+    final sheetHeight = screenHeight * _keypadSheetMaxFraction;
+    final effectiveFraction = _keypadDragValue ?? _keypadPanelAnimation.value;
+    final currentHeight = sheetHeight * effectiveFraction;
+
+    return GestureDetector(
+      onVerticalDragStart: _onKeypadDragStart,
+      onVerticalDragUpdate: (d) => _onKeypadDragUpdate(d, sheetHeight),
+      onVerticalDragEnd: (_) => _onKeypadDragEnd(sheetHeight),
+      child: AnimatedContainer(
+        duration: _keypadDragValue != null ? Duration.zero : _keypadSnapDuration,
+        curve: _keypadSnapCurve,
+        height: currentHeight,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          clipBehavior: Clip.hardEdge,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: SizedBox(
+              height: sheetHeight,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                        border: Border(
+                          top: BorderSide(color: Colors.white.withOpacity(0.12)),
+                          left: BorderSide(color: Colors.white.withOpacity(0.06)),
+                          right: BorderSide(color: Colors.white.withOpacity(0.06)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: _KeypadSheet(
+                            onKeyPressed: (key) {
+                              HapticFeedback.selectionClick();
+                              setState(() => _keypadDigits += key);
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialMode(ThemeData theme, double topPadding) {
+    return SafeArea(
+      child: Column(
+        children: [
+          SizedBox(height: topPadding),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  color: Colors.white70,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    context.pop();
+                  },
+                ),
+                const Spacer(),
+                Text(
+                  'Numara çevir',
+                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _dialDigits.isEmpty ? 'Numara girin' : _dialDigits,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: _dialDigits.isEmpty ? Colors.white38 : Colors.white,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                if (_dialDigits.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.backspace_outlined),
+                    color: Colors.white70,
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _dialDigits = _dialDigits.isEmpty ? '' : _dialDigits.substring(0, _dialDigits.length - 1));
+                    },
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: _KeypadSheet(
+              onKeyPressed: (key) {
+                HapticFeedback.selectionClick();
+                setState(() => _dialDigits += key);
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: _dialDigits.trim().isEmpty ? null : _startCallWithDialNumber,
+            icon: const Icon(Icons.call_rounded, size: 22),
+            label: const Text('Ara'),
+            style: FilledButton.styleFrom(
+              backgroundColor: DesignTokens.primary,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _endCall() async {
@@ -90,6 +337,18 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         ref: ref as Ref<Object?>,
         () => FirestoreService.setAgentStatus(agentId: _agentId, status: 'Müsait'),
       );
+      final phone = widget.phone ?? (_dialDigits.trim().isNotEmpty ? _dialDigits.trim() : null);
+      await runWithResilience(
+        ref: ref as Ref<Object?>,
+        () => FirestoreService.createCallRecord(
+          advisorId: _agentId,
+          direction: 'outgoing',
+          outcome: AppConstants.callOutcomeCompleted,
+          durationSeconds: _elapsedSeconds,
+          phoneNumber: phone,
+          customerId: widget.customerId,
+        ),
+      );
       if (!mounted) return;
       final extra = <String, dynamic>{
         'durationSec': _elapsedSeconds,
@@ -97,6 +356,7 @@ class _CallScreenState extends ConsumerState<CallScreen> {
       };
       final customerId = widget.customerId;
       if (customerId != null && customerId.isNotEmpty) extra['customerId'] = customerId;
+      if (phone != null && phone.isNotEmpty) extra['phone'] = phone;
       context.push(AppRouter.routeCallSummary, extra: extra);
     } catch (e) {
       if (mounted) setState(() => _callState = CallUIState.connected);
@@ -112,10 +372,12 @@ class _CallScreenState extends ConsumerState<CallScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: DesignTokens.scaffoldDark,
       body: Stack(
         fit: StackFit.expand,
         children: [
+          if (_isDialMode) _buildDialMode(theme, topPadding),
+          if (!_isDialMode)
           SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: 24),
             child: Column(
@@ -145,7 +407,7 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _ClientInfoHeader(customerId: widget.customerId),
+                _ClientInfoHeader(customerId: widget.customerId, displayPhone: _dialDigits.isNotEmpty ? _dialDigits : null),
                 const SizedBox(height: 16),
                 _SiriWaveBars(isActive: !_isMuted),
                 const SizedBox(height: 8),
@@ -188,8 +450,8 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _callState == CallUIState.ending
-                                  ? const Color(0xFFE53935).withOpacity(0.6)
-                                  : const Color(0xFFE53935),
+                                  ? DesignTokens.danger.withOpacity(0.6)
+                                  : DesignTokens.danger,
                             ),
                             child: _callState == CallUIState.ending
                                 ? const SizedBox(
@@ -230,9 +492,11 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                             isActive: _isKeypadOpen,
                             onTap: () {
                               HapticFeedback.selectionClick();
-                              setState(() {
-                                _isKeypadOpen = !_isKeypadOpen;
-                              });
+                              if (_isKeypadOpen) {
+                                _closeKeypadPanel();
+                              } else {
+                                _openKeypadPanel();
+                              }
                             },
                           ),
                           const SizedBox(width: 24),
@@ -272,66 +536,18 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                       behavior: HitTestBehavior.opaque,
                       onTap: () {
                         HapticFeedback.lightImpact();
-                        setState(() {
-                          _isKeypadOpen = false;
-                        });
+                        _closeKeypadPanel();
                       },
                       child: Container(
-                        color: Colors.transparent,
+                        color: Colors.black26,
                         height: screenHeight * 0.52,
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () {},
-                      child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                      child: SizedBox(
-                        height: screenHeight * 0.48,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.08),
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                                  border: Border(
-                                    top: BorderSide(color: Colors.white.withOpacity(0.12)),
-                                    left: BorderSide(color: Colors.white.withOpacity(0.06)),
-                                    right: BorderSide(color: Colors.white.withOpacity(0.06)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(height: 12),
-                                Container(
-                                  width: 36,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white24,
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                                const Expanded(
-                                  child: Center(
-                                    child: _KeypadSheet(),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                    _buildDraggableKeypadSheet(screenHeight),
+                  ],
+                ),
               ),
             ),
-          ),
           ),
           Positioned(
             top: topPadding + 8,
@@ -461,9 +677,10 @@ class _SiriWaveBarsAnimatedState extends State<_SiriWaveBarsAnimated>
 }
 
 class _ClientInfoHeader extends ConsumerWidget {
-  const _ClientInfoHeader({this.customerId});
+  const _ClientInfoHeader({this.customerId, this.displayPhone});
 
   final String? customerId;
+  final String? displayPhone;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -471,10 +688,10 @@ class _ClientInfoHeader extends ConsumerWidget {
     if (customerId == null || customerId!.isEmpty) {
       return Column(
         children: [
-          const CircleAvatar(radius: 40, backgroundColor: Color(0xFF161B22)),
+          const CircleAvatar(radius: 40, backgroundColor: DesignTokens.surfaceDarkCard),
           const SizedBox(height: 12),
           Text(
-            'Arama',
+            displayPhone != null && displayPhone!.isNotEmpty ? displayPhone! : 'Arama',
             style: theme.textTheme.titleLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w600,
@@ -482,7 +699,7 @@ class _ClientInfoHeader extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Potansiyel Alıcı',
+            displayPhone != null && displayPhone!.isNotEmpty ? 'Aranan numara' : 'Potansiyel Alıcı',
             style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
           ),
         ],
@@ -497,7 +714,7 @@ class _ClientInfoHeader extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: const Color(0xFF161B22),
+              backgroundColor: DesignTokens.surfaceDarkCard,
               child: Text(
                 initial,
                 style: theme.textTheme.headlineMedium?.copyWith(
@@ -524,14 +741,14 @@ class _ClientInfoHeader extends ConsumerWidget {
       },
       loading: () => Column(
         children: [
-          const CircleAvatar(radius: 40, backgroundColor: Color(0xFF161B22)),
+          const CircleAvatar(radius: 40, backgroundColor: DesignTokens.surfaceDarkCard),
           const SizedBox(height: 12),
           Text('Yükleniyor...', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
         ],
       ),
       error: (_, __) => Column(
         children: [
-          const CircleAvatar(radius: 40, backgroundColor: Color(0xFF161B22)),
+          const CircleAvatar(radius: 40, backgroundColor: DesignTokens.surfaceDarkCard),
           const SizedBox(height: 12),
           Text('Müşteri', style: theme.textTheme.titleLarge?.copyWith(color: Colors.white)),
         ],
@@ -573,7 +790,7 @@ class _RoundIconButton extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              color: isActive ? const Color(0xFF00FF41) : Colors.white,
+              color: isActive ? DesignTokens.primary : Colors.white,
               size: 24,
             ),
           ),
@@ -591,7 +808,9 @@ class _RoundIconButton extends StatelessWidget {
 }
 
 class _KeypadSheet extends StatelessWidget {
-  const _KeypadSheet();
+  const _KeypadSheet({this.onKeyPressed});
+
+  final void Function(String key)? onKeyPressed;
 
   static const double _keyDiameter = 76.0;
   static const double _keySpacing = 14.0;
@@ -611,7 +830,7 @@ class _KeypadSheet extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C2128).withOpacity(0.95),
+          color: DesignTokens.scaffoldDark.withOpacity(0.95),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white.withOpacity(0.15)),
           boxShadow: [
@@ -639,7 +858,7 @@ class _KeypadSheet extends StatelessWidget {
               final keyLabel = keys[index];
               return GestureDetector(
                 onTapDown: (_) => HapticFeedback.selectionClick(),
-                onTap: () {},
+                onTap: () => onKeyPressed?.call(keyLabel),
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,

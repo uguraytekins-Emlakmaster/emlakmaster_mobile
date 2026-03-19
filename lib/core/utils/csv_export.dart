@@ -21,3 +21,28 @@ String callsToCsv(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
   }
   return sb.toString();
 }
+
+/// Çağrı listesini telefon ve yön dahil CSV'ye dönüştürür (danışman çağrı listesi / toplu SMS için).
+String callsToCsvWithPhones(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  const bom = '\uFEFF';
+  final sb = StringBuffer(bom);
+  sb.writeln('id,tarih,yon,telefon,sure_sn,sonuc,createdAt');
+  for (final d in docs) {
+    final data = d.data();
+    final id = d.id;
+    final direction = data['direction'] as String? ?? data['callDirection'] as String? ?? '';
+    final phone = data['phoneNumber'] as String? ?? data['phone'] as String? ?? '';
+    final duration = data['durationSec'] as num?;
+    final outcome = data['outcome'] as String? ?? data['callOutcome'] as String? ?? '';
+    final createdAt = data['createdAt'];
+    String createdAtStr = '';
+    String dateStr = '';
+    if (createdAt is Timestamp) {
+      final dt = createdAt.toDate();
+      createdAtStr = dt.toIso8601String();
+      dateStr = '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+    }
+    sb.writeln('"$id","$dateStr","$direction","$phone",${duration?.toInt() ?? ''},"$outcome","$createdAtStr"');
+  }
+  return sb.toString();
+}

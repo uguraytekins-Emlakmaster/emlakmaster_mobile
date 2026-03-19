@@ -23,6 +23,12 @@ class MarketPulsePanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
     final role = ref.watch(displayRoleOrNullProvider);
     if (role == null || !FeaturePermission.canViewOpportunityRadar(role)) {
       return const SizedBox.shrink();
@@ -32,9 +38,9 @@ class MarketPulsePanel extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
       decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
+        color: surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withOpacity(0.5)),
+        border: Border.all(color: border.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,7 +53,7 @@ class MarketPulsePanel extends ConsumerWidget {
                 child: Text(
                   'Market Pulse',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: DesignTokens.textPrimaryDark,
+                        color: textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
@@ -59,11 +65,11 @@ class MarketPulsePanel extends ConsumerWidget {
           async.when(
             data: (regions) {
               if (regions.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     'Bölgesel talep hesaplanıyor.',
-                    style: TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+                    style: TextStyle(color: textSecondary, fontSize: 12),
                   ),
                 );
               }
@@ -89,12 +95,12 @@ class MarketPulsePanel extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: DesignTokens.space3),
-          const Divider(height: 1, color: DesignTokens.borderDark),
+          Divider(height: 1, color: border),
           const SizedBox(height: DesignTokens.space2),
           Text(
             'Son atılan ilanlar (sahibinden / emlakjet / hepsi emlak)',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: DesignTokens.textSecondaryDark,
+                  color: textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -102,11 +108,11 @@ class MarketPulsePanel extends ConsumerWidget {
           listingsAsync.when(
             data: (listings) {
               if (listings.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     'Bu bölge için henüz ilan yok. Ayarlardan şehir/ilçe seçin; ilanlar arka planda çekilir.',
-                    style: TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+                    style: TextStyle(color: textSecondary, fontSize: 12),
                   ),
                 );
               }
@@ -122,19 +128,19 @@ class MarketPulsePanel extends ConsumerWidget {
             loading: () => Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
-                children: List.generate(3, (_) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                children: List.generate(3, (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
                   child: Row(
                     children: [
-                      const SkeletonLoader(width: 48, height: 48, borderRadius: BorderRadius.all(Radius.circular(6))),
-                      const SizedBox(width: 12),
+                      SkeletonLoader(width: 48, height: 48, borderRadius: BorderRadius.all(Radius.circular(6))),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SkeletonLoader(height: 12, width: double.infinity, borderRadius: BorderRadius.all(Radius.circular(4))),
-                            const SizedBox(height: 6),
-                            const SkeletonLoader(height: 10, width: 120, borderRadius: BorderRadius.all(Radius.circular(4))),
+                            SkeletonLoader(height: 12, width: double.infinity, borderRadius: BorderRadius.all(Radius.circular(4))),
+                            SizedBox(height: 6),
+                            SkeletonLoader(height: 10, width: 120, borderRadius: BorderRadius.all(Radius.circular(4))),
                           ],
                         ),
                       ),
@@ -210,6 +216,12 @@ class _ListingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
+    final surfaceElevated = isDark ? DesignTokens.surfaceDarkElevated : DesignTokens.surfaceLightElevated;
     final price = listing.priceText ?? (listing.priceValue != null ? '${listing.priceValue!.toStringAsFixed(0)} ₺' : '');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -237,19 +249,19 @@ class _ListingTile extends StatelessWidget {
                       height: 48,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    errorWidget: (_, __, ___) => const SizedBox(
+                    errorWidget: (_, __, ___) => SizedBox(
                       width: 48,
                       height: 48,
-                      child: Icon(Icons.home_rounded, color: DesignTokens.textTertiaryDark),
+                      child: Icon(Icons.home_rounded, color: textTertiary),
                     ),
                   ),
                 ),
               )
             else
-              const SizedBox(
+              SizedBox(
                 width: 48,
                 height: 48,
-                child: Icon(Icons.home_rounded, color: DesignTokens.textTertiaryDark),
+                child: Icon(Icons.home_rounded, color: textTertiary),
               ),
             const SizedBox(width: DesignTokens.space2),
             Expanded(
@@ -258,8 +270,8 @@ class _ListingTile extends StatelessWidget {
                 children: [
                   Text(
                     listing.title,
-                    style: const TextStyle(
-                      color: DesignTokens.textPrimaryDark,
+                    style: TextStyle(
+                      color: textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -272,12 +284,12 @@ class _ListingTile extends StatelessWidget {
                       if (listing.district != null)
                         Text(
                           listing.district!,
-                          style: const TextStyle(
-                            color: DesignTokens.textTertiaryDark,
+                          style: TextStyle(
+                            color: textTertiary,
                             fontSize: 11,
                           ),
                         ),
-                      if (listing.district != null && price.isNotEmpty) const Text(' · ', style: TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11)),
+                      if (listing.district != null && price.isNotEmpty) Text(' · ', style: TextStyle(color: textTertiary, fontSize: 11)),
                       if (price.isNotEmpty)
                         Text(
                           price,
@@ -293,18 +305,18 @@ class _ListingTile extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: DesignTokens.surfaceDarkElevated,
+                      color: surfaceElevated,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       listing.source.label,
-                      style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 10),
+                      style: TextStyle(color: textSecondary, fontSize: 10),
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.open_in_new_rounded, size: 16, color: DesignTokens.textTertiaryDark),
+            Icon(Icons.open_in_new_rounded, size: 16, color: textTertiary),
           ],
         ),
       ),
@@ -318,6 +330,11 @@ class _RegionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
     final pct = (region.demandScore * 100).toInt();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -326,19 +343,19 @@ class _RegionRow extends StatelessWidget {
           Expanded(
             child: Text(
               region.regionName,
-              style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: 13),
+              style: TextStyle(color: textPrimary, fontSize: 13),
             ),
           ),
           if (region.budgetSegment != null)
             Text(
               region.budgetSegment!,
-              style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
+              style: TextStyle(color: textTertiary, fontSize: 11),
             ),
           const SizedBox(width: 8),
           Text(
             '%$pct',
             style: TextStyle(
-              color: region.demandScore >= 0.7 ? DesignTokens.success : DesignTokens.textSecondaryDark,
+              color: region.demandScore >= 0.7 ? DesignTokens.success : textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
