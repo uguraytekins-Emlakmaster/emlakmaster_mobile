@@ -16,6 +16,31 @@ if [[ ! -f "$REGISTRANT_M" ]]; then
   exit 1
 fi
 
+# flutter_contacts 2.x (Swift-only): @import flutter_contacts → ObjC'de "different definitions" modül hatası.
+# Çözüm: flutter_contacts-Swift.h (Flutter varsayılan üretiminde yok; pub get sonrası tekrar uygulanır).
+if grep -qF 'FlutterContactsPlugin.h>' "$REGISTRANT_M" && ! grep -q 'flutter_contacts-Swift.h' "$REGISTRANT_M"; then
+  python3 -c "
+import pathlib, sys
+p = pathlib.Path(sys.argv[1])
+t = p.read_text()
+old = '''#if __has_include(<flutter_contacts/FlutterContactsPlugin.h>)
+#import <flutter_contacts/FlutterContactsPlugin.h>
+#else
+@import flutter_contacts;
+#endif'''
+new = '''#if __has_include(<flutter_contacts/flutter_contacts-Swift.h>)
+#import <flutter_contacts/flutter_contacts-Swift.h>
+#elif __has_include(<flutter_contacts/FlutterContactsPlugin.h>)
+#import <flutter_contacts/FlutterContactsPlugin.h>
+#else
+@import flutter_contacts.Swift;
+#endif'''
+if old in t:
+    p.write_text(t.replace(old, new, 1))
+    print('fix_ios_plugin_order: flutter_contacts Swift header import yaması.', file=sys.stderr)
+" "$REGISTRANT_M" || true
+fi
+
 # registerWithRegistry bloğunda ilk [XXX register...] satırı FLTFirebaseCorePlugin mı?
 # Not: macOS awk için \s yerine [ \t] kullanıyoruz
 FIRST_REGISTER_LINE=$(awk '
