@@ -11,10 +11,26 @@ npm install
 
 ## Dağıtım
 
+**Önemli:** Firebase projesi **Blaze (pay-as-you-go)** olmalı; Spark planda Cloud Functions deploy edilemez.
+
 ```bash
-# Firebase CLI ile (proje kökünden)
-firebase deploy --only functions
+# Proje kökünden (emlakmaster_mobile)
+./scripts/deploy_firebase_functions.sh
 ```
+
+Alternatif:
+
+```bash
+cd functions && npm install && cd .. && firebase deploy --only functions --project emlak-master
+```
+
+Yerel emülatör (Blaze gerekmez, `USE_FUNCTIONS_EMULATOR=true` ile uygulama bağlanır):
+
+```bash
+./scripts/run_functions_emulator.sh
+```
+
+Ayrıntı: `doc/MARKET_PULSE_FIREBASE.md`.
 
 ## Fonksiyonlar
 

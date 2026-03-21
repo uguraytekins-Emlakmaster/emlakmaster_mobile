@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -7,6 +8,8 @@ import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
+import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:flutter/material.dart';
@@ -103,7 +106,7 @@ class AdminReportsPage extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: cardSurface,
                           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                          border: Border.all(color: DesignTokens.primary.withOpacity(0.4)),
+                          border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.4)),
                         ),
                         child: Row(
                           children: [
@@ -142,11 +145,7 @@ class AdminReportsPage extends ConsumerWidget {
                 return const SizedBox.shrink();
               },
             ),
-          const _SectionCard(
-            icon: Icons.analytics_rounded,
-            title: 'Performans özeti',
-            subtitle: 'Aylık/heftalık çağrı, görüşme ve kapanış metrikleri',
-          ),
+          const _AdminReportsPerfSection(),
           const SizedBox(height: DesignTokens.space4),
           InkWell(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
@@ -195,6 +194,146 @@ class AdminReportsPage extends ConsumerWidget {
   }
 }
 
+/// Yönetici performans özeti: en az bir çağrı özeti veya işlem kaydı yoksa boş durum.
+class _AdminReportsPerfSection extends StatelessWidget {
+  const _AdminReportsPerfSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirestoreService.callSummariesSampleStream(),
+      builder: (context, summariesSnap) {
+        if (summariesSnap.hasError) {
+          return const _AdminPerfErrorCard();
+        }
+        if (!summariesSnap.hasData) {
+          return const _AdminPerfLoadingCard();
+        }
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirestoreService.dealsSampleStream(),
+          builder: (context, dealsSnap) {
+            if (dealsSnap.hasError) {
+              return const _AdminPerfErrorCard();
+            }
+            if (!dealsSnap.hasData) {
+              return const _AdminPerfLoadingCard();
+            }
+            final hasSummaries = summariesSnap.data!.docs.isNotEmpty;
+            final hasDeals = dealsSnap.data!.docs.isNotEmpty;
+            if (!hasSummaries && !hasDeals) {
+              return Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: DesignTokens.space4),
+                  child: EmptyState(
+                    compact: true,
+                    icon: Icons.analytics_outlined,
+                    title: 'Henüz rapor verisi yok',
+                    subtitle:
+                        'Çağrı özeti veya işlem kaydı oluştuğunda özet metrikler burada görünecek.',
+                    outlinedActionLabel: 'Yeni kayıt ekle',
+                    onOutlinedAction: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Rapor kaydı oluşturma yakında.'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            }
+            return const Padding(
+              padding: EdgeInsets.only(bottom: DesignTokens.space4),
+              child: _SectionCard(
+                icon: Icons.analytics_rounded,
+                title: 'Performans özeti',
+                subtitle: 'Aylık/heftalık çağrı, görüşme ve kapanış metrikleri',
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _AdminPerfLoadingCard extends StatelessWidget {
+  const _AdminPerfLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: DesignTokens.space4),
+      child: Container(
+        padding: const EdgeInsets.all(DesignTokens.space5),
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          border: Border.all(color: border),
+        ),
+        child: Row(
+          children: [
+            SkeletonLoader(
+              width: 56,
+              height: 56,
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            ),
+            const SizedBox(width: DesignTokens.space4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonLoader(
+                    width: 200,
+                    height: 14,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+                  ),
+                  const SizedBox(height: 8),
+                  SkeletonLoader(
+                    width: 160,
+                    height: 12,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminPerfErrorCard extends StatelessWidget {
+  const _AdminPerfErrorCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: DesignTokens.space4),
+        child: EmptyState(
+          compact: true,
+          icon: Icons.cloud_off_outlined,
+          title: 'Rapor verilerine ulaşılamadı',
+          subtitle: 'Bağlantınızı kontrol edip sayfayı yenileyin.',
+          outlinedActionLabel: 'Yeniden dene',
+          onOutlinedAction: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Sayfayı yenileyin veya aşağı çekin.')),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.icon,
@@ -227,7 +366,7 @@ class _SectionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(DesignTokens.space3),
             decoration: BoxDecoration(
-              color: DesignTokens.primary.withOpacity(0.15),
+              color: DesignTokens.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
             ),
             child: Icon(icon, color: DesignTokens.primary, size: 28),

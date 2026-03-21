@@ -52,7 +52,7 @@ class ProfileAvatar extends StatelessWidget {
           border,
           CircleAvatar(
             radius: size / 2 - 3,
-            backgroundColor: DesignTokens.primary.withOpacity(0.25),
+            backgroundColor: DesignTokens.primary.withValues(alpha: 0.25),
             child: Text(
               initials,
               style: TextStyle(
@@ -83,7 +83,7 @@ class ProfileAvatar extends StatelessWidget {
             ),
             errorWidget: (context, url, error) => CircleAvatar(
               radius: size / 2 - 3,
-              backgroundColor: DesignTokens.primary.withOpacity(0.25),
+              backgroundColor: DesignTokens.primary.withValues(alpha: 0.25),
               child: Text(
                 initials,
                 style: TextStyle(

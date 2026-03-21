@@ -90,7 +90,7 @@ class _MagicCallFab extends StatelessWidget {
             color: DesignTokens.primary,
             boxShadow: [
               BoxShadow(
-                color: DesignTokens.primary.withOpacity(0.3),
+                color: DesignTokens.primary.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),

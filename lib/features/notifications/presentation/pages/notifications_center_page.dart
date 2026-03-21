@@ -120,17 +120,17 @@ class _NotificationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: read
             ? DesignTokens.surfaceDark
-            : DesignTokens.surfaceDark.withOpacity(0.95),
+            : DesignTokens.surfaceDark.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         border: Border.all(
           color: read
               ? DesignTokens.borderDark
-              : DesignTokens.primary.withOpacity(0.3),
+              : DesignTokens.primary.withValues(alpha: 0.3),
           width: read ? 1 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: DesignTokens.primary.withOpacity(read ? 0 : 0.08),
+            color: DesignTokens.primary.withValues(alpha: read ? 0 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -144,7 +144,7 @@ class _NotificationCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(DesignTokens.space2),
                 decoration: BoxDecoration(
-                  color: DesignTokens.primary.withOpacity(0.15),
+                  color: DesignTokens.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                 ),
                 child: const Icon(
@@ -219,14 +219,14 @@ class _ChampionEmptyState extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    DesignTokens.primary.withOpacity(0.2),
-                    DesignTokens.accent.withOpacity(0.1),
+                    DesignTokens.primary.withValues(alpha: 0.2),
+                    DesignTokens.accent.withValues(alpha: 0.1),
                   ],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: DesignTokens.primary.withOpacity(0.2),
+                    color: DesignTokens.primary.withValues(alpha: 0.2),
                     blurRadius: 24,
                     offset: const Offset(0, 4),
                   ),
@@ -235,7 +235,7 @@ class _ChampionEmptyState extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 56,
-                color: DesignTokens.primary.withOpacity(0.9),
+                color: DesignTokens.primary.withValues(alpha: 0.9),
               ),
             ),
             const SizedBox(height: DesignTokens.space6),

@@ -241,5 +241,5 @@ void FirebaseConfigureFromPlistIfNeeded(void) {
 
 __attribute__((constructor(101)))
 static void FirebaseConfigureGuardInstallEarly(void) {
-    FirebaseConfigureGuardInstall();
+    // Disabled: historical swizzle guard caused unstable Firebase init on recent iOS/Flutter.
 }

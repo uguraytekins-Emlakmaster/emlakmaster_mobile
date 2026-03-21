@@ -14,6 +14,9 @@ class EmptyState extends StatelessWidget {
     this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.outlinedActionLabel,
+    this.onOutlinedAction,
+    this.compact = false,
     this.illustration,
   });
 
@@ -22,6 +25,11 @@ class EmptyState extends StatelessWidget {
   final String? subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
+  /// Hayalet / ikincil eylem (OutlinedButton).
+  final String? outlinedActionLabel;
+  final VoidCallback? onOutlinedAction;
+  /// Küçük ikon ve daha az dikey boşluk (Çağrı Merkezi, Raporlar).
+  final bool compact;
   /// Opsiyonel: özel illüstrasyon widget (örn. Lottie veya büyük ikon).
   final Widget? illustration;
 
@@ -31,9 +39,11 @@ class EmptyState extends StatelessWidget {
     final textColor = ext.foregroundSecondary;
     const primaryColor = DesignTokens.primary;
 
+    final iconBox = compact ? 56.0 : 96.0;
+    final iconSize = compact ? 28.0 : 48.0;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.space6),
+        padding: EdgeInsets.all(compact ? DesignTokens.space4 : DesignTokens.space6),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -41,26 +51,26 @@ class EmptyState extends StatelessWidget {
               illustration!
             else
               Container(
-                width: 96,
-                height: 96,
+                width: iconBox,
+                height: iconBox,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      primaryColor.withOpacity(0.15),
-                      primaryColor.withOpacity(0.05),
+                      primaryColor.withValues(alpha: 0.12),
+                      primaryColor.withValues(alpha: 0.04),
                     ],
                   ),
                 ),
                 child: Icon(
                   icon,
-                  size: 48,
-                  color: primaryColor.withOpacity(0.8),
+                  size: iconSize,
+                  color: primaryColor.withValues(alpha: 0.75),
                 ),
               ),
-            const SizedBox(height: DesignTokens.space5),
+            SizedBox(height: compact ? DesignTokens.space3 : DesignTokens.space5),
             Text(
               title,
               textAlign: TextAlign.center,
@@ -75,12 +85,30 @@ class EmptyState extends StatelessWidget {
                 subtitle!,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: textColor.withOpacity(0.8),
+                      color: textColor.withValues(alpha: 0.8),
                     ),
               ),
             ],
+            if (outlinedActionLabel != null && onOutlinedAction != null) ...[
+              SizedBox(height: compact ? DesignTokens.space3 : DesignTokens.space4),
+              OutlinedButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  onOutlinedAction!();
+                },
+                icon: const Icon(Icons.add_rounded, size: 18, color: DesignTokens.primary),
+                label: Text(
+                  outlinedActionLabel!,
+                  style: const TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: DesignTokens.primary),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
+              ),
+            ],
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: DesignTokens.space5),
+              SizedBox(height: compact ? DesignTokens.space3 : DesignTokens.space5),
               PressableScaleButton(
                 child: FilledButton.icon(
                   onPressed: () {

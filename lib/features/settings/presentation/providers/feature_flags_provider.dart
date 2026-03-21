@@ -52,6 +52,8 @@ class FeatureFlagsNotifier extends StateNotifier<AsyncValue<Map<String, bool>>> 
         }
       }
       state = AsyncValue.data(map);
+      AppLifecyclePowerService.powerSaverEnabled =
+          map[AppConstants.keyPowerSaver] ?? false;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }

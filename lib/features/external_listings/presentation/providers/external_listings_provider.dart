@@ -7,8 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final externalListingsStreamProvider =
     StreamProvider<List<ExternalListingEntity>>((ref) {
   final settingsAsync = ref.watch(listingDisplaySettingsProvider);
-  final cityCode = settingsAsync.valueOrNull?.cityCode ?? '21';
-  final districtName = settingsAsync.valueOrNull?.districtName;
+  final settings = settingsAsync.valueOrNull;
+  final cityCode = settings?.cityCode ?? '21';
+  final rawDist = settings?.districtName;
+  final districtName =
+      rawDist != null && rawDist.trim().isNotEmpty ? rawDist.trim() : null;
   return ExternalListingsRepository.streamListings(
     cityCode: cityCode,
     districtName: districtName,

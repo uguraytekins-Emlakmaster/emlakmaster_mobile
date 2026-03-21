@@ -39,67 +39,77 @@ class BentoSahaRadar extends StatelessWidget {
             : 'Yükleniyor...';
 
         return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
-            boxShadow: DesignTokens.neomorphicEmbossDark,
-            color: DesignTokens.surfaceDark.withOpacity(0.6),
-            border: Border.all(color: DesignTokens.borderDark.withOpacity(0.6)),
+          decoration: DesignTokens.dashboardCardDecoration(
+            surfaceColor: DesignTokens.surfaceDark.withValues(alpha: 0.6),
           ),
           padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Saha-Radar',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final narrow = constraints.maxWidth < 300;
+              final mapArea = SizedBox(
+                height: 160,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                      color: DesignTokens.surfaceDark,
+                      border: Border.all(color: DesignTokens.antiqueGold.withValues(alpha: 0.12)),
+                    ),
+                    child: snapshot.hasData
+                        ? CustomPaint(
+                            painter: DiyarbakirMapPainter(agents: withLocation),
+                            size: Size.infinite,
+                          )
+                        : const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white70,
+                            ),
+                          ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
-              ),
-              const SizedBox(height: 12),
-              Row(
+              );
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 160,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                            color: DesignTokens.surfaceDark,
-                            border: Border.all(color: DesignTokens.antiqueGold.withOpacity(0.12)),
-                          ),
-                          child: snapshot.hasData
-                              ? CustomPaint(
-                                  painter: DiyarbakirMapPainter(agents: withLocation),
-                                  size: Size.infinite,
-                                )
-                              : const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                        ),
-                      ),
+                  const Text(
+                    'Saha-Radar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 56,
-                    height: 160,
-                    child: _HeatmapPulseChart(),
+                  const SizedBox(height: 8),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
                   ),
+                  const SizedBox(height: 12),
+                  if (narrow) ...[
+                    mapArea,
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 72,
+                      width: double.infinity,
+                      child: RepaintBoundary(child: _HeatmapPulseChart()),
+                    ),
+                  ] else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: mapArea),
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: 52,
+                          height: 160,
+                          child: RepaintBoundary(child: _HeatmapPulseChart()),
+                        ),
+                      ],
+                    ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
         );
       },
@@ -129,7 +139,7 @@ class DiyarbakirMapPainter extends CustomPainter {
     canvas.drawPath(
       borderPath,
       Paint()
-        ..color = Colors.white.withOpacity(0.08)
+        ..color = Colors.white.withValues(alpha: 0.08)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5,
     );
@@ -140,7 +150,7 @@ class DiyarbakirMapPainter extends CustomPainter {
       ..color = DesignTokens.primary
       ..style = PaintingStyle.fill;
     final greenStroke = Paint()
-      ..color = DesignTokens.primary.withOpacity(0.6)
+      ..color = DesignTokens.primary.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
@@ -172,7 +182,7 @@ class DiyarbakirMapPainter extends CustomPainter {
       text: TextSpan(
         text: 'Diyarbakır',
         style: TextStyle(
-          color: Colors.white.withOpacity(0.25),
+          color: Colors.white.withValues(alpha: 0.25),
           fontSize: 10,
           fontWeight: FontWeight.w500,
         ),
@@ -225,7 +235,7 @@ class _HeatmapPulseChartState extends State<_HeatmapPulseChart> with SingleTicke
         Text(
           'Arama',
           style: TextStyle(
-            color: DesignTokens.antiqueGold.withOpacity(0.9),
+            color: DesignTokens.antiqueGold.withValues(alpha: 0.9),
             fontSize: 9,
             fontWeight: FontWeight.w600,
           ),
@@ -272,7 +282,7 @@ class _PulseLinePainter extends CustomPainter {
       }
     }
     final paint = Paint()
-      ..color = DesignTokens.antiqueGold.withOpacity(0.85)
+      ..color = DesignTokens.antiqueGold.withValues(alpha: 0.85)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.8
       ..strokeCap = StrokeCap.round

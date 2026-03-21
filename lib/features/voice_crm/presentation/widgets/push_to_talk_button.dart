@@ -117,7 +117,7 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
           color: _isRecording ? DesignTokens.danger : (_available ? DesignTokens.primary : DesignTokens.textTertiaryDark),
           boxShadow: [
             BoxShadow(
-              color: (_isRecording ? DesignTokens.danger : DesignTokens.primary).withOpacity(0.4),
+              color: (_isRecording ? DesignTokens.danger : DesignTokens.primary).withValues(alpha: 0.4),
               blurRadius: _isRecording ? 16 : 12,
               spreadRadius: _isRecording ? 2 : 0,
             ),

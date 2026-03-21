@@ -28,7 +28,7 @@ class UnauthorizedScreen extends StatelessWidget {
               Icon(
                 Icons.lock_rounded,
                 size: 64,
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 24),
               Text(

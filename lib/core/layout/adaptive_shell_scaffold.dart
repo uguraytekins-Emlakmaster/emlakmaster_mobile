@@ -147,7 +147,7 @@ class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: surface,
-          border: Border(top: BorderSide(color: (isDark ? Colors.white : Colors.black).withOpacity(0.08))),
+          border: Border(top: BorderSide(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08))),
         ),
         child: SafeArea(
           child: Padding(

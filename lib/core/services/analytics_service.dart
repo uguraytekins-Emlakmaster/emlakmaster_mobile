@@ -1,4 +1,5 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 /// Uygulama olayları ve ekran görüntüleme için Firebase Analytics sarmalayıcı.
 class AnalyticsService {
@@ -7,12 +8,11 @@ class AnalyticsService {
   static final AnalyticsService _instance = AnalyticsService._();
   static AnalyticsService get instance => _instance;
 
-  static FirebaseAnalytics get _analytics => FirebaseAnalytics.instance;
-
   /// Ekran görüntüleme (route/sayfa adı).
   Future<void> logScreenView({required String screenName, String? screenClass}) async {
     try {
-      await _analytics.logScreenView(
+      if (Firebase.apps.isEmpty) return;
+      await FirebaseAnalytics.instance.logScreenView(
         screenName: screenName,
         screenClass: screenClass ?? screenName,
       );
@@ -24,7 +24,8 @@ class AnalyticsService {
   /// Özel olay: giriş, ilan tıklama, ayar değişikliği vb.
   Future<void> logEvent(String name, [Map<String, Object>? params]) async {
     try {
-      await _analytics.logEvent(name: name, parameters: params);
+      if (Firebase.apps.isEmpty) return;
+      await FirebaseAnalytics.instance.logEvent(name: name, parameters: params);
     } catch (_) {
       // Analytics hatası uygulama akışını bozmasın.
     }
@@ -33,14 +34,16 @@ class AnalyticsService {
   /// Kullanıcı giriş yaptı.
   Future<void> logLogin({String? method}) async {
     try {
-      await _analytics.logLogin(loginMethod: method ?? 'email');
+      if (Firebase.apps.isEmpty) return;
+      await FirebaseAnalytics.instance.logLogin(loginMethod: method ?? 'email');
     } catch (_) {}
   }
 
   /// Yeni kayıt (email veya google).
   Future<void> logSignUp({String method = 'email'}) async {
     try {
-      await _analytics.logSignUp(signUpMethod: method);
+      if (Firebase.apps.isEmpty) return;
+      await FirebaseAnalytics.instance.logSignUp(signUpMethod: method);
     } catch (_) {}
   }
 

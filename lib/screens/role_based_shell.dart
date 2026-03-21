@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -37,9 +38,9 @@ class _ShellLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      // Açık temada scaffold beyazı "boş ekran" gibi görünmesin.
+      backgroundColor: DesignTokens.backgroundDark,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -48,7 +49,10 @@ class _ShellLoading extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'Panel hazırlanıyor...',
-              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontSize: 14),
+              style: TextStyle(
+                color: DesignTokens.textPrimaryDark.withValues(alpha: 0.9),
+                fontSize: 14,
+              ),
             ),
           ],
         ),

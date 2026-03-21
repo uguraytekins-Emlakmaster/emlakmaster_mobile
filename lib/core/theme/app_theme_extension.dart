@@ -79,16 +79,16 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       foregroundSecondary: DesignTokens.textSecondaryDark,
       foregroundMuted: DesignTokens.textTertiaryDark,
       border: DesignTokens.borderDark,
-      borderSubdle: DesignTokens.borderDark.withOpacity(0.6),
-      inputBackground: DesignTokens.inputBackgroundGold.withOpacity(0.25),
+      borderSubdle: DesignTokens.borderDark.withValues(alpha: 0.6),
+      inputBackground: DesignTokens.inputBackgroundGold.withValues(alpha: 0.25),
       inputForeground: DesignTokens.textPrimaryDark,
       inputBorder: DesignTokens.borderDark,
       popoverBackground: DesignTokens.surfaceDark,
       popoverForeground: DesignTokens.textPrimaryDark,
       chartBackground: DesignTokens.surfaceDarkElevated,
-      shadowColor: Colors.black.withOpacity(0.35),
+      shadowColor: Colors.black.withValues(alpha: 0.35),
       shimmerBase: DesignTokens.surfaceDarkElevated,
-      shimmerHighlight: DesignTokens.surfaceDark.withOpacity(0.5),
+      shimmerHighlight: DesignTokens.surfaceDark.withValues(alpha: 0.5),
     );
   }
 

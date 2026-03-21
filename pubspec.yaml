@@ -57,6 +57,7 @@ dependencies:
 
   # Core / infra
   http: ^1.2.0
+  html: ^0.15.4
   equatable: ^2.0.5
   shared_preferences: ^2.5.3
   hive: ^2.2.3
@@ -70,6 +71,11 @@ dependencies:
   call_log: ^4.0.0
 
   cupertino_icons: ^1.0.8
+  pdf: ^3.12.0
+  printing: ^5.14.3
+  barcode: ^2.2.9
+  google_fonts: ^8.0.2
+  uuid: ^4.5.3
   # Facebook girişi kapalıyken flutter_facebook_auth kullanılmamalı: iOS'ta FBSDK açılışta
   # Info.plist'teki sahte token ile SIGABRT üretebilir. Tekrar açmak için paketi ekleyin ve
   # doc/FACEBOOK_SIGNIN_SETUP.md + scripts/configure_facebook_app.sh kullanın.

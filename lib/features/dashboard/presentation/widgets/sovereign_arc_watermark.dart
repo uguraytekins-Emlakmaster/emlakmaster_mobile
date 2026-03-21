@@ -89,7 +89,7 @@ class _SovereignArcPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.longestSide * 0.52;
     final paint = Paint()
-      ..color = DesignTokens.antiqueGold.withOpacity(0.03)
+      ..color = DesignTokens.antiqueGold.withValues(alpha: 0.03)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
@@ -104,7 +104,7 @@ class _SovereignArcPainter extends CustomPainter {
 
     // İkinci iç arc (derinlik)
     final inner = Paint()
-      ..color = DesignTokens.antiqueGold.withOpacity(0.02)
+      ..color = DesignTokens.antiqueGold.withValues(alpha: 0.02)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
     canvas.drawPath(

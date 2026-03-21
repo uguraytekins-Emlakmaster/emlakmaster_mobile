@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:emlakmaster_mobile/core/services/finance_rates_math.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -62,6 +63,8 @@ class FinanceService {
   }
 
   /// Tek seferlik fetch (önbelleği günceller). API yanıtı boş/hatalıysa güvenli varsayılan döner.
+  ///
+  /// Not: `base=USD` iken `rates['EUR']` = EUR başına USD değil; **EUR/TRY** = TRY/USD ÷ EUR/USD.
   static Future<FinanceRates> fetchLiveRates() async {
     try {
       final fxResp = await http.get(Uri.parse(_fxUrl));
@@ -70,16 +73,33 @@ class FinanceService {
       }
       final fxBody = jsonDecode(fxResp.body);
       final fxJson = fxBody is Map<String, dynamic> ? fxBody : null;
-      final fxRates = fxJson?['rates'];
-      if (fxRates is! Map<String, dynamic>) {
+      // exchangerate.host: hata veya kota durumunda success:false ve rates yok olabilir.
+      final success = fxJson?['success'];
+      if (success == false) {
+        final err = fxJson?['error'];
+        throw Exception('FX API error: $err');
+      }
+      final rawRates = fxJson?['rates'];
+      final fxRates =
+          rawRates is Map ? Map<String, dynamic>.from(rawRates) : null;
+      if (fxRates == null || fxRates.isEmpty) {
+        if (kDebugMode) {
+          final snippet = fxResp.body.length > 400
+              ? '${fxResp.body.substring(0, 400)}…'
+              : fxResp.body;
+          debugPrint('FinanceService: FX body (snippet): $snippet');
+        }
         throw Exception('FX rates format invalid');
       }
 
-      final usdTry = (fxRates['TRY'] is num)
-          ? (fxRates['TRY'] as num).toDouble()
-          : (_cache?.usdTry ?? 0.0);
-      final eurTry = (fxRates['EUR'] is num)
-          ? (fxRates['EUR'] as num).toDouble()
+      // TRY/USD (1 USD kaç TRY)
+      final tryPerUsd = fxRates['TRY'] is num ? (fxRates['TRY'] as num).toDouble() : null;
+      // EUR/USD (1 USD kaç EUR) — doğrudan EUR/TRY değildir
+      final eurPerUsd = fxRates['EUR'] is num ? (fxRates['EUR'] as num).toDouble() : null;
+
+      final usdTry = tryPerUsd ?? _cache?.usdTry ?? 0.0;
+      final eurTry = (tryPerUsd != null && eurPerUsd != null)
+          ? eurTryFromUsdBaseRates(tryPerUsd, eurPerUsd)
           : (_cache?.eurTry ?? 0.0);
 
       double gramGoldTry = 0;
@@ -88,8 +108,13 @@ class FinanceService {
         if (goldResp.statusCode == 200) {
           final goldBody = jsonDecode(goldResp.body);
           final goldJson = goldBody is Map<String, dynamic> ? goldBody : null;
-          final goldRates = goldJson?['rates'];
-          if (goldRates is Map<String, dynamic> && goldRates['TRY'] is num) {
+          if (goldJson?['success'] == false) {
+            throw Exception('Gold API error: ${goldJson?['error']}');
+          }
+          final goldRaw = goldJson?['rates'];
+          final goldRates =
+              goldRaw is Map ? Map<String, dynamic>.from(goldRaw) : null;
+          if (goldRates != null && goldRates['TRY'] is num) {
             final xauTry = (goldRates['TRY'] as num).toDouble();
             gramGoldTry = xauTry / 31.1035;
           }

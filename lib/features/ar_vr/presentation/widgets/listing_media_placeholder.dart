@@ -98,7 +98,7 @@ class _Chip extends StatelessWidget {
       label: Text(label, style: const TextStyle(fontSize: 12)),
       onPressed: url != null ? () => _openUrl(context, url) : null,
       backgroundColor: DesignTokens.surfaceDarkElevated,
-      side: BorderSide(color: DesignTokens.primary.withOpacity(0.5)),
+      side: BorderSide(color: DesignTokens.primary.withValues(alpha: 0.5)),
     );
   }
 }

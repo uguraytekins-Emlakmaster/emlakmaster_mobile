@@ -3,7 +3,7 @@
   "description": "Market Pulse harici ilan çekici – sahibinden, emlakjet, hepsi emlak",
   "main": "index.js",
   "engines": {
-    "node": "20"
+    "node": ">=20"
   },
   "scripts": {
     "serve": "firebase emulators:start --only functions",

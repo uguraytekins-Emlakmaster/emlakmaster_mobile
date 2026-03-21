@@ -139,7 +139,7 @@ class _KpiChipState extends State<_KpiChip> {
                       shadows: (active || widget.highlight)
                           ? [
                               Shadow(
-                                color: DesignTokens.antiqueGold.withOpacity(0.35),
+                                color: DesignTokens.antiqueGold.withValues(alpha: 0.35),
                                 blurRadius: 8,
                               ),
                             ]
@@ -150,7 +150,7 @@ class _KpiChipState extends State<_KpiChip> {
                     widget.label,
                     style: TextStyle(
                       fontSize: DesignTokens.fontSizeXs,
-                      color: active ? DesignTokens.antiqueGold.withOpacity(0.9) : DesignTokens.textTertiaryDark,
+                      color: active ? DesignTokens.antiqueGold.withValues(alpha: 0.9) : DesignTokens.textTertiaryDark,
                     ),
                   ),
                 ],
@@ -159,7 +159,7 @@ class _KpiChipState extends State<_KpiChip> {
               Icon(
                 Icons.auto_awesome,
                 size: 12,
-                color: DesignTokens.antiqueGold.withOpacity(0.7),
+                color: DesignTokens.antiqueGold.withValues(alpha: 0.7),
               ),
             ],
           ),

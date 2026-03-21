@@ -32,14 +32,26 @@ class ListingDisplaySettingsRepository {
 
   static ListingDisplaySettingsEntity _fromMap(Map<String, dynamic> data, Timestamp? updatedAt) {
     return ListingDisplaySettingsEntity(
-      cityCode: data['cityCode'] as String? ?? '21',
-      cityName: data['cityName'] as String? ?? 'Diyarbakır',
-      districtCode: data['districtCode'] as String?,
-      districtName: data['districtName'] as String?,
+      // Firestore’da cityCode bazen sayı (21) — harici ilan sorgusu string ile eşleşmeli.
+      cityCode: _asStringCode(data['cityCode']),
+      cityName: (data['cityName'] as String?)?.trim().isNotEmpty == true
+          ? (data['cityName'] as String).trim()
+          : 'Diyarbakır',
+      districtCode: (data['districtCode'] as String?)?.trim(),
+      districtName: (data['districtName'] as String?)?.trim(),
       companyName: data['companyName'] as String? ?? '',
       logoUrl: data['logoUrl'] as String?,
       updatedAt: updatedAt?.toDate(),
     );
+  }
+
+  static String _asStringCode(dynamic v) {
+    if (v == null) return '21';
+    if (v is int) return v.toString();
+    if (v is double) return v.round().toString();
+    if (v is num) return v.round().toString();
+    final s = v.toString().trim();
+    return s.isEmpty ? '21' : s;
   }
 
   static Future<void> set(ListingDisplaySettingsEntity s) async {

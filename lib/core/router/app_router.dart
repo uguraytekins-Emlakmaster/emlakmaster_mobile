@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/app_loading.dart';
 import '../services/analytics_service.dart';
+import '../services/auth_service.dart';
 import '../services/onboarding_store.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -23,6 +24,8 @@ import '../../features/campaigns/presentation/pages/bulk_campaign_page.dart';
 import '../../features/pipeline/presentation/pages/pipeline_kanban_page.dart';
 import '../../screens/listing_detail_page.dart';
 import '../../screens/role_based_shell.dart';
+import '../../features/analytics/presentation/pages/intel_report_history_page.dart';
+import '../../features/analytics/presentation/pages/rainbow_analytics_center_page.dart';
 
 /// go_router ile merkezi routing. Login router içinde; beyaz ekran önlenir.
 class AppRouter {
@@ -74,6 +77,8 @@ class AppRouter {
   static const String routePipeline = '/pipeline';
   static const String routeNotifications = '/notifications';
   static const String routeBulkCampaign = '/campaigns/bulk';
+  static const String routeRainbowAnalytics = '/rainbow-analytics';
+  static const String routeRainbowIntelHistory = '/rainbow-intel-history';
 
   static GoRouter create(Ref ref, Listenable refreshListenable) {
     return GoRouter(
@@ -290,13 +295,40 @@ class AppRouter {
                 FadeTransition(opacity: animation, child: child),
           ),
         ),
+        GoRoute(
+          path: routeRainbowAnalytics,
+          pageBuilder: (context, state) {
+            final listingId = state.uri.queryParameters['listingId'];
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              name: state.matchedLocation,
+              child: RainbowAnalyticsCenterPage(prefillListingId: listingId),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
+        ),
+        GoRoute(
+          path: routeRainbowIntelHistory,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const IntelReportHistoryPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
       ],
     );
   }
 
   static final goRouterProvider = Provider<GoRouter>((ref) {
     final refresh = ValueNotifier(0);
+    // Redirect kararları currentUser + role/doc durumuna bağlı.
+    // Role yüklenirken (users/{uid} doc yokken) `needsRoleSelectionProvider` değişir;
+    // bu değişim için refresh tetiklenmezse yanlış route'ta kalınabiliyor.
     ref.listen(currentUserProvider, (_, __) => refresh.value++);
+    ref.listen(needsRoleSelectionProvider, (_, __) => refresh.value++);
     return AppRouter.create(ref, refresh);
   });
 }
@@ -311,8 +343,92 @@ class _AuthShell extends ConsumerWidget {
     final roleAsync = ref.watch(currentRoleProvider);
     return roleAsync.when(
       loading: () => const _RouteLoadingScreen(),
-      error: (_, __) => const _RouteLoadingScreen(),
+      error: (e, _) {
+        final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
+        if (uid == null || uid.isEmpty) {
+          return const _RouteLoadingScreen();
+        }
+        return _HomeShellRoleErrorScreen(uid: uid, error: e);
+      },
       data: (_) => child,
+    );
+  }
+}
+
+/// Ana shell: Firestore users/{uid} dinlenemezse (permission-denied, ağ vb.) sonsuz yüklemede kalmayı önler.
+class _HomeShellRoleErrorScreen extends ConsumerWidget {
+  const _HomeShellRoleErrorScreen({required this.uid, required this.error});
+
+  final String uid;
+  final Object error;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final msg = error.toString().toLowerCase();
+    final isPermission = msg.contains('permission') || msg.contains('permission-denied');
+    final isNetwork = msg.contains('network') || msg.contains('unavailable');
+    String text = 'Hesap bilgileriniz yüklenemedi. Uygulama burada takılı kalmış olabilir.';
+    if (isPermission) {
+      text = 'Hesap bilgilerinize erişim yetkiniz yok. Firestore kurallarını veya kullanıcı kaydını kontrol edin.';
+    }
+    if (isNetwork) {
+      text = 'Bağlantı kurulamadı. İnterneti kontrol edip tekrar deneyin.';
+    }
+
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    return Scaffold(
+      backgroundColor: DesignTokens.backgroundDark,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded, size: 64, color: DesignTokens.primary),
+              const SizedBox(height: 24),
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: onSurface.withValues(alpha: 0.9), fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                error.toString(),
+                textAlign: TextAlign.center,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: onSurface.withValues(alpha: 0.55), fontSize: 11),
+              ),
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: () {
+                  ref.invalidate(userDocStreamProvider(uid));
+                },
+                icon: const Icon(Icons.refresh_rounded, size: 20),
+                label: const Text('Tekrar dene'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: DesignTokens.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await AuthService.instance.signOut();
+                },
+                icon: const Icon(Icons.logout_rounded, size: 20),
+                label: const Text('Çıkış yap'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: onSurface.withValues(alpha: 0.9),
+                  side: BorderSide(color: onSurface.withValues(alpha: 0.4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -333,7 +449,7 @@ class _RouteLoadingScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'Yükleniyor...',
-              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontSize: 14),
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.9), fontSize: 14),
             ),
           ],
         ),
@@ -387,7 +503,7 @@ class _ErrorFallbackScreen extends StatelessWidget {
               Text(
                 'Lütfen tekrar deneyin veya ana sayfaya dönün.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: onSurface.withOpacity(0.9), fontSize: 14),
+                style: TextStyle(color: onSurface.withValues(alpha: 0.9), fontSize: 14),
               ),
               const SizedBox(height: 32),
               FilledButton.icon(

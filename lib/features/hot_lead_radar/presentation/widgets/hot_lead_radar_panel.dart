@@ -32,7 +32,7 @@ class _HotLeadRadarBody extends StatelessWidget {
       decoration: BoxDecoration(
         color: DesignTokens.surfaceDark,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withOpacity(0.5)),
+        border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

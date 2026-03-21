@@ -43,11 +43,11 @@ class SyncStatusBanner extends ConsumerWidget {
           ),
           decoration: BoxDecoration(
             color: isOffline
-                ? DesignTokens.warning.withOpacity(0.15)
-                : DesignTokens.surfaceDark.withOpacity(0.6),
+                ? DesignTokens.warning.withValues(alpha: 0.15)
+                : DesignTokens.surfaceDark.withValues(alpha: 0.6),
             border: Border(
               bottom: BorderSide(
-                color: isOffline ? DesignTokens.warning.withOpacity(0.5) : DesignTokens.borderDark,
+                color: isOffline ? DesignTokens.warning.withValues(alpha: 0.5) : DesignTokens.borderDark,
               ),
             ),
           ),

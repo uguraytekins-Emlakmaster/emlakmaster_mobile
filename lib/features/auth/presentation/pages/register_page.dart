@@ -273,7 +273,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     Text(
                       'Bilgilerinizi girin; ardından rolünüzü seçerek panele geçin.',
                       style: TextStyle(
-                        color: DesignTokens.textSecondaryDark.withOpacity(0.95),
+                        color: DesignTokens.textSecondaryDark.withValues(alpha: 0.95),
                         fontSize: DesignTokens.fontSizeSm,
                         height: 1.4,
                       ),
@@ -283,19 +283,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     Container(
                       padding: const EdgeInsets.all(DesignTokens.space3),
                       decoration: BoxDecoration(
-                        color: DesignTokens.antiqueGold.withOpacity(0.06),
+                        color: DesignTokens.antiqueGold.withValues(alpha: 0.06),
                         borderRadius:
                             BorderRadius.circular(DesignTokens.radiusMd),
                         border: Border.all(
-                            color: DesignTokens.antiqueGold.withOpacity(0.2)),
+                            color: DesignTokens.antiqueGold.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(Icons.info_outline_rounded,
                               size: 20,
-                              color: DesignTokens.antiqueGold.withOpacity(
-                                  0.9)), // ignore: prefer_const_constructors
+                              color: DesignTokens.antiqueGold.withValues(alpha: 0.9)), // ignore: prefer_const_constructors
                           const SizedBox(width: DesignTokens.space2),
                           const Expanded(
                             child: Text(
@@ -424,16 +423,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       Container(
                         padding: const EdgeInsets.all(DesignTokens.space3),
                         decoration: BoxDecoration(
-                          color: DesignTokens.danger.withOpacity(0.12),
+                          color: DesignTokens.danger.withValues(alpha: 0.12),
                           borderRadius:
                               BorderRadius.circular(DesignTokens.radiusMd),
                           border: Border.all(
-                              color: DesignTokens.danger.withOpacity(0.35)),
+                              color: DesignTokens.danger.withValues(alpha: 0.35)),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.error_outline_rounded,
-                                color: DesignTokens.danger.withOpacity(0.9),
+                                color: DesignTokens.danger.withValues(alpha: 0.9),
                                 size: 20),
                             const SizedBox(width: DesignTokens.space2),
                             Expanded(
@@ -485,7 +484,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         Expanded(
                             child: Divider(
                                 color:
-                                    DesignTokens.borderDark.withOpacity(0.6))),
+                                    DesignTokens.borderDark.withValues(alpha: 0.6))),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
@@ -499,7 +498,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         Expanded(
                             child: Divider(
                                 color:
-                                    DesignTokens.borderDark.withOpacity(0.6))),
+                                    DesignTokens.borderDark.withValues(alpha: 0.6))),
                       ],
                     ),
                     const SizedBox(height: DesignTokens.space5),

@@ -199,7 +199,7 @@ class AdminTeamsPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     DropdownButtonFormField<String>(
-                      value: managerId,
+                      initialValue: managerId,
                       decoration: InputDecoration(
                         labelText: l10n.t('label_manager'),
                         border: const OutlineInputBorder(),
@@ -267,7 +267,7 @@ class _TeamListTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
         leading: CircleAvatar(
-          backgroundColor: DesignTokens.primary.withOpacity(0.2),
+          backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
           child: const Icon(Icons.groups_rounded, color: DesignTokens.primary),
         ),
         title: Text(

@@ -16,7 +16,7 @@ void showResurrectionLeadTopicSheet(
   final isDark = theme.brightness == Brightness.dark;
   final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
   final fg = theme.colorScheme.onSurface;
-  final muted = fg.withOpacity(0.72);
+  final muted = fg.withValues(alpha: 0.72);
 
   final draft = item.suggestedMessagePlaceholder ??
       'Merhaba, sizin için uygun yeni seçeneklerimiz var. Müsait olduğunuzda görüşelim.';
@@ -47,7 +47,7 @@ void showResurrectionLeadTopicSheet(
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: fg.withOpacity(0.15),
+                    color: fg.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -91,9 +91,9 @@ void showResurrectionLeadTopicSheet(
                 Container(
                   padding: const EdgeInsets.all(DesignTokens.space4),
                   decoration: BoxDecoration(
-                    color: fg.withOpacity(0.06),
+                    color: fg.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                    border: Border.all(color: fg.withOpacity(0.1)),
+                    border: Border.all(color: fg.withValues(alpha: 0.1)),
                   ),
                   child: Text(draft, style: TextStyle(color: muted, height: 1.45, fontSize: 13)),
                 ),

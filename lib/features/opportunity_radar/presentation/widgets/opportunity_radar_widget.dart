@@ -24,11 +24,7 @@ class OpportunityRadarWidget extends ConsumerWidget {
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
-      decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withOpacity(0.5)),
-      ),
+      decoration: DesignTokens.dashboardCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -36,15 +32,23 @@ class OpportunityRadarWidget extends ConsumerWidget {
             children: [
               const Icon(Icons.radar_rounded, color: DesignTokens.primary, size: 22),
               const SizedBox(width: DesignTokens.space2),
-              Text(
-                'Fırsat radarı',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
-                      fontWeight: FontWeight.w600,
-                    ),
+              Expanded(
+                child: Text(
+                  'Fırsat radarı',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: DesignTokens.textPrimaryDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
               TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 onPressed: () => context.push(AppRouter.routeWarRoom),
                 child: const Text('War Room', style: TextStyle(color: DesignTokens.primary, fontSize: 12)),
               ),

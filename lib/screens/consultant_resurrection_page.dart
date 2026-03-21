@@ -38,7 +38,7 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                   Icon(
                     Icons.check_circle_outline_rounded,
                     size: 64,
-                    color: DesignTokens.primary.withOpacity(0.5),
+                    color: DesignTokens.primary.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: DesignTokens.space4),
                   Text(
@@ -85,7 +85,7 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: DesignTokens.primary.withOpacity(0.15),
+                      color: DesignTokens.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                     ),
                     child: const Icon(

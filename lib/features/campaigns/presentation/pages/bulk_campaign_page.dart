@@ -264,7 +264,7 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
       decoration: BoxDecoration(
         color: DesignTokens.surfaceDark,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withOpacity(0.8)),
+        border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,7 +542,7 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
       decoration: BoxDecoration(
         color: DesignTokens.surfaceDark,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withOpacity(0.8)),
+        border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -653,7 +653,7 @@ class _BottomActionBar extends StatelessWidget {
         DesignTokens.space5,
       ),
       decoration: BoxDecoration(
-        color: isDark ? Colors.black.withOpacity(0.9) : Colors.white,
+        color: isDark ? Colors.black.withValues(alpha: 0.9) : Colors.white,
         border: const Border(
           top: BorderSide(color: DesignTokens.borderDark),
         ),

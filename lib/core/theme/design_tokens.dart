@@ -167,7 +167,7 @@ abstract final class DesignTokens {
   static const Color primaryGlow = Color(0xFFBFA071);
   static List<Color> get gradientPrimary => [backgroundDark, surfaceDark];
   static List<Color> get gradientCardBorder =>
-      [antiqueGold.withOpacity(0.35), antiqueGold.withOpacity(0.1)];
+      [antiqueGold.withValues(alpha: 0.35), antiqueGold.withValues(alpha: 0.1)];
   static BoxDecoration cardChampion({
     bool withGlow = false,
     Color? borderColor,
@@ -181,7 +181,7 @@ abstract final class DesignTokens {
         boxShadow: withGlow
             ? [
                 BoxShadow(
-                  color: antiqueGold.withOpacity(0.12),
+                  color: antiqueGold.withValues(alpha: 0.12),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -193,19 +193,19 @@ abstract final class DesignTokens {
   /// Çok hafif emboss: metallic brass hissi.
   static List<BoxShadow> get neomorphicEmbossDark => [
         BoxShadow(
-          color: Colors.white.withOpacity(0.03),
+          color: Colors.white.withValues(alpha: 0.03),
           offset: const Offset(-1.5, -1.5),
           blurRadius: 3,
         ),
         BoxShadow(
-          color: Colors.black.withOpacity(0.25),
+          color: Colors.black.withValues(alpha: 0.25),
           offset: const Offset(1.5, 1.5),
           blurRadius: 4,
         ),
       ];
   static List<BoxShadow> neomorphicGlowAntiqueGold({double intensity = 0.2}) => [
         BoxShadow(
-          color: antiqueGold.withOpacity(intensity),
+          color: antiqueGold.withValues(alpha: intensity),
           blurRadius: 12,
         ),
       ];
@@ -217,7 +217,7 @@ abstract final class DesignTokens {
         color: surfaceColor ?? surfaceDark,
         borderRadius: BorderRadius.circular(radiusLg),
         border: Border.all(
-          color: hoverOrActive ? antiqueGold.withOpacity(0.35) : borderDark.withOpacity(0.8),
+          color: hoverOrActive ? antiqueGold.withValues(alpha: 0.35) : borderDark.withValues(alpha: 0.8),
           width: 0.8,
         ),
         boxShadow: [
@@ -225,9 +225,27 @@ abstract final class DesignTokens {
           if (hoverOrActive) ...neomorphicGlowAntiqueGold(intensity: 0.15),
         ],
       );
+
+  /// Dashboard / War Room kartları — tek tip köşe + gölge (Rainbow Gayrimenkul premium).
+  static BoxDecoration dashboardCardDecoration({
+    bool highlight = false,
+    Color? surfaceColor,
+  }) =>
+      BoxDecoration(
+        color: surfaceColor ?? surfaceDark,
+        borderRadius: BorderRadius.circular(radiusLg),
+        border: Border.all(
+          color: highlight ? antiqueGold.withValues(alpha: 0.35) : borderDark.withValues(alpha: 0.55),
+          width: 0.85,
+        ),
+        boxShadow: [
+          ...neomorphicEmbossDark,
+          if (highlight) ...neomorphicGlowAntiqueGold(intensity: 0.12),
+        ],
+      );
   // Shimmer (görsel yükleme)
   static Color get shimmerBase => surfaceDarkElevated;
-  static Color get shimmerHighlight => surfaceDark.withOpacity(0.5);
+  static Color get shimmerHighlight => surfaceDark.withValues(alpha: 0.5);
   static Color get shimmerBaseLight => borderLight;
   static Color get shimmerHighlightLight => surfaceLight;
   static const double championCardRadius = 16;

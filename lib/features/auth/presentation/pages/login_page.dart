@@ -383,11 +383,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       Container(
                         padding: const EdgeInsets.all(DesignTokens.space3),
                         decoration: BoxDecoration(
-                          color: DesignTokens.danger.withOpacity(0.12),
+                          color: DesignTokens.danger.withValues(alpha: 0.12),
                           borderRadius:
                               BorderRadius.circular(DesignTokens.radiusMd),
                           border: Border.all(
-                              color: DesignTokens.danger.withOpacity(0.35)),
+                              color: DesignTokens.danger.withValues(alpha: 0.35)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +397,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Icon(Icons.error_outline_rounded,
-                                    color: DesignTokens.danger.withOpacity(0.9),
+                                    color: DesignTokens.danger.withValues(alpha: 0.9),
                                     size: 20),
                                 const SizedBox(width: DesignTokens.space2),
                                 Expanded(
@@ -624,7 +624,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
     );
     final focusBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      borderSide: BorderSide(color: DesignTokens.antiqueGold.withOpacity(0.7)),
+      borderSide: BorderSide(color: DesignTokens.antiqueGold.withValues(alpha: 0.7)),
     );
     return Padding(
       padding: EdgeInsets.only(
@@ -695,7 +695,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                 Text(
                   _errorMessage!,
                   style: TextStyle(
-                      color: DesignTokens.danger.withOpacity(0.95),
+                      color: DesignTokens.danger.withValues(alpha: 0.95),
                       fontSize: DesignTokens.fontSizeSm),
                 ),
               ],

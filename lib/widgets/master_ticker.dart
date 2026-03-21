@@ -16,7 +16,7 @@ class MasterTicker extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),

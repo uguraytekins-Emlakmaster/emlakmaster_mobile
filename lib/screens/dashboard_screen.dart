@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/features/settings/presentation/providers/feat
 import 'package:emlakmaster_mobile/widgets/bento_ai_news.dart';
 import 'package:emlakmaster_mobile/widgets/bento_analytics.dart';
 import 'package:emlakmaster_mobile/widgets/bento_saha_radar.dart';
+import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
@@ -44,6 +45,7 @@ class DashboardPage extends ConsumerWidget {
       final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
       final size = MediaQuery.of(context).size;
       final flags = ref.watch(featureFlagsProvider).valueOrNull;
+      final compact = flags?[AppConstants.keyCompactDashboard] ?? false;
       final kpiBar = flags?[AppConstants.keyFeatureKpiBar] ?? true;
       final marketPulse = flags?[AppConstants.keyFeatureMarketPulse] ?? true;
       final dailyBrief = flags?[AppConstants.keyFeatureDailyBrief] ?? true;
@@ -61,25 +63,30 @@ class DashboardPage extends ConsumerWidget {
               backgroundColor: surface,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(
+                padding: EdgeInsets.only(
                   left: DesignTokens.contentPaddingHorizontal,
                   right: DesignTokens.contentPaddingHorizontal,
-                  bottom: 120,
+                  bottom: compact ? 100 : 120,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const DashboardTopAppBar(),
-                    const SizedBox(height: 16),
+                    SizedBox(height: compact ? 12 : 16),
                     if (kpiBar) const DashboardKpiSection(),
-                    if (kpiBar) const SizedBox(height: 16),
+                    if (kpiBar) SizedBox(height: compact ? 12 : 16),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
                       child: MasterTicker(),
                     ),
                     const SizedBox(height: DesignTokens.space6),
                     const FinanceBar(),
+                    const SizedBox(height: DesignTokens.space6),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
+                      child: RainbowAnalyticsCenterCard(),
+                    ),
                     const SizedBox(height: DesignTokens.space6),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
@@ -118,19 +125,36 @@ class DashboardPage extends ConsumerWidget {
                       child: MissedOpportunitiesPanel(),
                     ),
                     const SizedBox(height: DesignTokens.space6),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.contentPaddingHorizontal,
+                      ),
                       child: Column(
                         children: [
-                          BentoPowerAnalytics(),
-                          SizedBox(height: 24),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(child: BentoSahaRadar()),
-                              SizedBox(width: 24),
-                              Expanded(child: BentoAiNews()),
-                            ],
+                          const RepaintBoundary(child: BentoPowerAnalytics()),
+                          SizedBox(height: compact ? 16 : 24),
+                          LayoutBuilder(
+                            builder: (context, c) {
+                              final stack = c.maxWidth < 520;
+                              if (stack) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    const BentoSahaRadar(),
+                                    SizedBox(height: compact ? 12 : 16),
+                                    const BentoAiNews(),
+                                  ],
+                                );
+                              }
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Expanded(child: BentoSahaRadar()),
+                                  SizedBox(width: compact ? 16 : 24),
+                                  const Expanded(child: BentoAiNews()),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),

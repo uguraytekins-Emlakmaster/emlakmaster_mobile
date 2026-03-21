@@ -53,7 +53,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
           decoration: BoxDecoration(
             borderRadius:
                 widget.borderRadius ?? BorderRadius.circular(DesignTokens.radiusMd),
-            color: Colors.white.withOpacity(_animation.value * 0.12),
+            color: Colors.white.withValues(alpha: _animation.value * 0.12),
           ),
         );
       },

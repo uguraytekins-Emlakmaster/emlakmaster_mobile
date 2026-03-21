@@ -214,9 +214,9 @@ class _TodayBriefLine extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space3, vertical: DesignTokens.space2),
       decoration: BoxDecoration(
-        color: surface.withOpacity(0.6),
+        color: surface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: border.withOpacity(0.5)),
+        border: Border.all(color: border.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -348,9 +348,9 @@ class _KpiChip extends StatelessWidget {
         vertical: DesignTokens.space2,
       ),
       decoration: BoxDecoration(
-        color: surface.withOpacity(0.8),
+        color: surface.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: border.withOpacity(0.7)),
+        border: Border.all(color: border.withValues(alpha: 0.7)),
       ),
       child: Row(
         children: [
@@ -389,7 +389,7 @@ class _ConsultantAcademyCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: border.withOpacity(0.7)),
+        border: Border.all(color: border.withValues(alpha: 0.7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +399,7 @@ class _ConsultantAcademyCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(DesignTokens.space3),
                 decoration: BoxDecoration(
-                  color: DesignTokens.primary.withOpacity(0.15),
+                  color: DesignTokens.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                 ),
                 child: const Icon(Icons.workspace_premium_rounded,
@@ -596,7 +596,7 @@ class _QuickActionsRow extends StatelessWidget {
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: textPrimary,
-              side: BorderSide(color: border.withOpacity(0.8)),
+              side: BorderSide(color: border.withValues(alpha: 0.8)),
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -636,9 +636,9 @@ class _WeeklyGoalCard extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.all(DesignTokens.space4),
           decoration: BoxDecoration(
-            color: surface.withOpacity(0.6),
+            color: surface.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            border: Border.all(color: border.withOpacity(0.5)),
+            border: Border.all(color: border.withValues(alpha: 0.5)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -701,12 +701,12 @@ class _PipelineChampionCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
             border: Border.all(
-              color: DesignTokens.primary.withOpacity(0.35),
+              color: DesignTokens.primary.withValues(alpha: 0.35),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: DesignTokens.primary.withOpacity(0.12),
+                color: DesignTokens.primary.withValues(alpha: 0.12),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -716,7 +716,7 @@ class _PipelineChampionCard extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 surface,
-                DesignTokens.primary.withOpacity(0.06),
+                DesignTokens.primary.withValues(alpha: 0.06),
               ],
             ),
           ),
@@ -733,7 +733,7 @@ class _PipelineChampionCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                   boxShadow: [
                     BoxShadow(
-                      color: DesignTokens.primary.withOpacity(0.35),
+                      color: DesignTokens.primary.withValues(alpha: 0.35),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -773,7 +773,7 @@ class _PipelineChampionCard extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,
-                color: DesignTokens.primary.withOpacity(0.8),
+                color: DesignTokens.primary.withValues(alpha: 0.8),
               ),
             ],
           ),
@@ -814,7 +814,7 @@ class _QuickStatsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(DesignTokens.space3),
                 decoration: BoxDecoration(
-                  color: DesignTokens.primary.withOpacity(0.15),
+                  color: DesignTokens.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                 ),
                 child: const Icon(

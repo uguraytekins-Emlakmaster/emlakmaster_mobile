@@ -113,7 +113,7 @@ class AdminConsultantsPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     DropdownButtonFormField<String>(
-                      value: inviteRole,
+                      initialValue: inviteRole,
                       decoration: InputDecoration(
                         labelText: l10n.t('label_role'),
                         border: const OutlineInputBorder(),
@@ -128,7 +128,7 @@ class AdminConsultantsPage extends ConsumerWidget {
                     if (teams.isNotEmpty) ...[
                       const SizedBox(height: DesignTokens.space4),
                       DropdownButtonFormField<String>(
-                        value: teamId,
+                        initialValue: teamId,
                         decoration: InputDecoration(
                           labelText: l10n.t('label_team'),
                           border: const OutlineInputBorder(),
@@ -145,7 +145,7 @@ class AdminConsultantsPage extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(DesignTokens.space3),
                       decoration: BoxDecoration(
-                        color: DesignTokens.primary.withOpacity(0.1),
+                        color: DesignTokens.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                         border: Border.all(color: DesignTokens.borderDark),
                       ),
@@ -376,7 +376,7 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
                           leading: CircleAvatar(
-                            backgroundColor: DesignTokens.primary.withOpacity(0.2),
+                            backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
                             child: const Icon(Icons.person_rounded, color: DesignTokens.primary),
                           ),
                           title: Text(
@@ -433,7 +433,7 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                     Text(u.name ?? u.email ?? u.uid, style: const TextStyle(color: DesignTokens.textPrimaryDark, fontWeight: FontWeight.w600)),
                     const SizedBox(height: DesignTokens.space4),
                     DropdownButtonFormField<String>(
-                      value: role,
+                      initialValue: role,
                       decoration: InputDecoration(
                         labelText: l10n.t('label_role'),
                         border: const OutlineInputBorder(),
@@ -447,7 +447,7 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     DropdownButtonFormField<String?>(
-                      value: teamId,
+                      initialValue: teamId,
                       decoration: InputDecoration(
                         labelText: l10n.t('label_team'),
                         border: const OutlineInputBorder(),
@@ -465,7 +465,7 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                       children: [
                         Text(l10n.t('is_active'), style: const TextStyle(color: DesignTokens.textPrimaryDark)),
                         const SizedBox(width: DesignTokens.space2),
-                        Switch(value: isActive, onChanged: (v) => setState(() => isActive = v), activeColor: DesignTokens.primary),
+                        Switch(value: isActive, onChanged: (v) => setState(() => isActive = v), activeThumbColor: DesignTokens.primary),
                       ],
                     ),
                     const SizedBox(height: DesignTokens.space3),

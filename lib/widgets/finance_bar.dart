@@ -1,5 +1,6 @@
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/finance_service.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 
 class FinanceBar extends StatelessWidget {
@@ -34,15 +35,26 @@ class FinanceBarLive extends StatelessWidget {
           builder: (context, snapshot) {
             final rates = snapshot.data;
             final prev = FinanceService.previousRates;
+            final awaitingFirst =
+                rates == null && snapshot.connectionState == ConnectionState.waiting;
+            if (awaitingFirst) {
+              return const _FinanceBarShimmer();
+            }
+            String fmtUsd() => (rates != null && rates.usdTry > 0)
+                ? rates.usdTry.toStringAsFixed(2)
+                : '—';
+            String fmtEur() => (rates != null && rates.eurTry > 0)
+                ? rates.eurTry.toStringAsFixed(2)
+                : '—';
             final items = <_FinanceDisplayItem>[
               _FinanceDisplayItem(
                 label: 'USD/TRY',
-                value: rates != null ? rates.usdTry.toStringAsFixed(2) : '—',
+                value: fmtUsd(),
                 change: _formatChange(current: rates?.usdTry, previous: prev?.usdTry),
               ),
               _FinanceDisplayItem(
                 label: 'EUR/TRY',
-                value: rates != null ? rates.eurTry.toStringAsFixed(2) : '—',
+                value: fmtEur(),
                 change: _formatChange(current: rates?.eurTry, previous: prev?.eurTry),
               ),
               _FinanceDisplayItem(
@@ -61,22 +73,28 @@ class FinanceBarLive extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(),
                     child: Text(
                       'Veriler güncelleniyor…',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
                     ),
                   ),
                 Expanded(
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.zero,
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final item = items[index];
-                      return FinanceChip(
-                        label: item.label,
-                        value: item.value,
-                        change: item.change,
-                      );
-                    },
+                  // Sabit genişlikli chip ×3 dar ekranda taşma yapıyordu (RenderFlex overflow).
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < items.length; i++)
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              right: i < items.length - 1 ? 8 : 0,
+                            ),
+                            child: FinanceChip(
+                              label: items[i].label,
+                              value: items[i].value,
+                              change: items[i].change,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -84,6 +102,44 @@ class FinanceBarLive extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+class _FinanceBarShimmer extends StatelessWidget {
+  const _FinanceBarShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < 3; i++)
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(right: i < 2 ? 8 : 0),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withValues(alpha: 0.04),
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ShimmerPlaceholder(width: 40, height: 10,
+                        borderRadius: BorderRadius.all(Radius.circular(4))),
+                    SizedBox(height: 10),
+                    ShimmerPlaceholder(width: 56, height: 16,
+                        borderRadius: BorderRadius.all(Radius.circular(4))),
+                    SizedBox(height: 8),
+                    ShimmerPlaceholder(width: 36, height: 10,
+                        borderRadius: BorderRadius.all(Radius.circular(4))),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -115,13 +171,12 @@ class FinanceChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUp = !change.startsWith('-');
     return Container(
-      width: 130,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       constraints: const BoxConstraints(minHeight: 52),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -152,11 +207,15 @@ class FinanceChip extends StatelessWidget {
                 color: isUp ? DesignTokens.primary : Colors.redAccent,
                 size: 16,
               ),
-              Text(
-                change,
-                style: TextStyle(
-                  color: isUp ? DesignTokens.primary : Colors.redAccent,
-                  fontSize: 10,
+              Flexible(
+                child: Text(
+                  change,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isUp ? DesignTokens.primary : Colors.redAccent,
+                    fontSize: 10,
+                  ),
                 ),
               ),
             ],

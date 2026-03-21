@@ -6,6 +6,12 @@ import 'package:emlakmaster_mobile/features/external_listings/domain/entities/ex
 class ExternalListingsRepository {
   static const int defaultLimit = 50;
 
+  static String? _propertyTypeFromDoc(Object? v) {
+    if (v is! String) return null;
+    final t = v.trim();
+    return t.isEmpty ? null : t;
+  }
+
   /// Şehir (ve isteğe bağlı ilçe) filtresiyle son atılan ilanları stream et.
   /// İlçe filtresi uygulama tarafında uygulanır (tek indeks: cityCode + postedAt).
   static Stream<List<ExternalListingEntity>> streamListings({
@@ -43,6 +49,7 @@ class ExternalListingsRepository {
       source: source,
       externalId: d['externalId'] as String? ?? doc.id,
       title: d['title'] as String? ?? '',
+      propertyType: _propertyTypeFromDoc(d['propertyType']),
       priceText: d['priceText'] as String?,
       priceValue: (d['priceValue'] as num?)?.toDouble(),
       city: d['cityName'] as String? ?? d['cityCode'] as String? ?? '',

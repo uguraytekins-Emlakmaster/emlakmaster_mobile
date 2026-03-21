@@ -45,7 +45,7 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                     ),
                     const Spacer(),
                     IconButton(
-                      icon: Icon(Icons.close_rounded, color: fg.withOpacity(0.6)),
+                      icon: Icon(Icons.close_rounded, color: fg.withValues(alpha: 0.6)),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
@@ -55,7 +55,7 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
                   'Son güncellemeler',
-                  style: TextStyle(color: fg.withOpacity(0.55), fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: fg.withValues(alpha: 0.55), fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 8),
@@ -64,7 +64,7 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                     ? Center(
                         child: Text(
                           'Bildirimler için giriş yapın.',
-                          style: TextStyle(color: fg.withOpacity(0.7)),
+                          style: TextStyle(color: fg.withValues(alpha: 0.7)),
                         ),
                       )
                     : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -81,7 +81,7 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                               controller: scroll,
                               padding: const EdgeInsets.all(24),
                               children: [
-                                Icon(Icons.notifications_none_rounded, size: 48, color: fg.withOpacity(0.25)),
+                                Icon(Icons.notifications_none_rounded, size: 48, color: fg.withValues(alpha: 0.25)),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Henüz bildirim yok',
@@ -92,7 +92,7 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                                 Text(
                                   'Lead ve görev bildirimleri burada özetlenir.',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: fg.withOpacity(0.65), fontSize: 13),
+                                  style: TextStyle(color: fg.withValues(alpha: 0.65), fontSize: 13),
                                 ),
                               ],
                             );
@@ -111,7 +111,7 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                                 leading: const Icon(Icons.circle_notifications_rounded, color: DesignTokens.primary, size: 22),
                                 title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 14)),
                                 subtitle: body.isNotEmpty
-                                    ? Text(body, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg.withOpacity(0.65), fontSize: 12))
+                                    ? Text(body, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg.withValues(alpha: 0.65), fontSize: 12))
                                     : null,
                               );
                             },

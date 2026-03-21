@@ -45,11 +45,13 @@ class _WarRoomBody extends ConsumerWidget {
     final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
     return Scaffold(
       backgroundColor: bg,
-      body: Column(
-        children: [
-          const Expanded(child: WarRoomCommandCenter()),
-          _ResurrectionStrip(),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Expanded(child: WarRoomCommandCenter()),
+            _ResurrectionStrip(),
+          ],
+        ),
       ),
     );
   }

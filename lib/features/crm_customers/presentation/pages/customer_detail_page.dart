@@ -276,7 +276,7 @@ class CustomerDetailPage extends ConsumerWidget {
                                             decoration: BoxDecoration(
                                               color: DesignTokens.backgroundDark,
                                               borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: DesignTokens.borderDark.withOpacity(0.5)),
+                                              border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.5)),
                                             ),
                                             child: Text(
                                               c,
@@ -346,7 +346,7 @@ class _PortfolioMatchSection extends ConsumerWidget {
           decoration: BoxDecoration(
             color: DesignTokens.surfaceDark,
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            border: Border.all(color: DesignTokens.primary.withOpacity(0.3)),
+            border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,7 +461,7 @@ class _CustomerHeader extends StatelessWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: DesignTokens.primary.withOpacity(0.2),
+                    backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
                     radius: 28,
                     child: Text(
                       fullName.trim().isEmpty ? '?' : fullName.trim().substring(0, 1).toUpperCase(),
@@ -498,7 +498,7 @@ class _CustomerHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: DesignTokens.primary.withOpacity(0.2),
+                        color: DesignTokens.primary.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                       ),
                       child: Text(
@@ -595,7 +595,7 @@ class _TimelineActions extends ConsumerWidget {
         decoration: BoxDecoration(
           color: DesignTokens.surfaceDark,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(DesignTokens.radius2xl)),
-          boxShadow: [BoxShadow(color: DesignTokens.primary.withOpacity(0.12), blurRadius: 24, offset: const Offset(0, -4))],
+          boxShadow: [BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, -4))],
         ),
         padding: EdgeInsets.only(
           left: DesignTokens.space6,
@@ -679,7 +679,7 @@ class _TimelineActions extends ConsumerWidget {
             decoration: BoxDecoration(
               color: DesignTokens.surfaceDark,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(DesignTokens.radius2xl)),
-              boxShadow: [BoxShadow(color: DesignTokens.accent.withOpacity(0.12), blurRadius: 24, offset: const Offset(0, -4))],
+              boxShadow: [BoxShadow(color: DesignTokens.accent.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, -4))],
             ),
             padding: EdgeInsets.only(
               left: DesignTokens.space6,
@@ -764,7 +764,7 @@ class _ActionChip extends StatelessWidget {
             color: DesignTokens.surfaceDark,
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
             border: Border.all(color: DesignTokens.borderDark),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 2))],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -828,7 +828,7 @@ class _CustomerTimeline extends StatelessWidget {
                       return Container(
                         padding: const EdgeInsets.all(DesignTokens.space6),
                         decoration: BoxDecoration(
-                          color: DesignTokens.surfaceDark.withOpacity(0.5),
+                          color: DesignTokens.surfaceDark.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                           border: Border.all(color: DesignTokens.borderDark),
                         ),
@@ -916,10 +916,10 @@ class _TimelineTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: _accentColor.withOpacity(0.2),
+              color: _accentColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              border: Border.all(color: _accentColor.withOpacity(0.5)),
-              boxShadow: [BoxShadow(color: _accentColor.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 2))],
+              border: Border.all(color: _accentColor.withValues(alpha: 0.5)),
+              boxShadow: [BoxShadow(color: _accentColor.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 2))],
             ),
             child: Icon(_icon, size: 20, color: _accentColor),
           ),
@@ -930,8 +930,8 @@ class _TimelineTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: DesignTokens.surfaceDark,
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                border: Border.all(color: _accentColor.withOpacity(0.25)),
-                boxShadow: [BoxShadow(color: _accentColor.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 2))],
+                border: Border.all(color: _accentColor.withValues(alpha: 0.25)),
+                boxShadow: [BoxShadow(color: _accentColor.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 2))],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

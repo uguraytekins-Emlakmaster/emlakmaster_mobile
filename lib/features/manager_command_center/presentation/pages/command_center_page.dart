@@ -85,6 +85,16 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
     super.dispose();
   }
 
+  void _clearFilters() {
+    setState(() {
+      _filterTeamId = null;
+      _filterAgentId = null;
+      _filterOutcome = null;
+      _teamMemberIds = [];
+      _searchController.clear();
+    });
+  }
+
   static const Map<String, String> _outcomeLabels = {
     'connected': 'Bağlandı',
     'missed': 'Cevapsız',
@@ -111,8 +121,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               style: TextStyle(color: textPrimary, fontSize: 15),
               decoration: InputDecoration(
                 hintText: 'Telefon, danışman, sonuç...',
-                hintStyle: TextStyle(color: textSecondary.withOpacity(0.7), fontSize: 14),
-                prefixIcon: Icon(Icons.search_rounded, color: DesignTokens.primary.withOpacity(0.9), size: 22),
+                hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.7), fontSize: 14),
+                prefixIcon: Icon(Icons.search_rounded, color: DesignTokens.primary.withValues(alpha: 0.9), size: 22),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: Icon(Icons.clear_rounded, size: 20, color: textSecondary),
@@ -131,7 +141,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide: BorderSide(color: border.withOpacity(0.6)),
+                  borderSide: BorderSide(color: border.withValues(alpha: 0.6)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -312,10 +322,25 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               if (mounted) setState(() => _lastFilteredDocs = filtered);
             });
             if (filtered.isEmpty) {
-              return const EmptyState(
+              final hasAnyDocs = docs.isNotEmpty;
+              return EmptyState(
+                compact: true,
                 icon: Icons.call_rounded,
-                title: 'Çağrı listesi',
-                subtitle: 'Henüz kayıtlı çağrı yok veya filtreye uygun sonuç yok.',
+                title: hasAnyDocs ? 'Uygun çağrı yok' : 'Çağrı kaydı yok',
+                subtitle: hasAnyDocs
+                    ? 'Arama veya filtrelere uygun kayıt bulunamadı.'
+                    : 'Henüz sisteme düşen çağrı yok. Yeni kayıtlar burada listelenir.',
+                outlinedActionLabel: hasAnyDocs ? 'Filtreleri temizle' : 'Yeni kayıt (yakında)',
+                onOutlinedAction: hasAnyDocs
+                    ? _clearFilters
+                    : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Çağrı ekleme akışı yakında bağlanacak.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
               );
             }
             return ListView.builder(
@@ -426,7 +451,7 @@ class _CommandCenterFilters extends StatelessWidget {
             final surfaceCard = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
             final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
             final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-            final hintColor = theme.colorScheme.onSurface.withOpacity(0.7);
+            final hintColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
               decoration: BoxDecoration(
@@ -548,19 +573,19 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
           color: surfaceCard,
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           border: Border.all(
-            color: _pressed ? DesignTokens.primary.withOpacity(0.5) : borderColor,
+            color: _pressed ? DesignTokens.primary.withValues(alpha: 0.5) : borderColor,
             width: _pressed ? 1.2 : 0.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(_pressed ? 0.35 : 0.2),
+              color: Colors.black.withValues(alpha: _pressed ? 0.35 : 0.2),
               blurRadius: _pressed ? 4 : 8,
               offset: Offset(0, _pressed ? 1 : 3),
               spreadRadius: _pressed ? 0 : 0.5,
             ),
             if (!_pressed)
               BoxShadow(
-                color: DesignTokens.primary.withOpacity(0.08),
+                color: DesignTokens.primary.withValues(alpha: 0.08),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),

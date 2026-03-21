@@ -24,7 +24,7 @@ class DailyBriefPanel extends ConsumerWidget {
       decoration: BoxDecoration(
         color: DesignTokens.surfaceDark,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withOpacity(0.5)),
+        border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +98,7 @@ class _BriefTile extends StatelessWidget {
       leading: Icon(
         _iconForCategory(item.category),
         size: 20,
-        color: DesignTokens.primary.withOpacity(0.9),
+        color: DesignTokens.primary.withValues(alpha: 0.9),
       ),
       title: Text(
         item.title ?? '',

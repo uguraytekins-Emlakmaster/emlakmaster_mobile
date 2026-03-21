@@ -75,10 +75,10 @@ class _ListingDisplaySettingsSectionState
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark.withOpacity(0.5) : DesignTokens.borderLight;
+    final border = isDark ? DesignTokens.borderDark.withValues(alpha: 0.5) : DesignTokens.borderLight;
     final onSurface = theme.colorScheme.onSurface;
-    final onSurfaceVariant = onSurface.withOpacity(0.7);
-    final onSurfaceDim = onSurface.withOpacity(0.5);
+    final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
+    final onSurfaceDim = onSurface.withValues(alpha: 0.5);
     final async = ref.watch(listingDisplaySettingsProvider);
     return async.when(
       data: (settings) {

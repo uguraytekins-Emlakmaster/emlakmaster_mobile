@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import '../logging/app_logger.dart';
@@ -11,6 +12,7 @@ class AuthSessionCoordinator {
 
   /// Uygulama öne gelince (soğuk değil, throttled).
   static Future<void> refreshOnAppResume() async {
+    if (Firebase.apps.isEmpty) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     final now = DateTime.now();

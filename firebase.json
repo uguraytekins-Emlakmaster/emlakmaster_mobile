@@ -1,1 +1,22 @@
-{"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"functions":{"source":"functions","predeploy":[]},"storage":{"rules":"storage.rules"},"flutter":{"platforms":{"android":{"default":{"projectId":"emlak-master","appId":"1:572835725773:android:27252e78a15a8fda92c484","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"emlak-master","appId":"1:572835725773:ios:9cc83a12d81b6aa392c484","uploadDebugSymbols":true,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"emlak-master","appId":"1:572835725773:ios:9cc83a12d81b6aa392c484","uploadDebugSymbols":true,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"emlak-master","configurations":{"android":"1:572835725773:android:27252e78a15a8fda92c484"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": {
+    "source": "functions",
+    "predeploy": []
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter":{"platforms":{"android":{"default":{"projectId":"emlak-master","appId":"1:572835725773:android:27252e78a15a8fda92c484","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"emlak-master","appId":"1:572835725773:ios:9cc83a12d81b6aa392c484","uploadDebugSymbols":true,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"emlak-master","appId":"1:572835725773:ios:9cc83a12d81b6aa392c484","uploadDebugSymbols":true,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"emlak-master","configurations":{"android":"1:572835725773:android:27252e78a15a8fda92c484"}}}}}}

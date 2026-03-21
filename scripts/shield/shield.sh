@@ -17,7 +17,8 @@ QUIET=0
 [[ "${1:-}" = "--quiet" ]] && QUIET=1 && shift
 RUN_ONE="${1:-}"
 
-log() { [[ $QUIET -eq 0 ]] && echo "$@"; }
+# QUIET=1 iken [[ ]] false döner; set -e ile tüm shield çıkmaması için her zaman başarı.
+log() { [[ $QUIET -eq 0 ]] && echo "$@" || true; }
 run_fixer() {
   local f="$1"
   [[ ! -x "$f" ]] && chmod +x "$f" 2>/dev/null
@@ -35,10 +36,10 @@ if [[ ! -d "$FIXERS_DIR" ]]; then
   exit 1
 fi
 
-[[ $QUIET -eq 0 ]] && echo "shield: PROJECT_ROOT=$PROJECT_ROOT"
+[[ $QUIET -eq 0 ]] && echo "shield: PROJECT_ROOT=$PROJECT_ROOT" || true
 
 for f in "$FIXERS_DIR"/[0-9][0-9]_*.sh; do
   [[ -f "$f" ]] && run_fixer "$f"
 done
 
-[[ $QUIET -eq 0 ]] && echo "shield: bitti."
+[[ $QUIET -eq 0 ]] && echo "shield: bitti." || true

@@ -22,6 +22,21 @@ service cloud.firestore {
       return agentIdField == request.auth.uid;
     }
 
+    // Harici ilan: istemciden (Market Pulse) güvenli yazım — Blaze/Functions olmadan.
+    function isClientExternalListingWrite(docId) {
+      let d = request.resource.data;
+      return docId.size() < 300
+        && d.clientFetched == true
+        && d.source in ['sahibinden', 'emlakjet', 'hepsiEmlak', 'demo']
+        && d.externalId is string && d.externalId.size() > 0 && d.externalId.size() < 200
+        && d.title is string && d.title.size() > 0 && d.title.size() < 500
+        && d.cityCode is string && d.cityCode.size() < 32
+        && d.cityName is string && d.cityName.size() < 200
+        && d.postedAt is timestamp
+        && d.link is string && d.link.size() < 2000
+        && d.link.matches('^https?://.+');
+    }
+
     // Kullanıcı (owner) kendi profilinde yalnızca güvenli alanları değiştirebilir;
     // role / isActive / teamId / managerId / createdAt değişimi sadece yönetici (yetki yükseltmesi önlenir).
     function userOwnerUpdatePreservesPrivileges() {
@@ -116,7 +131,10 @@ service cloud.firestore {
     }
     match /external_listings/{docId} {
       allow read: if isSignedIn();
-      allow write: if false;
+      // Cloud Functions (Admin SDK) kuralları bypass eder. İstemci yazımı: Market Pulse
+      // "İlanları güncelle" — yalnızca clientFetched + şema doğrulaması (Blaze gerekmez).
+      allow create, update: if isSignedIn() && isClientExternalListingWrite(docId);
+      allow delete: if false;
     }
     match /news/{docId} {
       allow read: if isSignedIn();

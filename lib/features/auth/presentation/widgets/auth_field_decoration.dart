@@ -16,7 +16,7 @@ abstract final class AuthFieldDecoration {
     );
     final focusBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      borderSide: BorderSide(color: DesignTokens.antiqueGold.withOpacity(0.7)),
+      borderSide: BorderSide(color: DesignTokens.antiqueGold.withValues(alpha: 0.7)),
     );
     return InputDecoration(
       labelText: label,

@@ -68,7 +68,7 @@ class _AuthRoleErrorScreen extends ConsumerWidget {
               Text(
                 text,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: onSurface.withOpacity(0.9), fontSize: 16),
+                style: TextStyle(color: onSurface.withValues(alpha: 0.9), fontSize: 16),
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
@@ -90,8 +90,8 @@ class _AuthRoleErrorScreen extends ConsumerWidget {
                 icon: const Icon(Icons.logout_rounded, size: 20),
                 label: const Text('Çıkış yap'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: onSurface.withOpacity(0.9),
-                  side: BorderSide(color: onSurface.withOpacity(0.4)),
+                  foregroundColor: onSurface.withValues(alpha: 0.9),
+                  side: BorderSide(color: onSurface.withValues(alpha: 0.4)),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),
@@ -119,7 +119,7 @@ class _AuthLoadingScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'Yükleniyor...',
-              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.9), fontSize: 14),
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.9), fontSize: 14),
             ),
           ],
         ),

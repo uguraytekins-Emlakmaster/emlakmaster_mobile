@@ -26,7 +26,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= _breakpointWide;
     final gradientColors = isDark
-        ? [DesignTokens.backgroundDark, DesignTokens.primaryDark.withOpacity(0.4)]
+        ? [DesignTokens.backgroundDark, DesignTokens.primaryDark.withValues(alpha: 0.4)]
         : [DesignTokens.backgroundLight, DesignTokens.backgroundLight];
 
     return Container(
@@ -228,10 +228,10 @@ class _GlowingDotState extends State<_GlowingDot> with SingleTickerProviderState
           height: 10,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: DesignTokens.brandGold.withOpacity(_animation.value),
+            color: DesignTokens.brandGold.withValues(alpha: _animation.value),
             boxShadow: [
               BoxShadow(
-                color: DesignTokens.brandGold.withOpacity(_animation.value * 0.8),
+                color: DesignTokens.brandGold.withValues(alpha: _animation.value * 0.8),
                 blurRadius: 6,
               ),
             ],
@@ -471,12 +471,12 @@ class _GlassCard extends StatelessWidget {
           padding: const EdgeInsets.all(DesignTokens.space5),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            color: surface.withOpacity(isDark ? 0.6 : 0.95),
-            border: Border.all(color: DesignTokens.brandGold.withOpacity(0.25)),
+            color: surface.withValues(alpha: isDark ? 0.6 : 0.95),
+            border: Border.all(color: DesignTokens.brandGold.withValues(alpha: 0.25)),
             boxShadow: isDark
                 ? [
                     BoxShadow(
-                      color: DesignTokens.brandNavy.withOpacity(0.3),
+                      color: DesignTokens.brandNavy.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),

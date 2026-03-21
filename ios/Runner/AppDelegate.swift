@@ -8,10 +8,11 @@ import FirebaseCore
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Duplicate FIRApp configure crash’ini önlemek için plugin kaydından önce guard kur.
-    FirebaseConfigureGuardInstall()
-    // Plist’ten tek seferlik configure (simulator’da nil apiKey decode crash’ını önlemek için).
-    FirebaseConfigureFromPlistIfNeeded()
+    // FCM: APNs token zinciri için uzaktan bildirim kaydı (bildirim izni Dart tarafında istenir).
+    // Bu çağrı, "no APNS Token" / FCM token gecikmesini azaltmaya yardımcı olur.
+    application.registerForRemoteNotifications()
+    // Firebase init Dart tarafında tek noktadan yönetiliyor.
+    // Native guard/swizzle katmanı bazı cihazlarda core/not-initialized ürettiği için devre dışı.
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -20,8 +21,6 @@ import FirebaseCore
     // UIScene ile window sahne tarafında kalır — nil olunca fatal error.
     synchronizeAppDelegateWindowForLegacyPlugins()
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-    // Plugin yüklendi; optionsFromFIROptions apiKey yamasını kur (Dart decode crash önlemi).
-    FirebaseConfigureGuardInstallCorePluginPatch()
   }
 
   /// Eski plugin'ler için AppDelegate.window'u sahne penceresine bağla.

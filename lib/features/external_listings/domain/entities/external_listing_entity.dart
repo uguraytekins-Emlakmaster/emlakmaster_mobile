@@ -4,7 +4,9 @@ import 'package:equatable/equatable.dart';
 enum ExternalListingSource {
   sahibinden('sahibinden.com'),
   emlakjet('emlakjet'),
-  hepsiEmlak('hepsi emlak');
+  hepsiEmlak('hepsi emlak'),
+  /// Uygulama içi örnek / test (Cloudflare nedeniyle otomatik çekme çalışmazsa).
+  demo('örnek');
 
   const ExternalListingSource(this.label);
   final String label;
@@ -17,6 +19,7 @@ class ExternalListingEntity with EquatableMixin {
     required this.source,
     required this.externalId,
     required this.title,
+    this.propertyType,
     this.priceText,
     this.priceValue,
     required this.city,
@@ -32,6 +35,8 @@ class ExternalListingEntity with EquatableMixin {
   final ExternalListingSource source;
   final String externalId;
   final String title;
+  /// Örn. «Konut», «Arsa», «İşyeri» — başlık satırında rozet olarak gösterilir.
+  final String? propertyType;
   final String? priceText;
   final double? priceValue;
   final String city;
@@ -43,5 +48,5 @@ class ExternalListingEntity with EquatableMixin {
   final double? sqm;
 
   @override
-  List<Object?> get props => [id, source, externalId, title, link, postedAt];
+  List<Object?> get props => [id, source, externalId, title, propertyType, link, postedAt];
 }

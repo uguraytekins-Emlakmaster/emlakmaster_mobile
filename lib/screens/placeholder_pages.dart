@@ -19,7 +19,7 @@ class CustomersPlaceholderPage extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
     final onSurface = theme.colorScheme.onSurface;
-    final onSurfaceVariant = onSurface.withOpacity(0.7);
+    final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
@@ -77,7 +77,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
     final onSurface = theme.colorScheme.onSurface;
-    final onSurfaceVariant = onSurface.withOpacity(0.7);
+    final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
@@ -314,9 +314,9 @@ class ThemeSection extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark.withOpacity(0.5) : DesignTokens.borderLight;
+    final border = isDark ? DesignTokens.borderDark.withValues(alpha: 0.5) : DesignTokens.borderLight;
     final onSurface = theme.colorScheme.onSurface;
-    final onSurfaceVariant = onSurface.withOpacity(0.7);
+    final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     final index = ref.watch(themeModeIndexProvider);
     return Container(
       decoration: BoxDecoration(
@@ -403,9 +403,9 @@ class NotificationsSection extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark.withOpacity(0.5) : DesignTokens.borderLight;
+    final border = isDark ? DesignTokens.borderDark.withValues(alpha: 0.5) : DesignTokens.borderLight;
     final onSurface = theme.colorScheme.onSurface;
-    final onSurfaceVariant = onSurface.withOpacity(0.7);
+    final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     final asyncEnabled = ref.watch(notificationsEnabledProvider);
     return Container(
       decoration: BoxDecoration(
@@ -433,7 +433,7 @@ class NotificationsSection extends ConsumerWidget {
             style: TextStyle(color: onSurfaceVariant, fontSize: 12),
           ),
           value: enabled,
-          activeColor: DesignTokens.primary,
+          activeThumbColor: DesignTokens.primary,
           onChanged: (v) => ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
         ),
       ),

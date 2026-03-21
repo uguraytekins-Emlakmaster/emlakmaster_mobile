@@ -455,7 +455,7 @@ class _AnalyzingProgressBar extends StatelessWidget {
       height: 6,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(999),
@@ -511,7 +511,7 @@ class _ResultSummaryWithSentiment extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,8 +594,8 @@ class _ExtractionBentoGrid extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: Colors.white.withOpacity(0.06),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              color: Colors.white.withValues(alpha: 0.06),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: Row(
               children: [
@@ -604,7 +604,7 @@ class _ExtractionBentoGrid extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: DesignTokens.primary.withOpacity(0.2),
+                    color: DesignTokens.primary.withValues(alpha: 0.2),
                   ),
                   child: Icon(e.icon, color: DesignTokens.primary, size: 20),
                 ),
@@ -660,8 +660,8 @@ class _NextStepCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: DesignTokens.primary.withOpacity(0.12),
-        border: Border.all(color: DesignTokens.primary.withOpacity(0.3)),
+        color: DesignTokens.primary.withValues(alpha: 0.12),
+        border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -51,7 +51,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      DesignTokens.primary.withOpacity(0.06),
+                      DesignTokens.primary.withValues(alpha: 0.06),
                       Colors.transparent,
                     ],
                   ),
@@ -172,7 +172,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
           ),
           boxShadow: [
             BoxShadow(
-              color: DesignTokens.primary.withOpacity(0.15),
+              color: DesignTokens.primary.withValues(alpha: 0.15),
               blurRadius: 24,
               offset: const Offset(0, -4),
             ),
@@ -394,9 +394,9 @@ class _StageColumn extends StatelessWidget {
               vertical: DesignTokens.space3,
             ),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              border: Border.all(color: color.withOpacity(0.4)),
+              border: Border.all(color: color.withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
@@ -408,7 +408,7 @@ class _StageColumn extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: color.withOpacity(0.5),
+                        color: color.withValues(alpha: 0.5),
                         blurRadius: 6,
                       ),
                     ],
@@ -431,7 +431,7 @@ class _StageColumn extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
+                    color: color.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
                   ),
                   child: Text(
@@ -499,7 +499,7 @@ class _StageColumn extends StatelessWidget {
                           BorderRadius.circular(DesignTokens.radiusMd),
                     ),
                     tileColor: isCurrent
-                        ? DesignTokens.primary.withOpacity(0.15)
+                        ? DesignTokens.primary.withValues(alpha: 0.15)
                         : null,
                     leading: Icon(
                       isCurrent ? Icons.check_circle_rounded : Icons.circle_outlined,
@@ -680,7 +680,7 @@ class _ChampionFab extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: DesignTokens.primary.withOpacity(0.4),
+              color: DesignTokens.primary.withValues(alpha: 0.4),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),

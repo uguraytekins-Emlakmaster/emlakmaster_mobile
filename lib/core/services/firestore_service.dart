@@ -54,6 +54,9 @@ class FirestoreService {
     }
   }
 
+  /// Firestore önbellek ayarları uygulandı mı (Firebase [DEFAULT] mevcut).
+  static bool get isFirestoreReady => _initialized;
+
   static Stream<List<String>>? _tickerStream;
 
   /// Ofis ticker stream (tek örnek, broadcast): birden fazla dinleyici güvenle bağlanabilir.
@@ -641,6 +644,29 @@ class FirestoreService {
         .collection('deals')
         .snapshots()
         .map((s) => s.docs.length);
+  }
+
+  /// Raporlar ekranı: en az bir çağrı özeti var mı (örnek, limit 1).
+  static Stream<QuerySnapshot<Map<String, dynamic>>> callSummariesSampleStream() async* {
+    await ensureInitialized();
+    if (!_initialized) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection('call_summaries')
+        .limit(1)
+        .snapshots();
+  }
+
+  /// Raporlar ekranı: en az bir işlem kaydı var mı (örnek, limit 1).
+  static Stream<QuerySnapshot<Map<String, dynamic>>> dealsSampleStream() async* {
+    await ensureInitialized();
+    if (!_initialized) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance.collection('deals').limit(1).snapshots();
   }
 
   /// news koleksiyonu (AI News Insight); yoksa boş liste.

@@ -34,10 +34,10 @@ class BentoPowerAnalytics extends StatelessWidget {
                   }
                 }
 
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    color: Colors.white.withOpacity(0.04),
+                return RepaintBoundary(
+                  child: Container(
+                  decoration: DesignTokens.dashboardCardDecoration(
+                    surfaceColor: Colors.white.withValues(alpha: 0.04),
                   ),
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -58,7 +58,7 @@ class BentoPowerAnalytics extends StatelessWidget {
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(6),
-                              color: DesignTokens.primary.withOpacity(0.2),
+                              color: DesignTokens.primary.withValues(alpha: 0.2),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -91,17 +91,20 @@ class BentoPowerAnalytics extends StatelessWidget {
                         style: TextStyle(color: Colors.grey, fontSize: 11),
                       ),
                       const SizedBox(height: 16),
-                      DonutChartsRow(
-                        callTrafficValue: '$callsCount',
-                        callTrafficSub: 'Çağrı (calls)',
-                        missedValue: '$missed',
-                        missedSub: 'Geri dönülmeyen',
-                        dealValue: '$dealsCount',
-                        dealSub: 'İşlem (deals)',
+                      RepaintBoundary(
+                        child: DonutChartsRow(
+                          callTrafficValue: '$callsCount',
+                          callTrafficSub: 'Çağrı (calls)',
+                          missedValue: '$missed',
+                          missedSub: 'Geri dönülmeyen',
+                          dealValue: '$dealsCount',
+                          dealSub: 'İşlem (deals)',
+                        ),
                       ),
                     ],
                   ),
-                );
+                ),
+              );
               },
             );
           },
@@ -115,9 +118,8 @@ class _AnalyticsLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: Colors.white.withOpacity(0.04),
+      decoration: DesignTokens.dashboardCardDecoration(
+        surfaceColor: Colors.white.withValues(alpha: 0.04),
       ),
       padding: const EdgeInsets.all(20),
       child: const Column(
@@ -260,24 +262,33 @@ class _AnimatedDonut extends StatelessWidget {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Column(
-              children: [
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 80),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      sub,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: const TextStyle(color: Colors.grey, fontSize: 9),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  sub,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey, fontSize: 9),
-                ),
-              ],
+              ),
             ),
           ),
           if (isAlert)

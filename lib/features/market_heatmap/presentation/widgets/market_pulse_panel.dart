@@ -1,21 +1,40 @@
-import 'package:animate_do/animate_do.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
-import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/external_listings/domain/entities/external_listing_entity.dart';
+import 'package:emlakmaster_mobile/features/external_listings/data/client_external_listings_sync_service.dart';
+import 'package:emlakmaster_mobile/features/external_listings/data/external_listings_sync_outcome.dart';
 import 'package:emlakmaster_mobile/features/external_listings/presentation/providers/external_listings_provider.dart';
+import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_investment_listing_tile.dart';
+import 'package:firebase_core/firebase_core.dart' show Firebase, FirebaseException;
 import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+/// İstemci tarafı ilan çekme hataları (Firestore / ağ).
+String marketPulseClientSyncErrorMessage(Object error) {
+  if (error is FirebaseException) {
+    switch (error.code) {
+      case 'permission-denied':
+        return 'Firestore izni yok. firestore.rules güncellemesini deploy edin: '
+            'firebase deploy --only firestore:rules';
+      case 'unavailable':
+        return 'Ağ veya Firestore geçici olarak kullanılamıyor.';
+      default:
+        return 'Güncelleme başarısız (${error.code}): ${error.message ?? ''}';
+    }
+  }
+  if (error is UnsupportedError) {
+    final m = error.message;
+    if (m != null && m.isNotEmpty) return m;
+    return 'Bu ortamda desteklenmiyor.';
+  }
+  return error.toString().split('\n').first;
+}
 
 /// Dashboard: "Market Pulse" – Bölgesel talep + harici sitelerden son atılan ilanlar.
 class MarketPulsePanel extends ConsumerWidget {
@@ -40,25 +59,49 @@ class MarketPulsePanel extends ConsumerWidget {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: border.withOpacity(0.5)),
+        border: Border.all(color: border.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              const Icon(Icons.show_chart_rounded, color: DesignTokens.primary, size: 22),
-              const SizedBox(width: DesignTokens.space2),
-              Expanded(
-                child: Text(
-                  'Market Pulse',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: textPrimary,
-                        fontWeight: FontWeight.w600,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.show_chart_rounded, color: DesignTokens.primary, size: 22),
+                      const SizedBox(width: DesignTokens.space2),
+                      Text(
+                        'Market Pulse',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: textPrimary,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.2,
+                            ),
                       ),
-                ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 30, top: 2),
+                    child: Text(
+                      'Yatırım istihbaratı — bölgesel akış',
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.15,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const _FetchListingsNowButton(),
+              const _MarketPulseListingActions(),
             ],
           ),
           const SizedBox(height: DesignTokens.space2),
@@ -97,12 +140,27 @@ class MarketPulsePanel extends ConsumerWidget {
           const SizedBox(height: DesignTokens.space3),
           Divider(height: 1, color: border),
           const SizedBox(height: DesignTokens.space2),
-          Text(
-            'Son atılan ilanlar (sahibinden / emlakjet / hepsi emlak)',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Son işlemler — çoklu kaynak',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: textPrimary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Sahibinden · Emlakjet · Hepsi Emlak · canlı + örnek',
+                style: TextStyle(
                   color: textSecondary,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
                 ),
+              ),
+            ],
           ),
           const SizedBox(height: DesignTokens.space2),
           listingsAsync.when(
@@ -110,19 +168,32 @@ class MarketPulsePanel extends ConsumerWidget {
               if (listings.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    'Bu bölge için henüz ilan yok. Ayarlardan şehir/ilçe seçin; ilanlar arka planda çekilir.',
-                    style: TextStyle(color: textSecondary, fontSize: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Liste boş. Canlı siteler çoğunlukla otomatik çekmeyi engeller (Cloudflare).',
+                        style: TextStyle(color: textSecondary, fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Üstte «Örnek yükle»ye basarak bu alanda örnek ilanları gösterebilirsiniz.',
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 );
               }
               final list = listings.take(10).toList();
+              // FadeInUp × 10 + stagger GPU/bellek yükünü artırıyordu (OOM riski); statik liste yeterli.
               return Column(
-                children: List.generate(list.length, (i) => FadeInUp(
-                  duration: DesignTokens.durationNormal,
-                  delay: Duration(milliseconds: i * 60),
-                  child: _ListingTile(listing: list[i]),
-                )),
+                children: list
+                    .map((e) => MarketPulseInvestmentListingTile(listing: e))
+                    .toList(),
               );
             },
             loading: () => Padding(
@@ -160,166 +231,121 @@ class MarketPulsePanel extends ConsumerWidget {
   }
 }
 
-/// Callable fetchListingsNow tetikleyen buton.
-class _FetchListingsNowButton extends ConsumerStatefulWidget {
-  const _FetchListingsNowButton();
+/// Güncelle + örnek yükle (Cloudflare / SPA nedeniyle canlı çekme sık başarısız olur).
+class _MarketPulseListingActions extends ConsumerStatefulWidget {
+  const _MarketPulseListingActions();
 
   @override
-  ConsumerState<_FetchListingsNowButton> createState() => _FetchListingsNowButtonState();
+  ConsumerState<_MarketPulseListingActions> createState() =>
+      _MarketPulseListingActionsState();
 }
 
-class _FetchListingsNowButtonState extends ConsumerState<_FetchListingsNowButton> {
+class _MarketPulseListingActionsState extends ConsumerState<_MarketPulseListingActions> {
   bool _loading = false;
+  bool _demoLoading = false;
+
+  static Future<ExternalListingsSyncOutcome>? _inFlight;
 
   Future<void> _fetchNow() async {
-    if (_loading) return;
+    if (_loading || _demoLoading || _inFlight != null) return;
+    if (Firebase.apps.isEmpty) {
+      AppToaster.error(
+        context,
+        'Firebase başlatılamadı. Uygulamayı yeniden başlatın veya yapılandırmayı kontrol edin.',
+      );
+      return;
+    }
     HapticFeedback.mediumImpact();
     setState(() => _loading = true);
+    _inFlight = ClientExternalListingsSyncService.syncNow().whenComplete(() {
+      _inFlight = null;
+    });
     try {
-      final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
-      await functions.httpsCallable('fetchListingsNow').call();
+      final outcome = await _inFlight!;
       if (mounted) {
         ref.invalidate(externalListingsStreamProvider);
-        AppToaster.success(context, 'İlanlar güncelleniyor. Kısa süre içinde listelenecek.');
+        if (outcome.written > 0) {
+          if (outcome.usedDemoFallback) {
+            AppToaster.success(
+              context,
+              'Liste hazır: ${outcome.written} ilan (örnek veri; canlı siteler otomatik çekmeye izin vermiyor).',
+            );
+          } else {
+            AppToaster.success(
+              context,
+              '${outcome.liveWritten} ilan güncellendi.',
+            );
+          }
+        } else {
+          AppToaster.error(
+            context,
+            'İlan yazılamadı. İnternet veya Firestore izinlerini kontrol edin.',
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
-        AppToaster.error(context, 'Güncelleme başarısız: ${e.toString().split('\n').first}');
+        AppToaster.error(context, marketPulseClientSyncErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: _loading ? null : _fetchNow,
-      icon: _loading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
-            )
-          : const Icon(Icons.refresh_rounded, size: 18, color: DesignTokens.primary),
-      label: Text(
-        _loading ? 'Güncelleniyor…' : 'İlanları güncelle',
-        style: const TextStyle(fontSize: 12, color: DesignTokens.primary),
-      ),
-    );
+  Future<void> _seedDemo() async {
+    if (_loading || _demoLoading) return;
+    if (Firebase.apps.isEmpty) return;
+    setState(() => _demoLoading = true);
+    try {
+      final n = await ClientExternalListingsSyncService.seedDemoListings();
+      if (mounted) {
+        ref.invalidate(externalListingsStreamProvider);
+        AppToaster.success(context, '$n örnek ilan eklendi (kaynak: örnek).');
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToaster.error(context, marketPulseClientSyncErrorMessage(e));
+      }
+    } finally {
+      if (mounted) setState(() => _demoLoading = false);
+    }
   }
-}
-
-class _ListingTile extends StatelessWidget {
-  const _ListingTile({required this.listing});
-  final ExternalListingEntity listing;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
-    final surfaceElevated = isDark ? DesignTokens.surfaceDarkElevated : DesignTokens.surfaceLightElevated;
-    final price = listing.priceText ?? (listing.priceValue != null ? '${listing.priceValue!.toStringAsFixed(0)} ₺' : '');
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: InkWell(
-        onTap: () {
-          final uri = Uri.tryParse(listing.link);
-          if (uri != null) launchUrl(uri, mode: LaunchMode.externalApplication);
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (listing.imageUrl != null && listing.imageUrl!.isNotEmpty)
-              Hero(
-                tag: 'listing_${listing.id}',
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: CachedNetworkImage(
-                    imageUrl: listing.imageUrl!,
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => ShimmerPlaceholder(
-                      width: 48,
-                      height: 48,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    errorWidget: (_, __, ___) => SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Icon(Icons.home_rounded, color: textTertiary),
-                    ),
+    final busy = _loading || _demoLoading;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextButton.icon(
+          onPressed: busy ? null : _fetchNow,
+          icon: _loading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: DesignTokens.primary,
                   ),
-                ),
-              )
-            else
-              SizedBox(
-                width: 48,
-                height: 48,
-                child: Icon(Icons.home_rounded, color: textTertiary),
-              ),
-            const SizedBox(width: DesignTokens.space2),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    listing.title,
-                    style: TextStyle(
-                      color: textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      if (listing.district != null)
-                        Text(
-                          listing.district!,
-                          style: TextStyle(
-                            color: textTertiary,
-                            fontSize: 11,
-                          ),
-                        ),
-                      if (listing.district != null && price.isNotEmpty) Text(' · ', style: TextStyle(color: textTertiary, fontSize: 11)),
-                      if (price.isNotEmpty)
-                        Text(
-                          price,
-                          style: const TextStyle(
-                            color: DesignTokens.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: surfaceElevated,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      listing.source.label,
-                      style: TextStyle(color: textSecondary, fontSize: 10),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.open_in_new_rounded, size: 16, color: textTertiary),
-          ],
+                )
+              : const Icon(Icons.refresh_rounded, size: 18, color: DesignTokens.primary),
+          label: Text(
+            _loading ? 'Güncelleniyor…' : 'İlanları güncelle',
+            style: const TextStyle(fontSize: 11, color: DesignTokens.primary),
+          ),
         ),
-      ),
+        TextButton(
+          onPressed: busy ? null : _seedDemo,
+          child: Text(
+            _demoLoading ? '…' : 'Örnek yükle',
+            style: TextStyle(
+              fontSize: 11,
+              color: DesignTokens.primary.withValues(alpha: 0.95),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

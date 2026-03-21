@@ -43,10 +43,10 @@ class CustomerCard extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.all(DesignTokens.space4),
           decoration: BoxDecoration(
-            color: isSelected ? DesignTokens.primary.withOpacity(0.08) : DesignTokens.surfaceDark.withOpacity(0.6),
+            color: isSelected ? DesignTokens.primary.withValues(alpha: 0.08) : DesignTokens.surfaceDark.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
             border: Border.all(
-              color: isSelected ? DesignTokens.primary.withOpacity(0.5) : DesignTokens.borderDark.withOpacity(0.5),
+              color: isSelected ? DesignTokens.primary.withValues(alpha: 0.5) : DesignTokens.borderDark.withValues(alpha: 0.5),
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -67,7 +67,7 @@ class CustomerCard extends ConsumerWidget {
                       ),
                     ),
                   CircleAvatar(
-                    backgroundColor: DesignTokens.primary.withOpacity(0.2),
+                    backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
                     radius: 24,
                     child: Text(
                       _avatarLetter(customer.fullName),
@@ -169,7 +169,7 @@ class _TemperatureChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
       ),
       child: Text(
@@ -196,7 +196,7 @@ class _LastContactChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
       ),
       child: Text(
@@ -249,7 +249,7 @@ class _LeadScoreChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
       ),
       child: Row(

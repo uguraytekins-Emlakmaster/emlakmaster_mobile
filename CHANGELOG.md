@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.0.5] – 2025-03-19
+
+### Market Pulse — yatırım terminali UI
+- **Liste satırı:** `MarketPulseInvestmentListingTile` — terminal tarzı kart, sol altın çizgi, tabular fiyat.
+- **Fiyat trendi:** ₺ sembolünün solunda yeşil yukarı ok (pozitif trend göstergesi).
+- **Emlak tipi rozeti:** Başlık satırı sonunda koyu mavi (#0D47A1) badge + beyaz metin (`propertyType` alanı).
+- **Platform kökeni:** «örnek» metni yerine mikro marka rozetleri (S/E/H); `demo` kaynakta üçlü şerit.
+- **Başlık metinleri:** Panelde «Yatırım istihbaratı», «Son işlemler — çoklu kaynak» alt başlıkları.
+
+### Harici ilanlar (istemci senkron)
+- **`ClientExternalListingsSyncService`:** Blaze olmadan HTML çekme + Firestore yazımı; boşta otomatik örnek seed.
+- **`ExternalListingsSyncOutcome`:** `liveWritten`, `demoWritten`, `usedDemoFallback`.
+- **`ExternalListingEntity.propertyType`:** Firestore `propertyType` alanı; örnek seed’de kaynak başına sahibinden/emlakjet/hepsiEmlak + gerçekçi başlıklar.
+
+### Dokümantasyon ve otomasyon
+- **doc/MARKET_PULSE_FREE.md**, **doc/MARKET_PULSE_FIREBASE.md**, **doc/AUTOMATION.md**, **doc/BACKLOG.md**, **doc/QA_CHECKLIST.md** vb. eklendi/güncellendi.
+- **Firebase Functions / emülatör:** `scripts/deploy_firebase_functions.sh`, `scripts/run_functions_emulator.sh`; `firebase_functions_bootstrap.dart`.
+
+### iOS / bildirim
+- **AppDelegate / SceneDelegate:** Uzaktan bildirim kaydı ve FCM hazırlığı ile ilgili güncellemeler.
+
+### Shield uyumu
+- Değişiklikler `scripts/shield/` ile uyumlu tutuldu; çalıştırma: `scripts/shield/shield.sh`, `scripts/run_with_shield.sh`, `scripts/build_with_shield.sh`.
+
+---
+
 ## [1.0.4] – 2025-03-15
 
 ### Performans (No-Lag)

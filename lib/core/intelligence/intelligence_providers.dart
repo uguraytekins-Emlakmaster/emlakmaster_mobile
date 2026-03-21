@@ -7,7 +7,9 @@ import 'package:emlakmaster_mobile/core/intelligence/intelligence_firestore.dart
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
 
 /// İlk okumada background servisi tetikler; sonuçlar Firestore'dan okunur.
+/// Bir tick gecikme: ilk frame çizilsin, sonra ağır Firestore yazıları çalışsın (bellek/GPU baskısı azalır).
 final intelligenceRunTriggerProvider = FutureProvider<void>((ref) async {
+  await Future<void>.delayed(Duration.zero);
   await BackgroundIntelligenceService.instance.runOnce();
 });
 

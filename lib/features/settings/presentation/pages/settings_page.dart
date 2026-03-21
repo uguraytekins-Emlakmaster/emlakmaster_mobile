@@ -71,20 +71,20 @@ class SettingsPage extends ConsumerWidget {
                     ),
                     subtitle: Text(
                       'Rol: ${override?.label ?? role.label}',
-                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7), fontSize: 12),
+                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 12),
                     ),
                   ),
-                  Divider(height: 1, color: theme.dividerColor.withOpacity(0.5)),
+                  Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   _AvatarSettingsRow(userId: user.uid),
                 ],
                 if (canBecomeAdmin) ...[
-                  Divider(height: 1, color: theme.dividerColor.withOpacity(0.5)),
+                  Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   ListTile(
                     leading: const Icon(Icons.admin_panel_settings_rounded, color: DesignTokens.primary),
                     title: Text('Yönetici yetkisi al', style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text(
                       'Firestore\'da rolünüz broker_owner olarak güncellenir.',
-                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7), fontSize: 11),
+                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 11),
                     ),
                     onTap: () async {
                       try {
@@ -115,11 +115,11 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ],
                 if (isAdmin) ...[
-                  Divider(height: 1, color: theme.dividerColor.withOpacity(0.5)),
+                  Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   ListTile(
                     leading: Icon(
                       Icons.dashboard_rounded,
-                      color: preferConsultant != true ? DesignTokens.primary : theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: preferConsultant != true ? DesignTokens.primary : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     title: Text('Yönetici paneli', style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: preferConsultant != true
@@ -130,7 +130,7 @@ class SettingsPage extends ConsumerWidget {
                   ListTile(
                     leading: Icon(
                       Icons.person_rounded,
-                      color: preferConsultant == true ? DesignTokens.primary : theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: preferConsultant == true ? DesignTokens.primary : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     title: Text('Danışman paneli', style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: preferConsultant == true
@@ -140,7 +140,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ],
                 if (canSwitchRole) ...[
-                  Divider(height: 1, color: theme.dividerColor.withOpacity(0.5)),
+                  Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   ListTile(
                     leading: const Icon(Icons.swap_horiz_rounded, color: DesignTokens.primary),
                     title: Text(
@@ -187,7 +187,7 @@ class SettingsPage extends ConsumerWidget {
             _sectionCard(context,
               children: [
                 for (var i = 0; i < AppLocalizations.supportedLocales.length; i++) ...[
-                  if (i > 0) Divider(height: 1, color: theme.dividerColor.withOpacity(0.5)),
+                  if (i > 0) Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   ListTile(
                     leading: const Icon(Icons.translate_rounded, color: DesignTokens.primary, size: 22),
                     title: Text(
@@ -232,7 +232,7 @@ class SettingsPage extends ConsumerWidget {
                   title: Text('Tüm Çağrılar', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500)),
                   subtitle: Text(
                     'Danışman paneli → Çağrılar: kendi çağrılarınız, CSV export, toplu SMS. Android\'de telefon günlüğü senkronu.',
-                    style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7), fontSize: 11),
+                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 11),
                   ),
                 ),
               ],
@@ -453,7 +453,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   subtitle: Text(
                     '${AppConstants.appShortName} • v${AppConstants.appVersion.split('+').first}',
-                    style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7), fontSize: 12),
+                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 12),
                   ),
                 ),
               ],
@@ -517,7 +517,7 @@ class SettingsPage extends ConsumerWidget {
       decoration: BoxDecoration(
         color: theme.cardTheme.color ?? theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -624,7 +624,7 @@ class _SectionHeader extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
@@ -657,10 +657,10 @@ class _SettingSwitch extends StatelessWidget {
       secondary: Icon(icon, color: DesignTokens.primary, size: 22),
       title: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500)),
       subtitle: subtitle != null
-          ? Text(subtitle!, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 11))
+          ? Text(subtitle!, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 11))
           : null,
       value: value,
-      activeColor: DesignTokens.primary,
+      activeThumbColor: DesignTokens.primary,
       onChanged: (v) => onChanged(v),
     );
   }

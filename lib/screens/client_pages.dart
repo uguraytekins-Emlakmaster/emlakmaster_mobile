@@ -49,10 +49,10 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
             const SizedBox(height: 8),
             Text(
               'Tercihlerinizi yazın; danışmanınız size uygun ilanları seçip geri dönecek.',
-              style: TextStyle(color: onSurface.withOpacity(0.75), fontSize: 14),
+              style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 14),
             ),
             const SizedBox(height: DesignTokens.space5),
-            Text('Tür', style: TextStyle(color: onSurface.withOpacity(0.8), fontWeight: FontWeight.w600, fontSize: 13)),
+            Text('Tür', style: TextStyle(color: onSurface.withValues(alpha: 0.8), fontWeight: FontWeight.w600, fontSize: 13)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -62,7 +62,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                   label: Text(t),
                   selected: sel,
                   onSelected: (_) => setState(() => _type = t),
-                  selectedColor: DesignTokens.primary.withOpacity(0.25),
+                  selectedColor: DesignTokens.primary.withValues(alpha: 0.25),
                   checkmarkColor: DesignTokens.primary,
                 );
               }).toList(),
@@ -74,7 +74,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
                 hintText: 'Örn: 3+1, Kayapınar, 4–6 M TL bütçe…',
-                hintStyle: TextStyle(color: onSurface.withOpacity(0.45)),
+                hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.45)),
                 filled: true,
                 fillColor: surface,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
@@ -127,7 +127,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                         Text(
                           '“$_type · $q” bilgisi danışmanınıza iletilmek üzere kaydedildi. En kısa sürede sizinle iletişime geçilecek.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: onSurface.withOpacity(0.8), height: 1.45),
+                          style: TextStyle(color: onSurface.withValues(alpha: 0.8), height: 1.45),
                         ),
                         const SizedBox(height: 24),
                         FilledButton(
@@ -189,7 +189,7 @@ class ClientFavoritesPage extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Uygulamada favori kaydı açıldığında ilanlarınız burada listelenecek. Şimdilik örnek portföyümüzden ilham alabilirsiniz.',
-              style: TextStyle(color: onSurface.withOpacity(0.75), fontSize: 14),
+              style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 14),
             ),
             const SizedBox(height: DesignTokens.space5),
             ..._samples.map((s) => Padding(
@@ -221,7 +221,7 @@ class ClientFavoritesPage extends StatelessWidget {
                         padding: const EdgeInsets.all(DesignTokens.space4),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                          border: Border.all(color: border.withOpacity(0.6)),
+                          border: Border.all(color: border.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           children: [
@@ -232,11 +232,11 @@ class ClientFavoritesPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(s.$1, style: TextStyle(color: onSurface, fontWeight: FontWeight.w700)),
-                                  Text(s.$2, style: TextStyle(color: onSurface.withOpacity(0.65), fontSize: 13)),
+                                  Text(s.$2, style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 13)),
                                 ],
                               ),
                             ),
-                            Icon(Icons.chevron_right_rounded, color: onSurface.withOpacity(0.4)),
+                            Icon(Icons.chevron_right_rounded, color: onSurface.withValues(alpha: 0.4)),
                           ],
                         ),
                       ),
@@ -282,7 +282,7 @@ class ClientMessagesPage extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Danışmanınızla görüşmek için aşağıdaki seçeneklerden birini kullanın.',
-              style: TextStyle(color: onSurface.withOpacity(0.75), fontSize: 14),
+              style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 14),
             ),
             const SizedBox(height: DesignTokens.space5),
             _msgTile(
@@ -352,12 +352,12 @@ class ClientMessagesPage extends StatelessWidget {
           padding: const EdgeInsets.all(DesignTokens.space4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            border: Border.all(color: border.withOpacity(0.6)),
+            border: Border.all(color: border.withValues(alpha: 0.6)),
           ),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: DesignTokens.primary.withOpacity(0.2),
+                backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
                 child: Icon(icon, color: DesignTokens.primary),
               ),
               const SizedBox(width: 14),
@@ -366,11 +366,11 @@ class ClientMessagesPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title, style: TextStyle(color: onSurface, fontWeight: FontWeight.w700)),
-                    Text(subtitle, style: TextStyle(color: onSurface.withOpacity(0.65), fontSize: 12)),
+                    Text(subtitle, style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12)),
                   ],
                 ),
               ),
-              Icon(Icons.open_in_new_rounded, size: 20, color: onSurface.withOpacity(0.45)),
+              Icon(Icons.open_in_new_rounded, size: 20, color: onSurface.withValues(alpha: 0.45)),
             ],
           ),
         ),
@@ -410,7 +410,7 @@ class ClientVirtualTourPage extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Aşağıdaki bağlantılar harici sitede örnek sanal tur içerikleri açar.',
-              style: TextStyle(color: onSurface.withOpacity(0.75), fontSize: 14),
+              style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 14),
             ),
             const SizedBox(height: DesignTokens.space5),
             ...tours.map((t) => Padding(
@@ -436,14 +436,14 @@ class ClientVirtualTourPage extends StatelessWidget {
                         padding: const EdgeInsets.all(DesignTokens.space5),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                          border: Border.all(color: border.withOpacity(0.6)),
+                          border: Border.all(color: border.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: DesignTokens.primary.withOpacity(0.15),
+                                color: DesignTokens.primary.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(Icons.threesixty_rounded, color: DesignTokens.primary, size: 32),
@@ -454,7 +454,7 @@ class ClientVirtualTourPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(t.$1, style: TextStyle(color: onSurface, fontWeight: FontWeight.w700)),
-                                  Text(t.$2, style: TextStyle(color: onSurface.withOpacity(0.65), fontSize: 13)),
+                                  Text(t.$2, style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 13)),
                                 ],
                               ),
                             ),
@@ -506,13 +506,13 @@ class ClientProfilePage extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: surface,
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                border: Border.all(color: border.withOpacity(0.6)),
+                border: Border.all(color: border.withValues(alpha: 0.6)),
               ),
               child: Row(
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: DesignTokens.primary.withOpacity(0.2),
+                    backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
                     child: Text(
                       avatarLetter,
                       style: const TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.w800, fontSize: 22),
@@ -529,7 +529,7 @@ class ClientProfilePage extends ConsumerWidget {
                         ),
                         Text(
                           'Müşteri hesabı',
-                          style: TextStyle(color: onSurface.withOpacity(0.65), fontSize: 13),
+                          style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 13),
                         ),
                       ],
                     ),
@@ -541,13 +541,13 @@ class ClientProfilePage extends ConsumerWidget {
             ListTile(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                side: BorderSide(color: border.withOpacity(0.5)),
+                side: BorderSide(color: border.withValues(alpha: 0.5)),
               ),
               tileColor: surface,
               leading: const Icon(Icons.privacy_tip_outlined, color: DesignTokens.primary),
               title: Text('KVKK & gizlilik', style: TextStyle(color: onSurface)),
-              subtitle: Text('Verileriniz nasıl kullanılır?', style: TextStyle(color: onSurface.withOpacity(0.65), fontSize: 12)),
-              trailing: Icon(Icons.chevron_right_rounded, color: onSurface.withOpacity(0.4)),
+              subtitle: Text('Verileriniz nasıl kullanılır?', style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12)),
+              trailing: Icon(Icons.chevron_right_rounded, color: onSurface.withValues(alpha: 0.4)),
               onTap: () {
                 HapticFeedback.lightImpact();
                 showDialog<void>(

@@ -23,7 +23,7 @@ class DiscoveryPanel extends ConsumerWidget {
     final async = ref.watch(discoveryItemsProvider);
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
-      decoration: DesignTokens.cardNeomorphic(),
+      decoration: DesignTokens.dashboardCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -31,17 +31,21 @@ class DiscoveryPanel extends ConsumerWidget {
             children: [
               const Icon(Icons.auto_awesome_rounded, color: DesignTokens.antiqueGold, size: 22),
               const SizedBox(width: DesignTokens.space2),
-              Text(
-                'Bugün keşfedilen fırsatlar',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
-                      fontWeight: FontWeight.w600,
-                    ),
+              Expanded(
+                child: Text(
+                  'Bugün keşfedilen fırsatlar',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: DesignTokens.textPrimaryDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: DesignTokens.space2),
               Text(
                 '≥%${(AppConstants.opportunityRadarMinScore * 100).toInt()}',
-                style: TextStyle(color: DesignTokens.antiqueGold.withOpacity(0.8), fontSize: 11),
+                style: TextStyle(color: DesignTokens.antiqueGold.withValues(alpha: 0.8), fontSize: 11),
               ),
             ],
           ),
@@ -151,7 +155,7 @@ class _DiscoveryTile extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         leading: CircleAvatar(
           radius: 18,
-          backgroundColor: DesignTokens.antiqueGold.withOpacity(0.2),
+          backgroundColor: DesignTokens.antiqueGold.withValues(alpha: 0.2),
           child: Text(
             '${(item.score * 100).toInt()}',
             style: const TextStyle(color: DesignTokens.antiqueGold, fontSize: 11, fontWeight: FontWeight.w700),

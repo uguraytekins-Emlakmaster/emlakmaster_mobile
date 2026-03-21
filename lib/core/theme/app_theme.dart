@@ -37,7 +37,7 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: DesignTokens.inputBackgroundGold.withOpacity(0.25),
+        fillColor: DesignTokens.inputBackgroundGold.withValues(alpha: 0.25),
         hintStyle: const TextStyle(color: DesignTokens.textTertiaryDark),
         labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
         border: OutlineInputBorder(

@@ -25,28 +25,38 @@ class RevenueLeakTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatted = _formatAmount(estimatedRiskAmount);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: DesignTokens.danger.withOpacity(0.12),
+        color: DesignTokens.danger.withValues(alpha: 0.12),
         border: Border(
-          bottom: BorderSide(color: DesignTokens.danger.withOpacity(0.35)),
+          bottom: BorderSide(color: DesignTokens.danger.withValues(alpha: 0.35)),
         ),
       ),
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, size: 16, color: DesignTokens.danger.withOpacity(0.9)),
-          const SizedBox(width: 8),
-          Text(
-            'Current Estimated Revenue at Risk: $formatted $currencySuffix',
-            style: TextStyle(
-              color: DesignTokens.danger.withOpacity(0.95),
-              fontSize: DesignTokens.fontSizeSm,
-              fontWeight: FontWeight.w600,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 18,
+              color: DesignTokens.danger.withValues(alpha: 0.9),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Current Estimated Revenue at Risk: $formatted $currencySuffix',
+                style: TextStyle(
+                  color: DesignTokens.danger.withValues(alpha: 0.95),
+                  fontSize: DesignTokens.fontSizeSm,
+                  fontWeight: FontWeight.w600,
+                  height: 1.25,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

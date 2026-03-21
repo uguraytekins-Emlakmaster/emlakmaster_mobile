@@ -357,7 +357,7 @@ class _TaskTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
         side: BorderSide(
           color: isOverdue
-              ? DesignTokens.danger.withOpacity(0.5)
+              ? DesignTokens.danger.withValues(alpha: 0.5)
               : DesignTokens.borderDark,
         ),
       ),

@@ -24,7 +24,7 @@ class MissedOpportunitiesPanel extends ConsumerWidget {
       decoration: BoxDecoration(
         color: DesignTokens.surfaceDark,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.danger.withOpacity(0.3)),
+        border: Border.all(color: DesignTokens.danger.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,7 +97,7 @@ class _MissedTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         radius: 16,
-        backgroundColor: DesignTokens.danger.withOpacity(0.2),
+        backgroundColor: DesignTokens.danger.withValues(alpha: 0.2),
         child: Text(
           '${(item.score * 100).toInt()}',
           style: const TextStyle(color: DesignTokens.danger, fontSize: 10, fontWeight: FontWeight.w700),

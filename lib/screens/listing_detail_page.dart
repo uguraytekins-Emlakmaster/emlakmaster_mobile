@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
@@ -145,6 +146,30 @@ class ListingDetailPage extends StatelessWidget {
                           fontSize: 22,
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            context.push(
+                              '${AppRouter.routeRainbowAnalytics}?listingId=$listingId',
+                            );
+                          },
+                          icon: const Icon(Icons.auto_graph_rounded, color: DesignTokens.primary),
+                          label: const Text(
+                            'Intelligence raporu oluştur',
+                            style: TextStyle(
+                              color: DesignTokens.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: DesignTokens.primary),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
                       if (description.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         Text(
@@ -179,7 +204,7 @@ class ListingDetailPage extends StatelessWidget {
     return Container(
       color: DesignTokens.surfaceDarkCard,
       child: Center(
-        child: Icon(Icons.home_rounded, size: 64, color: Colors.white.withOpacity(0.2)),
+        child: Icon(Icons.home_rounded, size: 64, color: Colors.white.withValues(alpha: 0.2)),
       ),
     );
   }

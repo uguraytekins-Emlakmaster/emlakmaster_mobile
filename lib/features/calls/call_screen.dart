@@ -206,12 +206,12 @@ class _CallScreenState extends ConsumerState<CallScreen>
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                         border: Border(
-                          top: BorderSide(color: Colors.white.withOpacity(0.12)),
-                          left: BorderSide(color: Colors.white.withOpacity(0.06)),
-                          right: BorderSide(color: Colors.white.withOpacity(0.06)),
+                          top: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+                          left: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                          right: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
                         ),
                       ),
                     ),
@@ -450,7 +450,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _callState == CallUIState.ending
-                                  ? DesignTokens.danger.withOpacity(0.6)
+                                  ? DesignTokens.danger.withValues(alpha: 0.6)
                                   : DesignTokens.danger,
                             ),
                             child: _callState == CallUIState.ending
@@ -568,8 +568,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: Colors.black.withOpacity(0.35),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    color: Colors.black.withValues(alpha: 0.35),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -665,7 +665,7 @@ class _SiriWaveBarsAnimatedState extends State<_SiriWaveBarsAnimated>
               width: barWidth,
               height: height.clamp(8.0, 32.0),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(barWidth / 2),
               ),
             );
@@ -785,8 +785,8 @@ class _RoundIconButton extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isActive
-                  ? Colors.white.withOpacity(0.14)
-                  : Colors.white.withOpacity(0.06),
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : Colors.white.withValues(alpha: 0.06),
             ),
             child: Icon(
               icon,
@@ -830,12 +830,12 @@ class _KeypadSheet extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
-          color: DesignTokens.scaffoldDark.withOpacity(0.95),
+          color: DesignTokens.scaffoldDark.withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.15)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -862,9 +862,9 @@ class _KeypadSheet extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       width: 1.5,
                     ),
                   ),

@@ -84,9 +84,9 @@ class _AnimatedSurfaceState extends State<_AnimatedSurface> {
     final baseBorder = widget.borderColor ?? ext.border;
 
     final hoverTransform = _pressed
-        ? (Matrix4.identity()..scale(0.98))
+        ? (Matrix4.identity()..scaleByDouble(0.98, 0.98, 1.0, 1))
         : (_hovering
-            ? (Matrix4.identity()..translate(0.0, -2.0))
+            ? (Matrix4.identity()..translateByDouble(0.0, -2.0, 0.0, 1))
             : Matrix4.identity());
 
     final hoverShadow = widget.elevation > 0 || _hovering
@@ -100,7 +100,7 @@ class _AnimatedSurfaceState extends State<_AnimatedSurface> {
         : const <BoxShadow>[];
 
     final borderColor = _hovering && interactive
-        ? DesignTokens.primary.withOpacity(0.5)
+        ? DesignTokens.primary.withValues(alpha: 0.5)
         : baseBorder;
 
     Widget surface = AnimatedContainer(

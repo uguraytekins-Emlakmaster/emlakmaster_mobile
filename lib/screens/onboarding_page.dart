@@ -90,7 +90,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             colors: [
               DesignTokens.backgroundDark,
               DesignTokens.backgroundDark,
-              DesignTokens.primary.withOpacity(0.03),
+              DesignTokens.primary.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -142,11 +142,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
               borderRadius: BorderRadius.circular(4),
               color: _currentPage == i
                   ? DesignTokens.primary
-                  : DesignTokens.textTertiaryDark.withOpacity(0.5),
+                  : DesignTokens.textTertiaryDark.withValues(alpha: 0.5),
               boxShadow: _currentPage == i
                   ? [
                       BoxShadow(
-                        color: DesignTokens.primary.withOpacity(0.4),
+                        color: DesignTokens.primary.withValues(alpha: 0.4),
                         blurRadius: 8,
                       ),
                     ]
@@ -178,7 +178,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           boxShadow: [
             BoxShadow(
-              color: DesignTokens.primary.withOpacity(0.25),
+              color: DesignTokens.primary.withValues(alpha: 0.25),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -310,12 +310,12 @@ class _OnboardingSlide extends StatelessWidget {
             borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
             boxShadow: [
               BoxShadow(
-                color: DesignTokens.primary.withOpacity(0.08),
+                color: DesignTokens.primary.withValues(alpha: 0.08),
                 blurRadius: 32,
                 offset: const Offset(0, 12),
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.25),
+                color: Colors.black.withValues(alpha: 0.25),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
                 spreadRadius: -4,
@@ -327,11 +327,11 @@ class _OnboardingSlide extends StatelessWidget {
               colors: [
                 DesignTokens.surfaceDarkElevated,
                 DesignTokens.surfaceDark,
-                DesignTokens.primary.withOpacity(0.04),
+                DesignTokens.primary.withValues(alpha: 0.04),
               ],
             ),
             border: Border.all(
-              color: DesignTokens.borderDark.withOpacity(0.8),
+              color: DesignTokens.borderDark.withValues(alpha: 0.8),
             ),
           ),
           child: ClipRRect(
@@ -362,7 +362,7 @@ class _OnboardingSlide extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  DesignTokens.surfaceDark.withOpacity(0.3),
+                  DesignTokens.surfaceDark.withValues(alpha: 0.3),
                 ],
               ),
             ),
@@ -386,8 +386,8 @@ class _OnboardingSlide extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  DesignTokens.primary.withOpacity(0.2),
-                  DesignTokens.primary.withOpacity(0.06),
+                  DesignTokens.primary.withValues(alpha: 0.2),
+                  DesignTokens.primary.withValues(alpha: 0.06),
                   Colors.transparent,
                 ],
               ),
@@ -403,12 +403,12 @@ class _OnboardingSlide extends StatelessWidget {
               shape: BoxShape.circle,
               color: DesignTokens.surfaceDark,
               border: Border.all(
-                color: DesignTokens.primary.withOpacity(0.25),
+                color: DesignTokens.primary.withValues(alpha: 0.25),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: DesignTokens.primary.withOpacity(0.15),
+                  color: DesignTokens.primary.withValues(alpha: 0.15),
                   blurRadius: 24,
                 ),
               ],
@@ -416,7 +416,7 @@ class _OnboardingSlide extends StatelessWidget {
             child: Icon(
               data.icon,
               size: 48,
-              color: DesignTokens.primary.withOpacity(0.95),
+              color: DesignTokens.primary.withValues(alpha: 0.95),
             ),
           ),
         ),
@@ -458,12 +458,12 @@ class _FloatingCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: DesignTokens.surfaceDark.withOpacity(0.9),
+          color: DesignTokens.surfaceDark.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
           border: Border.all(color: DesignTokens.borderDark),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

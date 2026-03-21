@@ -133,7 +133,7 @@ class _TeamInfoCard extends StatelessWidget {
                     .where((u) => AppRole.fromFirestoreRole(u.role).isManagerTier)
                     .toList();
                 return DropdownButtonFormField<String>(
-                  value: selectedManagerId.isEmpty ? null : selectedManagerId,
+                  initialValue: selectedManagerId.isEmpty ? null : selectedManagerId,
                   decoration: InputDecoration(
                     labelText: l10n.t('label_manager'),
                     border: const OutlineInputBorder(),
@@ -324,7 +324,7 @@ class _MemberTile extends StatelessWidget {
         return ListTile(
           contentPadding: EdgeInsets.zero,
           leading: CircleAvatar(
-            backgroundColor: DesignTokens.primary.withOpacity(0.2),
+            backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
             child: const Icon(Icons.person_rounded, color: DesignTokens.primary, size: 20),
           ),
           title: Text(
