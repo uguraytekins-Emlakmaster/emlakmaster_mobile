@@ -13,6 +13,8 @@ class UserDoc {
     this.email,
     this.avatarUrl,
     this.isActive = true,
+    /// Birincil ofis (çok kiracılı üyelik). Üyelik detayı `office_memberships`.
+    this.officeId,
     this.teamId,
     this.managerId,
     this.createdAt,
@@ -25,6 +27,7 @@ class UserDoc {
   final String? email;
   final String? avatarUrl;
   final bool isActive;
+  final String? officeId;
    /// Ekip kimliği (her danışman tek ekipte).
   final String? teamId;
 
@@ -44,6 +47,7 @@ class UserDoc {
       email: data['email'] as String?,
       avatarUrl: data['avatarUrl'] as String?,
       isActive: data['isActive'] as bool? ?? true,
+      officeId: data['officeId'] as String?,
       teamId: data['teamId'] as String?,
       managerId: data['managerId'] as String?,
       createdAt: _parseTimestamp(data['createdAt']),
@@ -99,6 +103,7 @@ class UserRepository {
     String? name,
     String? email,
     bool isActive = true,
+    String? officeId,
     String? teamId,
     String? managerId,
   }) async {
@@ -111,6 +116,7 @@ class UserRepository {
         'name': name,
         'email': email,
         'isActive': isActive,
+        if (officeId != null) 'officeId': officeId,
         if (teamId != null) 'teamId': teamId,
         if (managerId != null) 'managerId': managerId,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -119,6 +125,43 @@ class UserRepository {
       if (kDebugMode) AppLogger.d('UserRepository.setUserDoc: $uid role=$role');
     } catch (e, st) {
       if (kDebugMode) AppLogger.e('UserRepository.setUserDoc', e, st);
+      rethrow;
+    }
+  }
+
+  /// `users/{uid}` **varsa** ad/e-posta günceller; yoksa no-op (rol oluşturma burada yapılmaz).
+  static Future<void> mergeProfileIfDocExists({
+    required String uid,
+    String? name,
+    String? email,
+  }) async {
+    try {
+      final ref = _store.collection(_usersCol).doc(uid);
+      final snap = await ref.get();
+      if (!snap.exists) return;
+      final data = snap.data();
+      if (data == null) return;
+      final patch = <String, dynamic>{};
+      final n = name?.trim();
+      if (n != null && n.isNotEmpty) {
+        final cur = data['name'] as String?;
+        if (cur == null || cur.isEmpty) {
+          patch['name'] = n;
+        }
+      }
+      final em = email?.trim();
+      if (em != null && em.isNotEmpty) {
+        final cur = data['email'] as String?;
+        if (cur == null || cur.isEmpty) {
+          patch['email'] = em;
+        }
+      }
+      if (patch.isEmpty) return;
+      patch['updatedAt'] = FieldValue.serverTimestamp();
+      await ref.set(patch, SetOptions(merge: true));
+      if (kDebugMode) AppLogger.d('UserRepository.mergeProfileIfDocExists: $uid');
+    } catch (e, st) {
+      if (kDebugMode) AppLogger.e('UserRepository.mergeProfileIfDocExists', e, st);
       rethrow;
     }
   }

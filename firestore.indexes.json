@@ -55,6 +55,22 @@
         { "fieldPath": "cityCode", "order": "ASCENDING" },
         { "fieldPath": "postedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "office_memberships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "office_invites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "code", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -48,6 +48,8 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
 
   static const List<({String label, IconData icon})> _actions = [
     (label: 'Dashboard', icon: Icons.dashboard_rounded),
+    (label: 'Ofis yönetimi', icon: Icons.groups_rounded),
+    (label: 'Ofis daveti oluştur', icon: Icons.vpn_key_outlined),
     (label: 'Çağrı Merkezi', icon: Icons.call_rounded),
     (label: 'War Room', icon: Icons.military_tech_rounded),
     (label: 'Broker Command', icon: Icons.business_center_rounded),
@@ -79,7 +81,11 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
 
     void onActionTap(int index) {
       final a = filteredActions[index];
-      if (a.label == 'Çağrı Merkezi') {
+      if (a.label == 'Ofis yönetimi') {
+        context.push(AppRouter.routeOfficeAdmin);
+      } else if (a.label == 'Ofis daveti oluştur') {
+        context.push(AppRouter.routeOfficeInviteCreate);
+      } else if (a.label == 'Çağrı Merkezi') {
         context.push(AppRouter.routeCommandCenter);
       } else if (a.label == 'War Room') {
         context.push(AppRouter.routeWarRoom);

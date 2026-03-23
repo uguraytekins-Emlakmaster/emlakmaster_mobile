@@ -9,6 +9,12 @@ abstract final class AppConstants {
 
   /// Firestore koleksiyon adları (spec ile uyumlu)
   static const String colUsers = 'users';
+  /// Çok kiracılı ofis: `offices/{id}`.
+  static const String colOffices = 'offices';
+  /// Kullanıcı ↔ ofis üyeliği: `office_memberships/{id}`.
+  static const String colOfficeMemberships = 'office_memberships';
+  /// Kısa kodlu davetler: `office_invites/{id}` (code alanı ile sorgulanır).
+  static const String colOfficeInvites = 'office_invites';
   static const String colRoles = 'roles';
   static const String colPermissions = 'permissions';
   static const String colAgents = 'agents';

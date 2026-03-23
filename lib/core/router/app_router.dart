@@ -1,9 +1,14 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../deep_linking/pending_deep_link_store.dart';
 import '../theme/design_tokens.dart';
+import '../../features/office/domain/office_exception.dart';
+import '../../features/office/presentation/utils/office_error_ui.dart';
 import '../widgets/app_loading.dart';
 import '../services/analytics_service.dart';
 import '../services/auth_service.dart';
@@ -26,6 +31,21 @@ import '../../screens/listing_detail_page.dart';
 import '../../screens/role_based_shell.dart';
 import '../../features/analytics/presentation/pages/intel_report_history_page.dart';
 import '../../features/analytics/presentation/pages/rainbow_analytics_center_page.dart';
+import '../../features/region_demand_map/presentation/pages/region_insight_page.dart';
+import '../../features/external_integrations/presentation/pages/connected_accounts_page.dart';
+import '../../features/external_integrations/presentation/pages/my_external_listings_page.dart';
+import '../../features/listing_import/presentation/pages/import_history_page.dart';
+import '../../features/listing_import/presentation/pages/import_hub_page.dart';
+import '../../features/messages/presentation/pages/message_center_page.dart';
+import '../../features/messages/presentation/pages/message_thread_page.dart';
+import '../../features/workspace/presentation/pages/workspace_setup_page.dart';
+import '../../features/office/presentation/pages/create_office_invite_page.dart';
+import '../../features/office/presentation/pages/create_office_page.dart';
+import '../../features/office/presentation/pages/join_office_page.dart';
+import '../../features/office/presentation/pages/office_admin_page.dart';
+import '../../features/office/presentation/pages/office_gate_page.dart';
+import '../../features/office/presentation/pages/office_recovery_page.dart';
+import '../intelligence/region_heatmap_defaults.dart';
 
 /// go_router ile merkezi routing. Login router içinde; beyaz ekran önlenir.
 class AppRouter {
@@ -34,6 +54,20 @@ class AppRouter {
   static const String routeLogin = '/login';
   static const String routeRegister = '/register';
   static const String routeOnboarding = '/onboarding';
+  /// İlk giriş: ofis oluştur / katıl + isteğe bağlı platform.
+  static const String routeWorkspaceSetup = '/workspace-setup';
+  /// Çok kiracılı: ofis yokken merkezi kapı.
+  static const String routeOfficeGate = '/office';
+  static const String routeOfficeCreate = '/office/create';
+  static const String routeOfficeJoin = '/office/join';
+  static const String routeOfficeInviteCreate = '/office/invite/create';
+  /// Üyelik / işaretçi tutarsızlığı, askı, davet tamamlanmadı.
+  static const String routeOfficeRecovery = '/office/recovery';
+  /// Üye ve davet yönetimi (owner / admin / manager).
+  static const String routeOfficeAdmin = '/office/admin';
+  /// Birleşik mesaj merkezi (platform API’leri bağlanınca dolar).
+  static const String routeMessageCenter = '/messages';
+  static const String routeMessageThread = '/messages/thread';
 
   static bool _isStaffOnlyPath(String path) {
     return path == routeCall ||
@@ -79,6 +113,17 @@ class AppRouter {
   static const String routeBulkCampaign = '/campaigns/bulk';
   static const String routeRainbowAnalytics = '/rainbow-analytics';
   static const String routeRainbowIntelHistory = '/rainbow-intel-history';
+  /// Market Pulse bölge kartı → harita / özet (`:regionId` = örn. kayapinar).
+  static const String routeRegionInsight = '/region-insight/:regionId';
+  static const String routeConnectedAccounts = '/settings/connected-accounts';
+  /// Harici platformlardan senkron ilanlar («Benim ilanlarım»).
+  static const String routeMyExternalListings = '/listings/my-external';
+  /// URL / dosya / uzantı içe aktarma motoru.
+  static const String routeImportHub = '/settings/import-engine';
+  static const String routeImportHistory = '/settings/import-history';
+
+  static String regionInsightPath(String regionId) =>
+      '/region-insight/${Uri.encodeComponent(regionId)}';
 
   static GoRouter create(Ref ref, Listenable refreshListenable) {
     return GoRouter(
@@ -91,18 +136,88 @@ class AppRouter {
           final user = ref.read(currentUserProvider).valueOrNull;
           final path = state.uri.path;
           final needsRole = ref.read(needsRoleSelectionProvider);
-          if (user != null && needsRole && path != routeRoleSelection) return routeRoleSelection;
+          final needsOffice = ref.read(needsOfficeSetupProvider);
+          final needsOfficeRecovery = ref.read(needsOfficeRecoveryProvider);
+          if (user != null && needsRole) {
+            final wsDone = OnboardingStore.instance.workspaceSetupCompletedSync;
+            if (!wsDone && path != routeWorkspaceSetup) return routeWorkspaceSetup;
+            if (wsDone && path == routeWorkspaceSetup) return routeRoleSelection;
+            if (wsDone) {
+              const allowWhileNeedsRole = <String>{
+                routeRoleSelection,
+                routeConnectedAccounts,
+                routeMyExternalListings,
+                routeMessageCenter,
+                routeMessageThread,
+              };
+              if (!allowWhileNeedsRole.contains(path)) {
+                return routeRoleSelection;
+              }
+            }
+          }
+          if (user != null && !needsRole && needsOffice) {
+            const allowWhileNeedsOffice = <String>{
+              routeOfficeGate,
+              routeOfficeCreate,
+              routeOfficeJoin,
+            };
+            if (!allowWhileNeedsOffice.contains(path)) {
+              return routeOfficeGate;
+            }
+            return null;
+          }
+          if (user != null && !needsRole && !needsOffice && needsOfficeRecovery) {
+            const allowWhileRecovery = <String>{
+              routeOfficeRecovery,
+              routeOfficeGate,
+              routeOfficeCreate,
+              routeOfficeJoin,
+              routeOfficeInviteCreate,
+              routeOfficeAdmin,
+              routeConnectedAccounts,
+              routeMyExternalListings,
+              routeMessageCenter,
+              routeMessageThread,
+            };
+            if (!allowWhileRecovery.contains(path)) {
+              return routeOfficeRecovery;
+            }
+            return null;
+          }
+          if (user != null && !needsRole && !needsOffice && !needsOfficeRecovery) {
+            const officeSetupPaths = <String>{
+              routeOfficeGate,
+              routeOfficeCreate,
+              routeOfficeJoin,
+            };
+            if (officeSetupPaths.contains(path)) {
+              return routeHome;
+            }
+          }
           if (user != null &&
               (path == routeLogin || path == routeOnboarding || path == routeRegister)) {
+            if (needsRole) {
+              if (!OnboardingStore.instance.workspaceSetupCompletedSync) return routeWorkspaceSetup;
+              return routeRoleSelection;
+            }
+            if (needsOffice) return routeOfficeGate;
+            if (needsOfficeRecovery) return routeOfficeRecovery;
             return routeHome;
           }
-          if (user != null && path == routeRoleSelection && !needsRole) return routeHome;
+          if (user != null && path == routeRoleSelection && !needsRole) {
+            if (needsOffice) return routeOfficeGate;
+            if (needsOfficeRecovery) return routeOfficeRecovery;
+            return routeHome;
+          }
           if (user == null && path == routeOnboarding) return null;
           if (user == null && path == routeLogin && !OnboardingStore.instance.completedSync) return routeOnboarding;
           if (user == null &&
               path != routeLogin &&
               path != routeOnboarding &&
               path != routeRegister) {
+            if (path.startsWith('/region-insight')) {
+              unawaited(PendingDeepLinkStore.save(path));
+            }
             return routeLogin;
           }
           final role = ref.read(displayRoleOrNullProvider);
@@ -139,6 +254,101 @@ class AppRouter {
             name: state.matchedLocation,
             child: const RegisterPage(),
           ),
+        ),
+        GoRoute(
+          path: routeWorkspaceSetup,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const WorkspaceSetupPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeOfficeGate,
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const OfficeGatePage(),
+          ),
+        ),
+        GoRoute(
+          path: routeOfficeCreate,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const CreateOfficePage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeOfficeJoin,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const JoinOfficePage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeOfficeInviteCreate,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const CreateOfficeInvitePage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeOfficeRecovery,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const OfficeRecoveryPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeOfficeAdmin,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const OfficeAdminPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeMessageCenter,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const MessageCenterPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeMessageThread,
+          pageBuilder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              name: state.matchedLocation,
+              child: MessageThreadPage(
+                customerName: extra['customerName'] as String? ?? 'Müşteri',
+                listingRef: extra['listingRef'] as String? ?? '—',
+                platformLabel: extra['platformLabel'] as String? ?? '',
+              ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
         ),
         GoRoute(
           path: routeRoleSelection,
@@ -318,6 +528,63 @@ class AppRouter {
                 FadeTransition(opacity: animation, child: child),
           ),
         ),
+        GoRoute(
+          path: routeRegionInsight,
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['regionId'] ?? '';
+            final region = resolveRegionHeatmapForRoute(
+              regionId: id,
+              extra: state.extra,
+            );
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              name: state.matchedLocation,
+              child: RegionInsightPage(region: region),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
+        ),
+        GoRoute(
+          path: routeConnectedAccounts,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const ConnectedAccountsPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeMyExternalListings,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const MyExternalListingsPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeImportHub,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const ImportHubPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
+        GoRoute(
+          path: routeImportHistory,
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const ImportHistoryPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
+        ),
       ],
     );
   }
@@ -329,6 +596,10 @@ class AppRouter {
     // bu değişim için refresh tetiklenmezse yanlış route'ta kalınabiliyor.
     ref.listen(currentUserProvider, (_, __) => refresh.value++);
     ref.listen(needsRoleSelectionProvider, (_, __) => refresh.value++);
+    ref.listen(needsOfficeSetupProvider, (_, __) => refresh.value++);
+    ref.listen(needsOfficeRecoveryProvider, (_, __) => refresh.value++);
+    ref.listen(primaryMembershipProvider, (_, __) => refresh.value++);
+    ref.listen(officeAccessStateProvider, (_, __) => refresh.value++);
     return AppRouter.create(ref, refresh);
   });
 }
@@ -364,16 +635,8 @@ class _HomeShellRoleErrorScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final msg = error.toString().toLowerCase();
-    final isPermission = msg.contains('permission') || msg.contains('permission-denied');
-    final isNetwork = msg.contains('network') || msg.contains('unavailable');
-    String text = 'Hesap bilgileriniz yüklenemedi. Uygulama burada takılı kalmış olabilir.';
-    if (isPermission) {
-      text = 'Hesap bilgilerinize erişim yetkiniz yok. Firestore kurallarını veya kullanıcı kaydını kontrol edin.';
-    }
-    if (isNetwork) {
-      text = 'Bağlantı kurulamadı. İnterneti kontrol edip tekrar deneyin.';
-    }
+    final text = officeErrorUserMessage(error);
+    final detail = error is OfficeException ? null : error.toString();
 
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
@@ -392,14 +655,16 @@ class _HomeShellRoleErrorScreen extends ConsumerWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(color: onSurface.withValues(alpha: 0.9), fontSize: 16),
               ),
-              const SizedBox(height: 12),
-              Text(
-                error.toString(),
-                textAlign: TextAlign.center,
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: onSurface.withValues(alpha: 0.55), fontSize: 11),
-              ),
+              if (detail != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  detail,
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: onSurface.withValues(alpha: 0.55), fontSize: 11),
+                ),
+              ],
               const SizedBox(height: 32),
               FilledButton.icon(
                 onPressed: () {
