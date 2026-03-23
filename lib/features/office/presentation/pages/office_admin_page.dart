@@ -8,6 +8,8 @@ import 'package:emlakmaster_mobile/features/office/domain/office_membership_enti
 import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
 import 'package:emlakmaster_mobile/features/office/presentation/providers/office_admin_providers.dart';
 import 'package:emlakmaster_mobile/features/office/presentation/utils/office_error_ui.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/platform_status_chip.dart';
 import 'package:emlakmaster_mobile/features/office/services/office_admin_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +62,7 @@ class OfficeAdminPage extends ConsumerWidget {
 
     final membersAsync = ref.watch(officeMembersStreamProvider(oid));
     final invitesAsync = ref.watch(officeInvitesStreamProvider(oid));
+    final adminPlat = ref.watch(adminPlatformConnectionsProvider);
 
     return Scaffold(
       backgroundColor: ext.background,
@@ -131,6 +134,64 @@ class OfficeAdminPage extends ConsumerWidget {
                 children: invites.map((i) => _InviteTile(invite: i, officeId: oid)).toList(),
               );
             },
+          ),
+          const SizedBox(height: 28),
+          Text('Harici platformlar', style: _sectionStyle(ext)),
+          const SizedBox(height: 6),
+          Text(
+            'Üye başına bağlantı durumu (şimdilik örnek; ileride ofis üyeleri + external_connections).',
+            style: TextStyle(color: ext.foregroundSecondary, fontSize: 12, height: 1.35),
+          ),
+          const SizedBox(height: 10),
+          ...adminPlat.map(
+            (row) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Material(
+                color: ext.surfaceElevated,
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              row.userDisplayName,
+                              style: TextStyle(
+                                color: ext.foreground,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              row.platform.displayName,
+                              style: TextStyle(color: ext.foregroundSecondary, fontSize: 12),
+                            ),
+                            if (row.error != null) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                row.error!.shortMessage,
+                                style: TextStyle(color: ext.danger, fontSize: 11),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      PlatformStatusChip(state: row.connectionState),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => context.push(AppRouter.routeConnectedAccounts),
+            icon: const Icon(Icons.hub_outlined, size: 18),
+            label: const Text('Bağlı platformlar ekranına git'),
           ),
         ],
       ),

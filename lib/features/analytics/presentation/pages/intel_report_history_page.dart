@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/analytics/data/pdf/rainbow_pdf_builder.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/providers/rainbow_intel_providers.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/intel_report_preview_sheet.dart';
@@ -15,7 +16,8 @@ class IntelReportHistoryPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: DesignTokens.scaffoldDark,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: DesignTokens.scaffoldDark,
         foregroundColor: Colors.white,
         title: const Text('Rapor geçmişi'),

@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dar
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/features/war_room/data/war_room_providers.dart';
+import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -55,11 +56,17 @@ class WarRoomCommandCenter extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
                   child: Row(
                     children: [
+                      if (context.canPop()) ...[
+                        const AppBackButton(),
+                        const SizedBox(width: 4),
+                      ],
                       const Icon(Icons.military_tech_rounded, color: DesignTokens.brandGold, size: 28),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'WAR ROOM',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: isDark ? DesignTokens.brandWhite : DesignTokens.textPrimaryLight,
                                 fontWeight: FontWeight.w800,
@@ -67,11 +74,31 @@ class WarRoomCommandCenter extends ConsumerWidget {
                               ),
                         ),
                       ),
-                      const _WarRoomTeamFilter(),
-                      TextButton.icon(
-                        onPressed: () => context.push(AppRouter.routeCommandCenter),
-                        icon: const Icon(Icons.call_rounded, size: 18, color: DesignTokens.brandGold),
-                        label: const Text('Çağrı Merkezi', style: TextStyle(color: DesignTokens.brandGold)),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          reverse: true,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const _WarRoomTeamFilter(),
+                              TextButton.icon(
+                                onPressed: () => context.push(AppRouter.routeCommandCenter),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                icon: const Icon(Icons.call_rounded, size: 18, color: DesignTokens.brandGold),
+                                label: const Text(
+                                  'Çağrı Merkezi',
+                                  style: TextStyle(color: DesignTokens.brandGold, fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -145,14 +172,28 @@ class _LeadPulseCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  ...List.generate(count.clamp(0, 12), (i) => _GlowingDot(delay: i * 0.15)),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ...List.generate(count.clamp(0, 12), (i) => _GlowingDot(delay: i * 0.15)),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Text(
-                    '$count yeni lead',
-                    style: const TextStyle(
-                      color: DesignTokens.brandWhite,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
+                  Flexible(
+                    child: Text(
+                      '$count yeni lead',
+                      style: const TextStyle(
+                        color: DesignTokens.brandWhite,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -297,8 +338,20 @@ class _TopPerformersCard extends ConsumerWidget {
             return bc.compareTo(ac);
           });
           if (agents.isEmpty) {
-            return const Center(
-              child: Text('Henüz veri yok', style: TextStyle(color: DesignTokens.textSecondaryDark)),
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.insights_outlined, size: 36, color: DesignTokens.brandGold),
+                  SizedBox(height: 8),
+                  Text(
+                    'Henüz veri yok',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: DesignTokens.textSecondaryDark, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
             );
           }
           final top = agents.take(5).toList();
@@ -468,7 +521,7 @@ class _GlassCard extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
-          padding: const EdgeInsets.all(DesignTokens.space5),
+          padding: const EdgeInsets.all(DesignTokens.cardPaddingStandard),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
             color: surface.withValues(alpha: isDark ? 0.6 : 0.95),
@@ -503,7 +556,7 @@ class _GlassCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Flexible(child: child),
+              child,
             ],
           ),
         ),

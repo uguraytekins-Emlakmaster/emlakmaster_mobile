@@ -134,4 +134,16 @@ class SettingsService {
     final prefs = await _storage;
     await prefs.setString(AppConstants.keyLocale, code);
   }
+
+  /// Fırsat Endeksi / kişiselleştirilmiş piyasa özeti için tercih edilen ilçe.
+  Future<String> getFavoriteInvestRegionId() async {
+    final prefs = await _storage;
+    return prefs.getString(AppConstants.keyFavoriteInvestRegion) ??
+        AppConstants.defaultFavoriteInvestRegionId;
+  }
+
+  Future<void> setFavoriteInvestRegionId(String regionId) async {
+    final prefs = await _storage;
+    await prefs.setString(AppConstants.keyFavoriteInvestRegion, regionId);
+  }
 }

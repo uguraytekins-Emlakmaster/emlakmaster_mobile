@@ -49,6 +49,14 @@ abstract final class AppConstants {
   static const String colDeals = 'deals';
   /// Harici ilan sitelerinden çekilen ilanlar (Market Pulse – son atılan ilanlar).
   static const String colExternalListings = 'external_listings';
+  /// Danışman bağlantıları: Sahibinden / Hepsiemlak / Emlakjet hesap bağlama.
+  static const String colExternalConnections = 'external_connections';
+  /// Bağlantı senkronu ile gelen ilanlar (Market Pulse [colExternalListings] ile ayrı tutulur).
+  static const String colIntegrationListings = 'integration_listings';
+  /// URL / dosya / uzantı içe aktarma görevleri (Cloud Functions yazar).
+  static const String colListingImportTasks = 'listing_import_tasks';
+  /// Senkron ve import logları (salt okuma).
+  static const String colIntegrationSyncLogs = 'integration_sync_logs';
   /// Mülk Sağlık Karnesi: listing bazlı timeline (listings/{id}/property_vault).
   static const String colPropertyVault = 'property_vault';
 
@@ -57,6 +65,9 @@ abstract final class AppConstants {
   static const String keyNotificationsEnabled = 'notifications_enabled';
   static const String keyLocale = 'locale';
   static const String keyLastUserId = 'last_user_id';
+  /// Yatırım / Fırsat Endeksi için takip edilen bölge id (örn. `kayapinar`).
+  static const String keyFavoriteInvestRegion = 'favorite_invest_region_id';
+  static const String defaultFavoriteInvestRegionId = 'kayapinar';
 
   /// Özellik bayrakları (ayarlardan aç/kapa) — tüm özellikler tek yerden yönetilir
   static const String keyFeatureVoiceCrm = 'feature_voice_crm';
@@ -80,6 +91,8 @@ abstract final class AppConstants {
   static const String keySoundEffects = 'sound_effects';
   /// Batarya tasarrufu: animasyonları azaltır, arka planda iş yükünü düşürür.
   static const String keyPowerSaver = 'power_saver';
+  /// Harici platform hesapları (Connected Accounts) — Phase 1 UI.
+  static const String keyFeatureExternalIntegrations = 'feature_external_integrations';
 
   /// Giriş ekranında Facebook butonu gösterilsin mi? (Facebook Developer + credentials hazır olunca true yap.)
   static const bool showFacebookLogin = false;
@@ -104,6 +117,14 @@ abstract final class AppConstants {
   static const String docIntelligenceMeta = 'intelligence_meta';
   /// İlan kaynakları & ofis ayarları: şehir, ilçe, şirket adı, logo (colAppSettings altında).
   static const String docListingDisplaySettings = 'listing_display_settings';
+  /// Sunucu (Cloud Functions) rollup aktifken istemci demo keşif/heatmap yazımını kapatır — pil + tek doğruluk kaynağı.
+  static const String docIntelligencePipeline = 'intelligence_pipeline';
+
+  /// Blaze olmayan Spark: istemci rollup yazımları `analytics_daily` için (kurallarla eşleşmeli).
+  static const String clientRollupSourceValue = 'client_rollup_v1';
+  /// Aynı cihazda çok sık Firestore yazımını önler (pil / kota).
+  static const Duration marketPulseClientRollupMinInterval = Duration(minutes: 30);
+  static const String keyMarketPulseClientRollupLastMs = 'market_pulse_client_rollup_last_ms';
   /// War Room: aylık satış hedefi (ofis) (colAppSettings altında).
   static const String docOfficeTargets = 'office_targets';
 

@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
 
 import 'package:call_log/call_log.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -49,8 +50,8 @@ class DeviceCallLogSyncService {
       final requested = await requestCallLogPermission();
       if (!requested) {
         final status = await Permission.phone.status;
-        AnalyticsService.instance.logEvent('calls_device_permission_denied', {
-          'permanently': status.isPermanentlyDenied,
+        AnalyticsService.instance.logEvent(AnalyticsEvents.callsDevicePermissionDenied, {
+          AnalyticsEvents.paramPermanently: status.isPermanentlyDenied,
         });
         return status.isPermanentlyDenied
             ? DeviceCallLogSyncResult.permissionPermanentlyDenied
@@ -90,13 +91,13 @@ class DeviceCallLogSyncService {
         taken++;
       }
       if (kDebugMode) debugPrint('DeviceCallLogSync: $count entries synced.');
-      AnalyticsService.instance.logEvent('calls_device_sync_success', {
-        'synced_count': count,
+      AnalyticsService.instance.logEvent(AnalyticsEvents.callsDeviceSyncSuccess, {
+        AnalyticsEvents.paramSyncedCount: count,
       });
       return DeviceCallLogSyncResult.success;
     } catch (e, st) {
       if (kDebugMode) debugPrint('DeviceCallLogSync error: $e $st');
-      AnalyticsService.instance.logEvent('calls_device_sync_error');
+      AnalyticsService.instance.logEvent(AnalyticsEvents.callsDeviceSyncError);
       return DeviceCallLogSyncResult.error;
     }
   }

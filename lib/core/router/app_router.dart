@@ -32,7 +32,7 @@ import '../../screens/role_based_shell.dart';
 import '../../features/analytics/presentation/pages/intel_report_history_page.dart';
 import '../../features/analytics/presentation/pages/rainbow_analytics_center_page.dart';
 import '../../features/region_demand_map/presentation/pages/region_insight_page.dart';
-import '../../features/external_integrations/presentation/pages/connected_accounts_page.dart';
+import '../../features/external_integrations/presentation/pages/connected_platforms_page.dart';
 import '../../features/external_integrations/presentation/pages/my_external_listings_page.dart';
 import '../../features/listing_import/presentation/pages/import_history_page.dart';
 import '../../features/listing_import/presentation/pages/import_hub_page.dart';
@@ -550,7 +550,7 @@ class AppRouter {
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
-            child: const ConnectedAccountsPage(),
+            child: const ConnectedPlatformsPage(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
           ),

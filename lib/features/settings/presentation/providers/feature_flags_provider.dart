@@ -24,6 +24,7 @@ final _allKeys = [
   AppConstants.keyHapticFeedback,
   AppConstants.keySoundEffects,
   AppConstants.keyPowerSaver,
+  AppConstants.keyFeatureExternalIntegrations,
 ];
 
 /// Tüm özellik bayrakları tek provider'da; ayar ekranı ve uygulama buradan okur.

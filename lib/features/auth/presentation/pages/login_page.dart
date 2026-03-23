@@ -1,20 +1,30 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, kDebugMode, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/login_attempt_guard.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/apple_auth_service.dart';
 import '../../../../core/services/facebook_auth_service.dart';
 import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../domain/auth_failure_kind.dart';
+import '../../domain/auth_result.dart';
+import '../utils/auth_result_ui.dart';
+import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../utils/auth_error_messages.dart';
 import '../widgets/auth_field_decoration.dart';
+import '../widgets/auth_page_shell.dart';
+
+enum _BusyKind { none, email, google, apple, facebook }
 
 /// Email/şifre ile giriş. Hata ve loading state.
 class LoginPage extends ConsumerStatefulWidget {
@@ -29,8 +39,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isLoading = false;
+  _BusyKind _busy = _BusyKind.none;
   String? _errorMessage;
+
+  bool get _anyBusy => _busy != _BusyKind.none;
 
   /// Gerçek hata kodu (Firebase vb.); kullanıcı "bilgiler doğru" dediğinde teşhis için gösterilir.
   String? _errorDetail;
@@ -43,7 +55,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _submit() async {
-    if (_isLoading) return;
+    if (_busy != _BusyKind.none) return;
     setState(() {
       _errorMessage = null;
       _errorDetail = null;
@@ -55,7 +67,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
     HapticFeedback.mediumImpact();
-    setState(() => _isLoading = true);
+    setState(() => _busy = _BusyKind.email);
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     try {
@@ -66,7 +78,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (!mounted) return;
       LoginAttemptGuard.clear();
       AnalyticsService.instance.logLogin(method: 'email');
-      setState(() => _isLoading = false);
     } catch (e, st) {
       if (!mounted) return;
       LoginAttemptGuard.recordFailure();
@@ -81,17 +92,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ? '${e.code}${e.message != null && e.message!.isNotEmpty ? ': ${e.message}' : ''}'
           : '${e.runtimeType}: ${e.toString().length > 80 ? '${e.toString().substring(0, 80)}…' : e}';
       setState(() {
-        _isLoading = false;
         _errorMessage = userFriendlyAuthError(e);
         _errorDetail = detail;
       });
+    } finally {
+      if (mounted) setState(() => _busy = _BusyKind.none);
     }
   }
 
   void _openForgotPassword() {
     FocusManager.instance.primaryFocus?.unfocus();
     final email = _emailController.text.trim();
-    final messenger = ScaffoldMessenger.of(context);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -102,18 +113,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
       builder: (sheetCtx) => _ForgotPasswordSheet(
         initialEmail: email,
-        onResetSent: () {
+        onDismiss: () {
           Navigator.of(sheetCtx).pop();
-          messenger.showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Şifre sıfırlama bağlantısı istendi. Gelen kutunuzu ve spam klasörünü kontrol edin.',
-              ),
-              backgroundColor: DesignTokens.success,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 5),
-            ),
-          );
+          // Başarı metni sheet içinde (_sent); ek SnackBar yok — kapanınca mesaj kaybolmaz.
         },
       ),
     );
@@ -123,8 +125,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
+  Future<void> _applyTypedAuthResult(
+    AuthResult r, {
+    required String analyticsMethod,
+  }) async {
+    if (r is AuthSuccess) {
+      LoginAttemptGuard.clear();
+      await AnalyticsService.instance.logLogin(method: analyticsMethod);
+    } else if (r.shouldRecordLoginFailure) {
+      LoginAttemptGuard.recordFailure();
+    }
+  }
+
   Future<void> _googleIleGiris() async {
-    if (_isLoading) return;
+    if (_busy != _BusyKind.none) return;
     final blocked = LoginAttemptGuard.assertCanAttempt();
     if (blocked != null) {
       setState(() => _errorMessage = blocked);
@@ -133,37 +147,61 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     HapticFeedback.mediumImpact();
     setState(() {
       _errorMessage = null;
-      _isLoading = true;
+      _errorDetail = null;
+      _busy = _BusyKind.google;
     });
     try {
-      await GoogleAuthService.instance.signInWithGoogleForFirebase().timeout(
+      final r = await GoogleAuthService.instance.signInWithGoogleTyped();
+      if (!mounted) return;
+      await _applyTypedAuthResult(r, analyticsMethod: 'google');
+      setState(() {
+        _errorMessage = r.loginBannerMessage;
+        _errorDetail = r is AuthFailure ? r.debugDetail : null;
+      });
+    } finally {
+      if (mounted) setState(() => _busy = _BusyKind.none);
+    }
+  }
+
+  bool get _canShowAppleButton =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS);
+
+  Future<void> _appleIleGiris() async {
+    if (_busy != _BusyKind.none) return;
+    final blocked = LoginAttemptGuard.assertCanAttempt();
+    if (blocked != null) {
+      setState(() => _errorMessage = blocked);
+      return;
+    }
+    HapticFeedback.lightImpact();
+    setState(() {
+      _errorMessage = null;
+      _errorDetail = null;
+      _busy = _BusyKind.apple;
+    });
+    try {
+      final r = await AppleAuthService.instance.signInWithAppleForFirebase().timeout(
             const Duration(seconds: 90),
-            onTimeout: () => throw FirebaseAuthException(
-              code: 'timeout',
-              message:
-                  'Google girişi zaman aşımına uğradı. Ağı kontrol edip tekrar deneyin.',
+            onTimeout: () => const AuthFailure(
+              kind: AuthFailureKind.networkError,
+              userMessage:
+                  'Apple ile giriş zaman aşımına uğradı. Ağı kontrol edip tekrar deneyin.',
             ),
           );
       if (!mounted) return;
-      LoginAttemptGuard.clear();
-      AnalyticsService.instance.logLogin(method: 'google');
-      setState(() => _isLoading = false);
-    } on GoogleSignInUserCanceled {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    } catch (e) {
-      if (!mounted) return;
-      LoginAttemptGuard.recordFailure();
-      final msg = _googleSignInErrorMessage(e);
+      await _applyTypedAuthResult(r, analyticsMethod: 'apple');
       setState(() {
-        _isLoading = false;
-        _errorMessage = msg.isEmpty ? null : msg;
+        _errorMessage = r.loginBannerMessage;
+        _errorDetail = r is AuthFailure ? r.debugDetail : null;
       });
+    } finally {
+      if (mounted) setState(() => _busy = _BusyKind.none);
     }
   }
 
   Future<void> _facebookIleGiris() async {
-    if (_isLoading) return;
+    if (_busy != _BusyKind.none) return;
     final blocked = LoginAttemptGuard.assertCanAttempt();
     if (blocked != null) {
       setState(() => _errorMessage = blocked);
@@ -172,7 +210,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     HapticFeedback.mediumImpact();
     setState(() {
       _errorMessage = null;
-      _isLoading = true;
+      _errorDetail = null;
+      _busy = _BusyKind.facebook;
     });
     try {
       await FacebookAuthService.instance
@@ -188,60 +227,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (!mounted) return;
       LoginAttemptGuard.clear();
       AnalyticsService.instance.logLogin(method: 'facebook');
-      setState(() => _isLoading = false);
-    } on FacebookSignInUserCanceled {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
     } catch (e) {
       if (!mounted) return;
       LoginAttemptGuard.recordFailure();
       final msg = _facebookSignInErrorMessage(e);
       setState(() {
-        _isLoading = false;
         _errorMessage = msg.isEmpty ? null : msg;
       });
+    } finally {
+      if (mounted) setState(() => _busy = _BusyKind.none);
     }
-  }
-
-  static String _googleSignInErrorMessage(Object e) {
-    if (e is FirebaseAuthException) {
-      switch (e.code) {
-        case 'account-exists-with-different-credential':
-          return 'Bu e-posta zaten e-posta/şifre veya başka bir yöntemle kayıtlı. O yöntemle giriş yapın.';
-        case 'invalid-credential':
-          return e.message ??
-              'Google oturumu doğrulanamadı. Uygulamayı güncelleyin veya yönetici ile iletişime geçin.';
-        case 'user-disabled':
-          return 'Bu hesap devre dışı bırakıldı.';
-        case 'timeout':
-          return e.message ?? 'Bağlantı zaman aşımı. Tekrar deneyin.';
-        case 'network-request-failed':
-          return 'İnternet bağlantısı yok veya zayıf.';
-        default:
-          return 'Google ile giriş yapılamadı (${e.code}). Tekrar deneyin.';
-      }
-    }
-    if (e is PlatformException) {
-      final c = e.code.toLowerCase();
-      final m = '${e.message}'.toLowerCase();
-      if (c.contains('canceled') ||
-          c.contains('cancelled') ||
-          m.contains('cancel')) {
-        return '';
-      }
-      if (c == 'sign_in_failed' ||
-          m.contains('12500') ||
-          m.contains('developer_error') ||
-          m.contains('10:')) {
-        return 'Android: Firebase Console’da SHA-1 parmak izini ve paket adını doğrulayın. '
-            'Ayrıntı: docs/GOOGLE_SIGNIN_401_FIX.md';
-      }
-      if (c.contains('network') || m.contains('network')) {
-        return 'Ağ hatası. Bağlantınızı kontrol edin.';
-      }
-      return 'Google girişi başarısız (${e.code}). Tekrar deneyin.';
-    }
-    return 'Google ile giriş başarısız. Tekrar deneyin.';
   }
 
   static String _facebookSignInErrorMessage(Object e) {
@@ -277,44 +272,36 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
-      body: SafeArea(
-        child: Center(
-          child: GestureDetector(
-            behavior: HitTestBehavior.deferToChild,
-            onTap: _unfocusKeyboard,
-            child: SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: DesignTokens.contentPaddingHorizontal),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: DesignTokens.space6),
-                    Text(
-                      'EmlakMaster',
-                      style:
-                          Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                color: DesignTokens.antiqueGold,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                              ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: DesignTokens.space2),
-                    const Text(
-                      'Giriş yapın',
-                      style: TextStyle(
-                        color: DesignTokens.textSecondaryDark,
-                        fontSize: DesignTokens.fontSizeMd,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: DesignTokens.space10),
+    final ext = AppThemeExtension.of(context);
+    return AuthPageShell(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: DesignTokens.space4),
+            Text(
+              'Rainbow CRM',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: ext.brandPrimary,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                    fontSize: 28,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            Text(
+              'Profesyonel gayrimenkul operasyonu',
+              style: TextStyle(
+                color: ext.foregroundSecondary,
+                fontSize: DesignTokens.fontSizeMd,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: DesignTokens.space8),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -370,7 +357,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: _isLoading ? null : _openForgotPassword,
+                        onPressed: _anyBusy ? null : _openForgotPassword,
                         style: TextButton.styleFrom(
                           foregroundColor: DesignTokens.antiqueGold,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -431,7 +418,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       button: true,
                       label: 'Giriş yap',
                       child: FilledButton(
-                        onPressed: _isLoading ? null : _submit,
+                        onPressed: _anyBusy ? null : _submit,
                         style: FilledButton.styleFrom(
                           backgroundColor: DesignTokens.antiqueGold,
                           foregroundColor: DesignTokens.inputTextOnGold,
@@ -442,7 +429,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 BorderRadius.circular(DesignTokens.radiusMd),
                           ),
                         ),
-                        child: _isLoading
+                        child: _busy == _BusyKind.email
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,
@@ -456,10 +443,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _googleIleGiris,
-                      icon: const Icon(Icons.g_mobiledata,
-                          size: 22, color: DesignTokens.textSecondaryDark),
-                      label: const Text('Google ile Giriş Yap'),
+                      onPressed: _anyBusy ? null : _googleIleGiris,
+                      icon: _busy == _BusyKind.google
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: DesignTokens.textSecondaryDark,
+                              ),
+                            )
+                          : const Icon(Icons.g_mobiledata,
+                              size: 22, color: DesignTokens.textSecondaryDark),
+                      label: Text(
+                        _busy == _BusyKind.google
+                            ? 'Google ile bağlanılıyor…'
+                            : 'Google ile Giriş Yap',
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: DesignTokens.textPrimaryDark,
                         side: const BorderSide(color: DesignTokens.borderDark),
@@ -471,10 +471,57 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                     ),
+                    if (_canShowAppleButton) ...[
+                      const SizedBox(height: DesignTokens.space3),
+                      IgnorePointer(
+                        ignoring: _anyBusy && _busy != _BusyKind.apple,
+                        child: Opacity(
+                          opacity:
+                              _anyBusy && _busy != _BusyKind.apple ? 0.45 : 1,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: SignInWithAppleButton(
+                                  onPressed: () async {
+                                    await _appleIleGiris();
+                                  },
+                                  text: 'Apple ile devam et',
+                                  style: SignInWithAppleButtonStyle.white,
+                                  height: 48,
+                                  borderRadius:
+                                      BorderRadius.circular(DesignTokens.radiusMd),
+                                ),
+                              ),
+                              if (_busy == _BusyKind.apple)
+                                Positioned.fill(
+                                  child: Material(
+                                    color: Colors.black.withValues(alpha: 0.35),
+                                    borderRadius: BorderRadius.circular(
+                                        DesignTokens.radiusMd),
+                                    child: const Center(
+                                      child: SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     if (AppConstants.showFacebookLogin) ...[
                       const SizedBox(height: DesignTokens.space3),
                       OutlinedButton.icon(
-                        onPressed: _isLoading ? null : _facebookIleGiris,
+                        onPressed: _anyBusy ? null : _facebookIleGiris,
                         icon: const Icon(Icons.facebook_rounded,
                             size: 18, color: Color(0xFF1877F2)),
                         label: const Text('Facebook ile Giriş Yap'),
@@ -502,7 +549,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                         TextButton(
-                          onPressed: _isLoading
+                          onPressed: _anyBusy
                               ? null
                               : () => context.push(AppRouter.routeRegister),
                           style: TextButton.styleFrom(
@@ -520,11 +567,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -534,10 +577,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 /// Şifremi unuttum: e-posta gir, sıfırlama bağlantısı gönder.
 class _ForgotPasswordSheet extends StatefulWidget {
   const _ForgotPasswordSheet(
-      {required this.initialEmail, required this.onResetSent});
+      {required this.initialEmail, required this.onDismiss});
 
   final String initialEmail;
-  final VoidCallback onResetSent;
+  /// Başarı ekranında «Tamam» sonrası: sheet kapanır + isteğe bağlı SnackBar.
+  final VoidCallback onDismiss;
 
   @override
   State<_ForgotPasswordSheet> createState() => _ForgotPasswordSheetState();
@@ -548,6 +592,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
   final _emailController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _sent = false;
 
   @override
   void initState() {
@@ -571,9 +616,11 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       await AuthService.instance
           .sendPasswordResetEmail(email: _emailController.text.trim());
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _sent = true;
+      });
       FocusManager.instance.primaryFocus?.unfocus();
-      widget.onResetSent();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -636,7 +683,48 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       child: GestureDetector(
         behavior: HitTestBehavior.deferToChild,
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: Form(
+        child: _sent
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(Icons.mark_email_read_outlined,
+                      size: 52, color: DesignTokens.success.withValues(alpha: 0.95)),
+                  const SizedBox(height: DesignTokens.space4),
+                  Text(
+                    'Bağlantı gönderildi',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: DesignTokens.textPrimaryDark,
+                          fontWeight: FontWeight.w800,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: DesignTokens.space2),
+                  const Text(
+                    'Gelen kutunuzu ve spam klasörünü kontrol edin. E-posta birkaç dakika sürebilir.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: DesignTokens.textSecondaryDark,
+                      fontSize: DesignTokens.fontSizeSm,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: DesignTokens.space6),
+                  FilledButton(
+                    onPressed: widget.onDismiss,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: DesignTokens.antiqueGold,
+                      foregroundColor: DesignTokens.inputTextOnGold,
+                      padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                      ),
+                    ),
+                    child: const Text('Tamam', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              )
+            : Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,

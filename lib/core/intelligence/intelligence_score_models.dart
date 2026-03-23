@@ -115,6 +115,7 @@ class DealDiscoveryItem with EquatableMixin {
     this.subtitle,
     this.score = 0.0,
     this.computedAt,
+    this.highlights = const [],
   });
 
   final String id;
@@ -125,9 +126,11 @@ class DealDiscoveryItem with EquatableMixin {
   final String? subtitle;
   final double score;
   final DateTime? computedAt;
+  /// Kısa fırsat maddeleri (Firestore: `highlights` — örn. "Son 7 günün en düşük fiyatlısı").
+  final List<String> highlights;
 
   @override
-  List<Object?> get props => [id, type, score];
+  List<Object?> get props => [id, type, score, highlights];
 }
 
 class BuyerCluster with EquatableMixin {

@@ -1,5 +1,5 @@
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
-import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -8,12 +8,16 @@ import 'package:emlakmaster_mobile/features/external_listings/data/client_extern
 import 'package:emlakmaster_mobile/features/external_listings/data/external_listings_sync_outcome.dart';
 import 'package:emlakmaster_mobile/features/external_listings/presentation/providers/external_listings_provider.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_investment_listing_tile.dart';
-import 'package:firebase_core/firebase_core.dart' show Firebase, FirebaseException;
+import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_listings_meta.dart';
+import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_region_comparison_cards.dart';
+import 'package:firebase_core/firebase_core.dart'
+    show Firebase, FirebaseException;
 import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
-import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
+import 'package:emlakmaster_mobile/shared/widgets/fade_in_on_mount.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// İstemci tarafı ilan çekme hataları (Firestore / ağ).
 String marketPulseClientSyncErrorMessage(Object error) {
@@ -44,10 +48,14 @@ class MarketPulsePanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final surface =
+        isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
     final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final textPrimary =
+        isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final textSecondary = isDark
+        ? DesignTokens.textSecondaryDark
+        : DesignTokens.textSecondaryLight;
     final role = ref.watch(displayRoleOrNullProvider);
     if (role == null || !FeaturePermission.canViewOpportunityRadar(role)) {
       return const SizedBox.shrink();
@@ -75,7 +83,8 @@ class MarketPulsePanel extends ConsumerWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.show_chart_rounded, color: DesignTokens.primary, size: 22),
+                      const Icon(Icons.show_chart_rounded,
+                          color: DesignTokens.primary, size: 22),
                       const SizedBox(width: DesignTokens.space2),
                       Text(
                         'Market Pulse',
@@ -104,33 +113,46 @@ class MarketPulsePanel extends ConsumerWidget {
               const _MarketPulseListingActions(),
             ],
           ),
+          const SizedBox(height: DesignTokens.space3),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Bölge analizi',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: textPrimary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.15,
+                    ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Karşılaştırmalı talep · fiyat bandı · pazar baskınlığı',
+                style: TextStyle(
+                  color: textSecondary,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: DesignTokens.space2),
           async.when(
-            data: (regions) {
-              if (regions.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'Bölgesel talep hesaplanıyor.',
-                    style: TextStyle(color: textSecondary, fontSize: 12),
-                  ),
-                );
-              }
-              return Column(
-                children: regions.map((e) => _RegionRow(region: e)).toList(),
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  SkeletonLoader(width: 80, height: 16, borderRadius: BorderRadius.all(Radius.circular(4))),
-                  SizedBox(width: 16),
-                  SkeletonLoader(width: 60, height: 16, borderRadius: BorderRadius.all(Radius.circular(4))),
-                  Spacer(),
-                  SkeletonLoader(width: 36, height: 16, borderRadius: BorderRadius.all(Radius.circular(4))),
-                ],
+            data: (regions) => FadeInOnMount(
+              child: MarketPulseRegionComparisonStrip(
+                regions: regions,
+                onRegionTap: (region) {
+                  HapticFeedback.selectionClick();
+                  context.push(
+                    AppRouter.regionInsightPath(region.regionId),
+                    extra: region,
+                  );
+                },
               ),
+            ),
+            loading: () => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: MarketPulseRegionComparisonStrip.skeleton(context),
             ),
             error: (e, _) => ErrorState(
               message: 'Bölgesel talep yüklenemedi.',
@@ -172,16 +194,32 @@ class MarketPulsePanel extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Liste boş. Canlı siteler çoğunlukla otomatik çekmeyi engeller (Cloudflare).',
+                        'Liste boş. Mobil istemci çoğu sitede Cloudflare nedeniyle ham HTML alamaz.',
                         style: TextStyle(color: textSecondary, fontSize: 12),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Üstte «Örnek yükle»ye basarak bu alanda örnek ilanları gösterebilirsiniz.',
+                        'Çözüm: GitHub Actions + Playwright ile saatlik çekim → Firestore (ücretsiz kota). '
+                        'Ayrıntı: doc/GITHUB_ACTIONS_LISTINGS_INGEST.md',
+                        style: TextStyle(
+                            color: textSecondary, fontSize: 11, height: 1.35),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Üstte «Örnek yükle» ile örnek ilanları veya «Güncelle» ile istemci senkronunu deneyin.',
                         style: TextStyle(
                           color: textPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Cihazda kontrol: USB ile telefon/tablet bağlayıp flutter run veya yükleme ile doğrulayın.',
+                        style: TextStyle(
+                          color: textSecondary,
+                          fontSize: 10.5,
+                          height: 1.35,
                         ),
                       ),
                     ],
@@ -191,33 +229,26 @@ class MarketPulsePanel extends ConsumerWidget {
               final list = listings.take(10).toList();
               // FadeInUp × 10 + stagger GPU/bellek yükünü artırıyordu (OOM riski); statik liste yeterli.
               return Column(
-                children: list
-                    .map((e) => MarketPulseInvestmentListingTile(listing: e))
-                    .toList(),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ...list.map(
+                    (e) => MarketPulseInvestmentListingTile(listing: e),
+                  ),
+                  const SizedBox(height: 8),
+                  MarketPulseListingsMeta(
+                    listings: list,
+                    textSecondary: textSecondary,
+                  ),
+                ],
               );
             },
             loading: () => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Column(
-                children: List.generate(3, (_) => const Padding(
-                  padding: EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      SkeletonLoader(width: 48, height: 48, borderRadius: BorderRadius.all(Radius.circular(6))),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SkeletonLoader(height: 12, width: double.infinity, borderRadius: BorderRadius.all(Radius.circular(4))),
-                            SizedBox(height: 6),
-                            SkeletonLoader(height: 10, width: 120, borderRadius: BorderRadius.all(Radius.circular(4))),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
+                children: List.generate(
+                  3,
+                  (_) => const MarketPulseListingTileSkeleton(),
+                ),
               ),
             ),
             error: (e, _) => ErrorState(
@@ -240,7 +271,8 @@ class _MarketPulseListingActions extends ConsumerStatefulWidget {
       _MarketPulseListingActionsState();
 }
 
-class _MarketPulseListingActionsState extends ConsumerState<_MarketPulseListingActions> {
+class _MarketPulseListingActionsState
+    extends ConsumerState<_MarketPulseListingActions> {
   bool _loading = false;
   bool _demoLoading = false;
 
@@ -328,7 +360,8 @@ class _MarketPulseListingActionsState extends ConsumerState<_MarketPulseListingA
                     color: DesignTokens.primary,
                   ),
                 )
-              : const Icon(Icons.refresh_rounded, size: 18, color: DesignTokens.primary),
+              : const Icon(Icons.refresh_rounded,
+                  size: 18, color: DesignTokens.primary),
           label: Text(
             _loading ? 'Güncelleniyor…' : 'İlanları güncelle',
             style: const TextStyle(fontSize: 11, color: DesignTokens.primary),
@@ -346,48 +379,6 @@ class _MarketPulseListingActionsState extends ConsumerState<_MarketPulseListingA
           ),
         ),
       ],
-    );
-  }
-}
-
-class _RegionRow extends StatelessWidget {
-  const _RegionRow({required this.region});
-  final RegionHeatmapScore region;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
-    final pct = (region.demandScore * 100).toInt();
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              region.regionName,
-              style: TextStyle(color: textPrimary, fontSize: 13),
-            ),
-          ),
-          if (region.budgetSegment != null)
-            Text(
-              region.budgetSegment!,
-              style: TextStyle(color: textTertiary, fontSize: 11),
-            ),
-          const SizedBox(width: 8),
-          Text(
-            '%$pct',
-            style: TextStyle(
-              color: region.demandScore >= 0.7 ? DesignTokens.success : textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

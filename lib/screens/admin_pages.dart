@@ -8,6 +8,7 @@ import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
@@ -28,11 +29,11 @@ class AdminEconomyPage extends StatelessWidget {
     final secondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         title: const Text('Ekonomi & Piyasa'),
-        elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.all(DesignTokens.space6),
@@ -75,11 +76,11 @@ class AdminReportsPage extends ConsumerWidget {
     final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         title: const Text('Raporlar & Ekip'),
-        elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.all(DesignTokens.space6),

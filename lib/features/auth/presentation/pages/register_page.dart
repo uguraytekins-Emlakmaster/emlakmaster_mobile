@@ -1,15 +1,22 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/apple_auth_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/facebook_auth_service.dart';
 import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/services/login_attempt_guard.dart';
+import '../../domain/auth_failure_kind.dart';
+import '../../domain/auth_result.dart';
+import '../utils/auth_result_ui.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../widgets/auth_field_decoration.dart';
 
@@ -31,6 +38,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
   String? _errorMessage;
+  /// 0: profil, 1: güvenlik (şifre)
+  int _step = 0;
 
   @override
   void dispose() {
@@ -42,6 +51,30 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   static void _unfocus() => FocusManager.instance.primaryFocus?.unfocus();
+
+  void _goNextStep() {
+    if (_step == 0) {
+      final nameOk = _nameController.text.trim().isEmpty ||
+          _nameController.text.trim().length >= 2;
+      final email = _emailController.text.trim();
+      final emailOk = email.contains('@') && email.length >= 5;
+      if (!nameOk) {
+        setState(() => _errorMessage = 'Ad en az 2 karakter olmalı.');
+        return;
+      }
+      if (!emailOk) {
+        setState(() => _errorMessage = 'Geçerli bir e-posta girin.');
+        return;
+      }
+      setState(() {
+        _errorMessage = null;
+        _step = 1;
+      });
+      HapticFeedback.lightImpact();
+      return;
+    }
+    _submit();
+  }
 
   Future<void> _submit() async {
     if (_isLoading) return;
@@ -98,6 +131,23 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return 'Kayıt tamamlanamadı. Bilgilerinizi kontrol edin.';
   }
 
+  bool get _canShowAppleButton =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+
+  Future<void> _applySocialAuthResult(
+    AuthResult r, {
+    required String analyticsMethod,
+  }) async {
+    if (r is AuthSuccess) {
+      LoginAttemptGuard.clear();
+      await AnalyticsService.instance.logSignUp(method: analyticsMethod);
+    } else if (r.shouldRecordLoginFailure) {
+      LoginAttemptGuard.recordFailure();
+    }
+  }
+
   Future<void> _googleKayit() async {
     if (_isLoading) return;
     final blocked = LoginAttemptGuard.assertCanAttempt();
@@ -111,27 +161,45 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       _isLoading = true;
     });
     try {
-      await GoogleAuthService.instance.signInWithGoogleForFirebase().timeout(
+      final r = await GoogleAuthService.instance.signInWithGoogleTyped();
+      if (!mounted) return;
+      await _applySocialAuthResult(r, analyticsMethod: 'google');
+      setState(() {
+        _errorMessage = r.loginBannerMessage;
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _appleKayit() async {
+    if (_isLoading) return;
+    final blocked = LoginAttemptGuard.assertCanAttempt();
+    if (blocked != null) {
+      setState(() => _errorMessage = blocked);
+      return;
+    }
+    HapticFeedback.lightImpact();
+    setState(() {
+      _errorMessage = null;
+      _isLoading = true;
+    });
+    try {
+      final r = await AppleAuthService.instance.signInWithAppleForFirebase().timeout(
             const Duration(seconds: 90),
-            onTimeout: () => throw FirebaseAuthException(
-              code: 'timeout',
-              message: 'Google oturumu zaman aşımına uğradı.',
+            onTimeout: () => const AuthFailure(
+              kind: AuthFailureKind.networkError,
+              userMessage:
+                  'Apple ile kayıt zaman aşımına uğradı. Ağı kontrol edip tekrar deneyin.',
             ),
           );
       if (!mounted) return;
-      LoginAttemptGuard.clear();
-      await AnalyticsService.instance.logSignUp(method: 'google');
-      setState(() => _isLoading = false);
-    } on GoogleSignInUserCanceled {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    } catch (e) {
-      if (!mounted) return;
-      LoginAttemptGuard.recordFailure();
+      await _applySocialAuthResult(r, analyticsMethod: 'apple');
       setState(() {
-        _isLoading = false;
-        _errorMessage = _googleErr(e);
+        _errorMessage = r.loginBannerMessage;
       });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -174,29 +242,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
   }
 
-  static String _googleErr(Object e) {
-    if (e is FirebaseAuthException) {
-      switch (e.code) {
-        case 'account-exists-with-different-credential':
-          return 'Bu e-posta başka bir yöntemle kayıtlı. E-posta ile giriş deneyin.';
-        case 'invalid-credential':
-          return e.message ?? 'Google oturumu doğrulanamadı.';
-        case 'timeout':
-          return e.message ?? 'Zaman aşımı. Tekrar deneyin.';
-        case 'network-request-failed':
-          return 'Ağ hatası. Bağlantınızı kontrol edin.';
-        default:
-          return 'Google ile devam edilemedi (${e.code}).';
-      }
-    }
-    if (e is PlatformException) {
-      final c = e.code.toLowerCase();
-      if (c.contains('cancel')) return '';
-      return 'Google hatası (${e.code}).';
-    }
-    return 'Google ile kayıt başarısız.';
-  }
-
   static String _facebookErr(Object e) {
     if (e is FirebaseAuthException) {
       switch (e.code) {
@@ -225,26 +270,39 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: DesignTokens.scaffoldDark,
       body: SafeArea(
-        child: Center(
-          child: GestureDetector(
+        child: GestureDetector(
             behavior: HitTestBehavior.deferToChild,
             onTap: _unfocus,
             child: SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: DesignTokens.contentPaddingHorizontal),
+              padding: EdgeInsets.fromLTRB(
+                DesignTokens.contentPaddingHorizontal,
+                DesignTokens.space2,
+                DesignTokens.contentPaddingHorizontal,
+                DesignTokens.space8 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: DesignTokens.space2),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
-                        onPressed: _isLoading ? null : () => context.pop(),
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                if (_step == 1) {
+                                  setState(() {
+                                    _step = 0;
+                                    _errorMessage = null;
+                                  });
+                                } else {
+                                  context.pop();
+                                }
+                              },
                         icon: const Icon(Icons.arrow_back_ios_new_rounded,
                             size: 20),
                         color: DesignTokens.textSecondaryDark,
@@ -258,7 +316,28 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: DesignTokens.space2),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+                      child: LinearProgressIndicator(
+                        value: (_step + 1) / 2,
+                        minHeight: 4,
+                        backgroundColor: DesignTokens.borderDark.withValues(alpha: 0.5),
+                        color: DesignTokens.antiqueGold,
+                      ),
+                    ),
                     const SizedBox(height: DesignTokens.space4),
+                    Text(
+                      _step == 0 ? 'Profil' : 'Güvenlik',
+                      style: const TextStyle(
+                        color: DesignTokens.textTertiaryDark,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: DesignTokens.space2),
                     Text(
                       'Hesap oluştur',
                       style:
@@ -280,6 +359,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: DesignTokens.space6),
+                    Visibility(
+                      visible: _step == 0,
+                      maintainState: true,
+                      maintainAnimation: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                     Container(
                       padding: const EdgeInsets.all(DesignTokens.space3),
                       decoration: BoxDecoration(
@@ -353,7 +439,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: DesignTokens.space4),
+                        ],
+                      ),
+                    ),
+                    Visibility(
+                      visible: _step == 1,
+                      maintainState: true,
+                      maintainAnimation: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -418,6 +513,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       },
                       onFieldSubmitted: (_) => _submit(),
                     ),
+                        ],
+                      ),
+                    ),
                     if (_errorMessage != null && _errorMessage!.isNotEmpty) ...[
                       const SizedBox(height: DesignTokens.space4),
                       Container(
@@ -450,10 +548,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ],
                     const SizedBox(height: DesignTokens.space6),
                     Semantics(
-                      label: 'Kayıt ol',
+                      label: _step == 0 ? 'Devam' : 'Kayıt ol',
                       button: true,
                       child: FilledButton(
-                        onPressed: _isLoading ? null : _submit,
+                        onPressed: _isLoading
+                            ? null
+                            : (_step == 0 ? _goNextStep : _submit),
                         style: FilledButton.styleFrom(
                           backgroundColor: DesignTokens.antiqueGold,
                           foregroundColor: DesignTokens.inputTextOnGold,
@@ -474,10 +574,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                   color: DesignTokens.inputTextOnGold,
                                 ),
                               )
-                            : const Text('Kayıt ol',
-                                style: TextStyle(fontWeight: FontWeight.w700)),
+                            : Text(
+                                _step == 0 ? 'Devam' : 'Kayıt ol',
+                                style: const TextStyle(fontWeight: FontWeight.w700),
+                              ),
                       ),
                     ),
+                    if (_step == 0) ...[
                     const SizedBox(height: DesignTokens.space5),
                     Row(
                       children: [
@@ -518,6 +621,29 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                       ),
                     ),
+                    if (_canShowAppleButton) ...[
+                      const SizedBox(height: DesignTokens.space3),
+                      IgnorePointer(
+                        ignoring: _isLoading,
+                        child: Opacity(
+                          opacity: _isLoading ? 0.45 : 1,
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: SignInWithAppleButton(
+                              onPressed: () async {
+                                await _appleKayit();
+                              },
+                              text: 'Apple ile devam et',
+                              style: SignInWithAppleButtonStyle.white,
+                              height: 48,
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusMd),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     if (AppConstants.showFacebookLogin) ...[
                       const SizedBox(height: DesignTokens.space3),
                       OutlinedButton.icon(
@@ -536,6 +662,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           ),
                         ),
                       ),
+                    ],
                     ],
                     const SizedBox(height: DesignTokens.space3),
                     const Text(
@@ -580,7 +707,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             ),
           ),
         ),
-      ),
     );
   }
 }

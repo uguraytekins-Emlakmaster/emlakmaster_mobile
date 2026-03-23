@@ -1,16 +1,29 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/intelligence/background_intelligence_service.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_firestore.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
+import 'package:emlakmaster_mobile/core/intelligence/market_pulse_client_rollup.dart';
+import 'package:emlakmaster_mobile/features/listing_display/data/listing_display_settings_repository.dart';
 
 /// İlk okumada background servisi tetikler; sonuçlar Firestore'dan okunur.
 /// Bir tick gecikme: ilk frame çizilsin, sonra ağır Firestore yazıları çalışsın (bellek/GPU baskısı azalır).
+/// Spark (Blaze yok): [MarketPulseClientRollupService] ile heatmap/discovery güncellenir (throttle’lı).
 final intelligenceRunTriggerProvider = FutureProvider<void>((ref) async {
   await Future<void>.delayed(Duration.zero);
   await BackgroundIntelligenceService.instance.runOnce();
+  try {
+    final settings = await ListingDisplaySettingsRepository.get();
+    await MarketPulseClientRollupService.runThrottledForCurrentSettings(cityCode: settings.cityCode);
+  } catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('intelligenceRunTriggerProvider: client rollup atlandı: $e');
+      debugPrint(st.toString());
+    }
+  }
 });
 
 /// Bugün keşfedilen fırsatlar – sadece score >= opportunityRadarMinScore ana ekranda.
@@ -22,6 +35,10 @@ final discoveryItemsProvider = StreamProvider<List<DealDiscoveryItem>>((ref) {
     final items = list.map((e) {
       if (e is! Map<String, dynamic>) return null;
       final computed = e['computedAt'] is Timestamp ? (e['computedAt'] as Timestamp).toDate() : null;
+      final rawHighlights = e['highlights'];
+      final highlights = rawHighlights is List
+          ? rawHighlights.map((x) => x?.toString() ?? '').where((s) => s.isNotEmpty).toList()
+          : const <String>[];
       return DealDiscoveryItem(
         id: e['id'] as String? ?? '',
         type: e['type'] as String? ?? 'hidden_opportunity',
@@ -31,6 +48,7 @@ final discoveryItemsProvider = StreamProvider<List<DealDiscoveryItem>>((ref) {
         subtitle: e['subtitle'] as String?,
         score: (e['score'] as num?)?.toDouble() ?? 0,
         computedAt: computed,
+        highlights: highlights,
       );
     }).whereType<DealDiscoveryItem>().toList();
     return items.where((e) => e.score >= AppConstants.opportunityRadarMinScore).toList();
@@ -45,6 +63,10 @@ final discoveryItemsFullProvider = StreamProvider<List<DealDiscoveryItem>>((ref)
     return list.map((e) {
       if (e is! Map<String, dynamic>) return null;
       final computed = e['computedAt'] is Timestamp ? (e['computedAt'] as Timestamp).toDate() : null;
+      final rawHighlights = e['highlights'];
+      final highlights = rawHighlights is List
+          ? rawHighlights.map((x) => x?.toString() ?? '').where((s) => s.isNotEmpty).toList()
+          : const <String>[];
       return DealDiscoveryItem(
         id: e['id'] as String? ?? '',
         type: e['type'] as String? ?? 'hidden_opportunity',
@@ -54,6 +76,7 @@ final discoveryItemsFullProvider = StreamProvider<List<DealDiscoveryItem>>((ref)
         subtitle: e['subtitle'] as String?,
         score: (e['score'] as num?)?.toDouble() ?? 0,
         computedAt: computed,
+        highlights: highlights,
       );
     }).whereType<DealDiscoveryItem>().toList();
   });

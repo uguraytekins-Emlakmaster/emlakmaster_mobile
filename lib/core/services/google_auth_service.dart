@@ -3,8 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../features/auth/domain/auth_result.dart';
+import '../../features/auth/domain/auth_result_mapper.dart';
 import '../config/google_oauth_constants.dart';
 import '../logging/app_logger.dart';
+import 'user_bootstrap_orchestrator.dart';
 
 /// Kullanıcı hesap seçiciyi kapattığında (iptal).
 class GoogleSignInUserCanceled implements Exception {
@@ -47,7 +50,9 @@ class GoogleAuthService {
     if (account != null) {
       final credential = await _buildCredential(account);
       if (credential != null) {
-        return _signInWithGoogleCredential(credential);
+        return _finishGoogleSignIn(
+          await _signInWithGoogleCredential(credential),
+        );
       }
     }
 
@@ -71,7 +76,36 @@ class GoogleAuthService {
       );
     }
 
-    return _signInWithGoogleCredential(credential);
+    return _finishGoogleSignIn(await _signInWithGoogleCredential(credential));
+  }
+
+  /// [AuthResult] ile giriş — iptal ve hatalar tip güvenli.
+  Future<AuthResult> signInWithGoogleTyped() async {
+    try {
+      final cred = await signInWithGoogleForFirebase().timeout(
+        const Duration(seconds: 90),
+        onTimeout: () => throw FirebaseAuthException(
+          code: 'timeout',
+          message:
+              'Google girişi zaman aşımına uğradı. Ağı kontrol edip tekrar deneyin.',
+        ),
+      );
+      return AuthSuccess(cred);
+    } on GoogleSignInUserCanceled {
+      return const AuthCancelled();
+    } on FirebaseAuthException catch (e) {
+      return AuthResultMapper.fromFirebaseAuth(e);
+    } catch (e) {
+      return AuthResultMapper.fromUnknown(e);
+    }
+  }
+
+  Future<UserCredential> _finishGoogleSignIn(UserCredential cred) async {
+    final u = cred.user;
+    if (u != null) {
+      await UserBootstrapOrchestrator.afterSuccessfulAuth(u);
+    }
+    return cred;
   }
 
   Future<UserCredential> _signInWithGoogleCredential(OAuthCredential credential) async {

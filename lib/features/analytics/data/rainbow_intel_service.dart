@@ -1,6 +1,8 @@
 import 'dart:isolate';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/intelligence/region_heatmap_defaults.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 
 import '../domain/models/rainbow_intel_models.dart';
@@ -121,6 +123,7 @@ class RainbowIntelService {
       basePricePerM2: payload.priceTry / m2,
       seed: id.hashCode,
     );
+    final districtSnapshots = await _loadDistrictSnapshotsKayapinarBaglar();
     return RainbowIntelReport(
       id: id,
       generatedAt: DateTime.now(),
@@ -134,7 +137,49 @@ class RainbowIntelService {
       priceTrend12mTryPerM2: trend,
       listingUrl: listingUrl,
       imageUrl: imageUrl,
+      districtSnapshots: districtSnapshots,
     );
+  }
+
+  /// Canlı heatmap (bugün) veya varsayılan Diyarbakır bölgeleri — PDF grid.
+  static Future<List<DistrictSnapshotRow>> _loadDistrictSnapshotsKayapinarBaglar() async {
+    try {
+      await FirestoreService.ensureInitialized();
+      final date = DateTime.now().toIso8601String().substring(0, 10);
+      final snap = await FirebaseFirestore.instance
+          .collection(AppConstants.colAnalyticsDaily)
+          .doc('heatmap_$date')
+          .get();
+      final raw = snap.data()?['regions'] as List<dynamic>?;
+      if (raw != null && raw.isNotEmpty) {
+        final out = <DistrictSnapshotRow>[];
+        for (final e in raw) {
+          if (e is! Map<String, dynamic>) continue;
+          final id = e['regionId'] as String? ?? '';
+          if (id != 'kayapinar' && id != 'baglar') continue;
+          out.add(
+            DistrictSnapshotRow(
+              districtName: e['regionName'] as String? ?? '',
+              demandScore: (e['demandScore'] as num?)?.toDouble() ?? 0,
+              budgetSegment: e['budgetSegment'] as String? ?? '',
+              propertyTypeHint: e['propertyTypeHint'] as String?,
+            ),
+          );
+        }
+        if (out.length >= 2) return out;
+      }
+    } catch (_) {}
+    return marketPulseDefaultRegionScores
+        .where((r) => r.regionId == 'kayapinar' || r.regionId == 'baglar')
+        .map(
+          (r) => DistrictSnapshotRow(
+            districtName: r.regionName,
+            demandScore: r.demandScore,
+            budgetSegment: r.budgetSegment ?? '',
+            propertyTypeHint: r.propertyTypeHint,
+          ),
+        )
+        .toList();
   }
 
   Future<void> persistReport(RainbowIntelReport r) => _history.save(r);

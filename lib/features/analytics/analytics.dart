@@ -11,5 +11,6 @@ export 'domain/models/rainbow_intel_models.dart';
 export 'domain/rainbow_score_engine.dart';
 export 'presentation/pages/intel_report_history_page.dart';
 export 'presentation/pages/rainbow_analytics_center_page.dart';
+export 'presentation/providers/investment_opportunity_providers.dart';
 export 'presentation/providers/rainbow_intel_providers.dart';
 export 'presentation/widgets/rainbow_analytics_center_card.dart';

@@ -31,7 +31,8 @@ class IntelligenceFirestore {
   }
 
   /// analytics_daily – bugünün keşifleri, market pulse, daily brief.
-  static Future<void> setDailyDiscovery(List<DealDiscoveryItem> items) async {
+  /// [rollupSource]: örn. [AppConstants.clientRollupSourceValue] (Spark istemci rollup).
+  static Future<void> setDailyDiscovery(List<DealDiscoveryItem> items, {String? rollupSource}) async {
     await FirestoreService.ensureInitialized();
     final date = DateTime.now().toIso8601String().substring(0, 10);
     final ref = FirebaseFirestore.instance
@@ -47,13 +48,15 @@ class IntelligenceFirestore {
             'title': e.title,
             'subtitle': e.subtitle,
             'score': e.score,
+            'highlights': e.highlights,
             'computedAt': e.computedAt != null ? Timestamp.fromDate(e.computedAt!) : null,
           }).toList(),
       'computedAt': FieldValue.serverTimestamp(),
+      if (rollupSource != null) 'source': rollupSource,
     }, SetOptions(merge: true));
   }
 
-  static Future<void> setMarketHeatmap(List<RegionHeatmapScore> heatmap) async {
+  static Future<void> setMarketHeatmap(List<RegionHeatmapScore> heatmap, {String? rollupSource}) async {
     await FirestoreService.ensureInitialized();
     final date = DateTime.now().toIso8601String().substring(0, 10);
     final ref = FirebaseFirestore.instance
@@ -70,6 +73,7 @@ class IntelligenceFirestore {
             'computedAt': e.computedAt != null ? Timestamp.fromDate(e.computedAt!) : null,
           }).toList(),
       'computedAt': FieldValue.serverTimestamp(),
+      if (rollupSource != null) 'source': rollupSource,
     }, SetOptions(merge: true));
   }
 

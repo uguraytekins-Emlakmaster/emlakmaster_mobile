@@ -34,7 +34,8 @@ class ExternalListingsRepository {
     });
   }
 
-  static ExternalListingEntity _fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  static ExternalListingEntity _fromDoc(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
     final sourceStr = d['source'] as String? ?? 'sahibinden';
     final source = ExternalListingSource.values.firstWhere(
@@ -44,6 +45,11 @@ class ExternalListingsRepository {
     final postedAt = d['postedAt'] is Timestamp
         ? (d['postedAt'] as Timestamp).toDate()
         : DateTime.now();
+    final ingestedByRaw = d['ingestedBy'];
+    final ingestedBy =
+        ingestedByRaw is String && ingestedByRaw.trim().isNotEmpty
+            ? ingestedByRaw.trim()
+            : null;
     return ExternalListingEntity(
       id: doc.id,
       source: source,
@@ -59,6 +65,11 @@ class ExternalListingsRepository {
       postedAt: postedAt,
       roomCount: d['roomCount'] as String?,
       sqm: (d['sqm'] as num?)?.toDouble(),
+      trendPct: (d['trendPct'] as num?)?.toDouble(),
+      ingestedAt: d['ingestedAt'] is Timestamp
+          ? (d['ingestedAt'] as Timestamp).toDate()
+          : null,
+      ingestedBy: ingestedBy,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
@@ -80,7 +81,8 @@ class SettingsPlaceholderPage extends ConsumerWidget {
     final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? onSurface,
         title: const Text('Ayarlar'),

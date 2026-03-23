@@ -25,6 +25,10 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     required this.shadowColor,
     required this.shimmerBase,
     required this.shimmerHighlight,
+    required this.brandPrimary,
+    required this.success,
+    required this.danger,
+    required this.onBrand,
   });
 
   final Color background;
@@ -46,6 +50,18 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   final Color shimmerBase;
   final Color shimmerHighlight;
 
+  /// Marka altını — aksan, aktif durum, CTA (her zaman #BFA071 ailesi).
+  final Color brandPrimary;
+
+  /// Başarı / olumlu analitik (yeşil).
+  final Color success;
+
+  /// Uyarı / hata (kırmızı) — sadece alert.
+  final Color danger;
+
+  /// Altın üzerinde metin (CTA içi).
+  final Color onBrand;
+
   static AppThemeExtension light() {
     return const AppThemeExtension(
       background: Color(0xFFF5F5F7),
@@ -66,12 +82,16 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       shadowColor: Color(0x14000000),
       shimmerBase: Color(0xFFE5E5E7),
       shimmerHighlight: Color(0xFFFFFFFF),
+      brandPrimary: DesignTokens.antiqueGold,
+      success: DesignTokens.success,
+      danger: DesignTokens.danger,
+      onBrand: DesignTokens.inputTextOnGold,
     );
   }
 
   static AppThemeExtension dark() {
     return AppThemeExtension(
-      background: DesignTokens.backgroundDark,
+      background: DesignTokens.scaffoldDark,
       surface: DesignTokens.surfaceDark,
       surfaceElevated: DesignTokens.surfaceDarkElevated,
       card: DesignTokens.surfaceDark,
@@ -89,6 +109,10 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       shadowColor: Colors.black.withValues(alpha: 0.35),
       shimmerBase: DesignTokens.surfaceDarkElevated,
       shimmerHighlight: DesignTokens.surfaceDark.withValues(alpha: 0.5),
+      brandPrimary: DesignTokens.antiqueGold,
+      success: DesignTokens.success,
+      danger: DesignTokens.danger,
+      onBrand: DesignTokens.inputTextOnGold,
     );
   }
 
@@ -117,6 +141,10 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     Color? shadowColor,
     Color? shimmerBase,
     Color? shimmerHighlight,
+    Color? brandPrimary,
+    Color? success,
+    Color? danger,
+    Color? onBrand,
   }) {
     return AppThemeExtension(
       background: background ?? this.background,
@@ -137,6 +165,10 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       shadowColor: shadowColor ?? this.shadowColor,
       shimmerBase: shimmerBase ?? this.shimmerBase,
       shimmerHighlight: shimmerHighlight ?? this.shimmerHighlight,
+      brandPrimary: brandPrimary ?? this.brandPrimary,
+      success: success ?? this.success,
+      danger: danger ?? this.danger,
+      onBrand: onBrand ?? this.onBrand,
     );
   }
 
@@ -162,6 +194,10 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       shadowColor: Color.lerp(shadowColor, other.shadowColor, t)!,
       shimmerBase: Color.lerp(shimmerBase, other.shimmerBase, t)!,
       shimmerHighlight: Color.lerp(shimmerHighlight, other.shimmerHighlight, t)!,
+      brandPrimary: Color.lerp(brandPrimary, other.brandPrimary, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
+      onBrand: Color.lerp(onBrand, other.onBrand, t)!,
     );
   }
 }

@@ -7,9 +7,9 @@ import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_perm
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
 
@@ -174,16 +174,11 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
     final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         title: const Text('Çağrı Merkezi'),
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
-        leading: ModalRoute.of(context)?.canPop == true
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => context.pop(),
-              )
-            : null,
         actions: [
           IconButton(
             icon: const Icon(Icons.download_rounded),

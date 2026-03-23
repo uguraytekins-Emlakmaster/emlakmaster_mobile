@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -20,11 +21,11 @@ class AdminTeamsPage extends ConsumerWidget {
     if (!FeaturePermission.canManageTeams(currentRole)) {
       return Scaffold(
         backgroundColor: DesignTokens.backgroundDark,
-        appBar: AppBar(
+        appBar: emlakAppBar(
+          context,
           backgroundColor: DesignTokens.backgroundDark,
           foregroundColor: DesignTokens.textPrimaryDark,
           title: Text(AppLocalizations.of(context).t('title_admin_teams')),
-          elevation: 0,
         ),
         body: Center(
           child: Padding(
@@ -46,11 +47,11 @@ class AdminTeamsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundDark,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: DesignTokens.backgroundDark,
         foregroundColor: DesignTokens.textPrimaryDark,
         title: Text(l10n.t('title_admin_teams')),
-        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded),

@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
 import 'package:emlakmaster_mobile/features/smart_matching_engine/presentation/providers/portfolio_match_provider.dart';
@@ -34,10 +35,8 @@ class CustomerDetailPage extends ConsumerWidget {
         title: const Text('Müşteri'),
         backgroundColor: DesignTokens.backgroundDark,
         foregroundColor: DesignTokens.textPrimaryDark,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
-        ),
+        leading: const AppBackButton(),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.call_rounded),

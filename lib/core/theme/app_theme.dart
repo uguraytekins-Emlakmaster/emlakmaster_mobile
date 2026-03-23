@@ -9,30 +9,40 @@ abstract final class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: DesignTokens.backgroundDark,
+      scaffoldBackgroundColor: DesignTokens.scaffoldDark,
       colorScheme: const ColorScheme.dark(
         primary: DesignTokens.antiqueGold,
         secondary: DesignTokens.antiqueGold,
         surface: DesignTokens.surfaceDark,
-        error: DesignTokens.danger,
+        onSurface: DesignTokens.textPrimaryDark,
         onPrimary: DesignTokens.inputTextOnGold,
         onSecondary: DesignTokens.inputTextOnGold,
-        onSurface: DesignTokens.textPrimaryDark,
+        onSurfaceVariant: DesignTokens.textSecondaryDark,
+        error: DesignTokens.danger,
         onError: Colors.white,
+        outline: DesignTokens.borderDark,
+        surfaceContainerHighest: DesignTokens.surfaceDarkElevated,
+        surfaceTint: Colors.transparent,
+        primaryContainer: Color(0xFF2A2418),
+        onPrimaryContainer: DesignTokens.antiqueGold,
       ),
       extensions: <ThemeExtension<dynamic>>[AppThemeExtension.dark()],
       textTheme: _textThemeDark,
       appBarTheme: const AppBarTheme(
-        backgroundColor: DesignTokens.backgroundDark,
+        backgroundColor: DesignTokens.scaffoldDark,
         foregroundColor: DesignTokens.textPrimaryDark,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(
+          color: DesignTokens.antiqueGold,
+          size: 22,
+        ),
       ),
       cardTheme: CardThemeData(
         color: DesignTokens.surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+          borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -108,22 +118,33 @@ abstract final class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: DesignTokens.antiqueGold,
         secondary: DesignTokens.antiqueGold,
-        error: DesignTokens.danger,
+        onSurface: DesignTokens.textPrimaryLight,
         onPrimary: DesignTokens.inputTextOnGold,
         onSecondary: DesignTokens.inputTextOnGold,
-        onSurface: DesignTokens.textPrimaryLight,
+        onSurfaceVariant: DesignTokens.textSecondaryLight,
+        error: DesignTokens.danger,
+        outline: DesignTokens.borderLight,
+        surfaceContainerHighest: DesignTokens.surfaceLightElevated,
+        surfaceTint: Colors.transparent,
+        primaryContainer: Color(0xFFF5EFE6),
+        onPrimaryContainer: Color(0xFF3D3428),
       ),
+      textTheme: _textThemeLight,
       appBarTheme: const AppBarTheme(
         backgroundColor: DesignTokens.backgroundLight,
         foregroundColor: DesignTokens.textPrimaryLight,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(
+          color: DesignTokens.antiqueGold,
+          size: 22,
+        ),
       ),
       cardTheme: CardThemeData(
         color: DesignTokens.surfaceLight,
         elevation: 1,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+          borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -176,4 +197,19 @@ abstract final class AppTheme {
       extensions: <ThemeExtension<dynamic>>[AppThemeExtension.light()],
     );
   }
+
+  static TextTheme get _textThemeLight => TextTheme(
+        displayLarge: DesignTokens.textDisplayTitleDark.copyWith(color: DesignTokens.textPrimaryLight),
+        headlineMedium: DesignTokens.textPageTitleDark.copyWith(color: DesignTokens.antiqueGold),
+        titleLarge: DesignTokens.textCardTitleDark.copyWith(color: DesignTokens.textPrimaryLight),
+        titleMedium: DesignTokens.textSectionTitleDark.copyWith(color: DesignTokens.textSecondaryLight),
+        bodyLarge: DesignTokens.textBodyDark.copyWith(color: DesignTokens.textSecondaryLight),
+        bodyMedium: DesignTokens.textBodyDark.copyWith(color: DesignTokens.textSecondaryLight),
+        bodySmall: DesignTokens.textCaptionDark.copyWith(color: DesignTokens.textTertiaryLight),
+        labelLarge: const TextStyle(
+          color: DesignTokens.textPrimaryLight,
+          fontSize: DesignTokens.fontSizeBase,
+          fontWeight: FontWeight.w600,
+        ),
+      );
 }

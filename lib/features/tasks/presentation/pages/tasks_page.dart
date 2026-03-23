@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,10 +23,10 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return Scaffold(
       backgroundColor: DesignTokens.backgroundDark,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: DesignTokens.backgroundDark,
         foregroundColor: DesignTokens.textPrimaryDark,
-        elevation: 0,
         title: const Text('Görevlerim'),
       ),
       body: uid.isEmpty

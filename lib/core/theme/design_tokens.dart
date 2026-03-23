@@ -5,17 +5,17 @@ import 'package:flutter/material.dart';
 abstract final class DesignTokens {
   DesignTokens._();
 
-  // ---------- Wealth Tech palet (referans: Gold Century)
-  /// Ana arka plan — derin koyu gri.
-  static const Color backgroundDark = Color(0xFF1E1E1E);
-  /// Scaffold / tam sayfa arka plan (koyu).
-  static const Color scaffoldDark = Color(0xFF0D1117);
-  /// Kart / yüzey — hafif açık.
-  static const Color surfaceDark = Color(0xFF252525);
-  /// Kart yüzeyi (dropdown, liste öğesi).
-  static const Color surfaceDarkCard = Color(0xFF161B22);
-  static const Color surfaceDarkElevated = Color(0xFF2D2D2D);
-  static const Color borderDark = Color(0xFF3A3A3A);
+  // ---------- Rainbow CRM — premium koyu (Stripe / Notion: neredeyse siyah + altın)
+  /// Ana arka plan — derin, neredeyse siyah (8pt grid uyumlu yüzeylerle katmanlanır).
+  static const Color backgroundDark = Color(0xFF0A0A0C);
+  /// Scaffold — tam siyah’a yakın (mavi ton YOK).
+  static const Color scaffoldDark = Color(0xFF050506);
+  /// Kart / panel yüzeyi — bir ton açık.
+  static const Color surfaceDark = Color(0xFF141416);
+  /// Kart yüzeyi (dropdown, modal).
+  static const Color surfaceDarkCard = Color(0xFF121214);
+  static const Color surfaceDarkElevated = Color(0xFF1C1C1F);
+  static const Color borderDark = Color(0xFF2E2E32);
 
   /// Birincil aksan: Antique Gold (başlıklar, CTA, sayılar, aktif durum).
   static const Color antiqueGold = Color(0xFFBFA071);
@@ -25,23 +25,25 @@ abstract final class DesignTokens {
   static const Color inputBackgroundGold = Color(0xFFD4C4A8);
   static const Color inputTextOnGold = Color(0xFF1A1A1A);
 
-  // ---------- Brand (Rainbow Gayrimenkul — legacy uyum)
-  static const Color brandNavy = Color(0xFF1A237E);
-  static const Color brandNavyLight = Color(0xFF283593);
+  // ---------- Brand (legacy — yeni UI’da mavi kullanmayın; nötr + gold)
+  static const Color brandNavy = Color(0xFF2A2A2E);
+  static const Color brandNavyLight = Color(0xFF3A3A40);
   static const Color brandGold = Color(0xFFBFA071);
   static const Color brandGoldLight = Color(0xFFD4C4A8);
   static const Color brandWhite = Color(0xFFFAFAFA);
 
   // ---------- Semantic (tema ile uyumlu)
   static const Color primary = Color(0xFFBFA071);
-  static const Color primaryDark = Color(0xFF0D1542);
+  /// Gradient / vinyet için koyu nötr (mavi değil).
+  static const Color primaryDark = Color(0xFF121214);
   static const Color secondary = Color(0xFFBFA071);
   static const Color accent = Color(0xFFBFA071);
 
-  static const Color success = Color(0xFF2E7D32);
+  static const Color success = Color(0xFF1B5E20);
   static const Color warning = Color(0xFFF9A825);
   static const Color danger = Color(0xFFC62828);
-  static const Color info = Color(0xFF1565C0);
+  /// Bilgi chip’leri — nötr gri (mavi kullanılmaz).
+  static const Color info = Color(0xFF8E8E93);
 
   static const Color backgroundLight = Color(0xFFF5F5F7);
   static const Color surfaceLight = Color(0xFFFFFFFF);
@@ -62,6 +64,8 @@ abstract final class DesignTokens {
   static const double space2 = 8;
   static const double space3 = 12;
   static const double space4 = 16;
+  /// Kart içi padding — marka standardı 16px (Dashboard / War Room kartları).
+  static const double cardPaddingStandard = 16;
   // Tercihli ana boşluklar (4-8-12-16-24-32-48-64); space5/space10 legacy kullanımlar için.
   static const double space5 = 20; // legacy – mümkün olduğunda space4/space6 tercih et
   static const double space6 = 24;
@@ -79,6 +83,9 @@ abstract final class DesignTokens {
   static const double radius2xl = 24;
   static const double radius3xl = 28;
   static const double radiusFull = 9999;
+
+  /// Kartlar, paneller, tipik yüzeyler — [dashboardCardDecoration] ile aynı köşe (Apple-tarzı bütünlük).
+  static const double uiSurfaceRadius = radiusLg;
 
   // ---------- Typography scale (font sizes)
   static const double fontSizeXs = 10;

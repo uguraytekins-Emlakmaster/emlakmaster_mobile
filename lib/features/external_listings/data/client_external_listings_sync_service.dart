@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/intelligence/market_pulse_client_rollup.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -20,6 +21,7 @@ abstract final class ClientExternalListingsSyncService {
   static const _uaChrome =
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
       '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
   /// Uzun beklemeyi önle; canlı çekim çoğunlukla yine de boş döner (Cloudflare).
   static const _timeout = Duration(seconds: 10);
 
@@ -78,7 +80,8 @@ abstract final class ClientExternalListingsSyncService {
     }
 
     if (merged.isNotEmpty) {
-      final col = FirebaseFirestore.instance.collection(AppConstants.colExternalListings);
+      final col = FirebaseFirestore.instance
+          .collection(AppConstants.colExternalListings);
       var written = 0;
       final entries = merged.entries.toList();
       const chunk = 400;
@@ -91,6 +94,10 @@ abstract final class ClientExternalListingsSyncService {
         }
         await batch.commit();
       }
+      try {
+        await MarketPulseClientRollupService.runNow(
+            cityCode: cityCode, force: true);
+      } catch (_) {}
       return ExternalListingsSyncOutcome(
         written: written,
         liveWritten: written,
@@ -101,6 +108,10 @@ abstract final class ClientExternalListingsSyncService {
 
     // Canlı çekim boş: Market Pulse’un boş kalmaması için aynı akışta örnek ilan yaz.
     final demoN = await seedDemoListings();
+    try {
+      await MarketPulseClientRollupService.runNow(
+          cityCode: cityCode, force: true);
+    } catch (_) {}
     return ExternalListingsSyncOutcome(
       written: demoN,
       liveWritten: 0,
@@ -115,7 +126,9 @@ abstract final class ClientExternalListingsSyncService {
       throw UnsupportedError('Örnek yükleme web’de desteklenmiyor.');
     }
     if (Firebase.apps.isEmpty) throw StateError('Firebase başlatılmadı.');
-    if (FirebaseAuth.instance.currentUser == null) throw StateError('Oturum gerekli.');
+    if (FirebaseAuth.instance.currentUser == null) {
+      throw StateError('Oturum gerekli.');
+    }
     await FirestoreService.ensureInitialized();
 
     final settings = await _loadSettings();
@@ -123,7 +136,8 @@ abstract final class ClientExternalListingsSyncService {
     final cityName = settings.$2;
     final districtName = settings.$3;
 
-    final col = FirebaseFirestore.instance.collection(AppConstants.colExternalListings);
+    final col =
+        FirebaseFirestore.instance.collection(AppConstants.colExternalListings);
     final batch = FirebaseFirestore.instance.batch();
     final samples = <Map<String, dynamic>>[
       {
@@ -132,6 +146,7 @@ abstract final class ClientExternalListingsSyncService {
         'propertyType': 'Konut',
         'district': districtName ?? 'Merkez',
         'price': '4.250.000 ₺',
+        'trendPct': 1.2,
         'link': 'https://www.sahibinden.com',
       },
       {
@@ -140,6 +155,7 @@ abstract final class ClientExternalListingsSyncService {
         'propertyType': 'Konut',
         'district': districtName ?? 'Merkez',
         'price': '22.000 ₺',
+        'trendPct': -0.4,
         'link': 'https://www.emlakjet.com',
       },
       {
@@ -148,6 +164,7 @@ abstract final class ClientExternalListingsSyncService {
         'propertyType': 'Villa',
         'district': districtName ?? 'Merkez',
         'price': '12.900.000 ₺',
+        'trendPct': 2.4,
         'link': 'https://www.hepsiemlak.com',
       },
       {
@@ -156,6 +173,7 @@ abstract final class ClientExternalListingsSyncService {
         'propertyType': 'Arsa',
         'district': districtName ?? 'Merkez',
         'price': '3.100.000 ₺',
+        'trendPct': -1.1,
         'link': 'https://www.sahibinden.com',
       },
       {
@@ -164,6 +182,7 @@ abstract final class ClientExternalListingsSyncService {
         'propertyType': 'İşyeri',
         'district': districtName ?? 'Merkez',
         'price': '8.750.000 ₺',
+        'trendPct': 0.8,
         'link': 'https://www.hepsiemlak.com',
       },
     ];
@@ -191,6 +210,8 @@ abstract final class ClientExternalListingsSyncService {
           'postedAt': Timestamp.fromDate(DateTime.now()),
           'roomCount': null,
           'sqm': null,
+          if (s['trendPct'] is num)
+            'trendPct': (s['trendPct'] as num).toDouble(),
           'clientFetched': true,
           'clientFetchedAt': FieldValue.serverTimestamp(),
         },
@@ -233,7 +254,8 @@ abstract final class ClientExternalListingsSyncService {
 
   static double? _parsePrice(String? text) {
     if (text == null || text.isEmpty) return null;
-    final cleaned = text.replaceAll(RegExp(r'[^\d,.]'), '').replaceAll(',', '.');
+    final cleaned =
+        text.replaceAll(RegExp(r'[^\d,.]'), '').replaceAll(',', '.');
     return double.tryParse(cleaned);
   }
 
@@ -260,20 +282,18 @@ abstract final class ClientExternalListingsSyncService {
   static Future<String> _getHtml(String url, {String? referer}) async {
     final uri = Uri.parse(url);
     final host = uri.host;
-    final res = await http
-        .get(
-          uri,
-          headers: {
-            'User-Agent': _uaChrome,
-            'Accept':
-                'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Cache-Control': 'no-cache',
-            'Upgrade-Insecure-Requests': '1',
-            'Referer': referer ?? 'https://$host/',
-          },
-        )
-        .timeout(_timeout);
+    final res = await http.get(
+      uri,
+      headers: {
+        'User-Agent': _uaChrome,
+        'Accept':
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Cache-Control': 'no-cache',
+        'Upgrade-Insecure-Requests': '1',
+        'Referer': referer ?? 'https://$host/',
+      },
+    ).timeout(_timeout);
     final body = res.body;
     if (kDebugMode && _isCloudflareChallenge(body)) {
       debugPrint('ClientExternalListingsSync: Cloudflare sayfası — $url');
@@ -392,8 +412,7 @@ abstract final class ClientExternalListingsSyncService {
   ) async {
     final out = <_ParsedRow>[];
     try {
-      final url =
-          'https://www.sahibinden.com/emlak-konut?a24=$cityCode&p=1';
+      final url = 'https://www.sahibinden.com/emlak-konut?a24=$cityCode&p=1';
       final html = await _getHtml(url, referer: 'https://www.sahibinden.com/');
       final doc = html_parser.parse(html);
 
@@ -403,9 +422,8 @@ abstract final class ClientExternalListingsSyncService {
         final linkEl = el.querySelector("a[href*='/ilan/']");
         final href = linkEl?.attributes['href'];
         if (href == null || href.isEmpty) continue;
-        final fullLink = href.startsWith('http')
-            ? href
-            : 'https://www.sahibinden.com$href';
+        final fullLink =
+            href.startsWith('http') ? href : 'https://www.sahibinden.com$href';
         final title = (linkEl!.text.trim().isNotEmpty)
             ? linkEl.text.trim()
             : (el.querySelector('.classifiedTitle')?.text.trim() ?? 'İlan');
@@ -417,7 +435,8 @@ abstract final class ClientExternalListingsSyncService {
         final idMatch = RegExp(r'/ilan/([^/?]+)').firstMatch(fullLink);
         final externalId =
             idMatch?.group(1) ?? 'sb-${DateTime.now().millisecondsSinceEpoch}';
-        final imgEl = el.querySelector('img[data-src]') ?? el.querySelector('img');
+        final imgEl =
+            el.querySelector('img[data-src]') ?? el.querySelector('img');
         var img = imgEl?.attributes['data-src'] ?? imgEl?.attributes['src'];
         if (img != null && !img.startsWith('http')) img = null;
         String? district;
@@ -459,9 +478,8 @@ abstract final class ClientExternalListingsSyncService {
           final fullLink = href.startsWith('http')
               ? href
               : 'https://www.sahibinden.com$href';
-          final title = linkEl!.text.trim().isEmpty
-              ? 'İlan'
-              : linkEl.text.trim();
+          final title =
+              linkEl!.text.trim().isEmpty ? 'İlan' : linkEl.text.trim();
           final priceText =
               el.querySelector('.searchResultsPriceValue')?.text.trim() ?? '';
           out.add(
@@ -524,16 +542,18 @@ abstract final class ClientExternalListingsSyncService {
       )) {
         final href = el.attributes['href'];
         if (href == null) continue;
-        final fullLink = href.startsWith('http')
-            ? href
-            : 'https://www.emlakjet.com$href';
-        var title = el.querySelector('h2, h3, .title, .listing-title')?.text.trim();
+        final fullLink =
+            href.startsWith('http') ? href : 'https://www.emlakjet.com$href';
+        var title =
+            el.querySelector('h2, h3, .title, .listing-title')?.text.trim();
         title ??= el.text.trim();
         if (title.length > 200) title = title.substring(0, 200);
         final priceText =
             el.querySelector('.price, .listing-price')?.text.trim() ?? '';
         final parts = fullLink.split('/').where((s) => s.isNotEmpty).toList();
-        final externalId = parts.isNotEmpty ? parts.last : 'ej-${DateTime.now().millisecondsSinceEpoch}';
+        final externalId = parts.isNotEmpty
+            ? parts.last
+            : 'ej-${DateTime.now().millisecondsSinceEpoch}';
         final img = el.querySelector('img')?.attributes['src'];
         out.add(
           _ParsedRow(
@@ -588,17 +608,19 @@ abstract final class ClientExternalListingsSyncService {
       final url = '$baseUrl/satilik/$slug';
       final html = await _getHtml(url, referer: '$baseUrl/');
       final doc = html_parser.parse(html);
-      for (final el in doc.querySelectorAll("a[href*='/ilan/'], .listing a, .card a")) {
+      for (final el
+          in doc.querySelectorAll("a[href*='/ilan/'], .listing a, .card a")) {
         final href = el.attributes['href'];
         if (href == null) continue;
-        final fullLink =
-            href.startsWith('http') ? href : '$baseUrl$href';
+        final fullLink = href.startsWith('http') ? href : '$baseUrl$href';
         var title = el.querySelector('h2, h3, .title')?.text.trim();
         title ??= el.text.trim();
         if (title.length > 200) title = title.substring(0, 200);
         final priceText = el.querySelector('.price')?.text.trim() ?? '';
         final parts = fullLink.split('/').where((s) => s.isNotEmpty).toList();
-        final externalId = parts.isNotEmpty ? parts.last : 'he-${DateTime.now().millisecondsSinceEpoch}';
+        final externalId = parts.isNotEmpty
+            ? parts.last
+            : 'he-${DateTime.now().millisecondsSinceEpoch}';
         final img = el.querySelector('img')?.attributes['src'];
         out.add(
           _ParsedRow(

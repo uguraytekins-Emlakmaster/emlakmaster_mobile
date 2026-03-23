@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_firestore.dart';
+import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/market_settings/domain/entities/market_settings_entity.dart';
 import 'package:emlakmaster_mobile/features/market_settings/data/market_settings_repository.dart';
 
@@ -13,12 +16,37 @@ class BackgroundIntelligenceService {
   bool _isRunning = false;
   bool get isRunning => _isRunning;
 
+  /// Sunucu rollup (Cloud Functions) aktifken `false` — istemci demo verisi yazılmaz; pil + tek kaynak.
+  Future<bool> _clientSeedIntelligenceEnabled() async {
+    try {
+      await FirestoreService.ensureInitialized();
+      final snap = await FirebaseFirestore.instance
+          .collection(AppConstants.colAppSettings)
+          .doc(AppConstants.docIntelligencePipeline)
+          .get();
+      if (!snap.exists) return true;
+      return snap.data()?['clientSeedWritesEnabled'] as bool? ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
   /// Çağrıldığında (örn. dashboard/shell açılışında) tüm motorları çalıştırır; Firestore'a yazar.
   Future<void> runOnce() async {
     if (_isRunning) return;
     _isRunning = true;
     if (kDebugMode) debugPrint('\n========== Intelligence Service (Terminal Çıktısı) ==========');
     try {
+      final allowClientSeed = await _clientSeedIntelligenceEnabled();
+      if (!allowClientSeed) {
+        if (kDebugMode) {
+          debugPrint(
+            'BackgroundIntelligenceService: app_settings/${AppConstants.docIntelligencePipeline} '
+            '→ clientSeedWritesEnabled=false; sunucu verisi korunuyor, istemci tohum yazımı atlandı.',
+          );
+        }
+        return;
+      }
       await _computeAndWriteDiscovery();
       await _computeAndWriteHeatmap();
       await _computeAndWriteDailyBrief();
@@ -43,14 +71,22 @@ class BackgroundIntelligenceService {
       subtitle: 'Kayapınar 3+1 segmenti',
       score: 0.85,
       computedAt: now,
+      highlights: const [
+        'Son 7 günün en düşük fiyatlısı',
+        'Yüksek kiralama potansiyeli',
+      ],
     ));
     items.add(DealDiscoveryItem(
       id: 'd2_${now.millisecondsSinceEpoch}',
       type: 'high_demand_region',
       title: 'Bağlar yatırım arsa',
       subtitle: 'Talep sinyali yükselişte',
-      score: 0.78,
+      score: 0.82,
       computedAt: now,
+      highlights: const [
+        'Bölge talebi son 14 günde artışta',
+        'Segment içi rekabet düşük',
+      ],
     ));
     await IntelligenceFirestore.setDailyDiscovery(items);
     if (kDebugMode) {

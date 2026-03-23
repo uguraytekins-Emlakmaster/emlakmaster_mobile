@@ -3,9 +3,11 @@ import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
 import 'package:emlakmaster_mobile/core/utils/sms_launcher.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
+import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/data/device_call_log_sync_service.dart';
@@ -95,8 +97,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
           duration: const Duration(seconds: 2),
         ),
       );
-      AnalyticsService.instance.logEvent('calls_export_csv', {
-        'count': list.length,
+      AnalyticsService.instance.logEvent(AnalyticsEvents.callsExportCsv, {
+        AnalyticsEvents.paramCount: list.length,
       });
     }
   }
@@ -118,8 +120,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         const SnackBar(content: Text('SMS uygulaması açılamadı.')),
       );
     } else if (mounted && ok) {
-      AnalyticsService.instance.logEvent('calls_bulk_sms', {
-        'count': phones.length,
+      AnalyticsService.instance.logEvent(AnalyticsEvents.callsBulkSms, {
+        AnalyticsEvents.paramCount: phones.length,
       });
     }
   }
@@ -209,7 +211,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         _whatsappIndex = 0;
       });
     }
-    AnalyticsService.instance.logEvent('calls_bulk_whatsapp_start', {'count': phones.length});
+    AnalyticsService.instance.logEvent(AnalyticsEvents.callsBulkWhatsappStart, {
+      AnalyticsEvents.paramCount: phones.length,
+    });
   }
 
   Future<void> _openNextWhatsApp() async {
@@ -294,8 +298,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     final result = await DeviceCallLogSyncService.instance.syncCallLogToFirestore(uid);
     if (!mounted) return;
     setState(() => _isSyncingDeviceCalls = false);
-    AnalyticsService.instance.logEvent('calls_device_sync_result', {
-      'result': result.name,
+    AnalyticsService.instance.logEvent(AnalyticsEvents.callsDeviceSyncResult, {
+      AnalyticsEvents.paramResult: result.name,
     });
     switch (result) {
       case DeviceCallLogSyncResult.success:
@@ -347,7 +351,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         title: const Text('Tüm Çağrılar'),
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -111,7 +112,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -131,7 +132,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             ? AppLocalizations.of(context).tArgs('n_selected', ['${_selectedIds.length}'])
                             : AppLocalizations.of(context).t('title_customers'),
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: DesignTokens.textPrimaryDark,
+                              color: AppThemeExtension.of(context).foreground,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -142,22 +143,28 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           _selectionMode = false;
                           _selectedIds.clear();
                         }),
-                        child: Text(AppLocalizations.of(context).t('cancel'), style: const TextStyle(color: DesignTokens.textSecondaryDark)),
+                        child: Text(
+                          AppLocalizations.of(context).t('cancel'),
+                          style: TextStyle(color: AppThemeExtension.of(context).foregroundSecondary),
+                        ),
                       ),
                       FilledButton.icon(
                         onPressed: _selectedIds.isEmpty ? null : () => _addSelectedToFollowUp(context, ref),
                         icon: const Icon(Icons.playlist_add_rounded, size: 18),
                         label: Text(AppLocalizations.of(context).tArgs('add_to_follow_up_count', ['${_selectedIds.length}'])),
                         style: FilledButton.styleFrom(
-                          backgroundColor: DesignTokens.primary,
-                          foregroundColor: Colors.black,
+                          backgroundColor: AppThemeExtension.of(context).brandPrimary,
+                          foregroundColor: AppThemeExtension.of(context).onBrand,
                         ),
                       ),
                     ] else ...[
                       TextButton.icon(
                         onPressed: () => setState(() => _selectionMode = true),
-                        icon: const Icon(Icons.checklist_rounded, size: 20, color: DesignTokens.primary),
-                        label: Text(AppLocalizations.of(context).t('bulk_action'), style: const TextStyle(color: DesignTokens.primary)),
+                        icon: Icon(Icons.checklist_rounded, size: 20, color: AppThemeExtension.of(context).brandPrimary),
+                        label: Text(
+                          AppLocalizations.of(context).t('bulk_action'),
+                          style: TextStyle(color: AppThemeExtension.of(context).brandPrimary),
+                        ),
                       ),
                       const SizedBox(width: DesignTokens.space2),
                       FilledButton.icon(
@@ -165,8 +172,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         icon: const Icon(Icons.campaign_rounded, size: 18),
                         label: Text(AppLocalizations.of(context).t('bulk_campaign')),
                         style: FilledButton.styleFrom(
-                          backgroundColor: DesignTokens.primary,
-                          foregroundColor: Colors.black,
+                          backgroundColor: AppThemeExtension.of(context).brandPrimary,
+                          foregroundColor: AppThemeExtension.of(context).onBrand,
                         ),
                       ),
                     ],
@@ -201,13 +208,16 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.error_outline_rounded,
-                                color: Colors.white54, size: 48),
+                            Icon(
+                              Icons.error_outline_rounded,
+                              color: AppThemeExtension.of(context).danger.withValues(alpha: 0.9),
+                              size: 48,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               AppLocalizations.of(context).t('customer_list_load_error'),
-                              style: const TextStyle(
-                                color: DesignTokens.textPrimaryDark,
+                              style: TextStyle(
+                                color: AppThemeExtension.of(context).foreground,
                                 fontWeight: FontWeight.w600,
                               ),
                               textAlign: TextAlign.center,
@@ -235,10 +245,11 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   if (filtered.isEmpty) {
                     final l10n = AppLocalizations.of(context);
                     return EmptyState(
+                      premiumVisual: true,
                       icon: Icons.people_rounded,
                       title: docs.isEmpty ? l10n.t('empty_customers_title') : l10n.t('empty_search_title'),
                       subtitle: docs.isEmpty
-                          ? l10n.t('empty_customers_subtitle')
+                          ? '${l10n.t('empty_customers_subtitle')}\n\n${l10n.t('empty_state_empower')}'
                           : l10n.tArgs('empty_search_subtitle', [_searchQuery]),
                       actionLabel: docs.isEmpty ? l10n.t('add_customer') : null,
                     );
@@ -292,23 +303,24 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
+        color: ext.surfaceElevated,
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: DesignTokens.borderDark),
+        border: Border.all(color: ext.border.withValues(alpha: 0.65)),
       ),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
           hintText: AppLocalizations.of(context).t('search_customers'),
-          hintStyle: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: DesignTokens.fontSizeBase),
-          prefixIcon: const Icon(Icons.search_rounded, color: DesignTokens.textTertiaryDark, size: 22),
+          hintStyle: TextStyle(color: ext.foregroundMuted, fontSize: DesignTokens.fontSizeBase),
+          prefixIcon: Icon(Icons.search_rounded, color: ext.foregroundMuted, size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 12),
         ),
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: ext.foreground),
       ),
     );
   }

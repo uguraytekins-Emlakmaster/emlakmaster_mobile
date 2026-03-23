@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
@@ -68,13 +69,8 @@ class ListingDetailPage extends StatelessWidget {
             slivers: [
               SliverAppBar(
                 backgroundColor: DesignTokens.scaffoldDark,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    context.pop();
-                  },
-                ),
+                leading: const AppBackButton(),
+                automaticallyImplyLeading: false,
                 expandedHeight: 220,
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(

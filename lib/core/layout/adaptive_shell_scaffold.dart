@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
 
 /// Nav item for [AdaptiveShellScaffold].
@@ -59,7 +60,7 @@ class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
 
   void _onNavTap(int index) {
     if (index == _currentIndex) return;
-    HapticFeedback.selectionClick();
+    HapticFeedback.lightImpact();
     setState(() => _currentIndex = index);
     widget.onIndexChanged?.call(index);
     _pageController.animateToPage(
@@ -74,7 +75,8 @@ class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
     final isWide = AdaptiveShellScaffold.isWide(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final ext = AppThemeExtension.of(context);
+    final surface = ext.surface;
     final primary = theme.colorScheme.primary;
     final onSurfaceVariant = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
 
@@ -115,7 +117,7 @@ class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
 
     if (isWide) {
       return Scaffold(
-        backgroundColor: isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight,
+        backgroundColor: ext.background,
         body: Row(
           children: [
             NavigationRail(
@@ -140,14 +142,14 @@ class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
     }
 
     return Scaffold(
-      backgroundColor: isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight,
+      backgroundColor: ext.background,
       body: body,
       floatingActionButton: widget.fab,
       floatingActionButtonLocation: widget.fabLocation ?? FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: surface,
-          border: Border(top: BorderSide(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08))),
+          border: Border(top: BorderSide(color: ext.border.withValues(alpha: 0.55))),
         ),
         child: SafeArea(
           child: Padding(

@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -20,11 +21,11 @@ class AdminConsultantsPage extends ConsumerWidget {
       final l10n = AppLocalizations.of(context);
       return Scaffold(
         backgroundColor: DesignTokens.backgroundDark,
-        appBar: AppBar(
+        appBar: emlakAppBar(
+          context,
           backgroundColor: DesignTokens.backgroundDark,
           foregroundColor: DesignTokens.textPrimaryDark,
           title: Text(l10n.t('title_admin_consultants')),
-          elevation: 0,
         ),
         body: Center(
           child: Padding(
@@ -46,11 +47,11 @@ class AdminConsultantsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundDark,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: DesignTokens.backgroundDark,
         foregroundColor: DesignTokens.textPrimaryDark,
         title: Text(l10n.t('title_admin_consultants')),
-        elevation: 0,
         actions: [
           if (FeaturePermission.canInviteAgents(currentRole))
             IconButton(

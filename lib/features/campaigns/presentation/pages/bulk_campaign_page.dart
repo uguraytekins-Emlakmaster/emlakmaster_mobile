@@ -5,6 +5,7 @@ import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/services/campaign_ai_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../core/utils/sms_launcher.dart';
 import '../../../../core/utils/whatsapp_launcher.dart';
 import '../../../../core/widgets/app_toaster.dart';
@@ -142,9 +143,9 @@ class BulkCampaignPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundDark,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: Colors.transparent,
-        elevation: 0,
         centerTitle: false,
         title: Text(
           AppLocalizations.of(context).t('title_bulk_campaign'),

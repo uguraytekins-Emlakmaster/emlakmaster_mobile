@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/analytics/data/pdf/rainbow_pdf_builder.dart';
 import 'package:emlakmaster_mobile/features/analytics/domain/models/rainbow_intel_models.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/providers/rainbow_intel_providers.dart';
@@ -171,7 +172,8 @@ class _RainbowAnalyticsCenterPageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DesignTokens.scaffoldDark,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: DesignTokens.scaffoldDark,
         foregroundColor: Colors.white,
         title: const Text('Rainbow Analytics Center'),

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import 'facebook_auth_service.dart';
 import 'google_auth_service.dart';
+import 'user_bootstrap_orchestrator.dart';
 import '../logging/app_logger.dart';
 
 /// Gerçek kullanıcı girişi: email/şifre, logout, session.
@@ -26,6 +27,10 @@ class AuthService {
       email: email.trim(),
       password: password,
     );
+    final u = currentUser;
+    if (u != null) {
+      await UserBootstrapOrchestrator.afterSuccessfulAuth(u);
+    }
     if (kDebugMode) {
       AppLogger.d('AuthService: signIn success ${currentUser?.uid}');
     }
@@ -45,6 +50,10 @@ class AuthService {
     if (name != null && name.isNotEmpty && cred.user != null) {
       await cred.user!.updateDisplayName(name);
       await cred.user!.reload();
+    }
+    final u = FirebaseAuth.instance.currentUser;
+    if (u != null) {
+      await UserBootstrapOrchestrator.afterSuccessfulAuth(u);
     }
     if (kDebugMode) {
       AppLogger.d('AuthService: register success ${cred.user?.uid}');

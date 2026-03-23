@@ -75,6 +75,39 @@ class RainbowScoreResult {
   final RainbowScoreBreakdown breakdown;
 }
 
+/// PDF / bölge karşılaştırması — Kayapınar & Bağlar (canlı heatmap veya varsayılan).
+class DistrictSnapshotRow {
+  const DistrictSnapshotRow({
+    required this.districtName,
+    required this.demandScore,
+    required this.budgetSegment,
+    this.propertyTypeHint,
+  });
+
+  /// Görünen ad (örn. Kayapınar).
+  final String districtName;
+  /// 0–1 talep skoru (Market Pulse ile uyumlu).
+  final double demandScore;
+  final String budgetSegment;
+  final String? propertyTypeHint;
+
+  Map<String, dynamic> toJson() => {
+        'districtName': districtName,
+        'demandScore': demandScore,
+        'budgetSegment': budgetSegment,
+        'propertyTypeHint': propertyTypeHint,
+      };
+
+  factory DistrictSnapshotRow.fromJson(Map<String, dynamic> j) {
+    return DistrictSnapshotRow(
+      districtName: j['districtName'] as String? ?? '',
+      demandScore: (j['demandScore'] as num?)?.toDouble() ?? 0,
+      budgetSegment: j['budgetSegment'] as String? ?? '',
+      propertyTypeHint: j['propertyTypeHint'] as String?,
+    );
+  }
+}
+
 /// Tam analiz raporu (UI + PDF + geçmiş).
 class RainbowIntelReport {
   RainbowIntelReport({
@@ -90,6 +123,7 @@ class RainbowIntelReport {
     required this.listingUrl,
     this.listingId,
     this.imageUrl,
+    this.districtSnapshots = const [],
   });
 
   final String id;
@@ -105,6 +139,8 @@ class RainbowIntelReport {
   final List<double> priceTrend12mTryPerM2;
   final String listingUrl;
   final String? imageUrl;
+  /// Kayapınar / Bağlar karşılaştırma satırları (PDF grid).
+  final List<DistrictSnapshotRow> districtSnapshots;
 
   double get pricePerM2 => m2 > 0 ? listingPriceTry / m2 : 0;
 
@@ -129,6 +165,8 @@ class RainbowIntelReport {
         'priceTrend12mTryPerM2': priceTrend12mTryPerM2,
         'listingUrl': listingUrl,
         'imageUrl': imageUrl,
+        'districtSnapshots':
+            districtSnapshots.map((e) => e.toJson()).toList(),
       };
 
   factory RainbowIntelReport.fromJson(Map<String, dynamic> j) {
@@ -156,6 +194,12 @@ class RainbowIntelReport {
           .toList(),
       listingUrl: j['listingUrl'] as String,
       imageUrl: j['imageUrl'] as String?,
+      districtSnapshots: (j['districtSnapshots'] as List<dynamic>?)
+              ?.map((e) => DistrictSnapshotRow.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ))
+              .toList() ??
+          const [],
     );
   }
 

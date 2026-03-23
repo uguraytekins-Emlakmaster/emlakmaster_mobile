@@ -1,52 +1,95 @@
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_surfaces.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/my_external_listings_inner.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/listings_portfolio_stream.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ListingsPage extends StatefulWidget {
+class ListingsPage extends ConsumerStatefulWidget {
   const ListingsPage({super.key});
 
   @override
-  State<ListingsPage> createState() => _ListingsPageState();
+  ConsumerState<ListingsPage> createState() => _ListingsPageState();
 }
 
-class _ListingsPageState extends State<ListingsPage> {
+class _ListingsPageState extends ConsumerState<ListingsPage> {
+  int _segment = 0;
+
   late final Stream<List<PortfolioListingItem>> _stream =
       ListingsPortfolioStream.combined();
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
+    final flags = ref.watch(featureFlagsProvider).valueOrNull;
+    final extInt = flags?[AppConstants.keyFeatureExternalIntegrations] ?? true;
+
     return Scaffold(
-      backgroundColor: DesignTokens.scaffoldDark,
+      backgroundColor: ext.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-              child: Text(
-                AppLocalizations.of(context).t('title_listings'),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    l10n.t('title_listings'),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: ext.foreground,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  if (extInt) ...[
+                    const SizedBox(height: 12),
+                    SegmentedButton<int>(
+                      segments: [
+                        ButtonSegment<int>(
+                          value: 0,
+                          label: Text(l10n.t('listings_tab_portfolio')),
+                          icon: const Icon(Icons.home_work_outlined, size: 18),
+                        ),
+                        ButtonSegment<int>(
+                          value: 1,
+                          label: Text(l10n.t('listings_tab_my_external')),
+                          icon: const Icon(Icons.hub_outlined, size: 18),
+                        ),
+                      ],
+                      selected: {_segment},
+                      onSelectionChanged: (Set<int> next) {
+                        setState(() => _segment = next.first);
+                      },
                     ),
+                  ],
+                ],
               ),
             ),
             Expanded(
-              child: StreamBuilder<List<PortfolioListingItem>>(
+              child: extInt && _segment == 1
+                  ? const MyExternalListingsInner()
+                  : StreamBuilder<List<PortfolioListingItem>>(
                 stream: _stream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       !snapshot.hasData) {
-                    return const Center(
+                    return Center(
                       child: CircularProgressIndicator(
-                        color: DesignTokens.primary,
+                        color: scheme.primary,
                         strokeWidth: 2,
                       ),
                     );
@@ -58,12 +101,16 @@ class _ListingsPageState extends State<ListingsPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.error_outline_rounded,
-                                size: 48, color: Colors.white54),
+                            Icon(Icons.error_outline_rounded,
+                                size: 48, color: ext.danger.withValues(alpha: 0.9)),
                             const SizedBox(height: 16),
                             Text(
                               AppLocalizations.of(context).t('listings_load_error'),
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: ext.foreground,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
@@ -74,37 +121,12 @@ class _ListingsPageState extends State<ListingsPage> {
                   final items = snapshot.data ?? [];
                   if (items.isEmpty) {
                     final l10n = AppLocalizations.of(context);
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.home_work_outlined,
-                            size: 56,
-                            color: Colors.white.withValues(alpha: 0.3),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.t('empty_listings'),
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32),
-                            child: Text(
-                              l10n.t('empty_listings_sub'),
-                              style: const TextStyle(
-                                color: Colors.white38,
-                                fontSize: 12,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
+                    return EmptyState(
+                      premiumVisual: true,
+                      icon: Icons.home_work_outlined,
+                      title: l10n.t('empty_listings'),
+                      subtitle:
+                          '${l10n.t('empty_listings_sub')}\n\n${l10n.t('empty_state_empower')}',
                     );
                   }
 
@@ -206,125 +228,127 @@ class _ListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final ext = AppThemeExtension.of(context);
+    final brand = ext.brandPrimary;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: DesignTokens.space4),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _onTap(context),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppSurfaces.radiusCardLg),
           child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
+            decoration: AppSurfaces.cardLevel1(context, radius: AppSurfaces.radiusCardLg),
             clipBehavior: Clip.antiAlias,
             child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AspectRatio(
-            aspectRatio: 16 / 10,
-            child: imageUrl != null && imageUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => LayoutBuilder(
-                      builder: (context, c) => ShimmerPlaceholder(
-                        width: c.maxWidth,
-                        height: c.maxHeight,
-                      ),
-                    ),
-                    errorWidget: (_, __, ___) => _placeholderImage(),
-                  )
-                : _placeholderImage(),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (isExternal) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: DesignTokens.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.open_in_new_rounded,
-                              size: 14,
-                              color: DesignTokens.primary,
+                AspectRatio(
+                  aspectRatio: 16 / 10,
+                  child: imageUrl != null && imageUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => LayoutBuilder(
+                            builder: (context, c) => ShimmerPlaceholder(
+                              width: c.maxWidth,
+                              height: c.maxHeight,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              l10n.t('listing_external_badge'),
-                              style: const TextStyle(
-                                color: DesignTokens.primary,
-                                fontSize: 11,
+                          ),
+                          errorWidget: (_, __, ___) => _placeholderImage(context),
+                        )
+                      : _placeholderImage(context),
+                ),
+                Padding(
+                  padding: AppSurfaces.paddingCard,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                color: ext.foreground,
                                 fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isExternal) ...[
+                            const SizedBox(width: DesignTokens.space2),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: DesignTokens.space2,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: brand.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.open_in_new_rounded,
+                                    size: 14,
+                                    color: brand,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    l10n.t('listing_external_badge'),
+                                    style: TextStyle(
+                                      color: brand,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
+                        ],
+                      ),
+                      const SizedBox(height: DesignTokens.space2),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: ext.foregroundSecondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              location,
+                              style: TextStyle(
+                                color: ext.foregroundSecondary,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: DesignTokens.space3),
+                      Text(
+                        price,
+                        style: TextStyle(
+                          color: brand,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
                         ),
                       ),
                     ],
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 16,
-                      color: Colors.white54,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        location,
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 13,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    color: DesignTokens.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
             ),
           ),
         ),
@@ -332,14 +356,15 @@ class _ListingCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholderImage() {
-    return Container(
-      color: DesignTokens.surfaceDarkCard,
+  Widget _placeholderImage(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return ColoredBox(
+      color: ext.surfaceElevated,
       child: Center(
         child: Icon(
           Icons.home_rounded,
           size: 48,
-          color: Colors.white.withValues(alpha: 0.2),
+          color: ext.foregroundMuted.withValues(alpha: 0.35),
         ),
       ),
     );

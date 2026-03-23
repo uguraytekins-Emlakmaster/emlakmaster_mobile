@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/daily_brief/presentation/widgets/daily_brief_panel.dart';
@@ -8,8 +9,6 @@ import 'package:emlakmaster_mobile/features/missed_opportunities/presentation/wi
 import 'package:emlakmaster_mobile/features/region_demand_map/presentation/widgets/region_demand_map_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../../shared/widgets/unauthorized_screen.dart';
 
 /// Broker Command Intelligence: tek panel – riskli fırsatlar, kapanmaya yakın, sıcak müşteriler, ekip, piyasa.
@@ -42,14 +41,11 @@ class _BrokerCommandBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DesignTokens.backgroundDark,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         title: const Text('Broker Command'),
         backgroundColor: DesignTokens.backgroundDark,
         foregroundColor: DesignTokens.textPrimaryDark,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
-        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {},

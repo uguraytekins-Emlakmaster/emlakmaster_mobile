@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
+import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
@@ -18,9 +19,27 @@ class RoleBasedShellSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final role = ref.watch(displayRoleOrNullProvider);
+    final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
+    if (uid == null || uid.isEmpty) {
+      return const _ShellLoading();
+    }
+    final docAsync = ref.watch(userDocStreamProvider(uid));
+    return docAsync.when(
+      loading: () => const _ShellLoading(),
+      error: (_, __) => const _ShellLoading(),
+      data: (doc) {
+        if (doc == null) {
+          // Firestore users/{uid} yok — router rol seçimine göndermeli; yanlışlıkla buradaysak bekle.
+          return const _ShellLoading();
+        }
+        final role = AppRole.fromFirestoreRole(doc.role);
+        return _buildForRole(context, ref, role);
+      },
+    );
+  }
+
+  Widget _buildForRole(BuildContext context, WidgetRef ref, AppRole role) {
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
-    if (role == null) return const _ShellLoading();
     if (FeaturePermission.seesClientPanel(role)) return const ClientShellPage();
     final forceConsultant = preferConsultant == true;
     final forceAdmin = preferConsultant == false;

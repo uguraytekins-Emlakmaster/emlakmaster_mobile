@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:emlakmaster_mobile/core/deep_linking/region_deep_link_bootstrap.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
@@ -13,6 +14,7 @@ import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/cache/app_cache_service.dart';
 import 'package:emlakmaster_mobile/core/services/sync_manager.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -233,10 +235,12 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     super.initState();
     AppLifecyclePowerService.instance.ensureObserved();
     WidgetsBinding.instance.addPostFrameCallback((_) => _runDeferredInit());
+    unawaited(RegionDeepLinkBootstrap.attach(ref));
   }
 
   @override
   void dispose() {
+    unawaited(RegionDeepLinkBootstrap.dispose());
     AppLifecyclePowerService.instance.removeObserved();
     super.dispose();
   }
@@ -271,6 +275,9 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   Widget build(BuildContext context) {
     ref.listen(currentUserProvider, (_, next) {
       final uid = next.valueOrNull?.uid;
+      if (uid != null && uid.isNotEmpty) {
+        Future<void>.microtask(() => RegionDeepLinkBootstrap.consumePendingAfterAuth(ref));
+      }
       if (uid == null || uid.isEmpty) return;
       if (Firebase.apps.isEmpty) return;
       PushNotificationService.instance
@@ -283,10 +290,8 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     final router = ref.watch(AppRouter.goRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider).valueOrNull ?? const Locale('tr');
-    return ColoredBox(
-      color: DesignTokens.backgroundDark,
-      child: MaterialApp.router(
-      title: 'EmlakMaster',
+    return MaterialApp.router(
+      title: 'Rainbow CRM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
@@ -302,6 +307,8 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
       routerConfig: router,
       builder: (context, child) {
           // Router henüz sayfa vermeden veya tema geç uygulanınca beyaz ekran olmasın.
+          final ext = AppThemeExtension.of(context);
+          final scheme = Theme.of(context).colorScheme;
           final isRtl = locale.languageCode == 'ar';
           final content = child != null && isRtl
               ? Directionality(textDirection: TextDirection.rtl, child: child)
@@ -323,17 +330,17 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  const ColoredBox(color: DesignTokens.backgroundDark),
+                  ColoredBox(color: ext.background),
                   if (content != null)
                     content
                   else
-                    const Center(
+                    Center(
                       child: SizedBox(
                         width: 32,
                         height: 32,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: DesignTokens.antiqueGold,
+                          color: scheme.primary,
                         ),
                       ),
                     ),
@@ -341,8 +348,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
               ),
             ),
           );
-        },
-      ),
+      },
     );
   }
 }

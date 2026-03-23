@@ -92,13 +92,13 @@ class DashboardPage extends ConsumerWidget {
                       padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
                       child: DiscoveryPanel(),
                     ),
-                    const SizedBox(height: DesignTokens.space4),
+                    const SizedBox(height: DesignTokens.space3),
                     if (marketPulse)
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
                         child: MarketPulsePanel(),
                       ),
-                    if (marketPulse) const SizedBox(height: DesignTokens.space4),
+                    if (marketPulse) const SizedBox(height: DesignTokens.space3),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
                       child: OpportunityRadarWidget(),

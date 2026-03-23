@@ -2,12 +2,17 @@ import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/settings_service.dart';
+import 'package:emlakmaster_mobile/features/analytics/presentation/providers/investment_opportunity_providers.dart';
+import 'package:emlakmaster_mobile/features/market_settings/domain/entities/market_settings_entity.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:emlakmaster_mobile/core/platform/file_stub.dart'
@@ -18,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../screens/placeholder_pages.dart' show NotificationsSection, ThemeSection;
 
 /// Kategorize ayarlar: Hesap & Giriş, Görünüm, Bildirimler, Çağrı & CRM, İlanlar, War Room, Ses, Gizlilik, Hakkında.
@@ -45,11 +51,11 @@ class SettingsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
+        title: Text(l10n.t('title_settings')),
         backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
         foregroundColor: theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
-        title: Text(l10n.t('title_settings')),
-        elevation: 0,
       ),
       body: SafeArea(
         child: ListView(
@@ -150,6 +156,26 @@ class SettingsPage extends ConsumerWidget {
                     onTap: () => _showRoleSwitcher(context, ref, override),
                   ),
                 ],
+              ],
+            ),
+            const SizedBox(height: 24),
+            const _SectionHeader(title: 'İletişim', icon: Icons.forum_rounded),
+            _sectionCard(
+              context,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.chat_bubble_outline_rounded, color: theme.colorScheme.primary),
+                  title: Text('Mesaj merkezi', style: TextStyle(color: theme.colorScheme.onSurface)),
+                  subtitle: Text(
+                    'Birleşik gelen kutusu — platform bağlantısı sonrası',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                      fontSize: 12,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.push(AppRouter.routeMessageCenter),
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -298,6 +324,37 @@ class SettingsPage extends ConsumerWidget {
                         ref.read(featureFlagsProvider.notifier).setFlag(
                             AppConstants.keyFeaturePortfolioMatch, v),
                   ),
+                  _SettingSwitch(
+                    title: 'Harici platform entegrasyonları',
+                    subtitle: 'Sahibinden / Hepsiemlak / Emlakjet bağlı hesaplar',
+                    icon: Icons.hub_rounded,
+                    value: flags[AppConstants.keyFeatureExternalIntegrations] ?? true,
+                    onChanged: (v) =>
+                        ref.read(featureFlagsProvider.notifier).setFlag(
+                            AppConstants.keyFeatureExternalIntegrations, v),
+                  ),
+                  if (flags[AppConstants.keyFeatureExternalIntegrations] ?? true) ...[
+                    ListTile(
+                      leading: Icon(Icons.link_rounded, color: theme.colorScheme.primary),
+                      title: Text('Bağlı hesapları yönet', style: TextStyle(color: theme.colorScheme.onSurface)),
+                      subtitle: Text(
+                        'Harici ilan hesaplarını bağla veya senkron durumunu gör',
+                        style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => context.push(AppRouter.routeConnectedAccounts),
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.collections_bookmark_rounded, color: theme.colorScheme.primary),
+                      title: Text(l10n.t('my_external_listings_title'), style: TextStyle(color: theme.colorScheme.onSurface)),
+                      subtitle: Text(
+                        l10n.t('my_external_listings_settings_sub'),
+                        style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => context.push(AppRouter.routeMyExternalListings),
+                    ),
+                  ],
                 ],
               ),
               loading: () => const SizedBox.shrink(),
@@ -414,6 +471,14 @@ class SettingsPage extends ConsumerWidget {
               error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 24),
+            const _SectionHeader(title: 'Yatırım & Piyasa', icon: Icons.show_chart_rounded),
+            _sectionCard(
+              context,
+              children: const [
+                _FavoriteInvestRegionTile(),
+              ],
+            ),
+            const SizedBox(height: 24),
             const _SectionHeader(title: 'Gizlilik & Veri', icon: Icons.privacy_tip_rounded),
             flagsAsync.when(
               data: (flags) => _sectionCard(context,
@@ -516,12 +581,86 @@ class SettingsPage extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.cardTheme.color ?? theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
+      ),
+    );
+  }
+}
+
+/// Fırsat Endeksi / Rainbow kartı için takip edilen Diyarbakır ilçesi.
+class _FavoriteInvestRegionTile extends ConsumerStatefulWidget {
+  const _FavoriteInvestRegionTile();
+
+  @override
+  ConsumerState<_FavoriteInvestRegionTile> createState() =>
+      _FavoriteInvestRegionTileState();
+}
+
+class _FavoriteInvestRegionTileState extends ConsumerState<_FavoriteInvestRegionTile> {
+  String? _value;
+
+  static const _options = <MapEntry<String, String>>[
+    MapEntry(MarketSettingsEntity.regionKayapinar, 'Kayapınar'),
+    MapEntry(MarketSettingsEntity.regionBaglar, 'Bağlar'),
+    MapEntry(MarketSettingsEntity.regionYenisehir, 'Yenişehir'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final id = await SettingsService.instance.getFavoriteInvestRegionId();
+    if (mounted) setState(() => _value = id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ids = _options.map((e) => e.key).toSet();
+    final raw = _value ?? AppConstants.defaultFavoriteInvestRegionId;
+    final v = ids.contains(raw) ? raw : AppConstants.defaultFavoriteInvestRegionId;
+    return ListTile(
+      leading: const Icon(Icons.location_city_rounded, color: DesignTokens.primary, size: 22),
+      title: Text(
+        'Fırsat Endeksi bölgesi',
+        style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        'Dashboard’daki yatırım iştahı özeti bu ilçeye göre hesaplanır.',
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+          fontSize: 11,
+        ),
+      ),
+      trailing: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: v,
+          isDense: true,
+          dropdownColor: theme.cardTheme.color ?? theme.colorScheme.surface,
+          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13),
+          items: _options
+              .map(
+                (e) => DropdownMenuItem<String>(
+                  value: e.key,
+                  child: Text(e.value),
+                ),
+              )
+              .toList(),
+          onChanged: (next) async {
+            if (next == null) return;
+            await SettingsService.instance.setFavoriteInvestRegionId(next);
+            ref.invalidate(favoriteInvestRegionIdProvider);
+            if (mounted) setState(() => _value = next);
+          },
+        ),
       ),
     );
   }

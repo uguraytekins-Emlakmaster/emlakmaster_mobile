@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
+import 'package:emlakmaster_mobile/features/opportunity_radar/presentation/widgets/opportunity_radar_laboratory_empty.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart';
 import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
@@ -48,6 +49,9 @@ class OpportunityRadarWidget extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                  ),
                 ),
                 onPressed: () => context.push(AppRouter.routeWarRoom),
                 child: const Text('War Room', style: TextStyle(color: DesignTokens.primary, fontSize: 12)),
@@ -58,13 +62,7 @@ class OpportunityRadarWidget extends ConsumerWidget {
           resurrectionAsync.when(
             data: (items) {
               if (items.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'Şu an öne çıkan fırsat yok.',
-                    style: TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 13),
-                  ),
-                );
+                return const OpportunityRadarLaboratoryEmpty();
               }
               return Column(
                 children: items.take(3).map((e) => ListTile(

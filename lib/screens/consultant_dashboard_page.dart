@@ -5,9 +5,10 @@ import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
-import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
+import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
@@ -32,7 +33,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
     final greeting = user?.email != null
         ? 'Merhaba, ${user!.email!.split('@').first}'
         : 'Merhaba';
-    AnalyticsService.instance.logScreenView(screenName: 'consultant_dashboard');
+    // Ekran görüntüsü: GoRouter `_AnalyticsRouteObserver` (route `name` = matchedLocation).
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
@@ -568,7 +569,7 @@ class _QuickActionsRow extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: () {
               HapticFeedback.mediumImpact();
-              AnalyticsService.instance.logEvent('magic_call_tap');
+              AnalyticsService.instance.logEvent(AnalyticsEvents.magicCallTap);
               context.push(AppRouter.routeCall);
             },
             style: ElevatedButton.styleFrom(
@@ -591,7 +592,7 @@ class _QuickActionsRow extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: () {
               HapticFeedback.selectionClick();
-              AnalyticsService.instance.logEvent('consultant_calls_tap');
+              AnalyticsService.instance.logEvent(AnalyticsEvents.consultantCallsTap);
               context.push(AppRouter.routeConsultantCalls);
             },
             style: OutlinedButton.styleFrom(

@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart';
 import 'package:flutter/material.dart';
@@ -22,11 +23,11 @@ class ConsultantResurrectionPage extends ConsumerWidget {
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         title: const Text('Takip listesi'),
-        elevation: 0,
       ),
       body: resurrectionAsync.when(
         data: (items) {

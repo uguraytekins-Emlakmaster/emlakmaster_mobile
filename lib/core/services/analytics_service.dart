@@ -1,7 +1,11 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+import '../analytics/analytics_events.dart';
+
 /// Uygulama olayları ve ekran görüntüleme için Firebase Analytics sarmalayıcı.
+///
+/// Özel `logEvent` isimleri: [AnalyticsEvents]. Firebase Remote Config / IAP yok; ürün kimliği tek kaynak yok.
 class AnalyticsService {
   AnalyticsService._();
 
@@ -50,13 +54,15 @@ class AnalyticsService {
   /// İlan detayına tıklandı (listing_id vb.).
   Future<void> logListingView({String? listingId, String? source}) async {
     final params = <String, Object>{};
-    if (listingId != null) params['listing_id'] = listingId;
-    if (source != null) params['source'] = source;
-    logEvent('listing_view', params.isEmpty ? null : params);
+    if (listingId != null) params[AnalyticsEvents.paramListingId] = listingId;
+    if (source != null) params[AnalyticsEvents.paramSource] = source;
+    logEvent(AnalyticsEvents.listingView, params.isEmpty ? null : params);
   }
 
   /// Ayar değişti (listing_display, tema vb.).
   Future<void> logSettingsChange({String? settingName}) async {
-    if (settingName != null) logEvent('settings_change', {'setting': settingName});
+    if (settingName != null) {
+      logEvent(AnalyticsEvents.settingsChange, {AnalyticsEvents.paramSetting: settingName});
+    }
   }
 }
