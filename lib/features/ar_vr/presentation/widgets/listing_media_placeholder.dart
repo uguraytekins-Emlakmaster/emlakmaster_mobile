@@ -1,8 +1,8 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 /// AR/VR Ready: 360° görüntüleyici (URL açma) ve Lidar meta.
 class ListingMedia360Placeholder extends StatelessWidget {
   const ListingMedia360Placeholder({
@@ -26,9 +26,9 @@ class ListingMedia360Placeholder extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
       decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
+        color: AppThemeExtension.of(context).surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: DesignTokens.borderDark),
+        border: Border.all(color: AppThemeExtension.of(context).border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,12 +36,12 @@ class ListingMedia360Placeholder extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.panorama_photosphere_select_rounded, size: 20, color: DesignTokens.primary),
+              Icon(Icons.panorama_photosphere_select_rounded, size: 20, color: AppThemeExtension.of(context).accent),
               const SizedBox(width: DesignTokens.space2),
               Text(
                 '360° & 3D',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
+                      color: AppThemeExtension.of(context).textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -97,8 +97,8 @@ class _Chip extends StatelessWidget {
     return ActionChip(
       label: Text(label, style: const TextStyle(fontSize: 12)),
       onPressed: url != null ? () => _openUrl(context, url) : null,
-      backgroundColor: DesignTokens.surfaceDarkElevated,
-      side: BorderSide(color: DesignTokens.primary.withValues(alpha: 0.5)),
+      backgroundColor: AppThemeExtension.of(context).surfaceElevated,
+      side: BorderSide(color: AppThemeExtension.of(context).accent.withValues(alpha: 0.5)),
     );
   }
 }

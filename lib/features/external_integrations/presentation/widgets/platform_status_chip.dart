@@ -1,8 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_ui_state.dart';
 import 'package:flutter/material.dart';
-
 class PlatformStatusChip extends StatelessWidget {
   const PlatformStatusChip({super.key, required this.state});
 
@@ -23,8 +21,8 @@ class PlatformStatusChip extends StatelessWidget {
           state.shortLabel,
         ),
       PlatformConnectionUiState.limited => (
-          DesignTokens.warning.withValues(alpha: 0.2),
-          DesignTokens.warning,
+          ext.warning.withValues(alpha: 0.2),
+          ext.warning,
           state.shortLabel,
         ),
       PlatformConnectionUiState.needsAttention => (
@@ -42,6 +40,8 @@ class PlatformStatusChip extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: fg,
           fontSize: 11,

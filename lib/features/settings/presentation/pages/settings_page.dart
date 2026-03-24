@@ -1,6 +1,10 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
+import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_provider.dart';
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
+import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
+import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/providers/investment_opportunity_providers.dart';
@@ -86,7 +90,7 @@ class SettingsPage extends ConsumerWidget {
                 if (canBecomeAdmin) ...[
                   Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   ListTile(
-                    leading: const Icon(Icons.admin_panel_settings_rounded, color: DesignTokens.primary),
+                    leading: Icon(Icons.admin_panel_settings_rounded, color: AppThemeExtension.of(context).accent),
                     title: Text('Yönetici yetkisi al', style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text(
                       'Firestore\'da rolünüz broker_owner olarak güncellenir.',
@@ -103,9 +107,9 @@ class SettingsPage extends ConsumerWidget {
                         ref.invalidate(userDocStreamProvider(user.uid));
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Yönetici yetkisi verildi. Panel yenileniyor...'),
-                              backgroundColor: DesignTokens.primary,
+                            SnackBar(
+                              content: const Text('Yönetici yetkisi verildi. Panel yenileniyor...'),
+                              backgroundColor: AppThemeExtension.of(context).accent,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -125,22 +129,22 @@ class SettingsPage extends ConsumerWidget {
                   ListTile(
                     leading: Icon(
                       Icons.dashboard_rounded,
-                      color: preferConsultant != true ? DesignTokens.primary : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: preferConsultant != true ? AppThemeExtension.of(context).accent : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     title: Text('Yönetici paneli', style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: preferConsultant != true
-                        ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
+                        ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
                         : null,
                     onTap: () => ref.read(preferredConsultantPanelProvider.notifier).state = false,
                   ),
                   ListTile(
                     leading: Icon(
                       Icons.person_rounded,
-                      color: preferConsultant == true ? DesignTokens.primary : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: preferConsultant == true ? AppThemeExtension.of(context).accent : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     title: Text('Danışman paneli', style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: preferConsultant == true
-                        ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
+                        ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
                         : null,
                     onTap: () => ref.read(preferredConsultantPanelProvider.notifier).state = true,
                   ),
@@ -148,7 +152,7 @@ class SettingsPage extends ConsumerWidget {
                 if (canSwitchRole) ...[
                   Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   ListTile(
-                    leading: const Icon(Icons.swap_horiz_rounded, color: DesignTokens.primary),
+                    leading: Icon(Icons.swap_horiz_rounded, color: AppThemeExtension.of(context).accent),
                     title: Text(
                       override != null ? 'Rol: ${override.label} (geri al)' : 'Rol değiştir (test)',
                       style: TextStyle(color: theme.colorScheme.onSurface),
@@ -215,13 +219,13 @@ class SettingsPage extends ConsumerWidget {
                 for (var i = 0; i < AppLocalizations.supportedLocales.length; i++) ...[
                   if (i > 0) Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   ListTile(
-                    leading: const Icon(Icons.translate_rounded, color: DesignTokens.primary, size: 22),
+                    leading: Icon(Icons.translate_rounded, color: AppThemeExtension.of(context).accent, size: 22),
                     title: Text(
                       l10n.t(AppLocalizations.languageCodeToLabelKey[AppLocalizations.supportedLocales[i].languageCode] ?? AppLocalizations.supportedLocales[i].languageCode),
                       style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
                     ),
                     trailing: localeState.valueOrNull?.languageCode == AppLocalizations.supportedLocales[i].languageCode
-                        ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
+                        ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
                         : null,
                     onTap: () => ref.read(localeProvider.notifier).setLocale(AppLocalizations.supportedLocales[i]),
                   ),
@@ -254,7 +258,7 @@ class SettingsPage extends ConsumerWidget {
             _sectionCard(context,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.call_made_rounded, color: DesignTokens.primary, size: 22),
+                  leading: Icon(Icons.call_made_rounded, color: AppThemeExtension.of(context).accent, size: 22),
                   title: Text('Tüm Çağrılar', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500)),
                   subtitle: Text(
                     'Danışman paneli → Çağrılar: kendi çağrılarınız, CSV export, toplu SMS. Android\'de telefon günlüğü senkronu.',
@@ -511,7 +515,7 @@ class SettingsPage extends ConsumerWidget {
             _sectionCard(context,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.phone_android_rounded, color: DesignTokens.primary, size: 22),
+                  leading: Icon(Icons.phone_android_rounded, color: AppThemeExtension.of(context).accent, size: 22),
                   title: Text(
                     AppConstants.appName,
                     style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600),
@@ -528,7 +532,7 @@ class SettingsPage extends ConsumerWidget {
             _sectionCard(context,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.logout_rounded, color: DesignTokens.danger),
+                  leading: Icon(Icons.logout_rounded, color: AppThemeExtension.of(context).danger),
                   title: Text('Çıkış yap', style: TextStyle(color: theme.colorScheme.onSurface)),
                   onTap: () => AuthService.instance.signOut(),
                 ),
@@ -560,7 +564,7 @@ class SettingsPage extends ConsumerWidget {
               return ListTile(
                 title: Text(r.label, style: TextStyle(color: theme.colorScheme.onSurface)),
                 trailing: currentOverride == r
-                    ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
+                    ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
                     : null,
                 onTap: () {
                   ref.read(overrideRoleProvider.notifier).state =
@@ -628,7 +632,7 @@ class _FavoriteInvestRegionTileState extends ConsumerState<_FavoriteInvestRegion
     final raw = _value ?? AppConstants.defaultFavoriteInvestRegionId;
     final v = ids.contains(raw) ? raw : AppConstants.defaultFavoriteInvestRegionId;
     return ListTile(
-      leading: const Icon(Icons.location_city_rounded, color: DesignTokens.primary, size: 22),
+      leading: Icon(Icons.location_city_rounded, color: AppThemeExtension.of(context).accent, size: 22),
       title: Text(
         'Fırsat Endeksi bölgesi',
         style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
@@ -666,35 +670,47 @@ class _FavoriteInvestRegionTileState extends ConsumerState<_FavoriteInvestRegion
   }
 }
 
-class _AvatarSettingsRow extends StatefulWidget {
+class _AvatarSettingsRow extends ConsumerStatefulWidget {
   const _AvatarSettingsRow({required this.userId});
   final String userId;
 
   @override
-  State<_AvatarSettingsRow> createState() => _AvatarSettingsRowState();
+  ConsumerState<_AvatarSettingsRow> createState() => _AvatarSettingsRowState();
 }
 
-class _AvatarSettingsRowState extends State<_AvatarSettingsRow> {
+class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
   bool _loading = false;
 
   Future<void> _pickAndUpload() async {
     if (_loading) return;
+    final storageAsync = ref.read(firebaseStorageAvailableProvider);
+    final storageOk = storageAsync.when(
+      data: (ok) => ok,
+      loading: () => true,
+      error: (_, __) => false,
+    );
+    if (!storageOk) {
+      AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
+      return;
+    }
     final picker = ImagePicker();
     final xFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (xFile == null) return;
     setState(() => _loading = true);
     try {
+      final String? url;
       if (kIsWeb) {
         final bytes = await xFile.readAsBytes();
-        await ProfileAvatarService.instance.uploadAvatarFromBytes(uid: widget.userId, bytes: bytes);
+        url = await ProfileAvatarService.instance.uploadAvatarFromBytes(uid: widget.userId, bytes: bytes);
       } else {
         final file = io.File(xFile.path);
-        await ProfileAvatarService.instance.uploadAvatar(uid: widget.userId, file: file);
+        url = await ProfileAvatarService.instance.uploadAvatar(uid: widget.userId, file: file);
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil fotoğrafı güncellendi.')),
-        );
+      if (!mounted) return;
+      if (url != null && url.isNotEmpty) {
+        AppToaster.success(context, 'Profil fotoğrafı güncellendi.');
+      } else {
+        AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -707,9 +723,7 @@ class _AvatarSettingsRowState extends State<_AvatarSettingsRow> {
     try {
       await ProfileAvatarService.instance.deleteAvatar(uid: widget.userId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil fotoğrafı kaldırıldı.')),
-        );
+        AppToaster.success(context, 'Profil fotoğrafı kaldırıldı.');
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -718,27 +732,53 @@ class _AvatarSettingsRowState extends State<_AvatarSettingsRow> {
 
   @override
   Widget build(BuildContext context) {
+    final storageAsync = ref.watch(firebaseStorageAvailableProvider);
+    final storageOk = storageAsync.when(
+      data: (ok) => ok,
+      loading: () => true,
+      error: (_, __) => false,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.photo_camera_rounded, color: DesignTokens.primary, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Profil fotoğrafı',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500, fontSize: 13),
+          Row(
+            children: [
+              Icon(Icons.photo_camera_rounded, color: AppThemeExtension.of(context).accent, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Profil fotoğrafı',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500, fontSize: 13),
+                ),
+              ),
+              TextButton(
+                onPressed: (_loading || !storageOk) ? null : _pickAndUpload,
+                child: Text(_loading ? 'Yükleniyor…' : 'Fotoğraf seç'),
+              ),
+              const SizedBox(width: 4),
+              TextButton(
+                onPressed: _loading ? null : _removeAvatar,
+                child: const Text('Kaldır'),
+              ),
+            ],
+          ),
+          if (!storageOk) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 28),
+              child: Text(
+                FirebaseStorageAvailability.unavailableMessage,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
+                  fontSize: 11,
+                ),
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: _loading ? null : _pickAndUpload,
-            child: Text(_loading ? 'Yükleniyor…' : 'Fotoğraf seç'),
-          ),
-          const SizedBox(width: 4),
-          TextButton(
-            onPressed: _loading ? null : _removeAvatar,
-            child: const Text('Kaldır'),
-          ),
+          ],
         ],
       ),
     );
@@ -793,13 +833,13 @@ class _SettingSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SwitchListTile(
-      secondary: Icon(icon, color: DesignTokens.primary, size: 22),
+      secondary: Icon(icon, color: AppThemeExtension.of(context).accent, size: 22),
       title: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500)),
       subtitle: subtitle != null
           ? Text(subtitle!, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 11))
           : null,
       value: value,
-      activeThumbColor: DesignTokens.primary,
+      activeThumbColor: AppThemeExtension.of(context).accent,
       onChanged: (v) => onChanged(v),
     );
   }

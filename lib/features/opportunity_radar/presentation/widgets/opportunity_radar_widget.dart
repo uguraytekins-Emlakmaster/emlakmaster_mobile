@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -18,6 +19,7 @@ class OpportunityRadarWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
     final role = ref.watch(displayRoleOrNullProvider);
     if (role == null || !FeaturePermission.canViewOpportunityRadar(role)) {
       return const SizedBox.shrink();
@@ -25,19 +27,19 @@ class OpportunityRadarWidget extends ConsumerWidget {
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
-      decoration: DesignTokens.dashboardCardDecoration(),
+      decoration: ext.surfaceCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.radar_rounded, color: DesignTokens.primary, size: 22),
+              Icon(Icons.radar_rounded, color: ext.accent, size: 22),
               const SizedBox(width: DesignTokens.space2),
               Expanded(
                 child: Text(
                   'Fırsat radarı',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: DesignTokens.textPrimaryDark,
+                        color: ext.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                   maxLines: 1,
@@ -54,7 +56,7 @@ class OpportunityRadarWidget extends ConsumerWidget {
                   ),
                 ),
                 onPressed: () => context.push(AppRouter.routeWarRoom),
-                child: const Text('War Room', style: TextStyle(color: DesignTokens.primary, fontSize: 12)),
+                child: Text('War Room', style: TextStyle(color: ext.accent, fontSize: 12)),
               ),
             ],
           ),
@@ -68,14 +70,17 @@ class OpportunityRadarWidget extends ConsumerWidget {
                 children: items.take(3).map((e) => ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.replay_rounded, size: 18, color: DesignTokens.warning),
+                  leading: Icon(Icons.replay_rounded, size: 18, color: ext.warning),
                   title: Text(
                     e.customerName ?? e.customerId,
-                    style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: 13),
+                    style: TextStyle(color: ext.textPrimary, fontSize: 13),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  subtitle: Text('${e.daysSilent} gün sessiz', style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11)),
+                  subtitle: Text(
+                    '${e.daysSilent} gün sessiz',
+                    style: TextStyle(color: ext.textTertiary, fontSize: 11),
+                  ),
                   onTap: () {
                     HapticFeedback.lightImpact();
                     showResurrectionLeadTopicSheet(

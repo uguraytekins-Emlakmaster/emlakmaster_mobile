@@ -1,8 +1,7 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
-
 /// "The Sovereign Arc" – çok şeffaf Antique Gold mühür.
 /// Web/desktop: imleç hareketine ters yönde hafif dönüş (hafif, jet hızlı).
 /// Mobil: statik mühür (kuş gibi hafif — Listener yok).
@@ -52,12 +51,13 @@ class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
     return LayoutBuilder(
       builder: (context, constraints) {
         _size = Size(constraints.maxWidth, constraints.maxHeight);
+        final accent = AppThemeExtension.of(context).accent;
         final arcWidget = RepaintBoundary(
           child: IgnorePointer(
             child: Transform.rotate(
               angle: useKinetic ? _angle : 0,
               child: CustomPaint(
-                painter: _SovereignArcPainter(),
+                painter: _SovereignArcPainter(accent),
                 size: _size,
               ),
             ),
@@ -84,12 +84,15 @@ class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
 }
 
 class _SovereignArcPainter extends CustomPainter {
+  _SovereignArcPainter(this.accent);
+  final Color accent;
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.longestSide * 0.52;
     final paint = Paint()
-      ..color = DesignTokens.antiqueGold.withValues(alpha: 0.03)
+      ..color = accent.withValues(alpha: 0.03)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
@@ -104,7 +107,7 @@ class _SovereignArcPainter extends CustomPainter {
 
     // İkinci iç arc (derinlik)
     final inner = Paint()
-      ..color = DesignTokens.antiqueGold.withValues(alpha: 0.02)
+      ..color = accent.withValues(alpha: 0.02)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
     canvas.drawPath(
@@ -119,5 +122,6 @@ class _SovereignArcPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _SovereignArcPainter oldDelegate) =>
+      oldDelegate.accent != accent;
 }

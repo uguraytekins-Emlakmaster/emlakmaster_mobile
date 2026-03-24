@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/debug/debug_api_trace.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
@@ -11,16 +12,18 @@ abstract final class TcmbPublicRates {
 
   /// XML parse edilemez veya kur yoksa null.
   static Future<TcmbParsedRates?> fetchToday() async {
-    try {
-      final resp = await http
-          .get(Uri.parse(todayXmlUrl))
-          .timeout(const Duration(seconds: 12));
-      if (resp.statusCode != 200) return null;
-      return parseTodayXml(resp.body);
-    } catch (e) {
-      if (kDebugMode) debugPrint('TcmbPublicRates.fetchToday: $e');
-      return null;
-    }
+    return traceHttpCall<TcmbParsedRates?>('TCMB today.xml', () async {
+      try {
+        final resp = await http
+            .get(Uri.parse(todayXmlUrl))
+            .timeout(const Duration(seconds: 12));
+        if (resp.statusCode != 200) return null;
+        return parseTodayXml(resp.body);
+      } catch (e) {
+        if (kDebugMode) debugPrint('TcmbPublicRates.fetchToday: $e');
+        return null;
+      }
+    });
   }
 
   /// Test ve offline doğrulama için.

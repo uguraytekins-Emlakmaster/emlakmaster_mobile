@@ -343,7 +343,7 @@ class FirestoreService {
     );
   }
 
-  /// Tüm müşteriler (kurala göre danışman sadece kendininkileri görür).
+  /// Tüm müşteriler (yönetici / eski ekranlar; tercihen [customersByAssignedAgentStream]).
   static Stream<QuerySnapshot<Map<String, dynamic>>> customersStream() async* {
     await ensureInitialized();
     if (!_initialized) {
@@ -354,6 +354,28 @@ class FirestoreService {
         .collection('customers')
         .limit(200)
         .snapshots();
+  }
+
+  /// Danışmana atanan müşteriler, en yeni kayıt önce. Üretim CRM listesi bunu kullanır.
+  static Stream<QuerySnapshot<Map<String, dynamic>>> customersByAssignedAgentStream(
+    String agentId,
+  ) async* {
+    await ensureInitialized();
+    if (!_initialized || agentId.isEmpty) {
+      yield* const Stream.empty();
+      return;
+    }
+    try {
+      yield* FirebaseFirestore.instance
+          .collection(AppConstants.colCustomers)
+          .where('assignedAgentId', isEqualTo: agentId)
+          .orderBy('createdAt', descending: true)
+          .limit(200)
+          .snapshots();
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('customersByAssignedAgentStream: $e $st');
+      yield* const Stream.empty();
+    }
   }
 
   /// War Room Lead Pulse: son eklenen lead'ler (updatedAt desc fallback; index gerekebilir).
@@ -478,6 +500,7 @@ class FirestoreService {
       'source': source,
       'createdAt': now,
       'updatedAt': now,
+      'lastContactAt': now,
       if (note != null && note.isNotEmpty) 'lastCallSummary': note,
     });
     return ref.id;
@@ -498,6 +521,9 @@ class FirestoreService {
   }
 
   /// Danışmana ait tüm çağrılar (gelen + giden), en yeni önce. Toplu SMS / CSV için.
+  ///
+  /// Composite index (deploy: `firebase deploy --only firestore:indexes`):
+  /// collection `calls`: advisorId ASC, createdAt DESC — see repo `firestore.indexes.json`.
   static Stream<QuerySnapshot<Map<String, dynamic>>> callsByAdvisorStream(
       String advisorId) async* {
     await ensureInitialized();
@@ -575,6 +601,8 @@ class FirestoreService {
   }
 
   /// Aynı veri, agentId alanı kullanılıyorsa (geriye uyumluluk).
+  ///
+  /// Composite index: collection `calls`: agentId ASC, createdAt DESC — `firestore.indexes.json`.
   static Stream<QuerySnapshot<Map<String, dynamic>>> callsByAgentIdStream(
       String agentId) async* {
     await ensureInitialized();
@@ -775,11 +803,55 @@ class FirestoreService {
     await ensureInitialized();
     if (!_initialized) return;
     final id = data['id'] as String? ?? FirebaseFirestore.instance.collection('tasks').doc().id;
-    await FirebaseFirestore.instance.collection('tasks').doc(id).set({
+    final advisorId = data['advisorId'] as String?;
+    final merged = <String, dynamic>{
       ...data,
       'id': id,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+    if (advisorId != null && advisorId.isNotEmpty) {
+      merged['userId'] = advisorId;
+    }
+    final due = merged['dueAt'] ?? merged['dueDate'];
+    if (due != null) {
+      merged['dueDate'] = due;
+      merged['dueAt'] = due;
+    }
+    final done = merged['done'];
+    if (done != null) {
+      merged['completed'] = done == true;
+    }
+    if (!merged.containsKey('createdAt')) {
+      merged['createdAt'] = FieldValue.serverTimestamp();
+    }
+    await FirebaseFirestore.instance.collection(AppConstants.colTasks).doc(id).set(
+          merged,
+          SetOptions(merge: true),
+        );
+  }
+
+  /// Manuel ilan ekleme (CRM portföyü; içe aktarma motorundan ayrı).
+  static Future<String> createListingManual({
+    required String ownerUserId,
+    required String title,
+    required String price,
+    required String location,
+    String source = 'manual',
+  }) async {
+    await ensureInitialized();
+    if (!_initialized) throw StateError('Firestore not initialized');
+    final ref = FirebaseFirestore.instance.collection(AppConstants.colListings).doc();
+    final now = FieldValue.serverTimestamp();
+    await ref.set({
+      'ownerUserId': ownerUserId,
+      'title': title,
+      'price': price,
+      'location': location,
+      'source': source,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+    return ref.id;
   }
 
   // ---------- Visits ----------

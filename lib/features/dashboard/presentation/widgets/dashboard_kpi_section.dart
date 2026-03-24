@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/kpi_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -43,7 +43,7 @@ class DashboardKpiSection extends StatelessWidget {
                         !hasCalls;
 
                 if (isLoading) {
-                  return const SizedBox(
+                  return SizedBox(
                     height: 52,
                     child: Center(
                       child: SizedBox(
@@ -51,7 +51,7 @@ class DashboardKpiSection extends StatelessWidget {
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: DesignTokens.antiqueGold,
+                          color: AppThemeExtension.of(context).accent,
                         ),
                       ),
                     ),

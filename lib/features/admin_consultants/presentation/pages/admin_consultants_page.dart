@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -9,7 +10,6 @@ import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_perm
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Admin → Danışman Yönetimi: consultant-tier listesi, filtreler (rol/ekip), düzenleme ve yeni danışman bilgisi.
 class AdminConsultantsPage extends ConsumerWidget {
   const AdminConsultantsPage({super.key});
@@ -20,11 +20,11 @@ class AdminConsultantsPage extends ConsumerWidget {
     if (!FeaturePermission.canManageConsultants(currentRole)) {
       final l10n = AppLocalizations.of(context);
       return Scaffold(
-        backgroundColor: DesignTokens.backgroundDark,
+        backgroundColor: AppThemeExtension.of(context).background,
         appBar: emlakAppBar(
           context,
-          backgroundColor: DesignTokens.backgroundDark,
-          foregroundColor: DesignTokens.textPrimaryDark,
+          backgroundColor: AppThemeExtension.of(context).background,
+          foregroundColor: AppThemeExtension.of(context).textPrimary,
           title: Text(l10n.t('title_admin_consultants')),
         ),
         body: Center(
@@ -32,8 +32,8 @@ class AdminConsultantsPage extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             child: Text(
               l10n.t('access_denied'),
-              style: const TextStyle(
-                color: DesignTokens.textSecondaryDark,
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textSecondary,
                 fontSize: DesignTokens.fontSizeSm,
               ),
               textAlign: TextAlign.center,
@@ -46,11 +46,11 @@ class AdminConsultantsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: DesignTokens.backgroundDark,
-        foregroundColor: DesignTokens.textPrimaryDark,
+        backgroundColor: AppThemeExtension.of(context).background,
+        foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: Text(l10n.t('title_admin_consultants')),
         actions: [
           if (FeaturePermission.canInviteAgents(currentRole))
@@ -81,8 +81,8 @@ class AdminConsultantsPage extends ConsumerWidget {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-              backgroundColor: DesignTokens.surfaceDark,
-              title: Text(l10n.t('action_add_consultant'), style: const TextStyle(color: DesignTokens.textPrimaryDark)),
+              backgroundColor: AppThemeExtension.of(context).surface,
+              title: Text(l10n.t('action_add_consultant'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -91,25 +91,25 @@ class AdminConsultantsPage extends ConsumerWidget {
                     TextField(
                       decoration: InputDecoration(
                         labelText: l10n.t('full_name'),
-                        labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
+                        labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
                         border: const OutlineInputBorder(),
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
-                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.primary)),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).accent)),
                       ),
-                      style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                      style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
                       onChanged: (v) => fullName = v.trim(),
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     TextField(
                       decoration: InputDecoration(
                         labelText: l10n.t('label_email'),
-                        labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
+                        labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
                         border: const OutlineInputBorder(),
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
-                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.primary)),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).accent)),
                       ),
                       keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                      style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
                       onChanged: (v) => email = v.trim(),
                     ),
                     const SizedBox(height: DesignTokens.space4),
@@ -118,11 +118,11 @@ class AdminConsultantsPage extends ConsumerWidget {
                       decoration: InputDecoration(
                         labelText: l10n.t('label_role'),
                         border: const OutlineInputBorder(),
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                       ),
-                      dropdownColor: DesignTokens.surfaceDark,
+                      dropdownColor: AppThemeExtension.of(context).surface,
                       items: [AppRole.agent, AppRole.teamLead, AppRole.officeManager]
-                          .map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: const TextStyle(color: DesignTokens.textPrimaryDark))))
+                          .map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: TextStyle(color: AppThemeExtension.of(context).textPrimary))))
                           .toList(),
                       onChanged: (v) => setState(() => inviteRole = v ?? inviteRole),
                     ),
@@ -133,11 +133,11 @@ class AdminConsultantsPage extends ConsumerWidget {
                         decoration: InputDecoration(
                           labelText: l10n.t('label_team'),
                           border: const OutlineInputBorder(),
-                          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                         ),
-                        dropdownColor: DesignTokens.surfaceDark,
+                        dropdownColor: AppThemeExtension.of(context).surface,
                         items: teams
-                            .map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: const TextStyle(color: DesignTokens.textPrimaryDark))))
+                            .map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: TextStyle(color: AppThemeExtension.of(context).textPrimary))))
                             .toList(),
                         onChanged: (v) => setState(() => teamId = v),
                       ),
@@ -146,13 +146,13 @@ class AdminConsultantsPage extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(DesignTokens.space3),
                       decoration: BoxDecoration(
-                        color: DesignTokens.primary.withValues(alpha: 0.1),
+                        color: AppThemeExtension.of(context).accent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                        border: Border.all(color: DesignTokens.borderDark),
+                        border: Border.all(color: AppThemeExtension.of(context).border),
                       ),
                       child: Text(
                         l10n.t('consultant_invite_info'),
-                        style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeSm),
+                        style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
                       ),
                     ),
                   ],
@@ -161,7 +161,7 @@ class AdminConsultantsPage extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text(l10n.t('cancel'), style: const TextStyle(color: DesignTokens.textSecondaryDark)),
+                  child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary)),
                 ),
                 FilledButton(
                   onPressed: () async {
@@ -192,7 +192,7 @@ class AdminConsultantsPage extends ConsumerWidget {
                       if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('${l10n.t('error_generic')} $e')));
                     }
                   },
-                  style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
                   child: Text(l10n.t('save')),
                 ),
               ],
@@ -229,25 +229,25 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
           child: TextField(
             decoration: InputDecoration(
               hintText: l10n.t('search_consultants'),
-              hintStyle: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: DesignTokens.fontSizeSm),
-              prefixIcon: const Icon(Icons.search_rounded, color: DesignTokens.textTertiaryDark),
+              hintStyle: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: DesignTokens.fontSizeSm),
+              prefixIcon: Icon(Icons.search_rounded, color: AppThemeExtension.of(context).textTertiary),
               filled: true,
-              fillColor: DesignTokens.surfaceDark,
+              fillColor: AppThemeExtension.of(context).surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                borderSide: const BorderSide(color: DesignTokens.borderDark),
+                borderSide: BorderSide(color: AppThemeExtension.of(context).border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                borderSide: const BorderSide(color: DesignTokens.borderDark),
+                borderSide: BorderSide(color: AppThemeExtension.of(context).border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                borderSide: const BorderSide(color: DesignTokens.primary),
+                borderSide: BorderSide(color: AppThemeExtension.of(context).accent),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space3, vertical: DesignTokens.space2),
             ),
-            style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: DesignTokens.fontSizeSm),
+            style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: DesignTokens.fontSizeSm),
             onChanged: (value) => setState(() => _search = value.trim().toLowerCase()),
           ),
         ),
@@ -264,7 +264,7 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(snap.error.toString(), style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeSm), textAlign: TextAlign.center),
+                          Text(snap.error.toString(), style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm), textAlign: TextAlign.center),
                           const SizedBox(height: DesignTokens.space3),
                           TextButton(onPressed: () => setState(() {}), child: Text(l10n.t('retry'))),
                         ],
@@ -273,7 +273,11 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                   );
                 }
                 if (!snap.hasData) {
-                  return const Expanded(child: Center(child: CircularProgressIndicator(color: DesignTokens.primary)));
+                  return Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
+                    ),
+                  );
                 }
                 var list = snap.data!;
                 if (_search.isNotEmpty) {
@@ -299,11 +303,11 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                           child: DropdownButton<String?>(
                             value: _filterRole,
                             isExpanded: true,
-                            hint: Text(l10n.t('label_role'), style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 13)),
-                            dropdownColor: DesignTokens.surfaceDark,
+                            hint: Text(l10n.t('label_role'), style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 13)),
+                            dropdownColor: AppThemeExtension.of(context).surface,
                             items: [
-                              DropdownMenuItem<String?>(child: Text(l10n.t('filter_role_all'), style: const TextStyle(color: DesignTokens.textPrimaryDark))),
-                              ...AppRole.values.where((r) => r.isManagerTier || r == AppRole.agent).map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: const TextStyle(color: DesignTokens.textPrimaryDark)))),
+                              DropdownMenuItem<String?>(child: Text(l10n.t('filter_role_all'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary))),
+                              ...AppRole.values.where((r) => r.isManagerTier || r == AppRole.agent).map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: TextStyle(color: AppThemeExtension.of(context).textPrimary)))),
                             ],
                             onChanged: (v) => setState(() => _filterRole = v),
                           ),
@@ -316,11 +320,11 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                             child: DropdownButton<String?>(
                               value: _filterTeamId,
                               isExpanded: true,
-                              hint: Text(l10n.t('label_team'), style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 13)),
-                              dropdownColor: DesignTokens.surfaceDark,
+                              hint: Text(l10n.t('label_team'), style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 13)),
+                              dropdownColor: AppThemeExtension.of(context).surface,
                               items: [
-                                DropdownMenuItem<String?>(child: Text(l10n.t('filter_team_all'), style: const TextStyle(color: DesignTokens.textPrimaryDark))),
-                                ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: const TextStyle(color: DesignTokens.textPrimaryDark), overflow: TextOverflow.ellipsis))),
+                                DropdownMenuItem<String?>(child: Text(l10n.t('filter_team_all'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary))),
+                                ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: TextStyle(color: AppThemeExtension.of(context).textPrimary), overflow: TextOverflow.ellipsis))),
                               ],
                               onChanged: (v) => setState(() => _filterTeamId = v),
                             ),
@@ -359,7 +363,7 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                     return Center(
                       child: Text(
                         l10n.t('empty_consultants'),
-                        style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeSm),
+                        style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
                       ),
                     );
                   }
@@ -372,28 +376,28 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                       final roleLabel = AppRole.fromFirestoreRole(u.role).label;
                       return Card(
                         margin: const EdgeInsets.only(bottom: DesignTokens.space3),
-                        color: DesignTokens.surfaceDark,
+                        color: AppThemeExtension.of(context).surface,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusLg)),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
                           leading: CircleAvatar(
-                            backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
-                            child: const Icon(Icons.person_rounded, color: DesignTokens.primary),
+                            backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+                            child: Icon(Icons.person_rounded, color: AppThemeExtension.of(context).accent),
                           ),
                           title: Text(
                             u.name ?? u.email ?? u.uid,
-                            style: const TextStyle(color: DesignTokens.textPrimaryDark, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w600),
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
                             '${u.email ?? '—'} · $roleLabel · ${l10n.t('label_team')}: $teamName${u.isActive ? '' : ' · Pasif'}',
-                            style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeSm),
+                            style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           trailing: widget.canEditTeamRole
                               ? IconButton(
-                                  icon: const Icon(Icons.edit_rounded, color: DesignTokens.primary, size: 20),
+                                  icon: Icon(Icons.edit_rounded, color: AppThemeExtension.of(context).accent, size: 20),
                                   onPressed: () => _showEditConsultantDialog(context, u, teams),
                                   tooltip: l10n.t('edit_consultant'),
                                 )
@@ -424,25 +428,25 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-              backgroundColor: DesignTokens.surfaceDark,
-              title: Text(l10n.t('edit_consultant'), style: const TextStyle(color: DesignTokens.textPrimaryDark)),
+              backgroundColor: AppThemeExtension.of(context).surface,
+              title: Text(l10n.t('edit_consultant'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(u.name ?? u.email ?? u.uid, style: const TextStyle(color: DesignTokens.textPrimaryDark, fontWeight: FontWeight.w600)),
+                    Text(u.name ?? u.email ?? u.uid, style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w600)),
                     const SizedBox(height: DesignTokens.space4),
                     DropdownButtonFormField<String>(
                       initialValue: role,
                       decoration: InputDecoration(
                         labelText: l10n.t('label_role'),
                         border: const OutlineInputBorder(),
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                       ),
-                      dropdownColor: DesignTokens.surfaceDark,
+                      dropdownColor: AppThemeExtension.of(context).surface,
                       items: [AppRole.agent, AppRole.teamLead, AppRole.officeManager, AppRole.generalManager, AppRole.brokerOwner]
-                          .map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: const TextStyle(color: DesignTokens.textPrimaryDark))))
+                          .map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: TextStyle(color: AppThemeExtension.of(context).textPrimary))))
                           .toList(),
                       onChanged: (v) => setState(() => role = v ?? role),
                     ),
@@ -452,33 +456,33 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                       decoration: InputDecoration(
                         labelText: l10n.t('label_team'),
                         border: const OutlineInputBorder(),
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                       ),
-                      dropdownColor: DesignTokens.surfaceDark,
+                      dropdownColor: AppThemeExtension.of(context).surface,
                       items: [
-                        DropdownMenuItem<String?>(child: Text(l10n.t('filter_team_all'), style: const TextStyle(color: DesignTokens.textPrimaryDark))),
-                        ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: const TextStyle(color: DesignTokens.textPrimaryDark)))),
+                        DropdownMenuItem<String?>(child: Text(l10n.t('filter_team_all'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary))),
+                        ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: TextStyle(color: AppThemeExtension.of(context).textPrimary)))),
                       ],
                       onChanged: (v) => setState(() => teamId = v),
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     Row(
                       children: [
-                        Text(l10n.t('is_active'), style: const TextStyle(color: DesignTokens.textPrimaryDark)),
+                        Text(l10n.t('is_active'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
                         const SizedBox(width: DesignTokens.space2),
-                        Switch(value: isActive, onChanged: (v) => setState(() => isActive = v), activeThumbColor: DesignTokens.primary),
+                        Switch(value: isActive, onChanged: (v) => setState(() => isActive = v), activeThumbColor: AppThemeExtension.of(context).accent),
                       ],
                     ),
                     const SizedBox(height: DesignTokens.space3),
                     Text(
                       l10n.t('password_reset_info'),
-                      style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: DesignTokens.fontSizeXs),
+                      style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: DesignTokens.fontSizeXs),
                     ),
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.t('cancel'), style: const TextStyle(color: DesignTokens.textSecondaryDark))),
+                TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary))),
                 FilledButton(
                   onPressed: () async {
                     try {
@@ -525,7 +529,7 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                       if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('${l10n.t('error_generic')} $e')));
                     }
                   },
-                  style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
                   child: Text(l10n.t('save')),
                 ),
               ],

@@ -1,6 +1,6 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
-
 /// Premium tam ekran analiz yükleyici.
 class AnalyzingIntelOverlay extends StatelessWidget {
   const AnalyzingIntelOverlay({super.key});
@@ -18,8 +18,8 @@ class AnalyzingIntelOverlay extends StatelessWidget {
               height: 72,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                color: DesignTokens.antiqueGold,
-                backgroundColor: DesignTokens.antiqueGold.withValues(alpha: 0.15),
+                color: AppThemeExtension.of(context).accent,
+                backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
               ),
             ),
             const SizedBox(height: DesignTokens.space6),
@@ -36,7 +36,7 @@ class AnalyzingIntelOverlay extends StatelessWidget {
             Text(
               'Rainbow Investment Intelligence',
               style: TextStyle(
-                color: DesignTokens.antiqueGold.withValues(alpha: 0.9),
+                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9),
                 fontSize: DesignTokens.fontSizeSm,
                 letterSpacing: 0.6,
               ),

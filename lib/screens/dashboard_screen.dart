@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/dashboard_kpi_section.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/sovereign_arc_watermark.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/welcome_patron_overlay.dart';
@@ -23,6 +24,8 @@ import 'package:emlakmaster_mobile/widgets/top_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Yönetici / broker **Dashboard** — danışman paneliyle aynı sistem:
+/// **Hero** (ofis kimliği) → **Operational** (KPI, komuta, sıcak/kaçırılan, günlük özet) → **Insight** (pipeline, ekonomi, ticker, harita, analitik).
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
@@ -39,149 +42,123 @@ class DashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     try {
-      final theme = Theme.of(context);
-      final isDark = theme.brightness == Brightness.dark;
-      final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-      final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-      final size = MediaQuery.of(context).size;
+      final ext = AppThemeExtension.of(context);
       final flags = ref.watch(featureFlagsProvider).valueOrNull;
       final compact = flags?[AppConstants.keyCompactDashboard] ?? false;
+      final scrollBottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
       final kpiBar = flags?[AppConstants.keyFeatureKpiBar] ?? true;
       final marketPulse = flags?[AppConstants.keyFeatureMarketPulse] ?? true;
       final dailyBrief = flags?[AppConstants.keyFeatureDailyBrief] ?? true;
+
+      final gapOp = compact
+          ? DashboardLayoutTokens.gapOperationalTight
+          : DashboardLayoutTokens.gapOperational;
+      final gapHero =
+          compact ? 4.0 : DashboardLayoutTokens.gapHeroToOperational.toDouble();
+      final gapInsight = DashboardLayoutTokens.gapInsightSection.toDouble();
+      const h = DashboardLayoutTokens.horizontalPadding;
+
+      Widget px(Widget child) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: h),
+            child: child,
+          );
+
       final content = Scaffold(
+        backgroundColor: ext.background,
         body: SafeArea(
           child: SovereignArcWatermark(
             child: RepaintBoundary(
-              child: Container(
-                width: size.width,
-                height: size.height,
-                color: bg,
+              child: ColoredBox(
+                color: ext.background,
                 child: RefreshIndicator(
-              onRefresh: () => _onRefresh(ref),
-              color: DesignTokens.antiqueGold,
-              backgroundColor: surface,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.only(
-                  left: DesignTokens.contentPaddingHorizontal,
-                  right: DesignTokens.contentPaddingHorizontal,
-                  bottom: compact ? 100 : 120,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const DashboardTopAppBar(),
-                    SizedBox(height: compact ? 12 : 16),
-                    if (kpiBar) const DashboardKpiSection(),
-                    if (kpiBar) SizedBox(height: compact ? 12 : 16),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                      child: MasterTicker(),
-                    ),
-                    const SizedBox(height: DesignTokens.space6),
-                    const FinanceBar(),
-                    const SizedBox(height: DesignTokens.space6),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                      child: RainbowAnalyticsCenterCard(),
-                    ),
-                    const SizedBox(height: DesignTokens.space6),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                      child: DiscoveryPanel(),
-                    ),
-                    const SizedBox(height: DesignTokens.space3),
-                    if (marketPulse)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                        child: MarketPulsePanel(),
-                      ),
-                    if (marketPulse) const SizedBox(height: DesignTokens.space3),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                      child: OpportunityRadarWidget(),
-                    ),
-                    const SizedBox(height: DesignTokens.space4),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                      child: HotLeadRadarPanel(),
-                    ),
-                    const SizedBox(height: DesignTokens.space4),
-                    if (dailyBrief)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                        child: DailyBriefPanel(),
-                      ),
-                    if (dailyBrief) const SizedBox(height: DesignTokens.space4),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                      child: RegionDemandMapPanel(),
-                    ),
-                    const SizedBox(height: DesignTokens.space4),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.contentPaddingHorizontal),
-                      child: MissedOpportunitiesPanel(),
-                    ),
-                    const SizedBox(height: DesignTokens.space6),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: DesignTokens.contentPaddingHorizontal,
-                      ),
-                      child: Column(
-                        children: [
-                          const RepaintBoundary(child: BentoPowerAnalytics()),
-                          SizedBox(height: compact ? 16 : 24),
-                          LayoutBuilder(
-                            builder: (context, c) {
-                              final stack = c.maxWidth < 520;
-                              if (stack) {
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    const BentoSahaRadar(),
-                                    SizedBox(height: compact ? 12 : 16),
-                                    const BentoAiNews(),
-                                  ],
-                                );
-                              }
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Expanded(child: BentoSahaRadar()),
-                                  SizedBox(width: compact ? 16 : 24),
-                                  const Expanded(child: BentoAiNews()),
-                                ],
-                              );
-                            },
+                  onRefresh: () => _onRefresh(ref),
+                  color: ext.accent,
+                  backgroundColor: ext.surface,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.only(bottom: scrollBottomPad),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // —— Layer 1: Hero — ofis kimliği, uyarı şeridi ——
+                        const DashboardTopAppBar(),
+                        SizedBox(height: gapHero),
+                        // —— Layer 2: Operational — KPI, komuta, acil, özet ——
+                        if (kpiBar) px(const DashboardKpiSection()),
+                        if (kpiBar) SizedBox(height: gapOp),
+                        px(const RainbowAnalyticsCenterCard()),
+                        SizedBox(height: gapOp),
+                        px(const HotLeadRadarPanel()),
+                        SizedBox(height: gapOp),
+                        px(const MissedOpportunitiesPanel()),
+                        SizedBox(height: gapOp),
+                        if (dailyBrief) px(const DailyBriefPanel()),
+                        SizedBox(height: gapInsight),
+                        // —— Layer 3: Insight — pipeline, ekonomi, ticker, harita, analitik ——
+                        px(const DiscoveryPanel()),
+                        SizedBox(height: gapInsight),
+                        const FinanceBar(),
+                        SizedBox(height: gapInsight),
+                        if (marketPulse) px(const MarketPulsePanel()),
+                        if (marketPulse) SizedBox(height: gapInsight),
+                        px(const MasterTicker()),
+                        SizedBox(height: gapInsight),
+                        px(const OpportunityRadarWidget()),
+                        SizedBox(height: gapInsight),
+                        px(const RegionDemandMapPanel()),
+                        SizedBox(height: gapInsight),
+                        px(
+                          Column(
+                            children: [
+                              const RepaintBoundary(child: BentoPowerAnalytics()),
+                              SizedBox(height: compact ? 16 : 24),
+                              LayoutBuilder(
+                                builder: (context, c) {
+                                  final stack = c.maxWidth < 520;
+                                  if (stack) {
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        const BentoSahaRadar(),
+                                        SizedBox(height: compact ? 12 : 16),
+                                        const BentoAiNews(),
+                                      ],
+                                    );
+                                  }
+                                  return Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Expanded(child: BentoSahaRadar()),
+                                      SizedBox(width: compact ? 16 : 24),
+                                      const Expanded(child: BentoAiNews()),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         ),
       );
       return WelcomePatronOverlay(child: content);
     } catch (e, st) {
       debugPrint('DashboardPage build error: $e');
       debugPrint(st.toString());
-      final theme = Theme.of(context);
-      final isDark = theme.brightness == Brightness.dark;
-      final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-      final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+      final ext = AppThemeExtension.of(context);
       return Scaffold(
-        backgroundColor: bg,
+        backgroundColor: ext.background,
         body: Center(
           child: Text(
             'Bir hata oluştu, lütfen tekrar deneyin.',
-            style: TextStyle(color: fg),
+            style: TextStyle(color: ext.textPrimary),
           ),
         ),
       );

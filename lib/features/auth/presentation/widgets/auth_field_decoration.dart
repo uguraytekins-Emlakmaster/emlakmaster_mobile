@@ -1,43 +1,45 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/design_tokens.dart';
-
 /// Giriş / kayıt ekranlarında tutarlı input görünümü.
 abstract final class AuthFieldDecoration {
-  static InputDecoration build({
+  static InputDecoration build(
+    BuildContext context, {
     required String label,
     String? hint,
     Widget? prefix,
     Widget? suffix,
   }) {
+    final ext = AppThemeExtension.of(context);
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      borderSide: const BorderSide(color: DesignTokens.borderDark),
+      borderSide: BorderSide(color: ext.border),
     );
     final focusBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      borderSide: BorderSide(color: DesignTokens.antiqueGold.withValues(alpha: 0.7)),
+      borderSide: BorderSide(color: ext.accent.withValues(alpha: 0.7)),
     );
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      labelStyle: const TextStyle(color: DesignTokens.textTertiaryDark),
-      hintStyle: const TextStyle(color: DesignTokens.textTertiaryDark),
+      labelStyle: TextStyle(color: ext.textTertiary),
+      hintStyle: TextStyle(color: ext.textTertiary),
       prefixIcon: prefix,
       suffixIcon: suffix,
-      prefixIconColor: DesignTokens.textTertiaryDark,
-      suffixIconColor: DesignTokens.textTertiaryDark,
+      prefixIconColor: ext.textTertiary,
+      suffixIconColor: ext.textTertiary,
       filled: true,
-      fillColor: DesignTokens.surfaceDark,
+      fillColor: ext.surface,
       enabledBorder: border,
       focusedBorder: focusBorder,
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        borderSide: const BorderSide(color: DesignTokens.danger),
+        borderSide: BorderSide(color: ext.danger),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        borderSide: const BorderSide(color: DesignTokens.danger),
+        borderSide: BorderSide(color: ext.danger),
       ),
     );
   }

@@ -1,5 +1,8 @@
 # Market Pulse – ücretsiz (Blaze / Cloud Functions olmadan)
 
+> **Sunucu tabanlı mimari** (ingest, rollup, ücretli proxy, 6 saatlik zamanlayıcı):  
+> **`doc/MARKET_PULSE_SERVERLESS_ARCHITECTURE.md`**
+
 ## Nasıl çalışıyor?
 
 “**İlanları güncelle**” **cihazdan** (iOS / Android / macOS) sitelere HTTP ile gider, HTML’den ilan çıkarmaya çalışır ve **`external_listings`** koleksiyonuna yazar.

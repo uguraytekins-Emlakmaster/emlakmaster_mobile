@@ -102,9 +102,10 @@ class AppLocalizations {
       'bulk_campaign': 'Toplu kampanya',
       'add_to_follow_up': 'Takip listesine ekle',
       'search_customers': 'Müşteri ara (isim, telefon, e-posta)',
-      'empty_customers_title': 'Müşteri listesi',
+      'empty_customers_title': 'Henüz müşteri yok',
       'empty_customers_subtitle':
-          'Henüz müşteri kaydı yok. Çağrı özeti kaydedildikçe burada görünecek.',
+          'Çağrı özeti veya CRM kaydı oluştukça kartlar burada birikir.',
+      'empty_customers_cta': 'İlk müşteriyi ekle',
       'empty_search_title': 'Sonuç yok',
       'empty_search_subtitle': '"{0}" aramasına uygun müşteri bulunamadı.',
       'customer_list_load_error': 'Müşteri listesi yüklenemedi.',
@@ -129,9 +130,11 @@ class AppLocalizations {
       // Listings
       'title_listings': 'İlan Portföyü',
       'listing': 'İlan',
-      'empty_listings': 'Henüz ilan yok',
+      'empty_listings': 'Portföyün boş',
       'empty_listings_sub':
-          'Ofis ilanları (listings) ve harici ilanlar (external_listings) boş. Firestore’a veri ekleyin.',
+          'İlanları içe aktarın veya bağlı platformlardan senkronlayın.',
+      'empty_listings_cta_import': 'İlan içe aktar',
+      'empty_listings_cta_accounts': 'Bağlı hesapları yönet',
       'listings_load_error': 'İlanlar yüklenemedi.',
       'listing_external_badge': 'Harici',
       'listing_external_no_link': 'Bu ilan için kaynak bağlantısı yok.',
@@ -154,7 +157,32 @@ class AppLocalizations {
       // Tasks
       'title_tasks': 'Görevler',
       'task': 'Görev',
-      'empty_tasks': 'Henüz görev yok',
+      'empty_tasks': 'Görev kutun hazır',
+      'empty_tasks_sub': 'Vade ve hatırlatma için görev ekleyin.',
+      'empty_tasks_cta': 'Görev oluştur',
+      'empty_calls_title': 'Çağrı geçmişin burada',
+      'empty_calls_sub': 'Magic Call ve cihaz kayıtları otomatik listelenir.',
+      'empty_calls_cta': 'Çağrı başlat',
+      'empty_followup_title': 'Takipte bekleyen lead yok',
+      'empty_followup_sub':
+          'Sessiz müşteriler oluştuğunda burada önceliklendirilirsiniz.',
+      'empty_followup_cta': 'Çağrı başlat',
+      'empty_my_listings_title': 'İçe aktarılan ilan yok',
+      'empty_my_listings_sub':
+          'Motor ekranından URL veya dosya ekleyerek başlayın.',
+      'empty_my_listings_cta_import': 'İçe aktarma motoru',
+      'empty_my_listings_cta_accounts': 'Bağlı hesaplar',
+      'empty_reports_title': 'Rapor verisi hazırlanıyor',
+      'empty_reports_sub':
+          'Çağrı özeti ve işlem kayıtları oluştuğunda metrikler burada görünecek.',
+      'empty_reports_cta': 'Danışmanları aç',
+      'empty_import_history_title': 'İçe aktarma geçmişi boş',
+      'empty_import_history_sub':
+          'Motor ekranından görev başlattığınızda kayıtlar burada izlenir.',
+      'empty_import_history_cta': 'İçe aktarma motoru',
+      'empty_intel_reports_title': 'Rapor arşivi boş',
+      'empty_intel_reports_sub':
+          'Rainbow analizleri üretildiğinde PDF\'ler burada listelenir.',
 
       // Notifications
       'title_notifications': 'Bildirimler',
@@ -260,9 +288,10 @@ class AppLocalizations {
       'bulk_campaign': 'Bulk campaign',
       'add_to_follow_up': 'Add to follow-up',
       'search_customers': 'Search (name, phone, email)',
-      'empty_customers_title': 'Customer list',
+      'empty_customers_title': 'No customers yet',
       'empty_customers_subtitle':
-          'No customers yet. They will appear here as you save call summaries.',
+          'Cards appear here as call summaries or CRM records are created.',
+      'empty_customers_cta': 'Add your first customer',
       'empty_search_title': 'No results',
       'empty_search_subtitle': 'No customers match "{0}".',
       'customer_list_load_error': 'Could not load customer list.',
@@ -285,9 +314,11 @@ class AppLocalizations {
 
       'title_listings': 'Listing Portfolio',
       'listing': 'Listing',
-      'empty_listings': 'No listings yet',
+      'empty_listings': 'Your portfolio is empty',
       'empty_listings_sub':
-          'Office listings (listings) and external listings (external_listings) are empty. Add data in Firestore.',
+          'Import listings or sync from connected platforms.',
+      'empty_listings_cta_import': 'Import listings',
+      'empty_listings_cta_accounts': 'Manage connected accounts',
       'listings_load_error': 'Could not load listings.',
       'listing_external_badge': 'External',
       'listing_external_no_link': 'No source link for this listing.',
@@ -309,7 +340,32 @@ class AppLocalizations {
 
       'title_tasks': 'Tasks',
       'task': 'Task',
-      'empty_tasks': 'No tasks yet',
+      'empty_tasks': 'Your task inbox is ready',
+      'empty_tasks_sub': 'Add tasks for due dates and reminders.',
+      'empty_tasks_cta': 'Create task',
+      'empty_calls_title': 'Calls will appear here',
+      'empty_calls_sub': 'Magic Call and device logs are listed automatically.',
+      'empty_calls_cta': 'Start a call',
+      'empty_followup_title': 'No leads to revive',
+      'empty_followup_sub':
+          'When customers go quiet, they will be prioritized here.',
+      'empty_followup_cta': 'Start a call',
+      'empty_my_listings_title': 'No imported listings',
+      'empty_my_listings_sub':
+          'Start from the import engine with a URL or file.',
+      'empty_my_listings_cta_import': 'Open import engine',
+      'empty_my_listings_cta_accounts': 'Connected accounts',
+      'empty_reports_title': 'Reports loading',
+      'empty_reports_sub':
+          'Metrics will appear once call summaries and deals exist.',
+      'empty_reports_cta': 'Open consultants',
+      'empty_import_history_title': 'No import history',
+      'empty_import_history_sub':
+          'When you start jobs from the engine, they are tracked here.',
+      'empty_import_history_cta': 'Open import engine',
+      'empty_intel_reports_title': 'No reports in archive',
+      'empty_intel_reports_sub':
+          'PDFs from Rainbow analysis will list here when generated.',
 
       'title_notifications': 'Notifications',
       'empty_notifications_title': 'No notifications yet',

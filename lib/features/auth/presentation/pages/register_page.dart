@@ -1,25 +1,20 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/analytics_service.dart';
-import '../../../../core/services/apple_auth_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/facebook_auth_service.dart';
 import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/services/login_attempt_guard.dart';
-import '../../domain/auth_failure_kind.dart';
 import '../../domain/auth_result.dart';
 import '../utils/auth_result_ui.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../widgets/auth_field_decoration.dart';
-
 /// E-posta ile yeni hesap. Başarıda router → rol seçimi veya ana sayfa (mevcut akış).
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -131,11 +126,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return 'Kayıt tamamlanamadı. Bilgilerinizi kontrol edin.';
   }
 
-  bool get _canShowAppleButton =>
-      !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS);
-
   Future<void> _applySocialAuthResult(
     AuthResult r, {
     required String analyticsMethod,
@@ -164,37 +154,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       final r = await GoogleAuthService.instance.signInWithGoogleTyped();
       if (!mounted) return;
       await _applySocialAuthResult(r, analyticsMethod: 'google');
-      setState(() {
-        _errorMessage = r.loginBannerMessage;
-      });
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _appleKayit() async {
-    if (_isLoading) return;
-    final blocked = LoginAttemptGuard.assertCanAttempt();
-    if (blocked != null) {
-      setState(() => _errorMessage = blocked);
-      return;
-    }
-    HapticFeedback.lightImpact();
-    setState(() {
-      _errorMessage = null;
-      _isLoading = true;
-    });
-    try {
-      final r = await AppleAuthService.instance.signInWithAppleForFirebase().timeout(
-            const Duration(seconds: 90),
-            onTimeout: () => const AuthFailure(
-              kind: AuthFailureKind.networkError,
-              userMessage:
-                  'Apple ile kayıt zaman aşımına uğradı. Ağı kontrol edip tekrar deneyin.',
-            ),
-          );
-      if (!mounted) return;
-      await _applySocialAuthResult(r, analyticsMethod: 'apple');
       setState(() {
         _errorMessage = r.loginBannerMessage;
       });
@@ -270,7 +229,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: DesignTokens.scaffoldDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: SafeArea(
         child: GestureDetector(
             behavior: HitTestBehavior.deferToChild,
@@ -305,9 +264,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               },
                         icon: const Icon(Icons.arrow_back_ios_new_rounded,
                             size: 20),
-                        color: DesignTokens.textSecondaryDark,
+                        color: AppThemeExtension.of(context).textSecondary,
                         style: IconButton.styleFrom(
-                          backgroundColor: DesignTokens.surfaceDark,
+                          backgroundColor: AppThemeExtension.of(context).surface,
                           padding: const EdgeInsets.all(10),
                           shape: RoundedRectangleBorder(
                             borderRadius:
@@ -322,15 +281,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       child: LinearProgressIndicator(
                         value: (_step + 1) / 2,
                         minHeight: 4,
-                        backgroundColor: DesignTokens.borderDark.withValues(alpha: 0.5),
-                        color: DesignTokens.antiqueGold,
+                        backgroundColor: AppThemeExtension.of(context).border.withValues(alpha: 0.5),
+                        color: AppThemeExtension.of(context).accent,
                       ),
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     Text(
                       _step == 0 ? 'Profil' : 'Güvenlik',
-                      style: const TextStyle(
-                        color: DesignTokens.textTertiaryDark,
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textTertiary,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2,
@@ -342,7 +301,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       'Hesap oluştur',
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: DesignTokens.textPrimaryDark,
+                                color: AppThemeExtension.of(context).textPrimary,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.3,
                               ),
@@ -352,7 +311,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     Text(
                       'Bilgilerinizi girin; ardından rolünüzü seçerek panele geçin.',
                       style: TextStyle(
-                        color: DesignTokens.textSecondaryDark.withValues(alpha: 0.95),
+                        color: AppThemeExtension.of(context).textSecondary.withValues(alpha: 0.95),
                         fontSize: DesignTokens.fontSizeSm,
                         height: 1.4,
                       ),
@@ -369,24 +328,24 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     Container(
                       padding: const EdgeInsets.all(DesignTokens.space3),
                       decoration: BoxDecoration(
-                        color: DesignTokens.antiqueGold.withValues(alpha: 0.06),
+                        color: AppThemeExtension.of(context).accent.withValues(alpha: 0.06),
                         borderRadius:
                             BorderRadius.circular(DesignTokens.radiusMd),
                         border: Border.all(
-                            color: DesignTokens.antiqueGold.withValues(alpha: 0.2)),
+                            color: AppThemeExtension.of(context).accent.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(Icons.info_outline_rounded,
                               size: 20,
-                              color: DesignTokens.antiqueGold.withValues(alpha: 0.9)), // ignore: prefer_const_constructors
+                              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9)), // ignore: prefer_const_constructors
                           const SizedBox(width: DesignTokens.space2),
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               'Davet e-postanız kayıtlıysa rol ve ekip otomatik atanır.',
                               style: TextStyle(
-                                color: DesignTokens.textSecondaryDark,
+                                color: AppThemeExtension.of(context).textSecondary,
                                 fontSize: DesignTokens.fontSizeSm - 1,
                                 height: 1.35,
                               ),
@@ -400,10 +359,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       controller: _nameController,
                       textCapitalization: TextCapitalization.words,
                       style:
-                          const TextStyle(color: DesignTokens.textPrimaryDark),
-                      cursorColor: DesignTokens.antiqueGold,
+                          TextStyle(color: AppThemeExtension.of(context).textPrimary),
+                      cursorColor: AppThemeExtension.of(context).accent,
                       onTapOutside: (_) => _unfocus(),
-                      decoration: AuthFieldDecoration.build(
+                      decoration: AuthFieldDecoration.build(context,
                         label: 'Ad Soyad',
                         hint: 'Opsiyonel',
                         prefix: const Icon(Icons.person_outline_rounded),
@@ -420,10 +379,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       style:
-                          const TextStyle(color: DesignTokens.textPrimaryDark),
-                      cursorColor: DesignTokens.antiqueGold,
+                          TextStyle(color: AppThemeExtension.of(context).textPrimary),
+                      cursorColor: AppThemeExtension.of(context).accent,
                       onTapOutside: (_) => _unfocus(),
-                      decoration: AuthFieldDecoration.build(
+                      decoration: AuthFieldDecoration.build(context,
                         label: 'E-posta',
                         hint: 'ornek@firma.com',
                         prefix: const Icon(Icons.email_outlined),
@@ -453,10 +412,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       style:
-                          const TextStyle(color: DesignTokens.textPrimaryDark),
-                      cursorColor: DesignTokens.antiqueGold,
+                          TextStyle(color: AppThemeExtension.of(context).textPrimary),
+                      cursorColor: AppThemeExtension.of(context).accent,
                       onTapOutside: (_) => _unfocus(),
-                      decoration: AuthFieldDecoration.build(
+                      decoration: AuthFieldDecoration.build(context,
                         label: 'Şifre',
                         hint: 'En az 8 karakter',
                         prefix: const Icon(Icons.lock_outline_rounded),
@@ -486,10 +445,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       controller: _confirmController,
                       obscureText: _obscureConfirm,
                       style:
-                          const TextStyle(color: DesignTokens.textPrimaryDark),
-                      cursorColor: DesignTokens.antiqueGold,
+                          TextStyle(color: AppThemeExtension.of(context).textPrimary),
+                      cursorColor: AppThemeExtension.of(context).accent,
                       onTapOutside: (_) => _unfocus(),
-                      decoration: AuthFieldDecoration.build(
+                      decoration: AuthFieldDecoration.build(context,
                         label: 'Şifre tekrar',
                         prefix: const Icon(Icons.lock_person_outlined),
                         suffix: IconButton(
@@ -521,23 +480,23 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       Container(
                         padding: const EdgeInsets.all(DesignTokens.space3),
                         decoration: BoxDecoration(
-                          color: DesignTokens.danger.withValues(alpha: 0.12),
+                          color: AppThemeExtension.of(context).danger.withValues(alpha: 0.12),
                           borderRadius:
                               BorderRadius.circular(DesignTokens.radiusMd),
                           border: Border.all(
-                              color: DesignTokens.danger.withValues(alpha: 0.35)),
+                              color: AppThemeExtension.of(context).danger.withValues(alpha: 0.35)),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.error_outline_rounded,
-                                color: DesignTokens.danger.withValues(alpha: 0.9),
+                                color: AppThemeExtension.of(context).danger.withValues(alpha: 0.9),
                                 size: 20),
                             const SizedBox(width: DesignTokens.space2),
                             Expanded(
                               child: Text(
                                 _errorMessage!,
-                                style: const TextStyle(
-                                  color: DesignTokens.textPrimaryDark,
+                                style: TextStyle(
+                                  color: AppThemeExtension.of(context).textPrimary,
                                   fontSize: DesignTokens.fontSizeSm,
                                 ),
                               ),
@@ -555,8 +514,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             ? null
                             : (_step == 0 ? _goNextStep : _submit),
                         style: FilledButton.styleFrom(
-                          backgroundColor: DesignTokens.antiqueGold,
-                          foregroundColor: DesignTokens.inputTextOnGold,
+                          backgroundColor: AppThemeExtension.of(context).accent,
+                          foregroundColor: AppThemeExtension.of(context).onBrand,
                           padding: const EdgeInsets.symmetric(
                               vertical: DesignTokens.space4),
                           shape: RoundedRectangleBorder(
@@ -566,12 +525,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           elevation: 0,
                         ),
                         child: _isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 22,
                                 width: 22,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: DesignTokens.inputTextOnGold,
+                                  color: AppThemeExtension.of(context).onBrand,
                                 ),
                               )
                             : Text(
@@ -587,13 +546,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         Expanded(
                             child: Divider(
                                 color:
-                                    DesignTokens.borderDark.withValues(alpha: 0.6))),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
+                                    AppThemeExtension.of(context).border.withValues(alpha: 0.6))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
                             'veya',
                             style: TextStyle(
-                              color: DesignTokens.textTertiaryDark,
+                              color: AppThemeExtension.of(context).textTertiary,
                               fontSize: DesignTokens.fontSizeSm,
                             ),
                           ),
@@ -601,18 +560,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         Expanded(
                             child: Divider(
                                 color:
-                                    DesignTokens.borderDark.withValues(alpha: 0.6))),
+                                    AppThemeExtension.of(context).border.withValues(alpha: 0.6))),
                       ],
                     ),
                     const SizedBox(height: DesignTokens.space5),
                     OutlinedButton.icon(
                       onPressed: _isLoading ? null : _googleKayit,
-                      icon: const Icon(Icons.g_mobiledata,
-                          size: 22, color: DesignTokens.textSecondaryDark),
+                      icon: Icon(Icons.g_mobiledata,
+                          size: 22, color: AppThemeExtension.of(context).textSecondary),
                       label: const Text('Google ile devam et'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: DesignTokens.textPrimaryDark,
-                        side: const BorderSide(color: DesignTokens.borderDark),
+                        foregroundColor: AppThemeExtension.of(context).textPrimary,
+                        side: BorderSide(color: AppThemeExtension.of(context).border),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         minimumSize: const Size(double.infinity, 48),
                         shape: RoundedRectangleBorder(
@@ -621,29 +580,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                       ),
                     ),
-                    if (_canShowAppleButton) ...[
-                      const SizedBox(height: DesignTokens.space3),
-                      IgnorePointer(
-                        ignoring: _isLoading,
-                        child: Opacity(
-                          opacity: _isLoading ? 0.45 : 1,
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: SignInWithAppleButton(
-                              onPressed: () async {
-                                await _appleKayit();
-                              },
-                              text: 'Apple ile devam et',
-                              style: SignInWithAppleButtonStyle.white,
-                              height: 48,
-                              borderRadius: BorderRadius.circular(
-                                  DesignTokens.radiusMd),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                     if (AppConstants.showFacebookLogin) ...[
                       const SizedBox(height: DesignTokens.space3),
                       OutlinedButton.icon(
@@ -652,8 +588,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             size: 18, color: Color(0xFF1877F2)),
                         label: const Text('Facebook ile devam et'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: DesignTokens.textPrimaryDark,
-                          side: const BorderSide(color: DesignTokens.borderDark),
+                          foregroundColor: AppThemeExtension.of(context).textPrimary,
+                          side: BorderSide(color: AppThemeExtension.of(context).border),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           minimumSize: const Size(double.infinity, 48),
                           shape: RoundedRectangleBorder(
@@ -665,11 +601,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ],
                     ],
                     const SizedBox(height: DesignTokens.space3),
-                    const Text(
+                    Text(
                       'Kayıt olarak hizmet şartlarını ve veri işleme bilgilendirmesini kabul etmiş olursunuz.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: DesignTokens.textTertiaryDark,
+                        color: AppThemeExtension.of(context).textTertiary,
                         fontSize: DesignTokens.fontSizeSm - 2,
                         height: 1.35,
                       ),
@@ -678,17 +614,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Zaten hesabınız var mı? ',
                           style: TextStyle(
-                            color: DesignTokens.textSecondaryDark,
+                            color: AppThemeExtension.of(context).textSecondary,
                             fontSize: DesignTokens.fontSizeMd,
                           ),
                         ),
                         TextButton(
                           onPressed: _isLoading ? null : () => context.pop(),
                           style: TextButton.styleFrom(
-                            foregroundColor: DesignTokens.antiqueGold,
+                            foregroundColor: AppThemeExtension.of(context).accent,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,

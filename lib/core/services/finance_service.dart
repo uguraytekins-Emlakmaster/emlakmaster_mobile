@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:emlakmaster_mobile/core/debug/debug_api_trace.dart';
 import 'package:emlakmaster_mobile/core/services/finance_rates_math.dart';
 import 'package:emlakmaster_mobile/core/services/tcmb_public_rates.dart';
 import 'package:flutter/foundation.dart';
@@ -235,79 +236,83 @@ class FinanceService {
   }
 
   static Future<double> _fetchGramGoldExchangerate() async {
-    try {
-      final goldResp = await http.get(Uri.parse(_goldUrl));
-      if (goldResp.statusCode != 200) return 0;
-      final goldBody = jsonDecode(goldResp.body);
-      final goldJson = goldBody is Map<String, dynamic> ? goldBody : null;
-      if (goldJson?['success'] == false) return 0;
-      final goldRaw = goldJson?['rates'];
-      final goldRates =
-          goldRaw is Map ? Map<String, dynamic>.from(goldRaw) : null;
-      if (goldRates != null && goldRates['TRY'] is num) {
-        final xauTry = (goldRates['TRY'] as num).toDouble();
-        return xauTry / 31.1035;
+    return traceHttpCall<double>('exchangerate XAU→TRY', () async {
+      try {
+        final goldResp = await http.get(Uri.parse(_goldUrl));
+        if (goldResp.statusCode != 200) return 0;
+        final goldBody = jsonDecode(goldResp.body);
+        final goldJson = goldBody is Map<String, dynamic> ? goldBody : null;
+        if (goldJson?['success'] == false) return 0;
+        final goldRaw = goldJson?['rates'];
+        final goldRates =
+            goldRaw is Map ? Map<String, dynamic>.from(goldRaw) : null;
+        if (goldRates != null && goldRates['TRY'] is num) {
+          final xauTry = (goldRates['TRY'] as num).toDouble();
+          return xauTry / 31.1035;
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('Gold price fetch error: $e');
       }
-    } catch (e) {
-      if (kDebugMode) debugPrint('Gold price fetch error: $e');
-    }
-    return 0;
+      return 0;
+    });
   }
 
   /// Ücretsiz exchangerate.host (yalnızca TCMB başarısız veya eksikse).
   ///
   /// Not: `base=USD` iken `rates['EUR']` = EUR başına USD değil; **EUR/TRY** = TRY/USD ÷ EUR/USD.
   static Future<FinanceRates> _fetchFromExchangerateHost() async {
-    try {
-      final fxResp = await http.get(Uri.parse(_fxUrl));
-      if (fxResp.statusCode != 200) {
-        throw Exception('FX HTTP ${fxResp.statusCode}');
-      }
-      final fxBody = jsonDecode(fxResp.body);
-      final fxJson = fxBody is Map<String, dynamic> ? fxBody : null;
-      final success = fxJson?['success'];
-      if (success == false) {
-        final err = fxJson?['error'];
-        throw Exception('FX API error: $err');
-      }
-      final rawRates = fxJson?['rates'];
-      final fxRates =
-          rawRates is Map ? Map<String, dynamic>.from(rawRates) : null;
-      if (fxRates == null || fxRates.isEmpty) {
-        if (kDebugMode) {
-          final snippet = fxResp.body.length > 400
-              ? '${fxResp.body.substring(0, 400)}…'
-              : fxResp.body;
-          debugPrint('FinanceService: FX body (snippet): $snippet');
+    return traceHttpCall<FinanceRates>('exchangerate.host USD/EUR', () async {
+      try {
+        final fxResp = await http.get(Uri.parse(_fxUrl));
+        if (fxResp.statusCode != 200) {
+          throw Exception('FX HTTP ${fxResp.statusCode}');
         }
-        throw Exception('FX rates format invalid');
+        final fxBody = jsonDecode(fxResp.body);
+        final fxJson = fxBody is Map<String, dynamic> ? fxBody : null;
+        final success = fxJson?['success'];
+        if (success == false) {
+          final err = fxJson?['error'];
+          throw Exception('FX API error: $err');
+        }
+        final rawRates = fxJson?['rates'];
+        final fxRates =
+            rawRates is Map ? Map<String, dynamic>.from(rawRates) : null;
+        if (fxRates == null || fxRates.isEmpty) {
+          if (kDebugMode) {
+            final snippet = fxResp.body.length > 400
+                ? '${fxResp.body.substring(0, 400)}…'
+                : fxResp.body;
+            debugPrint('FinanceService: FX body (snippet): $snippet');
+          }
+          throw Exception('FX rates format invalid');
+        }
+
+        final tryPerUsd = fxRates['TRY'] is num ? (fxRates['TRY'] as num).toDouble() : null;
+        final eurPerUsd = fxRates['EUR'] is num ? (fxRates['EUR'] as num).toDouble() : null;
+
+        final usdTry = tryPerUsd ?? _cache?.usdTry ?? 0.0;
+        final eurTry = (tryPerUsd != null && eurPerUsd != null)
+            ? eurTryFromUsdBaseRates(tryPerUsd, eurPerUsd)
+            : (_cache?.eurTry ?? 0.0);
+
+        final gramGoldTry = await _fetchGramGoldExchangerate();
+
+        return FinanceRates(
+          usdTry: usdTry,
+          eurTry: eurTry,
+          gramGoldTry: gramGoldTry > 0 ? gramGoldTry : (_cache?.gramGoldTry ?? 0),
+          updatedAt: DateTime.now(),
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('FinanceService.fetchLiveRates error: $e');
+        if (_cache != null) return _cache!;
+        return FinanceRates(
+          usdTry: _cache?.usdTry ?? 0,
+          eurTry: _cache?.eurTry ?? 0,
+          gramGoldTry: _cache?.gramGoldTry ?? 0,
+          updatedAt: DateTime.now(),
+        );
       }
-
-      final tryPerUsd = fxRates['TRY'] is num ? (fxRates['TRY'] as num).toDouble() : null;
-      final eurPerUsd = fxRates['EUR'] is num ? (fxRates['EUR'] as num).toDouble() : null;
-
-      final usdTry = tryPerUsd ?? _cache?.usdTry ?? 0.0;
-      final eurTry = (tryPerUsd != null && eurPerUsd != null)
-          ? eurTryFromUsdBaseRates(tryPerUsd, eurPerUsd)
-          : (_cache?.eurTry ?? 0.0);
-
-      final gramGoldTry = await _fetchGramGoldExchangerate();
-
-      return FinanceRates(
-        usdTry: usdTry,
-        eurTry: eurTry,
-        gramGoldTry: gramGoldTry > 0 ? gramGoldTry : (_cache?.gramGoldTry ?? 0),
-        updatedAt: DateTime.now(),
-      );
-    } catch (e) {
-      if (kDebugMode) debugPrint('FinanceService.fetchLiveRates error: $e');
-      if (_cache != null) return _cache!;
-      return FinanceRates(
-        usdTry: _cache?.usdTry ?? 0,
-        eurTry: _cache?.eurTry ?? 0,
-        gramGoldTry: _cache?.gramGoldTry ?? 0,
-        updatedAt: DateTime.now(),
-      );
-    }
+    });
   }
 }

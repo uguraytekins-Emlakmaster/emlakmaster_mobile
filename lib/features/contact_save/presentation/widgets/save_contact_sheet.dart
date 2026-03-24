@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/contact_save/data/contact_permission_helper.dart';
 import 'package:emlakmaster_mobile/features/contact_save/data/save_contact_service.dart';
@@ -8,7 +8,6 @@ import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Rehbere ve uygulamaya kaydet: sesli komut (AI yardımı) + manuel giriş.
 /// Pro: tam AI asistan; Normal: sesli komut ile rehber + uygulama kaydı.
 void showSaveContactSheet(
@@ -22,7 +21,7 @@ void showSaveContactSheet(
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: DesignTokens.scaffoldDark,
+    backgroundColor: AppThemeExtension.of(context).background,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -105,7 +104,7 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: DesignTokens.scaffoldDark,
+        backgroundColor: AppThemeExtension.of(context).background,
         title: const Text(
           'Rehber izni kapalı',
           style: TextStyle(color: Colors.white),
@@ -124,7 +123,7 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
               Navigator.of(ctx).pop();
               await ContactPermissionHelper.instance.openSystemSettings();
             },
-            style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+            style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
             child: const Text('Ayarlara git', style: TextStyle(color: Colors.black)),
           ),
         ],
@@ -145,9 +144,9 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
     HapticFeedback.mediumImpact();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sesli giriş alındı. Gerekirse düzenleyip kaydedin.'),
-          backgroundColor: DesignTokens.primary,
+        SnackBar(
+          content: const Text('Sesli giriş alındı. Gerekirse düzenleyip kaydedin.'),
+          backgroundColor: AppThemeExtension.of(context).accent,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -208,7 +207,7 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                   ? 'Rehbere kaydedildi.'
                   : 'Uygulamaya kaydedildi.',
         ),
-        backgroundColor: DesignTokens.primary,
+        backgroundColor: AppThemeExtension.of(context).accent,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -252,10 +251,10 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
             const SizedBox(height: 20),
             Row(
               children: [
-                const Text(
+                Text(
                   'Sesli komut',
                   style: TextStyle(
-                    color: DesignTokens.textPrimaryDark,
+                    color: AppThemeExtension.of(context).textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -326,7 +325,7 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                 'Rehbere kaydet (telefon rehberi)',
                 style: TextStyle(color: Colors.white, fontSize: 14),
               ),
-              activeColor: DesignTokens.primary,
+              activeColor: AppThemeExtension.of(context).accent,
             ),
             CheckboxListTile(
               value: _saveToApp,
@@ -335,13 +334,13 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                 'Uygulamaya kaydet (EmlakMaster müşteri)',
                 style: TextStyle(color: Colors.white, fontSize: 14),
               ),
-              activeColor: DesignTokens.primary,
+              activeColor: AppThemeExtension.of(context).accent,
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
               Text(
                 _error!,
-                style: const TextStyle(color: DesignTokens.danger, fontSize: 13),
+                style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13),
               ),
             ],
             const SizedBox(height: 24),
@@ -350,7 +349,7 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
               child: FilledButton(
                 onPressed: _saving ? null : _onSave,
                 style: FilledButton.styleFrom(
-                  backgroundColor: DesignTokens.primary,
+                  backgroundColor: AppThemeExtension.of(context).accent,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Sign in with Apple kaldırıldı (ücretsiz Apple Developer hesabı ile profil uyumsuzluğu önlemi).
+  Ücretli hesap + App Store hedefi için Xcode’da capability ve com.apple.developer.applesignin yeniden eklenebilir.
+-->
 <plist version="1.0">
-<dict>
-	<!-- aps-environment kaldırıldı: Kişisel (ücretsiz) Apple Developer hesabı Push Notifications ile profil oluşturamaz.
-	     Ücretli hesap + TestFlight/App Store için tekrar ekleyin:
-	     <key>aps-environment</key><string>development</string> veya <string>production</string> -->
-</dict>
+<dict/>
 </plist>

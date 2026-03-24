@@ -37,8 +37,14 @@ pod install --repo-update
 
 ## 2) Xcode: “The sandbox is not in sync with the Podfile.lock”
 
+**Neden:** `Podfile.lock` güncellendi (ör. `flutter pub get`, yeni plugin) ama `Pods/` klasörü / `Manifest.lock` eski kaldı.
+
 1. Xcode’u kapatın.
-2. Yukarıdaki gibi **`ios`** klasöründe `pod install` çalıştırın.
+2. Proje kökünden:
+   ```bash
+   cd ios && pod install --repo-update
+   ```
+   veya kalkan + pub: `scripts/pub_get_with_fix.sh` (iOS fixer `Podfile.lock` ≠ `Pods/Manifest.lock` ise `pod install` tetikler).
 3. Projeyi **`.xcworkspace`** ile açın:  
    `ios/Runner.xcworkspace` (`.xcodeproj` değil).
 4. Xcode’da tekrar Build (⌘B).
@@ -50,6 +56,10 @@ cd /Users/uguraytekin/Projeler/EmlakMaster_Proje/emlakmaster_mobile/ios
 rm -rf Pods Podfile.lock build
 pod install --repo-update
 ```
+
+**Tek komut (önerilen):** proje kökünde `scripts/ios_pod_repair.sh` — `flutter pub get` + `pod install` (varsayılan). Trunk tam tarama için `--repo-update`. Bozuk CDN / `JSON::ParserError` / `gRPC-Core.podspec.json` için: `--clean-cache` (isteğe bağlı `--repo-update`).
+
+> **Not (Cursor / CI):** Ara ara CocoaPods CDN indirmesi yarım kalıp `unexpected end of input` ile `gRPC-Core` podspec’i bozulabilir. Bu durumda **`--clean-cache`** ve komutu **yerel Terminal.app**’te (veya Xcode dışı tam ortamda) çalıştırın; önbellek `~/Library/Caches/CocoaPods` altındadır. Cursor içinde `pod install` BoringSSL/gRPC aşamasında çok uzun sürebilir — **Mac’te doğrudan Terminal** kullanın.
 
 ---
 

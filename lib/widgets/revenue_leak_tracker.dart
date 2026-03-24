@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -24,12 +25,13 @@ class RevenueLeakTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final formatted = _formatAmount(estimatedRiskAmount);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: DesignTokens.danger.withValues(alpha: 0.12),
+        color: ext.danger.withValues(alpha: 0.12),
         border: Border(
-          bottom: BorderSide(color: DesignTokens.danger.withValues(alpha: 0.35)),
+          bottom: BorderSide(color: ext.danger.withValues(alpha: 0.35)),
         ),
       ),
       child: Padding(
@@ -39,14 +41,14 @@ class RevenueLeakTracker extends StatelessWidget {
             Icon(
               Icons.warning_amber_rounded,
               size: 18,
-              color: DesignTokens.danger.withValues(alpha: 0.9),
+              color: ext.danger.withValues(alpha: 0.9),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Current Estimated Revenue at Risk: $formatted $currencySuffix',
                 style: TextStyle(
-                  color: DesignTokens.danger.withValues(alpha: 0.95),
+                  color: ext.danger.withValues(alpha: 0.95),
                   fontSize: DesignTokens.fontSizeSm,
                   fontWeight: FontWeight.w600,
                   height: 1.25,

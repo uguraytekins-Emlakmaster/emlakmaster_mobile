@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -5,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 /// Müşteri: Arama — kriter girip danışmana talep iletir.
 class ClientSearchPage extends StatefulWidget {
   const ClientSearchPage({super.key});
@@ -28,10 +28,10 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
 
     return ColoredBox(
       color: bg,
@@ -62,8 +62,8 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                   label: Text(t),
                   selected: sel,
                   onSelected: (_) => setState(() => _type = t),
-                  selectedColor: DesignTokens.primary.withValues(alpha: 0.25),
-                  checkmarkColor: DesignTokens.primary,
+                  selectedColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
+                  checkmarkColor: AppThemeExtension.of(context).accent,
                 );
               }).toList(),
             ),
@@ -93,7 +93,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: const Text('Lütfen arama kriterlerinizi yazın.'),
-                      backgroundColor: DesignTokens.danger,
+                      backgroundColor: AppThemeExtension.of(context).danger,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -112,7 +112,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Icons.check_circle_rounded, color: DesignTokens.success, size: 48),
+                        Icon(Icons.check_circle_rounded, color: AppThemeExtension.of(context).success, size: 48),
                         const SizedBox(height: 16),
                         Text(
                           'Talebiniz alındı',
@@ -133,8 +133,8 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                         FilledButton(
                           onPressed: () => Navigator.pop(ctx),
                           style: FilledButton.styleFrom(
-                            backgroundColor: DesignTokens.primary,
-                            foregroundColor: DesignTokens.inputTextOnGold,
+                            backgroundColor: AppThemeExtension.of(context).accent,
+                            foregroundColor: AppThemeExtension.of(context).onBrand,
                           ),
                           child: const Text('Tamam'),
                         ),
@@ -144,8 +144,8 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                 );
               },
               style: FilledButton.styleFrom(
-                backgroundColor: DesignTokens.primary,
-                foregroundColor: DesignTokens.inputTextOnGold,
+                backgroundColor: AppThemeExtension.of(context).accent,
+                foregroundColor: AppThemeExtension.of(context).onBrand,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               icon: const Icon(Icons.send_rounded),
@@ -171,10 +171,10 @@ class ClientFavoritesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
 
     return ColoredBox(
       color: bg,
@@ -225,7 +225,7 @@ class ClientFavoritesPage extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.home_work_rounded, color: DesignTokens.primary, size: 36),
+                            Icon(Icons.home_work_rounded, color: AppThemeExtension.of(context).accent, size: 36),
                             const SizedBox(width: 14),
                             Expanded(
                               child: Column(
@@ -264,10 +264,10 @@ class ClientMessagesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
 
     return ColoredBox(
       color: bg,
@@ -357,8 +357,8 @@ class ClientMessagesPage extends StatelessWidget {
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
-                child: Icon(icon, color: DesignTokens.primary),
+                backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+                child: Icon(icon, color: AppThemeExtension.of(context).accent),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -387,10 +387,10 @@ class ClientVirtualTourPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
 
     final tours = [
       ('Örnek daire turu', 'YouTube üzerinde 360° örnek', 'https://www.youtube.com/results?search_query=360+apartment+tour'),
@@ -443,10 +443,10 @@ class ClientVirtualTourPage extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: DesignTokens.primary.withValues(alpha: 0.15),
+                                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.threesixty_rounded, color: DesignTokens.primary, size: 32),
+                              child: Icon(Icons.threesixty_rounded, color: AppThemeExtension.of(context).accent, size: 32),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -458,7 +458,7 @@ class ClientVirtualTourPage extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.play_circle_fill_rounded, color: DesignTokens.primary, size: 40),
+                            Icon(Icons.play_circle_fill_rounded, color: AppThemeExtension.of(context).accent, size: 40),
                           ],
                         ),
                       ),
@@ -485,10 +485,10 @@ class ClientProfilePage extends ConsumerWidget {
     }();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
 
     return ColoredBox(
       color: bg,
@@ -512,10 +512,10 @@ class ClientProfilePage extends ConsumerWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
+                    backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
                     child: Text(
                       avatarLetter,
-                      style: const TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.w800, fontSize: 22),
+                      style: TextStyle(color: AppThemeExtension.of(context).accent, fontWeight: FontWeight.w800, fontSize: 22),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -544,7 +544,7 @@ class ClientProfilePage extends ConsumerWidget {
                 side: BorderSide(color: border.withValues(alpha: 0.5)),
               ),
               tileColor: surface,
-              leading: const Icon(Icons.privacy_tip_outlined, color: DesignTokens.primary),
+              leading: Icon(Icons.privacy_tip_outlined, color: AppThemeExtension.of(context).accent),
               title: Text('KVKK & gizlilik', style: TextStyle(color: onSurface)),
               subtitle: Text('Verileriniz nasıl kullanılır?', style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12)),
               trailing: Icon(Icons.chevron_right_rounded, color: onSurface.withValues(alpha: 0.4)),
@@ -577,8 +577,8 @@ class ClientProfilePage extends ConsumerWidget {
                 icon: const Icon(Icons.logout_rounded),
                 label: const Text('Çıkış yap'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: DesignTokens.danger,
-                  side: const BorderSide(color: DesignTokens.danger),
+                  foregroundColor: AppThemeExtension.of(context).danger,
+                  side: BorderSide(color: AppThemeExtension.of(context).danger),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),

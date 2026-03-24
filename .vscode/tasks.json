@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Listings ingest: pytest",
+      "type": "shell",
+      "command": "pip install -q -r requirements-dev.txt && python -m pytest tests/ -v",
+      "options": {
+        "cwd": "${workspaceFolder}/EmlakMaster_Proje/emlakmaster_mobile/tools/github_listings_ingest"
+      },
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Listings ingest: yerel çalıştır",
+      "type": "shell",
+      "command": "${workspaceFolder}/EmlakMaster_Proje/emlakmaster_mobile/scripts/run_listings_ingest_local.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/EmlakMaster_Proje/emlakmaster_mobile"
+      },
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Listings ingest: tam kurulum scripti",
+      "type": "shell",
+      "command": "${workspaceFolder}/EmlakMaster_Proje/emlakmaster_mobile/scripts/listings_ingest_do_everything.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/EmlakMaster_Proje/emlakmaster_mobile"
+      },
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    }
+  ]
+}

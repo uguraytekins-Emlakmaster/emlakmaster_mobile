@@ -1,15 +1,15 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 /// Üst bardaki bildirim ikonu: konu = bildirimler → kısa önizleme paneli (tam sayfa değil).
 void showDashboardNotificationsSheet(BuildContext context, {required String uid}) {
   final theme = Theme.of(context);
   final isDark = theme.brightness == Brightness.dark;
-  final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+  final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
   final fg = theme.colorScheme.onSurface;
 
   showModalBottomSheet<void>(
@@ -33,7 +33,7 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                 padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications_active_rounded, color: DesignTokens.primary, size: 22),
+                    Icon(Icons.notifications_active_rounded, color: AppThemeExtension.of(context).accent, size: 22),
                     const SizedBox(width: 10),
                     Text(
                       'Bildirimler',
@@ -71,8 +71,8 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                         stream: FirestoreService.notificationsByUserStream(uid),
                         builder: (context, snap) {
                           if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
-                            return const Center(
-                              child: CircularProgressIndicator(color: DesignTokens.primary, strokeWidth: 2),
+                            return Center(
+                              child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent, strokeWidth: 2),
                             );
                           }
                           final docs = snap.data?.docs ?? [];
@@ -108,7 +108,7 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                               final body = d['body'] as String? ?? '';
                               return ListTile(
                                 contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                                leading: const Icon(Icons.circle_notifications_rounded, color: DesignTokens.primary, size: 22),
+                                leading: Icon(Icons.circle_notifications_rounded, color: AppThemeExtension.of(context).accent, size: 22),
                                 title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 14)),
                                 subtitle: body.isNotEmpty
                                     ? Text(body, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg.withValues(alpha: 0.65), fontSize: 12))
@@ -127,8 +127,8 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                     context.push(AppRouter.routeNotifications);
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: DesignTokens.primary,
-                    foregroundColor: DesignTokens.inputTextOnGold,
+                    backgroundColor: AppThemeExtension.of(context).accent,
+                    foregroundColor: AppThemeExtension.of(context).onBrand,
                     minimumSize: const Size(double.infinity, 48),
                   ),
                   child: const Text('Tüm bildirim merkezi'),

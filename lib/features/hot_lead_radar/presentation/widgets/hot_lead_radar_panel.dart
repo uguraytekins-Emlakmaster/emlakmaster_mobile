@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -7,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/models/lead_temperature.dart';
-
 /// Bugün aranması gereken en önemli müşteriler – skor >= hotLeadRadarMinScore (Signal vs Noise).
 class HotLeadRadarPanel extends ConsumerWidget {
   const HotLeadRadarPanel({super.key});
@@ -30,35 +30,35 @@ class _HotLeadRadarBody extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
       decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
+        color: AppThemeExtension.of(context).surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.5)),
+        border: Border.all(color: AppThemeExtension.of(context).border.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.whatshot_rounded, color: DesignTokens.warning, size: 22),
+              Icon(Icons.whatshot_rounded, color: AppThemeExtension.of(context).warning, size: 22),
               const SizedBox(width: DesignTokens.space2),
               Text(
                 'Hot Lead Radar',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
+                      color: AppThemeExtension.of(context).textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
               ),
               const Spacer(),
               Text(
                 '≥%${(AppConstants.hotLeadRadarMinScore * 100).toInt()}',
-                style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
+                style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 11),
               ),
             ],
           ),
           const SizedBox(height: DesignTokens.space2),
-          const Text(
+          Text(
             'Yüksek bütçe + yüksek sıcaklık + eşleşen ilan müşterileri burada. Liste müşteri sayfasından beslenir.',
-            style: TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+            style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
           ),
         ],
       ),

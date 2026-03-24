@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'design_tokens.dart';
+import 'theme_palette.dart';
 
 /// Semantic theme tokens — tek kaynak; light/dark otomatik.
-/// Bileşenler doğrudan renk yerine bu token'ları kullanmalı.
+/// Bileşenler renk için [textPrimary], [accent], [surface] vb. kullanmalı; ham renk için [ThemePalette] değil.
 @immutable
 class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   const AppThemeExtension({
@@ -27,6 +28,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     required this.shimmerHighlight,
     required this.brandPrimary,
     required this.success,
+    required this.warning,
     required this.danger,
     required this.onBrand,
   });
@@ -50,73 +52,145 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   final Color shimmerBase;
   final Color shimmerHighlight;
 
-  /// Marka altını — aksan, aktif durum, CTA (her zaman #BFA071 ailesi).
   final Color brandPrimary;
-
-  /// Başarı / olumlu analitik (yeşil).
   final Color success;
-
-  /// Uyarı / hata (kırmızı) — sadece alert.
+  final Color warning;
   final Color danger;
-
-  /// Altın üzerinde metin (CTA içi).
   final Color onBrand;
+
+  Color get textPrimary => foreground;
+  Color get textSecondary => foregroundSecondary;
+  Color get textTertiary => foregroundMuted;
+  Color get accent => brandPrimary;
+  Color get borderSubtle => borderSubdle;
+
+  /// Üst/alt gradient (FAB, hero) — [background] → [surface].
+  List<Color> get gradientPrimary => <Color>[background, surface];
+
+  /// Altın vurgu kenar gradient’i (özel kart çerçeveleri).
+  List<Color> get gradientAccentBorder => <Color>[
+        brandPrimary.withValues(alpha: 0.35),
+        brandPrimary.withValues(alpha: 0.1),
+      ];
+
+  /// Filigran / watermark için düşük opaklık marka rengi.
+  Color get brandWatermark => brandPrimary.withValues(alpha: 0.031);
+
+  /// Durum / bilgi ikonları (ThemePalette.info ile uyumlu).
+  Color get info => ThemePalette.info;
+
+  /// Koyu yüzey üzerinde ikincil panel (navy).
+  Color get brandNavy => ThemePalette.brandNavy;
+
+  Color get brandNavyLight => ThemePalette.brandNavyLight;
+
+  /// Açık metin / FAB ön planı (açık ton).
+  Color get onAccentLight => ThemePalette.brandWhite;
+
+  /// Dashboard / insight kartları — neomorphic hafif gölge.
+  BoxDecoration surfaceCardDecoration({bool highlight = false, Color? surfaceColor}) {
+    return BoxDecoration(
+      color: surfaceColor ?? surface,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      border: Border.all(
+        color: highlight ? brandPrimary.withValues(alpha: 0.35) : border.withValues(alpha: 0.55),
+        width: 0.85,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: foreground.withValues(alpha: 0.03),
+          offset: const Offset(-1.5, -1.5),
+          blurRadius: 3,
+        ),
+        BoxShadow(
+          color: shadowColor.withValues(alpha: 0.45),
+          offset: const Offset(1.5, 1.5),
+          blurRadius: 4,
+        ),
+        if (highlight)
+          BoxShadow(
+            color: brandPrimary.withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+      ],
+    );
+  }
+
+  /// Pipeline / şampiyon kartları.
+  BoxDecoration championCardDecoration({bool withGlow = false, Color? borderColor}) {
+    return BoxDecoration(
+      color: surface,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      border: Border.all(color: borderColor ?? border),
+      boxShadow: withGlow
+          ? [
+              BoxShadow(
+                color: brandPrimary.withValues(alpha: 0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ]
+          : null,
+    );
+  }
 
   static AppThemeExtension light() {
     return const AppThemeExtension(
-      background: Color(0xFFF5F5F7),
-      surface: Color(0xFFFFFFFF),
-      surfaceElevated: Color(0xFFFAFAFA),
-      card: Color(0xFFFFFFFF),
-      foreground: Color(0xFF1C1C1E),
-      foregroundSecondary: Color(0xFF6B6B70),
-      foregroundMuted: Color(0xFF8E8E93),
-      border: Color(0xFFE5E5E7),
-      borderSubdle: Color(0xFFE5E5E7),
-      inputBackground: Color(0xFFFFFFFF),
-      inputForeground: Color(0xFF1C1C1E),
-      inputBorder: Color(0xFFE5E5E7),
-      popoverBackground: Color(0xFFFFFFFF),
-      popoverForeground: Color(0xFF1C1C1E),
-      chartBackground: Color(0xFFFAFAFA),
+      background: ThemePalette.backgroundLight,
+      surface: ThemePalette.surfaceLight,
+      surfaceElevated: ThemePalette.surfaceLightElevated,
+      card: ThemePalette.surfaceLight,
+      foreground: ThemePalette.textPrimaryLight,
+      foregroundSecondary: ThemePalette.textSecondaryLight,
+      foregroundMuted: ThemePalette.textTertiaryLight,
+      border: ThemePalette.borderLight,
+      borderSubdle: ThemePalette.borderLight,
+      inputBackground: ThemePalette.surfaceLight,
+      inputForeground: ThemePalette.textPrimaryLight,
+      inputBorder: ThemePalette.borderLight,
+      popoverBackground: ThemePalette.surfaceLight,
+      popoverForeground: ThemePalette.textPrimaryLight,
+      chartBackground: ThemePalette.surfaceLightElevated,
       shadowColor: Color(0x14000000),
-      shimmerBase: Color(0xFFE5E5E7),
-      shimmerHighlight: Color(0xFFFFFFFF),
-      brandPrimary: DesignTokens.antiqueGold,
-      success: DesignTokens.success,
-      danger: DesignTokens.danger,
-      onBrand: DesignTokens.inputTextOnGold,
+      shimmerBase: ThemePalette.shimmerBaseLight,
+      shimmerHighlight: ThemePalette.shimmerHighlightLight,
+      brandPrimary: ThemePalette.antiqueGold,
+      success: ThemePalette.success,
+      warning: ThemePalette.warning,
+      danger: ThemePalette.danger,
+      onBrand: ThemePalette.inputTextOnGold,
     );
   }
 
   static AppThemeExtension dark() {
     return AppThemeExtension(
-      background: DesignTokens.scaffoldDark,
-      surface: DesignTokens.surfaceDark,
-      surfaceElevated: DesignTokens.surfaceDarkElevated,
-      card: DesignTokens.surfaceDark,
-      foreground: DesignTokens.textPrimaryDark,
-      foregroundSecondary: DesignTokens.textSecondaryDark,
-      foregroundMuted: DesignTokens.textTertiaryDark,
-      border: DesignTokens.borderDark,
-      borderSubdle: DesignTokens.borderDark.withValues(alpha: 0.6),
-      inputBackground: DesignTokens.inputBackgroundGold.withValues(alpha: 0.25),
-      inputForeground: DesignTokens.textPrimaryDark,
-      inputBorder: DesignTokens.borderDark,
-      popoverBackground: DesignTokens.surfaceDark,
-      popoverForeground: DesignTokens.textPrimaryDark,
-      chartBackground: DesignTokens.surfaceDarkElevated,
+      background: ThemePalette.scaffoldDark,
+      surface: ThemePalette.surfaceDark,
+      surfaceElevated: ThemePalette.surfaceDarkElevated,
+      card: ThemePalette.surfaceDark,
+      foreground: ThemePalette.textPrimaryDark,
+      foregroundSecondary: ThemePalette.textSecondaryDark,
+      foregroundMuted: ThemePalette.textTertiaryDark,
+      border: ThemePalette.borderDark,
+      borderSubdle: ThemePalette.borderDark.withValues(alpha: 0.6),
+      inputBackground: ThemePalette.inputBackgroundGold.withValues(alpha: 0.25),
+      inputForeground: ThemePalette.textPrimaryDark,
+      inputBorder: ThemePalette.borderDark,
+      popoverBackground: ThemePalette.surfaceDark,
+      popoverForeground: ThemePalette.textPrimaryDark,
+      chartBackground: ThemePalette.surfaceDarkElevated,
       shadowColor: Colors.black.withValues(alpha: 0.35),
-      shimmerBase: DesignTokens.surfaceDarkElevated,
-      shimmerHighlight: DesignTokens.surfaceDark.withValues(alpha: 0.5),
-      brandPrimary: DesignTokens.antiqueGold,
-      success: DesignTokens.success,
-      danger: DesignTokens.danger,
-      onBrand: DesignTokens.inputTextOnGold,
+      shimmerBase: ThemePalette.shimmerBaseDark,
+      shimmerHighlight: ThemePalette.shimmerHighlightDark,
+      brandPrimary: ThemePalette.antiqueGold,
+      success: ThemePalette.success,
+      warning: ThemePalette.warning,
+      danger: ThemePalette.danger,
+      onBrand: ThemePalette.inputTextOnGold,
     );
   }
 
-  /// BuildContext'ten güvenli erişim; extension yoksa dark döner.
   static AppThemeExtension of(BuildContext context) {
     return Theme.of(context).extension<AppThemeExtension>() ?? AppThemeExtension.dark();
   }
@@ -143,6 +217,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     Color? shimmerHighlight,
     Color? brandPrimary,
     Color? success,
+    Color? warning,
     Color? danger,
     Color? onBrand,
   }) {
@@ -167,6 +242,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       shimmerHighlight: shimmerHighlight ?? this.shimmerHighlight,
       brandPrimary: brandPrimary ?? this.brandPrimary,
       success: success ?? this.success,
+      warning: warning ?? this.warning,
       danger: danger ?? this.danger,
       onBrand: onBrand ?? this.onBrand,
     );
@@ -196,6 +272,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       shimmerHighlight: Color.lerp(shimmerHighlight, other.shimmerHighlight, t)!,
       brandPrimary: Color.lerp(brandPrimary, other.brandPrimary, t)!,
       success: Color.lerp(success, other.success, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
       onBrand: Color.lerp(onBrand, other.onBrand, t)!,
     );

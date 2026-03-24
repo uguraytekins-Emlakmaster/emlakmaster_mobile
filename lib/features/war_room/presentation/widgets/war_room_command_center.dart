@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:ui';
 
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
@@ -11,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
-
 /// Full-screen Command Center: Lead Pulse, Top Performers, Market Ticker, Daily Target.
 /// Adaptive: GridView for Web/Desktop (width >= 600), single column for mobile.
 class WarRoomCommandCenter extends ConsumerWidget {
@@ -23,12 +23,12 @@ class WarRoomCommandCenter extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= _breakpointWide;
     final gradientColors = isDark
-        ? [DesignTokens.backgroundDark, DesignTokens.primaryDark.withValues(alpha: 0.4)]
-        : [DesignTokens.backgroundLight, DesignTokens.backgroundLight];
+        ? [AppThemeExtension.of(context).background, AppThemeExtension.of(context).background.withValues(alpha: 0.4)]
+        : [AppThemeExtension.of(context).background, AppThemeExtension.of(context).background];
 
     return Container(
       width: double.infinity,
@@ -47,7 +47,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
             ref.invalidate(dealsCountProvider);
             ref.invalidate(officeMonthlyTargetProvider);
           },
-          color: DesignTokens.brandGold,
+          color: AppThemeExtension.of(context).accent,
           backgroundColor: surface,
           child: CustomScrollView(
             slivers: [
@@ -60,7 +60,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
                         const AppBackButton(),
                         const SizedBox(width: 4),
                       ],
-                      const Icon(Icons.military_tech_rounded, color: DesignTokens.brandGold, size: 28),
+                      Icon(Icons.military_tech_rounded, color: AppThemeExtension.of(context).accent, size: 28),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -68,7 +68,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: isDark ? DesignTokens.brandWhite : DesignTokens.textPrimaryLight,
+                                color: isDark ? AppThemeExtension.of(context).onAccentLight : AppThemeExtension.of(context).textPrimary,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 2,
                               ),
@@ -89,10 +89,10 @@ class WarRoomCommandCenter extends ConsumerWidget {
                                   minimumSize: Size.zero,
                                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                icon: const Icon(Icons.call_rounded, size: 18, color: DesignTokens.brandGold),
-                                label: const Text(
+                                icon: Icon(Icons.call_rounded, size: 18, color: AppThemeExtension.of(context).accent),
+                                label: Text(
                                   'Çağrı Merkezi',
-                                  style: TextStyle(color: DesignTokens.brandGold, fontSize: 12),
+                                  style: TextStyle(color: AppThemeExtension.of(context).accent, fontSize: 12),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -187,8 +187,8 @@ class _LeadPulseCard extends ConsumerWidget {
                   Flexible(
                     child: Text(
                       '$count yeni lead',
-                      style: const TextStyle(
-                        color: DesignTokens.brandWhite,
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).onAccentLight,
                         fontWeight: FontWeight.w700,
                         fontSize: 18,
                       ),
@@ -202,7 +202,7 @@ class _LeadPulseCard extends ConsumerWidget {
               liveCalls.when(
                 data: (calls) => Text(
                   'Şu an $calls aktif çağrı',
-                  style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 13),
+                  style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 13),
                 ),
                 loading: () => const SizedBox.shrink(),
                 error: (_, __) => const SizedBox.shrink(),
@@ -210,8 +210,8 @@ class _LeadPulseCard extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: DesignTokens.brandGold)),
-        error: (e, _) => const Text('Lead pulse yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
+        loading: () => Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
+        error: (e, _) => Text('Lead pulse yüklenemedi.', style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13)),
       ),
     );
   }
@@ -269,10 +269,10 @@ class _GlowingDotState extends State<_GlowingDot> with SingleTickerProviderState
           height: 10,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: DesignTokens.brandGold.withValues(alpha: _animation.value),
+            color: AppThemeExtension.of(context).accent.withValues(alpha: _animation.value),
             boxShadow: [
               BoxShadow(
-                color: DesignTokens.brandGold.withValues(alpha: _animation.value * 0.8),
+                color: AppThemeExtension.of(context).accent.withValues(alpha: _animation.value * 0.8),
                 blurRadius: 6,
               ),
             ],
@@ -301,11 +301,11 @@ class _WarRoomTeamFilter extends ConsumerWidget {
             child: DropdownButton<String?>(
               value: selectedId,
               isDense: true,
-              hint: Text(l10n.t('label_team'), style: const TextStyle(color: DesignTokens.brandGold, fontSize: 12)),
-              dropdownColor: DesignTokens.surfaceDark,
+              hint: Text(l10n.t('label_team'), style: TextStyle(color: AppThemeExtension.of(context).accent, fontSize: 12)),
+              dropdownColor: AppThemeExtension.of(context).surface,
               items: [
-                DropdownMenuItem<String?>(child: Text(l10n.t('filter_all_teams'), style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: 12))),
-                ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: 12), overflow: TextOverflow.ellipsis))),
+                DropdownMenuItem<String?>(child: Text(l10n.t('filter_all_teams'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: 12))),
+                ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: 12), overflow: TextOverflow.ellipsis))),
               ],
               onChanged: (v) => ref.read(warRoomSelectedTeamIdProvider.notifier).state = v,
             ),
@@ -338,17 +338,23 @@ class _TopPerformersCard extends ConsumerWidget {
             return bc.compareTo(ac);
           });
           if (agents.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.insights_outlined, size: 36, color: DesignTokens.brandGold),
-                  SizedBox(height: 8),
+                  Icon(Icons.insights_outlined, size: 36, color: AppThemeExtension.of(context).accent),
+                  const SizedBox(height: 8),
                   Text(
-                    'Henüz veri yok',
+                    'Sıralama için veri bekleniyor',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: DesignTokens.textSecondaryDark, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Çağrı metrikleri oluştuğunda danışmanlar burada listelenir.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12, height: 1.35),
                   ),
                 ],
               ),
@@ -375,13 +381,13 @@ class _TopPerformersCard extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         name,
-                        style: const TextStyle(color: DesignTokens.textPrimaryDark, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w600),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
                       '$calls çağrı',
-                      style: const TextStyle(color: DesignTokens.brandGold, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: AppThemeExtension.of(context).accent, fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -390,8 +396,8 @@ class _TopPerformersCard extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: DesignTokens.brandGold)),
-        error: (e, _) => const Text('Yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
+        loading: () => Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
+        error: (e, _) => Text('Yüklenemedi.', style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13)),
       ),
     );
   }
@@ -418,12 +424,12 @@ class _MarketTickerCard extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(
                       children: [
-                        const Icon(Icons.circle, size: 6, color: DesignTokens.brandGold),
+                        Icon(Icons.circle, size: 6, color: AppThemeExtension.of(context).accent),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             e,
-                            style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+                            style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -463,15 +469,15 @@ class _DailyTargetCard extends ConsumerWidget {
                     children: [
                       Text(
                         '$deals / $target',
-                        style: const TextStyle(
-                          color: DesignTokens.brandWhite,
+                        style: TextStyle(
+                          color: AppThemeExtension.of(context).onAccentLight,
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
                         ),
                       ),
                       Text(
                         '${(progress * 100).toInt()}%',
-                        style: const TextStyle(color: DesignTokens.brandGold, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: AppThemeExtension.of(context).accent, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -481,24 +487,24 @@ class _DailyTargetCard extends ConsumerWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 8,
-                      backgroundColor: DesignTokens.surfaceDarkElevated,
-                      valueColor: const AlwaysStoppedAnimation<Color>(DesignTokens.brandGold),
+                      backgroundColor: AppThemeExtension.of(context).surfaceElevated,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppThemeExtension.of(context).accent),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Bu ay kapanan satış',
-                    style: TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
+                    style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 11),
                   ),
                 ],
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator(color: DesignTokens.brandGold)),
-            error: (_, __) => Text('$deals satış', style: const TextStyle(color: DesignTokens.brandWhite, fontSize: 18)),
+            loading: () => Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
+            error: (_, __) => Text('$deals satış', style: TextStyle(color: AppThemeExtension.of(context).onAccentLight, fontSize: 18)),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: DesignTokens.brandGold)),
-        error: (e, _) => const Text('Hedef yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 13)),
+        loading: () => Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
+        error: (e, _) => Text('Hedef yüklenemedi.', style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13)),
       ),
     );
   }
@@ -514,8 +520,8 @@ class _GlassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final titleColor = isDark ? DesignTokens.brandWhite : DesignTokens.textPrimaryLight;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final titleColor = isDark ? AppThemeExtension.of(context).onAccentLight : AppThemeExtension.of(context).textPrimary;
     return ClipRRect(
       borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
       child: BackdropFilter(
@@ -525,11 +531,11 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
             color: surface.withValues(alpha: isDark ? 0.6 : 0.95),
-            border: Border.all(color: DesignTokens.brandGold.withValues(alpha: 0.25)),
+            border: Border.all(color: AppThemeExtension.of(context).accent.withValues(alpha: 0.25)),
             boxShadow: isDark
                 ? [
                     BoxShadow(
-                      color: DesignTokens.brandNavy.withValues(alpha: 0.3),
+                      color: AppThemeExtension.of(context).brandNavy.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -542,7 +548,7 @@ class _GlassCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, color: DesignTokens.brandGold, size: 22),
+                  Icon(icon, color: AppThemeExtension.of(context).accent, size: 22),
                   const SizedBox(width: 8),
                   Text(
                     title,

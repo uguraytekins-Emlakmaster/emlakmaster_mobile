@@ -4,6 +4,7 @@
 
 | Konu | Not |
 |------|-----|
+| Harici ilan entegrasyonları (Rainbow) | Üretim mimarisi: `doc/EXTERNAL_LISTING_INTEGRATION_ARCHITECTURE.md` — Phase 1–3 |
 | `withOpacity` → `withValues` | ~200+ bilgi seviyesi uyarı; toplu geçiş için Flutter sürümüne uygun helper |
 | `integration_test` veya Patrol | Elle QA yerine otomatik ekran akışları |
 | Xcode `xcrun xctrace` betiği | Performans trace’i tek komutla (şablon cihaza göre) |

@@ -1,10 +1,10 @@
-
 import 'package:emlakmaster_mobile/core/platform/file_stub.dart'
     if (dart.library.io) 'dart:io' as io;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
+import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
@@ -54,6 +54,8 @@ class ProfileAvatarService {
   }
 
   Future<String?> _uploadData(String uid, Uint8List data) async {
+    if (!await FirebaseStorageAvailability.checkUsable()) return null;
+    try {
       final ref = _storage.ref().child('users').child(uid).child('avatar_256.jpg');
       final task = await ref.putData(
         data,
@@ -62,22 +64,33 @@ class ProfileAvatarService {
           cacheControl: 'public,max-age=86400',
         ),
       );
-    final url = await task.ref.getDownloadURL();
-    await _store.collection(AppConstants.colUsers).doc(uid).set(
-      {
-        'avatarUrl': url,
-        'updatedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
-    return url;
+      final url = await task.ref.getDownloadURL();
+      await _store.collection(AppConstants.colUsers).doc(uid).set(
+        {
+          'avatarUrl': url,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+      return url;
+    } on FirebaseException catch (e, st) {
+      if (kDebugMode) AppLogger.e('ProfileAvatarService._uploadData', e, st);
+      if (FirebaseStorageAvailability.isUnavailableError(e)) return null;
+      return null;
+    } catch (e, st) {
+      if (kDebugMode) AppLogger.e('ProfileAvatarService._uploadData', e, st);
+      return null;
+    }
   }
 
   /// Profil fotoğrafını siler (Storage + Firestore alanı boşaltılır).
   Future<void> deleteAvatar({required String uid}) async {
     try {
-      final ref = _storage.ref().child('users').child(uid).child('avatar_256.jpg');
-      await ref.delete().catchError((_) {});
+      final usable = await FirebaseStorageAvailability.checkUsable();
+      if (usable) {
+        final ref = _storage.ref().child('users').child(uid).child('avatar_256.jpg');
+        await ref.delete().catchError((_) {});
+      }
       await _store.collection(AppConstants.colUsers).doc(uid).set(
         {
           'avatarUrl': FieldValue.delete(),

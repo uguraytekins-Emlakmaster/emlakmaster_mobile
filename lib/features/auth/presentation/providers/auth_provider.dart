@@ -1,3 +1,5 @@
+import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
+import 'package:emlakmaster_mobile/core/dev/dev_office_fallback.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -47,6 +49,11 @@ final primaryMembershipProvider = StreamProvider.autoDispose<OfficeMembership?>(
     return Stream<OfficeMembership?>.value(null);
   }
   return UserRepository.userDocStream(user.uid).asyncExpand((doc) {
+    if (DevOfficeFallback.isActive) {
+      return Stream<OfficeMembership?>.value(
+        DevOfficeFallback.syntheticMembership(user.uid),
+      );
+    }
     final oid = doc?.officeId;
     return OfficeMembershipRepository.watchPrimaryMembershipForUser(user.uid, oid);
   });
@@ -75,12 +82,14 @@ final officeAccessStateProvider = Provider<AsyncValue<OfficeAccessState>>((ref) 
   }
   final doc = docAsync.valueOrNull;
   final mem = memAsync.valueOrNull;
+  final devFb = isDevMode && DevOfficeFallback.isActive;
   return AsyncValue.data(
     deriveOfficeAccessState(
       userDoc: doc,
       primaryMembership: mem,
       userDocLoading: false,
       membershipLoading: false,
+      devOfficeFallback: devFb,
     ),
   );
 });
@@ -94,7 +103,8 @@ final currentRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
   if (user == null) return const AsyncValue.data(AppRole.guest);
   final doc = ref.watch(userDocStreamProvider(user.uid)).valueOrNull;
   if (doc == null) return const AsyncValue.data(AppRole.guest);
-  final hasOffice = doc.officeId != null && doc.officeId!.isNotEmpty;
+  final devFb = isDevMode && DevOfficeFallback.isActive;
+  final hasOffice = (doc.officeId != null && doc.officeId!.isNotEmpty) || devFb;
   if (!hasOffice) {
     return AsyncValue.data(AppRole.fromFirestoreRole(doc.role));
   }
@@ -154,6 +164,15 @@ final currentRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
 final currentOfficeProvider = StreamProvider.autoDispose<Office?>((ref) {
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) return Stream.value(null);
+  if (isDevMode && DevOfficeFallback.isActive) {
+    return Stream.value(
+      Office(
+        id: kLocalDevOfficeId,
+        name: DevOfficeFallback.officeName,
+        createdBy: user.uid,
+      ),
+    );
+  }
   final doc = ref.watch(userDocStreamProvider(user.uid)).valueOrNull;
   final oid = doc?.officeId;
   if (oid == null || oid.isEmpty) return Stream.value(null);
@@ -174,6 +193,7 @@ final officeRoleProvider = Provider<AsyncValue<OfficeRole?>>((ref) {
 final needsOfficeSetupProvider = Provider<bool>((ref) {
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) return false;
+  if (isDevMode && DevOfficeFallback.isActive) return false;
   final doc = ref.watch(userDocStreamProvider(user.uid)).valueOrNull;
   if (doc == null) return false;
   final o = doc.officeId;

@@ -57,5 +57,11 @@ node_modules
 .env.local
 .env.*.local
 
+# Firebase Admin (asla commit etme)
+**/firebase-adminsdk*.json
+**/service-account*.json
+tools/github_listings_ingest/.service_account.json
+tools/github_listings_ingest/.env.local
+
 # Facebook Login (App ID / Client Token — git’e eklenmesin)
 scripts/facebook_credentials.txt

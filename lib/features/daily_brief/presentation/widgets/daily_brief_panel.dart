@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -7,7 +8,6 @@ import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Dashboard: "AI Daily Brief" – bugünün kritik bilgileri.
 class DailyBriefPanel extends ConsumerWidget {
   const DailyBriefPanel({super.key});
@@ -22,21 +22,21 @@ class DailyBriefPanel extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
       decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
+        color: AppThemeExtension.of(context).surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.5)),
+        border: Border.all(color: AppThemeExtension.of(context).border.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.summarize_rounded, color: DesignTokens.primary, size: 22),
+              Icon(Icons.summarize_rounded, color: AppThemeExtension.of(context).accent, size: 22),
               const SizedBox(width: DesignTokens.space2),
               Text(
                 'Bugünün özeti',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
+                      color: AppThemeExtension.of(context).textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -46,11 +46,11 @@ class DailyBriefPanel extends ConsumerWidget {
           async.when(
             data: (items) {
               if (items.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     'Özet hazırlanıyor.',
-                    style: TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+                    style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
                   ),
                 );
               }
@@ -98,16 +98,16 @@ class _BriefTile extends StatelessWidget {
       leading: Icon(
         _iconForCategory(item.category),
         size: 20,
-        color: DesignTokens.primary.withValues(alpha: 0.9),
+        color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9),
       ),
       title: Text(
         item.title ?? '',
-        style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: 13),
+        style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: 13),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: item.subtitle != null
-          ? Text(item.subtitle!, style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11))
+          ? Text(item.subtitle!, style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 11))
           : null,
     );
   }

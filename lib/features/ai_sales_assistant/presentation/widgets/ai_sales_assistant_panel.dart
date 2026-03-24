@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:ui';
 
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -6,7 +7,6 @@ import 'package:emlakmaster_mobile/features/lead_temperature_engine/presentation
 import 'package:emlakmaster_mobile/features/smart_matching_engine/presentation/providers/portfolio_match_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Çağrı ekranında gösterilen AI Satış Asistanı paneli.
 /// "Bu müşteri %78 satın alma ihtimali taşıyor" + bütçe, son ilan, uygun portföy, önerilen cümle.
 class AiSalesAssistantPanel extends ConsumerWidget {
@@ -108,13 +108,13 @@ class AiSalesAssistantPanel extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: DesignTokens.primary.withValues(alpha: 0.12),
-                    border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.3)),
+                    color: AppThemeExtension.of(context).accent.withValues(alpha: 0.12),
+                    border: Border.all(color: AppThemeExtension.of(context).accent.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.lightbulb_rounded, color: DesignTokens.primary, size: 18),
+                      Icon(Icons.lightbulb_rounded, color: AppThemeExtension.of(context).accent, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -133,10 +133,10 @@ class AiSalesAssistantPanel extends ConsumerWidget {
       loading: () => _GlassPanel(
         child: Row(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent),
             ),
             const SizedBox(width: 12),
             Text('Müşteri verisi yükleniyor...', style: _bodyStyle(context)),
@@ -192,11 +192,11 @@ class _ProbabilityChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color = DesignTokens.textTertiaryDark;
+    Color color = AppThemeExtension.of(context).textTertiary;
     if (probability >= 70) {
-      color = DesignTokens.success;
+      color = AppThemeExtension.of(context).success;
     } else if (probability >= 40) {
-      color = DesignTokens.warning;
+      color = AppThemeExtension.of(context).warning;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

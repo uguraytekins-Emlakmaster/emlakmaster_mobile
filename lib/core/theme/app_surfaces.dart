@@ -51,7 +51,20 @@ abstract final class AppSurfaces {
           blurRadius: 14,
           offset: const Offset(0, 4),
         ),
-        ...isDark ? DesignTokens.neomorphicEmbossDark : const <BoxShadow>[],
+        ...isDark
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: ext.foreground.withValues(alpha: 0.03),
+                  offset: const Offset(-1.5, -1.5),
+                  blurRadius: 3,
+                ),
+                BoxShadow(
+                  color: ext.shadowColor.withValues(alpha: 0.4),
+                  offset: const Offset(1.5, 1.5),
+                  blurRadius: 4,
+                ),
+              ]
+            : const <BoxShadow>[],
       ],
     );
   }

@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Rainbow CRM — Listing Import",
+  "version": "0.1.0",
+  "description": "Kullanıcı tetiklemeli ilan verisi aktarımı. Şifre toplamaz; yalnızca Firebase ID token ile POST.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://www.sahibinden.com/*",
+    "https://*.sahibinden.com/*",
+    "https://www.hepsiemlak.com/*",
+    "https://www.emlakjet.com/*",
+    "https://europe-west1-*.cloudfunctions.net/*"
+  ],
+  "action": {
+    "default_title": "İlanları içe aktar"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

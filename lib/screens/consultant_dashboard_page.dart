@@ -1,10 +1,15 @@
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
@@ -17,133 +22,173 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Danışman paneli – Benim Özetim: günlük odak, takip sayısı, hızlı erişim, piyasa.
+/// Danışman paneli — [DashboardPage] ile aynı tasarım sistemi: **Hero** → **Operational** → **Insight** ([DashboardLayoutTokens]).
 class ConsultantDashboardPage extends ConsumerWidget {
   const ConsultantDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final ext = AppThemeExtension.of(context);
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
+    final flags = ref.watch(featureFlagsProvider).valueOrNull;
+    final voiceCrmEnabled = flags?[AppConstants.keyFeatureVoiceCrm] ?? true;
+    final showMagicCallFab =
+        !AdaptiveShellScaffold.isWide(context) && voiceCrmEnabled;
+    final summaryBottomPad =
+        DashboardLayoutTokens.bottomScrollPadding(context, showFab: showMagicCallFab);
     final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
     final greeting = user?.email != null
         ? 'Merhaba, ${user!.email!.split('@').first}'
         : 'Merhaba';
-    // Ekran görüntüsü: GoRouter `_AnalyticsRouteObserver` (route `name` = matchedLocation).
+
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: ext.background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
+            // —— Layer 1–2: Hero + Operational (above-the-fold) ——
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(DesignTokens.space6),
+                padding: const EdgeInsets.fromLTRB(
+                  DashboardLayoutTokens.horizontalPadding,
+                  DashboardLayoutTokens.pageTopInset,
+                  DashboardLayoutTokens.horizontalPadding,
+                  DashboardLayoutTokens.pageBottomInset,
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                greeting,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      color: textSecondary,
-                                    ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                AppLocalizations.of(context).t('my_summary'),
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                      color: textPrimary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Semantics(
-                          label: AppLocalizations.of(context).t('notifications'),
-                          button: true,
-                          child: IconButton(
-                            onPressed: () => context.push(AppRouter.routeNotifications),
-                            icon: Icon(
-                              Icons.notifications_outlined,
-                              color: textSecondary,
-                              size: 26,
-                            ),
-                            tooltip: AppLocalizations.of(context).t('notifications'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
+                    _DashboardHeroHeader(greeting: greeting),
+                    const SizedBox(height: DashboardLayoutTokens.gapHeroToOperational),
                     const _ConsultantTeamLine(),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
                     const _TodayKpiRow(),
-                    const SizedBox(height: 8),
-                    _TodayBriefLine(resurrectionAsync: resurrectionAsync),
-                    const SizedBox(height: 8),
-                    const _QuickActionsRow(),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
+                    const _MagicCallPrimaryBlock(),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
+                    _QuickStatsCard(
+                      resurrectionAsync: resurrectionAsync,
+                      compact: true,
+                    ),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
+                    const _WeeklyGoalCard(),
                   ],
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
-                child: _QuickStatsCard(resurrectionAsync: resurrectionAsync),
-              ),
+            // —— Layer 3: Insight (scroll) —— sıra: pipeline → fırsatlar → ticker → ekonomi → piyasa → akademi
+            const SliverToBoxAdapter(
+              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: DesignTokens.space4)),
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: DesignTokens.space6),
-                child: _WeeklyGoalCard(),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: DesignTokens.space4)),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+                padding: EdgeInsets.symmetric(
+                  horizontal: DashboardLayoutTokens.horizontalPadding,
+                ),
                 child: _PipelineChampionCard(),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: DesignTokens.space6)),
-            const SliverToBoxAdapter(child: MasterTicker()),
-            const SliverToBoxAdapter(child: SizedBox(height: DesignTokens.space4)),
-            const SliverToBoxAdapter(child: FinanceBar()),
-            const SliverToBoxAdapter(child: SizedBox(height: DesignTokens.space4)),
             const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: DesignTokens.space6),
-                child: MarketPulsePanel(),
-              ),
+              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: DesignTokens.space4)),
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+                padding: EdgeInsets.symmetric(
+                  horizontal: DashboardLayoutTokens.horizontalPadding,
+                ),
                 child: DiscoveryPanel(),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: DesignTokens.space4)),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+            ),
+            const SliverToBoxAdapter(child: MasterTicker()),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+            ),
+            const SliverToBoxAdapter(child: FinanceBar()),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+            ),
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+                padding: EdgeInsets.symmetric(
+                  horizontal: DashboardLayoutTokens.horizontalPadding,
+                ),
+                child: MarketPulsePanel(),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+            ),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: DashboardLayoutTokens.horizontalPadding,
+                ),
                 child: _ConsultantAcademyCard(),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: DesignTokens.space8)),
+            SliverToBoxAdapter(child: SizedBox(height: summaryBottomPad)),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Hero katmanı: selam + başlık + bildirim (tek odak alanı).
+class _DashboardHeroHeader extends StatelessWidget {
+  const _DashboardHeroHeader({required this.greeting});
+
+  final String greeting;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                greeting,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: ext.textSecondary,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                AppLocalizations.of(context).t('my_summary'),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: ext.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        Semantics(
+          label: AppLocalizations.of(context).t('notifications'),
+          button: true,
+          child: IconButton(
+            onPressed: () => context.push(AppRouter.routeNotifications),
+            icon: Icon(
+              Icons.notifications_outlined,
+              color: ext.textSecondary,
+              size: 24,
+            ),
+            tooltip: AppLocalizations.of(context).t('notifications'),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -154,9 +199,7 @@ class _ConsultantTeamLine extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
+    final ext = AppThemeExtension.of(context);
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
     if (uid == null) return const SizedBox.shrink();
     final userDocAsync = ref.watch(userDocStreamProvider(uid));
@@ -181,7 +224,7 @@ class _ConsultantTeamLine extends ConsumerWidget {
                   child: Text(
                     '${AppLocalizations.of(context).t('label_team')}: $teamName · ${AppLocalizations.of(context).t('label_manager')}: $managerName',
                     style: TextStyle(
-                      color: textTertiary,
+                      color: ext.textTertiary,
                       fontSize: DesignTokens.fontSizeXs,
                     ),
                     maxLines: 1,
@@ -199,50 +242,93 @@ class _ConsultantTeamLine extends ConsumerWidget {
   }
 }
 
-class _TodayBriefLine extends StatelessWidget {
-  const _TodayBriefLine({required this.resurrectionAsync});
-  final AsyncValue<List<dynamic>> resurrectionAsync;
+/// Birincil CTA: Magic Call tam genişlik, ikincil: Tüm çağrılar.
+class _MagicCallPrimaryBlock extends StatelessWidget {
+  const _MagicCallPrimaryBlock();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
-    final count = resurrectionAsync.valueOrNull?.length ?? 0;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space3, vertical: DesignTokens.space2),
-      decoration: BoxDecoration(
-        color: surface.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: border.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.today_rounded, size: 18, color: DesignTokens.primary),
-          const SizedBox(width: DesignTokens.space2),
-          Text(
-            AppLocalizations.of(context).tArgs('today_follows', [count.toString()]),
-            style: TextStyle(
-              color: textSecondary,
-              fontSize: DesignTokens.fontSizeSm,
-            ),
-          ),
-          Text(
-            count > 0 ? ' · ' : '',
-            style: TextStyle(color: textTertiary),
-          ),
-          if (count > 0)
-            Text(
-              AppLocalizations.of(context).t('today_brief'),
-              style: TextStyle(
-                color: textTertiary,
-                fontSize: DesignTokens.fontSizeXs,
+    final ext = AppThemeExtension.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _MagicCallPrimaryButton(
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            AnalyticsService.instance.logEvent(AnalyticsEvents.magicCallTap);
+            context.push(AppRouter.routeCall);
+          },
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  AnalyticsService.instance.logEvent(AnalyticsEvents.consultantCallsTap);
+                  context.push(AppRouter.routeConsultantCalls);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ext.textPrimary,
+                  side: BorderSide(color: ext.borderSubtle),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+                  ),
+                ),
+                icon: const Icon(Icons.call_rounded, size: 18),
+                label: const Text(
+                  'Tüm Çağrılarım',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
-        ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _MagicCallPrimaryButton extends StatelessWidget {
+  const _MagicCallPrimaryButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Semantics(
+      button: true,
+      label: 'Magic Call',
+      child: Material(
+        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+        color: ext.accent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: DesignTokens.space4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.phone_in_talk_rounded, size: 22, color: ext.onBrand),
+                const SizedBox(width: 10),
+                Text(
+                  'Magic Call',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: ext.onBrand,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -254,17 +340,14 @@ class _TodayKpiRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final ext = AppThemeExtension.of(context);
     final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     final textStyleLabel = TextStyle(
-      color: textSecondary,
+      color: ext.textSecondary,
       fontSize: DesignTokens.fontSizeXs,
     );
     final textStyleValue = TextStyle(
-      color: textPrimary,
+      color: ext.textPrimary,
       fontWeight: FontWeight.w700,
       fontSize: DesignTokens.fontSizeMd,
     );
@@ -339,30 +422,33 @@ class _KpiChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final ext = AppThemeExtension.of(context);
     return Container(
+      constraints: const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightKpi),
       padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space3,
-        vertical: DesignTokens.space2,
+        horizontal: DesignTokens.space2,
+        vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: surface.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: border.withValues(alpha: 0.7)),
+        color: ext.surfaceElevated,
+        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+        border: Border.all(color: ext.borderSubtle),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: DesignTokens.primary),
+          Icon(icon, size: 18, color: ext.accent),
           const SizedBox(width: DesignTokens.space2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label, style: labelStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(value, style: valueStyle),
+                Text(
+                  value,
+                  style: valueStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
@@ -378,19 +464,13 @@ class _ConsultantAcademyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
+    final ext = AppThemeExtension.of(context);
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space5),
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: border.withValues(alpha: 0.7)),
+        color: ext.surface,
+        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardL),
+        border: Border.all(color: ext.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,21 +480,22 @@ class _ConsultantAcademyCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(DesignTokens.space3),
                 decoration: BoxDecoration(
-                  color: DesignTokens.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  color: ext.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
                 ),
-                child: const Icon(Icons.workspace_premium_rounded,
-                    color: DesignTokens.primary, size: 22),
+                child: Icon(Icons.workspace_premium_rounded, color: ext.accent, size: 22),
               ),
               const SizedBox(width: DesignTokens.space3),
               Expanded(
                 child: Text(
                   'Yıldız Danışman Akademisi',
                   style: TextStyle(
-                    color: textPrimary,
+                    color: ext.textPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: DesignTokens.fontSizeMd,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -423,7 +504,7 @@ class _ConsultantAcademyCard extends StatelessWidget {
           Text(
             'Bugünün mikro eğitimi: İtiraz karşılama – “Fiyat yüksek”',
             style: TextStyle(
-              color: textSecondary,
+              color: ext.textSecondary,
               fontSize: DesignTokens.fontSizeSm,
               fontWeight: FontWeight.w600,
             ),
@@ -434,19 +515,19 @@ class _ConsultantAcademyCard extends StatelessWidget {
             '2) Aynı bölgedeki örnek satışlarla fiyatı çerçevele.\n'
             '3) Alternatif (daha küçük / farklı bölge) sun.',
             style: TextStyle(
-              color: textTertiary,
+              color: ext.textTertiary,
               fontSize: DesignTokens.fontSizeXs,
               height: 1.4,
             ),
           ),
           const SizedBox(height: DesignTokens.space3),
-          Divider(height: 1, color: border),
+          Divider(height: 1, color: ext.borderSubtle),
           const SizedBox(height: DesignTokens.space2),
           Text(
             'Önerilen aksiyon: Bugün bu script\'i kullanarak en az 3 “kararsız” müşterini tekrar ara. '
             'Notlarını CRM\'e yaz; haftalık değerlendirmede bunlara bakacağız.',
             style: TextStyle(
-              color: textSecondary,
+              color: ext.textSecondary,
               fontSize: DesignTokens.fontSizeXs,
               height: 1.4,
             ),
@@ -460,7 +541,7 @@ class _ConsultantAcademyCard extends StatelessWidget {
                 showModalBottomSheet<void>(
                   context: context,
                   isScrollControlled: true,
-                  backgroundColor: surface,
+                  backgroundColor: ext.surface,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
                   ),
@@ -477,13 +558,13 @@ class _ConsultantAcademyCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.school_rounded, color: DesignTokens.primary, size: 28),
+                              Icon(Icons.school_rounded, color: ext.accent, size: 28),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   'İtiraz karşılama – “Fiyat yüksek”',
                                   style: TextStyle(
-                                    color: textPrimary,
+                                    color: ext.textPrimary,
                                     fontWeight: FontWeight.w800,
                                     fontSize: DesignTokens.fontSizeMd,
                                   ),
@@ -494,17 +575,17 @@ class _ConsultantAcademyCard extends StatelessWidget {
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             'Açılış cümlesi',
-                            style: TextStyle(color: textPrimary, fontWeight: FontWeight.w700, fontSize: 13),
+                            style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w700, fontSize: 13),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             '“Anlıyorum; bütçenizi zorlamadan size uygun seçenekleri birlikte netleştirelim.”',
-                            style: TextStyle(color: textSecondary, fontSize: 13, height: 1.45),
+                            style: TextStyle(color: ext.textSecondary, fontSize: 13, height: 1.45),
                           ),
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             'Adım adım',
-                            style: TextStyle(color: textPrimary, fontWeight: FontWeight.w700, fontSize: 13),
+                            style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w700, fontSize: 13),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -512,7 +593,7 @@ class _ConsultantAcademyCard extends StatelessWidget {
                             '2) Çerçevele: Aynı bölgede son dönem kapanan örnekleri (m² fiyatı) kısaca paylaş.\n\n'
                             '3) Alternatif sun: Daha küçük metrekare veya komşu mahallede 1–2 seçenek öner.\n\n'
                             '4) Sonraki adım: “Yarın aynı saatte iki ilanı yerinde gösterebilir miyim?” diye net randevu iste.',
-                            style: TextStyle(color: textTertiary, fontSize: 12, height: 1.5),
+                            style: TextStyle(color: ext.textTertiary, fontSize: 12, height: 1.5),
                           ),
                           const SizedBox(height: DesignTokens.space5),
                           SizedBox(
@@ -525,8 +606,8 @@ class _ConsultantAcademyCard extends StatelessWidget {
                               icon: const Icon(Icons.phone_in_talk_rounded, size: 20),
                               label: const Text('Magic Call ile uygula'),
                               style: FilledButton.styleFrom(
-                                backgroundColor: DesignTokens.primary,
-                                foregroundColor: DesignTokens.inputTextOnGold,
+                                backgroundColor: ext.accent,
+                                foregroundColor: ext.onBrand,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                             ),
@@ -538,7 +619,7 @@ class _ConsultantAcademyCard extends StatelessWidget {
                 );
               },
               style: TextButton.styleFrom(
-                foregroundColor: DesignTokens.primary,
+                foregroundColor: ext.accent,
               ),
               icon: const Icon(Icons.play_circle_fill_rounded, size: 18),
               label: const Text(
@@ -553,68 +634,6 @@ class _ConsultantAcademyCard extends StatelessWidget {
   }
 }
 
-/// Hızlı aksiyonlar: Magic Call ve Tüm Çağrılar.
-class _QuickActionsRow extends StatelessWidget {
-  const _QuickActionsRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              AnalyticsService.instance.logEvent(AnalyticsEvents.magicCallTap);
-              context.push(AppRouter.routeCall);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: DesignTokens.primary,
-              foregroundColor: DesignTokens.inputTextOnGold,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              ),
-            ),
-            icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
-            label: const Text(
-              'Magic Call',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        const SizedBox(width: DesignTokens.space3),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
-              HapticFeedback.selectionClick();
-              AnalyticsService.instance.logEvent(AnalyticsEvents.consultantCallsTap);
-              context.push(AppRouter.routeConsultantCalls);
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: textPrimary,
-              side: BorderSide(color: border.withValues(alpha: 0.8)),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              ),
-            ),
-            icon: const Icon(Icons.call_rounded, size: 18),
-            label: const Text(
-              'Tüm Çağrılarım',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _WeeklyGoalCard extends ConsumerWidget {
   const _WeeklyGoalCard();
 
@@ -622,12 +641,7 @@ class _WeeklyGoalCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final ext = AppThemeExtension.of(context);
     final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return StreamBuilder<int>(
       stream: FirestoreService.agentWeeklyCallCountStream(uid),
@@ -635,40 +649,51 @@ class _WeeklyGoalCard extends ConsumerWidget {
         final current = snap.data ?? 0;
         final progress = weeklyGoal > 0 ? (current / weeklyGoal).clamp(0.0, 1.0) : 0.0;
         return Container(
-          padding: const EdgeInsets.all(DesignTokens.space4),
+          constraints: const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightOperationalCard),
+          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 10),
           decoration: BoxDecoration(
-            color: surface.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            border: Border.all(color: border.withValues(alpha: 0.5)),
+            color: ext.surfaceElevated,
+            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+            border: Border.all(color: ext.borderSubtle),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Bu hafta',
-                    style: TextStyle(color: textSecondary, fontSize: DesignTokens.fontSizeSm),
+                  Expanded(
+                    child: Text(
+                      'Bu hafta',
+                      style: TextStyle(color: ext.textSecondary, fontSize: DesignTokens.fontSizeSm),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  Text(
-                    '$current / $weeklyGoal çağrı',
-                    style: TextStyle(
-                      color: textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: DesignTokens.fontSizeSm,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      '$current / $weeklyGoal çağrı',
+                      style: TextStyle(
+                        color: ext.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: DesignTokens.fontSizeSm,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: DesignTokens.space2),
+              const SizedBox(height: 6),
               ClipRRect(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                 child: LinearProgressIndicator(
                   value: progress,
-                  minHeight: 6,
-                  backgroundColor: border,
-                  valueColor: const AlwaysStoppedAnimation<Color>(DesignTokens.primary),
+                  minHeight: 5,
+                  backgroundColor: ext.borderSubtle,
+                  valueColor: AlwaysStoppedAnimation<Color>(ext.accent),
                 ),
               ),
             ],
@@ -684,11 +709,7 @@ class _PipelineChampionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final ext = AppThemeExtension.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -696,54 +717,27 @@ class _PipelineChampionCard extends StatelessWidget {
           HapticFeedback.mediumImpact();
           context.push(AppRouter.routePipeline);
         },
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
         child: Container(
-          padding: const EdgeInsets.all(DesignTokens.space5),
+          constraints: const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightInsightCard),
+          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space4),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            border: Border.all(
-              color: DesignTokens.primary.withValues(alpha: 0.35),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: DesignTokens.primary.withValues(alpha: 0.12),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                surface,
-                DesignTokens.primary.withValues(alpha: 0.06),
-              ],
-            ),
+            color: ext.surfaceElevated,
+            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+            border: Border.all(color: ext.border),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(DesignTokens.space4),
+                padding: const EdgeInsets.all(DesignTokens.space3),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: DesignTokens.gradientPrimary,
-                  ),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  boxShadow: [
-                    BoxShadow(
-                      color: DesignTokens.primary.withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: ext.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.account_tree_rounded,
-                  color: DesignTokens.inputTextOnGold,
-                  size: 26,
+                  color: ext.accent,
+                  size: 22,
                 ),
               ),
               const SizedBox(width: DesignTokens.space4),
@@ -755,18 +749,22 @@ class _PipelineChampionCard extends StatelessWidget {
                     Text(
                       'Pipeline',
                       style: TextStyle(
-                        color: textPrimary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: DesignTokens.fontSizeLg,
+                        color: ext.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: DesignTokens.fontSizeMd,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Satış hunisi · Aşamaları yönet',
                       style: TextStyle(
-                        color: textSecondary,
+                        color: ext.textSecondary,
                         fontSize: DesignTokens.fontSizeSm,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -774,7 +772,7 @@ class _PipelineChampionCard extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,
-                color: DesignTokens.primary.withValues(alpha: 0.8),
+                color: ext.textTertiary,
               ),
             ],
           ),
@@ -785,27 +783,31 @@ class _PipelineChampionCard extends StatelessWidget {
 }
 
 class _QuickStatsCard extends StatelessWidget {
-  const _QuickStatsCard({required this.resurrectionAsync});
+  const _QuickStatsCard({
+    required this.resurrectionAsync,
+    this.compact = false,
+  });
 
   final AsyncValue<List<dynamic>> resurrectionAsync;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
+    final ext = AppThemeExtension.of(context);
     final count = resurrectionAsync.valueOrNull?.length ?? 0;
     final isLoading = resurrectionAsync.isLoading;
+    final pad = compact ? DesignTokens.space4 : DesignTokens.space5;
+    final iconBox = compact ? DesignTokens.space2 : DesignTokens.space3;
+    final iconSize = compact ? 20.0 : 24.0;
     return Container(
-      padding: const EdgeInsets.all(DesignTokens.space5),
+      constraints: BoxConstraints(
+        minHeight: compact ? DashboardLayoutTokens.minHeightOperationalCard : DashboardLayoutTokens.minHeightInsightCard,
+      ),
+      padding: EdgeInsets.all(pad),
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: border),
+        color: ext.surface,
+        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+        border: Border.all(color: ext.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -813,18 +815,18 @@ class _QuickStatsCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(DesignTokens.space3),
+                padding: EdgeInsets.all(iconBox),
                 decoration: BoxDecoration(
-                  color: DesignTokens.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  color: ext.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.replay_rounded,
-                  color: DesignTokens.primary,
-                  size: 24,
+                  color: ext.accent,
+                  size: iconSize,
                 ),
               ),
-              const SizedBox(width: DesignTokens.space4),
+              SizedBox(width: compact ? DesignTokens.space3 : DesignTokens.space4),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -832,18 +834,22 @@ class _QuickStatsCard extends StatelessWidget {
                     Text(
                       'Takip listesi',
                       style: TextStyle(
-                        color: textPrimary,
+                        color: ext.textPrimary,
                         fontWeight: FontWeight.w600,
-                        fontSize: DesignTokens.fontSizeMd,
+                        fontSize: compact ? DesignTokens.fontSizeSm : DesignTokens.fontSizeMd,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     if (isLoading)
                       Text(
                         'Takip listesi yükleniyor...',
                         style: TextStyle(
-                          color: textSecondary,
+                          color: ext.textSecondary,
                           fontSize: DesignTokens.fontSizeSm,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       )
                     else
                       Text(
@@ -851,15 +857,22 @@ class _QuickStatsCard extends StatelessWidget {
                             ? 'Şu an takip edilecek lead yok'
                             : '$count lead takip bekliyor',
                         style: TextStyle(
-                          color: textSecondary,
+                          color: ext.textSecondary,
                           fontSize: DesignTokens.fontSizeSm,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                   ],
                 ),
               ),
               if (count > 0)
                 TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: ext.accent,
+                  ),
                   onPressed: () {
                     HapticFeedback.mediumImpact();
                     context.push(AppRouter.routeResurrection);
@@ -868,15 +881,29 @@ class _QuickStatsCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: DesignTokens.space4),
-          Text(
-            'Magic Call ile aradığın müşterilerin özeti otomatik kaydedilir; '
-            'takip sekmesinden sessiz kalan lead\'lere ulaşabilirsin.',
-            style: TextStyle(
-              color: textTertiary,
-              fontSize: DesignTokens.fontSizeXs,
+          if (!compact) ...[
+            const SizedBox(height: DesignTokens.space4),
+            Text(
+              'Magic Call ile aradığın müşterilerin özeti otomatik kaydedilir; '
+              'takip sekmesinden sessiz kalan lead\'lere ulaşabilirsin.',
+              style: TextStyle(
+                color: ext.textTertiary,
+                fontSize: DesignTokens.fontSizeXs,
+              ),
             ),
-          ),
+          ] else ...[
+            const SizedBox(height: 6),
+            Text(
+              'Sessiz kalan lead\'ler için yeniden kazanım.',
+              style: TextStyle(
+                color: ext.textTertiary,
+                fontSize: DesignTokens.fontSizeXs,
+                height: 1.25,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );

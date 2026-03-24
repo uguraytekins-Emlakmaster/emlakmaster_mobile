@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
@@ -9,7 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_router.dart';
-
 /// İlk girişte kullanıcı henüz Firestore'da yoksa gösterilir.
 /// Broker, Gayrimenkul Yatırım Uzmanı, Ofis Müdürü, Danışman vb. seçeneklerinden biri seçilir ve users doc oluşturulur.
 class RoleSelectionPage extends ConsumerStatefulWidget {
@@ -112,9 +112,10 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
     final hasAnyUserAsync = ref.watch(hasAnyUserProvider);
 
     if (user == null) {
-      return const Scaffold(
-        backgroundColor: DesignTokens.scaffoldDark,
-        body: Center(child: CircularProgressIndicator(color: DesignTokens.primary)),
+      final ext = AppThemeExtension.of(context);
+      return Scaffold(
+        backgroundColor: ext.background,
+        body: Center(child: CircularProgressIndicator(color: ext.accent)),
       );
     }
 
@@ -123,17 +124,19 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
         _inviteCheckScheduled = true;
         WidgetsBinding.instance.addPostFrameCallback((_) => _checkAndApplyInvite());
       }
-      return const Scaffold(
-        backgroundColor: DesignTokens.scaffoldDark,
-        body: Center(child: CircularProgressIndicator(color: DesignTokens.primary)),
+      final ext = AppThemeExtension.of(context);
+      return Scaffold(
+        backgroundColor: ext.background,
+        body: Center(child: CircularProgressIndicator(color: ext.accent)),
       );
     }
 
     final includeSuperAdmin = hasAnyUserAsync.valueOrNull == false;
     final roles = _selectableRoles(includeSuperAdmin);
 
+    final ext = AppThemeExtension.of(context);
     return Scaffold(
-      backgroundColor: DesignTokens.scaffoldDark,
+      backgroundColor: ext.background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -146,15 +149,15 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
                     Text(
                       'Hoş geldiniz',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
+                            color: ext.textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Nasıl giriş yapmak istiyorsunuz? Seçtiğiniz rol panele ve yetkilere yansır.',
                       style: TextStyle(
-                        color: Colors.white54,
+                        color: ext.textSecondary,
                         fontSize: 14,
                         height: 1.35,
                       ),
@@ -205,24 +208,24 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: DesignTokens.danger,
+                    style: TextStyle(
+                      color: ext.danger,
                       fontSize: 13,
                     ),
                   ),
                 ),
               ),
             if (_submitting)
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Center(
                     child: SizedBox(
                       width: 28,
                       height: 28,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: DesignTokens.primary,
+                        color: ext.accent,
                       ),
                     ),
                   ),
@@ -275,8 +278,9 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Material(
-      color: DesignTokens.surfaceDarkCard,
+      color: ext.card,
       borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
       child: InkWell(
         onTap: onTap,
@@ -289,10 +293,10 @@ class _RoleCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: DesignTokens.primary.withValues(alpha: 0.15),
+                  color: ext.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                 ),
-                child: Icon(icon, color: DesignTokens.primary, size: 26),
+                child: Icon(icon, color: ext.accent, size: 26),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -301,8 +305,8 @@ class _RoleCard extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: ext.textPrimary,
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
@@ -310,8 +314,8 @@ class _RoleCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: ext.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -319,10 +323,10 @@ class _RoleCard extends StatelessWidget {
                 ),
               ),
               if (onTap != null)
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: Colors.white38,
+                  color: ext.textTertiary,
                 ),
             ],
           ),

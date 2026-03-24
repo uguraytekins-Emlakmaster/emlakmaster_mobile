@@ -1,10 +1,10 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/domain/entities/resurrection_segment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-
 /// Konu başlığına göre yeniden kazanım / sessiz lead paneli (tam sayfa yönlendirme yerine).
 /// [topicTitle]: ekranın konusu — örn. "Takip listesi", "Fırsat radarı", "Yeniden kazanım kuyruğu".
 void showResurrectionLeadTopicSheet(
@@ -14,7 +14,7 @@ void showResurrectionLeadTopicSheet(
 }) {
   final theme = Theme.of(context);
   final isDark = theme.brightness == Brightness.dark;
-  final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
+  final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
   final fg = theme.colorScheme.onSurface;
   final muted = fg.withValues(alpha: 0.72);
 
@@ -53,8 +53,8 @@ void showResurrectionLeadTopicSheet(
                 ),
                 Text(
                   topicTitle,
-                  style: const TextStyle(
-                    color: DesignTokens.primary,
+                  style: TextStyle(
+                    color: AppThemeExtension.of(context).accent,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.6,
@@ -103,10 +103,10 @@ void showResurrectionLeadTopicSheet(
                     await Clipboard.setData(ClipboardData(text: draft));
                     if (ctx.mounted) {
                       ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(
-                          content: Text('Taslak panoya kopyalandı'),
+                        SnackBar(
+                          content: const Text('Taslak panoya kopyalandı'),
                           behavior: SnackBarBehavior.floating,
-                          backgroundColor: DesignTokens.primary,
+                          backgroundColor: AppThemeExtension.of(context).accent,
                         ),
                       );
                     }
@@ -131,8 +131,8 @@ void showResurrectionLeadTopicSheet(
                   icon: const Icon(Icons.phone_in_talk_rounded, size: 20),
                   label: const Text('Hemen ara (Magic Call)'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: DesignTokens.primary,
-                    foregroundColor: DesignTokens.inputTextOnGold,
+                    backgroundColor: AppThemeExtension.of(context).accent,
+                    foregroundColor: AppThemeExtension.of(context).onBrand,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -144,9 +144,9 @@ void showResurrectionLeadTopicSheet(
                       AppRouter.routeCustomerDetail.replaceFirst(':id', item.customerId),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     'Tam müşteri kartını aç',
-                    style: TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppThemeExtension.of(context).accent, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],

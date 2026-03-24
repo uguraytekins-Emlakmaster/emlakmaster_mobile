@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -7,7 +8,6 @@ import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Dashboard: "Missed Opportunities" – kaçırılmış fırsatlar.
 class MissedOpportunitiesPanel extends ConsumerWidget {
   const MissedOpportunitiesPanel({super.key});
@@ -22,21 +22,21 @@ class MissedOpportunitiesPanel extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
       decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
+        color: AppThemeExtension.of(context).surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.danger.withValues(alpha: 0.3)),
+        border: Border.all(color: AppThemeExtension.of(context).danger.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.money_off_rounded, color: DesignTokens.danger, size: 22),
+              Icon(Icons.money_off_rounded, color: AppThemeExtension.of(context).danger, size: 22),
               const SizedBox(width: DesignTokens.space2),
               Text(
                 'Kaçırılan fırsatlar',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
+                      color: AppThemeExtension.of(context).textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -46,11 +46,11 @@ class MissedOpportunitiesPanel extends ConsumerWidget {
           async.when(
             data: (items) {
               if (items.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     'Kaçırılmış fırsat tespiti yok.',
-                    style: TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+                    style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
                   ),
                 );
               }
@@ -97,15 +97,15 @@ class _MissedTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         radius: 16,
-        backgroundColor: DesignTokens.danger.withValues(alpha: 0.2),
+        backgroundColor: AppThemeExtension.of(context).danger.withValues(alpha: 0.2),
         child: Text(
           '${(item.score * 100).toInt()}',
-          style: const TextStyle(color: DesignTokens.danger, fontSize: 10, fontWeight: FontWeight.w700),
+          style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 10, fontWeight: FontWeight.w700),
         ),
       ),
       title: Text(
         item.reason ?? 'Fırsat',
-        style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: 12),
+        style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: 12),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),

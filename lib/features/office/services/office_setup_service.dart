@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
+import 'package:emlakmaster_mobile/core/dev/dev_office_fallback.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -26,15 +28,21 @@ class OfficeSetupService {
     required User user,
     required String officeName,
   }) async {
+    DevOfficeFallback.resetLastCreateFlag();
+
     final uid = user.uid;
     final existing = await UserRepository.getUserDoc(uid);
     if (existing?.officeId != null && existing!.officeId!.isNotEmpty) {
       return existing.officeId!;
     }
 
-    final name = officeName.trim();
+    var name = officeName.trim();
     if (name.isEmpty) {
-      throw OfficeException(OfficeErrorCode.unknown, 'Ofis adı gerekli.');
+      if (isDevMode) {
+        name = 'Rainbow';
+      } else {
+        throw OfficeException(OfficeErrorCode.unknown, 'Ofis adı gerekli.');
+      }
     }
 
     final officeRef = _db.collection(AppConstants.colOffices).doc();
@@ -74,11 +82,21 @@ class OfficeSetupService {
     try {
       await batch.commit();
     } catch (e, st) {
+      AppLogger.e('OFFICE CREATE ERROR', e, st);
+      if (isDevMode) {
+        DevOfficeFallback.activate(officeName: name);
+        DevOfficeFallback.markUsedFallback();
+        return kLocalDevOfficeId;
+      }
       if (kDebugMode) AppLogger.e('OfficeSetupService.createOfficeAsOwner', e, st);
       throw OfficeException(OfficeErrorCode.network, 'Ofis oluşturulamadı. Bağlantınızı kontrol edin.', e);
     }
     return officeId;
   }
+
+  /// UI: son [createOfficeAsOwner] çağrısı yerel moda düştü mü?
+  static bool get usedDevFallbackOnLastCreate =>
+      isDevMode && DevOfficeFallback.usedFallbackOnLastCreate;
 
   /// Davet kodu ile katıl — transaction.
   static Future<void> joinOfficeWithInviteCode({

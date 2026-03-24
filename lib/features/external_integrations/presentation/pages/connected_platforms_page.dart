@@ -42,6 +42,8 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         'Bağlı platformlar',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: ext.foreground,
                               fontWeight: FontWeight.w800,
@@ -70,7 +72,10 @@ class ConnectedPlatformsPage extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     TextButton.icon(
                       onPressed: () {
@@ -78,16 +83,35 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                         context.push(AppRouter.routeImportHub);
                       },
                       icon: const Icon(Icons.upload_file_rounded, size: 18),
-                      label: const Text('İçe aktarma merkezi'),
+                      label: const Text(
+                        'İçe aktarma merkezi',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        context.push(AppRouter.routeMyListings);
+                      },
+                      icon: const Icon(Icons.library_add_check_rounded, size: 18),
+                      label: const Text(
+                        'İçe aktarılanlar',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     TextButton.icon(
                       onPressed: () {
                         HapticFeedback.selectionClick();
                         context.push(AppRouter.routeMyExternalListings);
                       },
                       icon: const Icon(Icons.home_work_outlined, size: 18),
-                      label: const Text('Harici ilanlarım'),
+                      label: const Text(
+                        'Harici ilanlarım',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),

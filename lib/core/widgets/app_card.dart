@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
-
 /// Ortak premium kart yüzeyi. Tüm kritik kart tipleri bunun üzerine inşa edilebilir.
 class AppCard extends StatelessWidget {
   const AppCard({
@@ -100,7 +99,7 @@ class _AnimatedSurfaceState extends State<_AnimatedSurface> {
         : const <BoxShadow>[];
 
     final borderColor = _hovering && interactive
-        ? DesignTokens.primary.withValues(alpha: 0.5)
+        ? ext.accent.withValues(alpha: 0.5)
         : baseBorder;
 
     Widget surface = AnimatedContainer(

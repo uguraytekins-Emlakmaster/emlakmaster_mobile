@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -14,13 +15,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 /// Dashboard: "Bugün keşfedilen fırsatlar" — geniş başlık, yarım daire skor göstergesi, madde detayları.
 class DiscoveryPanel extends ConsumerWidget {
   const DiscoveryPanel({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
     final role = ref.watch(displayRoleOrNullProvider);
     if (role == null || !FeaturePermission.canViewOpportunityRadar(role)) {
       return const SizedBox.shrink();
@@ -35,7 +36,7 @@ class DiscoveryPanel extends ConsumerWidget {
         DesignTokens.space4,
         DesignTokens.space3,
       ),
-      decoration: DesignTokens.dashboardCardDecoration(),
+      decoration: ext.surfaceCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -44,17 +45,17 @@ class DiscoveryPanel extends ConsumerWidget {
           async.when(
             data: (items) {
               if (items.isEmpty) {
-                return const Column(
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Text(
                         'Bu eşikte fırsat yok. Detay listesinde daha düşük skorluları görebilirsiniz.',
-                        style: TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+                        style: TextStyle(color: ext.textSecondary, fontSize: 12),
                       ),
                     ),
-                    _OpportunityRadarTeaser(),
+                    const _OpportunityRadarTeaser(),
                   ],
                 );
               }
@@ -124,6 +125,7 @@ class _DiscoveryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final progress = AppConstants.opportunityRadarMinScore.clamp(0.0, 1.0);
 
     return Row(
@@ -131,10 +133,10 @@ class _DiscoveryHeader extends StatelessWidget {
       children: [
         Column(
           children: [
-            const Icon(Icons.auto_awesome_rounded, color: DesignTokens.antiqueGold, size: 26),
+            Icon(Icons.auto_awesome_rounded, color: ext.accent, size: 26),
             Transform.translate(
               offset: const Offset(10, -6),
-              child: const Icon(Icons.auto_awesome_rounded, color: DesignTokens.antiqueGold, size: 18),
+              child: Icon(Icons.auto_awesome_rounded, color: ext.accent, size: 18),
             ),
           ],
         ),
@@ -146,17 +148,17 @@ class _DiscoveryHeader extends StatelessWidget {
               Text(
                 'Bugün keşfedilen fırsatlar',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
+                      color: ext.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 17,
                       height: 1.25,
                     ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Yüksek skor eşiğindeki segmentler',
                 style: TextStyle(
-                  color: DesignTokens.textTertiaryDark,
+                  color: ext.textTertiary,
                   fontSize: 12,
                   height: 1.2,
                 ),
@@ -169,7 +171,7 @@ class _DiscoveryHeader extends StatelessWidget {
           progress: progress,
           label: '$minScorePercent+',
           size: 88,
-          trackColor: DesignTokens.borderDark,
+          trackColor: ext.borderSubtle,
         ),
       ],
     );
@@ -193,6 +195,7 @@ class SemicircleScoreGauge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final labelSize = size < 60 ? 11.0 : 15.0;
     return SizedBox(
       width: size,
@@ -200,7 +203,9 @@ class SemicircleScoreGauge extends StatelessWidget {
       child: CustomPaint(
         painter: _SemicircleGaugePainter(
           progress: progress.clamp(0.0, 1.0),
-          trackColor: trackColor ?? DesignTokens.borderDark,
+          trackColor: trackColor ?? ext.borderSubtle,
+          warningColor: ext.warning,
+          successColor: ext.success,
         ),
         child: Align(
           alignment: Alignment.bottomCenter,
@@ -209,7 +214,7 @@ class SemicircleScoreGauge extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: DesignTokens.success,
+                color: ext.success,
                 fontSize: labelSize,
                 fontWeight: FontWeight.w800,
                 height: 1,
@@ -226,13 +231,14 @@ class _SemicircleGaugePainter extends CustomPainter {
   _SemicircleGaugePainter({
     required this.progress,
     required this.trackColor,
+    required this.warningColor,
+    required this.successColor,
   });
 
   final double progress;
   final Color trackColor;
-
-  static const Color _yellow = Color(0xFFF9A825);
-  static const Color _green = Color(0xFF2E7D32);
+  final Color warningColor;
+  final Color successColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -262,12 +268,13 @@ class _SemicircleGaugePainter extends CustomPainter {
     if (prog <= 0) return;
 
     final rect = Rect.fromCircle(center: center, radius: radius);
-    final grad = const SweepGradient(
+    final mid = Color.lerp(warningColor, successColor, 0.5)!;
+    final grad = SweepGradient(
       startAngle: math.pi,
       colors: [
-        _yellow,
-        Color(0xFF8BC34A),
-        _green,
+        warningColor,
+        mid,
+        successColor,
       ],
     ).createShader(rect);
 
@@ -288,7 +295,10 @@ class _SemicircleGaugePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SemicircleGaugePainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.trackColor != trackColor;
+    return oldDelegate.progress != progress ||
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.warningColor != warningColor ||
+        oldDelegate.successColor != successColor;
   }
 }
 
@@ -347,6 +357,7 @@ class _DiscoveryOpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final bullets = _bulletsFor(item);
 
     return Padding(
@@ -354,9 +365,12 @@ class _DiscoveryOpportunityCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(DesignTokens.space3),
         decoration: BoxDecoration(
-          color: DesignTokens.surfaceDarkCard.withValues(alpha: 0.85),
+          color: Color.alphaBlend(
+            ext.surfaceElevated.withValues(alpha: 0.85),
+            ext.surface,
+          ),
           borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),
-          border: Border.all(color: DesignTokens.success.withValues(alpha: 0.22)),
+          border: Border.all(color: ext.success.withValues(alpha: 0.22)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,8 +381,8 @@ class _DiscoveryOpportunityCard extends StatelessWidget {
                 children: [
                   Text(
                     item.title ?? 'Fırsat',
-                    style: const TextStyle(
-                      color: DesignTokens.textPrimaryDark,
+                    style: TextStyle(
+                      color: ext.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -379,8 +393,8 @@ class _DiscoveryOpportunityCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       item.subtitle!,
-                      style: const TextStyle(
-                        color: DesignTokens.textSecondaryDark,
+                      style: TextStyle(
+                        color: ext.textSecondary,
                         fontSize: 12,
                         height: 1.25,
                       ),
@@ -394,10 +408,10 @@ class _DiscoveryOpportunityCard extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             '• ',
                             style: TextStyle(
-                              color: DesignTokens.success,
+                              color: ext.success,
                               fontSize: 13,
                               height: 1.35,
                               fontWeight: FontWeight.w700,
@@ -406,8 +420,8 @@ class _DiscoveryOpportunityCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               line,
-                              style: const TextStyle(
-                                color: DesignTokens.textSecondaryDark,
+                              style: TextStyle(
+                                color: ext.textSecondary,
                                 fontSize: 12,
                                 height: 1.35,
                               ),
@@ -425,7 +439,7 @@ class _DiscoveryOpportunityCard extends StatelessWidget {
               progress: item.score.clamp(0.0, 1.0),
               label: '${(item.score * 100).round()}+',
               size: 52,
-              trackColor: DesignTokens.borderDark,
+              trackColor: ext.borderSubtle,
             ),
           ],
         ),
@@ -440,6 +454,7 @@ class _OpportunityRadarTeaser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -456,11 +471,11 @@ class _OpportunityRadarTeaser extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),
-            border: Border.all(color: DesignTokens.success.withValues(alpha: 0.35)),
+            border: Border.all(color: ext.success.withValues(alpha: 0.35)),
             gradient: LinearGradient(
               colors: [
-                DesignTokens.success.withValues(alpha: 0.12),
-                DesignTokens.surfaceDark.withValues(alpha: 0.3),
+                ext.success.withValues(alpha: 0.12),
+                ext.surface.withValues(alpha: 0.3),
               ],
             ),
           ),
@@ -468,7 +483,7 @@ class _OpportunityRadarTeaser extends StatelessWidget {
             children: [
               Icon(
                 Icons.radar_rounded,
-                color: DesignTokens.success.withValues(alpha: 0.95),
+                color: ext.success.withValues(alpha: 0.95),
                 size: 22,
               ),
               const SizedBox(width: DesignTokens.space3),
@@ -479,7 +494,7 @@ class _OpportunityRadarTeaser extends StatelessWidget {
                     Text(
                       'Fırsat radarı',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: DesignTokens.success,
+                            color: ext.success,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                           ),
@@ -488,7 +503,7 @@ class _OpportunityRadarTeaser extends StatelessWidget {
                     Text(
                       'Lead sıcaklığı, yeniden kazanım ve derin analiz — War Room',
                       style: TextStyle(
-                        color: DesignTokens.textTertiaryDark.withValues(alpha: 0.95),
+                        color: ext.textTertiary.withValues(alpha: 0.95),
                         fontSize: 11,
                         height: 1.25,
                       ),
@@ -498,7 +513,7 @@ class _OpportunityRadarTeaser extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: DesignTokens.success.withValues(alpha: 0.75),
+                color: ext.success.withValues(alpha: 0.75),
                 size: 22,
               ),
             ],

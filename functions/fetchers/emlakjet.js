@@ -1,4 +1,4 @@
-const axios = require("axios");
+const { getAxios } = require("../httpClient");
 const cheerio = require("cheerio");
 
 /**
@@ -10,7 +10,7 @@ async function fetchEmlakjet(cityCode, cityName, districtName) {
   try {
     const citySlug = cityName.toLowerCase().replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c").replace(/\s+/g, "-");
     const url = `https://www.emlakjet.com/satilik-konut/${citySlug}/`;
-    const { data: html } = await axios.get(url, {
+    const { data: html } = await getAxios().get(url, {
       timeout: 15000,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; EmlakMaster/1.0)",

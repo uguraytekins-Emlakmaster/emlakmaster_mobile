@@ -1,6 +1,8 @@
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/platform/file_stub.dart'
     if (dart.library.io) 'dart:io' as io;
+import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_provider.dart';
+import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:emlakmaster_mobile/core/constants/turkish_cities.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
@@ -45,13 +47,19 @@ class _ListingDisplaySettingsSectionState
         imageQuality: 85,
       );
       if (x == null || !mounted) return;
-      final String url;
+      final String? url;
       if (kIsWeb) {
         final bytes = await x.readAsBytes();
         url = await LogoStorageService.instance.uploadLogoBytes(bytes);
       } else {
         final file = io.File(x.path);
         url = await LogoStorageService.instance.uploadLogo(file);
+      }
+      if (url == null || url.isEmpty) {
+        if (mounted) {
+          AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
+        }
+        return;
       }
       final settings = ref.read(listingDisplaySettingsProvider).valueOrNull ??
           const ListingDisplaySettingsEntity();
@@ -62,10 +70,11 @@ class _ListingDisplaySettingsSectionState
       }
     } catch (e) {
       if (mounted) {
-        final msg = e.toString().contains('storage') || e.toString().contains('Storage')
-            ? 'Firebase Storage açılmamış olabilir. Konsoldan Storage\'ı başlatın.'
-            : 'Logo yüklenemedi: $e';
-        AppToaster.error(context, msg);
+        if (FirebaseStorageAvailability.isUnavailableError(e)) {
+          AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
+        } else {
+          AppToaster.error(context, 'Logo yüklenemedi: $e');
+        }
       }
     }
   }
@@ -74,12 +83,18 @@ class _ListingDisplaySettingsSectionState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark.withValues(alpha: 0.5) : DesignTokens.borderLight;
+    final surface = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final border = isDark ? AppThemeExtension.of(context).border.withValues(alpha: 0.5) : AppThemeExtension.of(context).border;
     final onSurface = theme.colorScheme.onSurface;
     final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     final onSurfaceDim = onSurface.withValues(alpha: 0.5);
     final async = ref.watch(listingDisplaySettingsProvider);
+    final storageAsync = ref.watch(firebaseStorageAvailableProvider);
+    final storageOk = storageAsync.when(
+      data: (ok) => ok,
+      loading: () => true,
+      error: (_, __) => false,
+    );
     return async.when(
       data: (settings) {
         if (_companyController.text != settings.companyName) {
@@ -116,7 +131,7 @@ class _ListingDisplaySettingsSectionState
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.location_city_rounded, color: DesignTokens.primary),
+                leading: Icon(Icons.location_city_rounded, color: AppThemeExtension.of(context).accent),
                 title: Text('Şehir', style: TextStyle(color: onSurface)),
                 subtitle: Text(
                   settings.cityName,
@@ -126,7 +141,7 @@ class _ListingDisplaySettingsSectionState
                 onTap: () => _showCityPicker(context, ref, settings),
               ),
               ListTile(
-                leading: const Icon(Icons.map_rounded, color: DesignTokens.primary),
+                leading: Icon(Icons.map_rounded, color: AppThemeExtension.of(context).accent),
                 title: Text('İlçe', style: TextStyle(color: onSurface)),
                 subtitle: Text(
                   settings.districtName ?? 'Tümü',
@@ -148,7 +163,7 @@ class _ListingDisplaySettingsSectionState
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: DesignTokens.primary),
+                      borderSide: BorderSide(color: AppThemeExtension.of(context).accent),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -168,16 +183,22 @@ class _ListingDisplaySettingsSectionState
                           fit: BoxFit.cover,
                           placeholder: (_, __) => const ShimmerPlaceholder(width: 40, height: 40),
                           errorWidget: (_, __, ___) =>
-                              const Icon(Icons.business_rounded, color: DesignTokens.primary),
+                              Icon(Icons.business_rounded, color: AppThemeExtension.of(context).accent),
                         ),
                       )
-                    : const Icon(Icons.business_rounded, color: DesignTokens.primary),
+                    : Icon(Icons.business_rounded, color: AppThemeExtension.of(context).accent),
                 title: Text('Ofis logosu', style: TextStyle(color: onSurface)),
                 subtitle: Text(
-                  'Galeriden logo seçin (sahibinden/emlakjet bölge ile kullanılır)',
+                  storageOk
+                      ? 'Galeriden logo seçin (sahibinden/emlakjet bölge ile kullanılır)'
+                      : '${FirebaseStorageAvailability.unavailableMessage} '
+                          '(logo yüklemesi şimdilik kapalı.)',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: Icon(Icons.chevron_right_rounded, color: onSurfaceVariant),
+                enabled: storageOk,
                 onTap: _pickAndUploadLogo,
               ),
               const SizedBox(height: 8),
@@ -187,10 +208,10 @@ class _ListingDisplaySettingsSectionState
       },
       loading: () => ListTile(
         title: Text('İlan kaynakları & ofis', style: TextStyle(color: onSurface)),
-        trailing: const SizedBox(
+        trailing: SizedBox(
           width: 24,
           height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent),
         ),
       ),
       error: (e, _) => ListTile(
@@ -209,8 +230,8 @@ class _ListingDisplaySettingsSectionState
       BuildContext context, WidgetRef ref, ListingDisplaySettingsEntity settings) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final sheetBg = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final sheetBg = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final textColor = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: sheetBg,
@@ -235,7 +256,7 @@ class _ListingDisplaySettingsSectionState
                   final selected = code == settings.cityCode;
                   return ListTile(
                     title: Text(name, style: TextStyle(color: textColor)),
-                    trailing: selected ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
+                    trailing: selected ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent) : null,
                     onTap: () async {
                       await ListingDisplaySettingsRepository.set(settings.copyWith(
                         cityCode: code,
@@ -258,8 +279,8 @@ class _ListingDisplaySettingsSectionState
       BuildContext context, WidgetRef ref, ListingDisplaySettingsEntity settings) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final sheetBg = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final sheetBg = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final textColor = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
     final districts = TurkishCities.districtsFor(settings.cityCode);
     showModalBottomSheet<void>(
       context: context,
@@ -278,7 +299,7 @@ class _ListingDisplaySettingsSectionState
             ListTile(
               title: Text('Tümü', style: TextStyle(color: textColor)),
               trailing: settings.districtName == null
-                  ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
+                  ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
                   : null,
               onTap: () async {
                 await ListingDisplaySettingsRepository.set(
@@ -290,7 +311,7 @@ class _ListingDisplaySettingsSectionState
               final selected = settings.districtName == d;
               return ListTile(
                 title: Text(d, style: TextStyle(color: textColor)),
-                trailing: selected ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
+                trailing: selected ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent) : null,
                 onTap: () async {
                   await ListingDisplaySettingsRepository.set(
                       settings.copyWith(districtName: d, districtCode: d));

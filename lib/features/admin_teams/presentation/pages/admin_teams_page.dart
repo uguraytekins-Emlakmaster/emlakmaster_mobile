@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -10,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'admin_team_detail_page.dart';
-
 /// Admin → Ekip listesi: ekipler, yeni ekip, detaya geçiş.
 class AdminTeamsPage extends ConsumerWidget {
   const AdminTeamsPage({super.key});
@@ -20,11 +20,11 @@ class AdminTeamsPage extends ConsumerWidget {
     final currentRole = ref.watch(currentRoleOrNullProvider) ?? AppRole.guest;
     if (!FeaturePermission.canManageTeams(currentRole)) {
       return Scaffold(
-        backgroundColor: DesignTokens.backgroundDark,
+        backgroundColor: AppThemeExtension.of(context).background,
         appBar: emlakAppBar(
           context,
-          backgroundColor: DesignTokens.backgroundDark,
-          foregroundColor: DesignTokens.textPrimaryDark,
+          backgroundColor: AppThemeExtension.of(context).background,
+          foregroundColor: AppThemeExtension.of(context).textPrimary,
           title: Text(AppLocalizations.of(context).t('title_admin_teams')),
         ),
         body: Center(
@@ -32,8 +32,8 @@ class AdminTeamsPage extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             child: Text(
               AppLocalizations.of(context).t('access_denied'),
-              style: const TextStyle(
-                color: DesignTokens.textSecondaryDark,
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textSecondary,
                 fontSize: DesignTokens.fontSizeSm,
               ),
               textAlign: TextAlign.center,
@@ -46,11 +46,11 @@ class AdminTeamsPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: DesignTokens.backgroundDark,
-        foregroundColor: DesignTokens.textPrimaryDark,
+        backgroundColor: AppThemeExtension.of(context).background,
+        foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: Text(l10n.t('title_admin_teams')),
         actions: [
           IconButton(
@@ -72,7 +72,7 @@ class AdminTeamsPage extends ConsumerWidget {
                   children: [
                     Text(
                       snapshot.error.toString(),
-                      style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeSm),
+                      style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: DesignTokens.space3),
@@ -86,8 +86,8 @@ class AdminTeamsPage extends ConsumerWidget {
             );
           }
           if (!snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: DesignTokens.primary),
+            return Center(
+              child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
             );
           }
           final teams = snapshot.data!;
@@ -98,12 +98,12 @@ class AdminTeamsPage extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.groups_rounded, size: 64, color: DesignTokens.textTertiaryDark),
+                    Icon(Icons.groups_rounded, size: 64, color: AppThemeExtension.of(context).textTertiary),
                     const SizedBox(height: DesignTokens.space4),
                     Text(
                       l10n.t('empty_teams_title'),
-                      style: const TextStyle(
-                        color: DesignTokens.textPrimaryDark,
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textPrimary,
                         fontSize: DesignTokens.fontSizeLg,
                         fontWeight: FontWeight.w600,
                       ),
@@ -112,8 +112,8 @@ class AdminTeamsPage extends ConsumerWidget {
                     const SizedBox(height: DesignTokens.space2),
                     Text(
                       l10n.t('empty_teams_subtitle'),
-                      style: const TextStyle(
-                        color: DesignTokens.textSecondaryDark,
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textSecondary,
                         fontSize: DesignTokens.fontSizeSm,
                       ),
                       textAlign: TextAlign.center,
@@ -124,8 +124,8 @@ class AdminTeamsPage extends ConsumerWidget {
                       icon: const Icon(Icons.add_rounded, size: 20),
                       label: Text(l10n.t('action_add_team')),
                       style: FilledButton.styleFrom(
-                        backgroundColor: DesignTokens.primary,
-                        foregroundColor: DesignTokens.brandWhite,
+                        backgroundColor: AppThemeExtension.of(context).accent,
+                        foregroundColor: AppThemeExtension.of(context).onAccentLight,
                       ),
                     ),
                   ],
@@ -155,8 +155,8 @@ class AdminTeamsPage extends ConsumerWidget {
                 bottom: DesignTokens.space4,
                 child: FloatingActionButton(
                   onPressed: () => _showCreateTeamDialog(context, ref),
-                  backgroundColor: DesignTokens.primary,
-                  child: const Icon(Icons.add_rounded, color: DesignTokens.brandWhite),
+                  backgroundColor: AppThemeExtension.of(context).accent,
+                  child: Icon(Icons.add_rounded, color: AppThemeExtension.of(context).onAccentLight),
                 ),
               ),
             ],
@@ -180,8 +180,8 @@ class AdminTeamsPage extends ConsumerWidget {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-              backgroundColor: DesignTokens.surfaceDark,
-              title: Text(l10n.t('action_add_team'), style: const TextStyle(color: DesignTokens.textPrimaryDark)),
+              backgroundColor: AppThemeExtension.of(context).surface,
+              title: Text(l10n.t('action_add_team'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -190,12 +190,12 @@ class AdminTeamsPage extends ConsumerWidget {
                     TextField(
                       decoration: InputDecoration(
                         labelText: l10n.t('label_team_name'),
-                        labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
+                        labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
                         border: const OutlineInputBorder(),
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
-                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.primary)),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).accent)),
                       ),
-                      style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                      style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
                       onChanged: (v) => name = v.trim(),
                     ),
                     const SizedBox(height: DesignTokens.space4),
@@ -204,15 +204,15 @@ class AdminTeamsPage extends ConsumerWidget {
                       decoration: InputDecoration(
                         labelText: l10n.t('label_manager'),
                         border: const OutlineInputBorder(),
-                        enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                       ),
-                      dropdownColor: DesignTokens.surfaceDark,
+                      dropdownColor: AppThemeExtension.of(context).surface,
                       items: managers
                           .map((u) => DropdownMenuItem(
                                 value: u.uid,
                                 child: Text(
                                   u.name ?? u.email ?? u.uid,
-                                  style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                                  style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ))
@@ -225,7 +225,7 @@ class AdminTeamsPage extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text(l10n.t('cancel'), style: const TextStyle(color: DesignTokens.textSecondaryDark)),
+                  child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary)),
                 ),
                 FilledButton(
                   onPressed: () async {
@@ -241,7 +241,7 @@ class AdminTeamsPage extends ConsumerWidget {
                       }
                     }
                   },
-                  style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
                   child: Text(l10n.t('save')),
                 ),
               ],
@@ -263,23 +263,23 @@ class _TeamListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: DesignTokens.space3),
-      color: DesignTokens.surfaceDark,
+      color: AppThemeExtension.of(context).surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusLg)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
         leading: CircleAvatar(
-          backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
-          child: const Icon(Icons.groups_rounded, color: DesignTokens.primary),
+          backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+          child: Icon(Icons.groups_rounded, color: AppThemeExtension.of(context).accent),
         ),
         title: Text(
           team.name,
-          style: const TextStyle(color: DesignTokens.textPrimaryDark, fontWeight: FontWeight.w600),
+          style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           '${AppLocalizations.of(context).t('label_members')}: ${team.memberIds.length}',
-          style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeSm),
+          style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: DesignTokens.textTertiaryDark),
+        trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppThemeExtension.of(context).textTertiary),
         onTap: onTap,
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -6,7 +7,6 @@ import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:flutter/material.dart';
-
 /// Ekip detay: ad, manager seçimi, üye listesi, üye ekle / ekipten çıkar.
 class AdminTeamDetailPage extends StatefulWidget {
   const AdminTeamDetailPage({super.key, required this.teamId});
@@ -25,19 +25,19 @@ class _AdminTeamDetailPageState extends State<AdminTeamDetailPage> {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: DesignTokens.backgroundDark,
-        foregroundColor: DesignTokens.textPrimaryDark,
+        backgroundColor: AppThemeExtension.of(context).background,
+        foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: Text(l10n.t('title_team_detail')),
       ),
       body: StreamBuilder<TeamDoc?>(
         stream: FirestoreService.teamDocStream(widget.teamId),
         builder: (context, teamSnap) {
           if (!teamSnap.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: DesignTokens.primary),
+            return Center(
+              child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
             );
           }
           final team = teamSnap.data;
@@ -45,7 +45,7 @@ class _AdminTeamDetailPageState extends State<AdminTeamDetailPage> {
             return Center(
               child: Text(
                 l10n.t('team_not_found'),
-                style: const TextStyle(color: DesignTokens.textSecondaryDark),
+                style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
               ),
             );
           }
@@ -111,7 +111,7 @@ class _TeamInfoCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     return Card(
-      color: DesignTokens.surfaceDark,
+      color: AppThemeExtension.of(context).surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusLg)),
       child: Padding(
         padding: const EdgeInsets.all(DesignTokens.space5),
@@ -120,8 +120,8 @@ class _TeamInfoCard extends StatelessWidget {
           children: [
             Text(
               team.name,
-              style: const TextStyle(
-                color: DesignTokens.textPrimaryDark,
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textPrimary,
                 fontSize: DesignTokens.fontSizeLg,
                 fontWeight: FontWeight.w600,
               ),
@@ -138,15 +138,15 @@ class _TeamInfoCard extends StatelessWidget {
                   decoration: InputDecoration(
                     labelText: l10n.t('label_manager'),
                     border: const OutlineInputBorder(),
-                    enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: DesignTokens.borderDark)),
+                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                   ),
-                  dropdownColor: DesignTokens.surfaceDark,
+                  dropdownColor: AppThemeExtension.of(context).surface,
                   items: managers
                       .map((u) => DropdownMenuItem(
                             value: u.uid,
                             child: Text(
                               u.name ?? u.email ?? u.uid,
-                              style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                              style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ))
@@ -160,7 +160,7 @@ class _TeamInfoCard extends StatelessWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: onSaveManager,
-                style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+                style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
                 child: Text(l10n.t('save')),
               ),
             ),
@@ -182,7 +182,7 @@ class _MembersCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     return Card(
-      color: DesignTokens.surfaceDark,
+      color: AppThemeExtension.of(context).surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusLg)),
       child: Padding(
         padding: const EdgeInsets.all(DesignTokens.space5),
@@ -194,16 +194,16 @@ class _MembersCard extends StatelessWidget {
               children: [
                 Text(
                   l10n.t('label_members'),
-                  style: const TextStyle(
-                    color: DesignTokens.textPrimaryDark,
+                  style: TextStyle(
+                    color: AppThemeExtension.of(context).textPrimary,
                     fontSize: DesignTokens.fontSizeMd,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 TextButton.icon(
                   onPressed: () => _showAddMemberDialog(context, teamId),
-                  icon: const Icon(Icons.person_add_rounded, size: 18, color: DesignTokens.primary),
-                  label: Text(l10n.t('action_add_member'), style: const TextStyle(color: DesignTokens.primary)),
+                  icon: Icon(Icons.person_add_rounded, size: 18, color: AppThemeExtension.of(context).accent),
+                  label: Text(l10n.t('action_add_member'), style: TextStyle(color: AppThemeExtension.of(context).accent)),
                 ),
               ],
             ),
@@ -212,7 +212,7 @@ class _MembersCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
                 child: Text(
                   l10n.t('empty_team_members'),
-                  style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeSm),
+                  style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
                 ),
               )
             else
@@ -247,8 +247,8 @@ class _MembersCard extends StatelessWidget {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-              backgroundColor: DesignTokens.surfaceDark,
-              title: Text(l10n.t('action_add_member'), style: const TextStyle(color: DesignTokens.textPrimaryDark)),
+              backgroundColor: AppThemeExtension.of(context).surface,
+              title: Text(l10n.t('action_add_member'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView.builder(
@@ -261,15 +261,15 @@ class _MembersCard extends StatelessWidget {
                       value: isSelected,
                       title: Text(
                         u.name ?? u.email ?? u.uid,
-                        style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                        style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
                         overflow: TextOverflow.ellipsis,
                       ),
                       subtitle: Text(
                         u.email ?? u.role,
-                        style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+                        style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      activeColor: DesignTokens.primary,
+                      activeColor: AppThemeExtension.of(context).accent,
                       onChanged: (v) {
                         setState(() {
                           if (v == true) {
@@ -286,7 +286,7 @@ class _MembersCard extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text(l10n.t('cancel'), style: const TextStyle(color: DesignTokens.textSecondaryDark)),
+                  child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary)),
                 ),
                 FilledButton(
                   onPressed: () async {
@@ -295,7 +295,7 @@ class _MembersCard extends StatelessWidget {
                     }
                     if (ctx.mounted) Navigator.of(ctx).pop();
                   },
-                  style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
                   child: Text(l10n.t('save')),
                 ),
               ],
@@ -325,18 +325,18 @@ class _MemberTile extends StatelessWidget {
         return ListTile(
           contentPadding: EdgeInsets.zero,
           leading: CircleAvatar(
-            backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
-            child: const Icon(Icons.person_rounded, color: DesignTokens.primary, size: 20),
+            backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+            child: Icon(Icons.person_rounded, color: AppThemeExtension.of(context).accent, size: 20),
           ),
           title: Text(
             name,
-            style: const TextStyle(color: DesignTokens.textPrimaryDark, fontSize: DesignTokens.fontSizeSm),
+            style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: DesignTokens.fontSizeSm),
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: user?.email != null
               ? Text(
                   user!.email!,
-                  style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 12),
+                  style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
                   overflow: TextOverflow.ellipsis,
                 )
               : null,
@@ -345,20 +345,20 @@ class _MemberTile extends StatelessWidget {
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  backgroundColor: DesignTokens.surfaceDark,
-                  title: Text(l10n.t('action_remove_from_team'), style: const TextStyle(color: DesignTokens.textPrimaryDark)),
+                  backgroundColor: AppThemeExtension.of(context).surface,
+                  title: Text(l10n.t('action_remove_from_team'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
                   content: Text(
                     l10n.t('confirm_remove_from_team'),
-                    style: const TextStyle(color: DesignTokens.textSecondaryDark),
+                    style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(l10n.t('cancel'), style: const TextStyle(color: DesignTokens.textSecondaryDark)),
+                      child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary)),
                     ),
                     FilledButton(
                       onPressed: () => Navigator.of(ctx).pop(true),
-                      style: FilledButton.styleFrom(backgroundColor: DesignTokens.danger),
+                      style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).danger),
                       child: Text(l10n.t('action_remove_from_team')),
                     ),
                   ],
@@ -378,7 +378,7 @@ class _MemberTile extends StatelessWidget {
             },
             child: Text(
               l10n.t('action_remove_from_team'),
-              style: const TextStyle(color: DesignTokens.danger, fontSize: DesignTokens.fontSizeSm),
+              style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: DesignTokens.fontSizeSm),
             ),
           ),
         );

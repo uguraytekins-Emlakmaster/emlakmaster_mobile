@@ -30,4 +30,22 @@ final class AppLogger {
   static void e(String message, [Object? error, StackTrace? stackTrace]) {
     _logger.e(message, error: error, stackTrace: stackTrace);
   }
+
+  /// Yönlendirme / navigator (yalnızca debug/profile).
+  static void nav(String message) {
+    if (kReleaseMode) return;
+    _logger.d('[nav] $message');
+  }
+
+  /// Riverpod / durum (yalnızca debug/profile).
+  static void state(String message) {
+    if (kReleaseMode) return;
+    _logger.d('[state] $message');
+  }
+
+  /// HTTP / harici API (yalnızca debug/profile; URL veya gövde loglamayın).
+  static void api(String message) {
+    if (kReleaseMode) return;
+    _logger.d('[api] $message');
+  }
 }

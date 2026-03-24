@@ -1,6 +1,6 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/app_loading.dart';
 import '../../features/broker_command/presentation/pages/broker_command_page.dart' deferred as broker_command;
 import '../../features/manager_command_center/presentation/pages/command_center_page.dart' deferred as command_center;
@@ -8,18 +8,19 @@ import '../../features/war_room/presentation/pages/war_room_page.dart' deferred 
 
 /// No-Lag Rule: Ağır modüller sadece ilgili sayfa açıldığında yüklenir (deferred loading).
 
-Widget _loadingScreen() {
-  return const Scaffold(
-    backgroundColor: DesignTokens.scaffoldDark,
+Widget _loadingScreen(BuildContext context) {
+  final ext = AppThemeExtension.of(context);
+  return Scaffold(
+    backgroundColor: ext.background,
     body: Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppLoading(),
-          SizedBox(height: 24),
+          const AppLoading(),
+          const SizedBox(height: 24),
           Text(
             'Yükleniyor...',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: ext.textSecondary, fontSize: 14),
           ),
         ],
       ),
@@ -51,18 +52,19 @@ class _LazyWarRoomPageState extends State<LazyWarRoomPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     if (_error != null) {
-      return const Scaffold(
-        backgroundColor: DesignTokens.scaffoldDark,
+      return Scaffold(
+        backgroundColor: ext.background,
         body: Center(
           child: Text(
             'Sayfa yüklenemedi.',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: ext.textSecondary),
           ),
         ),
       );
     }
-    if (!_loaded) return _loadingScreen();
+    if (!_loaded) return _loadingScreen(context);
     return war_room.WarRoomPage();
   }
 }
@@ -91,18 +93,19 @@ class _LazyBrokerCommandPageState extends State<LazyBrokerCommandPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     if (_error != null) {
-      return const Scaffold(
-        backgroundColor: DesignTokens.scaffoldDark,
+      return Scaffold(
+        backgroundColor: ext.background,
         body: Center(
           child: Text(
             'Sayfa yüklenemedi.',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: ext.textSecondary),
           ),
         ),
       );
     }
-    if (!_loaded) return _loadingScreen();
+    if (!_loaded) return _loadingScreen(context);
     return broker_command.BrokerCommandPage();
   }
 }
@@ -131,18 +134,19 @@ class _LazyCommandCenterPageState extends State<LazyCommandCenterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     if (_error != null) {
-      return const Scaffold(
-        backgroundColor: DesignTokens.scaffoldDark,
+      return Scaffold(
+        backgroundColor: ext.background,
         body: Center(
           child: Text(
             'Sayfa yüklenemedi.',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: ext.textSecondary),
           ),
         ),
       );
     }
-    if (!_loaded) return _loadingScreen();
+    if (!_loaded) return _loadingScreen(context);
     return command_center.CommandCenterPage();
   }
 }

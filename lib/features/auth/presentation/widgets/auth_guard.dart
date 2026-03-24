@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/auth_service.dart';
 import '../providers/auth_provider.dart';
 import '../pages/login_page.dart';
-
 /// user null → login; user var ama role loading → loading; role var → child (app); role error → hata + çıkış.
 class AuthGuard extends ConsumerWidget {
   const AuthGuard({
@@ -63,7 +62,7 @@ class _AuthRoleErrorScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded, size: 64, color: DesignTokens.primary),
+              Icon(Icons.error_outline_rounded, size: 64, color: AppThemeExtension.of(context).accent),
               const SizedBox(height: 24),
               Text(
                 text,
@@ -78,7 +77,7 @@ class _AuthRoleErrorScreen extends ConsumerWidget {
                 icon: const Icon(Icons.refresh_rounded, size: 20),
                 label: const Text('Tekrar dene'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: DesignTokens.primary,
+                  backgroundColor: AppThemeExtension.of(context).accent,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),

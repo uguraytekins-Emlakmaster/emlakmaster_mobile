@@ -9,7 +9,6 @@ import 'package:emlakmaster_mobile/features/office/services/office_setup_service
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Owner / admin / manager: yeni davet kodu üretir (UI).
 class CreateOfficeInvitePage extends ConsumerStatefulWidget {
   const CreateOfficeInvitePage({super.key});
@@ -143,7 +142,7 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
               Text(
                 _error!,
                 style: TextStyle(
-                  color: DesignTokens.danger.withValues(alpha: 0.95),
+                  color: ext.danger.withValues(alpha: 0.95),
                   fontSize: 13,
                 ),
               ),
@@ -153,7 +152,7 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
               SelectableText(
                 'Davet kodu: $_createdCode',
                 style: TextStyle(
-                  color: DesignTokens.success.withValues(alpha: 0.95),
+                  color: ext.success.withValues(alpha: 0.95),
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1,
@@ -164,17 +163,17 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
             FilledButton(
               onPressed: _busy ? null : _submit,
               style: FilledButton.styleFrom(
-                backgroundColor: DesignTokens.antiqueGold,
-                foregroundColor: DesignTokens.inputTextOnGold,
+                backgroundColor: ext.accent,
+                foregroundColor: ext.onBrand,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: _busy
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: DesignTokens.inputTextOnGold,
+                        color: ext.onBrand,
                       ),
                     )
                   : const Text('Davet kodu üret'),

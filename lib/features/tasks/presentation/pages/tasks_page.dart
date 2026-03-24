@@ -1,14 +1,16 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 /// Danışman görevleri: vade tarihine göre liste, yapıldı işaretleme, görev ekleme.
 class TasksPage extends ConsumerStatefulWidget {
   const TasksPage({super.key});
@@ -22,18 +24,18 @@ class _TasksPageState extends ConsumerState<TasksPage> {
   Widget build(BuildContext context) {
     final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: DesignTokens.backgroundDark,
-        foregroundColor: DesignTokens.textPrimaryDark,
+        backgroundColor: AppThemeExtension.of(context).background,
+        foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: const Text('Görevlerim'),
       ),
       body: uid.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
                 'Giriş yapılmamış.',
-                style: TextStyle(color: DesignTokens.textSecondaryDark),
+                style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
               ),
             )
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -41,30 +43,30 @@ class _TasksPageState extends ConsumerState<TasksPage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting &&
                     !snapshot.hasData) {
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(
-                      color: DesignTokens.primary,
+                      color: AppThemeExtension.of(context).accent,
                       strokeWidth: 2,
                     ),
                   );
                 }
                 if (snapshot.hasError) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(DesignTokens.space6),
+                      padding: const EdgeInsets.all(DesignTokens.space6),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.error_outline_rounded,
                             size: 48,
-                            color: DesignTokens.textSecondaryDark,
+                            color: AppThemeExtension.of(context).textSecondary,
                           ),
-                          SizedBox(height: DesignTokens.space4),
+                          const SizedBox(height: DesignTokens.space4),
                           Text(
                             'Görevler yüklenemedi.',
                             style: TextStyle(
-                              color: DesignTokens.textPrimaryDark,
+                              color: AppThemeExtension.of(context).textPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                             textAlign: TextAlign.center,
@@ -76,32 +78,14 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 }
                 final docs = snapshot.data?.docs ?? [];
                 if (docs.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.task_alt_rounded,
-                          size: 56,
-                          color: DesignTokens.textTertiaryDark,
-                        ),
-                        SizedBox(height: DesignTokens.space4),
-                        Text(
-                          'Henüz görev yok',
-                          style: TextStyle(
-                            color: DesignTokens.textSecondaryDark,
-                            fontSize: 16,
-                          ),
-                        ),
-                        SizedBox(height: DesignTokens.space2),
-                        Text(
-                          'Sağ alttaki + ile yeni görev ekleyin.',
-                          style: TextStyle(
-                            color: DesignTokens.textTertiaryDark,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+                  return Center(
+                    child: EmptyState(
+                      premiumVisual: true,
+                      icon: Icons.task_alt_rounded,
+                      title: AppLocalizations.of(context).t('empty_tasks'),
+                      subtitle: AppLocalizations.of(context).t('empty_tasks_sub'),
+                      actionLabel: AppLocalizations.of(context).t('empty_tasks_cta'),
+                      onAction: () => _showAddTaskDialog(context, ref, uid),
                     ),
                   );
                 }
@@ -145,7 +129,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
           ? null
           : FloatingActionButton(
               onPressed: () => _showAddTaskDialog(context, ref, uid),
-              backgroundColor: DesignTokens.primary,
+              backgroundColor: AppThemeExtension.of(context).accent,
               foregroundColor: Colors.black,
               child: const Icon(Icons.add_rounded, size: 28),
             ),
@@ -158,11 +142,21 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     bool done,
   ) async {
     HapticFeedback.lightImpact();
-    await FirestoreService.setTask({
-      ...current,
-      'id': id,
-      'done': done,
-    });
+    try {
+      await FirestoreService.setTask({
+        ...current,
+        'id': id,
+        'done': done,
+      });
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Görev güncellenemedi: ${e.message ?? e.code}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _showAddTaskDialog(BuildContext context, WidgetRef ref, String uid) {
@@ -174,7 +168,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: DesignTokens.surfaceDark,
+      backgroundColor: AppThemeExtension.of(context).surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -195,7 +189,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: DesignTokens.borderDark,
+                    color: AppThemeExtension.of(context).border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -204,7 +198,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
               Text(
                 'Yeni görev',
                 style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
+                      color: AppThemeExtension.of(context).textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -213,14 +207,14 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 controller: titleController,
                 decoration: InputDecoration(
                   labelText: 'Görev başlığı',
-                  labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
+                  labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
                   filled: true,
-                  fillColor: DesignTokens.backgroundDark,
+                  fillColor: AppThemeExtension.of(context).background,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                   ),
                 ),
-                style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
                 autofocus: true,
               ),
               const SizedBox(height: DesignTokens.space4),
@@ -229,14 +223,14 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 decoration: InputDecoration(
                   labelText: 'Müşteri ID (opsiyonel)',
                   hintText: 'Müşteri detaydan kopyalayabilirsiniz',
-                  labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
+                  labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
                   filled: true,
-                  fillColor: DesignTokens.backgroundDark,
+                  fillColor: AppThemeExtension.of(context).background,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                   ),
                 ),
-                style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
               ),
               const SizedBox(height: DesignTokens.space4),
               StatefulBuilder(
@@ -253,20 +247,20 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                         setModalState(() => pickedDate = date);
                       }
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.calendar_today_rounded,
                       size: 18,
-                      color: DesignTokens.primary,
+                      color: AppThemeExtension.of(context).accent,
                     ),
                     label: Text(
                       pickedDate != null
                           ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
                           : 'Vade tarihi seç',
-                      style: const TextStyle(color: DesignTokens.primary),
+                      style: TextStyle(color: AppThemeExtension.of(context).accent),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: DesignTokens.primary,
-                      side: const BorderSide(color: DesignTokens.primary),
+                      foregroundColor: AppThemeExtension.of(context).accent,
+                      side: BorderSide(color: AppThemeExtension.of(context).accent),
                     ),
                   );
                 },
@@ -277,9 +271,9 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text(
+                      child: Text(
                         'İptal',
-                        style: TextStyle(color: DesignTokens.textSecondaryDark),
+                        style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
                       ),
                     ),
                   ),
@@ -290,29 +284,40 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                         if (title.isEmpty) return;
                         Navigator.pop(ctx);
                         final custId = customerIdController.text.trim();
-                        await FirestoreService.setTask({
-                          'advisorId': uid,
-                          'title': title,
-                          'dueAt': pickedDate != null
-                              ? Timestamp.fromDate(pickedDate!)
-                              : Timestamp.fromDate(
-                                  DateTime.now().add(const Duration(days: 1)),
-                                ),
-                          'done': false,
-                          if (custId.isNotEmpty) 'customerId': custId,
-                        });
-                        if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            const SnackBar(
-                              content: Text('Görev eklendi.'),
-                              backgroundColor: DesignTokens.primary,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                        try {
+                          await FirestoreService.setTask({
+                            'advisorId': uid,
+                            'title': title,
+                            'dueAt': pickedDate != null
+                                ? Timestamp.fromDate(pickedDate!)
+                                : Timestamp.fromDate(
+                                    DateTime.now().add(const Duration(days: 1)),
+                                  ),
+                            'done': false,
+                            if (custId.isNotEmpty) 'customerId': custId,
+                          });
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: const Text('Görev eklendi.'),
+                                backgroundColor: AppThemeExtension.of(context).accent,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        } on FirebaseException catch (e) {
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text('Görev eklenemedi: ${e.message ?? e.code}'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
                         }
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: DesignTokens.primary,
+                        backgroundColor: AppThemeExtension.of(context).accent,
                         foregroundColor: Colors.black,
                       ),
                       child: const Text('Ekle'),
@@ -353,13 +358,13 @@ class _TaskTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: DesignTokens.space3),
-      color: DesignTokens.surfaceDark,
+      color: AppThemeExtension.of(context).surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
         side: BorderSide(
           color: isOverdue
-              ? DesignTokens.danger.withValues(alpha: 0.5)
-              : DesignTokens.borderDark,
+              ? AppThemeExtension.of(context).danger.withValues(alpha: 0.5)
+              : AppThemeExtension.of(context).border,
         ),
       ),
       child: InkWell(
@@ -373,9 +378,9 @@ class _TaskTile extends StatelessWidget {
               Checkbox(
                 value: done,
                 onChanged: (_) => onToggleDone(),
-                activeColor: DesignTokens.primary,
+                activeColor: AppThemeExtension.of(context).accent,
                 fillColor: WidgetStateProperty.resolveWith((_) {
-                  return done ? DesignTokens.primary : Colors.transparent;
+                  return done ? AppThemeExtension.of(context).accent : Colors.transparent;
                 }),
               ),
               Expanded(
@@ -386,8 +391,8 @@ class _TaskTile extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: done
-                            ? DesignTokens.textTertiaryDark
-                            : DesignTokens.textPrimaryDark,
+                            ? AppThemeExtension.of(context).textTertiary
+                            : AppThemeExtension.of(context).textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
                         decoration: done ? TextDecoration.lineThrough : null,
@@ -399,8 +404,8 @@ class _TaskTile extends StatelessWidget {
                         _formatDue(dueAt!, isOverdue),
                         style: TextStyle(
                           color: isOverdue
-                              ? DesignTokens.danger
-                              : DesignTokens.textSecondaryDark,
+                              ? AppThemeExtension.of(context).danger
+                              : AppThemeExtension.of(context).textSecondary,
                           fontSize: 13,
                         ),
                       ),
@@ -414,10 +419,10 @@ class _TaskTile extends StatelessWidget {
                             customerId!,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Müşteriye git →',
                           style: TextStyle(
-                            color: DesignTokens.primary,
+                            color: AppThemeExtension.of(context).accent,
                             fontSize: 12,
                           ),
                         ),

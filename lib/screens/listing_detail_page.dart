@@ -1,14 +1,13 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-
 /// İlan detay: galeri (tek görsel), başlık, fiyat, konum, açıklama.
 class ListingDetailPage extends StatelessWidget {
   const ListingDetailPage({super.key, required this.listingId});
@@ -18,13 +17,13 @@ class ListingDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: DesignTokens.scaffoldDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirestoreService.listingDocStream(listingId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: DesignTokens.primary, strokeWidth: 2),
+            return Center(
+              child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent, strokeWidth: 2),
             );
           }
           if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
@@ -44,8 +43,8 @@ class ListingDetailPage extends StatelessWidget {
                     const SizedBox(height: 24),
                     TextButton.icon(
                       onPressed: () => context.pop(),
-                      icon: const Icon(Icons.arrow_back_rounded, color: DesignTokens.primary),
-                      label: const Text('Geri', style: TextStyle(color: DesignTokens.primary)),
+                      icon: Icon(Icons.arrow_back_rounded, color: AppThemeExtension.of(context).accent),
+                      label: Text('Geri', style: TextStyle(color: AppThemeExtension.of(context).accent)),
                     ),
                   ],
                 ),
@@ -68,7 +67,7 @@ class ListingDetailPage extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                backgroundColor: DesignTokens.scaffoldDark,
+                backgroundColor: AppThemeExtension.of(context).background,
                 leading: const AppBackButton(),
                 automaticallyImplyLeading: false,
                 expandedHeight: 220,
@@ -84,9 +83,9 @@ class ListingDetailPage extends StatelessWidget {
                               height: c.maxHeight > 0 ? c.maxHeight : 220,
                             ),
                           ),
-                          errorWidget: (_, __, ___) => _placeholder(),
+                          errorWidget: (_, __, ___) => _placeholder(context),
                         )
-                      : _placeholder(),
+                      : _placeholder(context),
                 ),
               ),
               SliverToBoxAdapter(
@@ -136,8 +135,8 @@ class ListingDetailPage extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(
                         priceStr.contains('₺') ? priceStr : '$priceStr ₺',
-                        style: const TextStyle(
-                          color: DesignTokens.primary,
+                        style: TextStyle(
+                          color: AppThemeExtension.of(context).accent,
                           fontWeight: FontWeight.w700,
                           fontSize: 22,
                         ),
@@ -152,16 +151,16 @@ class ListingDetailPage extends StatelessWidget {
                               '${AppRouter.routeRainbowAnalytics}?listingId=$listingId',
                             );
                           },
-                          icon: const Icon(Icons.auto_graph_rounded, color: DesignTokens.primary),
-                          label: const Text(
+                          icon: Icon(Icons.auto_graph_rounded, color: AppThemeExtension.of(context).accent),
+                          label: Text(
                             'Intelligence raporu oluştur',
                             style: TextStyle(
-                              color: DesignTokens.primary,
+                              color: AppThemeExtension.of(context).accent,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: DesignTokens.primary),
+                            side: BorderSide(color: AppThemeExtension.of(context).accent),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),
@@ -196,9 +195,9 @@ class ListingDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
+  Widget _placeholder(BuildContext context) {
     return Container(
-      color: DesignTokens.surfaceDarkCard,
+      color: AppThemeExtension.of(context).card,
       child: Center(
         child: Icon(Icons.home_rounded, size: 64, color: Colors.white.withValues(alpha: 0.2)),
       ),

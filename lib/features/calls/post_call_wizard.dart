@@ -1,6 +1,6 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:math' as math;
 
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 /// Duygu durumu: AI görüşme tonuna göre 5 seçenekten biri.
 enum CallSentiment {
   veryPositive,   // 🤩 Çok Heyecanlı/Pozitif
@@ -214,7 +213,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: DesignTokens.scaffoldDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: SafeArea(
         child: Stack(
           children: [
@@ -283,8 +282,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               const SizedBox(height: 12),
                               Text(
                                 _saveError!,
-                                style: const TextStyle(
-                                  color: DesignTokens.danger,
+                                style: TextStyle(
+                                  color: AppThemeExtension.of(context).danger,
                                   fontSize: 13,
                                 ),
                                 textAlign: TextAlign.center,
@@ -296,7 +295,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: DesignTokens.primary,
+                                  backgroundColor: AppThemeExtension.of(context).accent,
                                   foregroundColor: Colors.black,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
@@ -350,8 +349,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               icon: const Icon(Icons.contact_phone_rounded, size: 20),
                               label: const Text('Rehbere ve uygulamaya kaydet (sesli / manuel)'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: DesignTokens.primary,
-                                side: const BorderSide(color: DesignTokens.primary),
+                                foregroundColor: AppThemeExtension.of(context).accent,
+                                side: BorderSide(color: AppThemeExtension.of(context).accent),
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -405,7 +404,7 @@ class _SkippedAnalysisCard extends StatelessWidget {
               icon: const Icon(Icons.home_rounded, size: 20),
               label: const Text('Ana sayfaya dön'),
               style: FilledButton.styleFrom(
-                backgroundColor: DesignTokens.primary,
+                backgroundColor: AppThemeExtension.of(context).accent,
                 foregroundColor: Colors.black,
               ),
             ),
@@ -462,7 +461,7 @@ class _AnalyzingProgressBar extends StatelessWidget {
         child: LinearProgressIndicator(
           value: value,
           backgroundColor: Colors.transparent,
-          valueColor: const AlwaysStoppedAnimation<Color>(DesignTokens.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(AppThemeExtension.of(context).accent),
         ),
       ),
     );
@@ -604,9 +603,9 @@ class _ExtractionBentoGrid extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: DesignTokens.primary.withValues(alpha: 0.2),
+                    color: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
                   ),
-                  child: Icon(e.icon, color: DesignTokens.primary, size: 20),
+                  child: Icon(e.icon, color: AppThemeExtension.of(context).accent, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -660,15 +659,15 @@ class _NextStepCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: DesignTokens.primary.withValues(alpha: 0.12),
-        border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.3)),
+        color: AppThemeExtension.of(context).accent.withValues(alpha: 0.12),
+        border: Border.all(color: AppThemeExtension.of(context).accent.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.lightbulb_rounded,
-            color: DesignTokens.primary,
+            color: AppThemeExtension.of(context).accent,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -679,7 +678,7 @@ class _NextStepCard extends StatelessWidget {
                 Text(
                   'Sonraki Adım Önerisi',
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: DesignTokens.primary,
+                    color: AppThemeExtension.of(context).accent,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

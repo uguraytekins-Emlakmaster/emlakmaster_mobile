@@ -9,7 +9,6 @@ import 'package:emlakmaster_mobile/features/office/services/office_migration_ser
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 /// Ofis işaretçisi / üyelik tutarsızlığı, askı, davet veya kaldırılmış üyelik — kurtarma.
 class OfficeRecoveryPage extends ConsumerWidget {
   const OfficeRecoveryPage({super.key});
@@ -171,7 +170,7 @@ class _RecoveryBody extends StatelessWidget {
               decoration: BoxDecoration(
                 color: ext.surfaceElevated,
                 borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-                border: Border.all(color: DesignTokens.antiqueGold.withValues(alpha: 0.35)),
+                border: Border.all(color: ext.accent.withValues(alpha: 0.35)),
               ),
               child: Text(
                 chipLabel!,
@@ -232,8 +231,8 @@ class _RecoveryActions extends StatelessWidget {
           icon: const Icon(Icons.refresh_rounded, size: 20),
           label: const Text('Yeniden doğrula'),
           style: FilledButton.styleFrom(
-            backgroundColor: DesignTokens.antiqueGold,
-            foregroundColor: DesignTokens.inputTextOnGold,
+            backgroundColor: ext.accent,
+            foregroundColor: ext.onBrand,
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),

@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -12,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 /// Müşteri detay: üstte bilgi kartı, altta timeline, Not ekle FAB.
 class CustomerDetailPage extends ConsumerWidget {
   const CustomerDetailPage({super.key, required this.customerId});
@@ -29,12 +29,13 @@ class CustomerDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: ext.background,
       appBar: AppBar(
         title: const Text('Müşteri'),
-        backgroundColor: DesignTokens.backgroundDark,
-        foregroundColor: DesignTokens.textPrimaryDark,
+        backgroundColor: ext.background,
+        foregroundColor: ext.textPrimary,
         leading: const AppBackButton(),
         automaticallyImplyLeading: false,
         actions: [
@@ -58,10 +59,10 @@ class CustomerDetailPage extends ConsumerWidget {
                     const SizedBox(height: DesignTokens.space5),
                     _PortfolioMatchSection(customerId: customerId),
                     const SizedBox(height: DesignTokens.space5),
-                    const Text(
+                    Text(
                       'Zaman çizelgesi',
                       style: TextStyle(
-                        color: DesignTokens.textSecondaryDark,
+                        color: ext.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -79,7 +80,7 @@ class CustomerDetailPage extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddNoteSheet(context, ref, customerId),
-        backgroundColor: DesignTokens.primary,
+        backgroundColor: ext.accent,
         foregroundColor: Colors.black,
         tooltip: 'Not ekle',
         child: const Icon(Icons.note_add_rounded),
@@ -88,11 +89,12 @@ class CustomerDetailPage extends ConsumerWidget {
   }
 
   static void _showAddNoteSheet(BuildContext context, WidgetRef ref, String customerId) {
+    final ext = AppThemeExtension.of(context);
     final controller = TextEditingController();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: DesignTokens.surfaceDark,
+      backgroundColor: ext.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
       ),
@@ -110,7 +112,7 @@ class CustomerDetailPage extends ConsumerWidget {
             Text(
               'Not ekle',
               style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                    color: DesignTokens.textPrimaryDark,
+                    color: ext.textPrimary,
                     fontWeight: FontWeight.w700,
                   ),
             ),
@@ -120,9 +122,9 @@ class CustomerDetailPage extends ConsumerWidget {
               runSpacing: DesignTokens.space2,
               children: _noteTemplates.map((t) {
                 return ActionChip(
-                  label: Text(t, style: const TextStyle(fontSize: 12, color: Colors.white)),
-                  backgroundColor: DesignTokens.surfaceDarkElevated,
-                  side: const BorderSide(color: DesignTokens.borderDark),
+                  label: Text(t, style: TextStyle(fontSize: 12, color: ext.textPrimary)),
+                  backgroundColor: ext.surfaceElevated,
+                  side: BorderSide(color: ext.border),
                   onPressed: () {
                     controller.text = controller.text.isEmpty ? t : '${controller.text}\n$t';
                   },
@@ -133,13 +135,13 @@ class CustomerDetailPage extends ConsumerWidget {
             TextField(
               controller: controller,
               maxLines: 4,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: ext.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Not içeriği...',
-                hintStyle: const TextStyle(color: DesignTokens.textTertiaryDark),
+                hintStyle: TextStyle(color: ext.textTertiary),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
                 filled: true,
-                fillColor: DesignTokens.backgroundDark,
+                fillColor: ext.background,
               ),
             ),
             const SizedBox(height: DesignTokens.space4),
@@ -149,14 +151,14 @@ class CustomerDetailPage extends ConsumerWidget {
                   final content = controller.text.trim();
                   if (content.isEmpty) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(content: Text('Lütfen not içeriği girin.'), backgroundColor: DesignTokens.danger),
+                      SnackBar(content: const Text('Lütfen not içeriği girin.'), backgroundColor: ext.danger),
                     );
                     return;
                   }
                   final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
                   if (uid.isEmpty) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(content: Text('Giriş yapılmamış.'), backgroundColor: DesignTokens.danger),
+                      SnackBar(content: const Text('Giriş yapılmamış.'), backgroundColor: ext.danger),
                     );
                     return;
                   }
@@ -169,9 +171,9 @@ class CustomerDetailPage extends ConsumerWidget {
                     if (ctx.mounted) {
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(
-                          content: Text('Not kaydedildi.'),
-                          backgroundColor: DesignTokens.primary,
+                        SnackBar(
+                          content: const Text('Not kaydedildi.'),
+                          backgroundColor: ext.accent,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -182,7 +184,7 @@ class CustomerDetailPage extends ConsumerWidget {
                       context: ctx,
                       useRootNavigator: true,
                       isScrollControlled: true,
-                      backgroundColor: DesignTokens.surfaceDark,
+                      backgroundColor: ext.surface,
                       shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
                       ),
@@ -199,10 +201,10 @@ class CustomerDetailPage extends ConsumerWidget {
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const Text(
+                                Text(
                                   'Not kaydı',
                                   style: TextStyle(
-                                    color: DesignTokens.primary,
+                                    color: ext.accent,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.6,
@@ -212,24 +214,24 @@ class CustomerDetailPage extends ConsumerWidget {
                                 Text(
                                   'Kayıt şu an tamamlanamadı',
                                   style: Theme.of(panelCtx).textTheme.titleMedium?.copyWith(
-                                        color: DesignTokens.textPrimaryDark,
+                                        color: ext.textPrimary,
                                         fontWeight: FontWeight.w800,
                                       ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   '$e',
-                                  style: const TextStyle(
-                                    color: DesignTokens.textSecondaryDark,
+                                  style: TextStyle(
+                                    color: ext.textSecondary,
                                     fontSize: 12,
                                     height: 1.35,
                                   ),
                                 ),
                                 const SizedBox(height: DesignTokens.space5),
-                                const Text(
+                                Text(
                                   'Bu müşterinin kayıtlı notları',
                                   style: TextStyle(
-                                    color: DesignTokens.textSecondaryDark,
+                                    color: ext.textSecondary,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 12,
                                   ),
@@ -242,24 +244,24 @@ class CustomerDetailPage extends ConsumerWidget {
                                     builder: (context, snap) {
                                       final docs = snap.data?.docs ?? [];
                                       if (snap.connectionState == ConnectionState.waiting && docs.isEmpty) {
-                                        return const Center(
+                                        return Center(
                                           child: SizedBox(
                                             width: 24,
                                             height: 24,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              color: DesignTokens.primary,
+                                              color: ext.accent,
                                             ),
                                           ),
                                         );
                                       }
                                       if (docs.isEmpty) {
-                                        return const Center(
+                                        return Center(
                                           child: Text(
                                             'Henüz not yok — kayıt başarılı olunca burada görünür.',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
-                                              color: DesignTokens.textTertiaryDark,
+                                              color: ext.textTertiary,
                                               fontSize: 12,
                                             ),
                                           ),
@@ -273,16 +275,16 @@ class CustomerDetailPage extends ConsumerWidget {
                                           return Container(
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              color: DesignTokens.backgroundDark,
+                                              color: ext.background,
                                               borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.5)),
+                                              border: Border.all(color: ext.border.withValues(alpha: 0.5)),
                                             ),
                                             child: Text(
                                               c,
                                               maxLines: 3,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: DesignTokens.textSecondaryDark,
+                                              style: TextStyle(
+                                                color: ext.textSecondary,
                                                 fontSize: 12,
                                               ),
                                             ),
@@ -299,7 +301,7 @@ class CustomerDetailPage extends ConsumerWidget {
                                     attemptSave();
                                   },
                                   style: FilledButton.styleFrom(
-                                    backgroundColor: DesignTokens.primary,
+                                    backgroundColor: ext.accent,
                                     foregroundColor: Colors.black,
                                     padding: const EdgeInsets.symmetric(vertical: 14),
                                   ),
@@ -319,7 +321,7 @@ class CustomerDetailPage extends ConsumerWidget {
               icon: const Icon(Icons.check_rounded, size: 20),
               label: const Text('Kaydet'),
               style: FilledButton.styleFrom(
-                backgroundColor: DesignTokens.primary,
+                backgroundColor: ext.accent,
                 foregroundColor: Colors.black,
               ),
             ),
@@ -336,6 +338,7 @@ class _PortfolioMatchSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
     final async = ref.watch(topMatchedListingsForCustomerProvider(customerId));
     return async.when(
       data: (list) {
@@ -343,21 +346,21 @@ class _PortfolioMatchSection extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.all(DesignTokens.space4),
           decoration: BoxDecoration(
-            color: DesignTokens.surfaceDark,
+            color: ext.surface,
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.3)),
+            border: Border.all(color: ext.accent.withValues(alpha: 0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.auto_awesome, size: 18, color: DesignTokens.primary),
+                  Icon(Icons.auto_awesome, size: 18, color: ext.accent),
                   const SizedBox(width: DesignTokens.space2),
                   Text(
                     'Bu müşteri için uygun ${list.length} ilan bulundu.',
-                    style: const TextStyle(
-                      color: DesignTokens.textPrimaryDark,
+                    style: TextStyle(
+                      color: ext.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: DesignTokens.fontSizeSm,
                     ),
@@ -369,13 +372,13 @@ class _PortfolioMatchSection extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: DesignTokens.space2),
                     child: Row(
                       children: [
-                        const Icon(Icons.home_rounded, size: 16, color: DesignTokens.textSecondaryDark),
+                        Icon(Icons.home_rounded, size: 16, color: ext.textSecondary),
                         const SizedBox(width: DesignTokens.space2),
                         Expanded(
                           child: Text(
                             e.title,
-                            style: const TextStyle(
-                              color: DesignTokens.textSecondaryDark,
+                            style: TextStyle(
+                              color: ext.textSecondary,
                               fontSize: DesignTokens.fontSizeXs,
                             ),
                             maxLines: 1,
@@ -384,8 +387,8 @@ class _PortfolioMatchSection extends ConsumerWidget {
                         ),
                         Text(
                           '%${e.score.round()}',
-                          style: const TextStyle(
-                            color: DesignTokens.primary,
+                          style: TextStyle(
+                            color: ext.accent,
                             fontWeight: FontWeight.w700,
                             fontSize: DesignTokens.fontSizeXs,
                           ),
@@ -419,23 +422,24 @@ class _CustomerHeader extends StatelessWidget {
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirestoreService.customerStream(customerId),
       builder: (context, snapshot) {
+        final ext = AppThemeExtension.of(context);
         if (!snapshot.hasData || snapshot.data?.data() == null) {
           return Container(
             padding: const EdgeInsets.all(DesignTokens.space5),
             decoration: BoxDecoration(
-              color: DesignTokens.surfaceDark,
+              color: ext.surface,
               borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              border: Border.all(color: DesignTokens.borderDark),
+              border: Border.all(color: ext.border),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: ext.accent),
                 ),
-                SizedBox(width: DesignTokens.space4),
-                Text('Yükleniyor...', style: TextStyle(color: Colors.white54)),
+                const SizedBox(width: DesignTokens.space4),
+                Text('Yükleniyor...', style: TextStyle(color: ext.textSecondary)),
               ],
             ),
           );
@@ -450,9 +454,9 @@ class _CustomerHeader extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(DesignTokens.space5),
           decoration: BoxDecoration(
-            color: DesignTokens.surfaceDark,
+            color: ext.surface,
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            border: Border.all(color: DesignTokens.borderDark),
+            border: Border.all(color: ext.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,11 +464,11 @@ class _CustomerHeader extends StatelessWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
+                    backgroundColor: ext.accent.withValues(alpha: 0.2),
                     radius: 28,
                     child: Text(
                       fullName.trim().isEmpty ? '?' : fullName.trim().substring(0, 1).toUpperCase(),
-                      style: const TextStyle(color: DesignTokens.primary, fontWeight: FontWeight.w700, fontSize: 20),
+                      style: TextStyle(color: ext.accent, fontWeight: FontWeight.w700, fontSize: 20),
                     ),
                   ),
                   const SizedBox(width: DesignTokens.space4),
@@ -474,8 +478,8 @@ class _CustomerHeader extends StatelessWidget {
                       children: [
                         Text(
                           fullName,
-                          style: const TextStyle(
-                            color: DesignTokens.textPrimaryDark,
+                          style: TextStyle(
+                            color: ext.textPrimary,
                             fontWeight: FontWeight.w700,
                             fontSize: DesignTokens.fontSizeLg,
                           ),
@@ -483,12 +487,12 @@ class _CustomerHeader extends StatelessWidget {
                         if (phone != '—')
                           Text(
                             phone,
-                            style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeSm),
+                            style: TextStyle(color: ext.textSecondary, fontSize: DesignTokens.fontSizeSm),
                           ),
                         if (email != '—')
                           Text(
                             email,
-                            style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: DesignTokens.fontSizeXs),
+                            style: TextStyle(color: ext.textTertiary, fontSize: DesignTokens.fontSizeXs),
                           ),
                       ],
                     ),
@@ -497,12 +501,12 @@ class _CustomerHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: DesignTokens.primary.withValues(alpha: 0.2),
+                        color: ext.accent.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                       ),
                       child: Text(
                         '${(temp * 100).toInt()}%',
-                        style: const TextStyle(color: DesignTokens.primary, fontSize: DesignTokens.fontSizeXs, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: ext.accent, fontSize: DesignTokens.fontSizeXs, fontWeight: FontWeight.w600),
                       ),
                     ),
                 ],
@@ -511,7 +515,7 @@ class _CustomerHeader extends StatelessWidget {
                 const SizedBox(height: DesignTokens.space3),
                 Text(
                   'Sonraki adım: $nextStep',
-                  style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: DesignTokens.fontSizeSm),
+                  style: TextStyle(color: ext.textTertiary, fontSize: DesignTokens.fontSizeSm),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -521,7 +525,7 @@ class _CustomerHeader extends StatelessWidget {
                   padding: const EdgeInsets.only(top: DesignTokens.space2),
                   child: Text(
                     'Son güncelleme: ${updatedAt.day}.${updatedAt.month}.${updatedAt.year}',
-                    style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
+                    style: TextStyle(color: ext.textTertiary, fontSize: 11),
                   ),
                 ),
               if (phone != '—' && phone.isNotEmpty) ...[
@@ -533,15 +537,15 @@ class _CustomerHeader extends StatelessWidget {
                         final ok = await WhatsAppLauncher.openChat(phone);
                         if (!ok && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('WhatsApp açılamadı. Numarayı kontrol edin.'),
-                              backgroundColor: DesignTokens.danger,
+                            SnackBar(
+                              content: const Text('WhatsApp açılamadı. Numarayı kontrol edin.'),
+                              backgroundColor: ext.danger,
                             ),
                           );
                         }
                       },
                       icon: const Icon(Icons.chat_rounded, size: 18, color: Color(0xFF25D366)),
-                      label: const Text('WhatsApp\'ta aç', style: TextStyle(color: DesignTokens.primary)),
+                      label: Text('WhatsApp\'ta aç', style: TextStyle(color: ext.accent)),
                     ),
                   ],
                 ),
@@ -590,76 +594,79 @@ class _TimelineActions extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: DesignTokens.surfaceDark,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(DesignTokens.radius2xl)),
-          boxShadow: [BoxShadow(color: DesignTokens.primary.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, -4))],
-        ),
-        padding: EdgeInsets.only(
-          left: DesignTokens.space6,
-          right: DesignTokens.space6,
-          top: DesignTokens.space6,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + DesignTokens.space6,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: DesignTokens.borderDark, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: DesignTokens.space4),
-            Text('Yeni teklif', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(color: DesignTokens.textPrimaryDark, fontWeight: FontWeight.w800)),
-            const SizedBox(height: DesignTokens.space4),
-            TextField(
-              controller: amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Tutar (TRY)',
-                labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
-                filled: true,
-                fillColor: DesignTokens.backgroundDark,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd), borderSide: const BorderSide(color: DesignTokens.primary, width: 1.5)),
-              ),
-              style: const TextStyle(color: DesignTokens.textPrimaryDark),
-            ),
-            const SizedBox(height: DesignTokens.space3),
-            TextField(
-              controller: notesController,
-              decoration: InputDecoration(
-                labelText: 'Not (opsiyonel)',
-                labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
-                filled: true,
-                fillColor: DesignTokens.backgroundDark,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
-              ),
-              style: const TextStyle(color: DesignTokens.textPrimaryDark),
-              maxLines: 2,
-            ),
-            const SizedBox(height: DesignTokens.space6),
-            Row(
-              children: [
-                Expanded(child: TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal', style: TextStyle(color: DesignTokens.textSecondaryDark)))),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    onPressed: () async {
-                      final amountStr = amountController.text.trim().replaceAll(',', '.');
-                      final amount = double.tryParse(amountStr);
-                      if (amount == null || amount <= 0) return;
-                      Navigator.pop(ctx);
-                      await FirestoreService.saveOffer(customerId: customerId, advisorId: uid, amount: amount, notes: notesController.text.trim().isEmpty ? null : notesController.text.trim());
-                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Teklif eklendi.'), backgroundColor: DesignTokens.primary, behavior: SnackBarBehavior.floating));
-                    },
-                    style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary, foregroundColor: Colors.black, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd))),
-                    child: const Text('Kaydet'),
-                  ),
+      builder: (ctx) {
+        final ext = AppThemeExtension.of(ctx);
+        return Container(
+          decoration: BoxDecoration(
+            color: ext.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(DesignTokens.radius2xl)),
+            boxShadow: [BoxShadow(color: ext.accent.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, -4))],
+          ),
+          padding: EdgeInsets.only(
+            left: DesignTokens.space6,
+            right: DesignTokens.space6,
+            top: DesignTokens.space6,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + DesignTokens.space6,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: ext.border, borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: DesignTokens.space4),
+              Text('Yeni teklif', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(color: ext.textPrimary, fontWeight: FontWeight.w800)),
+              const SizedBox(height: DesignTokens.space4),
+              TextField(
+                controller: amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Tutar (TRY)',
+                  labelStyle: TextStyle(color: ext.textSecondary),
+                  filled: true,
+                  fillColor: ext.background,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd), borderSide: BorderSide(color: ext.accent, width: 1.5)),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
+                style: TextStyle(color: ext.textPrimary),
+              ),
+              const SizedBox(height: DesignTokens.space3),
+              TextField(
+                controller: notesController,
+                decoration: InputDecoration(
+                  labelText: 'Not (opsiyonel)',
+                  labelStyle: TextStyle(color: ext.textSecondary),
+                  filled: true,
+                  fillColor: ext.background,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
+                ),
+                style: TextStyle(color: ext.textPrimary),
+                maxLines: 2,
+              ),
+              const SizedBox(height: DesignTokens.space6),
+              Row(
+                children: [
+                  Expanded(child: TextButton(onPressed: () => Navigator.pop(ctx), child: Text('İptal', style: TextStyle(color: ext.textSecondary)))),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: () async {
+                        final amountStr = amountController.text.trim().replaceAll(',', '.');
+                        final amount = double.tryParse(amountStr);
+                        if (amount == null || amount <= 0) return;
+                        Navigator.pop(ctx);
+                        await FirestoreService.saveOffer(customerId: customerId, advisorId: uid, amount: amount, notes: notesController.text.trim().isEmpty ? null : notesController.text.trim());
+                        if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: const Text('Teklif eklendi.'), backgroundColor: ext.accent, behavior: SnackBarBehavior.floating));
+                      },
+                      style: FilledButton.styleFrom(backgroundColor: ext.accent, foregroundColor: Colors.black, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd))),
+                      child: const Text('Kaydet'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -674,11 +681,12 @@ class _TimelineActions extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
+          final ext = AppThemeExtension.of(ctx);
           return Container(
             decoration: BoxDecoration(
-              color: DesignTokens.surfaceDark,
+              color: ext.surface,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(DesignTokens.radius2xl)),
-              boxShadow: [BoxShadow(color: DesignTokens.accent.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, -4))],
+              boxShadow: [BoxShadow(color: ext.accent.withValues(alpha: 0.12), blurRadius: 24, offset: const Offset(0, -4))],
             ),
             padding: EdgeInsets.only(
               left: DesignTokens.space6,
@@ -690,36 +698,36 @@ class _TimelineActions extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: DesignTokens.borderDark, borderRadius: BorderRadius.circular(2)))),
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: ext.border, borderRadius: BorderRadius.circular(2)))),
                 const SizedBox(height: DesignTokens.space4),
-                Text('Yeni ziyaret', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(color: DesignTokens.textPrimaryDark, fontWeight: FontWeight.w800)),
+                Text('Yeni ziyaret', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(color: ext.textPrimary, fontWeight: FontWeight.w800)),
                 const SizedBox(height: DesignTokens.space4),
                 OutlinedButton.icon(
                   onPressed: () async {
                     final date = await showDatePicker(context: ctx, initialDate: pickedDate ?? DateTime.now(), firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
                     if (date != null) setModalState(() => pickedDate = date);
                   },
-                  icon: const Icon(Icons.calendar_today_rounded, size: 18, color: DesignTokens.accent),
-                  label: Text(pickedDate != null ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}' : 'Tarih seç', style: const TextStyle(color: DesignTokens.accent)),
-                  style: OutlinedButton.styleFrom(foregroundColor: DesignTokens.accent, side: const BorderSide(color: DesignTokens.accent)),
+                  icon: Icon(Icons.calendar_today_rounded, size: 18, color: ext.accent),
+                  label: Text(pickedDate != null ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}' : 'Tarih seç', style: TextStyle(color: ext.accent)),
+                  style: OutlinedButton.styleFrom(foregroundColor: ext.accent, side: BorderSide(color: ext.accent)),
                 ),
                 const SizedBox(height: DesignTokens.space3),
                 TextField(
                   controller: notesController,
                   decoration: InputDecoration(
                     labelText: 'Not (opsiyonel)',
-                    labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
+                    labelStyle: TextStyle(color: ext.textSecondary),
                     filled: true,
-                    fillColor: DesignTokens.backgroundDark,
+                    fillColor: ext.background,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
                   ),
-                  style: const TextStyle(color: DesignTokens.textPrimaryDark),
+                  style: TextStyle(color: ext.textPrimary),
                   maxLines: 2,
                 ),
                 const SizedBox(height: DesignTokens.space6),
                 Row(
                   children: [
-                    Expanded(child: TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('İptal', style: TextStyle(color: DesignTokens.textSecondaryDark)))),
+                    Expanded(child: TextButton(onPressed: () => Navigator.pop(ctx), child: Text('İptal', style: TextStyle(color: ext.textSecondary)))),
                     Expanded(
                       flex: 2,
                       child: FilledButton(
@@ -727,9 +735,9 @@ class _TimelineActions extends ConsumerWidget {
                           if (pickedDate == null) return;
                           Navigator.pop(ctx);
                           await FirestoreService.saveVisit(customerId: customerId, advisorId: uid, scheduledAt: pickedDate!, notes: notesController.text.trim().isEmpty ? null : notesController.text.trim());
-                          if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Ziyaret eklendi.'), backgroundColor: DesignTokens.primary, behavior: SnackBarBehavior.floating));
+                          if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: const Text('Ziyaret eklendi.'), backgroundColor: ext.accent, behavior: SnackBarBehavior.floating));
                         },
-                        style: FilledButton.styleFrom(backgroundColor: DesignTokens.accent, foregroundColor: Colors.black, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd))),
+                        style: FilledButton.styleFrom(backgroundColor: ext.accent, foregroundColor: Colors.black, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd))),
                         child: const Text('Kaydet'),
                       ),
                     ),
@@ -752,6 +760,7 @@ class _ActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -760,17 +769,17 @@ class _ActionChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: DesignTokens.space3, horizontal: DesignTokens.space4),
           decoration: BoxDecoration(
-            color: DesignTokens.surfaceDark,
+            color: ext.surface,
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            border: Border.all(color: DesignTokens.borderDark),
+            border: Border.all(color: ext.border),
             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: DesignTokens.primary),
+              Icon(icon, size: 18, color: ext.accent),
               const SizedBox(width: DesignTokens.space2),
-              Text(label, style: const TextStyle(color: DesignTokens.textPrimaryDark, fontWeight: FontWeight.w600, fontSize: DesignTokens.fontSizeSm)),
+              Text(label, style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w600, fontSize: DesignTokens.fontSizeSm)),
             ],
           ),
         ),
@@ -797,6 +806,7 @@ class _CustomerTimeline extends StatelessWidget {
                 return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirestoreService.offersByCustomerStream(customerId),
                   builder: (context, offerSnap) {
+                    final ext = AppThemeExtension.of(context);
                     final items = <_TimelineRow>[];
                     add(String id, TimelineItemType type, String title, String subtitle, DateTime at) {
                       items.add(_TimelineRow(id: id, type: type, title: title, subtitle: subtitle, at: at));
@@ -827,22 +837,22 @@ class _CustomerTimeline extends StatelessWidget {
                       return Container(
                         padding: const EdgeInsets.all(DesignTokens.space6),
                         decoration: BoxDecoration(
-                          color: DesignTokens.surfaceDark.withValues(alpha: 0.5),
+                          color: ext.surface.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                          border: Border.all(color: DesignTokens.borderDark),
+                          border: Border.all(color: ext.border),
                         ),
-                        child: const Column(
+                        child: Column(
                           children: [
-                            Icon(Icons.timeline_rounded, size: 40, color: Colors.white24),
-                            SizedBox(height: DesignTokens.space3),
+                            Icon(Icons.timeline_rounded, size: 40, color: ext.textTertiary),
+                            const SizedBox(height: DesignTokens.space3),
                             Text(
                               'Henüz kayıt yok',
-                              style: TextStyle(color: Colors.white54, fontSize: DesignTokens.fontSizeSm),
+                              style: TextStyle(color: ext.textSecondary, fontSize: DesignTokens.fontSizeSm),
                             ),
                             Text(
                               'Çağrı özeti, not, ziyaret veya teklif eklendikçe burada görünecek.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white38, fontSize: DesignTokens.fontSizeXs),
+                              style: TextStyle(color: ext.textTertiary, fontSize: DesignTokens.fontSizeXs),
                             ),
                           ],
                         ),
@@ -890,21 +900,24 @@ class _TimelineTile extends StatelessWidget {
     }
   }
 
-  Color get _accentColor {
+  Color _accentColor(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     switch (row.type) {
       case TimelineItemType.offer:
-        return DesignTokens.primary;
+        return ext.accent;
       case TimelineItemType.visit:
-        return DesignTokens.accent;
+        return ext.accent;
       case TimelineItemType.callSummary:
-        return DesignTokens.info;
+        return ext.info;
       default:
-        return DesignTokens.primary;
+        return ext.accent;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final color = _accentColor(context);
     final dateStr = '${row.at.day}.${row.at.month}.${row.at.year} ${row.at.hour.toString().padLeft(2, '0')}:${row.at.minute.toString().padLeft(2, '0')}';
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space3),
@@ -915,22 +928,22 @@ class _TimelineTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: _accentColor.withValues(alpha: 0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              border: Border.all(color: _accentColor.withValues(alpha: 0.5)),
-              boxShadow: [BoxShadow(color: _accentColor.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 2))],
+              border: Border.all(color: color.withValues(alpha: 0.5)),
+              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 2))],
             ),
-            child: Icon(_icon, size: 20, color: _accentColor),
+            child: Icon(_icon, size: 20, color: color),
           ),
           const SizedBox(width: DesignTokens.space3),
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(DesignTokens.space4),
               decoration: BoxDecoration(
-                color: DesignTokens.surfaceDark,
+                color: ext.surface,
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                border: Border.all(color: _accentColor.withValues(alpha: 0.25)),
-                boxShadow: [BoxShadow(color: _accentColor.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 2))],
+                border: Border.all(color: color.withValues(alpha: 0.25)),
+                boxShadow: [BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 2))],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -939,8 +952,8 @@ class _TimelineTile extends StatelessWidget {
                     children: [
                       Text(
                         row.title,
-                        style: const TextStyle(
-                          color: DesignTokens.textPrimaryDark,
+                        style: TextStyle(
+                          color: ext.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: DesignTokens.fontSizeSm,
                         ),
@@ -948,7 +961,7 @@ class _TimelineTile extends StatelessWidget {
                       const Spacer(),
                       Text(
                         dateStr,
-                        style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
+                        style: TextStyle(color: ext.textTertiary, fontSize: 11),
                       ),
                     ],
                   ),
@@ -956,7 +969,7 @@ class _TimelineTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       row.subtitle,
-                      style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: DesignTokens.fontSizeXs),
+                      style: TextStyle(color: ext.textSecondary, fontSize: DesignTokens.fontSizeXs),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

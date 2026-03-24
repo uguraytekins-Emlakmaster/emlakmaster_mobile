@@ -5,7 +5,6 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-
 /// Ofis yokken: oluştur veya katıl seçimi (merkezi yönlendirme).
 class OfficeGatePage extends StatelessWidget {
   const OfficeGatePage({super.key});
@@ -106,7 +105,7 @@ class _Tile extends StatelessWidget {
           padding: const EdgeInsets.all(DesignTokens.space4),
           child: Row(
             children: [
-              Icon(icon, color: DesignTokens.antiqueGold, size: 28),
+              Icon(icon, color: ext.accent, size: 28),
               const SizedBox(width: DesignTokens.space4),
               Expanded(
                 child: Column(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/resilience/sync_status.dart';
+import '../../core/theme/app_theme_extension.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/app_toaster.dart';
 
@@ -17,6 +18,7 @@ class SyncStatusBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
     final status = ref.watch(syncStatusProvider);
     final isOffline = !status.isOnline;
     // Compact: sadece çevrimdışıyken bant göster. Normal: çevrimdışı veya son senkron bilgisi varsa göster.
@@ -43,11 +45,11 @@ class SyncStatusBanner extends ConsumerWidget {
           ),
           decoration: BoxDecoration(
             color: isOffline
-                ? DesignTokens.warning.withValues(alpha: 0.15)
-                : DesignTokens.surfaceDark.withValues(alpha: 0.6),
+                ? ext.warning.withValues(alpha: 0.15)
+                : ext.surface.withValues(alpha: 0.6),
             border: Border(
               bottom: BorderSide(
-                color: isOffline ? DesignTokens.warning.withValues(alpha: 0.5) : DesignTokens.borderDark,
+                color: isOffline ? ext.warning.withValues(alpha: 0.5) : ext.border,
               ),
             ),
           ),
@@ -57,13 +59,13 @@ class SyncStatusBanner extends ConsumerWidget {
               Icon(
                 isOffline ? Icons.cloud_off_rounded : Icons.cloud_done_rounded,
                 size: compact ? 14 : 16,
-                color: isOffline ? DesignTokens.warning : DesignTokens.primary,
+                color: isOffline ? ext.warning : ext.accent,
               ),
               SizedBox(width: compact ? DesignTokens.space2 : DesignTokens.space2),
               Text(
                 isOffline ? 'İnternet yok. Veriler önbellekten gösteriliyor.' : status.shortLabel,
                 style: TextStyle(
-                  color: isOffline ? DesignTokens.warning : DesignTokens.textSecondaryDark,
+                  color: isOffline ? ext.warning : ext.textSecondary,
                   fontSize: compact ? 11 : 12,
                   fontWeight: FontWeight.w500,
                 ),

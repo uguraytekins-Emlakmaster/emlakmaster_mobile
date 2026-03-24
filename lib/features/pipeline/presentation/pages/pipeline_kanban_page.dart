@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 
 /// Pipeline Kanban: aşama sütunları, premium kartlar, dokun ile aşama değiştir.
 class PipelineKanbanPage extends ConsumerStatefulWidget {
@@ -24,25 +25,26 @@ class PipelineKanbanPage extends ConsumerStatefulWidget {
 class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: ext.background,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 120,
             floating: true,
             pinned: true,
-            backgroundColor: DesignTokens.backgroundDark,
-            foregroundColor: DesignTokens.textPrimaryDark,
+            backgroundColor: ext.background,
+            foregroundColor: ext.textPrimary,
             leading: context.canPop() ? const AppBackButton() : null,
             automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
-              title: const Text(
+              title: Text(
                 'Pipeline',
                 style: TextStyle(
-                  color: DesignTokens.textPrimaryDark,
+                  color: ext.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 22,
                   letterSpacing: -0.5,
@@ -54,7 +56,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      DesignTokens.primary.withValues(alpha: 0.06),
+                      ext.accent.withValues(alpha: 0.06),
                       Colors.transparent,
                     ],
                   ),
@@ -66,10 +68,10 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
             SliverToBoxAdapter(
               child: SizedBox(
                 height: MediaQuery.of(context).size.height * 0.5,
-                child: const Center(
+                child: Center(
                   child: Text(
                     'Giriş yapılmamış.',
-                    style: TextStyle(color: DesignTokens.textSecondaryDark),
+                    style: TextStyle(color: ext.textSecondary),
                   ),
                 ),
               ),
@@ -79,11 +81,12 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirestoreService.pipelineItemsByAdvisorStream(uid),
                 builder: (context, snapshot) {
+                  final sheetExt = ext;
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       !snapshot.hasData) {
                     return SizedBox(
                       height: MediaQuery.of(context).size.height * 0.5,
-                      child: const Center(
+                      child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -91,15 +94,15 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                               width: 32,
                               height: 32,
                               child: CircularProgressIndicator(
-                                color: DesignTokens.primary,
+                                color: sheetExt.accent,
                                 strokeWidth: 2,
                               ),
                             ),
-                            SizedBox(height: DesignTokens.space4),
+                            const SizedBox(height: DesignTokens.space4),
                             Text(
                               'Pipeline yükleniyor...',
                               style: TextStyle(
-                                color: DesignTokens.textSecondaryDark,
+                                color: sheetExt.textSecondary,
                                 fontSize: DesignTokens.fontSizeSm,
                               ),
                             ),
@@ -149,10 +152,11 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
     HapticFeedback.mediumImpact();
     await FirestoreService.updatePipelineItemStage(itemId, stage.id);
     if (mounted) {
+      final ext = AppThemeExtension.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${stage.label} aşamasına taşındı'),
-          backgroundColor: DesignTokens.primary,
+          backgroundColor: ext.accent,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -167,15 +171,17 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
+      builder: (ctx) {
+        final sheetExt = AppThemeExtension.of(ctx);
+        return Container(
         decoration: BoxDecoration(
-          color: DesignTokens.surfaceDark,
+          color: sheetExt.surface,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(DesignTokens.radius2xl),
           ),
           boxShadow: [
             BoxShadow(
-              color: DesignTokens.primary.withValues(alpha: 0.15),
+              color: sheetExt.accent.withValues(alpha: 0.15),
               blurRadius: 24,
               offset: const Offset(0, -4),
             ),
@@ -196,7 +202,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: DesignTokens.borderDark,
+                  color: sheetExt.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -205,7 +211,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
             Text(
               'Pipeline\'a ekle',
               style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                    color: DesignTokens.textPrimaryDark,
+                    color: sheetExt.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -215,9 +221,9 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
               decoration: InputDecoration(
                 labelText: 'Müşteri ID',
                 hintText: 'Müşteri detay sayfasından kopyalayın',
-                labelStyle: const TextStyle(color: DesignTokens.textSecondaryDark),
+                labelStyle: TextStyle(color: sheetExt.textSecondary),
                 filled: true,
-                fillColor: DesignTokens.backgroundDark,
+                fillColor: sheetExt.background,
                 border: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(DesignTokens.radiusMd),
@@ -225,13 +231,13 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide: const BorderSide(
-                    color: DesignTokens.primary,
+                  borderSide: BorderSide(
+                    color: sheetExt.accent,
                     width: 1.5,
                   ),
                 ),
               ),
-              style: const TextStyle(color: DesignTokens.textPrimaryDark),
+              style: TextStyle(color: sheetExt.textPrimary),
             ),
             const SizedBox(height: DesignTokens.space6),
             Row(
@@ -239,9 +245,9 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text(
+                    child: Text(
                       'İptal',
-                      style: TextStyle(color: DesignTokens.textSecondaryDark),
+                      style: TextStyle(color: sheetExt.textSecondary),
                     ),
                   ),
                 ),
@@ -258,18 +264,19 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                         'stage': PipelineStage.lead.id,
                       });
                       if (ctx.mounted) {
+                        final snackExt = AppThemeExtension.of(ctx);
                         ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(
-                            content: Text('Pipeline\'a eklendi.'),
-                            backgroundColor: DesignTokens.primary,
+                          SnackBar(
+                            content: const Text('Pipeline\'a eklendi.'),
+                            backgroundColor: snackExt.accent,
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                       }
                     },
                     style: FilledButton.styleFrom(
-                      backgroundColor: DesignTokens.primary,
-                      foregroundColor: Colors.black,
+                      backgroundColor: sheetExt.accent,
+                      foregroundColor: sheetExt.onBrand,
                       minimumSize: const Size.fromHeight(DesignTokens.championButtonHeight),
                       shape: RoundedRectangleBorder(
                         borderRadius:
@@ -283,7 +290,8 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
             ),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 }
@@ -364,28 +372,29 @@ class _StageColumn extends StatelessWidget {
   final void Function(_PipelineCardData item, PipelineStage newStage) onStageTap;
   final void Function(_PipelineCardData item) onCardTap;
 
-  static Color _stageColor(PipelineStage s) {
+  static Color _stageColor(PipelineStage s, AppThemeExtension ext) {
     switch (s.id) {
       case 'lead':
-        return DesignTokens.info;
+        return ext.info;
       case 'qualified':
-        return DesignTokens.accent;
+        return ext.accent;
       case 'proposal':
-        return DesignTokens.secondary;
+        return ext.accent;
       case 'negotiation':
-        return DesignTokens.warning;
+        return ext.warning;
       case 'closed_won':
-        return DesignTokens.success;
+        return ext.success;
       case 'closed_lost':
-        return DesignTokens.danger;
+        return ext.danger;
       default:
-        return DesignTokens.primary;
+        return ext.accent;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _stageColor(stage);
+    final ext = AppThemeExtension.of(context);
+    final color = _stageColor(stage, ext);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space2),
       child: Column(
@@ -421,8 +430,8 @@ class _StageColumn extends StatelessWidget {
                 Expanded(
                   child: Text(
                     stage.label,
-                    style: const TextStyle(
-                      color: DesignTokens.textPrimaryDark,
+                    style: TextStyle(
+                      color: ext.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: DesignTokens.fontSizeMd,
                     ),
@@ -469,15 +478,18 @@ class _StageColumn extends StatelessWidget {
     void Function(_PipelineCardData, PipelineStage) onStageTap,
   ) {
     HapticFeedback.lightImpact();
+    final ext = AppThemeExtension.of(context);
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: DesignTokens.surfaceDark,
+      backgroundColor: ext.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(DesignTokens.radius2xl),
         ),
       ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) {
+        final sheetExt = AppThemeExtension.of(ctx);
+        return SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.space6),
           child: Column(
@@ -487,7 +499,7 @@ class _StageColumn extends StatelessWidget {
               Text(
                 'Aşamayı değiştir',
                 style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
+                      color: sheetExt.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
               ),
@@ -502,19 +514,19 @@ class _StageColumn extends StatelessWidget {
                           BorderRadius.circular(DesignTokens.radiusMd),
                     ),
                     tileColor: isCurrent
-                        ? DesignTokens.primary.withValues(alpha: 0.15)
+                        ? sheetExt.accent.withValues(alpha: 0.15)
                         : null,
                     leading: Icon(
                       isCurrent ? Icons.check_circle_rounded : Icons.circle_outlined,
                       color: isCurrent
-                          ? DesignTokens.primary
-                          : DesignTokens.textTertiaryDark,
+                          ? sheetExt.accent
+                          : sheetExt.textTertiary,
                       size: 22,
                     ),
                     title: Text(
                       stage.label,
                       style: TextStyle(
-                        color: DesignTokens.textPrimaryDark,
+                        color: sheetExt.textPrimary,
                         fontWeight:
                             isCurrent ? FontWeight.w700 : FontWeight.w500,
                       ),
@@ -529,7 +541,8 @@ class _StageColumn extends StatelessWidget {
             ],
           ),
         ),
-      ),
+      );
+      },
     );
   }
 }
@@ -560,6 +573,7 @@ class _PipelineCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -568,7 +582,7 @@ class _PipelineCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(DesignTokens.championCardRadius),
         child: Container(
           padding: const EdgeInsets.all(DesignTokens.space4),
-          decoration: DesignTokens.cardChampion(withGlow: true),
+          decoration: ext.championCardDecoration(withGlow: true),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -578,8 +592,8 @@ class _PipelineCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       data.customerName ?? 'Müşteri ${data.customerId.length > 8 ? "${data.customerId.substring(0, 8)}..." : data.customerId}',
-                      style: const TextStyle(
-                        color: DesignTokens.textPrimaryDark,
+                      style: TextStyle(
+                        color: ext.textPrimary,
                         fontWeight: FontWeight.w700,
                         fontSize: DesignTokens.fontSizeMd,
                       ),
@@ -594,26 +608,26 @@ class _PipelineCard extends ConsumerWidget {
                 const SizedBox(height: DesignTokens.space2),
                 Text(
                   '${data.value!.toStringAsFixed(0)} ${data.currency}',
-                  style: const TextStyle(
-                    color: DesignTokens.primary,
+                  style: TextStyle(
+                    color: ext.accent,
                     fontWeight: FontWeight.w700,
                     fontSize: DesignTokens.fontSizeSm,
                   ),
                 ),
               ],
               const SizedBox(height: DesignTokens.space2),
-              const Row(
+              Row(
                 children: [
                   Icon(
                     Icons.touch_app_rounded,
                     size: 14,
-                    color: DesignTokens.textTertiaryDark,
+                    color: ext.textTertiary,
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
                     'Uzun bas: aşama değiştir',
                     style: TextStyle(
-                      color: DesignTokens.textTertiaryDark,
+                      color: ext.textTertiary,
                       fontSize: 10,
                     ),
                   ),
@@ -633,6 +647,7 @@ class _PipelineHeatChip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
     final customerAsync = ref.watch(customerEntityByIdProvider(customerId));
     return customerAsync.when(
       data: (customer) {
@@ -642,7 +657,7 @@ class _PipelineHeatChip extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: DesignTokens.surfaceDarkElevated,
+            color: ext.surfaceElevated,
             borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
           ),
           child: Row(
@@ -652,8 +667,8 @@ class _PipelineHeatChip extends ConsumerWidget {
               const SizedBox(width: 2),
               Text(
                 '${score.score.round()}',
-                style: const TextStyle(
-                  color: DesignTokens.textSecondaryDark,
+                style: TextStyle(
+                  color: ext.textSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
@@ -674,6 +689,7 @@ class _ChampionFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -683,7 +699,7 @@ class _ChampionFab extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: DesignTokens.primary.withValues(alpha: 0.4),
+              color: ext.accent.withValues(alpha: 0.4),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -691,12 +707,12 @@ class _ChampionFab extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: DesignTokens.gradientPrimary,
+            colors: ext.gradientPrimary,
           ),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.add_rounded,
-          color: Colors.black,
+          color: ext.onBrand,
           size: 28,
         ),
       ),

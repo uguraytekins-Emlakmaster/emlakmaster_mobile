@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 
 /// Hata durumu ekranı. Teknik mesaj göstermez; kullanıcı dostu mesaj + yeniden dene.
 class ErrorState extends StatelessWidget {
@@ -16,23 +17,24 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(DesignTokens.space6),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline_rounded,
               size: 56,
-              color: DesignTokens.danger,
+              color: ext.danger,
             ),
             const SizedBox(height: DesignTokens.space4),
             Text(
               message,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: DesignTokens.textSecondaryDark,
+                    color: ext.textSecondary,
                   ),
             ),
             if (onRetry != null) ...[
@@ -45,8 +47,8 @@ class ErrorState extends StatelessWidget {
                 icon: const Icon(Icons.refresh_rounded, size: 20),
                 label: const Text('Tekrar Dene'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: DesignTokens.primary,
-                  foregroundColor: DesignTokens.brandWhite,
+                  backgroundColor: ext.accent,
+                  foregroundColor: ext.onBrand,
                 ),
               ),
             ],

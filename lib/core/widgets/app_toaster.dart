@@ -1,8 +1,8 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/design_tokens.dart';
-
 /// Profesyonel toast / SnackBar mesajları. Hata, başarı, bilgi için tutarlı stil.
 class AppToaster {
   AppToaster._();
@@ -16,7 +16,7 @@ class AppToaster {
     VoidCallback? onAction,
   }) {
     HapticFeedback.mediumImpact();
-    final (color, icon) = _styleFor(type);
+    final (color, icon) = _styleFor(type, context);
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -52,16 +52,17 @@ class AppToaster {
     );
   }
 
-  static (Color, IconData) _styleFor(ToastType type) {
+  static (Color, IconData) _styleFor(ToastType type, BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     switch (type) {
       case ToastType.success:
-        return (DesignTokens.success, Icons.check_circle_rounded);
+        return (ext.success, Icons.check_circle_rounded);
       case ToastType.error:
-        return (DesignTokens.danger, Icons.error_rounded);
+        return (ext.danger, Icons.error_rounded);
       case ToastType.warning:
-        return (DesignTokens.warning, Icons.warning_rounded);
+        return (ext.warning, Icons.warning_rounded);
       case ToastType.info:
-        return (DesignTokens.info, Icons.info_rounded);
+        return (ext.info, Icons.info_rounded);
     }
   }
 

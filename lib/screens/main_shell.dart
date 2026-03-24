@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/pages/customer_list_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
+import 'package:emlakmaster_mobile/widgets/magic_call_wizard_fab.dart';
 import 'package:emlakmaster_mobile/screens/listings_screen.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
@@ -79,8 +80,20 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
           SettingsPage(),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _currentIndex == 0 && voiceCrmEnabled ? const _MagicCallFab() : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: _currentIndex == 0 && voiceCrmEnabled
+          ? MagicCallWizardFab(
+              onPressed: () => context.push(AppRouter.routeCall),
+              backgroundColor: ext.brandPrimary,
+              foregroundColor: ext.onBrand,
+              boxShadow: [
+                BoxShadow(
+                  color: ext.brandPrimary.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                ),
+              ],
+            )
+          : null,
       bottomNavigationBar: RepaintBoundary(
         child: Container(
           decoration: BoxDecoration(
@@ -212,44 +225,3 @@ class _NavItem {
   const _NavItem(this.icon, this.label);
 }
 
-class _MagicCallFab extends StatelessWidget {
-  const _MagicCallFab();
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 72),
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          context.push(AppRouter.routeCall);
-        },
-        child: Container(
-          width: 220,
-          height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            color: ext.brandPrimary,
-            boxShadow: DesignTokens.neomorphicGlowAntiqueGold(intensity: 0.25),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.phone_in_talk_rounded, color: ext.onBrand, size: 22),
-              const SizedBox(width: 10),
-              Text(
-                'Magic Call & AI Wizard',
-                style: TextStyle(
-                  color: ext.onBrand,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

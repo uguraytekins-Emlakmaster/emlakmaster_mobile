@@ -1,9 +1,8 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/skeleton_loader.dart';
-
 class ProfileAvatar extends StatelessWidget {
   const ProfileAvatar({
     super.key,
@@ -25,22 +24,22 @@ class ProfileAvatar extends StatelessWidget {
     final border = Container(
       width: size,
       height: size,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            DesignTokens.primary,
-            DesignTokens.secondary,
+            AppThemeExtension.of(context).accent,
+            AppThemeExtension.of(context).accent,
           ],
         ),
       ),
       child: Container(
         margin: const EdgeInsets.all(2),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: DesignTokens.surfaceDark,
+          color: AppThemeExtension.of(context).surface,
         ),
       ),
     );
@@ -52,11 +51,11 @@ class ProfileAvatar extends StatelessWidget {
           border,
           CircleAvatar(
             radius: size / 2 - 3,
-            backgroundColor: DesignTokens.primary.withValues(alpha: 0.25),
+            backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
             child: Text(
               initials,
               style: TextStyle(
-                color: DesignTokens.brandWhite,
+                color: AppThemeExtension.of(context).onAccentLight,
                 fontWeight: FontWeight.w600,
                 fontSize: size * 0.4,
               ),
@@ -83,11 +82,11 @@ class ProfileAvatar extends StatelessWidget {
             ),
             errorWidget: (context, url, error) => CircleAvatar(
               radius: size / 2 - 3,
-              backgroundColor: DesignTokens.primary.withValues(alpha: 0.25),
+              backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
               child: Text(
                 initials,
                 style: TextStyle(
-                  color: DesignTokens.brandWhite,
+                  color: AppThemeExtension.of(context).onAccentLight,
                   fontWeight: FontWeight.w600,
                   fontSize: size * 0.4,
                 ),

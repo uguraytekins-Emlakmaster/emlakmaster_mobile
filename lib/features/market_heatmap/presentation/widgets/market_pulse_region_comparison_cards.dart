@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:math' as math;
 
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
@@ -5,7 +6,6 @@ import 'package:emlakmaster_mobile/core/intelligence/region_heatmap_defaults.dar
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:flutter/material.dart';
-
 export 'package:emlakmaster_mobile/core/intelligence/region_heatmap_defaults.dart'
     show marketPulseDefaultRegionScores;
 
@@ -23,7 +23,7 @@ class MarketPulseRegionComparisonStrip extends StatelessWidget {
   /// Yükleme iskeleti — üç kart genişliği.
   static Widget skeleton(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
     return Row(
       children: List.generate(
         3,
@@ -100,10 +100,10 @@ class _RegionComparisonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final textPrimary = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
+    final textTertiary = isDark ? AppThemeExtension.of(context).textTertiary : AppThemeExtension.of(context).textTertiary;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
     final pct = (region.demandScore * 100).clamp(0, 100).round();
     final range = region.budgetSegment ?? '—';
     final demand = region.demandScore.clamp(0.0, 1.0);
@@ -119,7 +119,7 @@ class _RegionComparisonCard extends StatelessWidget {
           colors: [
             Colors.white.withValues(alpha: isDark ? 0.08 : 0.85),
             Colors.white.withValues(alpha: isDark ? 0.02 : 0.45),
-            DesignTokens.primary.withValues(alpha: isDark ? 0.07 : 0.12),
+            AppThemeExtension.of(context).accent.withValues(alpha: isDark ? 0.07 : 0.12),
           ],
           stops: const [0.0, 0.55, 1.0],
         ),
@@ -145,10 +145,10 @@ class _RegionComparisonCard extends StatelessWidget {
                   margin: const EdgeInsets.only(top: 2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: hotMarket ? DesignTokens.success : DesignTokens.warning,
+                    color: hotMarket ? AppThemeExtension.of(context).success : AppThemeExtension.of(context).warning,
                     boxShadow: [
                       BoxShadow(
-                        color: (hotMarket ? DesignTokens.success : DesignTokens.warning)
+                        color: (hotMarket ? AppThemeExtension.of(context).success : AppThemeExtension.of(context).warning)
                             .withValues(alpha: 0.45),
                         blurRadius: 4,
                       ),
@@ -202,7 +202,7 @@ class _RegionComparisonCard extends StatelessWidget {
                   painter: _DominanceArcPainter(
                     fill: region.demandScore.clamp(0.0, 1.0),
                     trackColor: textTertiary.withValues(alpha: 0.25),
-                    valueColor: DesignTokens.primary,
+                    valueColor: AppThemeExtension.of(context).accent,
                   ),
                 ),
               ),
@@ -222,10 +222,10 @@ class _RegionComparisonCard extends StatelessWidget {
                 demandScore: region.demandScore.clamp(0.0, 1.0),
                 lineColor: region.demandScore >= 0.7
                     ? const Color(0xFF43A047)
-                    : DesignTokens.primary.withValues(alpha: 0.9),
+                    : AppThemeExtension.of(context).accent.withValues(alpha: 0.9),
                 fillColor: (region.demandScore >= 0.7
                         ? const Color(0xFF43A047)
-                        : DesignTokens.primary)
+                        : AppThemeExtension.of(context).accent)
                     .withValues(alpha: 0.12),
               ),
             ),
@@ -239,8 +239,8 @@ class _RegionComparisonCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        splashColor: DesignTokens.primary.withValues(alpha: 0.12),
-        highlightColor: DesignTokens.primary.withValues(alpha: 0.06),
+        splashColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.12),
+        highlightColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.06),
         child: Semantics(
           label:
               '${region.regionName}, fiyat bandı $range, talep yüzde $pct, ${hotMarket ? "sıcak" : "durgun"} pazar',
@@ -285,8 +285,8 @@ class _HeatmapDemandBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          DesignTokens.warning.withValues(alpha: 0.95),
-                          DesignTokens.success.withValues(alpha: 0.92),
+                          AppThemeExtension.of(context).warning.withValues(alpha: 0.95),
+                          AppThemeExtension.of(context).success.withValues(alpha: 0.92),
                         ],
                       ),
                     ),

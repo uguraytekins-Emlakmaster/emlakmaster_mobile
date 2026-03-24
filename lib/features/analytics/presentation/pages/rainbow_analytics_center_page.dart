@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -11,7 +12,6 @@ import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/intel
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 /// Komuta merkezi — analiz başlatma ve geçmişe gidiş.
 class RainbowAnalyticsCenterPage extends ConsumerStatefulWidget {
   const RainbowAnalyticsCenterPage({
@@ -171,18 +171,18 @@ class _RainbowAnalyticsCenterPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: DesignTokens.scaffoldDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: DesignTokens.scaffoldDark,
+        backgroundColor: AppThemeExtension.of(context).background,
         foregroundColor: Colors.white,
         title: const Text('Rainbow Analytics Center'),
         actions: [
           TextButton(
             onPressed: () => context.push(AppRouter.routeRainbowIntelHistory),
-            child: const Text(
+            child: Text(
               'Geçmiş',
-              style: TextStyle(color: DesignTokens.antiqueGold),
+              style: TextStyle(color: AppThemeExtension.of(context).accent),
             ),
           ),
         ],
@@ -200,10 +200,10 @@ class _RainbowAnalyticsCenterPageState
             ),
           ),
           const SizedBox(height: DesignTokens.space6),
-          const Text(
+          Text(
             'Manuel giriş (off-market)',
             style: TextStyle(
-              color: DesignTokens.antiqueGold,
+              color: AppThemeExtension.of(context).accent,
               fontWeight: FontWeight.w700,
               fontSize: DesignTokens.fontSizeMd,
             ),
@@ -221,7 +221,7 @@ class _RainbowAnalyticsCenterPageState
             icon: const Icon(Icons.insights_rounded),
             label: const Text('Intelligence raporu oluştur'),
             style: FilledButton.styleFrom(
-              backgroundColor: DesignTokens.antiqueGold,
+              backgroundColor: AppThemeExtension.of(context).accent,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
@@ -254,7 +254,7 @@ class _RainbowAnalyticsCenterPageState
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: DesignTokens.antiqueGold),
+            borderSide: BorderSide(color: AppThemeExtension.of(context).accent),
           ),
         ),
       ),

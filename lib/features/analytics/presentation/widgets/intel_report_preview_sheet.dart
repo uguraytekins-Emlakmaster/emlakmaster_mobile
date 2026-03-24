@@ -1,11 +1,10 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:typed_data';
 
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/analytics/domain/models/rainbow_intel_models.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 /// Koyu tema önizleme + PDF aksiyonları.
 Future<void> showIntelReportPreviewSheet({
   required BuildContext context,
@@ -90,7 +89,7 @@ Future<void> showIntelReportPreviewSheet({
                           icon: const Icon(Icons.download_rounded),
                           label: const Text('PDF indir / paylaş'),
                           style: FilledButton.styleFrom(
-                            backgroundColor: DesignTokens.antiqueGold,
+                            backgroundColor: AppThemeExtension.of(context).accent,
                             foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
@@ -107,11 +106,11 @@ Future<void> showIntelReportPreviewSheet({
                               await launchUrl(uri, mode: LaunchMode.externalApplication);
                             }
                           },
-                          icon: const Icon(Icons.chat_rounded, color: DesignTokens.antiqueGold),
+                          icon: Icon(Icons.chat_rounded, color: AppThemeExtension.of(context).accent),
                           label: const Text('WhatsApp ile gönder'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: DesignTokens.antiqueGold,
-                            side: const BorderSide(color: DesignTokens.antiqueGold),
+                            foregroundColor: AppThemeExtension.of(context).accent,
+                            side: BorderSide(color: AppThemeExtension.of(context).accent),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),

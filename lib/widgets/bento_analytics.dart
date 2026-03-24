@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +8,7 @@ class BentoPowerAnalytics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return StreamBuilder<int>(
       stream: FirestoreService.callsCountStream(),
       builder: (context, callsSnapshot) {
@@ -36,8 +37,11 @@ class BentoPowerAnalytics extends StatelessWidget {
 
                 return RepaintBoundary(
                   child: Container(
-                  decoration: DesignTokens.dashboardCardDecoration(
-                    surfaceColor: Colors.white.withValues(alpha: 0.04),
+                  decoration: ext.surfaceCardDecoration(
+                    surfaceColor: Color.alphaBlend(
+                      ext.foreground.withValues(alpha: 0.04),
+                      ext.surface,
+                    ),
                   ),
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -45,10 +49,10 @@ class BentoPowerAnalytics extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             'Power Analytics',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: ext.textPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -58,7 +62,7 @@ class BentoPowerAnalytics extends StatelessWidget {
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(6),
-                              color: DesignTokens.primary.withValues(alpha: 0.2),
+                              color: ext.accent.withValues(alpha: 0.2),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -66,16 +70,16 @@ class BentoPowerAnalytics extends StatelessWidget {
                                 Container(
                                   width: 5,
                                   height: 5,
-                                  decoration: const BoxDecoration(
-                                    color: DesignTokens.primary,
+                                  decoration: BoxDecoration(
+                                    color: ext.accent,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
                                 const SizedBox(width: 4),
-                                const Text(
+                                Text(
                                   'Canlı',
                                   style: TextStyle(
-                                    color: DesignTokens.primary,
+                                    color: ext.accent,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -86,9 +90,9 @@ class BentoPowerAnalytics extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Çağrı & işlem sayıları (calls / deals)',
-                        style: TextStyle(color: Colors.grey, fontSize: 11),
+                        style: TextStyle(color: ext.textTertiary, fontSize: 11),
                       ),
                       const SizedBox(height: 16),
                       RepaintBoundary(
@@ -117,20 +121,24 @@ class BentoPowerAnalytics extends StatelessWidget {
 class _AnalyticsLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Container(
-      decoration: DesignTokens.dashboardCardDecoration(
-        surfaceColor: Colors.white.withValues(alpha: 0.04),
+      decoration: ext.surfaceCardDecoration(
+        surfaceColor: Color.alphaBlend(
+          ext.foreground.withValues(alpha: 0.04),
+          ext.surface,
+        ),
       ),
       padding: const EdgeInsets.all(20),
-      child: const Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(height: 8),
-          CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
-          SizedBox(height: 12),
+          const SizedBox(height: 8),
+          CircularProgressIndicator(strokeWidth: 2, color: ext.accent),
+          const SizedBox(height: 12),
           Text(
             'Yükleniyor...',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+            style: TextStyle(color: ext.textSecondary, fontSize: 12),
           ),
         ],
       ),
@@ -207,7 +215,8 @@ class _AnimatedDonut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isAlert ? Colors.redAccent : DesignTokens.primary;
+    final ext = AppThemeExtension.of(context);
+    final borderColor = isAlert ? ext.danger : ext.accent;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 400),
@@ -230,7 +239,7 @@ class _AnimatedDonut extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: borderColor, width: 2),
-                color: Colors.transparent,
+                color: ext.surface.withValues(alpha: 0),
               ),
               child: Center(
                 child: AnimatedSwitcher(
@@ -273,8 +282,8 @@ class _AnimatedDonut extends StatelessWidget {
                       label,
                       textAlign: TextAlign.center,
                       maxLines: 2,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: ext.textPrimary,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
@@ -284,7 +293,7 @@ class _AnimatedDonut extends StatelessWidget {
                       sub,
                       textAlign: TextAlign.center,
                       maxLines: 2,
-                      style: const TextStyle(color: Colors.grey, fontSize: 9),
+                      style: TextStyle(color: ext.textTertiary, fontSize: 9),
                     ),
                   ],
                 ),
@@ -298,8 +307,8 @@ class _AnimatedDonut extends StatelessWidget {
               child: Container(
                 width: 10,
                 height: 10,
-                decoration: const BoxDecoration(
-                  color: Colors.redAccent,
+                decoration: BoxDecoration(
+                  color: ext.danger,
                   shape: BoxShape.circle,
                 ),
               ),

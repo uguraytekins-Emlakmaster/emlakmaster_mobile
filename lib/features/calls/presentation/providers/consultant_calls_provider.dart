@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
@@ -36,14 +37,26 @@ final consultantCallsStreamProvider =
     if (!controller.isClosed) controller.add(docs);
   }
 
+  void onAdvisorError(Object e, StackTrace st) {
+    debugPrint('[consultantCallsStreamProvider] advisor: $e');
+    lastAdvisor = null;
+    mergeAndEmit();
+  }
+
+  void onAgentError(Object e, StackTrace st) {
+    debugPrint('[consultantCallsStreamProvider] agent: $e');
+    lastAgent = null;
+    mergeAndEmit();
+  }
+
   final sub1 = byAdvisor.listen((s) {
     lastAdvisor = s;
     mergeAndEmit();
-  }, onError: controller.addError, onDone: () {});
+  }, onError: onAdvisorError, onDone: () {});
   final sub2 = byAgent.listen((s) {
     lastAgent = s;
     mergeAndEmit();
-  }, onError: controller.addError, onDone: () {});
+  }, onError: onAgentError, onDone: () {});
 
   ref.onDispose(() {
     sub1.cancel();

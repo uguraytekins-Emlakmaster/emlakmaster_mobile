@@ -58,7 +58,7 @@ class CapabilityBadgeRow extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: ext.foregroundSecondary,
+            color: ext.textSecondary,
             fontSize: 11,
             fontWeight: FontWeight.w500,
           ),

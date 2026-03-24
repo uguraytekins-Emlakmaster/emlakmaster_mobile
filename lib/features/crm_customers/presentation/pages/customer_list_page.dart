@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,10 +11,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/design_tokens.dart';
-import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../widgets/customer_card.dart';
-
 /// CRM müşteri listesi: Firestore customers stream + arama + kartlar + toplu işlem.
 class CustomerListPage extends ConsumerStatefulWidget {
   const CustomerListPage({super.key});
@@ -42,27 +41,27 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     super.dispose();
   }
 
-  static DateTime? _parseDate(dynamic v) {
-    if (v == null) return null;
-    if (v is Timestamp) return v.toDate();
-    if (v is DateTime) return v;
-    return null;
-  }
-
   Future<void> _addSelectedToFollowUp(BuildContext context, WidgetRef ref) async {
+    final ext = AppThemeExtension.of(context);
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     if (uid.isEmpty) return;
     HapticFeedback.mediumImpact();
-    final count = _selectedIds.length;
     final due = DateTime.now().add(const Duration(days: 3));
+    var count = 0;
     for (final id in _selectedIds) {
-      await FirestoreService.setTask({
-        'advisorId': uid,
-        'customerId': id,
-        'title': 'Takip et',
-        'dueAt': Timestamp.fromDate(due),
-        'done': false,
-      });
+      if (id.startsWith('__dev_demo_')) continue;
+      count++;
+      try {
+        await FirestoreService.setTask({
+          'advisorId': uid,
+          'customerId': id,
+          'title': 'Takip et',
+          'dueAt': Timestamp.fromDate(due),
+          'done': false,
+        });
+      } catch (_) {
+        // Yumuşak geçiş: görev yazılamazsa sessizce atla
+      }
     }
     if (context.mounted) {
       setState(() {
@@ -72,47 +71,18 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$count müşteri takip listesine eklendi (Görevler\'de görünür).'),
-          backgroundColor: DesignTokens.primary,
+          backgroundColor: ext.accent,
           behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 
-  static CustomerEntity _docToEntity(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data();
-    final id = doc.id;
-    final updatedAt = _parseDate(data['updatedAt']) ?? DateTime.now();
-    final createdAt = _parseDate(data['createdAt']) ?? updatedAt;
-    final fullName = data['fullName'] as String? ??
-        data['customerIntent'] as String? ??
-        'Müşteri';
-    final regionRaw = data['regionPreferences'] ?? data['preferredRegions'];
-    final regionList = regionRaw is List ? regionRaw.map((e) => e.toString()).toList() : <String>[];
-    return CustomerEntity(
-      id: id,
-      fullName: fullName.isEmpty ? 'İsimsiz' : fullName,
-      primaryPhone: data['primaryPhone'] as String? ?? data['phone'] as String?,
-      email: data['email'] as String?,
-      assignedAdvisorId: data['assignedAgentId'] as String?,
-      nextSuggestedAction: data['lastNextStepSuggestion'] as String?,
-      lastInteractionAt: _parseDate(data['lastInteractionAt']) ?? updatedAt,
-      regionPreferences: List<String>.from(regionList),
-      callsCount: data['callsCount'] as int? ?? 0,
-      visitsCount: data['visitsCount'] as int? ?? 0,
-      offersCount: data['offersCount'] as int? ?? 0,
-      budgetMin: (data['budgetMin'] as num?)?.toDouble(),
-      budgetMax: (data['budgetMax'] as num?)?.toDouble(),
-      leadTemperature: (data['leadTemperature'] as num?)?.toDouble(),
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+      backgroundColor: ext.background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -132,7 +102,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             ? AppLocalizations.of(context).tArgs('n_selected', ['${_selectedIds.length}'])
                             : AppLocalizations.of(context).t('title_customers'),
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: AppThemeExtension.of(context).foreground,
+                              color: ext.foreground,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -145,7 +115,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         }),
                         child: Text(
                           AppLocalizations.of(context).t('cancel'),
-                          style: TextStyle(color: AppThemeExtension.of(context).foregroundSecondary),
+                          style: TextStyle(color: ext.foregroundSecondary),
                         ),
                       ),
                       FilledButton.icon(
@@ -153,17 +123,17 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         icon: const Icon(Icons.playlist_add_rounded, size: 18),
                         label: Text(AppLocalizations.of(context).tArgs('add_to_follow_up_count', ['${_selectedIds.length}'])),
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppThemeExtension.of(context).brandPrimary,
-                          foregroundColor: AppThemeExtension.of(context).onBrand,
+                          backgroundColor: ext.brandPrimary,
+                          foregroundColor: ext.onBrand,
                         ),
                       ),
                     ] else ...[
                       TextButton.icon(
                         onPressed: () => setState(() => _selectionMode = true),
-                        icon: Icon(Icons.checklist_rounded, size: 20, color: AppThemeExtension.of(context).brandPrimary),
+                        icon: Icon(Icons.checklist_rounded, size: 20, color: ext.brandPrimary),
                         label: Text(
                           AppLocalizations.of(context).t('bulk_action'),
-                          style: TextStyle(color: AppThemeExtension.of(context).brandPrimary),
+                          style: TextStyle(color: ext.brandPrimary),
                         ),
                       ),
                       const SizedBox(width: DesignTokens.space2),
@@ -172,8 +142,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         icon: const Icon(Icons.campaign_rounded, size: 18),
                         label: Text(AppLocalizations.of(context).t('bulk_campaign')),
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppThemeExtension.of(context).brandPrimary,
-                          foregroundColor: AppThemeExtension.of(context).onBrand,
+                          backgroundColor: ext.brandPrimary,
+                          foregroundColor: ext.onBrand,
                         ),
                       ),
                     ],
@@ -189,46 +159,28 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             ),
             const SliverPadding(padding: EdgeInsets.only(top: DesignTokens.space4)),
             SliverFillRemaining(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: FirestoreService.customersStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: CircularProgressIndicator(color: DesignTokens.primary),
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Center(
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final async = ref.watch(customerListForAgentProvider);
+                  return async.when(
+                    loading: () => Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.error_outline_rounded,
-                              color: AppThemeExtension.of(context).danger.withValues(alpha: 0.9),
-                              size: 48,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              AppLocalizations.of(context).t('customer_list_load_error'),
-                              style: TextStyle(
-                                color: AppThemeExtension.of(context).foreground,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+                        child: CircularProgressIndicator(color: ext.accent),
+                      ),
+                    ),
+                    error: (_, __) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: EmptyState(
+                          premiumVisual: true,
+                          icon: Icons.cloud_off_rounded,
+                          title: AppLocalizations.of(context).t('customer_list_load_error'),
+                          subtitle: 'Bağlantıyı kontrol edin veya bir süre sonra yeniden deneyin.',
                         ),
                       ),
-                    );
-                  }
-                  final docs = snapshot.data?.docs ?? [];
-                  final entities = docs.map(_docToEntity).toList();
+                    ),
+                    data: (entities) {
                   final filtered = _searchQuery.isEmpty
                       ? entities
                       : entities.where((e) {
@@ -244,14 +196,18 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         }).toList();
                   if (filtered.isEmpty) {
                     final l10n = AppLocalizations.of(context);
+                    final isEmptyFirestore = entities.isEmpty;
                     return EmptyState(
                       premiumVisual: true,
                       icon: Icons.people_rounded,
-                      title: docs.isEmpty ? l10n.t('empty_customers_title') : l10n.t('empty_search_title'),
-                      subtitle: docs.isEmpty
-                          ? '${l10n.t('empty_customers_subtitle')}\n\n${l10n.t('empty_state_empower')}'
+                      title: isEmptyFirestore ? l10n.t('empty_customers_title') : l10n.t('empty_search_title'),
+                      subtitle: isEmptyFirestore
+                          ? l10n.t('empty_customers_subtitle')
                           : l10n.tArgs('empty_search_subtitle', [_searchQuery]),
-                      actionLabel: docs.isEmpty ? l10n.t('add_customer') : null,
+                      actionLabel: isEmptyFirestore ? l10n.t('empty_customers_cta') : null,
+                      onAction: isEmptyFirestore
+                          ? () => context.push(AppRouter.routeCall)
+                          : null,
                     );
                   }
                   return ListView.builder(
@@ -277,6 +233,17 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                 }
                               });
                             } else {
+                              if (entity.id.startsWith('__dev_demo_')) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Demo kayıt — gerçek müşteri için arama veya müşteri oluşturun.',
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                                return;
+                              }
                               context.push(AppRouter.routeCustomerDetail.replaceFirst(':id', entity.id));
                             }
                           },
@@ -285,6 +252,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         ),
                         ),
                       );
+                    },
+                  );
                     },
                   );
                 },

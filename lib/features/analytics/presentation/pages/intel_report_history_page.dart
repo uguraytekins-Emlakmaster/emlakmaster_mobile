@@ -1,4 +1,7 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/analytics/data/pdf/rainbow_pdf_builder.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/providers/rainbow_intel_providers.dart';
@@ -6,7 +9,6 @@ import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/intel
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
-
 class IntelReportHistoryPage extends ConsumerWidget {
   const IntelReportHistoryPage({super.key});
 
@@ -15,35 +17,37 @@ class IntelReportHistoryPage extends ConsumerWidget {
     final async = ref.watch(intelReportHistoryListProvider);
 
     return Scaffold(
-      backgroundColor: DesignTokens.scaffoldDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: DesignTokens.scaffoldDark,
+        backgroundColor: AppThemeExtension.of(context).background,
         foregroundColor: Colors.white,
         title: const Text('Rapor geçmişi'),
       ),
       body: async.when(
         data: (items) {
           if (items.isEmpty) {
+            final l10n = AppLocalizations.of(context);
             return RefreshIndicator(
-              color: DesignTokens.antiqueGold,
+              color: AppThemeExtension.of(context).accent,
               onRefresh: () async => ref.invalidate(intelReportHistoryListProvider),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
                 children: [
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.25),
-                  Center(
-                    child: Text(
-                      'Henüz kayıtlı rapor yok.',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-                    ),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.18),
+                  EmptyState(
+                    compact: true,
+                    icon: Icons.picture_as_pdf_outlined,
+                    title: l10n.t('empty_intel_reports_title'),
+                    subtitle: l10n.t('empty_intel_reports_sub'),
                   ),
                 ],
               ),
             );
           }
           return RefreshIndicator(
-            color: DesignTokens.antiqueGold,
+            color: AppThemeExtension.of(context).accent,
             onRefresh: () async => ref.invalidate(intelReportHistoryListProvider),
             child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -53,7 +57,7 @@ class IntelReportHistoryPage extends ConsumerWidget {
             itemBuilder: (context, i) {
               final r = items[i];
               return Material(
-                color: DesignTokens.surfaceDarkCard,
+                color: AppThemeExtension.of(context).card,
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -77,13 +81,13 @@ class IntelReportHistoryPage extends ConsumerWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: DesignTokens.antiqueGold.withValues(alpha: 0.5),
+                              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Text(
                             r.rainbowScore.toStringAsFixed(0),
-                            style: const TextStyle(
-                              color: DesignTokens.antiqueGold,
+                            style: TextStyle(
+                              color: AppThemeExtension.of(context).accent,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -124,7 +128,7 @@ class IntelReportHistoryPage extends ConsumerWidget {
                           },
                           icon: Icon(
                             Icons.ios_share_rounded,
-                            color: DesignTokens.antiqueGold.withValues(alpha: 0.9),
+                            color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9),
                           ),
                         ),
                       ],
@@ -136,8 +140,8 @@ class IntelReportHistoryPage extends ConsumerWidget {
           ),
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: DesignTokens.antiqueGold),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
         ),
         error: (e, _) => Center(
           child: Text('Yüklenemedi: $e', style: const TextStyle(color: Colors.white70)),

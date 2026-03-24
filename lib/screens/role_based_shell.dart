@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'admin_shell.dart';
 import 'client_shell.dart';
 import 'consultant_shell.dart';
-
 /// RBAC: Giriş sonrası rolüne göre Admin, Consultant veya Client paneli.
 /// - ADMIN: Dashboard, War Room, çağrı merkezi, raporlar, ekonomi, ayarlar.
 /// - CONSULTANT: Özetim, müşteriler, ilanlar, Magic Call, takip, ayarlar.
@@ -59,7 +58,7 @@ class _ShellLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       // Açık temada scaffold beyazı "boş ekran" gibi görünmesin.
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -69,7 +68,7 @@ class _ShellLoading extends StatelessWidget {
             Text(
               'Panel hazırlanıyor...',
               style: TextStyle(
-                color: DesignTokens.textPrimaryDark.withValues(alpha: 0.9),
+                color: AppThemeExtension.of(context).textPrimary.withValues(alpha: 0.9),
                 fontSize: 14,
               ),
             ),

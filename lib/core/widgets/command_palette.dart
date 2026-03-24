@@ -1,11 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 /// Cmd+K (veya Ctrl+K) ile açılan Smart Command Palette.
 /// Yazarken sayfa komutları ve müşteri araması yapar.
 class CommandPalette {
@@ -137,9 +135,15 @@ class _CommandPaletteContentState extends State<_CommandPaletteContent> {
                     stream: FirestoreService.customersStream(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: DesignTokens.primary))),
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(color: ext.accent),
+                            ),
+                          ),
                         );
                       }
                       final docs = snapshot.data!.docs;
@@ -195,7 +199,7 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return ListTile(
-      leading: Icon(icon, color: DesignTokens.primary),
+      leading: Icon(icon, color: ext.accent),
       title: Text(label, style: TextStyle(color: ext.popoverForeground)),
       onTap: onTap,
     );

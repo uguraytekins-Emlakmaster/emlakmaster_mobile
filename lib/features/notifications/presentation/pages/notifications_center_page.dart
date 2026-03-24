@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -5,7 +6,6 @@ import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Bildirim merkezi: in-app bildirimler, champion boş durum.
 class NotificationsCenterPage extends ConsumerWidget {
   const NotificationsCenterPage({super.key});
@@ -14,11 +14,11 @@ class NotificationsCenterPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: DesignTokens.backgroundDark,
-        foregroundColor: DesignTokens.textPrimaryDark,
+        backgroundColor: AppThemeExtension.of(context).background,
+        foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: const Text(
           'Bildirimler',
           style: TextStyle(
@@ -38,7 +38,7 @@ class NotificationsCenterPage extends ConsumerWidget {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting &&
                     !snapshot.hasData) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -46,15 +46,15 @@ class NotificationsCenterPage extends ConsumerWidget {
                           width: 32,
                           height: 32,
                           child: CircularProgressIndicator(
-                            color: DesignTokens.primary,
+                            color: AppThemeExtension.of(context).accent,
                             strokeWidth: 2,
                           ),
                         ),
-                        SizedBox(height: DesignTokens.space4),
+                        const SizedBox(height: DesignTokens.space4),
                         Text(
                           'Bildirimler yükleniyor...',
                           style: TextStyle(
-                            color: DesignTokens.textSecondaryDark,
+                            color: AppThemeExtension.of(context).textSecondary,
                             fontSize: DesignTokens.fontSizeSm,
                           ),
                         ),
@@ -120,18 +120,18 @@ class _NotificationCard extends StatelessWidget {
       padding: const EdgeInsets.all(DesignTokens.space4),
       decoration: BoxDecoration(
         color: read
-            ? DesignTokens.surfaceDark
-            : DesignTokens.surfaceDark.withValues(alpha: 0.95),
+            ? AppThemeExtension.of(context).surface
+            : AppThemeExtension.of(context).surface.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         border: Border.all(
           color: read
-              ? DesignTokens.borderDark
-              : DesignTokens.primary.withValues(alpha: 0.3),
+              ? AppThemeExtension.of(context).border
+              : AppThemeExtension.of(context).accent.withValues(alpha: 0.3),
           width: read ? 1 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: DesignTokens.primary.withValues(alpha: read ? 0 : 0.08),
+            color: AppThemeExtension.of(context).accent.withValues(alpha: read ? 0 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -145,13 +145,13 @@ class _NotificationCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(DesignTokens.space2),
                 decoration: BoxDecoration(
-                  color: DesignTokens.primary.withValues(alpha: 0.15),
+                  color: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.campaign_rounded,
                   size: 18,
-                  color: DesignTokens.primary,
+                  color: AppThemeExtension.of(context).accent,
                 ),
               ),
               const SizedBox(width: DesignTokens.space3),
@@ -159,7 +159,7 @@ class _NotificationCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: TextStyle(
-                    color: DesignTokens.textPrimaryDark,
+                    color: AppThemeExtension.of(context).textPrimary,
                     fontWeight: read ? FontWeight.w500 : FontWeight.w700,
                     fontSize: DesignTokens.fontSizeMd,
                   ),
@@ -168,8 +168,8 @@ class _NotificationCard extends StatelessWidget {
               if (createdAt != null)
                 Text(
                   '${createdAt!.day}.${createdAt!.month}',
-                  style: const TextStyle(
-                    color: DesignTokens.textTertiaryDark,
+                  style: TextStyle(
+                    color: AppThemeExtension.of(context).textTertiary,
                     fontSize: 11,
                   ),
                 ),
@@ -179,8 +179,8 @@ class _NotificationCard extends StatelessWidget {
             const SizedBox(height: DesignTokens.space2),
             Text(
               body,
-              style: const TextStyle(
-                color: DesignTokens.textSecondaryDark,
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textSecondary,
                 fontSize: DesignTokens.fontSizeSm,
                 height: 1.4,
               ),
@@ -220,14 +220,14 @@ class _ChampionEmptyState extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    DesignTokens.primary.withValues(alpha: 0.2),
-                    DesignTokens.accent.withValues(alpha: 0.1),
+                    AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+                    AppThemeExtension.of(context).accent.withValues(alpha: 0.1),
                   ],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: DesignTokens.primary.withValues(alpha: 0.2),
+                    color: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
                     blurRadius: 24,
                     offset: const Offset(0, 4),
                   ),
@@ -236,14 +236,14 @@ class _ChampionEmptyState extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 56,
-                color: DesignTokens.primary.withValues(alpha: 0.9),
+                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9),
               ),
             ),
             const SizedBox(height: DesignTokens.space6),
             Text(
               title,
-              style: const TextStyle(
-                color: DesignTokens.textPrimaryDark,
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textPrimary,
                 fontWeight: FontWeight.w800,
                 fontSize: DesignTokens.fontSizeXl,
               ),
@@ -252,8 +252,8 @@ class _ChampionEmptyState extends StatelessWidget {
             const SizedBox(height: DesignTokens.space2),
             Text(
               subtitle,
-              style: const TextStyle(
-                color: DesignTokens.textSecondaryDark,
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textSecondary,
                 fontSize: DesignTokens.fontSizeSm,
                 height: 1.4,
               ),

@@ -1,10 +1,10 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
-
 /// Veri yokken "laboratuvar çalışıyor" hissi: radar animasyonu + dönen durum metinleri.
 /// Arka planda animasyon duraklatılır (pil / performans).
 class OpportunityRadarLaboratoryEmpty extends StatefulWidget {
@@ -83,6 +83,7 @@ class _OpportunityRadarLaboratoryEmptyState extends State<OpportunityRadarLabora
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final reduce = AppLifecyclePowerService.shouldReduceMotion;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -93,21 +94,22 @@ class _OpportunityRadarLaboratoryEmptyState extends State<OpportunityRadarLabora
             width: 44,
             height: 44,
             child: reduce
-                ? const Icon(
+                ? Icon(
                     Icons.radar_rounded,
-                    color: DesignTokens.success,
+                    color: ext.success,
                     size: 36,
                   )
                 : AnimatedBuilder(
                     animation: _radarController,
-                    builder: (context, _) {
+                    builder: (ctx, _) {
                       final t = _radarController.value * 2 * math.pi;
+                      final pulseExt = AppThemeExtension.of(ctx);
                       return CustomPaint(
-                        painter: _RadarPulsePainter(phase: t),
-                        child: const Center(
+                        painter: _RadarPulsePainter(phase: t, successColor: pulseExt.success),
+                        child: Center(
                           child: Icon(
                             Icons.radar_rounded,
-                            color: DesignTokens.success,
+                            color: pulseExt.success,
                             size: 26,
                           ),
                         ),
@@ -125,8 +127,8 @@ class _OpportunityRadarLaboratoryEmptyState extends State<OpportunityRadarLabora
                   child: Text(
                     _messages[_messageIndex],
                     key: ValueKey<int>(_messageIndex),
-                    style: const TextStyle(
-                      color: DesignTokens.textSecondaryDark,
+                    style: TextStyle(
+                      color: ext.textSecondary,
                       fontSize: 13,
                       height: 1.35,
                       fontWeight: FontWeight.w500,
@@ -137,7 +139,7 @@ class _OpportunityRadarLaboratoryEmptyState extends State<OpportunityRadarLabora
                 Text(
                   'Öne çıkan fırsat geldiğinde burada göreceksiniz.',
                   style: TextStyle(
-                    color: DesignTokens.textTertiaryDark.withValues(alpha: 0.9),
+                    color: ext.textTertiary.withValues(alpha: 0.9),
                     fontSize: 11,
                     height: 1.3,
                   ),
@@ -152,9 +154,10 @@ class _OpportunityRadarLaboratoryEmptyState extends State<OpportunityRadarLabora
 }
 
 class _RadarPulsePainter extends CustomPainter {
-  _RadarPulsePainter({required this.phase});
+  _RadarPulsePainter({required this.phase, required this.successColor});
 
   final double phase;
+  final Color successColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -166,7 +169,7 @@ class _RadarPulsePainter extends CustomPainter {
       final r = maxR * (0.35 + 0.65 * wave);
       final opacity = (1 - wave) * 0.45;
       final paint = Paint()
-        ..color = DesignTokens.success.withValues(alpha: opacity)
+        ..color = successColor.withValues(alpha: opacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5;
       canvas.drawCircle(c, r, paint);
@@ -175,6 +178,6 @@ class _RadarPulsePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RadarPulsePainter oldDelegate) {
-    return oldDelegate.phase != phase;
+    return oldDelegate.phase != phase || oldDelegate.successColor != successColor;
   }
 }

@@ -1,5 +1,8 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
 import 'package:flutter/services.dart';
@@ -7,12 +10,12 @@ import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_perm
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
-
 /// Yönetici çağrı merkezi: tüm çağrılar. Sadece canViewAllCalls rolleri erişebilir.
 class CommandCenterPage extends ConsumerStatefulWidget {
   const CommandCenterPage({super.key});
@@ -29,12 +32,12 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
     final roleAsync = ref.watch(displayRoleProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final loadingBg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
+    final loadingBg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
     return roleAsync.when(
       loading: () => Scaffold(
         backgroundColor: loadingBg,
-        body: const Center(
-          child: CircularProgressIndicator(color: DesignTokens.primary),
+        body: Center(
+          child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
         ),
       ),
       error: (_, __) => const UnauthorizedScreen(
@@ -106,10 +109,10 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
   Widget _buildSearchBar() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surfaceCard = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final surfaceCard = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final textPrimary = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
       child: Row(
@@ -122,7 +125,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               decoration: InputDecoration(
                 hintText: 'Telefon, danışman, sonuç...',
                 hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.7), fontSize: 14),
-                prefixIcon: Icon(Icons.search_rounded, color: DesignTokens.primary.withValues(alpha: 0.9), size: 22),
+                prefixIcon: Icon(Icons.search_rounded, color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9), size: 22),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: Icon(Icons.clear_rounded, size: 20, color: textSecondary),
@@ -145,7 +148,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide: const BorderSide(color: DesignTokens.primary, width: 1.2),
+                  borderSide: BorderSide(color: AppThemeExtension.of(context).accent, width: 1.2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -170,8 +173,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final fg = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
     return Scaffold(
       backgroundColor: bg,
       appBar: emlakAppBar(
@@ -193,9 +196,9 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               final csv = callsToCsv(docs);
               Clipboard.setData(ClipboardData(text: csv));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('CSV panoya kopyalandı. Excel\'e yapıştırabilirsiniz.'),
-                  backgroundColor: DesignTokens.primary,
+                SnackBar(
+                  content: const Text('CSV panoya kopyalandı. Excel\'e yapıştırabilirsiniz.'),
+                  backgroundColor: AppThemeExtension.of(context).accent,
                 ),
               );
             },
@@ -240,8 +243,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
-              return const Center(
-                child: CircularProgressIndicator(color: DesignTokens.primary),
+              return Center(
+                child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
               );
             }
             if (snapshot.hasError) {
@@ -251,8 +254,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline_rounded,
-                          color: DesignTokens.textSecondaryDark, size: 48),
+                      Icon(Icons.error_outline_rounded,
+                          color: AppThemeExtension.of(context).textSecondary, size: 48),
                       const SizedBox(height: 16),
                       Text(
                         'Çağrılar yüklenemedi.',
@@ -266,7 +269,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                       Text(
                         'Lütfen tekrar deneyin.',
                         style: TextStyle(
-                          color: isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight,
+                          color: isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary,
                           fontSize: 13,
                         ),
                         textAlign: TextAlign.center,
@@ -277,7 +280,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                         icon: const Icon(Icons.refresh_rounded, size: 20),
                         label: const Text('Tekrar dene'),
                         style: TextButton.styleFrom(
-                          foregroundColor: DesignTokens.primary,
+                          foregroundColor: AppThemeExtension.of(context).accent,
                         ),
                       ),
                     ],
@@ -318,24 +321,24 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
             });
             if (filtered.isEmpty) {
               final hasAnyDocs = docs.isNotEmpty;
+              final l10n = AppLocalizations.of(context);
+              if (hasAnyDocs) {
+                return EmptyState(
+                  compact: true,
+                  icon: Icons.call_rounded,
+                  title: 'Uygun çağrı yok',
+                  subtitle: 'Arama veya filtrelere uygun kayıt bulunamadı.',
+                  outlinedActionLabel: 'Filtreleri temizle',
+                  onOutlinedAction: _clearFilters,
+                );
+              }
               return EmptyState(
                 compact: true,
                 icon: Icons.call_rounded,
-                title: hasAnyDocs ? 'Uygun çağrı yok' : 'Çağrı kaydı yok',
-                subtitle: hasAnyDocs
-                    ? 'Arama veya filtrelere uygun kayıt bulunamadı.'
-                    : 'Henüz sisteme düşen çağrı yok. Yeni kayıtlar burada listelenir.',
-                outlinedActionLabel: hasAnyDocs ? 'Filtreleri temizle' : 'Yeni kayıt (yakında)',
-                onOutlinedAction: hasAnyDocs
-                    ? _clearFilters
-                    : () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Çağrı ekleme akışı yakında bağlanacak.'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+                title: l10n.t('empty_calls_title'),
+                subtitle: l10n.t('empty_calls_sub'),
+                actionLabel: l10n.t('empty_calls_cta'),
+                onAction: () => context.push(AppRouter.routeCall),
               );
             }
             return ListView.builder(
@@ -364,16 +367,16 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 }
                 final cardTheme = Theme.of(context);
                 final cardIsDark = cardTheme.brightness == Brightness.dark;
-                final surface = cardIsDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-                final tp = cardIsDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-                final ts = cardIsDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+                final surface = cardIsDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+                final tp = cardIsDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+                final ts = cardIsDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
                 return Card(
                   margin: const EdgeInsets.only(bottom: DesignTokens.space2),
                   color: surface,
                   child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: DesignTokens.primary,
-                      child: Icon(Icons.call_rounded, color: DesignTokens.inputTextOnGold, size: 20),
+                    leading: CircleAvatar(
+                      backgroundColor: AppThemeExtension.of(context).accent,
+                      child: Icon(Icons.call_rounded, color: AppThemeExtension.of(context).onBrand, size: 20),
                     ),
                     title: Text(
                       'Çağrı ${id.length > 8 ? id.substring(0, 8) : id}',
@@ -442,10 +445,10 @@ class _CommandCenterFilters extends StatelessWidget {
             };
             final theme = Theme.of(context);
             final isDark = theme.brightness == Brightness.dark;
-            final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-            final surfaceCard = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-            final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-            final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+            final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+            final surfaceCard = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+            final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+            final textColor = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
             final hintColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
@@ -553,8 +556,8 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surfaceCard = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final borderColor = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final surfaceCard = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final borderColor = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
@@ -568,7 +571,7 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
           color: surfaceCard,
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           border: Border.all(
-            color: _pressed ? DesignTokens.primary.withValues(alpha: 0.5) : borderColor,
+            color: _pressed ? AppThemeExtension.of(context).accent.withValues(alpha: 0.5) : borderColor,
             width: _pressed ? 1.2 : 0.8,
           ),
           boxShadow: [
@@ -580,7 +583,7 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
             ),
             if (!_pressed)
               BoxShadow(
-                color: DesignTokens.primary.withValues(alpha: 0.08),
+                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.08),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -589,13 +592,13 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(widget.icon, size: 20, color: DesignTokens.primary),
+            Icon(widget.icon, size: 20, color: AppThemeExtension.of(context).accent),
             if (widget.label != null) ...[
               const SizedBox(width: 6),
               Text(
                 widget.label!,
-                style: const TextStyle(
-                  color: DesignTokens.primary,
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).accent,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),

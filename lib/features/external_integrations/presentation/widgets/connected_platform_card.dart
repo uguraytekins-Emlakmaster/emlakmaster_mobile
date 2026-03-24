@@ -6,7 +6,6 @@ import 'package:emlakmaster_mobile/features/external_integrations/presentation/w
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/platform_status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 class ConnectedPlatformCard extends StatelessWidget {
   const ConnectedPlatformCard({
     super.key,
@@ -57,6 +56,8 @@ class ConnectedPlatformCard extends StatelessWidget {
                     children: [
                       Text(
                         platform.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: ext.foreground,
                           fontWeight: FontWeight.w800,
@@ -67,6 +68,8 @@ class ConnectedPlatformCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         _supportLabel(platform.supportLevel),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: ext.foregroundSecondary,
                           fontSize: 12,
@@ -75,6 +78,7 @@ class ConnectedPlatformCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 PlatformStatusChip(state: platform.connectionState),
               ],
             ),
@@ -279,7 +283,7 @@ class _MiniAction extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return Material(
       color: filled
-          ? DesignTokens.antiqueGold.withValues(alpha: 0.9)
+          ? ext.accent.withValues(alpha: 0.9)
           : ext.surfaceElevated,
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
       child: InkWell(
@@ -299,7 +303,7 @@ class _MiniAction extends StatelessWidget {
                 color: danger
                     ? ext.danger
                     : filled
-                        ? DesignTokens.inputTextOnGold
+                        ? ext.onBrand
                         : ext.foreground,
               ),
               const SizedBox(width: 6),
@@ -309,7 +313,7 @@ class _MiniAction extends StatelessWidget {
                   color: danger
                       ? ext.danger
                       : filled
-                          ? DesignTokens.inputTextOnGold
+                          ? ext.onBrand
                           : ext.foreground,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

@@ -1,4 +1,6 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -15,7 +17,6 @@ import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Yönetici paneli – Ekonomi & Piyasa: kur, altın, piyasa nabzı, ticker.
 class AdminEconomyPage extends StatelessWidget {
   const AdminEconomyPage({super.key});
@@ -24,9 +25,9 @@ class AdminEconomyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final secondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final fg = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+    final secondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
     return Scaffold(
       backgroundColor: bg,
       appBar: emlakAppBar(
@@ -72,8 +73,8 @@ class AdminReportsPage extends ConsumerWidget {
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final fg = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
     return Scaffold(
       backgroundColor: bg,
       appBar: emlakAppBar(
@@ -91,8 +92,8 @@ class AdminReportsPage extends ConsumerWidget {
               builder: (context, snap) {
                 final teams = snap.data ?? [];
                 if (teams.isEmpty) {
-                  final cardSurface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-                  final cardSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+                  final cardSurface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+                  final cardSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: DesignTokens.space4),
                     child: InkWell(
@@ -107,20 +108,20 @@ class AdminReportsPage extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: cardSurface,
                           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                          border: Border.all(color: DesignTokens.primary.withValues(alpha: 0.4)),
+                          border: Border.all(color: AppThemeExtension.of(context).accent.withValues(alpha: 0.4)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.group_add_rounded, color: DesignTokens.primary, size: 32),
+                            Icon(Icons.group_add_rounded, color: AppThemeExtension.of(context).accent, size: 32),
                             const SizedBox(width: DesignTokens.space4),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Ekiplerini kur',
                                     style: TextStyle(
-                                      color: DesignTokens.primary,
+                                      color: AppThemeExtension.of(context).accent,
                                       fontWeight: FontWeight.w700,
                                       fontSize: DesignTokens.fontSizeMd,
                                     ),
@@ -136,7 +137,7 @@ class AdminReportsPage extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: DesignTokens.primary),
+                            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppThemeExtension.of(context).accent),
                           ],
                         ),
                       ),
@@ -222,6 +223,7 @@ class _AdminReportsPerfSection extends StatelessWidget {
             final hasSummaries = summariesSnap.data!.docs.isNotEmpty;
             final hasDeals = dealsSnap.data!.docs.isNotEmpty;
             if (!hasSummaries && !hasDeals) {
+              final l10n = AppLocalizations.of(context);
               return Align(
                 alignment: Alignment.topCenter,
                 child: Padding(
@@ -229,14 +231,13 @@ class _AdminReportsPerfSection extends StatelessWidget {
                   child: EmptyState(
                     compact: true,
                     icon: Icons.analytics_outlined,
-                    title: 'Henüz rapor verisi yok',
-                    subtitle:
-                        'Çağrı özeti veya işlem kaydı oluştuğunda özet metrikler burada görünecek.',
-                    outlinedActionLabel: 'Yeni kayıt ekle',
+                    title: l10n.t('empty_reports_title'),
+                    subtitle: l10n.t('empty_reports_sub'),
+                    outlinedActionLabel: l10n.t('empty_reports_cta'),
                     onOutlinedAction: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Rapor kaydı oluşturma yakında.'),
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const AdminConsultantsPage(),
                         ),
                       );
                     },
@@ -265,8 +266,8 @@ class _AdminPerfLoadingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space4),
       child: Container(
@@ -350,11 +351,11 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textPrimary = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final textPrimary = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
+    final textTertiary = isDark ? AppThemeExtension.of(context).textTertiary : AppThemeExtension.of(context).textTertiary;
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space5),
       decoration: BoxDecoration(
@@ -367,10 +368,10 @@ class _SectionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(DesignTokens.space3),
             decoration: BoxDecoration(
-              color: DesignTokens.primary.withValues(alpha: 0.15),
+              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
             ),
-            child: Icon(icon, color: DesignTokens.primary, size: 28),
+            child: Icon(icon, color: AppThemeExtension.of(context).accent, size: 28),
           ),
           const SizedBox(width: DesignTokens.space4),
           Expanded(

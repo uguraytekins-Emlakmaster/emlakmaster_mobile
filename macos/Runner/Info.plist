@@ -42,6 +42,16 @@
 			<key>CFBundleURLName</key>
 			<string>Google Sign-In</string>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.emlakmaster.regioninsight</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>emlakmaster</string>
+			</array>
+		</dict>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Sesli not ve hands-free CRM için mikrofon erişimi gerekir.</string>

@@ -1,8 +1,7 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 
-import '../theme/design_tokens.dart';
-
-/// Uygulama genelinde tutarlı yükleme göstergesi. DesignTokens.primary rengi kullanır.
+/// Uygulama genelinde tutarlı yükleme göstergesi. AppThemeExtension.of(context).accent rengi kullanır.
 class AppLoading extends StatelessWidget {
   const AppLoading({
     super.key,
@@ -20,7 +19,7 @@ class AppLoading extends StatelessWidget {
       height: size,
       child: CircularProgressIndicator(
         strokeWidth: strokeWidth,
-        color: DesignTokens.primary,
+        color: AppThemeExtension.of(context).accent,
       ),
     );
   }

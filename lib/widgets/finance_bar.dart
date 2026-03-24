@@ -2,13 +2,15 @@ import 'dart:math' as math;
 
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/services/finance_service.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Ekonomi (B): Yahoo / TCMB / yedek akış — premium dark fintech kartları.
+/// Ekonomi (B): Yahoo / TCMB — [AppThemeExtension] ile light/dark uyumlu kartlar.
 class FinanceBar extends StatelessWidget {
   const FinanceBar({super.key});
 
@@ -21,16 +23,11 @@ class FinanceBar extends StatelessWidget {
 class FinanceBarLive extends StatelessWidget {
   const FinanceBarLive({super.key});
 
-  static const Color _charcoal = Color(0xFF1A1A1F);
-  static const Color _cardSurface = Color(0xFF242428);
-
-  /// Neon yeşil (CANLI + sparkline).
-  static const Color _neonGreen = Color(0xFF00FF9D);
-
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
       child: StreamBuilder<FinanceRates>(
         stream: FinanceService.ratesStream,
         initialData: FinanceService.getCached(),
@@ -41,13 +38,13 @@ class FinanceBarLive extends StatelessWidget {
             return r.usdTry > 0 || r.eurTry > 0 || r.gramGoldTry > 0;
           }
 
-          final awaitingFirst = rates == null &&
-              snapshot.connectionState == ConnectionState.waiting;
+          final awaitingFirst =
+              rates == null && snapshot.connectionState == ConnectionState.waiting;
           final awaitingValidRates = rates != null &&
               !hasValidRates(rates) &&
               snapshot.connectionState == ConnectionState.waiting;
           if (awaitingFirst || awaitingValidRates) {
-            return const _FinanceBarShimmer();
+            return _FinanceBarShimmer(ext: ext);
           }
 
           String fmtUsd() => (rates != null && rates.usdTry > 0)
@@ -70,6 +67,8 @@ class FinanceBarLive extends StatelessWidget {
           final usdDense = FinanceService.densifySeries(usdSeries);
           final eurDense = FinanceService.densifySeries(eurSeries);
           final goldDense = FinanceService.densifySeries(goldSeries);
+
+          final liveColor = ext.success;
 
           final items = <_EconomyCardData>[
             _EconomyCardData(
@@ -96,18 +95,27 @@ class FinanceBarLive extends StatelessWidget {
             ),
           ];
 
+          final outerBg = Color.alphaBlend(
+            ext.foreground.withValues(alpha: 0.04),
+            ext.chartBackground,
+          );
+
           return ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardL),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                const Positioned.fill(
-                  child: ColoredBox(color: _charcoal),
+                Positioned.fill(
+                  child: ColoredBox(color: outerBg),
                 ),
                 Positioned.fill(
                   child: IgnorePointer(
                     child: CustomPaint(
-                      painter: _NoiseTexturePainter(seed: 42, opacity: 0.05),
+                      painter: _NoiseTexturePainter(
+                        seed: 42,
+                        opacity: 0.05,
+                        dotColor: ext.foreground,
+                      ),
                     ),
                   ),
                 ),
@@ -123,14 +131,15 @@ class FinanceBarLive extends StatelessWidget {
                           child: Text(
                             'Veriler güncelleniyor…',
                             style: GoogleFonts.inter(
-                              color: Colors.white.withValues(alpha: 0.45),
+                              color: ext.textTertiary,
                               fontSize: 10,
                             ),
                           ),
                         ),
                       _EconomyLiveHeader(
                         dataSource: rates?.dataSource,
-                        neonGreen: _neonGreen,
+                        liveColor: liveColor,
+                        ext: ext,
                       ),
                       const SizedBox(height: 14),
                       Row(
@@ -144,8 +153,8 @@ class FinanceBarLive extends StatelessWidget {
                                 ),
                                 child: _EconomyFintechCard(
                                   data: items[i],
-                                  cardSurface: _cardSurface,
-                                  neonGreen: _neonGreen,
+                                  ext: ext,
+                                  liveColor: liveColor,
                                 ),
                               ),
                             ),
@@ -181,19 +190,23 @@ class _EconomyCardData {
   final List<double> sparkline;
 }
 
-/// ~%5 opaklıkta gürültü dokusu (arka plan).
 class _NoiseTexturePainter extends CustomPainter {
-  _NoiseTexturePainter({required this.seed, required this.opacity});
+  _NoiseTexturePainter({
+    required this.seed,
+    required this.opacity,
+    required this.dotColor,
+  });
 
   final int seed;
   final double opacity;
+  final Color dotColor;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
     final rnd = math.Random(seed);
     final count = (size.width * size.height * 0.018).round().clamp(120, 2800);
-    final paint = Paint()..color = Colors.white.withValues(alpha: opacity);
+    final paint = Paint()..color = dotColor.withValues(alpha: opacity);
     for (var i = 0; i < count; i++) {
       final x = rnd.nextDouble() * size.width;
       final y = rnd.nextDouble() * size.height;
@@ -204,18 +217,22 @@ class _NoiseTexturePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _NoiseTexturePainter oldDelegate) {
-    return oldDelegate.seed != seed || oldDelegate.opacity != opacity;
+    return oldDelegate.seed != seed ||
+        oldDelegate.opacity != opacity ||
+        oldDelegate.dotColor != dotColor;
   }
 }
 
 class _EconomyLiveHeader extends StatefulWidget {
   const _EconomyLiveHeader({
     this.dataSource,
-    required this.neonGreen,
+    required this.liveColor,
+    required this.ext,
   });
 
   final String? dataSource;
-  final Color neonGreen;
+  final Color liveColor;
+  final AppThemeExtension ext;
 
   @override
   State<_EconomyLiveHeader> createState() => _EconomyLiveHeaderState();
@@ -249,6 +266,7 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
   @override
   Widget build(BuildContext context) {
     final reduce = AppLifecyclePowerService.shouldReduceMotion;
+    final ext = widget.ext;
     final src = widget.dataSource;
     final srcLabel = src == 'TCMB'
         ? 'TCMB · resmi XML'
@@ -263,10 +281,10 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
       height: 7,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: widget.neonGreen,
+        color: widget.liveColor,
         boxShadow: [
           BoxShadow(
-            color: widget.neonGreen.withValues(alpha: 0.75),
+            color: widget.liveColor.withValues(alpha: 0.75),
             blurRadius: 10,
             spreadRadius: 0.5,
           ),
@@ -279,7 +297,7 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
       fontSize: 11,
       letterSpacing: 1.4,
       fontWeight: FontWeight.w600,
-      color: widget.neonGreen,
+      color: widget.liveColor,
     );
 
     return Row(
@@ -296,7 +314,7 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.3,
-                  color: DesignTokens.textSecondaryDark,
+                  color: ext.textSecondary,
                 ),
               ),
               if (srcLabel != null)
@@ -307,9 +325,10 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
                     style: GoogleFonts.inter(
                       fontSize: 9,
                       height: 1.2,
-                      color:
-                          DesignTokens.textTertiaryDark.withValues(alpha: 0.9),
+                      color: ext.textTertiary.withValues(alpha: 0.9),
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
             ],
@@ -342,7 +361,6 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
   }
 }
 
-/// Apple: .SF Pro Display — diğer platformlarda Inter.
 TextStyle _sfProDisplayLabel(
   BuildContext context, {
   required double fontSize,
@@ -372,8 +390,11 @@ TextStyle _sfProDisplayLabel(
   );
 }
 
-TextStyle _sfProDisplayNumber(BuildContext context,
-    {required double fontSize}) {
+TextStyle _sfProDisplayNumber(
+  BuildContext context, {
+  required double fontSize,
+  required Color color,
+}) {
   final useSf = !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.macOS);
@@ -383,7 +404,7 @@ TextStyle _sfProDisplayNumber(BuildContext context,
       fontSize: fontSize,
       fontWeight: FontWeight.w600,
       letterSpacing: -0.65,
-      color: Colors.white,
+      color: color,
       height: 1.0,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
@@ -392,7 +413,7 @@ TextStyle _sfProDisplayNumber(BuildContext context,
     fontSize: fontSize,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.5,
-    color: Colors.white,
+    color: color,
     height: 1.0,
     fontFeatures: const [FontFeature.tabularFigures()],
   );
@@ -401,37 +422,36 @@ TextStyle _sfProDisplayNumber(BuildContext context,
 class _EconomyFintechCard extends StatelessWidget {
   const _EconomyFintechCard({
     required this.data,
-    required this.cardSurface,
-    required this.neonGreen,
+    required this.ext,
+    required this.liveColor,
   });
 
   final _EconomyCardData data;
-  final Color cardSurface;
-  final Color neonGreen;
+  final AppThemeExtension ext;
+  final Color liveColor;
 
   @override
   Widget build(BuildContext context) {
-    const muted = DesignTokens.textTertiaryDark;
-    final numStyle = _sfProDisplayNumber(context, fontSize: 17);
+    final numStyle = _sfProDisplayNumber(context, fontSize: 17, color: ext.textPrimary);
     final symStyle = GoogleFonts.inter(
       fontSize: 10,
       fontWeight: FontWeight.w500,
-      color: muted.withValues(alpha: 0.85),
+      color: ext.textTertiary.withValues(alpha: 0.85),
       height: 1,
     );
 
     return Container(
       decoration: BoxDecoration(
-        color: cardSurface,
-        borderRadius: BorderRadius.circular(16),
+        color: ext.surfaceElevated,
+        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.55),
+            color: ext.shadowColor.withValues(alpha: 0.35),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: ext.shadowColor.withValues(alpha: 0.2),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -452,7 +472,7 @@ class _EconomyFintechCard extends StatelessWidget {
                       fontSize: 9.5,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.35,
-                      color: muted,
+                      color: ext.textTertiary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -464,7 +484,7 @@ class _EconomyFintechCard extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 8,
                       fontWeight: FontWeight.w500,
-                      color: muted.withValues(alpha: 0.65),
+                      color: ext.textTertiary.withValues(alpha: 0.65),
                     ),
                   ),
               ],
@@ -493,7 +513,7 @@ class _EconomyFintechCard extends StatelessWidget {
               child: CustomPaint(
                 painter: _NeonAreaSparklinePainter(
                   values: data.sparkline,
-                  neonColor: neonGreen,
+                  neonColor: liveColor,
                 ),
               ),
             ),
@@ -504,7 +524,6 @@ class _EconomyFintechCard extends StatelessWidget {
   }
 }
 
-/// Neon yeşil alan grafiği (oturum içi hareket; 24s saat verisi yoksa sentetik seri).
 class _NeonAreaSparklinePainter extends CustomPainter {
   _NeonAreaSparklinePainter({
     required this.values,
@@ -582,14 +601,19 @@ class _NeonAreaSparklinePainter extends CustomPainter {
 }
 
 class _FinanceBarShimmer extends StatelessWidget {
-  const _FinanceBarShimmer();
+  const _FinanceBarShimmer({required this.ext});
+
+  final AppThemeExtension ext;
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardL),
       child: Container(
-        color: const Color(0xFF1A1A1F),
+        color: Color.alphaBlend(
+          ext.foreground.withValues(alpha: 0.04),
+          ext.chartBackground,
+        ),
         padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -599,7 +623,7 @@ class _FinanceBarShimmer extends StatelessWidget {
                 ShimmerPlaceholder(
                   width: 56,
                   height: 10,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusXs),
                 ),
                 const Spacer(),
                 Container(
@@ -607,14 +631,14 @@ class _FinanceBarShimmer extends StatelessWidget {
                   height: 7,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: ext.foreground.withValues(alpha: 0.12),
                   ),
                 ),
                 const SizedBox(width: 8),
                 ShimmerPlaceholder(
                   width: 36,
                   height: 10,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusXs),
                 ),
               ],
             ),
@@ -628,11 +652,11 @@ class _FinanceBarShimmer extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF242428),
-                          borderRadius: BorderRadius.circular(16),
+                          color: ext.surfaceElevated,
+                          borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.4),
+                              color: ext.shadowColor.withValues(alpha: 0.3),
                               blurRadius: 16,
                               offset: const Offset(0, 8),
                             ),
@@ -644,22 +668,19 @@ class _FinanceBarShimmer extends StatelessWidget {
                             ShimmerPlaceholder(
                               width: 44,
                               height: 10,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(4)),
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
                             ),
                             SizedBox(height: 10),
                             ShimmerPlaceholder(
                               width: 64,
                               height: 18,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(4)),
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
                             ),
                             SizedBox(height: 10),
                             ShimmerPlaceholder(
                               width: 72,
                               height: 28,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(4)),
+                              borderRadius: BorderRadius.all(Radius.circular(4)),
                             ),
                           ],
                         ),

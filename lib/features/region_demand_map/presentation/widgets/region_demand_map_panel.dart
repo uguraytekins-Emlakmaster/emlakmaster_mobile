@@ -1,10 +1,10 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Bölge talep haritası: hangi mahallede talep artıyor, fiyat yükseliyor, satış hızlı.
 /// 🔴 çok talep | 🟡 orta | 🟢 normal
 class RegionDemandMapPanel extends ConsumerWidget {
@@ -22,14 +22,15 @@ class RegionDemandMapPanel extends ConsumerWidget {
     return 'Normal';
   }
 
-  static Color _demandColor(double score) {
-    if (score >= 0.6) return DesignTokens.danger;
-    if (score >= 0.3) return DesignTokens.warning;
-    return DesignTokens.success;
+  static Color _demandColor(AppThemeExtension ext, double score) {
+    if (score >= 0.6) return ext.danger;
+    if (score >= 0.3) return ext.warning;
+    return ext.success;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
     final async = ref.watch(marketHeatmapProvider);
     return async.when(
       data: (regions) {
@@ -43,9 +44,9 @@ class RegionDemandMapPanel extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.all(DesignTokens.space4),
           decoration: BoxDecoration(
-            color: DesignTokens.surfaceDark,
+            color: ext.surface,
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            border: Border.all(color: DesignTokens.borderDark),
+            border: Border.all(color: ext.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,12 +54,12 @@ class RegionDemandMapPanel extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.map_rounded, color: DesignTokens.primary, size: 20),
+                  Icon(Icons.map_rounded, color: ext.accent, size: 20),
                   const SizedBox(width: DesignTokens.space2),
                   Text(
                     'Bölge talep haritası',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: DesignTokens.textPrimaryDark,
+                          color: ext.textPrimary,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
@@ -88,18 +89,18 @@ class RegionDemandMapPanel extends ConsumerWidget {
       loading: () => Container(
         padding: const EdgeInsets.all(DesignTokens.space6),
         decoration: BoxDecoration(
-          color: DesignTokens.surfaceDark,
+          color: ext.surface,
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         ),
-        child: const Row(
+        child: Row(
           children: [
             SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
+              child: CircularProgressIndicator(strokeWidth: 2, color: ext.accent),
             ),
-            SizedBox(width: DesignTokens.space4),
-            Text('Talep haritası yükleniyor...', style: TextStyle(color: DesignTokens.textSecondaryDark)),
+            const SizedBox(width: DesignTokens.space4),
+            Text('Talep haritası yükleniyor...', style: TextStyle(color: ext.textSecondary)),
           ],
         ),
       ),
@@ -118,10 +119,11 @@ class _LegendChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: DesignTokens.backgroundDark,
+        color: ext.background,
         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
       ),
       child: Row(
@@ -129,7 +131,7 @@ class _LegendChip extends StatelessWidget {
         children: [
           Text(emoji, style: const TextStyle(fontSize: 12)),
           const SizedBox(width: 4),
-          Text(label, style: const TextStyle(color: DesignTokens.textSecondaryDark, fontSize: 11)),
+          Text(label, style: TextStyle(color: ext.textSecondary, fontSize: 11)),
         ],
       ),
     );
@@ -152,7 +154,8 @@ class _RegionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final emoji = RegionDemandMapPanel._demandEmoji(demandScore);
     final label = RegionDemandMapPanel._demandLabel(demandScore);
-    final color = RegionDemandMapPanel._demandColor(demandScore);
+    final ext = AppThemeExtension.of(context);
+    final color = RegionDemandMapPanel._demandColor(ext, demandScore);
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space2),
       child: Container(
@@ -172,8 +175,8 @@ class _RegionTile extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: const TextStyle(
-                      color: DesignTokens.textPrimaryDark,
+                    style: TextStyle(
+                      color: ext.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: DesignTokens.fontSizeSm,
                     ),
@@ -181,8 +184,8 @@ class _RegionTile extends StatelessWidget {
                   if (budgetSegment != null || propertyHint != null)
                     Text(
                       [budgetSegment, propertyHint].whereType<String>().join(' • '),
-                      style: const TextStyle(
-                        color: DesignTokens.textTertiaryDark,
+                      style: TextStyle(
+                        color: ext.textTertiary,
                         fontSize: 11,
                       ),
                       maxLines: 1,

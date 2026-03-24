@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:async' show unawaited;
 
 import 'package:flutter/foundation.dart';
@@ -5,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../logging/app_logger.dart';
 import '../deep_linking/pending_deep_link_store.dart';
-import '../theme/design_tokens.dart';
 import '../../features/office/domain/office_exception.dart';
 import '../../features/office/presentation/utils/office_error_ui.dart';
 import '../widgets/app_loading.dart';
@@ -36,6 +37,7 @@ import '../../features/external_integrations/presentation/pages/connected_platfo
 import '../../features/external_integrations/presentation/pages/my_external_listings_page.dart';
 import '../../features/listing_import/presentation/pages/import_history_page.dart';
 import '../../features/listing_import/presentation/pages/import_hub_page.dart';
+import '../../features/listing_import/presentation/pages/my_listings_page.dart';
 import '../../features/messages/presentation/pages/message_center_page.dart';
 import '../../features/messages/presentation/pages/message_thread_page.dart';
 import '../../features/workspace/presentation/pages/workspace_setup_page.dart';
@@ -46,7 +48,6 @@ import '../../features/office/presentation/pages/office_admin_page.dart';
 import '../../features/office/presentation/pages/office_gate_page.dart';
 import '../../features/office/presentation/pages/office_recovery_page.dart';
 import '../intelligence/region_heatmap_defaults.dart';
-
 /// go_router ile merkezi routing. Login router içinde; beyaz ekran önlenir.
 class AppRouter {
   AppRouter._();
@@ -121,6 +122,8 @@ class AppRouter {
   /// URL / dosya / uzantı içe aktarma motoru.
   static const String routeImportHub = '/settings/import-engine';
   static const String routeImportHistory = '/settings/import-history';
+  /// İçe aktarılan ilanlar (yerel motor — Phase 1.5).
+  static const String routeMyListings = '/listings/my-imported';
 
   static String regionInsightPath(String regionId) =>
       '/region-insight/${Uri.encodeComponent(regionId)}';
@@ -147,6 +150,9 @@ class AppRouter {
                 routeRoleSelection,
                 routeConnectedAccounts,
                 routeMyExternalListings,
+                routeMyListings,
+                routeImportHub,
+                routeImportHistory,
                 routeMessageCenter,
                 routeMessageThread,
               };
@@ -176,6 +182,9 @@ class AppRouter {
               routeOfficeAdmin,
               routeConnectedAccounts,
               routeMyExternalListings,
+              routeMyListings,
+              routeImportHub,
+              routeImportHistory,
               routeMessageCenter,
               routeMessageThread,
             };
@@ -223,7 +232,8 @@ class AppRouter {
           final role = ref.read(displayRoleOrNullProvider);
           if (user != null && role != null && role.isClientTier && _isStaffOnlyPath(path)) return routeHome;
           return null;
-        } catch (_) {
+        } catch (e, st) {
+          AppLogger.e('GoRouter redirect', e, st);
           return routeLogin;
         }
       },
@@ -566,6 +576,20 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: routeMyListings,
+          pageBuilder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            final taskId = extra?['importTaskId'] as String?;
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              name: state.matchedLocation,
+              child: MyListingsPage(initialImportTaskId: taskId),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
+        ),
+        GoRoute(
           path: routeImportHub,
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
@@ -641,14 +665,14 @@ class _HomeShellRoleErrorScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded, size: 64, color: DesignTokens.primary),
+              Icon(Icons.error_outline_rounded, size: 64, color: AppThemeExtension.of(context).accent),
               const SizedBox(height: 24),
               Text(
                 text,
@@ -673,7 +697,7 @@ class _HomeShellRoleErrorScreen extends ConsumerWidget {
                 icon: const Icon(Icons.refresh_rounded, size: 20),
                 label: const Text('Tekrar dene'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: DesignTokens.primary,
+                  backgroundColor: AppThemeExtension.of(context).accent,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),
@@ -705,7 +729,7 @@ class _RouteLoadingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -724,12 +748,55 @@ class _RouteLoadingScreen extends StatelessWidget {
 }
 
 class _AnalyticsRouteObserver extends NavigatorObserver {
+  void _debugLog(String action, Route<dynamic>? route) {
+    if (!kDebugMode) return;
+    final n = route?.settings.name;
+    AppLogger.nav(
+      '$action ${n != null && n.isNotEmpty ? n : route?.settings.arguments ?? route.runtimeType}',
+    );
+  }
+
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
-    final name = route.settings.name;
-    if (name != null && name.isNotEmpty) {
-      AnalyticsService.instance.logScreenView(screenName: name);
+    try {
+      _debugLog('push', route);
+      final name = route.settings.name;
+      if (name != null && name.isNotEmpty) {
+        AnalyticsService.instance.logScreenView(screenName: name);
+      }
+    } catch (e, st) {
+      AppLogger.e('RouteObserver.didPush', e, st);
+    }
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    try {
+      _debugLog('pop', route);
+    } catch (e, st) {
+      AppLogger.e('RouteObserver.didPop', e, st);
+    }
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    try {
+      _debugLog('replace', newRoute);
+    } catch (e, st) {
+      AppLogger.e('RouteObserver.didReplace', e, st);
+    }
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didRemove(route, previousRoute);
+    try {
+      _debugLog('remove', route);
+    } catch (e, st) {
+      AppLogger.e('RouteObserver.didRemove', e, st);
     }
   }
 }
@@ -744,17 +811,17 @@ class _ErrorFallbackScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline_rounded,
                 size: 64,
-                color: DesignTokens.primary,
+                color: AppThemeExtension.of(context).accent,
               ),
               const SizedBox(height: 24),
               Text(
@@ -776,8 +843,8 @@ class _ErrorFallbackScreen extends StatelessWidget {
                 icon: const Icon(Icons.home_rounded),
                 label: const Text('Ana Sayfaya Dön'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: DesignTokens.primary,
-                  foregroundColor: DesignTokens.inputTextOnGold,
+                  backgroundColor: AppThemeExtension.of(context).accent,
+                  foregroundColor: AppThemeExtension.of(context).onBrand,
                 ),
               ),
             ],

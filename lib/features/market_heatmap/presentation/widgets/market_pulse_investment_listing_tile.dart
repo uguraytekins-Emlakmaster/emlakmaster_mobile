@@ -476,6 +476,7 @@ class _MicroBrandBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final w = compact ? 22.0 : 28.0;
     return Tooltip(
       message: _tooltip,
@@ -488,7 +489,7 @@ class _MicroBrandBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(3),
           boxShadow: [
             BoxShadow(
-              color: AppThemeExtension.of(context).shadowColor.withValues(alpha: 0.35),
+              color: ext.shadowColor.withValues(alpha: 0.35),
               blurRadius: 2,
               offset: const Offset(0, 1),
             ),

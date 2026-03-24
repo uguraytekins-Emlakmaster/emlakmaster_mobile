@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -8,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
-
 /// Role-Based War Room: aktif çağrılar, sıcak fırsatlar, gecikmiş görevler, yüksek değerli lead'ler, danışman durumu.
 class WarRoomPage extends ConsumerWidget {
   const WarRoomPage({super.key});
@@ -18,11 +18,11 @@ class WarRoomPage extends ConsumerWidget {
     final roleAsync = ref.watch(displayRoleProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final loadingBg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
+    final loadingBg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
     return roleAsync.when(
       loading: () => Scaffold(
         backgroundColor: loadingBg,
-        body: const Center(child: CircularProgressIndicator(color: DesignTokens.primary)),
+        body: Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
       ),
       error: (_, __) => const UnauthorizedScreen(message: 'Rol yüklenemedi.'),
       data: (role) {
@@ -42,7 +42,7 @@ class _WarRoomBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
@@ -62,9 +62,9 @@ class _ResurrectionStrip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
@@ -80,7 +80,7 @@ class _ResurrectionStrip extends ConsumerWidget {
           const SizedBox(height: 8),
           resurrectionAsync.when(
             data: (items) {
-              final elevated = isDark ? DesignTokens.surfaceDarkElevated : DesignTokens.surfaceLightElevated;
+              final elevated = isDark ? AppThemeExtension.of(context).surfaceElevated : AppThemeExtension.of(context).surfaceElevated;
               if (items.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -96,7 +96,7 @@ class _ResurrectionStrip extends ConsumerWidget {
                   itemBuilder: (context, i) {
                     final e = items[i];
                     return ActionChip(
-                      avatar: const Icon(Icons.person_outline_rounded, size: 18, color: DesignTokens.primary),
+                      avatar: Icon(Icons.person_outline_rounded, size: 18, color: AppThemeExtension.of(context).accent),
                       label: Text('${e.customerName ?? e.customerId} • ${e.daysSilent ?? 0}g', style: const TextStyle(fontSize: 11)),
                       onPressed: () {
                         HapticFeedback.lightImpact();
@@ -113,8 +113,8 @@ class _ResurrectionStrip extends ConsumerWidget {
                 ),
               );
             },
-            loading: () => const SizedBox(height: 36, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary))),
-            error: (_, __) => const Text('Kuyruk yüklenemedi.', style: TextStyle(color: DesignTokens.danger, fontSize: 12)),
+            loading: () => SizedBox(height: 36, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent))),
+            error: (_, __) => Text('Kuyruk yüklenemedi.', style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 12)),
           ),
         ],
       ),
@@ -133,7 +133,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: DesignTokens.space2),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: DesignTokens.primary),
+          Icon(icon, size: 20, color: AppThemeExtension.of(context).accent),
           const SizedBox(width: DesignTokens.space2),
           Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
         ],

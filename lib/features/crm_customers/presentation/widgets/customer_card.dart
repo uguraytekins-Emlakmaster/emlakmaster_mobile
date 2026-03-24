@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +9,6 @@ import '../../../../core/utils/last_contact_label.dart';
 import '../../../../features/lead_temperature_engine/presentation/providers/lead_temperature_provider.dart';
 import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/models/lead_temperature.dart';
-
 String _avatarLetter(String? fullName) {
   if (fullName == null || fullName.trim().isEmpty) return '?';
   return fullName.trim().substring(0, 1).toUpperCase();
@@ -43,10 +43,10 @@ class CustomerCard extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.all(DesignTokens.space4),
           decoration: BoxDecoration(
-            color: isSelected ? DesignTokens.primary.withValues(alpha: 0.08) : DesignTokens.surfaceDark.withValues(alpha: 0.6),
+            color: isSelected ? AppThemeExtension.of(context).accent.withValues(alpha: 0.08) : AppThemeExtension.of(context).surface.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
             border: Border.all(
-              color: isSelected ? DesignTokens.primary.withValues(alpha: 0.5) : DesignTokens.borderDark.withValues(alpha: 0.5),
+              color: isSelected ? AppThemeExtension.of(context).accent.withValues(alpha: 0.5) : AppThemeExtension.of(context).border.withValues(alpha: 0.5),
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -61,18 +61,18 @@ class CustomerCard extends ConsumerWidget {
                       child: Checkbox(
                         value: isSelected,
                         onChanged: (_) => onTap?.call(),
-                        activeColor: DesignTokens.primary,
+                        activeColor: AppThemeExtension.of(context).accent,
                         fillColor: WidgetStateProperty.resolveWith((_) =>
-                            isSelected ? DesignTokens.primary : Colors.transparent),
+                            isSelected ? AppThemeExtension.of(context).accent : Colors.transparent),
                       ),
                     ),
                   CircleAvatar(
-                    backgroundColor: DesignTokens.primary.withValues(alpha: 0.2),
+                    backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
                     radius: 24,
                     child: Text(
                       _avatarLetter(customer.fullName),
-                      style: const TextStyle(
-                        color: DesignTokens.primary,
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).accent,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -84,8 +84,8 @@ class CustomerCard extends ConsumerWidget {
                       children: [
                         Text(
                           customer.fullName ?? 'İsimsiz',
-                          style: const TextStyle(
-                            color: DesignTokens.textPrimaryDark,
+                          style: TextStyle(
+                            color: AppThemeExtension.of(context).textPrimary,
                             fontWeight: FontWeight.w600,
                             fontSize: DesignTokens.fontSizeMd,
                           ),
@@ -93,8 +93,8 @@ class CustomerCard extends ConsumerWidget {
                         if (customer.primaryPhone != null)
                           Text(
                             customer.primaryPhone!,
-                            style: const TextStyle(
-                              color: DesignTokens.textSecondaryDark,
+                            style: TextStyle(
+                              color: AppThemeExtension.of(context).textSecondary,
                               fontSize: DesignTokens.fontSizeSm,
                             ),
                           ),
@@ -108,7 +108,7 @@ class CustomerCard extends ConsumerWidget {
                   if (!selectionMode)
                     IconButton(
                       icon: const Icon(Icons.contact_phone_outlined, size: 22),
-                      color: DesignTokens.textSecondaryDark,
+                      color: AppThemeExtension.of(context).textSecondary,
                       onPressed: () {
                         HapticFeedback.lightImpact();
                         showSaveContactSheet(
@@ -133,8 +133,8 @@ class CustomerCard extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           customer.nextSuggestedAction!,
-                          style: const TextStyle(
-                            color: DesignTokens.textTertiaryDark,
+                          style: TextStyle(
+                            color: AppThemeExtension.of(context).textTertiary,
                             fontSize: DesignTokens.fontSizeXs,
                           ),
                           maxLines: 1,
@@ -160,11 +160,11 @@ class _TemperatureChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color = DesignTokens.textTertiaryDark;
+    Color color = AppThemeExtension.of(context).textTertiary;
     if (value >= 0.7) {
-      color = DesignTokens.success;
+      color = AppThemeExtension.of(context).success;
     } else if (value >= 0.4) {
-      color = DesignTokens.warning;
+      color = AppThemeExtension.of(context).warning;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -187,11 +187,11 @@ class _LastContactChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = LastContactLabel.colorType(lastAt);
-    Color color = DesignTokens.textTertiaryDark;
+    Color color = AppThemeExtension.of(context).textTertiary;
     if (type == 1) {
-      color = DesignTokens.success;
+      color = AppThemeExtension.of(context).success;
     } else if (type == 2) {
-      color = DesignTokens.warning;
+      color = AppThemeExtension.of(context).warning;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -229,20 +229,20 @@ class _LeadScoreChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color = DesignTokens.textTertiaryDark;
+    Color color = AppThemeExtension.of(context).textTertiary;
     switch (level) {
       case LeadTemperatureLevel.urgent:
-        color = DesignTokens.danger;
+        color = AppThemeExtension.of(context).danger;
         break;
       case LeadTemperatureLevel.hot:
-        color = DesignTokens.success;
+        color = AppThemeExtension.of(context).success;
         break;
       case LeadTemperatureLevel.warm:
       case LeadTemperatureLevel.reactivationCandidate:
-        color = DesignTokens.warning;
+        color = AppThemeExtension.of(context).warning;
         break;
       default:
-        color = DesignTokens.info;
+        color = AppThemeExtension.of(context).info;
     }
     final emoji = _emoji(level);
     final scoreInt = score.round().clamp(0, 100);

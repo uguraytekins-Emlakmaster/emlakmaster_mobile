@@ -1,10 +1,10 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 /// Arama ekranı state makinesi: connecting → connected → ending → (summary).
 enum CallUIState {
   connecting,
@@ -318,7 +317,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
             icon: const Icon(Icons.call_rounded, size: 22),
             label: const Text('Ara'),
             style: FilledButton.styleFrom(
-              backgroundColor: DesignTokens.primary,
+              backgroundColor: AppThemeExtension.of(context).accent,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
             ),
@@ -372,7 +371,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: DesignTokens.scaffoldDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -450,8 +449,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: _callState == CallUIState.ending
-                                  ? DesignTokens.danger.withValues(alpha: 0.6)
-                                  : DesignTokens.danger,
+                                  ? AppThemeExtension.of(context).danger.withValues(alpha: 0.6)
+                                  : AppThemeExtension.of(context).danger,
                             ),
                             child: _callState == CallUIState.ending
                                 ? const SizedBox(
@@ -688,7 +687,7 @@ class _ClientInfoHeader extends ConsumerWidget {
     if (customerId == null || customerId!.isEmpty) {
       return Column(
         children: [
-          const CircleAvatar(radius: 40, backgroundColor: DesignTokens.surfaceDarkCard),
+          CircleAvatar(radius: 40, backgroundColor: AppThemeExtension.of(context).card),
           const SizedBox(height: 12),
           Text(
             displayPhone != null && displayPhone!.isNotEmpty ? displayPhone! : 'Arama',
@@ -714,7 +713,7 @@ class _ClientInfoHeader extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: DesignTokens.surfaceDarkCard,
+              backgroundColor: AppThemeExtension.of(context).card,
               child: Text(
                 initial,
                 style: theme.textTheme.headlineMedium?.copyWith(
@@ -741,14 +740,14 @@ class _ClientInfoHeader extends ConsumerWidget {
       },
       loading: () => Column(
         children: [
-          const CircleAvatar(radius: 40, backgroundColor: DesignTokens.surfaceDarkCard),
+          CircleAvatar(radius: 40, backgroundColor: AppThemeExtension.of(context).card),
           const SizedBox(height: 12),
           Text('Yükleniyor...', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
         ],
       ),
       error: (_, __) => Column(
         children: [
-          const CircleAvatar(radius: 40, backgroundColor: DesignTokens.surfaceDarkCard),
+          CircleAvatar(radius: 40, backgroundColor: AppThemeExtension.of(context).card),
           const SizedBox(height: 12),
           Text('Müşteri', style: theme.textTheme.titleLarge?.copyWith(color: Colors.white)),
         ],
@@ -790,7 +789,7 @@ class _RoundIconButton extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              color: isActive ? DesignTokens.primary : Colors.white,
+              color: isActive ? AppThemeExtension.of(context).accent : Colors.white,
               size: 24,
             ),
           ),
@@ -830,7 +829,7 @@ class _KeypadSheet extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
-          color: DesignTokens.scaffoldDark.withValues(alpha: 0.95),
+          color: AppThemeExtension.of(context).background.withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
           boxShadow: [

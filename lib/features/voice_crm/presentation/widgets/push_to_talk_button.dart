@@ -1,10 +1,10 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/domain/entities/voice_crm_intent.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/domain/usecases/extract_voice_crm_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-
 /// Hands-Free CRM: Push-to-Talk + STT + intent extraction.
 class PushToTalkButton extends StatefulWidget {
   const PushToTalkButton({
@@ -114,10 +114,10 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
         height: widget.size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: _isRecording ? DesignTokens.danger : (_available ? DesignTokens.primary : DesignTokens.textTertiaryDark),
+          color: _isRecording ? AppThemeExtension.of(context).danger : (_available ? AppThemeExtension.of(context).accent : AppThemeExtension.of(context).textTertiary),
           boxShadow: [
             BoxShadow(
-              color: (_isRecording ? DesignTokens.danger : DesignTokens.primary).withValues(alpha: 0.4),
+              color: (_isRecording ? AppThemeExtension.of(context).danger : AppThemeExtension.of(context).accent).withValues(alpha: 0.4),
               blurRadius: _isRecording ? 16 : 12,
               spreadRadius: _isRecording ? 2 : 0,
             ),
@@ -125,7 +125,7 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
         ),
         child: Icon(
           _isRecording ? Icons.mic_rounded : Icons.mic_none_rounded,
-          color: DesignTokens.brandWhite,
+          color: AppThemeExtension.of(context).onAccentLight,
           size: widget.size * 0.45,
         ),
       ),

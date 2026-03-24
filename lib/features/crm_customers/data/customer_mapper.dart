@@ -13,6 +13,11 @@ class CustomerMapper {
     return null;
   }
 
+  /// Sorgu satırından (liste ekranı).
+  static CustomerEntity? fromQueryDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    return fromDoc(doc);
+  }
+
   /// Tek müşteri dokümanından entity üretir. Doküman yoksa null.
   static CustomerEntity? fromDoc(DocumentSnapshot<Map<String, dynamic>>? snapshot) {
     if (snapshot == null || !snapshot.exists || snapshot.data() == null) return null;

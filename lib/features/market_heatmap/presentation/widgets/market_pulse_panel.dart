@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -46,16 +47,11 @@ class MarketPulsePanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface =
-        isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textPrimary =
-        isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final textSecondary = isDark
-        ? DesignTokens.textSecondaryDark
-        : DesignTokens.textSecondaryLight;
+    final ext = AppThemeExtension.of(context);
+    final surface = ext.surface;
+    final border = ext.border;
+    final textPrimary = ext.textPrimary;
+    final textSecondary = ext.textSecondary;
     final role = ref.watch(displayRoleOrNullProvider);
     if (role == null || !FeaturePermission.canViewOpportunityRadar(role)) {
       return const SizedBox.shrink();
@@ -83,8 +79,8 @@ class MarketPulsePanel extends ConsumerWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.show_chart_rounded,
-                          color: DesignTokens.primary, size: 22),
+                      Icon(Icons.show_chart_rounded,
+                          color: ext.accent, size: 22),
                       const SizedBox(width: DesignTokens.space2),
                       Text(
                         'Market Pulse',
@@ -345,6 +341,7 @@ class _MarketPulseListingActionsState
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final busy = _loading || _demoLoading;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -352,19 +349,19 @@ class _MarketPulseListingActionsState
         TextButton.icon(
           onPressed: busy ? null : _fetchNow,
           icon: _loading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: DesignTokens.primary,
+                    color: ext.accent,
                   ),
                 )
-              : const Icon(Icons.refresh_rounded,
-                  size: 18, color: DesignTokens.primary),
+              : Icon(Icons.refresh_rounded,
+                  size: 18, color: ext.accent),
           label: Text(
             _loading ? 'Güncelleniyor…' : 'İlanları güncelle',
-            style: const TextStyle(fontSize: 11, color: DesignTokens.primary),
+            style: TextStyle(fontSize: 11, color: ext.accent),
           ),
         ),
         TextButton(
@@ -373,7 +370,7 @@ class _MarketPulseListingActionsState
             _demoLoading ? '…' : 'Örnek yükle',
             style: TextStyle(
               fontSize: 11,
-              color: DesignTokens.primary.withValues(alpha: 0.95),
+              color: ext.accent.withValues(alpha: 0.95),
               fontWeight: FontWeight.w600,
             ),
           ),

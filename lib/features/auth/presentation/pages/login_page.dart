@@ -1,21 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, kDebugMode, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/login_attempt_guard.dart';
 import '../../../../core/services/analytics_service.dart';
-import '../../../../core/services/apple_auth_service.dart';
 import '../../../../core/services/facebook_auth_service.dart';
 import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/services/auth_service.dart';
-import '../../domain/auth_failure_kind.dart';
 import '../../domain/auth_result.dart';
 import '../utils/auth_result_ui.dart';
 import '../../../../core/theme/app_theme_extension.dart';
@@ -23,8 +19,7 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../utils/auth_error_messages.dart';
 import '../widgets/auth_field_decoration.dart';
 import '../widgets/auth_page_shell.dart';
-
-enum _BusyKind { none, email, google, apple, facebook }
+enum _BusyKind { none, email, google, facebook }
 
 /// Email/şifre ile giriş. Hata ve loading state.
 class LoginPage extends ConsumerStatefulWidget {
@@ -103,10 +98,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _openForgotPassword() {
     FocusManager.instance.primaryFocus?.unfocus();
     final email = _emailController.text.trim();
+    final ext = AppThemeExtension.of(context);
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: DesignTokens.surfaceDark,
+      backgroundColor: ext.surface,
       shape: const RoundedRectangleBorder(
         borderRadius:
             BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
@@ -154,43 +150,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final r = await GoogleAuthService.instance.signInWithGoogleTyped();
       if (!mounted) return;
       await _applyTypedAuthResult(r, analyticsMethod: 'google');
-      setState(() {
-        _errorMessage = r.loginBannerMessage;
-        _errorDetail = r is AuthFailure ? r.debugDetail : null;
-      });
-    } finally {
-      if (mounted) setState(() => _busy = _BusyKind.none);
-    }
-  }
-
-  bool get _canShowAppleButton =>
-      !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS);
-
-  Future<void> _appleIleGiris() async {
-    if (_busy != _BusyKind.none) return;
-    final blocked = LoginAttemptGuard.assertCanAttempt();
-    if (blocked != null) {
-      setState(() => _errorMessage = blocked);
-      return;
-    }
-    HapticFeedback.lightImpact();
-    setState(() {
-      _errorMessage = null;
-      _errorDetail = null;
-      _busy = _BusyKind.apple;
-    });
-    try {
-      final r = await AppleAuthService.instance.signInWithAppleForFirebase().timeout(
-            const Duration(seconds: 90),
-            onTimeout: () => const AuthFailure(
-              kind: AuthFailureKind.networkError,
-              userMessage:
-                  'Apple ile giriş zaman aşımına uğradı. Ağı kontrol edip tekrar deneyin.',
-            ),
-          );
-      if (!mounted) return;
-      await _applyTypedAuthResult(r, analyticsMethod: 'apple');
       setState(() {
         _errorMessage = r.loginBannerMessage;
         _errorDetail = r is AuthFailure ? r.debugDetail : null;
@@ -307,10 +266,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       style:
-                          const TextStyle(color: DesignTokens.textPrimaryDark),
-                      cursorColor: DesignTokens.antiqueGold,
+                          TextStyle(color: ext.textPrimary),
+                      cursorColor: ext.accent,
                       onTapOutside: (_) => _unfocusKeyboard(),
-                      decoration: AuthFieldDecoration.build(
+                      decoration: AuthFieldDecoration.build(context,
                         label: 'E-posta',
                         hint: 'ornek@firma.com',
                         prefix: const Icon(Icons.email_outlined),
@@ -331,10 +290,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       style:
-                          const TextStyle(color: DesignTokens.textPrimaryDark),
-                      cursorColor: DesignTokens.antiqueGold,
+                          TextStyle(color: ext.textPrimary),
+                      cursorColor: ext.accent,
                       onTapOutside: (_) => _unfocusKeyboard(),
-                      decoration: AuthFieldDecoration.build(
+                      decoration: AuthFieldDecoration.build(context,
                         label: 'Şifre',
                         prefix: const Icon(Icons.lock_outline_rounded),
                         suffix: IconButton(
@@ -359,7 +318,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       child: TextButton(
                         onPressed: _anyBusy ? null : _openForgotPassword,
                         style: TextButton.styleFrom(
-                          foregroundColor: DesignTokens.antiqueGold,
+                          foregroundColor: ext.accent,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
                         child: const Text('Şifremi unuttum'),
@@ -370,11 +329,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       Container(
                         padding: const EdgeInsets.all(DesignTokens.space3),
                         decoration: BoxDecoration(
-                          color: DesignTokens.danger.withValues(alpha: 0.12),
+                          color: ext.danger.withValues(alpha: 0.12),
                           borderRadius:
                               BorderRadius.circular(DesignTokens.radiusMd),
                           border: Border.all(
-                              color: DesignTokens.danger.withValues(alpha: 0.35)),
+                              color: ext.danger.withValues(alpha: 0.35)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,14 +343,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Icon(Icons.error_outline_rounded,
-                                    color: DesignTokens.danger.withValues(alpha: 0.9),
+                                    color: ext.danger.withValues(alpha: 0.9),
                                     size: 20),
                                 const SizedBox(width: DesignTokens.space2),
                                 Expanded(
                                   child: Text(
                                     _errorMessage!,
-                                    style: const TextStyle(
-                                        color: DesignTokens.textPrimaryDark,
+                                    style: TextStyle(
+                                        color: ext.textPrimary,
                                         fontSize: DesignTokens.fontSizeSm),
                                   ),
                                 ),
@@ -402,8 +361,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               const SizedBox(height: DesignTokens.space2),
                               Text(
                                 'Hata kodu: $_errorDetail',
-                                style: const TextStyle(
-                                  color: DesignTokens.textSecondaryDark,
+                                style: TextStyle(
+                                  color: ext.textSecondary,
                                   fontSize: DesignTokens.fontSizeSm - 2,
                                   fontFamily: 'monospace',
                                 ),
@@ -420,8 +379,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       child: FilledButton(
                         onPressed: _anyBusy ? null : _submit,
                         style: FilledButton.styleFrom(
-                          backgroundColor: DesignTokens.antiqueGold,
-                          foregroundColor: DesignTokens.inputTextOnGold,
+                          backgroundColor: ext.accent,
+                          foregroundColor: ext.onBrand,
                           padding: const EdgeInsets.symmetric(
                               vertical: DesignTokens.space4),
                           shape: RoundedRectangleBorder(
@@ -430,12 +389,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                         child: _busy == _BusyKind.email
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 22,
                                 width: 22,
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: DesignTokens.inputTextOnGold),
+                                    color: ext.onBrand),
                               )
                             : const Text('Giriş yap',
                                 style: TextStyle(fontWeight: FontWeight.w700)),
@@ -445,24 +404,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     OutlinedButton.icon(
                       onPressed: _anyBusy ? null : _googleIleGiris,
                       icon: _busy == _BusyKind.google
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: DesignTokens.textSecondaryDark,
+                                color: ext.textSecondary,
                               ),
                             )
-                          : const Icon(Icons.g_mobiledata,
-                              size: 22, color: DesignTokens.textSecondaryDark),
+                          : Icon(Icons.g_mobiledata,
+                              size: 22, color: ext.textSecondary),
                       label: Text(
                         _busy == _BusyKind.google
                             ? 'Google ile bağlanılıyor…'
                             : 'Google ile Giriş Yap',
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: DesignTokens.textPrimaryDark,
-                        side: const BorderSide(color: DesignTokens.borderDark),
+                        foregroundColor: ext.textPrimary,
+                        side: BorderSide(color: ext.border),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         minimumSize: const Size(double.infinity, 48),
                         shape: RoundedRectangleBorder(
@@ -471,53 +430,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                     ),
-                    if (_canShowAppleButton) ...[
-                      const SizedBox(height: DesignTokens.space3),
-                      IgnorePointer(
-                        ignoring: _anyBusy && _busy != _BusyKind.apple,
-                        child: Opacity(
-                          opacity:
-                              _anyBusy && _busy != _BusyKind.apple ? 0.45 : 1,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                height: 48,
-                                child: SignInWithAppleButton(
-                                  onPressed: () async {
-                                    await _appleIleGiris();
-                                  },
-                                  text: 'Apple ile devam et',
-                                  style: SignInWithAppleButtonStyle.white,
-                                  height: 48,
-                                  borderRadius:
-                                      BorderRadius.circular(DesignTokens.radiusMd),
-                                ),
-                              ),
-                              if (_busy == _BusyKind.apple)
-                                Positioned.fill(
-                                  child: Material(
-                                    color: Colors.black.withValues(alpha: 0.35),
-                                    borderRadius: BorderRadius.circular(
-                                        DesignTokens.radiusMd),
-                                    child: const Center(
-                                      child: SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
                     if (AppConstants.showFacebookLogin) ...[
                       const SizedBox(height: DesignTokens.space3),
                       OutlinedButton.icon(
@@ -526,8 +438,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             size: 18, color: Color(0xFF1877F2)),
                         label: const Text('Facebook ile Giriş Yap'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: DesignTokens.textPrimaryDark,
-                          side: const BorderSide(color: DesignTokens.borderDark),
+                          foregroundColor: ext.textPrimary,
+                          side: BorderSide(color: ext.border),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           minimumSize: const Size(double.infinity, 48),
                           shape: RoundedRectangleBorder(
@@ -541,10 +453,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Hesabınız yok mu?',
                           style: TextStyle(
-                            color: DesignTokens.textSecondaryDark,
+                            color: ext.textSecondary,
                             fontSize: DesignTokens.fontSizeMd,
                           ),
                         ),
@@ -553,7 +465,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               ? null
                               : () => context.push(AppRouter.routeRegister),
                           style: TextButton.styleFrom(
-                            foregroundColor: DesignTokens.antiqueGold,
+                            foregroundColor: ext.accent,
                             padding: const EdgeInsets.only(left: 4, right: 8),
                             minimumSize: const Size(0, 0),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -665,13 +577,14 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      borderSide: const BorderSide(color: DesignTokens.borderDark),
+      borderSide: BorderSide(color: ext.border),
     );
     final focusBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      borderSide: BorderSide(color: DesignTokens.antiqueGold.withValues(alpha: 0.7)),
+      borderSide: BorderSide(color: ext.accent.withValues(alpha: 0.7)),
     );
     return Padding(
       padding: EdgeInsets.only(
@@ -689,22 +602,22 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Icon(Icons.mark_email_read_outlined,
-                      size: 52, color: DesignTokens.success.withValues(alpha: 0.95)),
+                      size: 52, color: ext.success.withValues(alpha: 0.95)),
                   const SizedBox(height: DesignTokens.space4),
                   Text(
                     'Bağlantı gönderildi',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: DesignTokens.textPrimaryDark,
+                          color: ext.textPrimary,
                           fontWeight: FontWeight.w800,
                         ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: DesignTokens.space2),
-                  const Text(
+                  Text(
                     'Gelen kutunuzu ve spam klasörünü kontrol edin. E-posta birkaç dakika sürebilir.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: DesignTokens.textSecondaryDark,
+                      color: ext.textSecondary,
                       fontSize: DesignTokens.fontSizeSm,
                       height: 1.4,
                     ),
@@ -713,8 +626,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                   FilledButton(
                     onPressed: widget.onDismiss,
                     style: FilledButton.styleFrom(
-                      backgroundColor: DesignTokens.antiqueGold,
-                      foregroundColor: DesignTokens.inputTextOnGold,
+                      backgroundColor: ext.accent,
+                      foregroundColor: ext.onBrand,
                       padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -733,15 +646,15 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
               Text(
                 'Şifremi unuttum',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: DesignTokens.textPrimaryDark,
+                      color: ext.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
               ),
               const SizedBox(height: DesignTokens.space2),
-              const Text(
+              Text(
                 'Kayıtlı e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.',
                 style: TextStyle(
-                    color: DesignTokens.textSecondaryDark,
+                    color: ext.textSecondary,
                     fontSize: DesignTokens.fontSizeSm),
               ),
               const SizedBox(height: DesignTokens.space6),
@@ -749,26 +662,26 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
-                style: const TextStyle(color: DesignTokens.textPrimaryDark),
-                cursorColor: DesignTokens.antiqueGold,
+                style: TextStyle(color: ext.textPrimary),
+                cursorColor: ext.accent,
                 onTapOutside: (_) =>
                     FocusManager.instance.primaryFocus?.unfocus(),
                 decoration: InputDecoration(
                   labelText: 'E-posta',
                   hintText: 'ornek@firma.com',
                   labelStyle:
-                      const TextStyle(color: DesignTokens.textTertiaryDark),
+                      TextStyle(color: ext.textTertiary),
                   hintStyle:
-                      const TextStyle(color: DesignTokens.textTertiaryDark),
-                  prefixIcon: const Icon(Icons.email_outlined,
-                      color: DesignTokens.textTertiaryDark),
+                      TextStyle(color: ext.textTertiary),
+                  prefixIcon: Icon(Icons.email_outlined,
+                      color: ext.textTertiary),
                   filled: true,
-                  fillColor: DesignTokens.surfaceDark,
+                  fillColor: ext.surface,
                   enabledBorder: inputBorder,
                   focusedBorder: focusBorder,
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                    borderSide: const BorderSide(color: DesignTokens.danger),
+                    borderSide: BorderSide(color: ext.danger),
                   ),
                 ),
                 validator: (v) {
@@ -783,7 +696,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                 Text(
                   _errorMessage!,
                   style: TextStyle(
-                      color: DesignTokens.danger.withValues(alpha: 0.95),
+                      color: ext.danger.withValues(alpha: 0.95),
                       fontSize: DesignTokens.fontSizeSm),
                 ),
               ],
@@ -794,8 +707,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                 child: FilledButton(
                   onPressed: _isLoading ? null : _sendReset,
                   style: FilledButton.styleFrom(
-                    backgroundColor: DesignTokens.antiqueGold,
-                    foregroundColor: DesignTokens.inputTextOnGold,
+                    backgroundColor: ext.accent,
+                    foregroundColor: ext.onBrand,
                     padding: const EdgeInsets.symmetric(
                         vertical: DesignTokens.space4),
                     shape: RoundedRectangleBorder(
@@ -804,12 +717,12 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                     ),
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 22,
                           width: 22,
                           child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: DesignTokens.inputTextOnGold),
+                              color: ext.onBrand),
                         )
                       : const Text('Sıfırlama bağlantısı gönder',
                           style: TextStyle(fontWeight: FontWeight.w600)),

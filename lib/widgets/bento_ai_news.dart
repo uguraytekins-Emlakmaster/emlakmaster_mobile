@@ -1,10 +1,9 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
-
 /// Firebase'de news yoksa kullanılacak sabit liste (Günün Fırsatı, Faiz Oranı vb.)
 final List<Map<String, String>> _defaultNewsItems = [
   {'title': 'Günün Fırsatı', 'body': 'Bugün faiz oranlarında hafif bir geri çekilme var. Kredi bekleyen alıcı listenizi kontrol edip, uygun müşterilere otomatik bilgilendirme gönderebilirsiniz.'},
@@ -48,9 +47,9 @@ class BentoAiNews extends StatelessWidget {
               Container(
                 width: 40,
                 height: 40,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: DesignTokens.primary,
+                  color: AppThemeExtension.of(context).accent,
                 ),
                 child: const Icon(Icons.bolt_rounded, color: Colors.black, size: 22),
               ),
@@ -83,13 +82,13 @@ class BentoAiNews extends StatelessWidget {
               const SizedBox(width: 12),
               TextButton(
                 style: TextButton.styleFrom(
-                  foregroundColor: DesignTokens.primary,
+                  foregroundColor: AppThemeExtension.of(context).accent,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 onPressed: () {
                   showModalBottomSheet<void>(
                     context: context,
-                    backgroundColor: DesignTokens.surfaceDark,
+                    backgroundColor: AppThemeExtension.of(context).surface,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                     ),
@@ -102,7 +101,7 @@ class BentoAiNews extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.bolt_rounded, color: DesignTokens.primary, size: 28),
+                                Icon(Icons.bolt_rounded, color: AppThemeExtension.of(context).accent, size: 28),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -138,7 +137,7 @@ class BentoAiNews extends StatelessWidget {
                               child: FilledButton(
                                 onPressed: () => Navigator.pop(ctx),
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: DesignTokens.primary,
+                                  backgroundColor: AppThemeExtension.of(context).accent,
                                   foregroundColor: Colors.black,
                                 ),
                                 child: const Text('Anladım'),

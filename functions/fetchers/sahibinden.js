@@ -1,4 +1,4 @@
-const axios = require("axios");
+const { getAxios } = require("../httpClient");
 const cheerio = require("cheerio");
 
 /**
@@ -11,7 +11,7 @@ async function fetchSahibinden(cityCode, cityName, districtName) {
   try {
     // Sahibinden emlak-konut liste URL (il bazlı: a24=il no)
     const url = `https://www.sahibinden.com/emlak-konut?a24=${cityCode}&p=1`;
-    const { data: html } = await axios.get(url, {
+    const { data: html } = await getAxios().get(url, {
       timeout: 15000,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; EmlakMaster/1.0; +https://emlakmaster.app)",

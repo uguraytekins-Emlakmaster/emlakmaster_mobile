@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -22,6 +23,7 @@ class BentoSahaRadar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirestoreService.agentsStream(),
       builder: (context, snapshot) {
@@ -39,8 +41,11 @@ class BentoSahaRadar extends StatelessWidget {
             : 'Yükleniyor...';
 
         return Container(
-          decoration: DesignTokens.dashboardCardDecoration(
-            surfaceColor: DesignTokens.surfaceDark.withValues(alpha: 0.6),
+          decoration: ext.surfaceCardDecoration(
+            surfaceColor: Color.alphaBlend(
+              ext.foreground.withValues(alpha: 0.08),
+              ext.surface,
+            ),
           ),
           padding: const EdgeInsets.all(20),
           child: LayoutBuilder(
@@ -53,18 +58,23 @@ class BentoSahaRadar extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                      color: DesignTokens.surfaceDark,
-                      border: Border.all(color: DesignTokens.antiqueGold.withValues(alpha: 0.12)),
+                      color: ext.surfaceElevated,
+                      border: Border.all(color: ext.accent.withValues(alpha: 0.12)),
                     ),
                     child: snapshot.hasData
                         ? CustomPaint(
-                            painter: DiyarbakirMapPainter(agents: withLocation),
+                            painter: DiyarbakirMapPainter(
+                              agents: withLocation,
+                              accent: ext.accent,
+                              borderStroke: ext.foreground.withValues(alpha: 0.08),
+                              labelMuted: ext.textTertiary.withValues(alpha: 0.25),
+                            ),
                             size: Size.infinite,
                           )
-                        : const Center(
+                        : Center(
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white70,
+                              color: ext.accent,
                             ),
                           ),
                   ),
@@ -73,17 +83,17 @@ class BentoSahaRadar extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Saha-Radar',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: ext.textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: DesignTokens.textTertiaryDark, fontSize: 11),
+                    style: TextStyle(color: ext.textTertiary, fontSize: 11),
                   ),
                   const SizedBox(height: 12),
                   if (narrow) ...[
@@ -118,9 +128,17 @@ class BentoSahaRadar extends StatelessWidget {
 }
 
 class DiyarbakirMapPainter extends CustomPainter {
-  final List<QueryDocumentSnapshot<Map<String, dynamic>>> agents;
+  DiyarbakirMapPainter({
+    required this.agents,
+    required this.accent,
+    required this.borderStroke,
+    required this.labelMuted,
+  });
 
-  DiyarbakirMapPainter({required this.agents});
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> agents;
+  final Color accent;
+  final Color borderStroke;
+  final Color labelMuted;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -139,7 +157,7 @@ class DiyarbakirMapPainter extends CustomPainter {
     canvas.drawPath(
       borderPath,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.08)
+        ..color = borderStroke
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5,
     );
@@ -147,10 +165,10 @@ class DiyarbakirMapPainter extends CustomPainter {
     // İlçe isimleri için nokta pozisyonları; konumu olan danışmanları yeşil nokta yap
     const dotRadius = 6.0;
     final greenPaint = Paint()
-      ..color = DesignTokens.primary
+      ..color = accent
       ..style = PaintingStyle.fill;
     final greenStroke = Paint()
-      ..color = DesignTokens.primary.withValues(alpha: 0.6)
+      ..color = accent.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
@@ -182,7 +200,7 @@ class DiyarbakirMapPainter extends CustomPainter {
       text: TextSpan(
         text: 'Diyarbakır',
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.25),
+          color: labelMuted,
           fontSize: 10,
           fontWeight: FontWeight.w500,
         ),
@@ -197,7 +215,10 @@ class DiyarbakirMapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant DiyarbakirMapPainter oldDelegate) {
-    return oldDelegate.agents != agents;
+    return oldDelegate.agents != agents ||
+        oldDelegate.accent != accent ||
+        oldDelegate.borderStroke != borderStroke ||
+        oldDelegate.labelMuted != labelMuted;
   }
 }
 
@@ -229,13 +250,14 @@ class _HeatmapPulseChartState extends State<_HeatmapPulseChart> with SingleTicke
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Arama',
           style: TextStyle(
-            color: DesignTokens.antiqueGold.withValues(alpha: 0.9),
+            color: ext.accent.withValues(alpha: 0.9),
             fontSize: 9,
             fontWeight: FontWeight.w600,
           ),
@@ -249,6 +271,7 @@ class _HeatmapPulseChartState extends State<_HeatmapPulseChart> with SingleTicke
                 painter: _PulseLinePainter(
                   values: _trendValues,
                   phase: _controller.value * 6.28,
+                  lineColor: ext.accent.withValues(alpha: 0.85),
                 ),
                 size: Size.infinite,
               );
@@ -261,9 +284,14 @@ class _HeatmapPulseChartState extends State<_HeatmapPulseChart> with SingleTicke
 }
 
 class _PulseLinePainter extends CustomPainter {
-  _PulseLinePainter({required this.values, this.phase = 0});
+  _PulseLinePainter({
+    required this.values,
+    this.phase = 0,
+    required this.lineColor,
+  });
   final List<double> values;
   final double phase;
+  final Color lineColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -282,7 +310,7 @@ class _PulseLinePainter extends CustomPainter {
       }
     }
     final paint = Paint()
-      ..color = DesignTokens.antiqueGold.withValues(alpha: 0.85)
+      ..color = lineColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.8
       ..strokeCap = StrokeCap.round
@@ -292,6 +320,8 @@ class _PulseLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _PulseLinePainter oldDelegate) {
-    return oldDelegate.values != values || oldDelegate.phase != phase;
+    return oldDelegate.values != values ||
+        oldDelegate.phase != phase ||
+        oldDelegate.lineColor != lineColor;
   }
 }

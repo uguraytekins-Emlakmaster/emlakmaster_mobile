@@ -1,3 +1,5 @@
+import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
+
 import '../../auth/data/user_repository.dart';
 import 'membership_status.dart';
 import 'office_membership_entity.dart';
@@ -35,14 +37,24 @@ OfficeAccessState deriveOfficeAccessState({
   required OfficeMembership? primaryMembership,
   required bool userDocLoading,
   required bool membershipLoading,
+  bool devOfficeFallback = false,
 }) {
   if (userDocLoading || (userDoc != null &&
-      userDoc.officeId != null &&
-      userDoc.officeId!.isNotEmpty &&
+      (devOfficeFallback ||
+          (userDoc.officeId != null && userDoc.officeId!.isNotEmpty)) &&
       membershipLoading)) {
     return OfficeAccessState.loading;
   }
   if (userDoc == null) return OfficeAccessState.loading;
+
+  /// Geliştirme: Firestore yazılamadı; sentetik üyelik ile ana uygulamaya izin ver.
+  if (isDevMode &&
+      devOfficeFallback &&
+      primaryMembership != null &&
+      primaryMembership.officeId == kLocalDevOfficeId) {
+    return OfficeAccessState.officeReady;
+  }
+
   final oid = userDoc.officeId;
   if (oid == null || oid.isEmpty) return OfficeAccessState.noOfficeContext;
 

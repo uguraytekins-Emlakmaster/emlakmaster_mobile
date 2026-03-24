@@ -1,8 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Market Pulse — operasyon & şeffaflık
+- **`ingestedAt` / `ingestedBy`** Firestore alanları `ExternalListingEntity` üzerinden okunur.
+- **`MarketPulseListingsMeta`:** «Son senkron» (en güncel CI ingest) + üçüncü taraf veri uyarısı.
+- **Boş liste:** Cihazda USB ile doğrulama notu.
+- **doc/MARKET_PULSE_OPERATIONS.md** — kablo olmadan yapılabilecek checklist.
+
 ## [1.0.5] – 2025-03-19
 
 ### Market Pulse — yatırım terminali UI
+- **Bölge analizi:** `MarketPulseRegionComparisonStrip` — Kayapınar / Bağlar / Yenişehir için yatay karşılaştırma kartları; fiyat bandı, talep %, mini yarım daire gösterge + sparkline; cam efektli zemin; boş veride varsayılan üçlü (`marketPulseDefaultRegionScores`).
+- **Bölge detayı:** Kart dokunuşu → `AppRouter.routeRegionInsight` (`/region-insight/:regionId`, `extra: RegionHeatmapScore`) → `RegionInsightPage` (özet metrikler + Google Haritalar’da «{bölge} Diyarbakır» araması). Varsayılan liste `region_heatmap_defaults.dart` içinde tek kaynak.
+- **Derin link:** `app_links` + `emlakmaster://` (Android/iOS/macOS manifest), `PendingDeepLinkStore` (oturum yokken `/region-insight/…` saklanır, girişten sonra `router.go`), `RegionDeepLinkBootstrap`, `regionInsightPathFromUri`, `resolveRegionHeatmapForRoute` için Türkçe/URL decode ile eşleşme. `doc/DEEP_LINKS.md`.
 - **Liste satırı:** `MarketPulseInvestmentListingTile` — terminal tarzı kart, sol altın çizgi, tabular fiyat.
 - **Fiyat trendi:** ₺ sembolünün solunda yeşil yukarı ok (pozitif trend göstergesi).
 - **Emlak tipi rozeti:** Başlık satırı sonunda koyu mavi (#0D47A1) badge + beyaz metin (`propertyType` alanı).
@@ -13,6 +24,30 @@
 - **`ClientExternalListingsSyncService`:** Blaze olmadan HTML çekme + Firestore yazımı; boşta otomatik örnek seed.
 - **`ExternalListingsSyncOutcome`:** `liveWritten`, `demoWritten`, `usedDemoFallback`.
 - **`ExternalListingEntity.propertyType`:** Firestore `propertyType` alanı; örnek seed’de kaynak başına sahibinden/emlakjet/hepsiEmlak + gerçekçi başlıklar.
+
+### Rainbow PDF (Analytics Center)
+- **`RainbowPdfBuilder`:** Kurumsal yeniden düzen — üst sağ **Rainbow Gayrimenkul**, **Rainbow Analytics Center** filigranı, ince altın çizgi, dairesel skor halkası + üç mini halka, Kayapınar/Bağlar **ızgara tablo** (canlı heatmap veya varsayılan).
+- **`DistrictSnapshotRow` / `districtSnapshots`:** Rapor modeli + `buildFullReport` heatmap okuma.
+- **doc/RAINBOW_PDF_REPORTING.md**
+
+### Spark (Blaze olmadan) — Market Pulse istemci rollup
+- **`MarketPulseClientRollupService`**: `external_listings` → `analytics_daily` heatmap + fırsat keşfi; `source: client_rollup_v1`.
+- **Firestore kuralları**: `isClientHeatmapRollup` / `isClientDiscoveryRollup` — giriş yapmış kullanıcı güvenli yazım.
+- **`intelligenceRunTriggerProvider`**: throttle’lı rollup; **`ClientExternalListingsSyncService`** sonrası `force` rollup.
+- **doc/MARKET_PULSE_SPARK_NO_BLAZE.md**, test: `market_pulse_client_rollup_test.dart`.
+
+### Operasyon scriptleri
+- **`scripts/setup_market_pulse_backend.sh`**: Functions deploy + (ADC varsa) `intelligence_pipeline` seed.
+- **`scripts/seed_intelligence_pipeline_only.sh`**, **`functions/tools/seed_intelligence_pipeline.js`**: Firestore `app_settings/intelligence_pipeline` (Admin SDK).
+- **`scripts/generate_ingest_secret.sh`**: `INGEST_SECRET` üretimi.
+- **`doc/OPERATIONS_MARKET_PULSE.md`**: Tek seferlik kurulum özeti.
+
+### Sunucu Market Pulse (Cloud Functions)
+- **`scheduledFetchListings`:** 15 dk yerine **6 saatte bir**; doğrudan çekim + **`rollupMarketIntelligence`** (`analytics_daily` heatmap + fırsat keşfi).
+- **`ingestListingsPipeline`:** `x-ingest-secret` ile JSON ingest (FlareSolverr / proxy worker); isteğe bağlı **`HTTPS_PROXY`** (Bright Data / Zyte).
+- **`httpClient.js`:** Ortak axios + proxy desteği; fetcher’lar buna geçirildi.
+- **`app_settings/intelligence_pipeline`:** `clientSeedWritesEnabled` — sunucu rollup kullanılırken istemci demo yazımını kapatma (`BackgroundIntelligenceService`).
+- **doc/MARKET_PULSE_SERVERLESS_ARCHITECTURE.md**
 
 ### Dokümantasyon ve otomasyon
 - **doc/MARKET_PULSE_FREE.md**, **doc/MARKET_PULSE_FIREBASE.md**, **doc/AUTOMATION.md**, **doc/BACKLOG.md**, **doc/QA_CHECKLIST.md** vb. eklendi/güncellendi.

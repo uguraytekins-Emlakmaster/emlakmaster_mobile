@@ -21,7 +21,20 @@ class RainbowIntelService {
 
   IntelReportHistoryRepository get history => _history;
 
+  /// Tüm `agents` koleksiyonunu her analizde çekmek aşırı yavaş; TTL ile önbelleklenir.
+  static Map<String, int>? _districtAgentCountsCache;
+  static DateTime? _districtAgentCountsCacheAt;
+  static const Duration _districtAgentCountsTtl = Duration(minutes: 12);
+
   static Future<Map<String, int>> _districtAgentCounts() async {
+    final now = DateTime.now();
+    final cached = _districtAgentCountsCache;
+    final at = _districtAgentCountsCacheAt;
+    if (cached != null &&
+        at != null &&
+        now.difference(at) < _districtAgentCountsTtl) {
+      return cached;
+    }
     await FirestoreService.ensureInitialized();
     final map = <String, int>{};
     try {
@@ -35,7 +48,15 @@ class RainbowIntelService {
     } catch (_) {
       // offline / kural
     }
+    _districtAgentCountsCache = map;
+    _districtAgentCountsCacheAt = now;
     return map;
+  }
+
+  /// Test / yoğun kullanım sonrası (isteğe bağlı).
+  static void clearDistrictAgentCountsCacheForTests() {
+    _districtAgentCountsCache = null;
+    _districtAgentCountsCacheAt = null;
   }
 
   static int _maxCount(Map<String, int> m) {
@@ -63,13 +84,17 @@ class RainbowIntelService {
     final district =
         d['district'] as String? ?? d['location'] as String? ?? 'Genel';
 
-    final ext = await ExternalMarketApiPlaceholder.fetchDistrictSnapshot(district);
-    var avg = await RainbowIntelCache.avgPricePerM2ForDistrict(district);
+    final parallel = await Future.wait([
+      ExternalMarketApiPlaceholder.fetchDistrictSnapshot(district),
+      RainbowIntelCache.avgPricePerM2ForDistrict(district),
+      _districtAgentCounts(),
+    ]);
+    final ext = parallel[0] as ExternalMarketSnapshot;
+    var avg = parallel[1] as double;
     if (ext.avgPricePerM2District != null) {
       avg = ext.avgPricePerM2District!;
     }
-
-    final counts = await _districtAgentCounts();
+    final counts = parallel[2] as Map<String, int>;
     final dc = counts[district] ?? 0;
     final mx = _maxCount(counts);
 
@@ -85,12 +110,17 @@ class RainbowIntelService {
 
   Future<IntelIsolatePayload> buildPayloadCustom(CustomIntelInput input) async {
     final district = input.district.trim().isEmpty ? 'Genel' : input.district;
-    final ext = await ExternalMarketApiPlaceholder.fetchDistrictSnapshot(district);
-    var avg = await RainbowIntelCache.avgPricePerM2ForDistrict(district);
+    final parallel = await Future.wait([
+      ExternalMarketApiPlaceholder.fetchDistrictSnapshot(district),
+      RainbowIntelCache.avgPricePerM2ForDistrict(district),
+      _districtAgentCounts(),
+    ]);
+    final ext = parallel[0] as ExternalMarketSnapshot;
+    var avg = parallel[1] as double;
     if (ext.avgPricePerM2District != null) {
       avg = ext.avgPricePerM2District!;
     }
-    final counts = await _districtAgentCounts();
+    final counts = parallel[2] as Map<String, int>;
     final dc = counts[district] ?? 0;
     final mx = _maxCount(counts);
 

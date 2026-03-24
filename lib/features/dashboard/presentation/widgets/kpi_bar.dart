@@ -1,6 +1,7 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
-
-import '../../../../core/theme/design_tokens.dart';
 
 /// Kısa AI önerisi (danışman KPI’sına göre).
 String _aiRecommendationFor(String label, String value) {
@@ -24,7 +25,7 @@ String _aiRecommendationFor(String label, String value) {
   }
 }
 
-/// Üst KPI bar: neomorphic chip’ler, Antique Gold hover glow, AI Coach ikonu.
+/// Üst KPI bar — ölçek **S**; [AppThemeExtension] ile light/dark uyumlu.
 class KpiBar extends StatelessWidget {
   const KpiBar({
     super.key,
@@ -98,7 +99,10 @@ class _KpiChipState extends State<_KpiChip> {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final active = _hover;
+    final emphasized = active || widget.highlight;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
@@ -106,11 +110,28 @@ class _KpiChipState extends State<_KpiChip> {
         message: _aiRecommendationFor(widget.label, widget.value),
         preferBelow: false,
         child: Container(
+          constraints: const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightKpi),
           padding: const EdgeInsets.symmetric(
             horizontal: DesignTokens.space3,
             vertical: DesignTokens.space2,
           ),
-          decoration: DesignTokens.cardNeomorphic(hoverOrActive: active || widget.highlight),
+          decoration: BoxDecoration(
+            color: ext.surfaceElevated,
+            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+            border: Border.all(
+              color: emphasized
+                  ? ext.accent.withValues(alpha: 0.35)
+                  : ext.borderSubtle,
+              width: 0.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: ext.shadowColor.withValues(alpha: 0.25),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -118,9 +139,7 @@ class _KpiChipState extends State<_KpiChip> {
                 Icon(
                   widget.icon,
                   size: 16,
-                  color: (active || widget.highlight)
-                      ? DesignTokens.antiqueGold
-                      : DesignTokens.textSecondaryDark,
+                  color: emphasized ? ext.accent : ext.textSecondary,
                 ),
                 const SizedBox(width: DesignTokens.space1),
               ],
@@ -133,25 +152,27 @@ class _KpiChipState extends State<_KpiChip> {
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: DesignTokens.fontSizeMd,
-                      color: (active || widget.highlight)
-                          ? DesignTokens.antiqueGold
-                          : DesignTokens.textPrimaryDark,
-                      shadows: (active || widget.highlight)
+                      color: emphasized ? ext.accent : ext.textPrimary,
+                      shadows: emphasized
                           ? [
                               Shadow(
-                                color: DesignTokens.antiqueGold.withValues(alpha: 0.35),
-                                blurRadius: 8,
+                                color: ext.accent.withValues(alpha: 0.25),
+                                blurRadius: 6,
                               ),
                             ]
                           : null,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     widget.label,
                     style: TextStyle(
                       fontSize: DesignTokens.fontSizeXs,
-                      color: active ? DesignTokens.antiqueGold.withValues(alpha: 0.9) : DesignTokens.textTertiaryDark,
+                      color: emphasized ? ext.accent.withValues(alpha: 0.9) : ext.textTertiary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -159,7 +180,7 @@ class _KpiChipState extends State<_KpiChip> {
               Icon(
                 Icons.auto_awesome,
                 size: 12,
-                color: DesignTokens.antiqueGold.withValues(alpha: 0.7),
+                color: ext.accent.withValues(alpha: 0.7),
               ),
             ],
           ),

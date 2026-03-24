@@ -44,7 +44,7 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+              padding: const EdgeInsets.fromLTRB(24, 10, 24, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -125,8 +125,11 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
                       premiumVisual: true,
                       icon: Icons.home_work_outlined,
                       title: l10n.t('empty_listings'),
-                      subtitle:
-                          '${l10n.t('empty_listings_sub')}\n\n${l10n.t('empty_state_empower')}',
+                      subtitle: l10n.t('empty_listings_sub'),
+                      actionLabel: l10n.t('empty_listings_cta_import'),
+                      onAction: () => context.push(AppRouter.routeImportHub),
+                      outlinedActionLabel: l10n.t('empty_listings_cta_accounts'),
+                      onOutlinedAction: () => context.push(AppRouter.routeConnectedAccounts),
                     );
                   }
 

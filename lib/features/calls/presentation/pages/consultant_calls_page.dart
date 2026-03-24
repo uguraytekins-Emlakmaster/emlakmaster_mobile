@@ -1,6 +1,6 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
     if (dart.library.io) 'dart:io' as io;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
@@ -11,11 +11,14 @@ import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/data/device_call_log_sync_service.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Danışmanın tüm çağrıları (gelen/giden), numaralar, toplu veri export ve toplu SMS.
@@ -144,10 +147,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       builder: (ctx) {
         final dTheme = Theme.of(ctx);
         final dIsDark = dTheme.brightness == Brightness.dark;
-        final dSurface = dIsDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-        final dBg = dIsDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-        final dFg = dIsDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-        final dSecondary = dIsDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+        final dSurface = dIsDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+        final dBg = dIsDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+        final dFg = dIsDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+        final dSecondary = dIsDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
         return AlertDialog(
           backgroundColor: dSurface,
           title: Text('WhatsApp ile aç', style: TextStyle(color: dFg)),
@@ -184,7 +187,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(controller.text),
-              style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+              style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
               child: const Text('İlkini aç'),
             ),
           ],
@@ -251,8 +254,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   Widget _buildIosInfoBanner(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
     return Material(
       color: surface,
       child: Padding(
@@ -340,10 +343,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final fg = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
     final callsAsync = ref.watch(consultantCallsStreamProvider);
 
     final queue = _whatsappQueue;
@@ -360,10 +363,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
           if (io.Platform.isAndroid)
             IconButton(
               icon: _isSyncingDeviceCalls
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent),
                     )
                   : const Icon(Icons.phone_android_rounded),
               tooltip: 'Telefon çağrılarını senkronize et',
@@ -387,8 +390,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         ],
       ),
       body: callsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: DesignTokens.primary),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
         ),
         error: (e, _) => Center(
           child: Padding(
@@ -416,12 +419,15 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (io.Platform.isIOS) _buildIosInfoBanner(context),
-                const Expanded(
+                Expanded(
                   child: Center(
                     child: EmptyState(
+                      premiumVisual: true,
                       icon: Icons.call_rounded,
-                      title: 'Henüz çağrı yok',
-                      subtitle: 'Arama yaptığınızda veya gelen çağrılar kaydedildiğinde burada listelenecek.',
+                      title: AppLocalizations.of(context).t('empty_calls_title'),
+                      subtitle: AppLocalizations.of(context).t('empty_calls_sub'),
+                      actionLabel: AppLocalizations.of(context).t('empty_calls_cta'),
+                      onAction: () => context.push(AppRouter.routeCall),
                     ),
                   ),
                 ),
@@ -445,7 +451,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       const Spacer(),
                       TextButton(
                         onPressed: () => _selectAll(true),
-                        style: TextButton.styleFrom(foregroundColor: DesignTokens.primary),
+                        style: TextButton.styleFrom(foregroundColor: AppThemeExtension.of(context).accent),
                         child: const Text('Tümünü seç'),
                       ),
                       TextButton(
@@ -493,7 +499,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             Icon(
                               isIncoming ? Icons.call_received_rounded : Icons.call_made_rounded,
                               size: 18,
-                              color: isIncoming ? DesignTokens.success : DesignTokens.info,
+                              color: isIncoming ? AppThemeExtension.of(context).success : AppThemeExtension.of(context).info,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -516,7 +522,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             style: TextStyle(color: textSecondary, fontSize: 12),
                           ),
                         ),
-                        activeColor: DesignTokens.primary,
+                        activeColor: AppThemeExtension.of(context).accent,
                       ),
                     );
                   },
@@ -534,7 +540,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
                   child: Row(
                     children: [
-                      const Icon(Icons.chat_rounded, color: DesignTokens.primary, size: 22),
+                      Icon(Icons.chat_rounded, color: AppThemeExtension.of(context).accent, size: 22),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -548,7 +554,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       ),
                       TextButton(
                         onPressed: _openNextWhatsApp,
-                        style: TextButton.styleFrom(foregroundColor: DesignTokens.primary),
+                        style: TextButton.styleFrom(foregroundColor: AppThemeExtension.of(context).accent),
                         child: const Text('Sıradakini aç'),
                       ),
                       TextButton(

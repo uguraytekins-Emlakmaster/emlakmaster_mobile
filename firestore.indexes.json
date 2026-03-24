@@ -57,6 +57,32 @@
       ]
     },
     {
+      "collectionGroup": "integration_listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUserId", "order": "ASCENDING" },
+        { "fieldPath": "platform", "order": "ASCENDING" },
+        { "fieldPath": "externalListingId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "integration_listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUserId", "order": "ASCENDING" },
+        { "fieldPath": "platform", "order": "ASCENDING" },
+        { "fieldPath": "duplicateFingerprint", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "listing_import_tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUserId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "office_memberships",
       "queryScope": "COLLECTION",
       "fields": [
@@ -70,6 +96,14 @@
       "fields": [
         { "fieldPath": "code", "order": "ASCENDING" },
         { "fieldPath": "isActive", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "customers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "assignedAgentId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],

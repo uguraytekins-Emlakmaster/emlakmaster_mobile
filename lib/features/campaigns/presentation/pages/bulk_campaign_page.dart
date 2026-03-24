@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,7 +12,6 @@ import '../../../../core/utils/whatsapp_launcher.dart';
 import '../../../../core/widgets/app_toaster.dart';
 import '../../../../features/crm_customers/data/customer_mapper.dart';
 import '../../../../shared/models/customer_models.dart';
-
 class BulkCampaignFilters {
   const BulkCampaignFilters({
     required this.minBudgetMillions,
@@ -142,7 +142,7 @@ class BulkCampaignPage extends ConsumerWidget {
     final count = segment?.activePhonesCount ?? 0;
 
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
         context,
         backgroundColor: Colors.transparent,
@@ -191,12 +191,12 @@ class _SegmentHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.filter_alt_rounded, color: DesignTokens.primary, size: 22),
+        Icon(Icons.filter_alt_rounded, color: AppThemeExtension.of(context).accent, size: 22),
         const SizedBox(width: DesignTokens.space2),
         Text(
           AppLocalizations.of(context).t('segment_header'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: DesignTokens.textPrimaryDark,
+                color: AppThemeExtension.of(context).textPrimary,
                 fontWeight: FontWeight.w600,
               ),
         ),
@@ -206,7 +206,7 @@ class _SegmentHeader extends StatelessWidget {
             Icon(
               Icons.people_rounded,
               size: 16,
-              color: totalCount > 0 ? DesignTokens.primary : DesignTokens.textTertiaryDark,
+              color: totalCount > 0 ? AppThemeExtension.of(context).accent : AppThemeExtension.of(context).textTertiary,
             ),
             const SizedBox(width: DesignTokens.space1),
             Text(
@@ -215,8 +215,8 @@ class _SegmentHeader extends StatelessWidget {
                   : AppLocalizations.of(context).t('segment_count_none'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: totalCount > 0
-                        ? DesignTokens.textSecondaryDark
-                        : DesignTokens.textTertiaryDark,
+                        ? AppThemeExtension.of(context).textSecondary
+                        : AppThemeExtension.of(context).textTertiary,
                   ),
             ),
           ],
@@ -263,9 +263,9 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space4),
       decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
+        color: AppThemeExtension.of(context).surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.8)),
+        border: Border.all(color: AppThemeExtension.of(context).border.withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +306,7 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
           Text(
             'Bütçe aralığı (milyon TL)',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: DesignTokens.textSecondaryDark,
+                  color: AppThemeExtension.of(context).textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -315,18 +315,18 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
             children: [
               Text(
                 '${_budgetRange.start.toStringAsFixed(0)}M',
-                style: const TextStyle(
-                  color: DesignTokens.textPrimaryDark,
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(width: DesignTokens.space1),
-              const Text('–', style: TextStyle(color: DesignTokens.textTertiaryDark)),
+              Text('–', style: TextStyle(color: AppThemeExtension.of(context).textTertiary)),
               const SizedBox(width: DesignTokens.space1),
               Text(
                 '${_budgetRange.end.toStringAsFixed(0)}M',
-                style: const TextStyle(
-                  color: DesignTokens.textPrimaryDark,
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -334,7 +334,7 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
               Text(
                 'Örnek: 2M – 8M',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: DesignTokens.textTertiaryDark,
+                      color: AppThemeExtension.of(context).textTertiary,
                     ),
               ),
             ],
@@ -356,38 +356,38 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
           Text(
             'Bölge / mahalle etiketi',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: DesignTokens.textSecondaryDark,
+                  color: AppThemeExtension.of(context).textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
           ),
           const SizedBox(height: DesignTokens.space2),
           TextField(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Örn: Bağdat Caddesi, Maslak, Küçükçekmece...',
               hintStyle: TextStyle(
-                color: DesignTokens.textTertiaryDark,
+                color: AppThemeExtension.of(context).textTertiary,
                 fontSize: DesignTokens.fontSizeSm,
               ),
               filled: true,
-              fillColor: DesignTokens.surfaceDark,
+              fillColor: AppThemeExtension.of(context).surface,
               border: OutlineInputBorder(
-                borderSide: BorderSide(color: DesignTokens.borderDark),
-                borderRadius: BorderRadius.all(Radius.circular(DesignTokens.radiusMd)),
+                borderSide: BorderSide(color: AppThemeExtension.of(context).border),
+                borderRadius: const BorderRadius.all(Radius.circular(DesignTokens.radiusMd)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: DesignTokens.borderDark),
-                borderRadius: BorderRadius.all(Radius.circular(DesignTokens.radiusMd)),
+                borderSide: BorderSide(color: AppThemeExtension.of(context).border),
+                borderRadius: const BorderRadius.all(Radius.circular(DesignTokens.radiusMd)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: DesignTokens.primary),
-                borderRadius: BorderRadius.all(Radius.circular(DesignTokens.radiusMd)),
+                borderSide: BorderSide(color: AppThemeExtension.of(context).accent),
+                borderRadius: const BorderRadius.all(Radius.circular(DesignTokens.radiusMd)),
               ),
-              contentPadding: EdgeInsets.symmetric(
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: DesignTokens.space3,
                 vertical: DesignTokens.space3,
               ),
             ),
-            style: const TextStyle(color: DesignTokens.textPrimaryDark),
+            style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
             onChanged: (value) {
               setState(() => _regionText = value.trim());
               _pushFilters();
@@ -397,7 +397,7 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
           Text(
             _buildSegmentSummary(),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: DesignTokens.textTertiaryDark,
+                  color: AppThemeExtension.of(context).textTertiary,
                 ),
           ),
         ],
@@ -434,12 +434,12 @@ class _AiMessageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.auto_awesome_rounded, color: DesignTokens.primary, size: 22),
+        Icon(Icons.auto_awesome_rounded, color: AppThemeExtension.of(context).accent, size: 22),
         const SizedBox(width: DesignTokens.space2),
         Text(
           AppLocalizations.of(context).t('ai_message_header'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: DesignTokens.textPrimaryDark,
+                color: AppThemeExtension.of(context).textPrimary,
                 fontWeight: FontWeight.w600,
               ),
         ),
@@ -450,19 +450,19 @@ class _AiMessageHeader extends StatelessWidget {
             vertical: DesignTokens.space1,
           ),
           decoration: BoxDecoration(
-            color: DesignTokens.surfaceDark,
+            color: AppThemeExtension.of(context).surface,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: DesignTokens.borderDark),
+            border: Border.all(color: AppThemeExtension.of(context).border),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.science_rounded, size: 14, color: DesignTokens.textTertiaryDark),
-              SizedBox(width: DesignTokens.space1),
+              Icon(Icons.science_rounded, size: 14, color: AppThemeExtension.of(context).textTertiary),
+              const SizedBox(width: DesignTokens.space1),
               Text(
                 'Beta · iskelet',
                 style: TextStyle(
-                  color: DesignTokens.textTertiaryDark,
+                  color: AppThemeExtension.of(context).textTertiary,
                   fontSize: DesignTokens.fontSizeXs,
                   fontWeight: FontWeight.w500,
                 ),
@@ -541,9 +541,9 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: DesignTokens.surfaceDark,
+        color: AppThemeExtension.of(context).surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border.all(color: DesignTokens.borderDark.withValues(alpha: 0.8)),
+        border: Border.all(color: AppThemeExtension.of(context).border.withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -559,8 +559,8 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
               children: [
                 Text(
                   AppLocalizations.of(context).t('message_text'),
-                  style: const TextStyle(
-                    color: DesignTokens.textSecondaryDark,
+                  style: TextStyle(
+                    color: AppThemeExtension.of(context).textSecondary,
                     fontWeight: FontWeight.w600,
                     fontSize: DesignTokens.fontSizeSm,
                   ),
@@ -569,19 +569,19 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
                 TextButton.icon(
                   onPressed: _loading ? null : _onSuggestPressed,
                   style: TextButton.styleFrom(
-                    foregroundColor: DesignTokens.primary,
+                    foregroundColor: AppThemeExtension.of(context).accent,
                     padding: const EdgeInsets.symmetric(
                       horizontal: DesignTokens.space3,
                       vertical: DesignTokens.space1,
                     ),
                   ),
                   icon: _loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 14,
                           height: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: DesignTokens.primary,
+                            color: AppThemeExtension.of(context).accent,
                           ),
                         )
                       : const Icon(Icons.bolt_rounded, size: 18),
@@ -598,7 +598,7 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
               ],
             ),
           ),
-          const Divider(height: 1, color: DesignTokens.borderDark),
+          Divider(height: 1, color: AppThemeExtension.of(context).border),
           Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),
             child: Consumer(
@@ -613,13 +613,13 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
                     isCollapsed: true,
                     border: InputBorder.none,
                     hintText: AppLocalizations.of(context).t('message_hint'),
-                    hintStyle: const TextStyle(
-                      color: DesignTokens.textTertiaryDark,
+                    hintStyle: TextStyle(
+                      color: AppThemeExtension.of(context).textTertiary,
                       fontSize: DesignTokens.fontSizeSm,
                     ),
                   ),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: DesignTokens.textPrimaryDark,
+                    color: AppThemeExtension.of(context).textPrimary,
                     height: 1.4,
                   ),
                 );
@@ -655,8 +655,8 @@ class _BottomActionBar extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: isDark ? Colors.black.withValues(alpha: 0.9) : Colors.white,
-        border: const Border(
-          top: BorderSide(color: DesignTokens.borderDark),
+        border: Border(
+          top: BorderSide(color: AppThemeExtension.of(context).border),
         ),
       ),
       child: SafeArea(

@@ -1,11 +1,15 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
+import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Danışman paneli – Takip: sessiz lead listesi (7/14/30+ gün), yeniden kazanım kuyruğu.
 class ConsultantResurrectionPage extends ConsumerWidget {
   const ConsultantResurrectionPage({super.key});
@@ -14,12 +18,12 @@ class ConsultantResurrectionPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.backgroundDark : DesignTokens.backgroundLight;
-    final fg = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
-    final surface = isDark ? DesignTokens.surfaceDark : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark : DesignTokens.borderLight;
-    final textSecondary = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
-    final textTertiary = isDark ? DesignTokens.textTertiaryDark : DesignTokens.textTertiaryLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final fg = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
+    final textTertiary = isDark ? AppThemeExtension.of(context).textTertiary : AppThemeExtension.of(context).textTertiary;
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Scaffold(
       backgroundColor: bg,
@@ -32,36 +36,15 @@ class ConsultantResurrectionPage extends ConsumerWidget {
       body: resurrectionAsync.when(
         data: (items) {
           if (items.isEmpty) {
+            final l10n = AppLocalizations.of(context);
             return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 64,
-                    color: DesignTokens.primary.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: DesignTokens.space4),
-                  Text(
-                    'Şu an takip edilecek lead yok',
-                    style: TextStyle(
-                      color: textSecondary,
-                      fontSize: DesignTokens.fontSizeMd,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      '7 gün ve üzeri sessiz kalan müşteriler burada listelenir.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: textTertiary,
-                        fontSize: DesignTokens.fontSizeSm,
-                      ),
-                    ),
-                  ),
-                ],
+              child: EmptyState(
+                premiumVisual: true,
+                icon: Icons.track_changes_rounded,
+                title: l10n.t('empty_followup_title'),
+                subtitle: l10n.t('empty_followup_sub'),
+                actionLabel: l10n.t('empty_followup_cta'),
+                onAction: () => context.push(AppRouter.routeCall),
               ),
             );
           }
@@ -86,12 +69,12 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: DesignTokens.primary.withValues(alpha: 0.15),
+                      color: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person_outline_rounded,
-                      color: DesignTokens.primary,
+                      color: AppThemeExtension.of(context).accent,
                       size: 22,
                     ),
                   ),
@@ -127,8 +110,8 @@ class ConsultantResurrectionPage extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: DesignTokens.primary),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
         ),
         error: (e, _) => Center(
           child: Padding(
@@ -136,10 +119,10 @@ class ConsultantResurrectionPage extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.error_outline_rounded,
                   size: 48,
-                  color: DesignTokens.danger,
+                  color: AppThemeExtension.of(context).danger,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -152,7 +135,7 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                   onPressed: () => ref.invalidate(resurrectionQueueProvider),
                   icon: const Icon(Icons.refresh_rounded, size: 20),
                   label: const Text('Tekrar dene'),
-                  style: FilledButton.styleFrom(backgroundColor: DesignTokens.primary),
+                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
                 ),
               ],
             ),

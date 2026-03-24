@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/theme_palette.dart';
 
 /// Rainbow CRM — tasarım sistemi özeti (kod + dokümantasyon).
 ///
-/// **Renk:** Birincil altın [DesignTokens.antiqueGold], arka plan neredeyse siyah
-/// ([DesignTokens.backgroundDark] / [DesignTokens.scaffoldDark]), yüzeyler [DesignTokens.surfaceDark].
-/// Vurgu: başarı yeşili [DesignTokens.success], uyarı/hata kırmızı [DesignTokens.danger].
+/// **Renk:** Birincil altın [ThemePalette.antiqueGold], arka plan neredeyse siyah
+/// ([ThemePalette.backgroundDark] / [ThemePalette.scaffoldDark]), yüzeyler [ThemePalette.surfaceDark].
+/// Vurgu: başarı yeşili [ThemePalette.success], uyarı/hata kırmızı [ThemePalette.danger].
 /// **Mavi ton kullanılmaz** (Material surfaceTint kapalı; bilgi = nötr gri).
 ///
 /// **Tipografi:** `Theme.of(context).textTheme` — display/headline kalın, body yüksek okunurluk.

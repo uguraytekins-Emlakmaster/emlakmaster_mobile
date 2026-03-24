@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:ui';
 
 import 'package:animate_do/animate_do.dart';
@@ -8,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-
 /// Onboarding asset paths (PNG/WebP, 1600x1600 or 2048x2048). Omit file to use premium placeholder.
 const List<String> _onboardingImagePaths = [
   'assets/onboarding/crm_dashboard.png',
@@ -81,16 +81,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundDark,
+      backgroundColor: AppThemeExtension.of(context).background,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              DesignTokens.backgroundDark,
-              DesignTokens.backgroundDark,
-              DesignTokens.primary.withValues(alpha: 0.03),
+              AppThemeExtension.of(context).background,
+              AppThemeExtension.of(context).background,
+              AppThemeExtension.of(context).accent.withValues(alpha: 0.03),
             ],
           ),
         ),
@@ -141,12 +141,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(4),
               color: _currentPage == i
-                  ? DesignTokens.primary
-                  : DesignTokens.textTertiaryDark.withValues(alpha: 0.5),
+                  ? AppThemeExtension.of(context).accent
+                  : AppThemeExtension.of(context).textTertiary.withValues(alpha: 0.5),
               boxShadow: _currentPage == i
                   ? [
                       BoxShadow(
-                        color: DesignTokens.primary.withValues(alpha: 0.4),
+                        color: AppThemeExtension.of(context).accent.withValues(alpha: 0.4),
                         blurRadius: 8,
                       ),
                     ]
@@ -178,7 +178,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           boxShadow: [
             BoxShadow(
-              color: DesignTokens.primary.withValues(alpha: 0.25),
+              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -190,8 +190,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
           child: FilledButton(
             onPressed: _onNext,
             style: FilledButton.styleFrom(
-              backgroundColor: DesignTokens.primary,
-              foregroundColor: DesignTokens.inputTextOnGold,
+              backgroundColor: AppThemeExtension.of(context).accent,
+              foregroundColor: AppThemeExtension.of(context).onBrand,
               minimumSize: const Size(double.infinity, 56),
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -264,8 +264,8 @@ class _OnboardingSlide extends StatelessWidget {
                     child: Text(
                       data.title,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: DesignTokens.textPrimaryDark,
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textPrimary,
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
@@ -280,8 +280,8 @@ class _OnboardingSlide extends StatelessWidget {
                     child: Text(
                       data.subtitle,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: DesignTokens.textSecondaryDark,
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textSecondary,
                         fontSize: 15,
                         height: 1.45,
                         letterSpacing: 0.1,
@@ -310,7 +310,7 @@ class _OnboardingSlide extends StatelessWidget {
             borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
             boxShadow: [
               BoxShadow(
-                color: DesignTokens.primary.withValues(alpha: 0.08),
+                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.08),
                 blurRadius: 32,
                 offset: const Offset(0, 12),
               ),
@@ -325,25 +325,25 @@ class _OnboardingSlide extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                DesignTokens.surfaceDarkElevated,
-                DesignTokens.surfaceDark,
-                DesignTokens.primary.withValues(alpha: 0.04),
+                AppThemeExtension.of(context).surfaceElevated,
+                AppThemeExtension.of(context).surface,
+                AppThemeExtension.of(context).accent.withValues(alpha: 0.04),
               ],
             ),
             border: Border.all(
-              color: DesignTokens.borderDark.withValues(alpha: 0.8),
+              color: AppThemeExtension.of(context).border.withValues(alpha: 0.8),
             ),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-            child: _buildVisualContent(visualHeight),
+            child: _buildVisualContent(context, visualHeight),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildVisualContent(double height) {
+  Widget _buildVisualContent(BuildContext context, double height) {
     if (imagePath != null && imagePath!.isNotEmpty) {
       return Stack(
         fit: StackFit.expand,
@@ -353,7 +353,7 @@ class _OnboardingSlide extends StatelessWidget {
             fit: BoxFit.contain,
             width: double.infinity,
             height: double.infinity,
-            errorBuilder: (_, __, ___) => _buildPlaceholderVisual(height),
+            errorBuilder: (_, __, ___) => _buildPlaceholderVisual(context, height),
           ),
           Container(
             decoration: BoxDecoration(
@@ -362,7 +362,7 @@ class _OnboardingSlide extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  DesignTokens.surfaceDark.withValues(alpha: 0.3),
+                  AppThemeExtension.of(context).surface.withValues(alpha: 0.3),
                 ],
               ),
             ),
@@ -370,10 +370,10 @@ class _OnboardingSlide extends StatelessWidget {
         ],
       );
     }
-    return _buildPlaceholderVisual(height);
+    return _buildPlaceholderVisual(context, height);
   }
 
-  Widget _buildPlaceholderVisual(double height) {
+  Widget _buildPlaceholderVisual(BuildContext context, double height) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -386,8 +386,8 @@ class _OnboardingSlide extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  DesignTokens.primary.withValues(alpha: 0.2),
-                  DesignTokens.primary.withValues(alpha: 0.06),
+                  AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+                  AppThemeExtension.of(context).accent.withValues(alpha: 0.06),
                   Colors.transparent,
                 ],
               ),
@@ -401,14 +401,14 @@ class _OnboardingSlide extends StatelessWidget {
             height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: DesignTokens.surfaceDark,
+              color: AppThemeExtension.of(context).surface,
               border: Border.all(
-                color: DesignTokens.primary.withValues(alpha: 0.25),
+                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: DesignTokens.primary.withValues(alpha: 0.15),
+                  color: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
                   blurRadius: 24,
                 ),
               ],
@@ -416,7 +416,7 @@ class _OnboardingSlide extends StatelessWidget {
             child: Icon(
               data.icon,
               size: 48,
-              color: DesignTokens.primary.withValues(alpha: 0.95),
+              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.95),
             ),
           ),
         ),
@@ -458,9 +458,9 @@ class _FloatingCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: DesignTokens.surfaceDark.withValues(alpha: 0.9),
+          color: AppThemeExtension.of(context).surface.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-          border: Border.all(color: DesignTokens.borderDark),
+          border: Border.all(color: AppThemeExtension.of(context).border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.2),
@@ -472,12 +472,12 @@ class _FloatingCard extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: DesignTokens.primary),
+            Icon(icon, size: 16, color: AppThemeExtension.of(context).accent),
             const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
-                color: DesignTokens.textSecondaryDark,
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textSecondary,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),

@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 /// Eski hub — [ConnectedPlatformsPage] kullanılır (`/settings/connected-accounts`).
 @Deprecated('Use ConnectedPlatformsPage (Phase 1.4)')
 class ConnectedAccountsPage extends ConsumerWidget {
@@ -336,8 +335,8 @@ class _StatusChip extends StatelessWidget {
         fg = ext.success;
         break;
       case 'needs_reauth':
-        bg = DesignTokens.warning.withValues(alpha: 0.25);
-        fg = DesignTokens.warning;
+        bg = ext.warning.withValues(alpha: 0.25);
+        fg = ext.warning;
         break;
       case 'limited':
         bg = ext.brandPrimary.withValues(alpha: 0.2);

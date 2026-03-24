@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
-
 /// Nav item for [AdaptiveShellScaffold].
 class AdaptiveNavItem {
   const AdaptiveNavItem(this.icon, this.label);
@@ -74,11 +73,10 @@ class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
   Widget build(BuildContext context) {
     final isWide = AdaptiveShellScaffold.isWide(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final ext = AppThemeExtension.of(context);
     final surface = ext.surface;
     final primary = theme.colorScheme.primary;
-    final onSurfaceVariant = isDark ? DesignTokens.textSecondaryDark : DesignTokens.textSecondaryLight;
+    final onSurfaceVariant = ext.textSecondary;
 
     final body = Column(
       children: [
@@ -90,7 +88,7 @@ class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
                 Text(
                   widget.title!,
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight,
+                    color: ext.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

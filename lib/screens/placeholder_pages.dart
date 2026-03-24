@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
@@ -10,7 +10,6 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 class CustomersPlaceholderPage extends StatelessWidget {
   const CustomersPlaceholderPage({super.key});
 
@@ -18,7 +17,7 @@ class CustomersPlaceholderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
     final onSurface = theme.colorScheme.onSurface;
     final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     return Scaffold(
@@ -76,7 +75,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? DesignTokens.scaffoldDark : DesignTokens.backgroundLight;
+    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
     final onSurface = theme.colorScheme.onSurface;
     final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     return Scaffold(
@@ -140,7 +139,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               ListTile(
-                leading: const Icon(Icons.admin_panel_settings_rounded, color: DesignTokens.primary),
+                leading: Icon(Icons.admin_panel_settings_rounded, color: AppThemeExtension.of(context).accent),
                 title: Text(
                   'Yönetici yetkisi al',
                   style: TextStyle(color: onSurface),
@@ -161,9 +160,9 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                     ref.invalidate(userDocStreamProvider(u.uid));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Yönetici yetkisi verildi. Panel yenileniyor...'),
-                          backgroundColor: DesignTokens.primary,
+                        SnackBar(
+                          content: const Text('Yönetici yetkisi verildi. Panel yenileniyor...'),
+                          backgroundColor: AppThemeExtension.of(context).accent,
                         ),
                       );
                     }
@@ -191,7 +190,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               ListTile(
                 leading: Icon(
                   Icons.dashboard_rounded,
-                  color: preferConsultant != true ? DesignTokens.primary : onSurfaceVariant,
+                  color: preferConsultant != true ? AppThemeExtension.of(context).accent : onSurfaceVariant,
                 ),
                 title: Text('Yönetici paneli', style: TextStyle(color: onSurface)),
                 subtitle: Text(
@@ -199,7 +198,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                   style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: preferConsultant != true
-                    ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
+                    ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
                     : null,
                 onTap: () {
                   ref.read(preferredConsultantPanelProvider.notifier).state = false;
@@ -208,7 +207,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               ListTile(
                 leading: Icon(
                   Icons.person_rounded,
-                  color: preferConsultant == true ? DesignTokens.primary : onSurfaceVariant,
+                  color: preferConsultant == true ? AppThemeExtension.of(context).accent : onSurfaceVariant,
                 ),
                 title: Text('Danışman paneli', style: TextStyle(color: onSurface)),
                 subtitle: Text(
@@ -216,7 +215,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                   style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: preferConsultant == true
-                    ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
+                    ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
                     : null,
                 onTap: () {
                   ref.read(preferredConsultantPanelProvider.notifier).state = true;
@@ -235,7 +234,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               ListTile(
-                leading: const Icon(Icons.swap_horiz_rounded, color: DesignTokens.primary),
+                leading: Icon(Icons.swap_horiz_rounded, color: AppThemeExtension.of(context).accent),
                 title: Text(
                   override != null
                       ? 'Rol: ${override.label} (geri al)'
@@ -256,7 +255,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(Icons.logout_rounded, color: DesignTokens.danger),
+              leading: Icon(Icons.logout_rounded, color: AppThemeExtension.of(context).danger),
               title: Text('Çıkış yap', style: TextStyle(color: onSurface)),
               onTap: () async {
                 await AuthService.instance.signOut();
@@ -271,8 +270,8 @@ class SettingsPlaceholderPage extends ConsumerWidget {
   void _showRoleSwitcher(BuildContext context, WidgetRef ref, AppRole? currentOverride) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final sheetBg = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final sheetBg = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final textColor = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: sheetBg,
@@ -291,7 +290,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
               return ListTile(
                 title: Text(r.label, style: TextStyle(color: textColor)),
                 trailing: currentOverride == r
-                    ? const Icon(Icons.check_rounded, color: DesignTokens.primary)
+                    ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
                     : null,
                 onTap: () {
                   ref.read(overrideRoleProvider.notifier).state =
@@ -315,8 +314,8 @@ class ThemeSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark.withValues(alpha: 0.5) : DesignTokens.borderLight;
+    final surface = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final border = isDark ? AppThemeExtension.of(context).border.withValues(alpha: 0.5) : AppThemeExtension.of(context).border;
     final onSurface = theme.colorScheme.onSurface;
     final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     final index = ref.watch(themeModeIndexProvider);
@@ -331,7 +330,7 @@ class ThemeSection extends ConsumerWidget {
           ListTile(
             leading: Icon(
               index == 0 ? Icons.brightness_auto_rounded : (index == 1 ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
-              color: DesignTokens.primary,
+              color: AppThemeExtension.of(context).accent,
             ),
             title: Text('Tema', style: TextStyle(color: onSurface)),
             subtitle: Text(
@@ -349,8 +348,8 @@ class ThemeSection extends ConsumerWidget {
   static void _showThemePicker(BuildContext context, WidgetRef ref, {required int currentIndex}) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final sheetBg = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final textColor = isDark ? DesignTokens.textPrimaryDark : DesignTokens.textPrimaryLight;
+    final sheetBg = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final textColor = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: sheetBg,
@@ -367,7 +366,7 @@ class ThemeSection extends ConsumerWidget {
             ),
             ListTile(
               title: Text('Sistem', style: TextStyle(color: textColor)),
-              trailing: currentIndex == 0 ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
+              trailing: currentIndex == 0 ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent) : null,
               onTap: () {
                 ref.read(themeModeIndexProvider.notifier).setThemeModeIndex(0);
                 Navigator.pop(ctx);
@@ -375,7 +374,7 @@ class ThemeSection extends ConsumerWidget {
             ),
             ListTile(
               title: Text('Açık', style: TextStyle(color: textColor)),
-              trailing: currentIndex == 1 ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
+              trailing: currentIndex == 1 ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent) : null,
               onTap: () {
                 ref.read(themeModeIndexProvider.notifier).setThemeModeIndex(1);
                 Navigator.pop(ctx);
@@ -383,7 +382,7 @@ class ThemeSection extends ConsumerWidget {
             ),
             ListTile(
               title: Text('Koyu', style: TextStyle(color: textColor)),
-              trailing: currentIndex == 2 ? const Icon(Icons.check_rounded, color: DesignTokens.primary) : null,
+              trailing: currentIndex == 2 ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent) : null,
               onTap: () {
                 ref.read(themeModeIndexProvider.notifier).setThemeModeIndex(2);
                 Navigator.pop(ctx);
@@ -404,8 +403,8 @@ class NotificationsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? DesignTokens.surfaceDarkCard : DesignTokens.surfaceLight;
-    final border = isDark ? DesignTokens.borderDark.withValues(alpha: 0.5) : DesignTokens.borderLight;
+    final surface = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
+    final border = isDark ? AppThemeExtension.of(context).border.withValues(alpha: 0.5) : AppThemeExtension.of(context).border;
     final onSurface = theme.colorScheme.onSurface;
     final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     final asyncEnabled = ref.watch(notificationsEnabledProvider);
@@ -418,7 +417,7 @@ class NotificationsSection extends ConsumerWidget {
       child: asyncEnabled.when(
         loading: () => ListTile(
           title: Text('Bildirimler', style: TextStyle(color: onSurface)),
-          trailing: const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: DesignTokens.primary)),
+          trailing: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent)),
         ),
         error: (_, __) => ListTile(
           title: Text('Bildirimler', style: TextStyle(color: onSurface)),
@@ -427,7 +426,7 @@ class NotificationsSection extends ConsumerWidget {
         data: (enabled) => SwitchListTile(
           secondary: Icon(
             enabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
-            color: DesignTokens.primary,
+            color: AppThemeExtension.of(context).accent,
           ),
           title: Text('Bildirimler', style: TextStyle(color: onSurface)),
           subtitle: Text(
@@ -435,7 +434,7 @@ class NotificationsSection extends ConsumerWidget {
             style: TextStyle(color: onSurfaceVariant, fontSize: 12),
           ),
           value: enabled,
-          activeThumbColor: DesignTokens.primary,
+          activeThumbColor: AppThemeExtension.of(context).accent,
           onChanged: (v) => ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
         ),
       ),

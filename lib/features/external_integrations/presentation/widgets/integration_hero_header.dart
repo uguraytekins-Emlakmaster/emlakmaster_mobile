@@ -68,6 +68,8 @@ class IntegrationHeroHeader extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.2,
                       ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (subtitle != null && subtitle!.isNotEmpty) ...[
                   const SizedBox(height: 6),
@@ -78,6 +80,8 @@ class IntegrationHeroHeader extends StatelessWidget {
                       height: 1.35,
                       fontSize: 13,
                     ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],

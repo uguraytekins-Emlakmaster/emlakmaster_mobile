@@ -1,10 +1,9 @@
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../features/auth/domain/entities/app_role.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
-
 /// İlk kez superAdmin girişinde tek seferlik "Sistemin Temelleri Atıldı" karşılama.
 class WelcomePatronOverlay extends ConsumerStatefulWidget {
   const WelcomePatronOverlay({
@@ -38,7 +37,7 @@ class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: DesignTokens.surfaceDarkCard,
+        backgroundColor: AppThemeExtension.of(context).card,
         title: const Row(
           children: [
             Text('🎉', style: TextStyle(fontSize: 28)),
@@ -71,7 +70,7 @@ class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tamam', style: TextStyle(color: DesignTokens.primary)),
+            child: Text('Tamam', style: TextStyle(color: AppThemeExtension.of(context).accent)),
           ),
         ],
       ),
