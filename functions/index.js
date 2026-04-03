@@ -235,3 +235,8 @@ exports.onListingImportTaskCreated = listingImportApi.onListingImportTaskCreated
 exports.extensionImport = listingImportApi.extensionImport;
 exports.adminApproveImportTask = listingImportApi.adminApproveImportTask;
 exports.runIntegrationListingSync = listingImportApi.runIntegrationListingSync;
+
+// Uzak AI callable — kota, kill switch, idempotency (aiRemoteGuard.js)
+const aiCallables = require("./aiCallables");
+exports.enrichPostCallSummary = aiCallables.enrichPostCallSummary;
+exports.generateBulkCampaignMessage = aiCallables.generateBulkCampaignMessage;

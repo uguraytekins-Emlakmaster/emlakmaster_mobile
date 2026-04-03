@@ -23,7 +23,7 @@ final investmentOpportunitySummaryProvider =
       data: (regions) {
         final list =
             regions.isEmpty ? marketPulseDefaultRegionScores : regions;
-        return AsyncValue.data(_summaryForFavorite(favId, list));
+        return AsyncValue.data(summaryForFavoriteRegion(favId, list));
       },
       loading: () {
         final snapshot = heatmapAsync.valueOrNull;
@@ -31,7 +31,7 @@ final investmentOpportunitySummaryProvider =
           final list = snapshot.isEmpty
               ? marketPulseDefaultRegionScores
               : snapshot;
-          return AsyncValue.data(_summaryForFavorite(favId, list));
+          return AsyncValue.data(summaryForFavoriteRegion(favId, list));
         }
         return const AsyncValue.loading();
       },
@@ -42,7 +42,7 @@ final investmentOpportunitySummaryProvider =
           );
         }
         return AsyncValue.data(
-          _summaryForFavorite(favId, marketPulseDefaultRegionScores),
+          summaryForFavoriteRegion(favId, marketPulseDefaultRegionScores),
         );
       },
     ),
@@ -52,7 +52,7 @@ final investmentOpportunitySummaryProvider =
 });
 
 /// [regions] boş olmamalı; yine de boşsa güvenli varsayılan.
-InvestmentOpportunitySummary _summaryForFavorite(
+InvestmentOpportunitySummary summaryForFavoriteRegion(
   String favId,
   List<RegionHeatmapScore> regions,
 ) {
@@ -67,6 +67,118 @@ InvestmentOpportunitySummary _summaryForFavorite(
   final r = match ?? safe.first;
   return InvestmentOpportunitySummary.fromRegion(r);
 }
+
+/// Dashboard [RainbowAnalyticsCenterCard] — net görsel fazlar (iskelet / canlı / önbellek / hata).
+enum AnalyticsCenterCardPhase {
+  /// İlk kare: henüz hiç özet yok (iskelet gösterilir).
+  loadingSkeleton,
+
+  /// Firestore + tercihler yüklü, güncel.
+  live,
+
+  /// Önbellek veya kısmi veri; arka planda yenileniyor.
+  stale,
+
+  /// Isı haritası hatası — varsayılan bölgelerle tahmin.
+  degraded,
+
+  /// Isı haritası boş döndü; varsayılanlarla dolduruldu.
+  empty,
+
+  /// Tercih okunamadı vb.; yeniden dene.
+  error,
+}
+
+class AnalyticsCenterCardUi {
+  const AnalyticsCenterCardUi({
+    required this.phase,
+    required this.summary,
+    this.error,
+  });
+
+  final AnalyticsCenterCardPhase phase;
+  final InvestmentOpportunitySummary summary;
+  final Object? error;
+
+  String get pulseLine =>
+      'Bugün ${summary.regionLabel} için yatırım iştahı: ${summary.appetiteLabel}';
+}
+
+/// Kart için tek kaynak: önce mümkün olan özet, sonra faz; asla “boş” his yok.
+final analyticsCenterCardUiProvider = Provider<AnalyticsCenterCardUi>((ref) {
+  final favAsync = ref.watch(favoriteInvestRegionIdProvider);
+  final heatAsync = ref.watch(marketHeatmapProvider);
+  final summaryAsync = ref.watch(investmentOpportunitySummaryProvider);
+
+  if (favAsync.hasError) {
+    return AnalyticsCenterCardUi(
+      phase: AnalyticsCenterCardPhase.error,
+      summary: InvestmentOpportunitySummary.fallback(),
+      error: favAsync.error,
+    );
+  }
+
+  if (summaryAsync.hasError) {
+    return AnalyticsCenterCardUi(
+      phase: AnalyticsCenterCardPhase.error,
+      summary: InvestmentOpportunitySummary.fallback(),
+      error: summaryAsync.error,
+    );
+  }
+
+  if (summaryAsync.hasValue) {
+    final summ = summaryAsync.requireValue;
+    if (heatAsync.hasError) {
+      return AnalyticsCenterCardUi(
+        phase: AnalyticsCenterCardPhase.degraded,
+        summary: summ,
+      );
+    }
+    if (heatAsync.isLoading) {
+      return AnalyticsCenterCardUi(
+        phase: AnalyticsCenterCardPhase.stale,
+        summary: summ,
+      );
+    }
+    if (heatAsync.hasValue && heatAsync.value!.isEmpty) {
+      return AnalyticsCenterCardUi(
+        phase: AnalyticsCenterCardPhase.empty,
+        summary: summ,
+      );
+    }
+    return AnalyticsCenterCardUi(
+      phase: AnalyticsCenterCardPhase.live,
+      summary: summ,
+    );
+  }
+
+  if (favAsync.hasValue && heatAsync.hasValue) {
+    final list = heatAsync.value!.isEmpty
+        ? marketPulseDefaultRegionScores
+        : heatAsync.value!;
+    return AnalyticsCenterCardUi(
+      phase: heatAsync.value!.isEmpty
+          ? AnalyticsCenterCardPhase.empty
+          : AnalyticsCenterCardPhase.stale,
+      summary: summaryForFavoriteRegion(favAsync.value!, list),
+    );
+  }
+
+  if (!favAsync.hasValue &&
+      heatAsync.hasValue &&
+      heatAsync.value != null &&
+      heatAsync.value!.isNotEmpty) {
+    return AnalyticsCenterCardUi(
+      phase: AnalyticsCenterCardPhase.stale,
+      summary: InvestmentOpportunitySummary.fromRegion(heatAsync.value!.first),
+    );
+  }
+
+  return AnalyticsCenterCardUi(
+    phase: AnalyticsCenterCardPhase.loadingSkeleton,
+    summary: InvestmentOpportunitySummary.fallback(),
+  );
+});
 
 class InvestmentOpportunitySummary {
   const InvestmentOpportunitySummary({

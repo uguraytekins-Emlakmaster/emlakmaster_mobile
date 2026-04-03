@@ -1,4 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/domain/broker_customer_alert.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +35,9 @@ class CustomerCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final temperatureScore = ref.watch(leadTemperatureForCustomerProvider(customer));
+    final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
+    final brokerAlert =
+        role.isManagerTier && brokerAlertsActiveForCustomer(customer);
     return Semantics(
       label: '${customer.fullName} müşteri kartı',
       button: true,
@@ -89,6 +95,8 @@ class CustomerCard extends ConsumerWidget {
                             fontWeight: FontWeight.w600,
                             fontSize: DesignTokens.fontSizeMd,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         if (customer.primaryPhone != null)
                           Text(
@@ -97,6 +105,8 @@ class CustomerCard extends ConsumerWidget {
                               color: AppThemeExtension.of(context).textSecondary,
                               fontSize: DesignTokens.fontSizeSm,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                       ],
                     ),
@@ -105,8 +115,23 @@ class CustomerCard extends ConsumerWidget {
                     _TemperatureChip(value: customer.leadTemperature!)
                   else
                     _LeadScoreChip(score: temperatureScore.score, level: temperatureScore.level),
+                  if (brokerAlert)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Tooltip(
+                        message: 'Operasyon uyarısı',
+                        child: Icon(
+                          Icons.notifications_active_rounded,
+                          size: 18,
+                          color: AppThemeExtension.of(context).danger,
+                        ),
+                      ),
+                    ),
                   if (!selectionMode)
                     IconButton(
+                      tooltip: 'Rehbere kaydet',
+                      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                      padding: const EdgeInsets.all(10),
                       icon: const Icon(Icons.contact_phone_outlined, size: 22),
                       color: AppThemeExtension.of(context).textSecondary,
                       onPressed: () {

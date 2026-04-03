@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
 /// Nav item for [AdaptiveShellScaffold].
@@ -12,7 +14,7 @@ class AdaptiveNavItem {
 
 /// Web/Desktop: sidebar (NavigationRail). Mobile: bottom nav.
 /// RBAC-agnostic; used by Admin, Consultant, and Client shells.
-class AdaptiveShellScaffold extends StatefulWidget {
+class AdaptiveShellScaffold extends ConsumerStatefulWidget {
   const AdaptiveShellScaffold({
     super.key,
     required this.navItems,
@@ -38,10 +40,10 @@ class AdaptiveShellScaffold extends StatefulWidget {
   }
 
   @override
-  State<AdaptiveShellScaffold> createState() => _AdaptiveShellScaffoldState();
+  ConsumerState<AdaptiveShellScaffold> createState() => _AdaptiveShellScaffoldState();
 }
 
-class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
+class _AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   late PageController _pageController;
   int _currentIndex = 0;
 
@@ -71,6 +73,17 @@ class _AdaptiveShellScaffoldState extends State<AdaptiveShellScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(mainShellShortcutProvider, (prev, next) {
+      if (next == null) return;
+      final idx = widget.navItems.length - 1;
+      ref.read(mainShellShortcutProvider.notifier).state = null;
+      if (idx >= 0 && idx < widget.navItems.length) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _onNavTap(idx);
+        });
+      }
+    });
+
     final isWide = AdaptiveShellScaffold.isWide(context);
     final theme = Theme.of(context);
     final ext = AppThemeExtension.of(context);

@@ -8,6 +8,13 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
+import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_insight_strip.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_smart_task_strip.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_last_call_signals_section.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_post_call_ai_insight_strip.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_timeline_intelligence_strip.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_transcript_hint_strip.dart';
 import 'package:emlakmaster_mobile/features/smart_matching_engine/presentation/providers/portfolio_match_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -56,16 +63,28 @@ class CustomerDetailPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _CustomerHeader(customerId: customerId),
+                    CustomerTimelineIntelligenceStrip(customerId: customerId),
+                    CustomerInsightStrip(customerId: customerId),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
+                        if (!role.isManagerTier) return const SizedBox.shrink();
+                        return CustomerSmartTaskStrip(customerId: customerId);
+                      },
+                    ),
+                    CustomerLastCallSignalsSection(customerId: customerId),
+                    CustomerPostCallAiInsightStrip(customerId: customerId),
+                    CustomerTranscriptHintStrip(customerId: customerId),
                     const SizedBox(height: DesignTokens.space5),
                     _PortfolioMatchSection(customerId: customerId),
                     const SizedBox(height: DesignTokens.space5),
                     Text(
                       'Zaman çizelgesi',
-                      style: TextStyle(
-                        color: ext.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: ext.textSecondary,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                          ),
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     _TimelineActions(customerId: customerId),
@@ -220,12 +239,14 @@ class CustomerDetailPage extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  '$e',
+                                  FirestoreService.userFacingErrorMessage(e),
                                   style: TextStyle(
                                     color: ext.textSecondary,
                                     fontSize: 12,
                                     height: 1.35,
                                   ),
+                                  maxLines: 4,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: DesignTokens.space5),
                                 Text(

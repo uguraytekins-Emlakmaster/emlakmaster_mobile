@@ -101,7 +101,7 @@ class FinanceBarLive extends StatelessWidget {
           );
 
           return ClipRRect(
-            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardL),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -120,7 +120,12 @@ class FinanceBarLive extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
+                  padding: const EdgeInsets.fromLTRB(
+                    DesignTokens.space4,
+                    DesignTokens.space4,
+                    DesignTokens.space4,
+                    DesignTokens.space5,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
@@ -309,13 +314,12 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Ekonomi',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.3,
-                  color: ext.textSecondary,
-                ),
+                'Ekonomi & döviz',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: ext.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                    ),
               ),
               if (srcLabel != null)
                 Padding(
@@ -443,22 +447,23 @@ class _EconomyFintechCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: ext.surfaceElevated,
-        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+        border: Border.all(color: ext.border.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
-            color: ext.shadowColor.withValues(alpha: 0.35),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: ext.shadowColor.withValues(alpha: 0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: ext.shadowColor.withValues(alpha: 0.22),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+        padding: const EdgeInsets.fromLTRB(
+          DesignTokens.space3,
+          DesignTokens.space3,
+          DesignTokens.space3,
+          DesignTokens.space3,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -468,12 +473,11 @@ class _EconomyFintechCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     data.label,
-                    style: GoogleFonts.inter(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.35,
-                      color: ext.textTertiary,
-                    ),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: ext.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.35,
+                        ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -17,13 +17,15 @@ class AdminShellPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final flags = ref.watch(featureFlagsProvider).valueOrNull;
-    final warRoom = flags?[AppConstants.keyFeatureWarRoom] ?? true;
+    final lean = flags?[AppConstants.keyV1LeanProduct] ?? true;
+    final warRoom = (flags?[AppConstants.keyFeatureWarRoom] ?? true) && !lean;
     final commandCenter = flags?[AppConstants.keyFeatureCommandCenter] ?? true;
+    final showEconomyTab = !lean;
     final navItems = <AdaptiveNavItem>[
       const AdaptiveNavItem(Icons.dashboard_rounded, 'Dashboard'),
       if (warRoom) const AdaptiveNavItem(Icons.military_tech_rounded, 'War Room'),
       if (commandCenter) const AdaptiveNavItem(Icons.call_rounded, 'Çağrı Merkezi'),
-      const AdaptiveNavItem(Icons.trending_up_rounded, 'Ekonomi'),
+      if (showEconomyTab) const AdaptiveNavItem(Icons.trending_up_rounded, 'Ekonomi'),
       const AdaptiveNavItem(Icons.analytics_rounded, 'Raporlar'),
       const AdaptiveNavItem(Icons.settings_rounded, 'Ayarlar'),
     ];
@@ -31,7 +33,7 @@ class AdminShellPage extends ConsumerWidget {
       const DashboardPage(),
       if (warRoom) const WarRoomPage(),
       if (commandCenter) const CommandCenterPage(),
-      const AdminEconomyPage(),
+      if (showEconomyTab) const AdminEconomyPage(),
       const AdminReportsPage(),
       const SettingsPage(),
     ];

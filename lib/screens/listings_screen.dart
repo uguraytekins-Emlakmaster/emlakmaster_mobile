@@ -34,8 +34,11 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
     final ext = AppThemeExtension.of(context);
     final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    final flags = ref.watch(featureFlagsProvider).valueOrNull;
-    final extInt = flags?[AppConstants.keyFeatureExternalIntegrations] ?? true;
+    final extInt = ref.watch(
+      featureFlagsProvider.select(
+        (a) => a.valueOrNull?[AppConstants.keyFeatureExternalIntegrations] ?? true,
+      ),
+    );
 
     return Scaffold(
       backgroundColor: ext.background,
@@ -44,20 +47,40 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 10, 24, 8),
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.space6,
+                DesignTokens.space3,
+                DesignTokens.space6,
+                DesignTokens.space2,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
                     l10n.t('title_listings'),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: ext.foreground,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: ext.textPrimary,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
+                  const SizedBox(height: DesignTokens.space1),
+                  Text(
+                    extInt
+                        ? 'Portföyünüz ve bağlı kaynaklar'
+                        : 'Ofis portföyü',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: ext.textSecondary,
+                        ),
+                  ),
                   if (extInt) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: DesignTokens.space4),
                     SegmentedButton<int>(
+                      style: ButtonStyle(
+                        visualDensity: VisualDensity.compact,
+                        side: WidgetStatePropertyAll(
+                          BorderSide(color: ext.border.withValues(alpha: 0.55)),
+                        ),
+                      ),
                       segments: [
                         ButtonSegment<int>(
                           value: 0,
@@ -134,7 +157,12 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                    padding: const EdgeInsets.fromLTRB(
+                      DesignTokens.space6,
+                      0,
+                      DesignTokens.space6,
+                      DesignTokens.space8,
+                    ),
                     itemCount: items.length,
                     cacheExtent: 400,
                     itemBuilder: (context, index) {
@@ -274,11 +302,11 @@ class _ListingCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               title,
-                              style: TextStyle(
-                                color: ext.foreground,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: ext.textPrimary,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.25,
+                                  ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -291,25 +319,27 @@ class _ListingCard extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: brand.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+                                color: brand.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
+                                border: Border.all(
+                                  color: brand.withValues(alpha: 0.28),
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     Icons.open_in_new_rounded,
-                                    size: 14,
+                                    size: 13,
                                     color: brand,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     l10n.t('listing_external_badge'),
-                                    style: TextStyle(
-                                      color: brand,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                          color: brand,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -317,36 +347,34 @@ class _ListingCard extends StatelessWidget {
                           ],
                         ],
                       ),
+                      const SizedBox(height: DesignTokens.space3),
+                      Text(
+                        price,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: brand,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
                       const SizedBox(height: DesignTokens.space2),
                       Row(
                         children: [
                           Icon(
                             Icons.location_on_outlined,
                             size: 16,
-                            color: ext.foregroundSecondary,
+                            color: ext.textTertiary,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               location,
-                              style: TextStyle(
-                                color: ext.foregroundSecondary,
-                                fontSize: 13,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: ext.textSecondary,
+                                  ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: DesignTokens.space3),
-                      Text(
-                        price,
-                        style: TextStyle(
-                          color: brand,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 18,
-                        ),
                       ),
                     ],
                   ),

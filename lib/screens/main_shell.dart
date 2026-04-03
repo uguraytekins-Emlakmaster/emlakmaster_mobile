@@ -5,7 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/pages/customer_list_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
-import 'package:emlakmaster_mobile/widgets/magic_call_wizard_fab.dart';
+import 'package:emlakmaster_mobile/widgets/magic_call_docked_bar.dart';
 import 'package:emlakmaster_mobile/screens/listings_screen.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
@@ -63,37 +63,37 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
     final flags = ref.watch(featureFlagsProvider).valueOrNull;
     final voiceCrmEnabled = flags?[AppConstants.keyFeatureVoiceCrm] ?? true;
 
+    final showMagicDock = _currentIndex == 0 && voiceCrmEnabled;
+
     return Scaffold(
       backgroundColor: ext.background,
-      body: PageView(
-        controller: _pageController,
-        physics: const BouncingScrollPhysics(),
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        children: const [
-          DashboardPage(),
-          ListingsPage(),
-          CustomerListPage(),
-          SettingsPage(),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: _currentIndex == 0 && voiceCrmEnabled
-          ? MagicCallWizardFab(
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              children: const [
+                DashboardPage(),
+                ListingsPage(),
+                CustomerListPage(),
+                SettingsPage(),
+              ],
+            ),
+          ),
+          if (showMagicDock)
+            MagicCallDockedBar(
               onPressed: () => context.push(AppRouter.routeCall),
               backgroundColor: ext.brandPrimary,
               foregroundColor: ext.onBrand,
-              boxShadow: [
-                BoxShadow(
-                  color: ext.brandPrimary.withValues(alpha: 0.25),
-                  blurRadius: 12,
-                ),
-              ],
-            )
-          : null,
+            ),
+        ],
+      ),
       bottomNavigationBar: RepaintBoundary(
         child: Container(
           decoration: BoxDecoration(

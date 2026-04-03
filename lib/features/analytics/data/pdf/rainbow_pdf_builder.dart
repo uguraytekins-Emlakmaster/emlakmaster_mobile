@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:barcode/barcode.dart';
+import 'package:emlakmaster_mobile/core/branding/brand_assets.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -31,6 +33,14 @@ abstract final class RainbowPdfBuilder {
     } catch (_) {
       regular = pw.Font.helvetica();
       bold = pw.Font.helveticaBold();
+    }
+
+    pw.MemoryImage? emblemPdf;
+    try {
+      final data = await rootBundle.load(BrandAssets.emblemMasterPng);
+      emblemPdf = pw.MemoryImage(data.buffer.asUint8List());
+    } catch (_) {
+      emblemPdf = null;
     }
 
     final doc = pw.Document(
@@ -89,7 +99,7 @@ abstract final class RainbowPdfBuilder {
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  _headerRow(report, bold, regular),
+                  _headerRow(report, bold, regular, emblemPdf),
                   pw.SizedBox(height: 18),
                   pw.Text(
                     report.propertyTitle,
@@ -300,6 +310,7 @@ abstract final class RainbowPdfBuilder {
     RainbowIntelReport report,
     pw.Font bold,
     pw.Font regular,
+    pw.MemoryImage? emblemImage,
   ) {
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 12),
@@ -312,28 +323,41 @@ abstract final class RainbowPdfBuilder {
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                'Rainbow Analytics Center',
-                style: pw.TextStyle(
-                  fontSize: 11,
-                  letterSpacing: 0.6,
-                  color: PdfColors.grey700,
-                  font: regular,
+          pw.Expanded(
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                if (emblemImage != null) ...[
+                  pw.Image(emblemImage, width: 28, height: 28),
+                  pw.SizedBox(width: 10),
+                ],
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Rainbow Analytics Center',
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 0.6,
+                          color: PdfColors.grey700,
+                          font: regular,
+                        ),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        'Investment Intelligence Report',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          color: PdfColors.grey600,
+                          font: regular,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                'Investment Intelligence Report',
-                style: pw.TextStyle(
-                  fontSize: 8,
-                  color: PdfColors.grey600,
-                  font: regular,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.end,

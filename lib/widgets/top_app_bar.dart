@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/widgets/dashboard_notifications_sheet.dart';
 import 'package:emlakmaster_mobile/widgets/revenue_leak_tracker.dart';
+import 'package:emlakmaster_mobile/widgets/session_avatar_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,11 +27,7 @@ class DashboardTopAppBar extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: ext.surfaceElevated,
-                child: Icon(Icons.apartment_rounded, color: ext.accent),
-              ),
+              const SessionAvatarButton(),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -61,11 +58,6 @@ class DashboardTopAppBar extends ConsumerWidget {
                 tooltip: 'Bildirimler',
                 icon: Icon(Icons.notifications_none_rounded, color: ext.textPrimary),
                 onPressed: () => showDashboardNotificationsSheet(context, uid: uid),
-              ),
-              const SizedBox(width: 4),
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: ext.surfaceElevated,
               ),
             ],
           ),

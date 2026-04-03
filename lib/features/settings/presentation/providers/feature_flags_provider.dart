@@ -25,6 +25,7 @@ final _allKeys = [
   AppConstants.keySoundEffects,
   AppConstants.keyPowerSaver,
   AppConstants.keyFeatureExternalIntegrations,
+  AppConstants.keyV1LeanProduct,
 ];
 
 /// Tüm özellik bayrakları tek provider'da; ayar ekranı ve uygulama buradan okur.
@@ -45,11 +46,10 @@ class FeatureFlagsNotifier extends StateNotifier<AsyncValue<Map<String, bool>>> 
         if (key == AppConstants.keyPowerSaver) {
           map[key] = await SettingsService.instance.getPowerSaverEnabled();
         } else {
-          map[key] = await SettingsService.instance.getFeatureFlag(key,
-              defaultValue: key == AppConstants.keyCompactDashboard ||
-                      key == AppConstants.keySoundEffects
-                  ? false
-                  : true);
+          map[key] = await SettingsService.instance.getFeatureFlag(
+            key,
+            defaultValue: _defaultFeatureFlag(key),
+          );
         }
       }
       state = AsyncValue.data(map);
@@ -72,7 +72,18 @@ class FeatureFlagsNotifier extends StateNotifier<AsyncValue<Map<String, bool>>> 
     state = AsyncValue.data({...current, key: value});
   }
 
-  bool get(String key) =>
-      state.valueOrNull?[key] ??
-      (key == AppConstants.keyPowerSaver ? false : true);
+  bool get(String key) {
+    final v = state.valueOrNull?[key];
+    if (v != null) return v;
+    return _defaultFeatureFlag(key);
+  }
+}
+
+bool _defaultFeatureFlag(String key) {
+  if (key == AppConstants.keyPowerSaver) return false;
+  if (key == AppConstants.keyV1LeanProduct) return true;
+  if (key == AppConstants.keyCompactDashboard || key == AppConstants.keySoundEffects) {
+    return false;
+  }
+  return true;
 }

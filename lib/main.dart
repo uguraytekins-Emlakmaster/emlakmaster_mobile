@@ -17,6 +17,7 @@ import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/cache/app_cache_service.dart';
 import 'package:emlakmaster_mobile/core/services/sync_manager.dart';
+import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
@@ -362,13 +363,24 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
                   content
                 else
                   Center(
-                    child: SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: scheme.primary,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const BrandEmblem(
+                          variant: BrandEmblemVariant.full,
+                          size: 120,
+                        ),
+                        const SizedBox(height: 28),
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: scheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 if (!kReleaseMode && isDevMode) const DevModeBadge(),

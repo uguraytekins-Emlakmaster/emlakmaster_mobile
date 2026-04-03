@@ -22,8 +22,10 @@ class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final role = ref.watch(displayRoleOrNullProvider);
-    if (role == AppRole.superAdmin && !_alreadyShown) {
+    final isSuperAdmin = ref.watch(
+      displayRoleOrNullProvider.select((r) => r == AppRole.superAdmin),
+    );
+    if (isSuperAdmin && !_alreadyShown) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _alreadyShown) return;
         _alreadyShown = true;

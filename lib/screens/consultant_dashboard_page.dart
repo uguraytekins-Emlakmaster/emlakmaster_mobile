@@ -1,10 +1,10 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
-import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -15,8 +15,10 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
+import 'package:emlakmaster_mobile/widgets/session_avatar_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,13 +31,13 @@ class ConsultantDashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    final resurrectionAsync = ref.watch(resurrectionQueueProvider);
-    final flags = ref.watch(featureFlagsProvider).valueOrNull;
-    final voiceCrmEnabled = flags?[AppConstants.keyFeatureVoiceCrm] ?? true;
-    final showMagicCallFab =
-        !AdaptiveShellScaffold.isWide(context) && voiceCrmEnabled;
+    final lean = ref.watch(
+      featureFlagsProvider.select(
+        (a) => a.valueOrNull?[AppConstants.keyV1LeanProduct] ?? true,
+      ),
+    );
     final summaryBottomPad =
-        DashboardLayoutTokens.bottomScrollPadding(context, showFab: showMagicCallFab);
+        DashboardLayoutTokens.shellScrollBottomPadding(context);
     final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
     final greeting = user?.email != null
         ? 'Merhaba, ${user!.email!.split('@').first}'
@@ -44,7 +46,9 @@ class ConsultantDashboardPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: ext.background,
       body: SafeArea(
-        child: CustomScrollView(
+        child: RepaintBoundary(
+          child: CustomScrollView(
+          cacheExtent: 380,
           slivers: [
             // —— Layer 1–2: Hero + Operational (above-the-fold) ——
             SliverToBoxAdapter(
@@ -63,74 +67,80 @@ class ConsultantDashboardPage extends ConsumerWidget {
                     const _ConsultantTeamLine(),
                     const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
                     const _TodayKpiRow(),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
+                    const ExecutionRemindersCard(surface: ExecutionReminderSurface.consultant),
                     const SizedBox(height: DashboardLayoutTokens.gapOperational),
                     const _MagicCallPrimaryBlock(),
                     const SizedBox(height: DashboardLayoutTokens.gapOperational),
-                    _QuickStatsCard(
-                      resurrectionAsync: resurrectionAsync,
-                      compact: true,
-                    ),
+                    const PriorityCallSignalsCard(),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
+                    const _QuickStatsCard(compact: true),
                     const SizedBox(height: DashboardLayoutTokens.gapOperational),
                     const _WeeklyGoalCard(),
                   ],
                 ),
               ),
             ),
-            // —— Layer 3: Insight (scroll) —— sıra: pipeline → fırsatlar → ticker → ekonomi → piyasa → akademi
-            const SliverToBoxAdapter(
-              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: DashboardLayoutTokens.horizontalPadding,
-                ),
-                child: _PipelineChampionCard(),
+            // —— Layer 3: Insight — V1 odaklı modda kapatılır (piyasa/ticker/akademi ağırlığı)
+            if (!lean) ...[
+              const SliverToBoxAdapter(
+                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
               ),
-            ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: DashboardLayoutTokens.horizontalPadding,
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: DashboardLayoutTokens.horizontalPadding,
+                  ),
+                  child: _PipelineChampionCard(),
                 ),
-                child: DiscoveryPanel(),
               ),
-            ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-            ),
-            const SliverToBoxAdapter(child: MasterTicker()),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-            ),
-            const SliverToBoxAdapter(child: FinanceBar()),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: DashboardLayoutTokens.horizontalPadding,
+              const SliverToBoxAdapter(
+                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+              ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: DashboardLayoutTokens.horizontalPadding,
+                  ),
+                  child: DiscoveryPanel(),
                 ),
-                child: MarketPulsePanel(),
               ),
-            ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: DashboardLayoutTokens.horizontalPadding,
+              const SliverToBoxAdapter(
+                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+              ),
+              const SliverToBoxAdapter(child: MasterTicker()),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+              ),
+              const SliverToBoxAdapter(child: FinanceBar()),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+              ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: DashboardLayoutTokens.horizontalPadding,
+                  ),
+                  child: MarketPulsePanel(),
                 ),
-                child: _ConsultantAcademyCard(),
               ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+              ),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: DashboardLayoutTokens.horizontalPadding,
+                  ),
+                  child: _ConsultantAcademyCard(),
+                ),
+              ),
+            ],
+            SliverToBoxAdapter(
+              child: SizedBox(height: summaryBottomPad + DesignTokens.space3),
             ),
-            SliverToBoxAdapter(child: SizedBox(height: summaryBottomPad)),
           ],
+        ),
         ),
       ),
     );
@@ -149,6 +159,11 @@ class _DashboardHeroHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 2),
+          child: SessionAvatarButton(size: 40),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -782,24 +797,22 @@ class _PipelineChampionCard extends StatelessWidget {
   }
 }
 
-class _QuickStatsCard extends StatelessWidget {
-  const _QuickStatsCard({
-    required this.resurrectionAsync,
-    this.compact = false,
-  });
+class _QuickStatsCard extends ConsumerWidget {
+  const _QuickStatsCard({this.compact = false});
 
-  final AsyncValue<List<dynamic>> resurrectionAsync;
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     final ext = AppThemeExtension.of(context);
     final count = resurrectionAsync.valueOrNull?.length ?? 0;
     final isLoading = resurrectionAsync.isLoading;
     final pad = compact ? DesignTokens.space4 : DesignTokens.space5;
     final iconBox = compact ? DesignTokens.space2 : DesignTokens.space3;
     final iconSize = compact ? 20.0 : 24.0;
-    return Container(
+    return RepaintBoundary(
+      child: Container(
       constraints: BoxConstraints(
         minHeight: compact ? DashboardLayoutTokens.minHeightOperationalCard : DashboardLayoutTokens.minHeightInsightCard,
       ),
@@ -906,6 +919,7 @@ class _QuickStatsCard extends StatelessWidget {
           ],
         ],
       ),
+    ),
     );
   }
 }

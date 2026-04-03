@@ -175,6 +175,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
     final isDark = theme.brightness == Brightness.dark;
     final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
     final fg = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
     return Scaffold(
       backgroundColor: bg,
       appBar: emlakAppBar(
@@ -204,25 +205,47 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
             },
             tooltip: 'CSV dışa aktar',
           ),
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 0, icon: Icon(Icons.table_rows_rounded, size: 18)),
-              ButtonSegment(value: 1, icon: Icon(Icons.grid_view_rounded, size: 18)),
-              ButtonSegment(value: 2, icon: Icon(Icons.timeline_rounded, size: 18)),
-            ],
-            selected: {_viewIndex},
-            onSelectionChanged: (s) => setState(() => _viewIndex = s.first),
-            style: ButtonStyle(
-              visualDensity: VisualDensity.compact,
-              padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
-            ),
-          ),
-          const SizedBox(width: DesignTokens.space2),
         ],
       ),
       body: SafeArea(
         child: Column(
           children: [
+            Material(
+              color: surface,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space4,
+                  DesignTokens.space2,
+                  DesignTokens.space4,
+                  DesignTokens.space2,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      'Görünüm',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    SegmentedButton<int>(
+                      segments: const [
+                        ButtonSegment(value: 0, icon: Icon(Icons.table_rows_rounded, size: 18)),
+                        ButtonSegment(value: 1, icon: Icon(Icons.grid_view_rounded, size: 18)),
+                        ButtonSegment(value: 2, icon: Icon(Icons.timeline_rounded, size: 18)),
+                      ],
+                      selected: {_viewIndex},
+                      onSelectionChanged: (s) => setState(() => _viewIndex = s.first),
+                      style: ButtonStyle(
+                        visualDensity: VisualDensity.compact,
+                        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             _CommandCenterFilters(
               filterTeamId: _filterTeamId,
               filterAgentId: _filterAgentId,
@@ -325,6 +348,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               if (hasAnyDocs) {
                 return EmptyState(
                   compact: true,
+                  anchorAboveCenter: true,
+                  grouped: true,
                   icon: Icons.call_rounded,
                   title: 'Uygun çağrı yok',
                   subtitle: 'Arama veya filtrelere uygun kayıt bulunamadı.',
@@ -333,7 +358,9 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 );
               }
               return EmptyState(
-                compact: true,
+                premiumVisual: true,
+                grouped: true,
+                anchorAboveCenter: true,
                 icon: Icons.call_rounded,
                 title: l10n.t('empty_calls_title'),
                 subtitle: l10n.t('empty_calls_sub'),

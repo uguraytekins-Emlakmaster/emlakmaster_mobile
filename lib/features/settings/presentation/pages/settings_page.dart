@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
@@ -30,8 +31,7 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../screens/placeholder_pages.dart' show NotificationsSection, ThemeSection;
 
-/// Kategorize ayarlar: Hesap & Giriş, Görünüm, Bildirimler, Çağrı & CRM, İlanlar, War Room, Ses, Gizlilik, Hakkında.
-/// Tüm özellikler açılıp kapatılabilir veya detay sayfasından düzenlenir.
+/// Ayarlar: bilgi mimarisi — Hesap → İletişim → Çağrı & CRM → … → Gelişmiş/Test (ayrık).
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -63,16 +63,21 @@ class SettingsPage extends ConsumerWidget {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          padding: const EdgeInsets.fromLTRB(
+            DesignTokens.space5,
+            DesignTokens.space3,
+            DesignTokens.space5,
+            DesignTokens.space8,
+          ),
           children: [
-            const _SectionHeader(title: 'Hesap & Giriş', icon: Icons.person_rounded),
-            _sectionCard(context,
+            const _SectionHeader(title: 'Hesap', icon: Icons.person_rounded),
+            _sectionCard(
+              context,
               children: [
                 if (user != null) ...[
                   ListTile(
-                    leading: ProfileAvatar(
-                      size: 44,
-                      imageUrl: ref.watch(userDocStreamProvider(user.uid)).valueOrNull?.avatarUrl,
+                    leading: _SettingsProfileAvatar(
+                      uid: user.uid,
                       fallbackText: user.displayName ?? user.email ?? '',
                     ),
                     title: Text(
@@ -82,6 +87,15 @@ class SettingsPage extends ConsumerWidget {
                     subtitle: Text(
                       'Rol: ${override?.label ?? role.label}',
                       style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 12),
+                    ),
+                    trailing: const ExcludeSemantics(
+                      child: Opacity(
+                        opacity: 0.48,
+                        child: BrandEmblem(
+                          variant: BrandEmblemVariant.mini,
+                          size: 26,
+                        ),
+                      ),
                     ),
                   ),
                   Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
@@ -149,20 +163,17 @@ class SettingsPage extends ConsumerWidget {
                     onTap: () => ref.read(preferredConsultantPanelProvider.notifier).state = true,
                   ),
                 ],
-                if (canSwitchRole) ...[
+                if (user != null) ...[
                   Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
                   ListTile(
-                    leading: Icon(Icons.swap_horiz_rounded, color: AppThemeExtension.of(context).accent),
-                    title: Text(
-                      override != null ? 'Rol: ${override.label} (geri al)' : 'Rol değiştir (test)',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                    ),
-                    onTap: () => _showRoleSwitcher(context, ref, override),
+                    leading: Icon(Icons.logout_rounded, color: AppThemeExtension.of(context).danger),
+                    title: Text('Çıkış yap', style: TextStyle(color: theme.colorScheme.onSurface)),
+                    onTap: () => AuthService.instance.signOut(),
                   ),
                 ],
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(title: 'İletişim', icon: Icons.forum_rounded),
             _sectionCard(
               context,
@@ -182,80 +193,10 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            _SectionHeader(title: l10n.t('section_appearance'), icon: Icons.palette_rounded),
-            const ThemeSection(),
-            const SizedBox(height: 12),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(context,
-                children: [
-                  _SettingSwitch(
-                    title: l10n.t('compact_dashboard'),
-                    subtitle: l10n.t('compact_dashboard_sub'),
-                    icon: Icons.dashboard_customize_rounded,
-                    value: flags[AppConstants.keyCompactDashboard] ?? false,
-                    onChanged: (v) =>
-                        ref.read(featureFlagsProvider.notifier).setFlag(
-                            AppConstants.keyCompactDashboard, v),
-                  ),
-                  _SettingSwitch(
-                    title: l10n.t('power_saver'),
-                    subtitle: l10n.t('power_saver_sub'),
-                    icon: Icons.battery_saver_rounded,
-                    value: flags[AppConstants.keyPowerSaver] ?? false,
-                    onChanged: (v) =>
-                        ref.read(featureFlagsProvider.notifier).setFlag(
-                            AppConstants.keyPowerSaver, v),
-                  ),
-                ],
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(title: l10n.t('section_language'), icon: Icons.language_rounded),
-            _sectionCard(context,
-              children: [
-                for (var i = 0; i < AppLocalizations.supportedLocales.length; i++) ...[
-                  if (i > 0) Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
-                  ListTile(
-                    leading: Icon(Icons.translate_rounded, color: AppThemeExtension.of(context).accent, size: 22),
-                    title: Text(
-                      l10n.t(AppLocalizations.languageCodeToLabelKey[AppLocalizations.supportedLocales[i].languageCode] ?? AppLocalizations.supportedLocales[i].languageCode),
-                      style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
-                    ),
-                    trailing: localeState.valueOrNull?.languageCode == AppLocalizations.supportedLocales[i].languageCode
-                        ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
-                        : null,
-                    onTap: () => ref.read(localeProvider.notifier).setLocale(AppLocalizations.supportedLocales[i]),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(title: l10n.t('section_notifications'), icon: Icons.notifications_rounded),
-            const NotificationsSection(),
-            const SizedBox(height: 12),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(context,
-                children: [
-                  _SettingSwitch(
-                    title: l10n.t('push_notifications'),
-                    subtitle: l10n.t('push_notifications_sub'),
-                    icon: Icons.notifications_active_rounded,
-                    value: flags[AppConstants.keyFeaturePushNotifications] ?? true,
-                    onChanged: (v) =>
-                        ref.read(featureFlagsProvider.notifier).setFlag(
-                            AppConstants.keyFeaturePushNotifications, v),
-                  ),
-                ],
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(title: 'Çağrı & CRM', icon: Icons.call_rounded),
-            _sectionCard(context,
+            _sectionCard(
+              context,
               children: [
                 ListTile(
                   leading: Icon(Icons.call_made_rounded, color: AppThemeExtension.of(context).accent, size: 22),
@@ -264,12 +205,15 @@ class SettingsPage extends ConsumerWidget {
                     'Danışman paneli → Çağrılar: kendi çağrılarınız, CSV export, toplu SMS. Android\'de telefon günlüğü senkronu.',
                     style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 11),
                   ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.push(AppRouter.routeConsultantCalls),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             flagsAsync.when(
-              data: (flags) => _sectionCard(context,
+              data: (flags) => _sectionCard(
+                context,
                 children: [
                   _SettingSwitch(
                     title: 'Sesli CRM (Magic Call)',
@@ -277,8 +221,30 @@ class SettingsPage extends ConsumerWidget {
                     icon: Icons.mic_rounded,
                     value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
                     onChanged: (v) =>
-                        ref.read(featureFlagsProvider.notifier).setFlag(
-                            AppConstants.keyFeatureVoiceCrm, v),
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keyFeatureVoiceCrm, v),
+                  ),
+                  Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.45)),
+                  _SettingSwitch(
+                    title: 'Çağrı özeti (AI)',
+                    subtitle: 'Arama sonrası otomatik özet',
+                    icon: Icons.summarize_rounded,
+                    value: flags[AppConstants.keyFeatureCallSummary] ?? true,
+                    onChanged: (v) =>
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keyFeatureCallSummary, v),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Arama sonrası kayıt',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppThemeExtension.of(context).textTertiary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.35,
+                        ),
+                      ),
+                    ),
                   ),
                   _SettingSwitch(
                     title: 'Rehbere / uygulamaya kaydet',
@@ -286,27 +252,138 @@ class SettingsPage extends ConsumerWidget {
                     icon: Icons.contact_phone_rounded,
                     value: flags[AppConstants.keyFeatureContactSave] ?? true,
                     onChanged: (v) =>
-                        ref.read(featureFlagsProvider.notifier).setFlag(
-                            AppConstants.keyFeatureContactSave, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Çağrı özeti (AI)',
-                    subtitle: 'Arama sonrası otomatik özet',
-                    icon: Icons.summarize_rounded,
-                    value: flags[AppConstants.keyFeatureCallSummary] ?? true,
-                    onChanged: (v) =>
-                        ref.read(featureFlagsProvider.notifier).setFlag(
-                            AppConstants.keyFeatureCallSummary, v),
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keyFeatureContactSave, v),
                   ),
                 ],
               ),
               loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
             ),
-            const SizedBox(height: 24),
-            const _SectionHeader(title: 'İlanlar & Eşleştirme', icon: Icons.home_work_rounded),
-            const ListingDisplaySettingsSection(),
-            const SizedBox(height: 12),
+            const SizedBox(height: DesignTokens.space6),
+            _SectionHeader(title: l10n.t('section_notifications'), icon: Icons.notifications_rounded),
+            flagsAsync.when(
+              data: (flags) => _sectionCard(
+                context,
+                children: [
+                  const NotificationsSection(embedInParentCard: true),
+                  Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.45)),
+                  _SettingSwitch(
+                    title: l10n.t('push_notifications'),
+                    subtitle: l10n.t('push_notifications_sub'),
+                    icon: Icons.notifications_active_rounded,
+                    value: flags[AppConstants.keyFeaturePushNotifications] ?? true,
+                    onChanged: (v) =>
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keyFeaturePushNotifications, v),
+                  ),
+                ],
+              ),
+              loading: () => _sectionCard(
+                context,
+                children: const [
+                  NotificationsSection(embedInParentCard: true),
+                ],
+              ),
+              error: (_, __) => _sectionCard(
+                context,
+                children: const [
+                  NotificationsSection(embedInParentCard: true),
+                ],
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space6),
+            _SectionHeader(title: l10n.t('section_appearance'), icon: Icons.palette_rounded),
+            flagsAsync.when(
+              data: (flags) => _sectionCard(
+                context,
+                children: [
+                  const ThemeSection(embedInParentCard: true),
+                  Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.45)),
+                  _SettingSwitch(
+                    title: l10n.t('compact_dashboard'),
+                    subtitle: l10n.t('compact_dashboard_sub'),
+                    icon: Icons.dashboard_customize_rounded,
+                    value: flags[AppConstants.keyCompactDashboard] ?? false,
+                    onChanged: (v) =>
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keyCompactDashboard, v),
+                  ),
+                ],
+              ),
+              loading: () => _sectionCard(
+                context,
+                children: const [
+                  ThemeSection(embedInParentCard: true),
+                ],
+              ),
+              error: (_, __) => _sectionCard(
+                context,
+                children: const [
+                  ThemeSection(embedInParentCard: true),
+                ],
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space6),
+            const _SectionHeader(title: 'Performans', icon: Icons.speed_rounded),
+            flagsAsync.when(
+              data: (flags) => _sectionCard(
+                context,
+                children: [
+                  _SettingSwitch(
+                    title: l10n.t('power_saver'),
+                    subtitle: l10n.t('power_saver_sub'),
+                    icon: Icons.battery_saver_rounded,
+                    value: flags[AppConstants.keyPowerSaver] ?? false,
+                    onChanged: (v) =>
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keyPowerSaver, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Titreşim (haptic)',
+                    subtitle: 'Butonlarda dokunsal geri bildirim',
+                    icon: Icons.vibration_rounded,
+                    value: flags[AppConstants.keyHapticFeedback] ?? true,
+                    onChanged: (v) =>
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keyHapticFeedback, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Ses efektleri',
+                    subtitle: 'Bildirim ve onay sesleri',
+                    icon: Icons.volume_up_rounded,
+                    value: flags[AppConstants.keySoundEffects] ?? false,
+                    onChanged: (v) =>
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keySoundEffects, v),
+                  ),
+                ],
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: DesignTokens.space6),
+            _SectionHeader(title: l10n.t('section_language'), icon: Icons.language_rounded),
+            _sectionCard(
+              context,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.translate_rounded, color: AppThemeExtension.of(context).accent, size: 22),
+                  title: Text('Dil', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500)),
+                  subtitle: Text(
+                    l10n.t(AppLocalizations.languageCodeToLabelKey[localeState.valueOrNull?.languageCode ?? 'tr'] ??
+                        'language_turkish'),
+                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => _openLanguageSelector(context, ref),
+                ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.space6),
+            const _SectionHeader(title: 'İlanlar & Ofis', icon: Icons.apartment_rounded),
+            _sectionCard(
+              context,
+              children: [
+                const ListingDisplaySettingsSection(embeddedInSettingsHub: true),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.space6),
+            const _SectionHeader(title: 'Eşleştirme & Entegrasyonlar', icon: Icons.hub_rounded),
             flagsAsync.when(
               data: (flags) => _sectionCard(context,
                 children: [
@@ -365,6 +442,26 @@ class SettingsPage extends ConsumerWidget {
               error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 24),
+            const _SectionHeader(title: 'Ürün & odak', icon: Icons.center_focus_strong_outlined),
+            flagsAsync.when(
+              data: (flags) => _sectionCard(
+                context,
+                children: [
+                  _SettingSwitch(
+                    title: 'Odaklı V1 (önerilen)',
+                    subtitle:
+                        'Açıkken: War Room ve Ekonomi sekmeleri ile ikincil analitik panelleri gizlenir; çekirdek CRM akışları kalır. Kapatınca tam özellik seti.',
+                    icon: Icons.bolt_outlined,
+                    value: flags[AppConstants.keyV1LeanProduct] ?? true,
+                    onChanged: (v) =>
+                        ref.read(featureFlagsProvider.notifier).setFlag(AppConstants.keyV1LeanProduct, v),
+                  ),
+                ],
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(title: 'War Room & Raporlar', icon: Icons.analytics_rounded),
             flagsAsync.when(
               data: (flags) => _sectionCard(context,
@@ -446,35 +543,7 @@ class SettingsPage extends ConsumerWidget {
               loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
             ),
-            const SizedBox(height: 24),
-            const _SectionHeader(title: 'Ses & Erişilebilirlik', icon: Icons.hearing_rounded),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(context,
-                children: [
-                  _SettingSwitch(
-                    title: 'Titreşim (haptic)',
-                    subtitle: 'Butonlarda dokunsal geri bildirim',
-                    icon: Icons.vibration_rounded,
-                    value: flags[AppConstants.keyHapticFeedback] ?? true,
-                    onChanged: (v) =>
-                        ref.read(featureFlagsProvider.notifier).setFlag(
-                            AppConstants.keyHapticFeedback, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Ses efektleri',
-                    subtitle: 'Bildirim ve onay sesleri',
-                    icon: Icons.volume_up_rounded,
-                    value: flags[AppConstants.keySoundEffects] ?? false,
-                    onChanged: (v) =>
-                        ref.read(featureFlagsProvider.notifier).setFlag(
-                            AppConstants.keySoundEffects, v),
-                  ),
-                ],
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(title: 'Yatırım & Piyasa', icon: Icons.show_chart_rounded),
             _sectionCard(
               context,
@@ -510,37 +579,125 @@ class SettingsPage extends ConsumerWidget {
               loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(title: 'Hakkında', icon: Icons.info_outline_rounded),
-            _sectionCard(context,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.phone_android_rounded, color: AppThemeExtension.of(context).accent, size: 22),
-                  title: Text(
-                    AppConstants.appName,
-                    style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    '${AppConstants.appShortName} • v${AppConstants.appVersion.split('+').first}',
-                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 12),
-                  ),
-                ),
+            _sectionCard(
+              context,
+              children: const [
+                EmlakMasterProductIdentityCard(),
               ],
             ),
-            const SizedBox(height: 24),
-            const _SectionHeader(title: 'Hesap', icon: Icons.logout_rounded),
-            _sectionCard(context,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.logout_rounded, color: AppThemeExtension.of(context).danger),
-                  title: Text('Çıkış yap', style: TextStyle(color: theme.colorScheme.onSurface)),
-                  onTap: () => AuthService.instance.signOut(),
+            if (canSwitchRole) ...[
+              const SizedBox(height: DesignTokens.space6),
+              Padding(
+                padding: const EdgeInsets.only(bottom: DesignTokens.space2),
+                child: Row(
+                  children: [
+                    Icon(Icons.science_outlined, size: 16, color: AppThemeExtension.of(context).textTertiary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'GELİŞMİŞ / TEST',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppThemeExtension.of(context).textTertiary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.05,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              _sectionCard(
+                context,
+                muted: true,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.swap_horiz_rounded, color: AppThemeExtension.of(context).accent),
+                    title: Text(
+                      override != null ? 'Rol: ${override.label} (geri al)' : 'Rol değiştir (test)',
+                      style: TextStyle(color: theme.colorScheme.onSurface),
+                    ),
+                    subtitle: Text(
+                      'Yalnızca görünüm modu; üretim hesabını değiştirmez.',
+                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.55), fontSize: 11),
+                    ),
+                    onTap: () => _showRoleSwitcher(context, ref, override),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  void _openLanguageSelector(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
+    final current = ref.read(localeProvider).valueOrNull;
+    final sheetH = MediaQuery.sizeOf(context).height * 0.52;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: ext.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusSheet)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  children: [
+                    Text(
+                      l10n.t('section_language'),
+                      style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 16),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: sheetH,
+                child: ListView.separated(
+                  itemCount: AppLocalizations.supportedLocales.length,
+                  separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
+                  itemBuilder: (context, i) {
+                    final loc = AppLocalizations.supportedLocales[i];
+                    final labelKey =
+                        AppLocalizations.languageCodeToLabelKey[loc.languageCode] ?? loc.languageCode;
+                    final label = l10n.t(labelKey);
+                    final selected = current?.languageCode == loc.languageCode;
+                    return ListTile(
+                      leading: Icon(Icons.translate_rounded, color: ext.accent, size: 22),
+                      title: Text(
+                        label,
+                        style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
+                      ),
+                      trailing: selected ? Icon(Icons.check_rounded, color: ext.accent) : null,
+                      onTap: () async {
+                        await ref.read(localeProvider.notifier).setLocale(loc);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -580,13 +737,20 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _sectionCard(BuildContext context, {required List<Widget> children}) {
-    final theme = Theme.of(context);
+  Widget _sectionCard(BuildContext context, {required List<Widget> children, bool muted = false}) {
+    final ext = AppThemeExtension.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: theme.cardTheme.color ?? theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+        color: muted ? ext.surfaceElevated.withValues(alpha: 0.88) : ext.surfaceElevated,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+        border: Border.all(color: ext.border.withValues(alpha: muted ? 0.35 : 0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: ext.shadowColor.withValues(alpha: muted ? 0.06 : 0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -786,6 +950,29 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
 }
 
 
+/// Yalnızca avatar URL değişince yeniden çizer; tüm Ayarlar listesini değil.
+class _SettingsProfileAvatar extends ConsumerWidget {
+  const _SettingsProfileAvatar({
+    required this.uid,
+    required this.fallbackText,
+  });
+
+  final String uid;
+  final String fallbackText;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final imageUrl = ref.watch(
+      userDocStreamProvider(uid).select((a) => a.valueOrNull?.avatarUrl),
+    );
+    return ProfileAvatar(
+      size: 44,
+      imageUrl: imageUrl,
+      fallbackText: fallbackText,
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title, required this.icon});
 
@@ -794,19 +981,21 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: DesignTokens.space2, top: DesignTokens.space1),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+          Icon(icon, size: 17, color: ext.accent.withValues(alpha: 0.9)),
+          const SizedBox(width: DesignTokens.space2),
+          Expanded(
+            child: Text(
+              title.toUpperCase(),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: ext.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
+                  ),
             ),
           ),
         ],

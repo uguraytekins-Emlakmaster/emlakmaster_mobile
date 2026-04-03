@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:math' as math;
 
+import 'package:emlakmaster_mobile/core/ai/ai_gate.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
@@ -8,11 +9,24 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/data/post_call_ai_enrichment_service.dart';
+import 'package:emlakmaster_mobile/features/calls/data/post_call_transcript_ingestion.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/transcript_ingest_payload.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment_input.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
+import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+/// Çağrı özeti ana yol olarak manuel düzenlenir. Push-to-Talk STT metni özete eklenir; aynı metin
+/// (kullanıcı transkript alanını elle değiştirmediyse) `lastCallTranscript` için [mergeSpeechToTextHandoffIfPresent] ile kaydedilir.
 /// Duygu durumu: AI görüşme tonuna göre 5 seçenekten biri.
 enum CallSentiment {
   veryPositive,   // 🤩 Çok Heyecanlı/Pozitif
@@ -41,6 +55,12 @@ class CallExtraction {
     required this.sentiment,
     required this.fullSummary,
   });
+}
+
+String _normalizeTranscriptLanguage(String? localeId) {
+  final s = localeId?.trim();
+  if (s == null || s.isEmpty) return 'tr';
+  return s;
 }
 
 String sentimentToStorage(CallSentiment s) {
@@ -115,6 +135,19 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   bool _isSaving = false;
   String? _saveError;
 
+  /// Kayıtta kullanılacak düzenlenebilir özet (AI metni + sesle eklenenler).
+  final TextEditingController _summaryController = TextEditingController();
+  /// v1: manuel / yapıştırılmış ham transkript (`lastCallTranscript`); özet alanından ayrı.
+  final TextEditingController _transcriptController = TextEditingController();
+  /// Yalnızca programatik (PTT) eklemelerde true; kullanıcı transkript alanını düzenlerse false.
+  bool _suppressTranscriptUserEdit = false;
+  /// Elle yapıştırma / düzenleme yapıldıysa true; yalnızca PTT ile dolduysa false → kayıtta STT handoff.
+  bool _transcriptUserEditedOnce = false;
+  double? _lastSttConfidence;
+  String? _lastSttLocaleId;
+  String _voiceStatus = '';
+  String? _voiceReviewHint;
+
   late AnimationController _progressController;
 
   static const String _demoConversation =
@@ -144,29 +177,113 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       _progressController.forward();
       Future.delayed(const Duration(milliseconds: 2500), () {
         if (!mounted) return;
+        final ext = extractFromConversation(_demoConversation);
+        _summaryController.text = ext.fullSummary;
         setState(() {
           _isAnalyzing = false;
-          _extraction = extractFromConversation(_demoConversation);
+          _extraction = ext;
         });
       });
     }
+    _transcriptController.addListener(_onTranscriptUserEdit);
+  }
+
+  void _onTranscriptUserEdit() {
+    if (_suppressTranscriptUserEdit) return;
+    _transcriptUserEditedOnce = true;
   }
 
   @override
   void dispose() {
+    _transcriptController.removeListener(_onTranscriptUserEdit);
     _progressController.dispose();
+    _summaryController.dispose();
+    _transcriptController.dispose();
     super.dispose();
+  }
+
+  void _onPostCallSpeechResult(PushToTalkSpeechResult r) {
+    final text = r.text?.trim();
+    if (text == null || text.isEmpty) {
+      if (r.noSpeechAfterRetries && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Sizi duyamadım, tekrar deneyebilirsiniz. Özeti elle de yazabilirsiniz.',
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppThemeExtension.of(context).surfaceElevated,
+          ),
+        );
+      }
+      return;
+    }
+    final cur = _summaryController.text.trim();
+    if (cur.isEmpty) {
+      _summaryController.text = text;
+    } else if (!cur.contains(text)) {
+      _summaryController.text = '$cur\n$text';
+    }
+    _appendTranscriptFromStt(text, r);
+    setState(() {
+      _voiceReviewHint = (r.shouldReview || r.textFromPartialOnly)
+          ? 'Ses metni aktarıldı; duraksamalı konuşmalarda küçük farklar olabilir. Kaydetmeden önce göz atmanız yeterli.'
+          : null;
+    });
+  }
+
+  /// PTT metnini özetle aynı kuralda transkript alanına yazar (ExpansionTile kapalıyken görünmez);
+  /// Kayıtta [mergeSpeechToTextHandoffIfPresent] yalnızca [_transcriptUserEditedOnce] false iken kullanılır.
+  void _appendTranscriptFromStt(String text, PushToTalkSpeechResult r) {
+    _suppressTranscriptUserEdit = true;
+    try {
+      final tcur = _transcriptController.text.trim();
+      if (tcur.isEmpty) {
+        _transcriptController.text = text;
+      } else if (!tcur.contains(text)) {
+        _transcriptController.text = '$tcur\n$text';
+      }
+      _lastSttConfidence = r.confidence;
+      _lastSttLocaleId = r.activeLocaleId;
+    } finally {
+      _suppressTranscriptUserEdit = false;
+    }
   }
 
   Future<void> _onSaveAndClose() async {
     if (_extraction == null || _isSaving) return;
+    final summaryText = _summaryController.text.trim();
     HapticFeedback.mediumImpact();
     setState(() {
       _isSaving = true;
       _saveError = null;
     });
-    final agentId = ref.read(currentUserProvider).valueOrNull?.uid ?? 'demoAgent1';
-    final customerId = widget.linkedCustomerId ?? 'demoCustomer1';
+    final agentId = ref.read(currentUserProvider).valueOrNull?.uid;
+    final customerId = widget.linkedCustomerId;
+    if (agentId == null || agentId.isEmpty) {
+      setState(() {
+        _isSaving = false;
+        _saveError = 'Oturum bulunamadı. Giriş yapıp tekrar deneyin.';
+      });
+      return;
+    }
+    if (customerId == null || customerId.isEmpty) {
+      setState(() {
+        _isSaving = false;
+        _saveError = 'Müşteri bağlantısı yok. Müşteriyle açılan aramadan kaydedin.';
+      });
+      return;
+    }
+    Map<String, dynamic>? summarySignalsPayload;
+    try {
+      if (summaryText.isNotEmpty) {
+        summarySignalsPayload =
+            extractPostCallCrmSignals(summaryText).toFirestorePayload();
+      }
+    } catch (_) {
+      summarySignalsPayload = null;
+    }
+
     try {
       await runWithResilience(
         ref: ref as Ref<Object?>,
@@ -180,12 +297,13 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             urgency: _extraction!.urgency,
             nextStepSuggestion: _extraction!.nextStepSuggestion,
             sentiment: sentimentToStorage(_extraction!.sentiment),
-            fullSummary: _extraction!.fullSummary,
+            fullSummary: summaryText,
+            lastCallSummarySignals: summarySignalsPayload,
           );
-          if (_extraction!.fullSummary.isNotEmpty) {
+          if (summaryText.isNotEmpty) {
             await FirestoreService.saveNote(
               customerId: customerId,
-              content: '📞 Çağrı özeti (AI): ${_extraction!.fullSummary}',
+              content: '📞 Çağrı özeti (AI): $summaryText',
               advisorId: agentId,
             );
           }
@@ -196,14 +314,80 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       );
       if (!mounted) return;
       AppLogger.i('Call summary saved');
+      final enrichCustomerId = customerId;
+      final summaryForAi = summaryText;
+      final transcriptForAi = _transcriptController.text.trim();
+      final sentimentForAi = sentimentToStorage(_extraction!.sentiment);
+      CustomerHeatLevel? heatForEnrich;
+      try {
+        final ent = await ref.read(customerEntityByIdProvider(customerId).future);
+        if (ent != null) {
+          heatForEnrich = computeCustomerHeat(ent).heatLevel;
+        }
+      } catch (_) {}
+      if (transcriptForAi.isNotEmpty) {
+        try {
+          if (!_transcriptUserEditedOnce) {
+            await PostCallTranscriptIngestion.mergeSpeechToTextHandoffIfPresent(
+              customerId: customerId,
+              rawTranscriptText: transcriptForAi,
+              transcriptLanguage: _normalizeTranscriptLanguage(_lastSttLocaleId),
+              transcriptConfidence: _lastSttConfidence,
+              sourceMetadata: const {'channel': 'post_call_ptt'},
+            );
+          } else {
+            await PostCallTranscriptIngestion.mergePayloadIfPresent(
+              customerId: customerId,
+              payload: TranscriptIngestPayload.manual(
+                rawTranscriptText: transcriptForAi,
+              ),
+            );
+          }
+        } catch (e, st) {
+          AppLogger.w('Transkript Firestore kaydı atlandı', e, st);
+        }
+      }
+      if (!mounted) return;
+      final enrichmentInput = PostCallAiEnrichmentInput.resolve(
+        summary: summaryForAi,
+        transcript: transcriptForAi.isEmpty ? null : transcriptForAi,
+      );
+      if (kDebugMode) {
+        AppLogger.d(
+          'PostCall save path: mode=${enrichmentInput.mode.storageId} '
+          'transcriptChars=${transcriptForAi.length} sttHandoff=${transcriptForAi.isNotEmpty}',
+        );
+      }
+      final featureMap = ref.read(featureFlagsProvider).valueOrNull;
+      final callSummaryEnabled = featureMap?[AppConstants.keyFeatureCallSummary] ?? true;
+      final allowRemote = AiGate.allowPostCallRemote(
+        input: enrichmentInput,
+        featureCallSummaryEnabled: callSummaryEnabled,
+        callDurationSec: widget.callDurationSec,
+      );
+      Future.microtask(() async {
+        try {
+          final enrichment = await PostCallAiEnrichmentService.instance.enrich(
+            input: enrichmentInput,
+            sentimentStorage: sentimentForAi,
+            heatLevel: heatForEnrich,
+            allowRemoteModel: allowRemote,
+          );
+          await FirestoreService.mergePostCallAiEnrichment(
+            enrichCustomerId,
+            enrichment.toFirestoreMap(),
+          );
+        } catch (e, stack) {
+          AppLogger.e('Post-call AI enrichment merge failed', e, stack);
+        }
+      });
       context.go(AppRouter.routeHome);
     } catch (e, st) {
       if (!mounted) return;
       AppLogger.e('PostCallWizard save failed', e, st);
       setState(() {
         _isSaving = false;
-        _saveError =
-            'Kayıt gönderilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+        _saveError = FirestoreService.userFacingErrorMessage(e);
       });
     }
   }
@@ -263,7 +447,150 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _ResultSummaryWithSentiment(extraction: _extraction!),
+                            _PostCallVoiceRow(
+                              voiceStatus: _voiceStatus,
+                              onSpeechResult: _onPostCallSpeechResult,
+                              onPhaseChanged: (phase) {
+                                if (mounted) setState(() => _voiceStatus = phase);
+                              },
+                            ),
+                            if (_voiceReviewHint != null) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: AppThemeExtension.of(context)
+                                      .warning
+                                      .withValues(alpha: 0.12),
+                                  border: Border.all(
+                                    color: AppThemeExtension.of(context)
+                                        .warning
+                                        .withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline_rounded,
+                                      size: 18,
+                                      color: AppThemeExtension.of(context).warning,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        _voiceReviewHint!,
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.9),
+                                          fontSize: 12,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 16),
+                            _ResultSummaryWithSentiment(
+                              extraction: _extraction!,
+                              summaryController: _summaryController,
+                              onSummaryEdited: () {
+                                if (_voiceReviewHint != null) {
+                                  setState(() => _voiceReviewHint = null);
+                                }
+                              },
+                            ),
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _summaryController,
+                              builder: (context, value, _) {
+                                return _SummarySignalsPreview(
+                                  summaryText: value.text,
+                                );
+                              },
+                            ),
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _summaryController,
+                              builder: (context, value, _) {
+                                return ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: _transcriptController,
+                                  builder: (context, tvalue, _) {
+                                    return _PostCallAiEnrichmentInsightPreview(
+                                      summaryText: value.text,
+                                      transcriptText: tvalue.text,
+                                      sentimentStorage: sentimentToStorage(
+                                        _extraction!.sentiment,
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                            Theme(
+                              data: Theme.of(context).copyWith(dividerColor: Colors.white24),
+                              child: ExpansionTile(
+                                tilePadding: EdgeInsets.zero,
+                                title: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.subtitles_outlined,
+                                      size: 18,
+                                      color: AppThemeExtension.of(context).accent,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Expanded(
+                                      child: Text(
+                                        'Transkript (opsiyonel)',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                subtitle: const Padding(
+                                  padding: EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'STT veya metin yapıştırın. Özet ana kayıt; transkript ayrı saklanır.',
+                                    style: TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 11,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ),
+                                children: [
+                                  TextField(
+                                    controller: _transcriptController,
+                                    maxLines: 6,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.92),
+                                      fontSize: 13,
+                                      height: 1.35,
+                                    ),
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.white.withValues(alpha: 0.06),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(alpha: 0.12),
+                                        ),
+                                      ),
+                                      hintText: 'Ham transkript…',
+                                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                             const SizedBox(height: 20),
                             const Text(
                               'Kritik bilgiler',
@@ -342,7 +669,9 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                                   context,
                                   initialName: name,
                                   initialPhone: phone,
-                                  initialNote: _extraction?.fullSummary,
+                                  initialNote: _summaryController.text.trim().isEmpty
+                                      ? null
+                                      : _summaryController.text.trim(),
                                   source: 'rehber_aramasi',
                                 );
                               },
@@ -493,10 +822,350 @@ const Map<CallSentiment, String> _sentimentSubtitle = {
   CallSentiment.urgent: 'Sıcak fırsat',
 };
 
+/// PushToTalkButton ile aynı akış: [onSpeechResult], [onPhaseChanged] → dinleme / bekleme / işleme metni.
+class _PostCallVoiceRow extends StatelessWidget {
+  const _PostCallVoiceRow({
+    required this.voiceStatus,
+    required this.onSpeechResult,
+    required this.onPhaseChanged,
+  });
+
+  final String voiceStatus;
+  final void Function(PushToTalkSpeechResult) onSpeechResult;
+  final void Function(String phase) onPhaseChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Sesle özet ekle',
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(width: 8),
+            PushToTalkButton(
+              size: 44,
+              onSpeechResult: onSpeechResult,
+              onPhaseChanged: onPhaseChanged,
+            ),
+          ],
+        ),
+        if (voiceStatus.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            voiceStatus,
+            style: TextStyle(
+              color: AppThemeExtension.of(context).textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+String _interestLevelLabelTr(String code) {
+  switch (code) {
+    case PostCallCrmSignals.interestHigh:
+      return 'Yüksek';
+    case PostCallCrmSignals.interestMedium:
+      return 'Orta';
+    case PostCallCrmSignals.interestLow:
+      return 'Düşük';
+    default:
+      return 'Belirsiz';
+  }
+}
+
+String _followUpUrgencyLabelTr(String code) {
+  switch (code) {
+    case PostCallCrmSignals.urgencyHigh:
+      return 'Yüksek';
+    case PostCallCrmSignals.urgencyMedium:
+      return 'Orta';
+    case PostCallCrmSignals.urgencyLow:
+      return 'Düşük';
+    default:
+      return 'Yok';
+  }
+}
+
+/// Kayıt öncesi: özet metninden kural tabanlı CRM sinyalleri (kaydedilecek alanlarla uyumlu).
+class _SummarySignalsPreview extends StatelessWidget {
+  const _SummarySignalsPreview({required this.summaryText});
+
+  final String summaryText;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = summaryText.trim();
+    if (t.isEmpty) return const SizedBox.shrink();
+
+    final s = extractPostCallCrmSignals(t);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: Colors.white.withValues(alpha: 0.05),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Özetten çıkan sinyaller (CRM)',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                _signalChip(
+                  context,
+                  'İlgi',
+                  _interestLevelLabelTr(s.interestLevel),
+                ),
+                _signalChip(
+                  context,
+                  'Takip aciliyeti',
+                  _followUpUrgencyLabelTr(s.followUpUrgency),
+                ),
+                _signalChip(
+                  context,
+                  'Randevu',
+                  s.appointmentMentioned ? 'Evet' : 'Hayır',
+                ),
+                _signalChip(
+                  context,
+                  'Fiyat itirazı',
+                  s.priceObjection ? 'Evet' : 'Hayır',
+                ),
+              ],
+            ),
+            if (s.nextActionHint.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                s.nextActionHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white70,
+                      height: 1.35,
+                    ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _signalChip(BuildContext context, String k, String v) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Colors.white.withValues(alpha: 0.08),
+      ),
+      child: Text(
+        '$k: $v',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.92),
+              fontWeight: FontWeight.w500,
+            ),
+      ),
+    );
+  }
+}
+
+/// Kayıt öncesi: yalnızca yerel sezgisel özet (her tuşta); bulut çağrısı yok.
+/// Kayıt sonrası arka planda [PostCallAiEnrichmentService] ile birleştirilir.
+class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
+  const _PostCallAiEnrichmentInsightPreview({
+    required this.summaryText,
+    this.transcriptText = '',
+    required this.sentimentStorage,
+  });
+
+  /// Bu altında önizleme göstermeyiz (gürültüyü keser).
+  static const int _kHideBelowChars = 8;
+
+  /// Canlı ton/takip satırları için minimum uzunluk; altında yumuşak teaser.
+  static const int _kFullPreviewMinChars = 28;
+
+  final String summaryText;
+  final String transcriptText;
+  final String sentimentStorage;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = summaryText.trim();
+    final tr = transcriptText.trim();
+    final len = math.max(t.length, tr.length);
+    if (len < _kHideBelowChars) return const SizedBox.shrink();
+    if (len < _kFullPreviewMinChars) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: Colors.white.withValues(alpha: 0.03),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.auto_awesome_outlined,
+                size: 15,
+                color: Colors.white.withValues(alpha: 0.45),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Özet netleştikçe ton ve takip önerileri burada canlı güncellenir.',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final previewInput = PostCallAiEnrichmentInput.resolve(
+      summary: t,
+      transcript: tr.isEmpty ? null : transcriptText,
+    );
+    final e = computeHeuristicPostCallAiEnrichment(
+      input: previewInput,
+      signals: previewInput.signalsForAiHeuristicLayer(),
+      sentimentLabelTr: sentimentLabelTrFromStorage(sentimentStorage),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: RepaintBoundary(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: Colors.white.withValues(alpha: 0.04),
+            border: Border.all(
+              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 16,
+                    color: AppThemeExtension.of(context).accent,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Destekleyici içgörü (canlı önizleme)',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                e.aiSummaryShortTr,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      height: 1.35,
+                    ),
+              ),
+              const SizedBox(height: 6),
+              _miniLine(context, 'Ton', e.aiCustomerMoodTr),
+              _miniLine(context, 'İtiraz', e.aiObjectionTypeTr),
+              _miniLine(context, 'Takip', e.aiFollowUpStyleTr),
+              _miniLine(context, 'Not', e.aiBrokerNoteTr),
+              const SizedBox(height: 6),
+              Text(
+                'Kayıttan sonra sunucu (varsa) içgörüyü güncelleyebilir; CRM skorları değişmez.',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.white54,
+                      height: 1.35,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _miniLine(BuildContext context, String label, String value) {
+    if (value.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: RichText(
+        text: TextSpan(
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Colors.white54,
+                height: 1.3,
+              ),
+          children: [
+            TextSpan(
+              text: '$label · ',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.78),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ResultSummaryWithSentiment extends StatelessWidget {
   final CallExtraction extraction;
+  final TextEditingController summaryController;
+  final VoidCallback onSummaryEdited;
 
-  const _ResultSummaryWithSentiment({required this.extraction});
+  const _ResultSummaryWithSentiment({
+    required this.extraction,
+    required this.summaryController,
+    required this.onSummaryEdited,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -552,12 +1221,22 @@ class _ResultSummaryWithSentiment extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  extraction.fullSummary,
+                TextField(
+                  controller: summaryController,
+                  onChanged: (_) => onSummaryEdited(),
+                  minLines: 3,
+                  maxLines: 8,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.white,
                     height: 1.35,
                     fontWeight: FontWeight.w500,
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                    hintText: 'Özeti düzenleyebilir veya sesle ekleyebilirsiniz',
+                    hintStyle: TextStyle(color: Colors.white38),
                   ),
                 ),
               ],

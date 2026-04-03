@@ -3,10 +3,9 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Danışman (ve broker) kabuğundaki yüzen "Magic Call & AI Wizard" CTA.
+/// Yüzen "Magic Call & AI Wizard" CTA (legacy); ana kabukta [MagicCallDockedBar] tercih edilir.
 ///
-/// [scrollBottomPadding] ile Özetim gibi kaydırılabilir sayfalarda içerik,
-/// FAB ve alt gezinme arasında çakışmasın diye alt boşluk hesaplanır.
+/// [scrollBottomPadding] geriye dönük uyumluluk için sabit nefes payı döner.
 class MagicCallWizardFab extends StatelessWidget {
   const MagicCallWizardFab({
     super.key,
@@ -27,14 +26,9 @@ class MagicCallWizardFab extends StatelessWidget {
   /// [floatingActionButton] konumunda alt gezinmenin üstüne çekmek için iç boşluk.
   static const double anchorBottomPadding = 72;
 
-  /// Pill + anchor boşluğu + nefes payı (kaydırma alanı için taban).
-  static const double _scrollBand = height + anchorBottomPadding + 16;
-
-  /// Özetim vb. scroll içeriğinin altına eklenecek boşluk (FAB görünürken).
+  /// Özetim vb. scroll içeriğinin altına eklenecek boşluk (sabit nefes payı).
   static double scrollBottomPadding(BuildContext context, {required bool showFab}) {
-    if (!showFab) return DesignTokens.space8;
-    final safeBottom = MediaQuery.paddingOf(context).bottom;
-    return _scrollBand + safeBottom + DesignTokens.space2;
+    return DesignTokens.space6;
   }
 
   @override

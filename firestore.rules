@@ -130,13 +130,85 @@ service cloud.firestore {
         && canManageOfficeMembers(oid);
     }
 
+    /// `users/{uid}.officeId` — boş string yoksa ofis bağlamı.
+    function userOfficeId(uid) {
+      let u = get(/databases/$(database)/documents/users/$(uid));
+      return u != null && u.data != null ? u.data.get('officeId', '') : '';
+    }
+    /// Okuyucu ile atanmış danışman aynı ofiste mi (çok kiracılı izolasyon).
+    function sameOfficeAsAssignedAgent(assignedAgentId) {
+      let ro = userOfficeId(request.auth.uid);
+      let ao = userOfficeId(assignedAgentId);
+      return ro is string && ro.size() > 0 && ao == ro;
+    }
+    /// Broker / ofis yöneticisi / ekip lideri vb. (super_admin hariç — ayrı global kural).
+    function isOfficeManagerTierRole() {
+      let u = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return u != null && u.data != null
+        && u.data.role in ['broker_owner', 'broker', 'general_manager', 'office_manager', 'team_lead', 'manager', 'admin', 'owner'];
+    }
+    function isSuperAdminUser() {
+      let u = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return u != null && u.data != null && u.data.role in ['super_admin'];
+    }
+    /// Üyelik dokümanı: owner / admin / manager (danışman değil) — users.role gecikmeli olsa da ofis yönetimi tanınır.
+    function isActiveOfficeManagerMembership(oid) {
+      let m = officeMembershipDoc(request.auth.uid, oid);
+      return m != null && m.data != null
+        && m.data.status == 'active'
+        && m.data.role in ['owner', 'admin', 'manager'];
+    }
+    function isOfficeManagerForIntelligence(oid) {
+      return isOfficeManagerTierRole() || isActiveOfficeManagerMembership(oid);
+    }
+    /// customers kurallarında get(users/assignedAgentId) için: aynı ofisteki danışman profiline yönetici okuması.
+    function canReadColleagueUserForOfficeIntelligence(userId) {
+      let oid = userOfficeId(request.auth.uid);
+      return oid is string && oid.size() > 0
+        && isActiveOfficeMember(oid)
+        && sameOfficeAsAssignedAgent(userId)
+        && isOfficeManagerForIntelligence(oid);
+    }
+    /// Ofis içi istihbarat: atanmış danışman aynı ofiste + okuyucu aktif üye + yönetici (users.role veya üyelik).
+    function canAccessCustomerOfficeWide() {
+      let agentId = resource.data.get('assignedAgentId', '');
+      let oid = userOfficeId(request.auth.uid);
+      return agentId is string && agentId.size() > 0
+        && oid is string && oid.size() > 0
+        && isActiveOfficeMember(oid)
+        && sameOfficeAsAssignedAgent(agentId)
+        && isOfficeManagerForIntelligence(oid);
+    }
+    function canCreateCustomerAsOfficeManager() {
+      let assignedId = request.resource.data.get('assignedAgentId', '');
+      let oid = userOfficeId(request.auth.uid);
+      return assignedId is string && assignedId.size() > 0
+        && oid is string && oid.size() > 0
+        && isActiveOfficeMember(oid)
+        && sameOfficeAsAssignedAgent(assignedId)
+        && isOfficeManagerForIntelligence(oid);
+    }
+    function canUpdateCustomerAsOfficeManager() {
+      let agentId = resource.data.get('assignedAgentId', '');
+      let oid = userOfficeId(request.auth.uid);
+      return agentId is string && agentId.size() > 0
+        && oid is string && oid.size() > 0
+        && isActiveOfficeMember(oid)
+        && sameOfficeAsAssignedAgent(agentId)
+        && isOfficeManagerForIntelligence(oid);
+    }
+
     // -------------------------------------------------------------------------
     // users: kullanıcı kendi dokümanını MUTLAKA okuyabilir (giriş sonrası rol yüklemesi için).
     // isOwner önce kontrol edilir; böylece kendi dokümanı için isManager() get() çağrılmaz (döngü önlenir).
     // Yönetici (isManager) tüm kullanıcıları görebilir ve alanları güncelleyebilir.
     // -------------------------------------------------------------------------
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isManager());
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId
+        || isManager()
+        || canReadColleagueUserForOfficeIntelligence(userId)
+      );
       allow create: if isOwner(userId)
         && request.resource.data.uid == userId
         && request.resource.data.keys().hasAll(['uid', 'role']);
@@ -231,13 +303,28 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // customers: DATA SILOING – Danışman sadece assignedAgentId == auth.uid olanları görür; yönetici hepsini.
-    // Müşteri çalma / veri sızıntısı önlemi: başka danışmanın müşterisine istek atılırsa Firebase reddeder.
+    // customers: DATA SILOING
+    // - Danışman: yalnızca assignedAgentId == auth.uid (kendi portföyü).
+    // - Broker / ofis yöneticisi: aynı ofisteki danışmanların müşterileri (users.officeId eşleşmesi + aktif üyelik).
+    // - super_admin: kurumsal destek için tüm müşteriler (dar rol).
+    // Çapraz ofis okuma/yazma: isManager() blanket kaldırıldı; office boundary zorunlu.
     // -------------------------------------------------------------------------
     match /customers/{customerId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.assignedAgentId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.assignedAgentId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.assignedAgentId == request.auth.uid);
+      allow read: if isSignedIn() && (
+        resource.data.assignedAgentId == request.auth.uid
+        || canAccessCustomerOfficeWide()
+        || isSuperAdminUser()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.assignedAgentId == request.auth.uid
+        || canCreateCustomerAsOfficeManager()
+        || isSuperAdminUser()
+      );
+      allow update: if isSignedIn() && (
+        resource.data.assignedAgentId == request.auth.uid
+        || canUpdateCustomerAsOfficeManager()
+        || isSuperAdminUser()
+      );
       allow delete: if false;
     }
 
@@ -258,10 +345,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // agentId veya assignedAgentId (AI Call Brain / haftalık sorgu ile uyumlu)
     match /call_summaries/{docId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.agentId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow read: if isSignedIn() && (isManager()
+        || resource.data.agentId == request.auth.uid
+        || resource.data.assignedAgentId == request.auth.uid);
+      allow create: if isSignedIn() && (isManager()
+        || request.resource.data.agentId == request.auth.uid
+        || request.resource.data.assignedAgentId == request.auth.uid);
+      allow update: if isSignedIn() && (isManager()
+        || resource.data.agentId == request.auth.uid
+        || resource.data.assignedAgentId == request.auth.uid);
       allow delete: if false;
     }
 
@@ -403,6 +497,14 @@ service cloud.firestore {
       allow read: if isSignedIn()
         && (resource.data.ownerUserId == request.auth.uid || isManager());
       allow create, update, delete: if false;
+    }
+
+    // AI idempotency / kota: yalnız Cloud Functions (Admin SDK); istemci erişimi yok.
+    match /ai_idempotency_cache/{docId} {
+      allow read, write: if false;
+    }
+    match /users/{userId}/_ai_remote_quota/{docId} {
+      allow read, write: if false;
     }
 
     // Diğer koleksiyonlar: sadece giriş zorunlu; yazma varsayılan kapalı (yukarıda tanımlanmayanlar)

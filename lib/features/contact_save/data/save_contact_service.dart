@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/data/contact_permission_helper.dart';
 import 'package:emlakmaster_mobile/features/contact_save/domain/contact_save_request.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, debugPrint, defaultTargetPlatform, kDebugMode, kIsWeb;
 import 'package:flutter_contacts/flutter_contacts.dart';
@@ -70,6 +71,7 @@ class SaveContactService {
     String source = 'uygulama',
   }) async {
     try {
+      await FirestoreService.ensureInitialized();
       final id = await FirestoreService.createCustomer(
         assignedAgentId: assignedAgentId,
         fullName: request.fullName,
@@ -79,6 +81,11 @@ class SaveContactService {
         source: source,
       );
       return id;
+    } on FirebaseException catch (e) {
+      if (kDebugMode) {
+        debugPrint('SaveContactService saveToApp Firebase: ${e.code} ${e.message}');
+      }
+      return null;
     } catch (e) {
       if (kDebugMode) debugPrint('SaveContactService saveToApp: $e');
       return null;

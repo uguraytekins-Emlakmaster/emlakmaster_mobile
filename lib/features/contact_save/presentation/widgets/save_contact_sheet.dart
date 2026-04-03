@@ -1,9 +1,13 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/contact_save/data/contact_permission_helper.dart';
 import 'package:emlakmaster_mobile/features/contact_save/data/save_contact_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/domain/contact_save_request.dart';
-import 'package:emlakmaster_mobile/features/contact_save/domain/extract_contact_from_voice.dart';
+import 'package:emlakmaster_mobile/features/contact_save/domain/extract_contact_from_voice.dart'
+    show logVoiceContactParseDebug, parseVoiceContact;
 import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,16 +22,11 @@ void showSaveContactSheet(
   String? initialNote,
   String source = 'uygulama',
 }) {
-  showModalBottomSheet<void>(
+  showPremiumModalBottomSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: AppThemeExtension.of(context).background,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        bottom: MediaQuery.viewInsetsOf(ctx).bottom,
       ),
       child: _SaveContactSheetContent(
         initialName: initialName,
@@ -70,6 +69,9 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
   bool _saveToApp = true;
   bool _saving = false;
   String? _error;
+  String _voiceStatus = '';
+  bool _highlightName = false;
+  bool _highlightPhone = false;
 
   @override
   void initState() {
@@ -131,26 +133,73 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
     );
   }
 
-  Future<void> _onVoiceResult(String? text) async {
-    if (text == null || text.isEmpty) return;
-    final contact = extractContactFromVoice(text);
-    if (contact == null) return;
+  void _onSpeechResult(PushToTalkSpeechResult r) {
+    final text = r.text;
+    if (text == null || text.isEmpty) {
+      // İlk boş sonuçta PushToTalk sessizce bir kez yeniden dinler; burada yalnızca ikinci kez boşsa mesaj.
+      if (r.noSpeechAfterRetries && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Sizi duyamadım, tekrar deneyebilirsiniz. İsterseniz alanları elle de doldurabilirsiniz.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    final parsed = parseVoiceContact(text);
+    logVoiceContactParseDebug(
+      rawText: text,
+      extraction: parsed,
+      shouldReviewStt: r.shouldReview,
+    );
+    if (parsed == null) {
+      setState(() {
+        _noteController.text = text;
+        _highlightName = false;
+        _highlightPhone = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'İsim/telefon çıkarılamadı; metin not alanına yazıldı. Düzenleyebilirsiniz.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    final contact = parsed.request;
+    final combinedReview = r.shouldReview ||
+        parsed.parseNeedsReview ||
+        parsed.nameMissing ||
+        parsed.phoneMissing;
     setState(() {
       _nameController.text = contact.fullName;
       _phoneController.text = contact.primaryPhone;
       if (contact.email != null) _emailController.text = contact.email!;
       if (contact.note != null) _noteController.text = contact.note!;
+      _highlightName = parsed.nameMissing;
+      _highlightPhone = parsed.phoneMissing;
     });
     HapticFeedback.mediumImpact();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Sesli giriş alındı. Gerekirse düzenleyip kaydedin.'),
-          backgroundColor: AppThemeExtension.of(context).accent,
-          behavior: SnackBarBehavior.floating,
+    if (!mounted) return;
+    final ext = AppThemeExtension.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          combinedReview
+              ? 'Sesli giriş alındı. Eksik veya belirsiz alanları kontrol edin (sarı çerçeve).'
+              : 'Sesli giriş alındı. Gerekirse düzenleyip kaydedin.',
         ),
-      );
-    }
+        backgroundColor: ext.accent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _onSave() async {
@@ -196,6 +245,9 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
       setState(() => _error = 'Uygulamaya kayıt başarısız. İnternet kontrol edin.');
       return;
     }
+    if (okApp) {
+      ref.invalidate(customerListForAgentProvider);
+    }
     Navigator.of(context).pop();
     HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -215,126 +267,223 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
+      initialChildSize: 0.72,
+      minChildSize: 0.42,
+      maxChildSize: 0.96,
       expand: false,
       builder: (_, scrollController) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: const EdgeInsets.fromLTRB(
+          DesignTokens.space6,
+          0,
+          DesignTokens.space6,
+          DesignTokens.space6,
+        ),
         child: ListView(
           controller: scrollController,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
+            const PremiumBottomSheetHandle(),
+            const SizedBox(height: DesignTokens.space4),
+            PremiumSheetHeader(
+              title: 'Rehbere ve uygulamaya kaydet',
+              subtitle:
+                  'Sesli komut veya manuel giriş. Kayıtlar CRM ile eşlenir; rehber izni ayrıca sorulur.',
+            ),
+            const SizedBox(height: DesignTokens.space5),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: ext.surfaceElevated,
+                borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                border: Border.all(color: ext.border.withValues(alpha: 0.55)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(DesignTokens.space4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Sesli giriş',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: ext.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: DesignTokens.space2),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Basılı tutun, ad ve telefon söyleyin',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: ext.textSecondary,
+                                  height: 1.3,
+                                ),
+                          ),
+                        ),
+                        PushToTalkButton(
+                          size: 48,
+                          onSpeechResult: _onSpeechResult,
+                          onPhaseChanged: (phase) {
+                            if (mounted) setState(() => _voiceStatus = phase);
+                          },
+                        ),
+                      ],
+                    ),
+                    if (_voiceStatus.isNotEmpty) ...[
+                      const SizedBox(height: DesignTokens.space2),
+                      Text(
+                        _voiceStatus,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: ext.textTertiary,
+                            ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Rehbere ve uygulamaya kaydet',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Sesli komut (AI) veya manuel giriş. Normal üyelikte de sesli kayıt kullanılabilir.',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Text(
-                  'Sesli komut',
-                  style: TextStyle(
-                    color: AppThemeExtension.of(context).textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                PushToTalkButton(
-                  size: 44,
-                  onResult: _onVoiceResult,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: DesignTokens.space5),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              onChanged: (_) {
+                if (_highlightName) setState(() => _highlightName = false);
+              },
+              decoration: InputDecoration(
                 labelText: 'İsim',
                 hintText: 'Ad Soyad',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: ext.textSecondary),
+                helperText: _highlightName
+                    ? 'Sesli girişte eksik veya belirsiz — lütfen doğrulayın'
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderSide: BorderSide(
+                    color: _highlightName ? ext.warning : ext.border,
+                    width: _highlightName ? 1.5 : 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderSide: BorderSide(
+                    color: _highlightName ? ext.warning : ext.accent,
+                    width: _highlightName ? 1.5 : 2,
+                  ),
+                ),
                 filled: true,
-                fillColor: Colors.white12,
+                fillColor: ext.surfaceElevated,
               ),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: ext.textPrimary),
               textCapitalization: TextCapitalization.words,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: DesignTokens.space3),
             TextField(
               controller: _phoneController,
-              decoration: const InputDecoration(
+              onChanged: (_) {
+                if (_highlightPhone) setState(() => _highlightPhone = false);
+              },
+              decoration: InputDecoration(
                 labelText: 'Telefon',
                 hintText: '05xx xxx xx xx',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: ext.textSecondary),
+                helperText: _highlightPhone
+                    ? 'Numara algılanamadı veya belirsiz — lütfen doğrulayın'
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderSide: BorderSide(
+                    color: _highlightPhone ? ext.warning : ext.border,
+                    width: _highlightPhone ? 1.5 : 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderSide: BorderSide(
+                    color: _highlightPhone ? ext.warning : ext.accent,
+                    width: _highlightPhone ? 1.5 : 2,
+                  ),
+                ),
                 filled: true,
-                fillColor: Colors.white12,
+                fillColor: ext.surfaceElevated,
               ),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: ext.textPrimary),
               keyboardType: TextInputType.phone,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: DesignTokens.space3),
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'E-posta (isteğe bağlı)',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: ext.textSecondary),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderSide: BorderSide(color: ext.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderSide: BorderSide(color: ext.accent, width: 1.5),
+                ),
                 filled: true,
-                fillColor: Colors.white12,
+                fillColor: ext.surfaceElevated,
               ),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: ext.textPrimary),
               keyboardType: TextInputType.emailAddress,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: DesignTokens.space3),
             TextField(
               controller: _noteController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Not (isteğe bağlı)',
                 hintText: 'Arama notu, bütçe vb.',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: ext.textSecondary),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderSide: BorderSide(color: ext.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderSide: BorderSide(color: ext.accent, width: 1.5),
+                ),
                 filled: true,
-                fillColor: Colors.white12,
+                fillColor: ext.surfaceElevated,
               ),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: ext.textPrimary),
               maxLines: 2,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: DesignTokens.space5),
             CheckboxListTile(
               value: _saveToDevice,
               onChanged: (v) => setState(() => _saveToDevice = v ?? true),
-              title: const Text(
+              title: Text(
                 'Rehbere kaydet (telefon rehberi)',
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: ext.textPrimary, fontSize: 14),
               ),
-              activeColor: AppThemeExtension.of(context).accent,
+              activeColor: ext.accent,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
             ),
             CheckboxListTile(
               value: _saveToApp,
               onChanged: (v) => setState(() => _saveToApp = v ?? true),
-              title: const Text(
-                'Uygulamaya kaydet (EmlakMaster müşteri)',
-                style: TextStyle(color: Colors.white, fontSize: 14),
+              title: Text(
+                'Uygulamaya kaydet (CRM müşteri)',
+                style: TextStyle(color: ext.textPrimary, fontSize: 14),
               ),
-              activeColor: AppThemeExtension.of(context).accent,
+              activeColor: ext.accent,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
@@ -343,34 +492,34 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                 style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13),
               ),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: DesignTokens.space5),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: _saving ? null : _onSave,
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppThemeExtension.of(context).accent,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: ext.accent,
+                  foregroundColor: ext.onBrand,
+                  padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
                   ),
                 ),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 22,
                         width: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.black,
+                          color: ext.onBrand,
                         ),
                       )
-                    : const Text(
+                    : Text(
                         'Kaydet',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: ext.onBrand,
+                            ),
                       ),
               ),
             ),

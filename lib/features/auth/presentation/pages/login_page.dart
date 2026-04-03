@@ -14,6 +14,7 @@ import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../domain/auth_result.dart';
 import '../utils/auth_result_ui.dart';
+import '../../../../core/branding/brand_emblem.dart';
 import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../utils/auth_error_messages.dart';
@@ -240,6 +241,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: DesignTokens.space4),
+            const Center(
+              child: BrandEmblem(
+                variant: BrandEmblemVariant.full,
+                size: 92,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space6),
             Text(
               'Rainbow CRM',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(

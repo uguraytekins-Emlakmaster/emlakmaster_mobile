@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -146,6 +147,13 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Center(
+                      child: BrandEmblem(
+                        variant: BrandEmblemVariant.mini,
+                        size: 64,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     Text(
                       'Hoş geldiniz',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(

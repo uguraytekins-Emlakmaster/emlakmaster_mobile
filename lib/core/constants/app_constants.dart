@@ -94,6 +94,10 @@ abstract final class AppConstants {
   /// Harici platform hesapları (Connected Accounts) — Phase 1 UI.
   static const String keyFeatureExternalIntegrations = 'feature_external_integrations';
 
+  /// V1 odaklı (hafif) ürün: ikincil sekmeler ve analitik yükü azaltır; çekirdek CRM açık kalır.
+  /// Varsayılan `true` — tam özellik seti için Ayarlardan kapatılabilir.
+  static const String keyV1LeanProduct = 'v1_lean_product';
+
   /// Giriş ekranında Facebook butonu gösterilsin mi? (Facebook Developer + credentials hazır olunca true yap.)
   static const bool showFacebookLogin = false;
 

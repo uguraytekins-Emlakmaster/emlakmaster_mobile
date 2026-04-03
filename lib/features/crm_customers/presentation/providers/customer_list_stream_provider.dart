@@ -6,10 +6,10 @@ import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/data/customer_mapper.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint, kReleaseMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Giriş yapan danışmana atanmış müşteriler. Hata durumunda çökmez; dev’de boşsa demo satırlar.
+/// Giriş yapan danışmana atanmış müşteriler. Release’te asla demo kullanılmaz; dev’de yalnızca Firestore yok/hata iken demo.
 final customerListForAgentProvider =
     StreamProvider.autoDispose<List<CustomerEntity>>((ref) {
   final uid = ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
@@ -25,7 +25,10 @@ final customerListForAgentProvider =
           .map((d) => CustomerMapper.fromQueryDoc(d))
           .whereType<CustomerEntity>()
           .toList();
-      if (isDevMode && list.isEmpty) {
+      // Firestore hazır: gerçek snapshot (boş dahil). Release’te demo yok.
+      if (FirestoreService.isFirestoreReady) {
+        controller.add(list);
+      } else if (!kReleaseMode && isDevMode && list.isEmpty) {
         controller.add(List<CustomerEntity>.from(crmDevDemoCustomers));
       } else {
         controller.add(list);
@@ -33,7 +36,7 @@ final customerListForAgentProvider =
     },
     onError: (Object e, StackTrace st) {
       debugPrint('[customerListForAgentProvider] $e');
-      if (isDevMode) {
+      if (!kReleaseMode && isDevMode) {
         controller.add(List<CustomerEntity>.from(crmDevDemoCustomers));
       } else {
         controller.add(const <CustomerEntity>[]);

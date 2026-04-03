@@ -1,3 +1,6 @@
+import 'package:emlakmaster_mobile/features/calls/domain/call_transcript_snapshot.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:equatable/equatable.dart';
 
 /// Müşteri türü (enum zaten == ve hashCode sağlar; Equatable kullanılmaz)
@@ -44,6 +47,8 @@ class CustomerEntity with EquatableMixin {
     this.leadTemperature,
     this.lifecycleStage,
     this.lastInteractionAt,
+    /// Firestore `lastCallSummary` — son çağrı / görüşme özeti metni.
+    this.lastCallSummary,
     this.nextSuggestedAction,
     this.tags = const [],
     this.callsCount = 0,
@@ -53,6 +58,9 @@ class CustomerEntity with EquatableMixin {
     this.voiceNoteSummaryUpdatedAt,
     this.isVipInvestor = false,
     this.investmentAlertEnabled = false,
+    this.lastCallSummarySignals,
+    this.lastCallAiEnrichment,
+    this.lastCallTranscript,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -70,6 +78,7 @@ class CustomerEntity with EquatableMixin {
   final double? leadTemperature;
   final LifecycleStage? lifecycleStage;
   final DateTime? lastInteractionAt;
+  final String? lastCallSummary;
   final String? nextSuggestedAction;
   final List<String> tags;
   final int callsCount;
@@ -81,9 +90,16 @@ class CustomerEntity with EquatableMixin {
   /// Yatırım Radarı: VIP yatırımcı bildirimi.
   final bool isVipInvestor;
   final bool investmentAlertEnabled;
+  /// Son çağrı özeti kaydından türetilen kural tabanlı sinyaller (Firestore `lastCallSummarySignals`).
+  final PostCallCrmSignals? lastCallSummarySignals;
+  /// Opsiyonel AI / sezgisel zenginleştirme (kaynak: `lastCallAiEnrichment.source`).
+  final PostCallAiEnrichment? lastCallAiEnrichment;
+  /// Gelecek STT: son görüşme ham transkripti (`lastCallTranscript`).
+  final CallTranscriptSnapshot? lastCallTranscript;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   @override
-  List<Object?> get props => [id, updatedAt];
+  List<Object?> get props =>
+      [id, updatedAt, lastCallSummary, lastCallAiEnrichment, lastCallTranscript];
 }

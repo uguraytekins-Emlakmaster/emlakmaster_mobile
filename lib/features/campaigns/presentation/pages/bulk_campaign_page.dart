@@ -507,9 +507,22 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
         }
         return;
       }
+      final sample = segment.customers.take(5).map((c) {
+        return {
+          'fullName': c.fullName,
+          'primaryPhone': c.primaryPhone,
+          'budgetMin': c.budgetMin,
+          'budgetMax': c.budgetMax,
+          'regions': c.regionPreferences,
+          'leadTemperature': c.leadTemperature,
+          'lastInteractionAt': c.lastInteractionAt?.toIso8601String(),
+        };
+      }).toList();
       final suggestion = await CampaignAiService.suggestMessageForSegment(
-        segment: segment,
         currentMessage: _controller.text,
+        totalCustomers: segment.customers.length,
+        phoneCount: segment.activePhonesCount,
+        sampleCustomers: sample,
       );
       if (!mounted) return;
       setState(() {

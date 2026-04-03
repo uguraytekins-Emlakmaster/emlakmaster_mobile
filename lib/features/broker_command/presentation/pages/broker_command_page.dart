@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -37,7 +38,7 @@ class BrokerCommandPage extends ConsumerWidget {
       data: (role) {
         if (!FeaturePermission.canViewWarRoom(role)) {
           return const UnauthorizedScreen(
-            message: 'Broker Command ekranına sadece yönetici ve operasyon erişebilir.',
+            message: 'War Room ekranına sadece yönetici ve operasyon erişebilir.',
           );
         }
         return const _BrokerCommandBody();
@@ -67,7 +68,7 @@ class _BrokerCommandBody extends StatelessWidget {
       appBar: emlakAppBar(
         context,
         title: Text(
-          'Broker Command',
+          'War Room',
           style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w700),
         ),
         backgroundColor: ext.background,
@@ -86,24 +87,51 @@ class _BrokerCommandBody extends StatelessWidget {
           children: [
             // —— Hero ——
             px(
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Rainbow Gayrimenkul',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: ext.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: ext.surfaceElevated,
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
+                  border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ext.shadowColor.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(DesignTokens.space5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'WAR ROOM',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: ext.accent.withValues(alpha: 0.85),
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.4,
+                            ),
+                      ),
+                      const SizedBox(height: DesignTokens.space2),
+                      Text(
+                        'Rainbow Gayrimenkul',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: ext.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: DesignTokens.space1),
+                      Text(
+                        'Canlı operasyonel farkındalık — komuta ve piyasa tek bakışta',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: ext.textSecondary,
+                              height: 1.35,
+                            ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Operasyonel komuta ve piyasa görünümü',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: ext.textSecondary,
-                        ),
-                  ),
-                ],
+                ),
               ),
             ),
             SizedBox(height: DashboardLayoutTokens.gapHeroToOperational.toDouble()),

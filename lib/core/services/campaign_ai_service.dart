@@ -1,43 +1,68 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
-import '../../features/campaigns/presentation/pages/bulk_campaign_page.dart';
+import '../ai/ai_gate.dart';
+import '../ai/heuristic_campaign_message.dart';
 
-/// Toplu kampanya metin önerileri için AI servis katmanı.
+/// Toplu kampanya metin önerileri — [AiGate] ile uzak model sınırlı; şablon geri dönüşü her zaman var.
+///
+/// [sampleCustomers]: Cloud Function sözleşmesi (en fazla ~5 kayıt).
 class CampaignAiService {
   CampaignAiService._();
 
-  /// Firebase Cloud Functions üzerinden kampanya metni üretir.
-  /// Backend tarafında `generateBulkCampaignMessage` callable fonksiyonu beklenir.
+  /// Firebase Cloud Functions: `generateBulkCampaignMessage`. Kapı reddederse veya hata olursa sezgisel metin.
   static Future<String> suggestMessageForSegment({
-    required BulkCampaignSegment segment,
     required String currentMessage,
+    required int totalCustomers,
+    required int phoneCount,
+    required List<Map<String, dynamic>> sampleCustomers,
   }) async {
-    final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
-    final callable = functions.httpsCallable('generateBulkCampaignMessage');
-    final response = await callable.call<Map<String, dynamic>>({
-      'currentMessage': currentMessage,
-      'stats': {
-        'totalCustomers': segment.customers.length,
-        'phoneCount': segment.activePhonesCount,
-      },
-      'sampleCustomers': segment.customers.take(5).map((c) {
-        return {
-          'fullName': c.fullName,
-          'primaryPhone': c.primaryPhone,
-          'budgetMin': c.budgetMin,
-          'budgetMax': c.budgetMax,
-          'regions': c.regionPreferences,
-          'leadTemperature': c.leadTemperature,
-          'lastInteractionAt': c.lastInteractionAt?.toIso8601String(),
-        };
-      }).toList(),
-    });
-    final data = response.data;
-    final text = data['message'] as String? ?? data['text'] as String?;
-    if (text == null || text.trim().isEmpty) {
-      throw Exception('Boş yanıt döndü');
+    final n = totalCustomers;
+
+    String fallback() => HeuristicCampaignMessage.build(
+          customerCount: n,
+          phoneCount: phoneCount,
+        );
+
+    if (!AiGate.allowCampaignRemote(
+      currentMessage: currentMessage,
+      segmentCustomerCount: n,
+      segmentPhoneCount: phoneCount,
+    )) {
+      final cached = AiGate.cachedCampaignSuggestion(
+        currentMessage: currentMessage,
+        segmentCustomerCount: n,
+        segmentPhoneCount: phoneCount,
+      );
+      if (cached != null && cached.trim().isNotEmpty) return cached.trim();
+      return fallback();
     }
-    return text.trim();
+
+    try {
+      final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
+      final callable = functions.httpsCallable('generateBulkCampaignMessage');
+      final response = await callable.call<Map<String, dynamic>>({
+        'currentMessage': currentMessage,
+        'stats': {
+          'totalCustomers': totalCustomers,
+          'phoneCount': phoneCount,
+        },
+        'sampleCustomers': sampleCustomers,
+      });
+      final data = response.data;
+      final text = data['message'] as String? ?? data['text'] as String?;
+      if (text == null || text.trim().isEmpty) {
+        return fallback();
+      }
+      final t = text.trim();
+      AiGate.markCampaignRemoteSuccess(
+        currentMessage: currentMessage,
+        segmentCustomerCount: n,
+        segmentPhoneCount: phoneCount,
+        suggestedText: t,
+      );
+      return t;
+    } catch (_) {
+      return fallback();
+    }
   }
 }
-

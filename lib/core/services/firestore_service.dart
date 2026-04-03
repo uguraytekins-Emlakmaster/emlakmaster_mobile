@@ -57,6 +57,38 @@ class FirestoreService {
   /// Firestore önbellek ayarları uygulandı mı (Firebase [DEFAULT] mevcut).
   static bool get isFirestoreReady => _initialized;
 
+  /// Yazma işlemleri: sessiz no-op yerine hata fırlatır (UI geri bildirim verebilir).
+  static void _requireFirestoreReady() {
+    if (!_initialized) {
+      throw StateError(
+        'Firestore başlatılamadı. Uygulamayı yeniden başlatıp tekrar deneyin.',
+      );
+    }
+  }
+
+  /// SnackBar / diyalog için kısa Türkçe mesaj (FirebaseException, StateError).
+  static String userFacingErrorMessage(Object error) {
+    if (error is FirebaseException) {
+      switch (error.code) {
+        case 'permission-denied':
+          return 'Erişim reddedildi. Oturum veya Firestore kurallarını kontrol edin.';
+        case 'unauthenticated':
+          return 'Oturum gerekli. Lütfen tekrar giriş yapın.';
+        case 'unavailable':
+        case 'deadline-exceeded':
+          return 'Sunucuya şu an ulaşılamıyor. Bağlantıyı kontrol edip tekrar deneyin.';
+        case 'failed-precondition':
+          return 'İstek önkoşulları sağlanmadı. Veriyi kontrol edin.';
+        default:
+          final m = error.message;
+          if (m != null && m.isNotEmpty) return m;
+          return 'İşlem tamamlanamadı (${error.code}).';
+      }
+    }
+    if (error is StateError) return error.message;
+    return 'İşlem tamamlanamadı.';
+  }
+
   static Stream<List<String>>? _tickerStream;
 
   /// Ofis ticker stream (tek örnek, broadcast): birden fazla dinleyici güvenle bağlanabilir.
@@ -308,7 +340,7 @@ class FirestoreService {
     required String nextAction,
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
 
     final ref = FirebaseFirestore.instance.collection('agents').doc(agentId);
     await ref.set(
@@ -331,7 +363,7 @@ class FirestoreService {
     required String status,
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
 
     final ref = FirebaseFirestore.instance.collection('agents').doc(agentId);
     await ref.set(
@@ -434,21 +466,84 @@ class FirestoreService {
     required String nextStepSuggestion,
     required String sentiment,
     String? fullSummary,
+    /// Kural tabanlı özet sinyalleri (`interestLevel`, `nextActionHint`, …).
+    Map<String, dynamic>? lastCallSummarySignals,
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
 
     final ref = FirebaseFirestore.instance.collection('customers').doc(customerId);
+    final Map<String, dynamic> data = {
+      'assignedAgentId': assignedAgentId,
+      'customerIntent': customerIntent,
+      'budgetRange': budgetRange,
+      'preferredRegions': preferredRegions,
+      'urgency': urgency,
+      'lastNextStepSuggestion': nextStepSuggestion,
+      'lastSentiment': sentiment,
+      if (fullSummary != null) 'lastCallSummary': fullSummary,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (lastCallSummarySignals != null && lastCallSummarySignals.isNotEmpty) {
+      data['lastCallSummarySignals'] = {
+        ...lastCallSummarySignals,
+        'extractedAt': FieldValue.serverTimestamp(),
+      };
+    }
+    await ref.set(data, SetOptions(merge: true));
+  }
+
+  /// Çağrı sonrası AI / sezgisel zenginleştirme (deterministik sinyalleri değiştirmez).
+  static Future<void> mergePostCallAiEnrichment(
+    String customerId,
+    Map<String, dynamic> enrichmentPayload,
+  ) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    if (customerId.isEmpty) return;
+    final ref = FirebaseFirestore.instance.collection(AppConstants.colCustomers).doc(customerId);
     await ref.set(
       {
-        'assignedAgentId': assignedAgentId,
-        'customerIntent': customerIntent,
-        'budgetRange': budgetRange,
-        'preferredRegions': preferredRegions,
-        'urgency': urgency,
-        'lastNextStepSuggestion': nextStepSuggestion,
-        'lastSentiment': sentiment,
-        if (fullSummary != null) 'lastCallSummary': fullSummary,
+        'lastCallAiEnrichment': {
+          ...enrichmentPayload,
+          'enrichedAt': FieldValue.serverTimestamp(),
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  /// Son görüşme transkript meta verisi (STT hazırlığı). `saveCallExtractionToCustomer` ile çakışmaz; merge.
+  /// [snapshot] tam metin içeriyorsa Firestore belge boyutunu göz önünde bulundurun (büyük metinler için alt koleksiyon sonrası).
+  static Future<void> mergeCustomerLastCallTranscript(
+    String customerId,
+    Map<String, dynamic> transcriptPayload,
+  ) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    if (customerId.isEmpty) return;
+    final ref = FirebaseFirestore.instance.collection(AppConstants.colCustomers).doc(customerId);
+    await ref.set(
+      {
+        'lastCallTranscript': transcriptPayload,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  /// Müşteriye bağlı görev **tamamlandığında** (done: false → true): `lastInteractionAt` güncellenir.
+  /// Böylece hatırlatıcılar, broker uyarıları ve sıcaklıktaki “son temas” girdileri deterministik olarak yenilenir.
+  /// Sinyal alanlarına (çağrı özeti, skor) dokunulmaz. Görev yeniden açılırsa geri alınmaz.
+  static Future<void> mergeCustomerCrmAfterTaskCompleted(String customerId) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    if (customerId.isEmpty) return;
+    final ref = FirebaseFirestore.instance.collection(AppConstants.colCustomers).doc(customerId);
+    await ref.set(
+      {
+        'lastInteractionAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       },
       SetOptions(merge: true),
@@ -462,7 +557,7 @@ class FirestoreService {
     double dealVolumeIncrement = 0.5,
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
 
     final ref = FirebaseFirestore.instance.collection('agents').doc(agentId);
     await ref.set(
@@ -550,7 +645,7 @@ class FirestoreService {
     String outcome = 'connected',
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
     final dt = DateTime.fromMillisecondsSinceEpoch(timestampMillis);
     final ts = Timestamp.fromDate(dt);
@@ -581,7 +676,7 @@ class FirestoreService {
     String officeId = '',
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
     final now = FieldValue.serverTimestamp();
     await col.add({
@@ -763,7 +858,7 @@ class FirestoreService {
     int retries = 3,
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection('call_summaries');
     Exception? last;
     for (var i = 0; i < retries; i++) {
@@ -801,7 +896,7 @@ class FirestoreService {
 
   static Future<void> setTask(Map<String, dynamic> data) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     final id = data['id'] as String? ?? FirebaseFirestore.instance.collection('tasks').doc().id;
     final advisorId = data['advisorId'] as String?;
     final merged = <String, dynamic>{
@@ -828,6 +923,49 @@ class FirestoreService {
           merged,
           SetOptions(merge: true),
         );
+  }
+
+  /// Müşteriye bağlı açık görev sayısı (`customerId` + done/completed değil).
+  static Future<int> countOpenTasksForCustomer(String customerId) async {
+    await ensureInitialized();
+    if (!_initialized || customerId.isEmpty) return 0;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection(AppConstants.colTasks)
+          .where('customerId', isEqualTo: customerId)
+          .limit(100)
+          .get();
+      return snap.docs.where((d) {
+        final data = d.data();
+        final done = data['done'] ?? data['completed'];
+        return done != true;
+      }).length;
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('countOpenTasksForCustomer: $e $st');
+      return 0;
+    }
+  }
+
+  /// Son [days] gün içinde eklenen not sayısı (sıcaklık skoru için).
+  static Future<int> countRecentNotesForCustomer(String customerId, {int days = 30}) async {
+    await ensureInitialized();
+    if (!_initialized || customerId.isEmpty) return 0;
+    try {
+      final cutoff = DateTime.now().subtract(Duration(days: days));
+      final snap = await FirebaseFirestore.instance
+          .collection(AppConstants.colNotes)
+          .where('customerId', isEqualTo: customerId)
+          .limit(100)
+          .get();
+      return snap.docs.where((d) {
+        final t = d.data()['createdAt'];
+        if (t is Timestamp) return t.toDate().isAfter(cutoff);
+        return false;
+      }).length;
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('countRecentNotesForCustomer: $e $st');
+      return 0;
+    }
   }
 
   /// Manuel ilan ekleme (CRM portföyü; içe aktarma motorundan ayrı).
@@ -875,7 +1013,7 @@ class FirestoreService {
     String? listingId,
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection('visits');
     await col.add({
       'customerId': customerId,
@@ -909,7 +1047,7 @@ class FirestoreService {
     String? notes,
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection('offers');
     await col.add({
       'customerId': customerId,
@@ -943,7 +1081,7 @@ class FirestoreService {
     required String advisorId,
   }) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection('notes');
     await col.add({
       'customerId': customerId,
@@ -968,7 +1106,7 @@ class FirestoreService {
 
   static Future<void> setPipelineItem(Map<String, dynamic> data) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection('pipeline_items');
     final id = data['id'] as String? ?? col.doc().id;
     await col.doc(id).set({
@@ -980,7 +1118,7 @@ class FirestoreService {
 
   static Future<void> updatePipelineItemStage(String itemId, String stageId) async {
     await ensureInitialized();
-    if (!_initialized) return;
+    _requireFirestoreReady();
     await FirebaseFirestore.instance.collection('pipeline_items').doc(itemId).update({
       'stage': stageId,
       'updatedAt': FieldValue.serverTimestamp(),

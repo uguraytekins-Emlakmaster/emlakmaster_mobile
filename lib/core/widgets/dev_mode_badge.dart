@@ -25,12 +25,10 @@ class DevModeBadge extends ConsumerWidget {
       end: 10,
       child: Material(
         color: Colors.transparent,
-        elevation: 6,
-        shadowColor: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: () => DevDebugPanel.show(context),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           // [Tooltip] needs an [Overlay] ancestor (inside [Navigator]). This badge
           // is painted in [MaterialApp.builder]'s [Stack] *beside* the navigator, so
           // use [Semantics] instead — same a11y label, no RawTooltip / Overlay.
@@ -39,44 +37,30 @@ class DevModeBadge extends ConsumerWidget {
             button: true,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppThemeExtension.of(context).accent.withValues(alpha: 0.5),
+                  color: AppThemeExtension.of(context).border.withValues(alpha: 0.65),
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFF252530).withValues(alpha: 0.94),
-                    const Color(0xFF141418).withValues(alpha: 0.96),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppThemeExtension.of(context).accent.withValues(alpha: 0.12),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: AppThemeExtension.of(context).surface.withValues(alpha: 0.82),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.developer_mode_rounded,
-                      size: 13,
-                      color: AppThemeExtension.of(context).accent.withValues(alpha: 0.95),
+                      size: 11,
+                      color: AppThemeExtension.of(context).textTertiary,
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 4),
                     Text(
                       'DEV',
                       style: TextStyle(
-                        color: AppThemeExtension.of(context).accent,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
+                        color: AppThemeExtension.of(context).textSecondary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.8,
                         height: 1,
                       ),
                     ),

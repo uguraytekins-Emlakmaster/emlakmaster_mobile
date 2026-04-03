@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_platform_id.dart';
@@ -93,17 +94,27 @@ class _MyExternalListingsInnerState extends ConsumerState<MyExternalListingsInne
                   ? raw
                   : raw.where((e) => e.platform == _platformFilter).toList();
               if (items.isEmpty) {
-                return EmptyState(
-                  premiumVisual: true,
-                  icon: Icons.cloud_sync_outlined,
-                  title: l10n.t('my_external_listings_empty_title'),
-                  subtitle: l10n.t('my_external_listings_empty_sub'),
-                  actionLabel: l10n.t('my_external_listings_connect_cta'),
-                  onAction: () => context.push(AppRouter.routeConnectedAccounts),
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+                    child: EmptyState(
+                      premiumVisual: true,
+                      icon: Icons.cloud_sync_outlined,
+                      title: l10n.t('my_external_listings_empty_title'),
+                      subtitle: l10n.t('my_external_listings_empty_sub'),
+                      actionLabel: l10n.t('my_external_listings_connect_cta'),
+                      onAction: () => context.push(AppRouter.routeConnectedAccounts),
+                    ),
+                  ),
                 );
               }
               return ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space4,
+                  0,
+                  DesignTokens.space4,
+                  DesignTokens.space8,
+                ),
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   return Padding(

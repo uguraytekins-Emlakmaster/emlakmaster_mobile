@@ -252,25 +252,38 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   }
 
   Widget _buildIosInfoBanner(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
-    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
-    return Material(
-      color: surface,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
-        child: Row(
-          children: [
-            Icon(Icons.info_outline_rounded, size: 18, color: textSecondary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'iOS\'ta sadece uygulama içi (Magic Call) aramaları listelenir. Telefon günlüğü Apple politikası gereği eklenemez.',
-                style: TextStyle(color: textSecondary, fontSize: 12),
+    final ext = AppThemeExtension.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.space6,
+        DesignTokens.space2,
+        DesignTokens.space6,
+        DesignTokens.space3,
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: ext.surfaceElevated,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+          border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(DesignTokens.space3),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline_rounded, size: 18, color: ext.accent.withValues(alpha: 0.85)),
+              const SizedBox(width: DesignTokens.space3),
+              Expanded(
+                child: Text(
+                  'iOS: Yalnızca uygulama içi (Magic Call) aramaları görünür. Sistem çağrı günlüğü Apple kısıtlaması nedeniyle eklenmez.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ext.textSecondary,
+                        height: 1.35,
+                      ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -420,9 +433,12 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               children: [
                 if (io.Platform.isIOS) _buildIosInfoBanner(context),
                 Expanded(
-                  child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
                     child: EmptyState(
                       premiumVisual: true,
+                      grouped: true,
+                      anchorAboveCenter: true,
                       icon: Icons.call_rounded,
                       title: AppLocalizations.of(context).t('empty_calls_title'),
                       subtitle: AppLocalizations.of(context).t('empty_calls_sub'),
@@ -441,12 +457,20 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               Material(
                 color: surface,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
+                  padding: const EdgeInsets.fromLTRB(
+                    DesignTokens.space6,
+                    DesignTokens.space3,
+                    DesignTokens.space6,
+                    DesignTokens.space2,
+                  ),
                   child: Row(
                     children: [
                       Text(
-                        '${_docs.length} çağrı',
-                        style: TextStyle(color: textSecondary, fontSize: 13),
+                        '${_docs.length} kayıt',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                       const Spacer(),
                       TextButton(
@@ -510,6 +534,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                   fontWeight: FontWeight.w600,
                                   fontSize: 15,
                                 ),
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -520,6 +545,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           child: Text(
                             '$dateStr · $durationStr · $outcomeStr',
                             style: TextStyle(color: textSecondary, fontSize: 12),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         activeColor: AppThemeExtension.of(context).accent,
@@ -550,6 +577,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       TextButton(

@@ -29,6 +29,21 @@ abstract final class DesignTokens {
   static const double radius3xl = 28;
   static const double radiusFull = 9999;
 
+  /// Küçük kontroller, checkbox alanları.
+  static const double radiusControl = 12;
+
+  /// Chip / filtre pill.
+  static const double radiusPill = 18;
+
+  /// Birincil kartlar (özet, KPI, içgörü).
+  static const double radiusCardPrimary = 24;
+
+  /// İkincil / liste satırı kartları.
+  static const double radiusCardSecondary = 20;
+
+  /// Alt sayfalar, formlar, modal üst köşe.
+  static const double radiusSheet = 28;
+
   static const double uiSurfaceRadius = radiusLg;
 
   // ---------- Typography scale (font sizes)

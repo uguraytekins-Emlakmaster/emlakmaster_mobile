@@ -1,4 +1,3 @@
-import 'package:emlakmaster_mobile/widgets/magic_call_wizard_fab.dart';
 import 'package:flutter/material.dart';
 
 import 'design_tokens.dart';
@@ -34,14 +33,18 @@ abstract final class DashboardLayoutTokens {
   static const double minHeightInsightCard = 88;
   static const double minHeightHeroCard = 120;
 
-  /// Alt gezinme + yüzen Magic Call FAB ile içerik çakışmasın; ekstra güvenli alan.
+  /// Scroll içeriğinin son satırı ile alt krom (nav / dock) arasında nefes payı.
+  /// Yüzen FAB kaldırıldı; alan çoğunlukla [Scaffold] gövdesinde rezerve.
   static double bottomScrollPadding(BuildContext context, {required bool showFab}) {
-    return MagicCallWizardFab.scrollBottomPadding(context, showFab: showFab);
+    return contentScrollBottomInset(context);
   }
 
-  /// Yönetici / broker shell: FAB yok; alt [NavigationBar] + güvenli alan.
+  /// Ana kabuk / özet sayfaları — alt gezinme veya docked CTA ile uyumlu alt boşluk.
   static double shellScrollBottomPadding(BuildContext context) {
-    final safe = MediaQuery.paddingOf(context).bottom;
-    return safe + kBottomNavigationBarHeight + DesignTokens.space4;
+    return contentScrollBottomInset(context);
+  }
+
+  static double contentScrollBottomInset(BuildContext context) {
+    return DesignTokens.space6;
   }
 }

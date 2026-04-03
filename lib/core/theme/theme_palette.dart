@@ -39,8 +39,9 @@ abstract final class ThemePalette {
   static const Color borderLight = Color(0xFFE5E5E7);
 
   static const Color textPrimaryDark = Color(0xFFF5F5F5);
-  static const Color textSecondaryDark = Color(0xFFB8B8B8);
-  static const Color textTertiaryDark = Color(0xFF8A8A8A);
+  /// Okunabilir ikincil metin (koyu tema; WCAG için biraz açıldı).
+  static const Color textSecondaryDark = Color(0xFFC8C8CE);
+  static const Color textTertiaryDark = Color(0xFF9A9AA3);
 
   static const Color textPrimaryLight = Color(0xFF1C1C1E);
   static const Color textSecondaryLight = Color(0xFF6B6B70);

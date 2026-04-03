@@ -21,10 +21,23 @@ PreferredSizeWidget emlakAppBar(
       theme.appBarTheme.foregroundColor ??
       theme.colorScheme.onSurface;
   final canPop = context.canPop();
+  final titleStyle = theme.appBarTheme.titleTextStyle ??
+      theme.textTheme.titleLarge ??
+      const TextStyle(fontSize: 20, fontWeight: FontWeight.w600);
+  final maxTitleWidth = MediaQuery.sizeOf(context).width - 112;
   return AppBar(
     leading: canPop ? const AppBackButton() : null,
     automaticallyImplyLeading: false,
-    title: title,
+    title: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxTitleWidth.clamp(160, 560)),
+      child: DefaultTextStyle.merge(
+        style: titleStyle,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: centerTitle ? TextAlign.center : TextAlign.start,
+        child: title,
+      ),
+    ),
     actions: actions,
     bottom: bottom,
     backgroundColor: bg,

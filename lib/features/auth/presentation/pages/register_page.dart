@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/branding/brand_emblem.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/auth_service.dart';
@@ -283,6 +284,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         minHeight: 4,
                         backgroundColor: AppThemeExtension.of(context).border.withValues(alpha: 0.5),
                         color: AppThemeExtension.of(context).accent,
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.space4),
+                    const Center(
+                      child: BrandEmblem(
+                        variant: BrandEmblemVariant.mini,
+                        size: 56,
                       ),
                     ),
                     const SizedBox(height: DesignTokens.space4),

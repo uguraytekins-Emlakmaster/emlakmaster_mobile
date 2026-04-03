@@ -308,7 +308,10 @@ class SettingsPlaceholderPage extends ConsumerWidget {
 }
 
 class ThemeSection extends ConsumerWidget {
-  const ThemeSection({super.key});
+  const ThemeSection({super.key, this.embedInParentCard = false});
+
+  /// [true]: yalnızca satır; üst kart [SettingsPage._sectionCard] tarafından verilir.
+  final bool embedInParentCard;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -319,6 +322,20 @@ class ThemeSection extends ConsumerWidget {
     final onSurface = theme.colorScheme.onSurface;
     final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     final index = ref.watch(themeModeIndexProvider);
+    final tile = ListTile(
+      leading: Icon(
+        index == 0 ? Icons.brightness_auto_rounded : (index == 1 ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+        color: AppThemeExtension.of(context).accent,
+      ),
+      title: Text('Tema', style: TextStyle(color: onSurface)),
+      subtitle: Text(
+        index == 0 ? 'Sistem' : (index == 1 ? 'Açık' : 'Koyu'),
+        style: TextStyle(color: onSurfaceVariant, fontSize: 12),
+      ),
+      trailing: Icon(Icons.chevron_right_rounded, color: onSurfaceVariant),
+      onTap: () => ThemeSection._showThemePicker(context, ref, currentIndex: index),
+    );
+    if (embedInParentCard) return tile;
     return Container(
       decoration: BoxDecoration(
         color: surface,
@@ -326,21 +343,7 @@ class ThemeSection extends ConsumerWidget {
         border: Border.all(color: border),
       ),
       child: Column(
-        children: [
-          ListTile(
-            leading: Icon(
-              index == 0 ? Icons.brightness_auto_rounded : (index == 1 ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
-              color: AppThemeExtension.of(context).accent,
-            ),
-            title: Text('Tema', style: TextStyle(color: onSurface)),
-            subtitle: Text(
-              index == 0 ? 'Sistem' : (index == 1 ? 'Açık' : 'Koyu'),
-              style: TextStyle(color: onSurfaceVariant, fontSize: 12),
-            ),
-            trailing: Icon(Icons.chevron_right_rounded, color: onSurfaceVariant),
-            onTap: () => ThemeSection._showThemePicker(context, ref, currentIndex: index),
-          ),
-        ],
+        children: [tile],
       ),
     );
   }
@@ -397,7 +400,9 @@ class ThemeSection extends ConsumerWidget {
 }
 
 class NotificationsSection extends ConsumerWidget {
-  const NotificationsSection({super.key});
+  const NotificationsSection({super.key, this.embedInParentCard = false});
+
+  final bool embedInParentCard;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -408,36 +413,38 @@ class NotificationsSection extends ConsumerWidget {
     final onSurface = theme.colorScheme.onSurface;
     final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
     final asyncEnabled = ref.watch(notificationsEnabledProvider);
+    final inner = asyncEnabled.when(
+      loading: () => ListTile(
+        title: Text('Bildirimler', style: TextStyle(color: onSurface)),
+        trailing: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent)),
+      ),
+      error: (_, __) => ListTile(
+        title: Text('Bildirimler', style: TextStyle(color: onSurface)),
+        subtitle: const Text('Yüklenemedi', style: TextStyle(color: Colors.red, fontSize: 12)),
+      ),
+      data: (enabled) => SwitchListTile(
+        secondary: Icon(
+          enabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
+          color: AppThemeExtension.of(context).accent,
+        ),
+        title: Text('Bildirimler', style: TextStyle(color: onSurface)),
+        subtitle: Text(
+          'Push ve uygulama içi bildirimler',
+          style: TextStyle(color: onSurfaceVariant, fontSize: 12),
+        ),
+        value: enabled,
+        activeThumbColor: AppThemeExtension.of(context).accent,
+        onChanged: (v) => ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
+      ),
+    );
+    if (embedInParentCard) return inner;
     return Container(
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: border),
       ),
-      child: asyncEnabled.when(
-        loading: () => ListTile(
-          title: Text('Bildirimler', style: TextStyle(color: onSurface)),
-          trailing: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent)),
-        ),
-        error: (_, __) => ListTile(
-          title: Text('Bildirimler', style: TextStyle(color: onSurface)),
-          subtitle: const Text('Yüklenemedi', style: TextStyle(color: Colors.red, fontSize: 12)),
-        ),
-        data: (enabled) => SwitchListTile(
-          secondary: Icon(
-            enabled ? Icons.notifications_active_rounded : Icons.notifications_off_rounded,
-            color: AppThemeExtension.of(context).accent,
-          ),
-          title: Text('Bildirimler', style: TextStyle(color: onSurface)),
-          subtitle: Text(
-            'Push ve uygulama içi bildirimler',
-            style: TextStyle(color: onSurfaceVariant, fontSize: 12),
-          ),
-          value: enabled,
-          activeThumbColor: AppThemeExtension.of(context).accent,
-          onChanged: (v) => ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
-        ),
-      ),
+      child: inner,
     );
   }
 }

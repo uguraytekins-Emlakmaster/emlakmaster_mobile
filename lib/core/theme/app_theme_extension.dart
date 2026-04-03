@@ -91,7 +91,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   BoxDecoration surfaceCardDecoration({bool highlight = false, Color? surfaceColor}) {
     return BoxDecoration(
       color: surfaceColor ?? surface,
-      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
       border: Border.all(
         color: highlight ? brandPrimary.withValues(alpha: 0.35) : border.withValues(alpha: 0.55),
         width: 0.85,
@@ -121,7 +121,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   BoxDecoration championCardDecoration({bool withGlow = false, Color? borderColor}) {
     return BoxDecoration(
       color: surface,
-      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
       border: Border.all(color: borderColor ?? border),
       boxShadow: withGlow
           ? [

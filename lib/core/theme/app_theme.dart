@@ -43,7 +43,7 @@ abstract final class AppTheme {
         color: ThemePalette.surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -176,7 +176,7 @@ abstract final class AppTheme {
         color: ThemePalette.surfaceLight,
         elevation: 1,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

@@ -1,12 +1,15 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_insight_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,47 +94,54 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 }
                 final now = DateTime.now();
                 final today = DateTime(now.year, now.month, now.day);
-                return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(
-                    DesignTokens.space6,
-                    DesignTokens.space2,
-                    DesignTokens.space6,
-                    100,
-                  ),
-                  itemCount: docs.length,
-                  cacheExtent: 300,
-                  itemBuilder: (context, index) {
-                    final doc = docs[index];
-                    final d = doc.data();
-                    final id = doc.id;
-                    final title =
-                        d['title'] as String? ?? 'Görev';
-                    final dueAt = (d['dueAt'] as Timestamp?)?.toDate();
-                    final done = d['done'] == true;
-                    final customerId = d['customerId'] as String?;
-                    return _TaskTile(
-                      id: id,
-                      title: title,
-                      dueAt: dueAt,
-                      done: done,
-                      customerId: customerId,
-                      isOverdue: dueAt != null &&
-                          dueAt.isBefore(today) &&
-                          !done,
-                      onToggleDone: () => _toggleDone(id, d, !done),
-                      onTap: () => _toggleDone(id, d, !done),
-                    );
-                  },
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                        DesignTokens.space6,
+                        DesignTokens.space2,
+                        DesignTokens.space6,
+                        88,
+                      ),
+                      itemCount: docs.length,
+                      cacheExtent: 300,
+                      itemBuilder: (context, index) {
+                        final doc = docs[index];
+                        final d = doc.data();
+                        final id = doc.id;
+                        final title = d['title'] as String? ?? 'Görev';
+                        final dueAt = (d['dueAt'] as Timestamp?)?.toDate();
+                        final done = d['done'] == true;
+                        final customerId = d['customerId'] as String?;
+                        return _TaskTile(
+                          id: id,
+                          title: title,
+                          dueAt: dueAt,
+                          done: done,
+                          customerId: customerId,
+                          isOverdue: dueAt != null &&
+                              dueAt.isBefore(today) &&
+                              !done,
+                          onToggleDone: () => _toggleDone(id, d, !done),
+                          onTap: () => _toggleDone(id, d, !done),
+                        );
+                      },
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: SafeArea(
+                        top: false,
+                        child: _TasksDockedAddBar(
+                          onPressed: () => _showAddTaskDialog(context, ref, uid),
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
-            ),
-      floatingActionButton: uid.isEmpty
-          ? null
-          : FloatingActionButton(
-              onPressed: () => _showAddTaskDialog(context, ref, uid),
-              backgroundColor: AppThemeExtension.of(context).accent,
-              foregroundColor: Colors.black,
-              child: const Icon(Icons.add_rounded, size: 28),
             ),
     );
   }
@@ -142,17 +152,38 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     bool done,
   ) async {
     HapticFeedback.lightImpact();
+    final wasDone = current['done'] == true;
+    final customerId = (current['customerId'] as String?)?.trim();
     try {
       await FirestoreService.setTask({
         ...current,
         'id': id,
         'done': done,
       });
+      if (!wasDone &&
+          done &&
+          customerId != null &&
+          customerId.isNotEmpty) {
+        try {
+          await FirestoreService.mergeCustomerCrmAfterTaskCompleted(customerId);
+          ref.invalidate(customerInsightProvider(customerId));
+        } catch (e, st) {
+          AppLogger.w('Müşteri CRM geri bildirimi (görev sonrası) yazılamadı', e, st);
+        }
+      }
     } on FirebaseException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Görev güncellenemedi: ${e.message ?? e.code}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on StateError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -165,42 +196,24 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     final customerIdController = TextEditingController();
     DateTime? pickedDate;
 
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: AppThemeExtension.of(context).surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) {
         return Padding(
           padding: EdgeInsets.only(
             left: DesignTokens.space6,
             right: DesignTokens.space6,
-            top: DesignTokens.space6,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + DesignTokens.space6,
+            bottom: MediaQuery.viewInsetsOf(ctx).bottom + DesignTokens.space6,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppThemeExtension.of(context).border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const PremiumBottomSheetHandle(),
               const SizedBox(height: DesignTokens.space4),
-              Text(
-                'Yeni görev',
-                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                      color: AppThemeExtension.of(context).textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
+              PremiumSheetHeader(
+                title: 'Yeni görev',
+                subtitle: 'Vade ve müşteri bağlantısı opsiyonel; görevler Görevler sekmesinde listelenir.',
               ),
               const SizedBox(height: DesignTokens.space4),
               TextField(
@@ -314,6 +327,15 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                               ),
                             );
                           }
+                        } on StateError catch (e) {
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text(e.message),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
                         }
                       },
                       style: FilledButton.styleFrom(
@@ -329,6 +351,64 @@ class _TasksPageState extends ConsumerState<TasksPage> {
           ),
         );
       },
+    );
+  }
+}
+
+class _TasksDockedAddBar extends StatelessWidget {
+  const _TasksDockedAddBar({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Material(
+      color: ext.surfaceElevated,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: ext.border.withValues(alpha: 0.5)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: ext.shadowColor.withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            DesignTokens.space6,
+            DesignTokens.space3,
+            DesignTokens.space6,
+            DesignTokens.space3,
+          ),
+          child: FilledButton.icon(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              onPressed();
+            },
+            icon: Icon(Icons.add_rounded, color: ext.onBrand, size: 22),
+            label: Text(
+              'Yeni görev',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: ext.onBrand,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: ext.accent,
+              foregroundColor: ext.onBrand,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -356,31 +436,37 @@ class _TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: DesignTokens.space3),
-      color: AppThemeExtension.of(context).surface,
+      color: ext.surfaceElevated,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
         side: BorderSide(
           color: isOverdue
-              ? AppThemeExtension.of(context).danger.withValues(alpha: 0.5)
-              : AppThemeExtension.of(context).border,
+              ? ext.danger.withValues(alpha: 0.42)
+              : ext.border.withValues(alpha: 0.55),
         ),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
         child: Padding(
-          padding: const EdgeInsets.all(DesignTokens.space4),
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.space3,
+            vertical: DesignTokens.space2,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Checkbox(
                 value: done,
                 onChanged: (_) => onToggleDone(),
-                activeColor: AppThemeExtension.of(context).accent,
+                activeColor: ext.accent,
+                side: BorderSide(color: ext.border.withValues(alpha: 0.8)),
                 fillColor: WidgetStateProperty.resolveWith((_) {
-                  return done ? AppThemeExtension.of(context).accent : Colors.transparent;
+                  return done ? ext.accent : Colors.transparent;
                 }),
               ),
               Expanded(
@@ -389,25 +475,21 @@ class _TaskTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        color: done
-                            ? AppThemeExtension.of(context).textTertiary
-                            : AppThemeExtension.of(context).textPrimary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                        decoration: done ? TextDecoration.lineThrough : null,
-                      ),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: done ? ext.textTertiary : ext.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            decoration: done ? TextDecoration.lineThrough : null,
+                            height: 1.25,
+                          ),
                     ),
                     if (dueAt != null) ...[
                       const SizedBox(height: DesignTokens.space1),
                       Text(
                         _formatDue(dueAt!, isOverdue),
-                        style: TextStyle(
-                          color: isOverdue
-                              ? AppThemeExtension.of(context).danger
-                              : AppThemeExtension.of(context).textSecondary,
-                          fontSize: 13,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: isOverdue ? ext.danger : ext.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
                       ),
                     ],
                     if (customerId != null && customerId!.isNotEmpty) ...[
@@ -421,10 +503,10 @@ class _TaskTile extends StatelessWidget {
                         ),
                         child: Text(
                           'Müşteriye git →',
-                          style: TextStyle(
-                            color: AppThemeExtension.of(context).accent,
-                            fontSize: 12,
-                          ),
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: ext.accent,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ),
                     ],

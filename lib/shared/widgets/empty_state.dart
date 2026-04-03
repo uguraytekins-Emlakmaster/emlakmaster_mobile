@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/branding/brand_emblem.dart';
 import '../../core/theme/app_theme_extension.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/pressable_scale_button.dart';
@@ -19,6 +20,11 @@ class EmptyState extends StatefulWidget {
     this.compact = false,
     this.illustration,
     this.premiumVisual = false,
+    this.brandSignature = false,
+    /// İnce yüzey + çerçeve; boş ekranda içeriği gruplar (CRM boş durumları).
+    this.grouped = false,
+    /// Dikeyde ortanın üstüne hizalar; üst kontroller ile boş içerik arası "çöl" hissini azaltır.
+    this.anchorAboveCenter = false,
   });
 
   final IconData icon;
@@ -31,6 +37,13 @@ class EmptyState extends StatefulWidget {
   final bool compact;
   final Widget? illustration;
   final bool premiumVisual;
+
+  /// Seçili premium boş durumlarda ince marka imzası (çok sınırlı kullanım).
+  final bool brandSignature;
+
+  final bool grouped;
+
+  final bool anchorAboveCenter;
 
   @override
   State<EmptyState> createState() => _EmptyStateState();
@@ -71,9 +84,22 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
-    final content = Column(
+    final column = Column(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        if (widget.brandSignature) ...[
+          ExcludeSemantics(
+            child: Opacity(
+              opacity: 0.42,
+              child: BrandEmblem(
+                variant: BrandEmblemVariant.monoGold,
+                size: widget.compact ? 28 : 36,
+              ),
+            ),
+          ),
+          SizedBox(height: widget.compact ? DesignTokens.space3 : DesignTokens.space4),
+        ],
         if (widget.illustration != null)
           widget.illustration!
         else
@@ -129,6 +155,8 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
         Text(
           widget.title,
           textAlign: TextAlign.center,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: ext.foreground,
                 fontWeight: FontWeight.w600,
@@ -139,6 +167,8 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
           Text(
             widget.subtitle!,
             textAlign: TextAlign.center,
+            maxLines: 6,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: textColor.withValues(alpha: 0.88),
                   height: 1.4,
@@ -147,35 +177,42 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
         ],
         if (widget.outlinedActionLabel != null && widget.onOutlinedAction != null) ...[
           SizedBox(height: widget.compact ? DesignTokens.space3 : DesignTokens.space4),
-          OutlinedButton.icon(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              widget.onOutlinedAction!();
-            },
-            icon: Icon(Icons.add_rounded, size: 18, color: brand),
-            label: Text(
-              widget.outlinedActionLabel!,
-              style: TextStyle(color: brand, fontWeight: FontWeight.w600),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: brand.withValues(alpha: 0.85)),
-              padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                widget.onOutlinedAction!();
+              },
+              icon: Icon(Icons.add_rounded, size: 18, color: brand),
+              label: Text(
+                widget.outlinedActionLabel!,
+                style: TextStyle(color: brand, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: brand.withValues(alpha: 0.85)),
+                padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
+              ),
             ),
           ),
         ],
         if (widget.actionLabel != null && widget.onAction != null) ...[
-          SizedBox(height: widget.compact ? DesignTokens.space3 : DesignTokens.space5),
-          PressableScaleButton(
-            child: FilledButton.icon(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                widget.onAction!();
-              },
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: Text(widget.actionLabel!),
-              style: FilledButton.styleFrom(
-                backgroundColor: brand,
-                foregroundColor: ext.onBrand,
+          SizedBox(height: widget.compact ? DesignTokens.space3 : DesignTokens.space4),
+          SizedBox(
+            width: double.infinity,
+            child: PressableScaleButton(
+              child: FilledButton.icon(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  widget.onAction!();
+                },
+                icon: const Icon(Icons.add_rounded, size: 20),
+                label: Text(widget.actionLabel!),
+                style: FilledButton.styleFrom(
+                  backgroundColor: brand,
+                  foregroundColor: ext.onBrand,
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: DesignTokens.space4),
+                ),
               ),
             ),
           ),
@@ -183,16 +220,60 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
       ],
     );
 
+    final content = widget.grouped
+        ? DecoratedBox(
+            decoration: BoxDecoration(
+              color: ext.surfaceElevated.withValues(alpha: 0.42),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              border: Border.all(color: ext.border.withValues(alpha: 0.38)),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.compact ? DesignTokens.space4 : DesignTokens.space5,
+                vertical: widget.compact ? DesignTokens.space4 : DesignTokens.space6,
+              ),
+              child: column,
+            ),
+          )
+        : column;
+
+    final animated = FadeTransition(
+      opacity: fade,
+      child: SlideTransition(
+        position: slide,
+        child: content,
+      ),
+    );
+
+    final pad = EdgeInsets.all(widget.compact ? DesignTokens.space4 : DesignTokens.space6);
+
+    if (widget.anchorAboveCenter) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Align(
+                alignment: Alignment(
+                  0,
+                  widget.compact ? -0.28 : -0.4,
+                ),
+                child: Padding(
+                  padding: pad,
+                  child: animated,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(widget.compact ? DesignTokens.space4 : DesignTokens.space6),
-        child: FadeTransition(
-          opacity: fade,
-          child: SlideTransition(
-            position: slide,
-            child: content,
-          ),
-        ),
+        padding: pad,
+        child: animated,
       ),
     );
   }

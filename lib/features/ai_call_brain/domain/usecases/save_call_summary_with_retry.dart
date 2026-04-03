@@ -2,12 +2,18 @@ import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/shared/models/call_summary_models.dart';
 
 /// Call summary kaydı: humanEdited/humanApproved korunur, fail durumunda retry.
+/// [assignedAgentId] Firestore kuralları (agentId / assignedAgentId) için zorunlu.
 class SaveCallSummaryWithRetry {
-  Future<void> call(CallSummaryEntity summary) async {
+  Future<void> call(
+    CallSummaryEntity summary, {
+    required String assignedAgentId,
+  }) async {
     final data = <String, dynamic>{
       'id': summary.id,
       'callId': summary.callId,
       'customerId': summary.customerId,
+      'agentId': assignedAgentId,
+      'assignedAgentId': assignedAgentId,
       'shortSummary': summary.shortSummary,
       'longSummary': summary.longSummary,
       'intent': summary.intent,
