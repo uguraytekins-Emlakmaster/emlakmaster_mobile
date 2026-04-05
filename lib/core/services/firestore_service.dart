@@ -986,6 +986,10 @@ class FirestoreService {
       'price': price,
       'location': location,
       'source': source,
+      'sourcePlatform': 'internal',
+      'sourceListingId': ref.id,
+      'isOwnedByOffice': true,
+      'syncStatus': 'synced',
       'createdAt': now,
       'updatedAt': now,
     });

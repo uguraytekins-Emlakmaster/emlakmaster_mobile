@@ -11,6 +11,7 @@ const {
   makeDocId,
 } = require("./duplicateService");
 const { upsertIntegrationListing } = require("../integrationListingsAdmin");
+const { upsertCanonicalOwnedListing } = require("../listingSync/canonicalListing");
 const { patchTask, COL } = require("./listingImportProcessor");
 
 /**
@@ -155,6 +156,15 @@ async function processFileImportTask(db, bucket, taskId, task) {
     return;
   }
 
+  const importSourcePlatform =
+    parsed.format === "csv"
+      ? "import_csv"
+      : parsed.format === "json"
+        ? "import_json"
+        : parsed.format === "xlsx"
+          ? "import_xlsx"
+          : "import_file";
+
   const rows = parsed.rows;
   if (!rows.length) {
     await patchTask(db, taskId, {
@@ -241,6 +251,26 @@ async function processFileImportTask(db, bucket, taskId, task) {
       }
 
       await upsertIntegrationListing(db, docId, ownerUserId, listingPayload);
+
+      const loc = [m.city, m.district].filter(Boolean).join(" · ");
+      try {
+        await upsertCanonicalOwnedListing(db, {
+          ownerUserId,
+          officeId,
+          sourcePlatform: importSourcePlatform,
+          sourceListingId: extId,
+          title: m.title,
+          price: m.price,
+          location: loc || null,
+          imageUrl: m.images && m.images.length ? m.images[0] : null,
+          syncHash: listingPayload.syncHash,
+          rawPayloadRef: `listing_import_tasks/${taskId}`,
+        });
+      } catch (e) {
+        // integration_listings yazıldı; canonical ikincil — hata görevi tamamen düşürmesin
+        console.warn("upsertCanonicalOwnedListing", e);
+      }
+
       imported++;
       integrationListingDocIds.push(docId);
       externalListingIds.push(extId);

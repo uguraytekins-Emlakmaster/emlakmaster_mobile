@@ -228,6 +228,12 @@ exports.ingestListingsPipeline = functions
 // ---------------------------------------------------------------------------
 // Core Import Engine — URL / dosya / uzantı / senkron / yönetici onayı
 // ---------------------------------------------------------------------------
+const listingSyncApi = require("./listingSync/listingSyncApi");
+exports.syncOwnedListingsForOffice = listingSyncApi.syncOwnedListingsForOffice;
+
+const backfillLegacyListings = require("./listingMigration/backfillLegacyListings");
+exports.backfillLegacyListings = backfillLegacyListings.backfillLegacyListings;
+
 const listingImportApi = require("./listingImportEngine/listingImportApi");
 exports.enqueueUrlImport = listingImportApi.enqueueUrlImport;
 exports.enqueueFileImport = listingImportApi.enqueueFileImport;

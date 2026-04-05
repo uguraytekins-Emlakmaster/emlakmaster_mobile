@@ -25,6 +25,7 @@ final _allKeys = [
   AppConstants.keySoundEffects,
   AppConstants.keyPowerSaver,
   AppConstants.keyFeatureExternalIntegrations,
+  AppConstants.keyFeatureOfficialMarketFeed,
   AppConstants.keyV1LeanProduct,
 ];
 
@@ -81,6 +82,7 @@ class FeatureFlagsNotifier extends StateNotifier<AsyncValue<Map<String, bool>>> 
 
 bool _defaultFeatureFlag(String key) {
   if (key == AppConstants.keyPowerSaver) return false;
+  if (key == AppConstants.keyFeatureOfficialMarketFeed) return false;
   if (key == AppConstants.keyV1LeanProduct) return true;
   if (key == AppConstants.keyCompactDashboard || key == AppConstants.keySoundEffects) {
     return false;

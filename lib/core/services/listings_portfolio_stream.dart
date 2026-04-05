@@ -3,147 +3,149 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/data/integration_listings_repository.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_synced_listing_entity.dart';
+import 'package:emlakmaster_mobile/features/listings/data/listing_row_factory.dart';
+import 'package:emlakmaster_mobile/features/listings/domain/listing_row_view.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
-/// İlan Portföyü satırı: ofis [listings] veya harici [external_listings].
-class PortfolioListingItem {
-  const PortfolioListingItem({
-    required this.id,
-    required this.isExternal,
-    required this.title,
-    required this.price,
-    required this.location,
-    this.imageUrl,
-    this.externalLink,
-  });
-
-  final String id;
-  final bool isExternal;
-  final String title;
-  final String price;
-  final String location;
-  final String? imageUrl;
-  final String? externalLink;
-}
-
-/// [listings] + [external_listings] birleşik akışı (tek abonelikte güncellenir).
+/// Ofis envanteri: canonical `listings` (ownerUserId ve/veya officeId) + legacy `integration_listings`.
+/// [external_listings] pazar akışı burada **yok**.
+///
+/// `integration_listings` satırı, aynı `sourcePlatform|sourceListingId` canonical `listings` ile
+/// çakışıyorsa düşürülür (çift kart önlenir).
 class ListingsPortfolioStream {
   ListingsPortfolioStream._();
 
-  static const int _externalLimit = 60;
+  static String _dedupeKey(ListingRowView r) => '${r.sourcePlatform}|${r.sourceListingId}';
 
-  /// Her çağrı yeni bir stream döner; [StatefulWidget] içinde bir kez saklayın.
-  static Stream<List<PortfolioListingItem>> combined() {
-    final controller = StreamController<List<PortfolioListingItem>>();
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? subInternal;
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? subExternal;
+  /// [officeId] — `users.officeId`; canonical ofis kapsamı için ikinci sorgu.
+  static Stream<List<ListingRowView>> owned({
+    required String uid,
+    String? officeId,
+  }) {
+    final controller = StreamController<List<ListingRowView>>();
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? subOwner;
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? subOffice;
+    StreamSubscription<List<IntegrationSyncedListingEntity>>? subIntegration;
 
-    QuerySnapshot<Map<String, dynamic>>? lastInternal;
-    QuerySnapshot<Map<String, dynamic>>? lastExternal;
+    QuerySnapshot<Map<String, dynamic>>? lastOwner;
+    QuerySnapshot<Map<String, dynamic>>? lastOffice;
+    List<IntegrationSyncedListingEntity> lastIntegration = const [];
 
     void emit() {
       if (controller.isClosed) return;
-      controller.add(_merge(lastInternal, lastExternal));
+
+      final byDocId = <String, ListingRowView>{};
+      for (final d in lastOwner?.docs ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[]) {
+        byDocId[d.id] = listingRowFromInternalDoc(d);
+      }
+      for (final d in lastOffice?.docs ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[]) {
+        if (!byDocId.containsKey(d.id)) {
+          byDocId[d.id] = listingRowFromInternalDoc(d);
+        }
+      }
+
+      final canonicalKeys = <String>{};
+      for (final r in byDocId.values) {
+        canonicalKeys.add(_dedupeKey(r));
+      }
+
+      final integrationRows = <ListingRowView>[];
+      for (final e in lastIntegration) {
+        final k = '${e.platform.storageKey}|${e.externalListingId}';
+        if (canonicalKeys.contains(k)) {
+          continue;
+        }
+        integrationRows.add(listingRowFromIntegration(e));
+      }
+
+      final merged = <ListingRowView>[...byDocId.values, ...integrationRows];
+      merged.sort((a, b) {
+        final ga = _groupOrder(a.rowKind);
+        final gb = _groupOrder(b.rowKind);
+        if (ga != gb) return ga.compareTo(gb);
+        final ta = a.lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final tb = b.lastSyncedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return tb.compareTo(ta);
+      });
+      controller.add(merged);
     }
 
     FirestoreService.ensureInitialized().then((_) {
       if (controller.isClosed) return;
       if (!FirestoreService.isFirestoreReady) {
-        controller.add(const <PortfolioListingItem>[]);
+        controller.add(const <ListingRowView>[]);
         return;
       }
 
       final fs = FirebaseFirestore.instance;
 
-      subInternal = fs.collection(AppConstants.colListings).snapshots().listen(
-        (s) {
-          lastInternal = s;
+      subOwner = fs
+          .collection(AppConstants.colListings)
+          .where('ownerUserId', isEqualTo: uid)
+          .snapshots()
+          .listen(
+            (s) {
+              lastOwner = s;
+              emit();
+            },
+            onError: (Object e, StackTrace st) {
+              if (kDebugMode) debugPrint('ListingsPortfolioStream ownerUserId: $e');
+              lastOwner = null;
+              emit();
+            },
+          );
+
+      final oid = officeId?.trim() ?? '';
+      if (oid.isNotEmpty) {
+        subOffice = fs
+            .collection(AppConstants.colListings)
+            .where('officeId', isEqualTo: oid)
+            .snapshots()
+            .listen(
+              (s) {
+                lastOffice = s;
+                emit();
+              },
+              onError: (Object e, StackTrace st) {
+                if (kDebugMode) debugPrint('ListingsPortfolioStream officeId: $e');
+                lastOffice = null;
+                emit();
+              },
+            );
+      }
+
+      subIntegration = IntegrationListingsRepository.instance.streamForOwner(uid).listen(
+        (list) {
+          lastIntegration = list;
           emit();
         },
         onError: (Object e, StackTrace st) {
-          if (kDebugMode) debugPrint('ListingsPortfolioStream internal: $e');
-          lastInternal = null;
-          emit();
-        },
-      );
-
-      final externalQuery = fs
-          .collection(AppConstants.colExternalListings)
-          .orderBy('postedAt', descending: true)
-          .limit(_externalLimit);
-
-      subExternal = externalQuery.snapshots().listen(
-        (s) {
-          lastExternal = s;
-          emit();
-        },
-        onError: (Object e, StackTrace st) {
-          if (kDebugMode) debugPrint('ListingsPortfolioStream external: $e');
-          lastExternal = null;
+          if (kDebugMode) debugPrint('ListingsPortfolioStream integration: $e');
+          lastIntegration = const [];
           emit();
         },
       );
     });
 
     controller.onCancel = () {
-      subInternal?.cancel();
-      subExternal?.cancel();
+      subOwner?.cancel();
+      subOffice?.cancel();
+      subIntegration?.cancel();
     };
 
     return controller.stream;
   }
 
-  static List<PortfolioListingItem> _merge(
-    QuerySnapshot<Map<String, dynamic>>? internal,
-    QuerySnapshot<Map<String, dynamic>>? external,
-  ) {
-    final out = <PortfolioListingItem>[];
-
-    for (final doc in internal?.docs ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[]) {
-      final d = doc.data();
-      final priceRaw = d['price'];
-      final priceStr = priceRaw is String
-          ? priceRaw
-          : (priceRaw as num?)?.toString() ?? '—';
-      final loc = d['location'] as String? ?? d['district'] as String? ?? '—';
-      out.add(
-        PortfolioListingItem(
-          id: doc.id,
-          isExternal: false,
-          title: d['title'] as String? ?? '',
-          price: priceStr,
-          location: loc,
-          imageUrl: d['imageUrl'] as String?,
-        ),
-      );
+  static int _groupOrder(ListingRowKind k) {
+    switch (k) {
+      case ListingRowKind.officePortfolio:
+        return 0;
+      case ListingRowKind.connectedPlatform:
+        return 1;
+      case ListingRowKind.market:
+        return 2;
     }
-
-    for (final doc in external?.docs ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[]) {
-      final d = doc.data();
-      final priceText = d['priceText'] as String?;
-      final priceVal = d['priceValue'];
-      final priceStr = (priceText != null && priceText.isNotEmpty)
-          ? priceText
-          : (priceVal is num ? priceVal.toString() : '—');
-      final city = d['cityName'] as String? ?? d['cityCode'] as String? ?? '';
-      final district = d['districtName'] as String?;
-      final locParts = <String>[];
-      if (city.isNotEmpty) locParts.add(city);
-      if (district != null && district.isNotEmpty) locParts.add(district);
-      final loc = locParts.join(' · ');
-      out.add(
-        PortfolioListingItem(
-          id: doc.id,
-          isExternal: true,
-          title: d['title'] as String? ?? '',
-          price: priceStr,
-          location: loc.isEmpty ? '—' : loc,
-          imageUrl: d['imageUrl'] as String?,
-          externalLink: d['link'] as String?,
-        ),
-      );
-    }
-
-    return out;
   }
 }

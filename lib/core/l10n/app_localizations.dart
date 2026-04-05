@@ -142,6 +142,23 @@ class AppLocalizations {
       'listing_not_found': 'İlan bulunamadı.',
       'listing_load_error': 'İlan yüklenemedi.',
       'listings_tab_portfolio': 'Portföy',
+      'listings_tab_owned': 'Benim İlanlarım',
+      'listings_tab_market': 'Pazar Akışı',
+      'listings_subtitle_owned': 'Ofis portföyü ve resmi platform senkronu',
+      'listings_subtitle_market': 'Yalnızca onaylı / resmi akış verisi',
+      'listings_section_office': 'Ofis portföyü',
+      'listings_section_connected': 'Bağlı platformlar',
+      'listings_badge_owned': 'Ofis',
+      'listings_badge_market': 'Pazar akışı',
+      'listings_badge_not_inventory':
+          'Birinci şahıs envanter değildir; genel piyasa verisidir.',
+      'listings_sync_line': '{0} · {1}',
+      'listings_market_disabled_title': 'Pazar akışı kapalı',
+      'listings_market_disabled_sub':
+          'Resmi ve onaylı bir pazar veri kaynağı etkinleştirilince burada görünecek. Kazıma veya gayriresmî veri gösterilmez.',
+      'listings_empty_market': 'Pazar akışında kayıt yok',
+      'listings_empty_market_sub':
+          'Resmi ingest veya bağlantı güncellendiğinde ilanlar listelenir.',
       'listings_tab_my_external': 'Benim ilanlarım',
       'my_external_listings_title': 'Harici ilanlarım',
       'my_external_listings_hero_sub':
@@ -326,6 +343,23 @@ class AppLocalizations {
       'listing_not_found': 'Listing not found.',
       'listing_load_error': 'Could not load listing.',
       'listings_tab_portfolio': 'Portfolio',
+      'listings_tab_owned': 'My listings',
+      'listings_tab_market': 'Market feed',
+      'listings_subtitle_owned': 'Office portfolio and official platform sync',
+      'listings_subtitle_market': 'Approved / official feed data only',
+      'listings_section_office': 'Office portfolio',
+      'listings_section_connected': 'Connected platforms',
+      'listings_badge_owned': 'Office',
+      'listings_badge_market': 'Market feed',
+      'listings_badge_not_inventory':
+          'Not first-party inventory; general market data.',
+      'listings_sync_line': '{0} · {1}',
+      'listings_market_disabled_title': 'Market feed disabled',
+      'listings_market_disabled_sub':
+          'Appears when an official market data source is enabled. Unofficial or scraped data is not shown.',
+      'listings_empty_market': 'No market feed items',
+      'listings_empty_market_sub':
+          'Listings appear when official ingest or feeds update.',
       'listings_tab_my_external': 'My listings',
       'my_external_listings_title': 'My external listings',
       'my_external_listings_hero_sub':

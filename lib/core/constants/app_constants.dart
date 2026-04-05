@@ -53,6 +53,12 @@ abstract final class AppConstants {
   static const String colExternalConnections = 'external_connections';
   /// Bağlantı senkronu ile gelen ilanlar (Market Pulse [colExternalListings] ile ayrı tutulur).
   static const String colIntegrationListings = 'integration_listings';
+  /// Ofis başına resmi connector / senkron yapılandırması (salt okuma; Functions yazar).
+  static const String colListingSources = 'listing_sources';
+  /// Owned listing senkron çalıştırma kayıtları (salt okuma).
+  static const String colListingSyncRuns = 'listing_sync_runs';
+  /// Senkron hata satırları (salt okuma).
+  static const String colListingSyncErrors = 'listing_sync_errors';
   /// URL / dosya / uzantı içe aktarma görevleri (Cloud Functions yazar).
   static const String colListingImportTasks = 'listing_import_tasks';
   /// Senkron ve import logları (salt okuma).
@@ -93,6 +99,9 @@ abstract final class AppConstants {
   static const String keyPowerSaver = 'power_saver';
   /// Harici platform hesapları (Connected Accounts) — Phase 1 UI.
   static const String keyFeatureExternalIntegrations = 'feature_external_integrations';
+
+  /// Resmi pazar akışı (`external_listings` ingest). Kapalıyken «Pazar Akışı» sekmesi gösterilmez.
+  static const String keyFeatureOfficialMarketFeed = 'feature_official_market_feed';
 
   /// V1 odaklı (hafif) ürün: ikincil sekmeler ve analitik yükü azaltır; çekirdek CRM açık kalır.
   /// Varsayılan `true` — tam özellik seti için Ayarlardan kapatılabilir.

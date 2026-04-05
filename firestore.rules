@@ -395,6 +395,23 @@ service cloud.firestore {
         && (resource.data.ownerUserId == request.auth.uid || isManager());
       allow create, update, delete: if false;
     }
+
+    // Resmi connector / senkron yapılandırması — salt okuma; yazma Admin SDK.
+    match /listing_sources/{docId} {
+      allow read: if isSignedIn()
+        && (resource.data.officeId == userOfficeId(request.auth.uid) || isManager());
+      allow create, update, delete: if false;
+    }
+    match /listing_sync_runs/{docId} {
+      allow read: if isSignedIn()
+        && (resource.data.officeId == userOfficeId(request.auth.uid) || isManager());
+      allow create, update, delete: if false;
+    }
+    match /listing_sync_errors/{docId} {
+      allow read: if isSignedIn()
+        && (resource.data.officeId == userOfficeId(request.auth.uid) || isManager());
+      allow create, update, delete: if false;
+    }
     match /news/{docId} {
       allow read: if isSignedIn();
       allow write: if false;
