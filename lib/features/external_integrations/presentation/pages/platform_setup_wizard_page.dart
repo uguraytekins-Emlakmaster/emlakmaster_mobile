@@ -2,13 +2,13 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/external_integrations/data/platform_setup_memory_store.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_connection_mode.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_platform_id.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_setup_status.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_setup_record.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,25 +55,32 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     }
   }
 
-  void _loadExisting() {
+  Future<void> _loadExisting() async {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
     final p = widget.initialPlatform;
     if (uid == null || p == null) return;
     final officeId = _officeId();
-    final rec = PlatformSetupMemoryStore.instance.get(uid, officeId, p);
-    if (rec == null) return;
+    if (officeId.isEmpty) return;
+    PlatformSetupRecord? rec;
+    try {
+      rec = await ref.read(platformSetupRepositoryProvider).get(officeId, p);
+    } on FirebaseException catch (_) {
+      rec = null;
+    }
+    final loaded = rec;
+    if (!mounted || loaded == null) return;
     setState(() {
-      _platform = rec.platform;
-      _mode = rec.connectionMode;
-      _storeName.text = rec.storeName ?? '';
-      _email.text = rec.contactEmail ?? '';
-      _company.text = rec.companyInfo ?? '';
-      _transferKey.text = rec.transferKey ?? '';
-      _integrationRef.text = rec.integrationReference ?? '';
-      _applicationStatus.text = rec.applicationStatus ?? '';
-      _notes.text = rec.notes ?? '';
-      _awaitingVerification = rec.awaitingVerification;
-      _setupFormCompleted = rec.setupCompleted;
+      _platform = loaded.platform;
+      _mode = loaded.connectionMode;
+      _storeName.text = loaded.storeName ?? '';
+      _email.text = loaded.contactEmail ?? '';
+      _company.text = loaded.companyInfo ?? '';
+      _transferKey.text = loaded.transferKey ?? '';
+      _integrationRef.text = loaded.integrationReference ?? '';
+      _applicationStatus.text = loaded.applicationStatus ?? '';
+      _notes.text = loaded.notes ?? '';
+      _awaitingVerification = loaded.awaitingVerification;
+      _setupFormCompleted = loaded.setupCompleted;
     });
   }
 
@@ -114,14 +121,28 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     return IntegrationSetupStatus.inProgress;
   }
 
-  void _saveAndFinish() {
+  Future<void> _saveAndFinish() async {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
     final p = _platform;
     if (uid == null || p == null || _mode == null) return;
 
     final now = DateTime.now();
     final officeId = _officeId();
-    final existing = PlatformSetupMemoryStore.instance.get(uid, officeId, p);
+    if (officeId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ofis bağlamı yok; kurulum kaydedilemedi.')),
+        );
+      }
+      return;
+    }
+
+    PlatformSetupRecord? existing;
+    try {
+      existing = await ref.read(platformSetupRepositoryProvider).get(officeId, p);
+    } on FirebaseException catch (_) {
+      existing = null;
+    }
 
     final record = PlatformSetupRecord(
       platform: p,
@@ -138,16 +159,26 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
       notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       setupCompleted: _setupFormCompleted,
       awaitingVerification: _awaitingVerification,
+      oauthVerified: existing?.oauthVerified ?? false,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
       lastVerifiedAt: _awaitingVerification ? null : existing?.lastVerifiedAt,
       lastSyncAt: existing?.lastSyncAt,
     );
 
-    PlatformSetupMemoryStore.instance.upsert(record);
-    ref.read(platformSetupRevisionProvider.notifier).state++;
+    try {
+      await ref.read(platformSetupRepositoryProvider).upsert(record);
+    } on FirebaseException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Kayıt başarısız')),
+        );
+      }
+      return;
+    }
+
     HapticFeedback.mediumImpact();
-    setState(() => _step = 4);
+    if (mounted) setState(() => _step = 4);
   }
 
   @override
@@ -243,7 +274,11 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
                     ),
                   if (_step == 3)
                     FilledButton(
-                      onPressed: _canFinish() ? _saveAndFinish : null,
+                      onPressed: _canFinish()
+                          ? () async {
+                              await _saveAndFinish();
+                            }
+                          : null,
                       child: const Text('Kaydet ve sonuç'),
                     ),
                   if (_step == 4)

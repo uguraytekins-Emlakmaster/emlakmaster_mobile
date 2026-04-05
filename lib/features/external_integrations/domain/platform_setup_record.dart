@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 import 'integration_connection_mode.dart';
@@ -95,6 +96,82 @@ class PlatformSetupRecord extends Equatable {
       lastVerifiedAt: lastVerifiedAt ?? this.lastVerifiedAt,
       lastSyncAt: lastSyncAt ?? this.lastSyncAt,
     );
+  }
+
+  /// `offices/{officeId}/platform_setups/{platform.storageKey}`
+  Map<String, dynamic> toFirestore() {
+    return {
+      'platform': platform.storageKey,
+      'officeId': officeId,
+      'ownerUserId': ownerUserId,
+      'connectionMode': connectionMode.name,
+      'setupStatus': setupStatus.name,
+      'storeName': storeName,
+      'contactEmail': contactEmail,
+      'companyInfo': companyInfo,
+      'transferKey': transferKey,
+      'integrationReference': integrationReference,
+      'applicationStatus': applicationStatus,
+      'notes': notes,
+      'setupCompleted': setupCompleted,
+      'awaitingVerification': awaitingVerification,
+      'oauthVerified': oauthVerified,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
+      'lastVerifiedAt': lastVerifiedAt != null ? Timestamp.fromDate(lastVerifiedAt!) : null,
+      'lastSyncAt': lastSyncAt != null ? Timestamp.fromDate(lastSyncAt!) : null,
+    };
+  }
+
+  static PlatformSetupRecord? fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final d = doc.data();
+    if (d == null) return null;
+    final platformKey = d['platform'] as String?;
+    final pid = IntegrationPlatformId.tryParse(platformKey);
+    if (pid == null) return null;
+
+    DateTime? ts(dynamic v) {
+      if (v is Timestamp) return v.toDate();
+      return null;
+    }
+
+    return PlatformSetupRecord(
+      platform: pid,
+      officeId: d['officeId'] as String? ?? '',
+      ownerUserId: d['ownerUserId'] as String? ?? '',
+      connectionMode: _parseConnectionMode(d['connectionMode'] as String?),
+      setupStatus: _parseSetupStatus(d['setupStatus'] as String?),
+      storeName: d['storeName'] as String?,
+      contactEmail: d['contactEmail'] as String?,
+      companyInfo: d['companyInfo'] as String?,
+      transferKey: d['transferKey'] as String?,
+      integrationReference: d['integrationReference'] as String?,
+      applicationStatus: d['applicationStatus'] as String?,
+      notes: d['notes'] as String?,
+      setupCompleted: d['setupCompleted'] as bool? ?? false,
+      awaitingVerification: d['awaitingVerification'] as bool? ?? false,
+      oauthVerified: d['oauthVerified'] as bool? ?? false,
+      createdAt: ts(d['createdAt']) ?? DateTime.now(),
+      updatedAt: ts(d['updatedAt']) ?? DateTime.now(),
+      lastVerifiedAt: ts(d['lastVerifiedAt']),
+      lastSyncAt: ts(d['lastSyncAt']),
+    );
+  }
+
+  static IntegrationConnectionMode _parseConnectionMode(String? s) {
+    if (s == null) return IntegrationConnectionMode.officialSetup;
+    for (final v in IntegrationConnectionMode.values) {
+      if (v.name == s) return v;
+    }
+    return IntegrationConnectionMode.officialSetup;
+  }
+
+  static IntegrationSetupStatus _parseSetupStatus(String? s) {
+    if (s == null) return IntegrationSetupStatus.notStarted;
+    for (final v in IntegrationSetupStatus.values) {
+      if (v.name == s) return v;
+    }
+    return IntegrationSetupStatus.inProgress;
   }
 
   @override

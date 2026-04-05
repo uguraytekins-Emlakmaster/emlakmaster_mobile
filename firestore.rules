@@ -92,6 +92,34 @@ service cloud.firestore {
         && m.data.status == 'active'
         && m.data.role in ['owner', 'admin', 'manager'];
     }
+
+    function platformSetupOptionalString(d, key, max) {
+      return d.get(key, null) == null || (d.get(key, null) is string && d.get(key, null).size() <= max);
+    }
+    function validPlatformSetupWrite(officeId, platformKey) {
+      let d = request.resource.data;
+      return d.officeId == officeId
+        && d.platform == platformKey
+        && d.ownerUserId is string && d.ownerUserId.size() > 0 && d.ownerUserId.size() < 128
+        && d.connectionMode is string
+        && d.connectionMode in ['officialSetup', 'transferKey', 'fileImport', 'manualOnly']
+        && d.setupStatus is string
+        && d.setupStatus in ['notStarted', 'inProgress', 'awaitingVerification', 'readyForImport', 'liveEnabled', 'blocked', 'error']
+        && d.setupCompleted is bool
+        && d.awaitingVerification is bool
+        && d.oauthVerified is bool
+        && d.createdAt is timestamp
+        && d.updatedAt is timestamp
+        && (d.get('lastVerifiedAt', null) == null || d.lastVerifiedAt is timestamp)
+        && (d.get('lastSyncAt', null) == null || d.lastSyncAt is timestamp)
+        && platformSetupOptionalString(d, 'storeName', 300)
+        && platformSetupOptionalString(d, 'contactEmail', 320)
+        && platformSetupOptionalString(d, 'companyInfo', 500)
+        && platformSetupOptionalString(d, 'transferKey', 500)
+        && platformSetupOptionalString(d, 'integrationReference', 500)
+        && platformSetupOptionalString(d, 'applicationStatus', 500)
+        && platformSetupOptionalString(d, 'notes', 8000);
+    }
     function userPreservesOfficeId() {
       return request.resource.data.get('officeId', '') == resource.data.get('officeId', '');
     }
@@ -233,6 +261,23 @@ service cloud.firestore {
         || (isActiveOfficeMember(officeId)
             && officeMembershipDoc(request.auth.uid, officeId).data.role in ['owner', 'admin']);
       allow delete: if false;
+
+      match /platform_setups/{platformKey} {
+        allow read: if isSignedIn() && (isManager() || isActiveOfficeMember(officeId));
+        allow create: if isSignedIn() && canManageOfficeMembers(officeId)
+          && platformKey in ['sahibinden', 'hepsiemlak', 'emlakjet']
+          && request.resource.data.ownerUserId == request.auth.uid
+          && validPlatformSetupWrite(officeId, platformKey);
+        allow update: if isSignedIn() && canManageOfficeMembers(officeId)
+          && platformKey in ['sahibinden', 'hepsiemlak', 'emlakjet']
+          && resource.data.officeId == officeId
+          && resource.data.platform == platformKey
+          && request.resource.data.officeId == officeId
+          && request.resource.data.platform == platformKey
+          && request.resource.data.ownerUserId == resource.data.ownerUserId
+          && validPlatformSetupWrite(officeId, platformKey);
+        allow delete: if false;
+      }
     }
 
     match /office_memberships/{membershipId} {

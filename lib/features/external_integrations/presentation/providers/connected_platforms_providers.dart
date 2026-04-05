@@ -3,30 +3,53 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/platform_setup_merge.dart';
 import '../../data/connected_platforms_mock.dart';
-import '../../data/platform_setup_memory_store.dart';
+import '../../data/platform_setup_firestore_repository.dart';
 import '../../domain/admin_platform_connection_row.dart';
 import '../../domain/integration_platform.dart';
 import '../../domain/integration_platform_id.dart';
 import '../../domain/platform_connection_ui_state.dart';
+import '../../domain/platform_setup_record.dart';
 
-/// Yerel kurulum kaydı değişince liste yenilenir.
-final platformSetupRevisionProvider = StateProvider<int>((ref) => 0);
+final platformSetupRepositoryProvider = Provider<PlatformSetupFirestoreRepository>((ref) {
+  return PlatformSetupFirestoreRepository();
+});
 
-/// Mock tanım + ofis kurulum kaydı birleşimi (dürüst kart durumu).
-final platformListProvider = Provider<List<IntegrationPlatform>>((ref) {
-  ref.watch(platformSetupRevisionProvider);
-  ref.watch(currentUserProvider);
-  ref.watch(primaryMembershipProvider);
+/// Firestore `offices/{officeId}/platform_setups/*` — canlı akış.
+final platformSetupMapProvider =
+    StreamProvider.autoDispose.family<Map<IntegrationPlatformId, PlatformSetupRecord>, String>(
+  (ref, officeId) {
+    if (officeId.isEmpty) {
+      return Stream.value(<IntegrationPlatformId, PlatformSetupRecord>{});
+    }
+    return ref.read(platformSetupRepositoryProvider).watchMap(officeId);
+  },
+);
 
+String _resolvedOfficeIdForIntegrations(Ref ref) {
   final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
   final officeFromMem = ref.watch(primaryMembershipProvider).valueOrNull?.officeId;
   final officeFromDoc =
       uid.isEmpty ? null : ref.watch(userDocStreamProvider(uid)).valueOrNull?.officeId;
-  final officeId = (officeFromMem != null && officeFromMem.isNotEmpty)
+  return (officeFromMem != null && officeFromMem.isNotEmpty)
       ? officeFromMem
       : (officeFromDoc ?? '');
+}
 
-  final store = PlatformSetupMemoryStore.instance;
+/// Mock tanım + ofis kurulum kaydı birleşimi (dürüst kart durumu).
+final platformListProvider = Provider<List<IntegrationPlatform>>((ref) {
+  ref.watch(currentUserProvider);
+  ref.watch(primaryMembershipProvider);
+
+  final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
+  final officeId = _resolvedOfficeIdForIntegrations(ref);
+
+  final asyncMap = ref.watch(platformSetupMapProvider(officeId));
+  final records = asyncMap.when(
+    data: (m) => m,
+    loading: () => <IntegrationPlatformId, PlatformSetupRecord>{},
+    error: (_, __) => <IntegrationPlatformId, PlatformSetupRecord>{},
+  );
+
   final base = ConnectedPlatformsMock.userPlatforms();
   if (uid.isEmpty) {
     return base;
@@ -35,7 +58,7 @@ final platformListProvider = Provider<List<IntegrationPlatform>>((ref) {
       .map(
         (p) => mergePlatformWithSetup(
           base: p,
-          record: store.get(uid, officeId, p.id),
+          record: records[p.id],
         ),
       )
       .toList();
