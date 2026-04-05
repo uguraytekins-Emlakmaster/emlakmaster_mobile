@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:emlakmaster_mobile/features/listing_import/domain/duplicate_grouping.dart';
+import 'package:emlakmaster_mobile/features/listing_import/domain/listing_canonical_helpers.dart';
 import 'package:emlakmaster_mobile/features/listing_import/domain/listing_entity.dart';
 import 'package:emlakmaster_mobile/features/listing_import/domain/listing_import_quality_gate.dart';
 import 'package:uuid/uuid.dart';
@@ -59,6 +60,7 @@ class MockListingImportEngine {
     );
 
     final now = DateTime.now();
+    final sourceListingId = 'url_${url.hashCode}';
     final out = ListingEntity(
       id: _uuid.v4(),
       ownerUserId: ownerUserId,
@@ -76,6 +78,12 @@ class MockListingImportEngine {
       duplicateGroupId: groupId,
       sourceUrl: url,
       importTaskId: taskId,
+      sourcePlatform: platformId,
+      sourceListingId: sourceListingId,
+      isOwnedByOffice: true,
+      syncStatus: 'pending',
+      lastSyncedAt: now,
+      contentHash: computeListingContentHash(title: title, price: price, location: location),
     );
     final reject = ListingImportQualityGate.rejectReasonForUrlListing(out);
     if (reject != null) {
@@ -105,6 +113,8 @@ class MockListingImportEngine {
     required Map<String, String> mapping,
     required List<List<dynamic>> rows,
     String? taskId,
+    String? storeSourcePlatform,
+    String importChannel = 'import_file',
   }) async {
     await simulateWork(progressSteps: 2);
     if (rows.isEmpty) return [];
@@ -125,6 +135,9 @@ class MockListingImportEngine {
     final de = col('description');
     final im = col('images');
     final su = col('sourceUrl');
+    final ei = col('externalListingId');
+
+    final platformTag = storeSourcePlatform ?? importChannel;
 
     final out = <ListingEntity>[];
     for (final row in dataRows) {
@@ -136,11 +149,15 @@ class MockListingImportEngine {
       final city = ci >= 0 ? cell(ci) : 'Diyarbakır';
       final district = di >= 0 ? cell(di) : 'Merkez';
       final location = '$city · $district';
-      final description = de >= 0 ? cell(de) : 'Dosyadan içe aktarıldı (mock).';
+      final description = de >= 0
+          ? cell(de)
+          : 'Toplu dosya içe aktarma (yerel). Mağaza OAuth yok; dosya güvenilir kaynaktır.';
       final imgs = im >= 0
           ? cell(im).split(RegExp(r'[;,|]')).map((s) => s.trim()).where((s) => s.isNotEmpty).toList()
           : <String>['https://picsum.photos/seed/${_random.nextInt(999)}/800/600'];
       final sourceUrl = su >= 0 ? cell(su) : null;
+      final extRaw = ei >= 0 ? cell(ei) : '';
+      final sourceListingId = extRaw.isNotEmpty ? extRaw : '${platformTag}_${out.length}';
 
       final now = DateTime.now();
       final groupId = DuplicateGrouping.computeGroupId(
@@ -158,12 +175,18 @@ class MockListingImportEngine {
           location: location,
           description: description,
           images: imgs.isEmpty ? ['https://picsum.photos/seed/${_random.nextInt(999)}/800/600'] : imgs,
-          platformId: 'file',
+          platformId: platformTag,
           createdAt: now,
           updatedAt: now,
           duplicateGroupId: groupId,
           sourceUrl: sourceUrl,
           importTaskId: taskId,
+          sourcePlatform: platformTag,
+          sourceListingId: sourceListingId,
+          isOwnedByOffice: true,
+          syncStatus: 'synced',
+          lastSyncedAt: now,
+          contentHash: computeListingContentHash(title: title, price: price, location: location),
         ),
       );
     }
@@ -187,6 +210,8 @@ class MockListingImportEngine {
     required Map<String, String> mapping,
     required List<int> bytes,
     String? taskId,
+    String? storeSourcePlatform,
+    String importChannel = 'import_json',
   }) async {
     await simulateWork(progressSteps: 2);
     final decoded = jsonDecode(utf8.decode(bytes)) as Object?;
@@ -212,12 +237,22 @@ class MockListingImportEngine {
           item['description'] ?? '',
           item['images'] ?? '',
           item['link'] ?? item['url'] ?? '',
+          item['externalListingId'] ?? item['id'] ?? item['ilan_id'] ?? '',
         ]);
       }
     }
     if (rows.isEmpty) return [];
 
-    final headers = ['title', 'price', 'city', 'district', 'description', 'images', 'sourceUrl'];
+    final headers = [
+      'title',
+      'price',
+      'city',
+      'district',
+      'description',
+      'images',
+      'sourceUrl',
+      'externalListingId',
+    ];
     final table = <List<dynamic>>[headers, ...rows];
     return parseFileMock(
       ownerUserId: ownerUserId,
@@ -225,6 +260,8 @@ class MockListingImportEngine {
       mapping: mapping,
       rows: table,
       taskId: taskId,
+      storeSourcePlatform: storeSourcePlatform,
+      importChannel: importChannel,
     );
   }
 
@@ -238,13 +275,14 @@ class MockListingImportEngine {
     String? taskId,
   }) {
     final now = DateTime.now();
+    final id = _uuid.v4();
     final groupId = DuplicateGrouping.computeGroupId(
       title: title,
       price: price,
       location: location,
     );
     return ListingEntity(
-      id: _uuid.v4(),
+      id: id,
       ownerUserId: ownerUserId,
       title: title,
       price: price,
@@ -257,6 +295,12 @@ class MockListingImportEngine {
       updatedAt: now,
       duplicateGroupId: groupId,
       importTaskId: taskId,
+      sourcePlatform: 'manual',
+      sourceListingId: id,
+      isOwnedByOffice: true,
+      syncStatus: 'synced',
+      lastSyncedAt: now,
+      contentHash: computeListingContentHash(title: title, price: price, location: location),
     );
   }
 }

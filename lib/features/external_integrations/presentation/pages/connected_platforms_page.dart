@@ -86,7 +86,7 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                       },
                       icon: const Icon(Icons.upload_file_rounded, size: 18),
                       label: const Text(
-                        'İçe aktarma merkezi',
+                        'Mağaza içe aktarma',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

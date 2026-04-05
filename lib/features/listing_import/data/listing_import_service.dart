@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:csv/csv.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_memory_store.dart';
+import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_xlsx.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listings_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/mock_listing_import_engine.dart';
 import 'package:emlakmaster_mobile/features/listing_import/domain/import_source_type.dart';
@@ -183,7 +184,7 @@ class ListingImportService {
     }
   }
 
-  /// Dosya (CSV/JSON) — yerel parse + mock zenginleştirme.
+  /// Dosya (CSV / JSON / XLSX) — mağaza dışa aktarımı için toplu yol (canlı OAuth gerekmez).
   Future<void> runFileImport({
     required String uid,
     required String officeId,
@@ -191,16 +192,35 @@ class ListingImportService {
     required String extension,
     required Map<String, String> mapping,
     String importMode = 'skip_duplicates',
+    String? storeSourcePlatform,
   }) async {
     final file = File(filePath);
     final bytes = await file.readAsBytes();
     final ext = extension.toLowerCase();
 
+    final String importChannel;
+    switch (ext) {
+      case 'csv':
+      case 'txt':
+        importChannel = 'import_csv';
+        break;
+      case 'json':
+        importChannel = 'import_json';
+        break;
+      case 'xlsx':
+      case 'xls':
+        importChannel = 'import_xlsx';
+        break;
+      default:
+        importChannel = 'import_file';
+    }
+    final taskPlatform = storeSourcePlatform ?? importChannel;
+
     final taskId = await createTask(
       ownerUserId: uid,
       officeId: officeId,
       sourceType: ImportSourceType.file,
-      platformId: 'file',
+      platformId: taskPlatform,
       sourceUrl: filePath,
       importMode: importMode,
     );
@@ -215,6 +235,22 @@ class ListingImportService {
           mapping: mapping,
           bytes: bytes,
           taskId: taskId,
+          storeSourcePlatform: storeSourcePlatform,
+          importChannel: importChannel,
+        );
+      } else if (ext == 'xlsx' || ext == 'xls') {
+        final rows = decodeXlsxBytesToRows(bytes);
+        if (rows.isEmpty) {
+          throw StateError('Excel dosyasında satır bulunamadı.');
+        }
+        listings = await _engine.parseFileMock(
+          ownerUserId: uid,
+          fileName: filePath,
+          mapping: mapping,
+          rows: rows,
+          taskId: taskId,
+          storeSourcePlatform: storeSourcePlatform,
+          importChannel: importChannel,
         );
       } else {
         final text = utf8.decode(bytes, allowMalformed: true);
@@ -225,6 +261,8 @@ class ListingImportService {
           mapping: mapping,
           rows: rows,
           taskId: taskId,
+          storeSourcePlatform: storeSourcePlatform,
+          importChannel: importChannel,
         );
       }
 

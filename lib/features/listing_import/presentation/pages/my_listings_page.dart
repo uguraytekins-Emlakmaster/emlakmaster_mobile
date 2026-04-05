@@ -76,7 +76,7 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
                     ),
                     if (canManage) ...[
                       IconButton(
-                        tooltip: 'İçe aktar',
+                        tooltip: 'Mağaza toplu içe aktar',
                         onPressed: () => context.push(AppRouter.routeImportHub),
                         icon: Icon(Icons.add_circle_outline_rounded, color: AppThemeExtension.of(context).accent),
                       ),
@@ -566,7 +566,7 @@ class _ListingCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      _PlatformBadge(label: listing.platformId),
+                      _PlatformBadge(label: listing.effectiveSourcePlatform),
                       if (duplicateCount > 1) ...[
                         const SizedBox(width: 6),
                         Container(
@@ -619,6 +619,15 @@ class _ListingCard extends StatelessWidget {
                     listing.location,
                     style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
                   ),
+                  if (listing.sourceListingId != null && listing.sourceListingId!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Kaynak ID: ${listing.sourceListingId}'
+                        '${listing.syncStatus != null ? ' · ${listing.syncStatus}' : ''}',
+                        style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 11),
+                      ),
+                    ),
                   if (listing.quickNote != null && listing.quickNote!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),

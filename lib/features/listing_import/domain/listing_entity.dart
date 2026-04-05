@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Birleşik ilan modeli — import motoru + CRM listesi (API’ye hazır).
+/// Kanonik alanlar Firestore `listings` / [ListingRowView] ile uyumludur.
 class ListingEntity extends Equatable {
   const ListingEntity({
     required this.id,
@@ -18,6 +19,12 @@ class ListingEntity extends Equatable {
     this.importTaskId,
     this.isFavorite = false,
     this.quickNote,
+    this.sourcePlatform,
+    this.sourceListingId,
+    this.isOwnedByOffice = true,
+    this.syncStatus,
+    this.lastSyncedAt,
+    this.contentHash,
   });
 
   final String id;
@@ -27,7 +34,7 @@ class ListingEntity extends Equatable {
   final String location;
   final String description;
   final List<String> images;
-  /// sahibinden | hepsiemlak | emlakjet | manual | file
+  /// Kanal / mağaza — sahibinden | hepsiemlak | import_csv | manual | …
   final String platformId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -36,6 +43,26 @@ class ListingEntity extends Equatable {
   final String? importTaskId;
   final bool isFavorite;
   final String? quickNote;
+
+  /// Firestore `sourcePlatform` — boşsa [platformId] kullanılır.
+  final String? sourcePlatform;
+
+  /// Kaynak sistemdeki ilan kimliği (dosya dış ID, URL türevi vb.).
+  final String? sourceListingId;
+
+  /// Ofis envanterinde birinci şahıs mülkiyet.
+  final bool isOwnedByOffice;
+
+  /// `synced` | `pending` | `error` | `stale` — Firestore ile aynı sözlük.
+  final String? syncStatus;
+
+  final DateTime? lastSyncedAt;
+
+  /// İçerik bütünlüğü / dedup.
+  final String? contentHash;
+
+  String get effectiveSourcePlatform =>
+      (sourcePlatform != null && sourcePlatform!.isNotEmpty) ? sourcePlatform! : platformId;
 
   ListingEntity copyWith({
     String? id,
@@ -53,6 +80,12 @@ class ListingEntity extends Equatable {
     String? importTaskId,
     bool? isFavorite,
     String? quickNote,
+    String? sourcePlatform,
+    String? sourceListingId,
+    bool? isOwnedByOffice,
+    String? syncStatus,
+    DateTime? lastSyncedAt,
+    String? contentHash,
   }) {
     return ListingEntity(
       id: id ?? this.id,
@@ -70,6 +103,12 @@ class ListingEntity extends Equatable {
       importTaskId: importTaskId ?? this.importTaskId,
       isFavorite: isFavorite ?? this.isFavorite,
       quickNote: quickNote ?? this.quickNote,
+      sourcePlatform: sourcePlatform ?? this.sourcePlatform,
+      sourceListingId: sourceListingId ?? this.sourceListingId,
+      isOwnedByOffice: isOwnedByOffice ?? this.isOwnedByOffice,
+      syncStatus: syncStatus ?? this.syncStatus,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      contentHash: contentHash ?? this.contentHash,
     );
   }
 
@@ -83,5 +122,10 @@ class ListingEntity extends Equatable {
         duplicateGroupId,
         importTaskId,
         isFavorite,
+        sourcePlatform,
+        sourceListingId,
+        isOwnedByOffice,
+        syncStatus,
+        contentHash,
       ];
 }

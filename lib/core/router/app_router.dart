@@ -120,7 +120,7 @@ class AppRouter {
   static const String routeConnectedAccounts = '/settings/connected-accounts';
   /// Harici platformlardan senkron ilanlar («Benim ilanlarım»).
   static const String routeMyExternalListings = '/listings/my-external';
-  /// URL / dosya / uzantı içe aktarma motoru.
+  /// Mağaza toplu içe aktarma (dosya birincil; URL deneysel).
   static const String routeImportHub = '/settings/import-engine';
   static const String routeImportHistory = '/settings/import-history';
   /// İçe aktarılan ilanlar (yerel motor — Phase 1.5).

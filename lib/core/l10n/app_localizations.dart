@@ -192,8 +192,8 @@ class AppLocalizations {
       'empty_followup_cta': 'Çağrı başlat',
       'empty_my_listings_title': 'İçe aktarılan ilan yok',
       'empty_my_listings_sub':
-          'Motor ekranından URL veya dosya ekleyerek başlayın.',
-      'empty_my_listings_cta_import': 'İçe aktarma motoru',
+          'Mağaza dışa aktarım dosyası (CSV/JSON/Excel) ile toplu içe aktarın veya yöneticiden içe aktarma ekranını açın.',
+      'empty_my_listings_cta_import': 'Mağaza toplu içe aktar',
       'empty_my_listings_cta_accounts': 'Bağlı hesaplar',
       'empty_reports_title': 'Rapor verisi hazırlanıyor',
       'empty_reports_sub':
@@ -201,8 +201,8 @@ class AppLocalizations {
       'empty_reports_cta': 'Danışmanları aç',
       'empty_import_history_title': 'İçe aktarma geçmişi boş',
       'empty_import_history_sub':
-          'Motor ekranından görev başlattığınızda kayıtlar burada izlenir.',
-      'empty_import_history_cta': 'İçe aktarma motoru',
+          'Toplu dosya veya görev başlattığınızda kayıtlar burada izlenir.',
+      'empty_import_history_cta': 'Mağaza içe aktarma',
       'empty_intel_reports_title': 'Rapor arşivi boş',
       'empty_intel_reports_sub':
           'Rainbow analizleri üretildiğinde PDF\'ler burada listelenir.',
@@ -398,8 +398,8 @@ class AppLocalizations {
       'empty_followup_cta': 'Start a call',
       'empty_my_listings_title': 'No imported listings',
       'empty_my_listings_sub':
-          'Start from the import engine with a URL or file.',
-      'empty_my_listings_cta_import': 'Open import engine',
+          'Bulk-import a store export (CSV/JSON/Excel) or open the manager import screen.',
+      'empty_my_listings_cta_import': 'Store bulk import',
       'empty_my_listings_cta_accounts': 'Connected accounts',
       'empty_reports_title': 'Reports loading',
       'empty_reports_sub':
@@ -407,8 +407,8 @@ class AppLocalizations {
       'empty_reports_cta': 'Open consultants',
       'empty_import_history_title': 'No import history',
       'empty_import_history_sub':
-          'When you start jobs from the engine, they are tracked here.',
-      'empty_import_history_cta': 'Open import engine',
+          'When you start bulk or file jobs, they are tracked here.',
+      'empty_import_history_cta': 'Store import',
       'empty_intel_reports_title': 'No reports in archive',
       'empty_intel_reports_sub':
           'PDFs from Rainbow analysis will list here when generated.',

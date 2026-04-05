@@ -12,6 +12,7 @@ import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_functions.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_service.dart';
+import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_xlsx.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -20,7 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 
-/// İçe aktarma — Phase 1.5 yerel motor (mock parse) + isteğe bağlı sunucu kuyruğu.
+/// Yönetici mağaza toplu içe aktarma — dosya birincil; URL deneysel ikincil.
 class ImportHubPage extends ConsumerStatefulWidget {
   const ImportHubPage({super.key});
 
@@ -36,6 +37,8 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
   final _manualDesc = TextEditingController();
   bool _busy = false;
   String? _importMode = 'skip_duplicates';
+  /// Mağaza dışa aktarımı için kaynak (ilanlar `sourcePlatform` alır).
+  String? _storePlatform;
 
   @override
   void dispose() {
@@ -51,6 +54,39 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     final fromMem = ref.read(primaryMembershipProvider).valueOrNull?.officeId;
     final fromDoc = ref.read(userDocStreamProvider(uid)).valueOrNull?.officeId;
     return (fromMem != null && fromMem.isNotEmpty) ? fromMem : (fromDoc ?? '');
+  }
+
+  Map<String, String> _defaultMapping() => {
+        'title': 'title',
+        'price': 'price',
+        'city': 'city',
+        'district': 'district',
+        'description': 'description',
+        'images': 'images',
+        'sourceUrl': 'link',
+        'externalListingId': 'externalId',
+      };
+
+  Map<String, String> _mappingFromHeaderRow(List<dynamic> headerRow) {
+    final headers = headerRow.map((e) => e.toString().trim()).toList();
+    String pick(Iterable<String> keys) {
+      for (final k in keys) {
+        final i = headers.indexWhere((h) => h.toLowerCase() == k.toLowerCase());
+        if (i >= 0) return headers[i];
+      }
+      return headers.isNotEmpty ? headers.first : 'title';
+    }
+
+    return {
+      'title': pick(['title', 'baslik', 'ilan_basligi', 'name']),
+      'price': pick(['price', 'fiyat', 'amount']),
+      'city': pick(['city', 'sehir', 'il']),
+      'district': pick(['district', 'ilce', 'semte']),
+      'description': pick(['description', 'aciklama', 'desc']),
+      'images': pick(['images', 'image', 'gorseller', 'foto']),
+      'sourceUrl': pick(['link', 'url', 'sourceurl']),
+      'externalListingId': pick(['externalid', 'id', 'ilan_id']),
+    };
   }
 
   Future<void> _runLocalUrl() async {
@@ -71,8 +107,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       );
       if (!mounted) return;
       _snack(
-        'Yerel deneysel motor: içe aktarma tamamlandı (mock veri; canlı parse değil). '
-        'Listeyi doğrulayın.',
+        'Deneysel URL: içe aktarma tamamlandı (tek ilan). Mağaza ölçeği için dosya yolunu kullanın.',
       );
       _urlCtrl.clear();
       context.push(AppRouter.routeMyListings);
@@ -92,7 +127,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
 
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['csv', 'json', 'txt'],
+      allowedExtensions: const ['csv', 'json', 'txt', 'xlsx', 'xls'],
     );
     if (result == null || result.files.isEmpty) return;
 
@@ -106,41 +141,14 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     setState(() => _busy = true);
     try {
       final ext = (f.extension ?? 'csv').toLowerCase();
-      Map<String, String> mapping = {
-        'title': 'title',
-        'price': 'price',
-        'city': 'city',
-        'district': 'district',
-        'description': 'description',
-        'images': 'images',
-        'sourceUrl': 'link',
-        'externalListingId': 'externalId',
-      };
+      var mapping = _defaultMapping();
+      final file = File(path);
 
       if (ext == 'csv' || ext == 'txt') {
-        final file = File(path);
         final text = utf8.decode(await file.readAsBytes(), allowMalformed: true);
         final rows = const CsvToListConverter(eol: '\n').convert(text);
         if (rows.isNotEmpty) {
-          final headers = rows.first.map((e) => e.toString().trim()).toList();
-          String pick(Iterable<String> keys) {
-            for (final k in keys) {
-              final i = headers.indexWhere((h) => h.toLowerCase() == k.toLowerCase());
-              if (i >= 0) return headers[i];
-            }
-            return headers.isNotEmpty ? headers.first : 'title';
-          }
-
-          mapping = {
-            'title': pick(['title', 'baslik', 'ilan_basligi', 'name']),
-            'price': pick(['price', 'fiyat', 'amount']),
-            'city': pick(['city', 'sehir', 'il']),
-            'district': pick(['district', 'ilce', 'semte']),
-            'description': pick(['description', 'aciklama', 'desc']),
-            'images': pick(['images', 'image', 'gorseller', 'foto']),
-            'sourceUrl': pick(['link', 'url', 'sourceurl']),
-            'externalListingId': pick(['externalid', 'id', 'ilan_id']),
-          };
+          mapping = _mappingFromHeaderRow(rows.first);
         }
         if (!mounted) return;
         final confirmed = await showDialog<bool>(
@@ -162,6 +170,51 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
           setState(() => _busy = false);
           return;
         }
+      } else if (ext == 'xlsx' || ext == 'xls') {
+        final bytes = await file.readAsBytes();
+        final rows = decodeXlsxBytesToRows(bytes);
+        if (rows.isNotEmpty) {
+          mapping = _mappingFromHeaderRow(rows.first);
+        }
+        if (!mounted) return;
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Excel sütun eşlemesi'),
+            content: SingleChildScrollView(
+              child: Text(
+                'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
+              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('İçe aktar')),
+            ],
+          ),
+        );
+        if (confirmed != true) {
+          setState(() => _busy = false);
+          return;
+        }
+      } else if (ext == 'json') {
+        if (!mounted) return;
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('JSON'),
+            content: const Text(
+              'JSON kökü ilan dizisi veya { "rows": [...] } olmalı. İlan kimliği için id / externalListingId kullanılabilir.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
+              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Devam')),
+            ],
+          ),
+        );
+        if (confirmed != true) {
+          setState(() => _busy = false);
+          return;
+        }
       }
 
       await ListingImportService.instance.runFileImport(
@@ -171,9 +224,13 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         extension: ext,
         mapping: mapping,
         importMode: _importMode ?? 'skip_duplicates',
+        storeSourcePlatform: _storePlatform,
       );
       if (!mounted) return;
-      _snack('Dosya işlendi (yerel motor).');
+      _snack(
+        'Toplu dosya işlendi. Kaynak: ${_storePlatform ?? 'dosya türü (import_*)'}. '
+        'Benim İlanlarım’da doğrulayın.',
+      );
       context.push(AppRouter.routeMyListings);
     } catch (e) {
       if (mounted) _snack('$e');
@@ -202,6 +259,11 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Manuel ilan', style: Theme.of(ctx).textTheme.titleLarge),
+                const SizedBox(height: 8),
+                Text(
+                  'Tek tek ekleme — mağaza dışa aktarımı yerine portföy girişi.',
+                  style: TextStyle(color: AppThemeExtension.of(ctx).foregroundSecondary, fontSize: 13),
+                ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _manualTitle,
@@ -281,7 +343,6 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     AppToaster.warning(context, msg);
   }
 
-  /// Opsiyonel: Firebase Callable + Storage (üretim kuyruğu).
   Future<void> _submitUrlServer() async {
     final url = _urlCtrl.text.trim();
     if (url.isEmpty) return;
@@ -292,7 +353,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         importMode: _importMode ?? 'skip_duplicates',
       );
       if (!mounted) return;
-      _snack(taskId != null ? 'Sunucu kuyruğu: $taskId' : 'İstek gönderildi.');
+      _snack(taskId != null ? 'Sunucu kuyruğu (tek URL): $taskId' : 'İstek gönderildi.');
       _urlCtrl.clear();
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
@@ -336,40 +397,13 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       final file = File(path);
       final bytes = await file.readAsBytes();
       final ext = (f.extension ?? 'csv').toLowerCase();
-      Map<String, String> mapping = {
-        'title': 'title',
-        'price': 'price',
-        'city': 'city',
-        'district': 'district',
-        'description': 'description',
-        'images': 'images',
-        'sourceUrl': 'link',
-        'externalListingId': 'externalId',
-      };
+      var mapping = _defaultMapping();
 
       if (ext == 'csv' || ext == 'txt') {
         final text = utf8.decode(bytes, allowMalformed: true);
         final rows = const CsvToListConverter(eol: '\n').convert(text);
         if (rows.isNotEmpty) {
-          final headers = rows.first.map((e) => e.toString().trim()).toList();
-          String pick(Iterable<String> keys) {
-            for (final k in keys) {
-              final i = headers.indexWhere((h) => h.toLowerCase() == k.toLowerCase());
-              if (i >= 0) return headers[i];
-            }
-            return headers.isNotEmpty ? headers.first : 'title';
-          }
-
-          mapping = {
-            'title': pick(['title', 'baslik', 'ilan_basligi', 'name']),
-            'price': pick(['price', 'fiyat', 'amount']),
-            'city': pick(['city', 'sehir', 'il']),
-            'district': pick(['district', 'ilce', 'semte']),
-            'description': pick(['description', 'aciklama', 'desc']),
-            'images': pick(['images', 'image', 'gorseller', 'foto']),
-            'sourceUrl': pick(['link', 'url', 'sourceurl']),
-            'externalListingId': pick(['externalid', 'id', 'ilan_id']),
-          };
+          mapping = _mappingFromHeaderRow(rows.first);
         }
 
         if (!mounted) return;
@@ -429,14 +463,17 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       final refStorage = FirebaseStorage.instance.ref(objectName);
       await refStorage.putData(bytes, SettableMetadata(contentType: _guessMime(ext)));
 
+      final platform = _storePlatform ?? 'sahibinden';
+
       final taskId = await ListingImportFunctions.instance.enqueueFileImport(
         storagePath: objectName,
         fileName: safeName,
         mapping: mapping,
         importMode: _importMode ?? 'skip_duplicates',
+        platform: platform,
       );
       if (!mounted) return;
-      _snack(taskId != null ? 'Dosya kuyruğa alındı: $taskId' : 'İstek gönderildi.');
+      _snack(taskId != null ? 'Toplu dosya kuyrukta: $taskId (platform: $platform)' : 'İstek gönderildi.');
     } on FirebaseException catch (e) {
       if (!mounted) return;
       if (FirebaseStorageAvailability.isUnavailableError(e)) {
@@ -488,12 +525,21 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               children: [
                 const AppBackButton(),
                 Expanded(
-                  child: Text(
-                    'İçe aktarma motoru',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: ext.foreground,
-                          fontWeight: FontWeight.w700,
-                        ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mağaza toplu içe aktarma',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: ext.foreground,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      Text(
+                        'Tüm vitrin ilanlarınızı tek seferde «Benim İlanlarım»a alın',
+                        style: TextStyle(color: ext.foregroundSecondary, fontSize: 12, height: 1.3),
+                      ),
+                    ],
                   ),
                 ),
                 TextButton(
@@ -506,15 +552,44 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Resmi platform OAuth ve güvenilir HTML parse henüz tam canlı değil. '
-              '«Yerel URL» deneyseldir (heuristik/mock): başlık, fiyat, konum veya görsel '
-              'güvenilir çıkmazsa kayıt oluşturulmaz. Güvenilir veri için CSV/JSON veya manuel giriş kullanın. '
-              'Sunucu kuyruğu, kalite eşiğini geçen sonuçları yazar.',
-              style: TextStyle(color: ext.foreground.withValues(alpha: 0.85), height: 1.35),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: ext.surfaceElevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+              ),
+              child: Text(
+                'Canlı mağaza OAuth / otomatik tam senkron henüz yok. Bugün için güvenilir yol: '
+                'platformdan dışa aktardığınız CSV, JSON veya Excel dosyasını yükleyin. '
+                'Bu, «tüm ilanları» tek işlemde içeri almanın üretim yoludur.',
+                style: TextStyle(color: ext.foreground.withValues(alpha: 0.9), height: 1.4, fontSize: 13),
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            _OfficialConnectorCard(ext: ext),
+            const SizedBox(height: 16),
+            Text('Mağaza kaynağı (etiket)', style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Text(
+              'İlanların sourcePlatform alanına yazılır; boşsa dosya türü (import_csv vb.) kullanılır.',
+              style: TextStyle(color: ext.foregroundSecondary, fontSize: 11, height: 1.35),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String?>(
+              initialValue: _storePlatform,
+              decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+              items: const [
+                DropdownMenuItem(value: null, child: Text('Genel / belirtmiyorum')),
+                DropdownMenuItem(value: 'sahibinden', child: Text('Sahibinden vitrin dışa aktarımı')),
+                DropdownMenuItem(value: 'hepsiemlak', child: Text('Hepsiemlak dışa aktarımı')),
+                DropdownMenuItem(value: 'emlakjet', child: Text('Emlakjet dışa aktarımı')),
+              ],
+              onChanged: _busy ? null : (v) => setState(() => _storePlatform = v),
+            ),
+            const SizedBox(height: 16),
             Text('Yinelenen kayıt modu', style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
@@ -527,72 +602,81 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               ],
               onChanged: _busy ? null : (v) => setState(() => _importMode = v),
             ),
-            const SizedBox(height: 24),
-            Text('İlan URL’si', style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _urlCtrl,
-              enabled: !_busy,
-              decoration: const InputDecoration(
-                hintText: 'https://www.sahibinden.com/ilan/...',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.url,
+            const SizedBox(height: 22),
+            Text(
+              '1 · Dosyadan toplu içe aktar (önerilen)',
+              style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w800, fontSize: 15),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             FilledButton.icon(
-              onPressed: _busy ? null : _runLocalUrl,
+              onPressed: _busy ? null : _runLocalFile,
               icon: _busy
                   ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.link),
-              label: const Text('URL’yi içe aktar (yerel)'),
+                  : const Icon(Icons.upload_file_rounded),
+              label: const Text('CSV / JSON / XLSX seç (cihazda işle)'),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: _busy ? null : _runLocalFile,
-              icon: const Icon(Icons.table_chart_outlined),
-              label: const Text('CSV / JSON dosyası (yerel)'),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             OutlinedButton.icon(
               onPressed: _busy ? null : _openManual,
               icon: const Icon(Icons.edit_note_rounded),
-              label: const Text('Manuel ilan ekle'),
+              label: const Text('Manuel tek tek ilan ekle'),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
+            Text(
+              '2 · Sunucu kuyruğu (Storage + Cloud Functions)',
+              style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w700, fontSize: 14),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Büyük dosyalar için; ilerleme «Geçmiş» ekranında.',
+              style: TextStyle(color: ext.foregroundSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: (_busy || !storageOk) ? null : _pickAndUploadServer,
+              child: const Text('Dosyayı Storage’a yükle ve kuyruğa al'),
+            ),
+            if (!storageOk)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  FirebaseStorageAvailability.unavailableMessage,
+                  maxLines: 3,
+                  style: TextStyle(color: ext.foreground.withValues(alpha: 0.65), fontSize: 12),
+                ),
+              ),
+            const SizedBox(height: 20),
             ExpansionTile(
-              title: Text('Gelişmiş: sunucu kuyruğu', style: TextStyle(color: ext.foreground)),
+              tilePadding: EdgeInsets.zero,
+              title: Text('Tek ilan URL’si (deneysel — ikincil)', style: TextStyle(color: ext.foreground)),
               subtitle: Text(
-                'Cloud Functions + Storage — ayrı izleme için «Geçmiş».',
+                'Mağaza ölçeği için uygun değildir; tek URL başına çalışır.',
                 style: TextStyle(color: ext.foreground.withValues(alpha: 0.65), fontSize: 12),
               ),
               children: [
+                TextField(
+                  controller: _urlCtrl,
+                  enabled: !_busy,
+                  decoration: const InputDecoration(
+                    hintText: 'https://www.sahibinden.com/ilan/...',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.url,
+                ),
+                const SizedBox(height: 10),
                 FilledButton.tonal(
-                  onPressed: _busy ? null : _submitUrlServer,
-                  child: const Text('URL’yi sunucuya gönder'),
+                  onPressed: _busy ? null : _runLocalUrl,
+                  child: const Text('URL’yi yerelde dene'),
                 ),
                 const SizedBox(height: 8),
-                OutlinedButton(
-                  onPressed: (_busy || !storageOk) ? null : _pickAndUploadServer,
-                  child: const Text('Dosyayı Storage’a yükle ve kuyruğa al'),
+                FilledButton.tonal(
+                  onPressed: _busy ? null : _submitUrlServer,
+                  child: const Text('URL’yi sunucu kuyruğuna gönder'),
                 ),
-                if (!storageOk)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      FirebaseStorageAvailability.unavailableMessage,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: ext.foreground.withValues(alpha: 0.65),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -602,6 +686,53 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _OfficialConnectorCard extends StatelessWidget {
+  const _OfficialConnectorCard({required this.ext});
+
+  final AppThemeExtension ext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: ext.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ext.accent.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.cloud_off_outlined, color: ext.accent, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Resmi entegrasyon (otomatik mağaza senkronu)',
+                  style: TextStyle(
+                    color: ext.foreground,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Hazırlanıyor — canlı OAuth ile vitrinin tamamını arka planda çekme şu an kapalı. '
+                  'Açıldığında bu kart «etkin» olacak; şimdilik dosya ile toplu içe aktarın.',
+                  style: TextStyle(color: ext.foregroundSecondary, fontSize: 12, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

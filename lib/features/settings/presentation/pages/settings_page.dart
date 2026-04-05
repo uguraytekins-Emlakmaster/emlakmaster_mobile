@@ -456,7 +456,7 @@ class SettingsPage extends ConsumerWidget {
                       ),
                       ListTile(
                         leading: Icon(Icons.upload_file_outlined, color: theme.colorScheme.primary),
-                        title: const Text('İçe aktarma merkezi'),
+                        title: const Text('Mağaza toplu içe aktarma'),
                         subtitle: Text(
                           'URL, dosya ve içe aktarma geçmişi',
                           style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
