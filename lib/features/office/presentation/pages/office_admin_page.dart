@@ -180,7 +180,7 @@ class OfficeAdminPage extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      PlatformStatusChip(state: row.connectionState),
+                      PlatformStatusChip(truthKind: row.truthKind),
                     ],
                   ),
                 ),

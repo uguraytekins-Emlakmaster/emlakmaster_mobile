@@ -11,6 +11,7 @@ const {
   makeDocId,
 } = require("./duplicateService");
 const { upsertIntegrationListing } = require("../integrationListingsAdmin");
+const { validateUrlImportExtraction } = require("./urlImportQualityGate");
 
 const COL = "listing_import_tasks";
 
@@ -84,6 +85,31 @@ async function processUrlImportTask(db, taskId, task) {
       status: TASK_STATUSES.failed,
       errorCode: ImportErrorCodes.PARSE_FAILED,
       errorMessage: String(e.message || e),
+      counts: { imported: 0, duplicates: 0, errors: 1 },
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return;
+  }
+
+  const quality = validateUrlImportExtraction(parsed, platform);
+  if (!quality.ok) {
+    const human =
+      quality.reason === "PLATFORM"
+        ? "Kaynak platform güvenilir şekilde tespit edilemedi."
+        : quality.reason === "TITLE_SHORT" || quality.reason === "TITLE_GENERIC"
+          ? "Başlık güvenilir şekilde çıkarılamadı (çok kısa veya anlamsız)."
+          : quality.reason === "PRICE"
+            ? "Fiyat güvenilir şekilde çıkarılamadı."
+            : quality.reason === "IMAGE"
+              ? "Ana görsel bulunamadı."
+              : quality.reason === "LOCATION"
+                ? "Konum (il/ilçe veya başlıkta konum ipucu) çıkarılamadı."
+                : "İçe aktarma güven eşiğini geçemedi.";
+    await patchTask(db, taskId, {
+      status: TASK_STATUSES.failed,
+      errorCode: ImportErrorCodes.LOW_CONFIDENCE_EXTRACTION,
+      errorMessage: `${human} CSV/JSON veya manuel giriş önerilir.`,
+      qualityReason: quality.reason || null,
       counts: { imported: 0, duplicates: 0, errors: 1 },
       processedAt: admin.firestore.FieldValue.serverTimestamp(),
     });

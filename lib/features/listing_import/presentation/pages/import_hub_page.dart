@@ -70,7 +70,10 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         importMode: _importMode ?? 'skip_duplicates',
       );
       if (!mounted) return;
-      _snack('İlan içe aktarıldı (yerel motor).');
+      _snack(
+        'Yerel deneysel motor: içe aktarma tamamlandı (mock veri; canlı parse değil). '
+        'Listeyi doğrulayın.',
+      );
       _urlCtrl.clear();
       context.push(AppRouter.routeMyListings);
     } catch (e) {
@@ -505,8 +508,10 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Phase 1.5: URL / dosya / manuel giriş yerel motor ile işlenir; gerçek scraping yok (mock). '
-              'Sunucu kuyruğu isteğe bağlıdır.',
+              'Resmi platform OAuth ve güvenilir HTML parse henüz tam canlı değil. '
+              '«Yerel URL» deneyseldir (heuristik/mock): başlık, fiyat, konum veya görsel '
+              'güvenilir çıkmazsa kayıt oluşturulmaz. Güvenilir veri için CSV/JSON veya manuel giriş kullanın. '
+              'Sunucu kuyruğu, kalite eşiğini geçen sonuçları yazar.',
               style: TextStyle(color: ext.foreground.withValues(alpha: 0.85), height: 1.35),
             ),
             const SizedBox(height: 20),

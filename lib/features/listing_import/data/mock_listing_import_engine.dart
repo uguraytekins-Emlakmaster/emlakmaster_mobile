@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:emlakmaster_mobile/features/listing_import/domain/duplicate_grouping.dart';
 import 'package:emlakmaster_mobile/features/listing_import/domain/listing_entity.dart';
+import 'package:emlakmaster_mobile/features/listing_import/domain/listing_import_quality_gate.dart';
 import 'package:uuid/uuid.dart';
 
 /// Gerçek scraping yok — gecikme + örnek veri (AI / API entegrasyonuna hazır arayüz).
@@ -12,9 +13,6 @@ class MockListingImportEngine {
 
   final _uuid = const Uuid();
   final _random = Random();
-
-  /// %10 başarısızlık (test için).
-  bool get _shouldFail => _random.nextInt(10) == 0;
 
   String detectPlatformId(String url) {
     final u = url.toLowerCase();
@@ -36,17 +34,23 @@ class MockListingImportEngine {
     String? taskId,
   }) async {
     final platformId = detectPlatformId(url);
-    await simulateWork();
-
-    if (_shouldFail) {
-      throw StateError('Örnek ağ hatası: URL çözümlenemedi (mock).');
+    if (platformId == 'unknown') {
+      throw StateError(
+        'URL kaynağı tanınmadı (sahibinden / hepsiemlak / emlakjet değil). '
+        'Deneysel içe aktarma iptal edildi; CSV/JSON veya manuel giriş kullanın.',
+      );
     }
+    await simulateWork();
 
     final title = _titleFromUrl(url);
     final price = 3500000.0 + _random.nextDouble() * 4000000.0;
     final location = 'Diyarbakır · ${['Kayapınar', 'Bağlar', 'Yenişehir'][_random.nextInt(3)]}';
     final description =
-        'Mock açıklama: ${title.length > 80 ? title.substring(0, 80) : title} — gerçek içerik API ile gelecek.';
+        'Deneysel yerel içe aktarma (mock): ${title.length > 80 ? title.substring(0, 80) : title} — '
+        'canlı OAuth/parse yok; üretim doğruluğu garanti edilmez.';
+
+    final seed = url.hashCode.abs();
+    final mainImage = 'https://picsum.photos/seed/$seed/800/600';
 
     final groupId = DuplicateGrouping.computeGroupId(
       title: title,
@@ -55,7 +59,7 @@ class MockListingImportEngine {
     );
 
     final now = DateTime.now();
-    return ListingEntity(
+    final out = ListingEntity(
       id: _uuid.v4(),
       ownerUserId: ownerUserId,
       title: title,
@@ -63,8 +67,8 @@ class MockListingImportEngine {
       location: location,
       description: description,
       images: [
-        'https://picsum.photos/seed/${_random.nextInt(999)}/800/600',
-        'https://picsum.photos/seed/${_random.nextInt(999)}/800/600',
+        mainImage,
+        'https://picsum.photos/seed/${seed + 1}/800/600',
       ],
       platformId: platformId,
       createdAt: now,
@@ -73,15 +77,25 @@ class MockListingImportEngine {
       sourceUrl: url,
       importTaskId: taskId,
     );
+    final reject = ListingImportQualityGate.rejectReasonForUrlListing(out);
+    if (reject != null) {
+      throw StateError(reject);
+    }
+    return out;
   }
 
   String _titleFromUrl(String url) {
     try {
       final uri = Uri.parse(url);
       final seg = uri.pathSegments.where((s) => s.isNotEmpty).toList();
-      if (seg.isNotEmpty) return seg.last.replaceAll('-', ' ');
+      if (seg.isNotEmpty) {
+        final fromSeg = seg.length >= 2 ? '${seg[seg.length - 2]} ${seg.last}' : seg.last;
+        final raw = fromSeg.replaceAll('-', ' ').trim();
+        if (raw.length >= 8) return raw;
+        return 'İlan özeti: $raw · ${uri.host.split('.').first}';
+      }
     } catch (_) {}
-    return 'İlan (${url.length.clamp(8, 40)} karakter)';
+    return 'İlan içe aktarma ${url.length.clamp(8, 40)} karakter';
   }
 
   /// CSV / JSON satırlarını listeye çevir (basit parse; gerçek şema sonra).

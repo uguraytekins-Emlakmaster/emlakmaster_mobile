@@ -59,8 +59,10 @@ class ConnectedPlatformsPage extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                 child: Text(
-                  'Sahibinden, Hepsiemlak ve Emlakjet hesaplarınızı tek yerden yönetin. '
-                  'Senkron ve OAuth entegrasyonu bir sonraki adımda devreye alınacak.',
+                  'Resmi OAuth ve canlı API bağlantıları henüz üretimde değil. '
+                  'Aşağıdaki kartlar arayüz önizlemesi ve yol haritasıdır; '
+                  '«Bağlı» veya tam senkron vaadi yoktur. URL içe aktarma deneyseldir — '
+                  'güvenilir veri için CSV/JSON veya manuel giriş kullanın.',
                   style: TextStyle(
                     color: ext.foregroundSecondary,
                     fontSize: 13,

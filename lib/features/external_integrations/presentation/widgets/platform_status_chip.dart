@@ -1,36 +1,43 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_ui_state.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_truth_kind.dart';
 import 'package:flutter/material.dart';
-class PlatformStatusChip extends StatelessWidget {
-  const PlatformStatusChip({super.key, required this.state});
 
-  final PlatformConnectionUiState state;
+/// Bağlantı rozeti — [PlatformConnectionTruthKind] gerçek entegrasyon durumunu yansıtır (optimistik "Bağlı" yok).
+class PlatformStatusChip extends StatelessWidget {
+  const PlatformStatusChip({super.key, required this.truthKind});
+
+  final PlatformConnectionTruthKind truthKind;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final (bg, fg, label) = switch (state) {
-      PlatformConnectionUiState.connected => (
+    final (Color bg, Color fg) = switch (truthKind) {
+      PlatformConnectionTruthKind.liveConnected => (
           ext.success.withValues(alpha: 0.2),
           ext.success,
-          state.shortLabel,
         ),
-      PlatformConnectionUiState.disconnected => (
-          ext.foregroundMuted.withValues(alpha: 0.2),
-          ext.foregroundSecondary,
-          state.shortLabel,
-        ),
-      PlatformConnectionUiState.limited => (
+      PlatformConnectionTruthKind.mockDemo => (
           ext.warning.withValues(alpha: 0.2),
           ext.warning,
-          state.shortLabel,
         ),
-      PlatformConnectionUiState.needsAttention => (
-          ext.danger.withValues(alpha: 0.18),
+      PlatformConnectionTruthKind.preparing => (
+          ext.accent.withValues(alpha: 0.18),
+          ext.accent,
+        ),
+      PlatformConnectionTruthKind.experimentalNotLive => (
+          ext.warning.withValues(alpha: 0.16),
+          ext.warning,
+        ),
+      PlatformConnectionTruthKind.setupIncomplete => (
+          ext.danger.withValues(alpha: 0.12),
           ext.danger,
-          'İnceleme gerekli',
+        ),
+      PlatformConnectionTruthKind.liveNotEnabled => (
+          ext.foregroundMuted.withValues(alpha: 0.2),
+          ext.foregroundSecondary,
         ),
     };
+    final label = truthKind.shortLabelTr;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(

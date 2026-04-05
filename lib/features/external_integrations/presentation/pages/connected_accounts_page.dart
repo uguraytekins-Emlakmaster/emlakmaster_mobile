@@ -53,7 +53,9 @@ class ConnectedAccountsPage extends ConsumerWidget {
               child: IntegrationHeroHeader(
                 title: l10n.t('listings_tab_my_external'),
                 subtitle:
-                    'Sahibinden, Hepsiemlak ve Emlakjet hesaplarınızı bağlayın; senkron ilanlar «${l10n.t('my_external_listings_title')}» ekranında görünür. OAuth sırayla açılacaktır.',
+                    'Resmi OAuth ve canlı API henüz tam üretimde değil. Bu ekran geçmiş akıştır; '
+                    'güncel bağlantı durumu «Bağlı platformlar» hub’ındaki gerçek durum etiketlerine bakın. '
+                    'Senkron ilanlar yalnızca canlı entegrasyon açıldığında üretim güvencesi taşır.',
                 icon: Icons.link_rounded,
                 trailing: Wrap(
                   spacing: 8,

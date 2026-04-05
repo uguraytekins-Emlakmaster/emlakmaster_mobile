@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_truth_kind.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_ui_state.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
@@ -35,20 +36,16 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
 
     final ext = AppThemeExtension.of(context);
     final total = platforms.length;
-    var ok = 0;
+    var liveOk = 0;
     var attention = 0;
     DateTime? latestSync;
     for (final p in platforms) {
-      switch (p.connectionState) {
-        case PlatformConnectionUiState.connected:
-        case PlatformConnectionUiState.limited:
-          ok++;
-          break;
-        case PlatformConnectionUiState.needsAttention:
-          attention++;
-          break;
-        case PlatformConnectionUiState.disconnected:
-          break;
+      if (p.truthKind == PlatformConnectionTruthKind.liveConnected) {
+        liveOk++;
+      }
+      if (p.truthKind == PlatformConnectionTruthKind.setupIncomplete ||
+          p.connectionState == PlatformConnectionUiState.needsAttention) {
+        attention++;
       }
       final t = p.lastSyncAt;
       if (t != null && (latestSync == null || t.isAfter(latestSync))) {
@@ -56,23 +53,25 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
       }
     }
 
-    final connectionLine = 'Bağlantı: $ok/$total hazır';
+    final connectionLine = liveOk > 0
+        ? 'Canlı bağlantı: $liveOk/$total'
+        : 'Canlı OAuth/API: henüz yok (demo/önizleme)';
     final String healthLine;
     final Color healthColor;
     if (attention > 0) {
-      healthLine = 'Senkron sağlığı: inceleme gerekebilir';
+      healthLine = 'Kurulum veya inceleme gerekebilir (canlı senkron kapalı olabilir)';
       healthColor = ext.warning;
-    } else if (ok == 0) {
-      healthLine = 'Senkron sağlığı: bağlantı bekleniyor';
+    } else if (liveOk == 0) {
+      healthLine = 'Resmi entegrasyonlar beta öncesi — kartlar yol haritası';
       healthColor = ext.textSecondary;
     } else {
-      healthLine = 'Senkron sağlığı: iyi';
+      healthLine = 'Canlı entegrasyonlar aktif görünüyor';
       healthColor = ext.accent.withValues(alpha: 0.9);
     }
 
     final syncHint = latestSync != null
         ? 'Son senkron: ${DateFormat('d MMM HH:mm', 'tr_TR').format(latestSync)}'
-        : 'Son senkron: —';
+        : 'Son senkron: — (demo modunda örnek tarih yok)';
 
     return RepaintBoundary(
       child: Padding(

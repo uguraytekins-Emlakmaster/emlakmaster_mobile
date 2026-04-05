@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_platform.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_truth_kind.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_capability.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/capability_badge_row.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/platform_status_chip.dart';
@@ -79,7 +80,7 @@ class ConnectedPlatformCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                PlatformStatusChip(state: platform.connectionState),
+                PlatformStatusChip(truthKind: platform.truthKind),
               ],
             ),
             if (platform.connectedAccountLabel != null) ...[
@@ -95,10 +96,22 @@ class ConnectedPlatformCard extends StatelessWidget {
                 ),
               ),
             ],
+            if (!platform.truthKind.isLiveProduction) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Resmi entegrasyonlar beta öncesi: aşağıdaki yetenekler yol haritasıdır.',
+                style: TextStyle(
+                  color: ext.foregroundMuted,
+                  fontSize: 11,
+                  height: 1.35,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             CapabilityBadgeRow(
               capabilities: platform.capabilities,
               connectionState: platform.connectionState,
+              truthKind: platform.truthKind,
             ),
             if (platform.errorState != null) ...[
               const SizedBox(height: 12),

@@ -1,17 +1,14 @@
 import '../domain/integration_capability.dart';
 import '../domain/integration_platform.dart';
 import '../domain/integration_platform_id.dart';
+import '../domain/platform_connection_truth_kind.dart';
 import '../domain/platform_connection_ui_state.dart';
 import '../domain/platform_error_ui.dart';
 import '../domain/platform_ui_capabilities.dart';
 import '../domain/admin_platform_connection_row.dart';
 
-/// Phase 1.4 — gerçek API yok; tutarlı mock senaryoları.
+/// Demo veri — canlı OAuth yok; [truthKind] ile durum dürüst gösterilir.
 abstract final class ConnectedPlatformsMock {
-  static final DateTime _t1 = DateTime(2026, 3, 18, 14, 32);
-  static final DateTime _t2 = DateTime(2026, 3, 17, 9, 15);
-  static final DateTime _t3 = DateTime(2026, 3, 16, 18, 40);
-
   static List<IntegrationPlatform> userPlatforms() {
     return [
       IntegrationPlatform(
@@ -25,9 +22,13 @@ abstract final class ConnectedPlatformsMock {
           canManageMessages: true,
           canSync: true,
         ),
-        connectionState: PlatformConnectionUiState.connected,
-        lastSyncAt: _t1,
-        connectedAccountLabel: 'kurumsal@rainbowgayrimenkul.com',
+        connectionState: PlatformConnectionUiState.disconnected,
+        truthKind: PlatformConnectionTruthKind.mockDemo,
+        connectedAccountLabel: 'Örnek (canlı hesap bağlı değil)',
+        errorState: const PlatformErrorUi(
+          shortMessage: 'Resmi OAuth / API bağlantısı henüz devrede değil.',
+          hint: 'Bu kart yalnızca arayüz örneğidir; senkron ve mesajlar aktif değildir.',
+        ),
       ),
       IntegrationPlatform(
         id: IntegrationPlatformId.hepsiemlak,
@@ -40,12 +41,11 @@ abstract final class ConnectedPlatformsMock {
           canManageMessages: false,
           canSync: true,
         ),
-        connectionState: PlatformConnectionUiState.limited,
-        lastSyncAt: _t2,
-        connectedAccountLabel: 'Rainbow Gayrimenkul',
+        connectionState: PlatformConnectionUiState.disconnected,
+        truthKind: PlatformConnectionTruthKind.experimentalNotLive,
         errorState: const PlatformErrorUi(
-          shortMessage: 'Bazı özellikler platform politikası nedeniyle kapalı.',
-          hint: 'Mesajlar için tarayıcı uzantısı planlanıyor.',
+          shortMessage: 'Kullanıcı kontrollü senkron hedefi — canlı bağlantı kapalı.',
+          hint: 'Deneysel URL içe aktarma ile karıştırmayın; CSV/JSON daha güvenilirdir.',
         ),
       ),
       IntegrationPlatform(
@@ -60,10 +60,10 @@ abstract final class ConnectedPlatformsMock {
           canSync: false,
         ),
         connectionState: PlatformConnectionUiState.needsAttention,
-        lastSyncAt: _t3,
+        truthKind: PlatformConnectionTruthKind.setupIncomplete,
         errorState: const PlatformErrorUi(
-          shortMessage: 'Oturum süresi dolmuş olabilir.',
-          hint: 'Yeniden bağlanarak devam edin.',
+          shortMessage: 'Kurulum tamamlanmadı — canlı entegrasyon aktif değil.',
+          hint: 'Yeniden bağlan seçeneği şimdilik yalnızca arayüz; OAuth açıldığında etkin olacak.',
         ),
       ),
     ];
@@ -72,27 +72,28 @@ abstract final class ConnectedPlatformsMock {
   /// Ofis yöneticisi paneli — örnek çok kullanıcı görünümü (ileride officeId sorgusu).
   static List<AdminPlatformConnectionRow> officeOverview() {
     return [
-      AdminPlatformConnectionRow(
+      const AdminPlatformConnectionRow(
         userId: 'u_demo_1',
         userDisplayName: 'Ayşe Yılmaz',
         platform: IntegrationPlatformId.sahibinden,
-        connectionState: PlatformConnectionUiState.connected,
-        lastSyncAt: _t1,
+        connectionState: PlatformConnectionUiState.disconnected,
+        truthKind: PlatformConnectionTruthKind.mockDemo,
       ),
-      AdminPlatformConnectionRow(
+      const AdminPlatformConnectionRow(
         userId: 'u_demo_2',
         userDisplayName: 'Mehmet Kaya',
         platform: IntegrationPlatformId.hepsiemlak,
-        connectionState: PlatformConnectionUiState.limited,
-        lastSyncAt: _t2,
-        error: const PlatformErrorUi(shortMessage: 'Kısmi senkron'),
+        connectionState: PlatformConnectionUiState.disconnected,
+        truthKind: PlatformConnectionTruthKind.preparing,
+        error: PlatformErrorUi(shortMessage: 'Canlı senkron henüz yok (demo).'),
       ),
       const AdminPlatformConnectionRow(
         userId: 'u_demo_3',
         userDisplayName: 'Zeynep Demir',
         platform: IntegrationPlatformId.emlakjet,
         connectionState: PlatformConnectionUiState.needsAttention,
-        error: PlatformErrorUi(shortMessage: 'Kimlik doğrulama gerekli'),
+        truthKind: PlatformConnectionTruthKind.setupIncomplete,
+        error: PlatformErrorUi(shortMessage: 'Kurulum tamamlanmadı'),
       ),
     ];
   }

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import 'integration_capability.dart';
 import 'integration_platform_id.dart';
+import 'platform_connection_truth_kind.dart';
 import 'platform_connection_ui_state.dart';
 import 'platform_error_ui.dart';
 import 'platform_ui_capabilities.dart';
@@ -15,6 +16,7 @@ class IntegrationPlatform extends Equatable {
     required this.supportLevel,
     required this.capabilities,
     required this.connectionState,
+    required this.truthKind,
     this.lastSyncAt,
     this.errorState,
     this.connectedAccountLabel,
@@ -28,6 +30,8 @@ class IntegrationPlatform extends Equatable {
   final IntegrationSupportLevel supportLevel;
   final PlatformUiCapabilities capabilities;
   final PlatformConnectionUiState connectionState;
+  /// Gerçek OAuth/canlı API durumu — [connectionState] yalnızca eski görünüm için tutulur.
+  final PlatformConnectionTruthKind truthKind;
   final DateTime? lastSyncAt;
   final PlatformErrorUi? errorState;
 
@@ -42,6 +46,7 @@ class IntegrationPlatform extends Equatable {
         supportLevel,
         capabilities,
         connectionState,
+        truthKind,
         lastSyncAt,
         errorState,
         connectedAccountLabel,

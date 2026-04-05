@@ -5,6 +5,7 @@ import '../domain/integration_platform_id.dart';
 abstract final class IntegrationCapabilityRegistry {
   IntegrationCapabilityRegistry._();
 
+  /// URL içe aktarma bayrakları deneysel kanalı açar; canlı OAuth ayrıca gerekir.
   static const IntegrationCapabilitySet _phase1Default = IntegrationCapabilitySet(
     canImportListings: true,
     requiresReauth: true,
