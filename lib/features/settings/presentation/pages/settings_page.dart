@@ -21,9 +21,8 @@ import 'package:emlakmaster_mobile/features/external_integrations/presentation/p
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:emlakmaster_mobile/features/profile/presentation/widgets/profile_avatar_crop_screen.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:emlakmaster_mobile/core/platform/file_stub.dart'
-    if (dart.library.io) 'dart:io' as io;
 import 'package:emlakmaster_mobile/features/profile/data/profile_avatar_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -929,13 +928,24 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
       return;
     }
     final picker = ImagePicker();
-    final xFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final xFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 92);
     if (xFile == null) return;
+    final rawBytes = await xFile.readAsBytes();
+    if (!mounted) return;
+    final cropped = await Navigator.of(context).push<Uint8List?>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (ctx) => ProfileAvatarCropScreen(imageBytes: rawBytes),
+      ),
+    );
+    if (cropped == null || !mounted) return;
+
     setState(() => _loading = true);
     try {
-      final result = kIsWeb
-          ? await ProfileAvatarService.instance.uploadAvatarFromBytes(uid: widget.userId, bytes: await xFile.readAsBytes())
-          : await ProfileAvatarService.instance.uploadAvatar(uid: widget.userId, file: io.File(xFile.path));
+      final result = await ProfileAvatarService.instance.uploadAvatarFromBytes(
+        uid: widget.userId,
+        bytes: cropped,
+      );
       if (!mounted) return;
       if (result != null && result.downloadUrl.isNotEmpty) {
         ref.invalidate(userDocStreamProvider(widget.userId));
@@ -943,7 +953,7 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
       } else {
         AppToaster.warning(
           context,
-          FirebaseStorageAvailability.unavailableMessage,
+          'Profil fotoğrafı yüklenemedi. Mevcut fotoğrafınız korundu.',
         );
       }
     } catch (e) {

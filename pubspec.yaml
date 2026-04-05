@@ -84,6 +84,7 @@ dependencies:
   google_fonts: ^8.0.2
   uuid: ^4.5.3
   intl: ^0.20.2
+  crop_your_image: ^2.0.0
   # Facebook girişi kapalıyken flutter_facebook_auth kullanılmamalı: iOS'ta FBSDK açılışta
   # Info.plist'teki sahte token ile SIGABRT üretebilir. Tekrar açmak için paketi ekleyin ve
   # doc/FACEBOOK_SIGNIN_SETUP.md + scripts/configure_facebook_app.sh kullanın.
