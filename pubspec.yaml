@@ -153,3 +153,5 @@ flutter_launcher_icons:
   min_sdk_android: 21
   adaptive_icon_background: "#0A0A0C"
   adaptive_icon_foreground: assets/branding/emlak_master_app_icon_MASTER.png
+  # Android adaptive maske köşeleri keser; %26 inset + merkezde küçük amblem = kırpılma yok
+  adaptive_icon_foreground_inset: 26
