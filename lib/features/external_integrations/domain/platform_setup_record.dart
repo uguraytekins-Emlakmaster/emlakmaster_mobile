@@ -22,6 +22,7 @@ class PlatformSetupRecord extends Equatable {
     this.notes,
     this.setupCompleted = false,
     this.awaitingVerification = false,
+    this.deferImportWorkflow = false,
     this.oauthVerified = false,
     required this.createdAt,
     required this.updatedAt,
@@ -46,6 +47,9 @@ class PlatformSetupRecord extends Equatable {
   final bool setupCompleted;
   final bool awaitingVerification;
 
+  /// Sihirbazda “önce kayıt sakla” — içe aktarma / hazır iddiasını erteler (kalıcı).
+  final bool deferImportWorkflow;
+
   /// Yalnızca gerçek OAuth/API doğrulandığında true — varsayılan false.
   final bool oauthVerified;
 
@@ -69,6 +73,7 @@ class PlatformSetupRecord extends Equatable {
     String? notes,
     bool? setupCompleted,
     bool? awaitingVerification,
+    bool? deferImportWorkflow,
     bool? oauthVerified,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -90,6 +95,7 @@ class PlatformSetupRecord extends Equatable {
       notes: notes ?? this.notes,
       setupCompleted: setupCompleted ?? this.setupCompleted,
       awaitingVerification: awaitingVerification ?? this.awaitingVerification,
+      deferImportWorkflow: deferImportWorkflow ?? this.deferImportWorkflow,
       oauthVerified: oauthVerified ?? this.oauthVerified,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -115,6 +121,7 @@ class PlatformSetupRecord extends Equatable {
       'notes': notes,
       'setupCompleted': setupCompleted,
       'awaitingVerification': awaitingVerification,
+      'deferImportWorkflow': deferImportWorkflow,
       'oauthVerified': oauthVerified,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -150,6 +157,7 @@ class PlatformSetupRecord extends Equatable {
       notes: d['notes'] as String?,
       setupCompleted: d['setupCompleted'] as bool? ?? false,
       awaitingVerification: d['awaitingVerification'] as bool? ?? false,
+      deferImportWorkflow: d['deferImportWorkflow'] as bool? ?? false,
       oauthVerified: d['oauthVerified'] as bool? ?? false,
       createdAt: ts(d['createdAt']) ?? DateTime.now(),
       updatedAt: ts(d['updatedAt']) ?? DateTime.now(),

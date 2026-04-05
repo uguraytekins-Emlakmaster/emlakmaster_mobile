@@ -4,6 +4,7 @@ import '../domain/platform_connection_truth_kind.dart';
 import '../domain/platform_connection_ui_state.dart';
 import '../domain/platform_error_ui.dart';
 import '../domain/platform_setup_record.dart';
+import 'platform_setup_completeness.dart';
 
 /// Mock kart + kurulum kaydı → dürüst görünüm (OAuth yoksa [liveConnected] üretilmez).
 IntegrationPlatform mergePlatformWithSetup({
@@ -12,10 +13,12 @@ IntegrationPlatform mergePlatformWithSetup({
 }) {
   if (record == null) return base;
 
-  final truth = _truthFromSetup(record);
-  final uiState = _uiStateFromSetup(record);
+  final derived = deriveSetupStatusForRecord(record);
+  final evaluation = evaluatePlatformSetup(record);
+  final truth = _truthFromDerived(derived, record);
+  final uiState = _uiStateFromDerived(derived, record);
 
-  final err = _errorFromSetup(record);
+  final err = _errorFromDerived(derived, evaluation, record);
 
   return IntegrationPlatform(
     id: base.id,
@@ -32,11 +35,14 @@ IntegrationPlatform mergePlatformWithSetup({
   );
 }
 
-PlatformConnectionTruthKind _truthFromSetup(PlatformSetupRecord r) {
+PlatformConnectionTruthKind _truthFromDerived(
+  IntegrationSetupStatus derived,
+  PlatformSetupRecord r,
+) {
   if (r.oauthVerified) {
     return PlatformConnectionTruthKind.liveConnected;
   }
-  switch (r.setupStatus) {
+  switch (derived) {
     case IntegrationSetupStatus.notStarted:
       return PlatformConnectionTruthKind.mockDemo;
     case IntegrationSetupStatus.inProgress:
@@ -54,8 +60,11 @@ PlatformConnectionTruthKind _truthFromSetup(PlatformSetupRecord r) {
   }
 }
 
-PlatformConnectionUiState _uiStateFromSetup(PlatformSetupRecord r) {
-  switch (r.setupStatus) {
+PlatformConnectionUiState _uiStateFromDerived(
+  IntegrationSetupStatus derived,
+  PlatformSetupRecord r,
+) {
+  switch (derived) {
     case IntegrationSetupStatus.notStarted:
       return PlatformConnectionUiState.disconnected;
     case IntegrationSetupStatus.inProgress:
@@ -74,14 +83,37 @@ PlatformConnectionUiState _uiStateFromSetup(PlatformSetupRecord r) {
   }
 }
 
-PlatformErrorUi? _errorFromSetup(PlatformSetupRecord r) {
+PlatformErrorUi? _errorFromDerived(
+  IntegrationSetupStatus derived,
+  PlatformSetupEvaluation evaluation,
+  PlatformSetupRecord r,
+) {
   if (r.setupStatus == IntegrationSetupStatus.error) {
     return PlatformErrorUi(
       shortMessage: r.notes?.isNotEmpty == true ? r.notes! : 'Kurulum hatası kaydedildi.',
       hint: 'Sihirbazdan düzenleyin veya destek ile iletişime geçin.',
     );
   }
-  if (r.setupStatus == IntegrationSetupStatus.awaitingVerification) {
+
+  if (derived == IntegrationSetupStatus.inProgress) {
+    if (evaluation.isMeaningful && !evaluation.isComplete) {
+      final hint = evaluation.missingHints.isEmpty
+          ? 'Temel bilgiler eksik. Sihirbazı tamamlayın.'
+          : 'Eksik: ${evaluation.missingHints.join(', ')}';
+      return PlatformErrorUi(
+        shortMessage: 'Kurulum tamamlanmadı',
+        hint: hint,
+      );
+    }
+    if (evaluation.isComplete && r.deferImportWorkflow) {
+      return const PlatformErrorUi(
+        shortMessage: 'Taslak kayıt',
+        hint: 'İçe aktarma veya doğrulama adımları henüz başlatılmadı. Sihirbazı tamamlayın.',
+      );
+    }
+  }
+
+  if (derived == IntegrationSetupStatus.awaitingVerification) {
     return PlatformErrorUi(
       shortMessage: 'Doğrulama bekleniyor',
       hint: r.applicationStatus?.isNotEmpty == true
@@ -90,7 +122,7 @@ PlatformErrorUi? _errorFromSetup(PlatformSetupRecord r) {
     );
   }
   if (r.oauthVerified) return null;
-  if (r.setupStatus == IntegrationSetupStatus.readyForImport) {
+  if (derived == IntegrationSetupStatus.readyForImport) {
     return const PlatformErrorUi(
       shortMessage: 'Canlı otomatik senkron henüz aktif değil.',
       hint: 'Mağaza dışa aktarım dosyası ile toplu içe aktarmayı kullanın.',

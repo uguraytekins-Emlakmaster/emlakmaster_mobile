@@ -112,6 +112,7 @@ service cloud.firestore {
         && d.setupStatus in ['notStarted', 'inProgress', 'awaitingVerification', 'readyForImport', 'liveEnabled', 'blocked', 'error']
         && d.setupCompleted is bool
         && d.awaitingVerification is bool
+        && d.deferImportWorkflow is bool
         && d.oauthVerified is bool
         && d.createdAt is timestamp
         && d.updatedAt is timestamp

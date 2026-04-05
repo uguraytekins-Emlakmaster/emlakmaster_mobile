@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_connection_mode.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_platform_id.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/application/platform_setup_completeness.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_setup_status.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_setup_record.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
@@ -47,10 +48,30 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
 
   _FirstDataChoice _firstData = _FirstDataChoice.bulkFile;
 
+  /// Son başarılı kayıttan sonra 5. adım metni (türetilmiş durum + değerlendirme).
+  IntegrationSetupStatus? _lastSavedDerivedStatus;
+  PlatformSetupEvaluation? _lastSavedEvaluation;
+  bool? _lastSavedDeferImport;
+
+  void _onWizardFieldChanged() {
+    if (_step == 3) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
     _platform = widget.initialPlatform;
+    for (final c in [
+      _storeName,
+      _email,
+      _company,
+      _transferKey,
+      _integrationRef,
+      _applicationStatus,
+      _notes,
+    ]) {
+      c.addListener(_onWizardFieldChanged);
+    }
     if (widget.editMode && widget.initialPlatform != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadExisting());
     }
@@ -83,11 +104,24 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
       _notes.text = loaded.notes ?? '';
       _awaitingVerification = loaded.awaitingVerification;
       _setupFormCompleted = loaded.setupCompleted;
+      _firstData =
+          loaded.deferImportWorkflow ? _FirstDataChoice.verifyLater : _FirstDataChoice.bulkFile;
     });
   }
 
   @override
   void dispose() {
+    for (final c in [
+      _storeName,
+      _email,
+      _company,
+      _transferKey,
+      _integrationRef,
+      _applicationStatus,
+      _notes,
+    ]) {
+      c.removeListener(_onWizardFieldChanged);
+    }
     _storeName.dispose();
     _email.dispose();
     _company.dispose();
@@ -106,21 +140,94 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     return (fromMem != null && fromMem.isNotEmpty) ? fromMem : (fromDoc ?? '');
   }
 
-  IntegrationSetupStatus _deriveFinalStatus() {
-    if (_awaitingVerification) return IntegrationSetupStatus.awaitingVerification;
-    if (_firstData == _FirstDataChoice.verifyLater) {
-      return IntegrationSetupStatus.inProgress;
-    }
-    if (_mode == IntegrationConnectionMode.fileImport) {
-      return IntegrationSetupStatus.readyForImport;
-    }
-    if (_mode == IntegrationConnectionMode.manualOnly) {
-      return IntegrationSetupStatus.readyForImport;
-    }
-    if (_setupFormCompleted) {
-      return IntegrationSetupStatus.readyForImport;
-    }
-    return IntegrationSetupStatus.inProgress;
+  PlatformSetupRecord _draftRecordForSave({
+    required String uid,
+    required String officeId,
+    required String ownerUserId,
+    required PlatformSetupRecord? existing,
+    required DateTime now,
+  }) {
+    final p = _platform!;
+    final mode = _mode!;
+    final defer = _firstData == _FirstDataChoice.verifyLater;
+    final eval = evaluatePlatformSetup(
+      PlatformSetupRecord(
+        platform: p,
+        officeId: officeId,
+        ownerUserId: ownerUserId,
+        connectionMode: mode,
+        setupStatus: IntegrationSetupStatus.inProgress,
+        storeName: _storeName.text.trim().isEmpty ? null : _storeName.text.trim(),
+        contactEmail: _email.text.trim().isEmpty ? null : _email.text.trim(),
+        companyInfo: _company.text.trim().isEmpty ? null : _company.text.trim(),
+        transferKey: _transferKey.text.trim().isEmpty ? null : _transferKey.text.trim(),
+        integrationReference: _integrationRef.text.trim().isEmpty ? null : _integrationRef.text.trim(),
+        applicationStatus: _applicationStatus.text.trim().isEmpty ? null : _applicationStatus.text.trim(),
+        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        setupCompleted: _setupFormCompleted,
+        awaitingVerification: _awaitingVerification,
+        deferImportWorkflow: defer,
+        oauthVerified: existing?.oauthVerified ?? false,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+        lastVerifiedAt: _awaitingVerification ? null : existing?.lastVerifiedAt,
+        lastSyncAt: existing?.lastSyncAt,
+      ),
+    );
+    final effectiveAwaiting =
+        _awaitingVerification && eval.isVerificationReady && !defer;
+
+    final preDerive = PlatformSetupRecord(
+      platform: p,
+      officeId: officeId,
+      ownerUserId: ownerUserId,
+      connectionMode: mode,
+      setupStatus: IntegrationSetupStatus.inProgress,
+      storeName: _storeName.text.trim().isEmpty ? null : _storeName.text.trim(),
+      contactEmail: _email.text.trim().isEmpty ? null : _email.text.trim(),
+      companyInfo: _company.text.trim().isEmpty ? null : _company.text.trim(),
+      transferKey: _transferKey.text.trim().isEmpty ? null : _transferKey.text.trim(),
+      integrationReference: _integrationRef.text.trim().isEmpty ? null : _integrationRef.text.trim(),
+      applicationStatus: _applicationStatus.text.trim().isEmpty ? null : _applicationStatus.text.trim(),
+      notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      setupCompleted: _setupFormCompleted,
+      awaitingVerification: effectiveAwaiting,
+      deferImportWorkflow: defer,
+      oauthVerified: existing?.oauthVerified ?? false,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      lastVerifiedAt: effectiveAwaiting ? null : existing?.lastVerifiedAt,
+      lastSyncAt: existing?.lastSyncAt,
+    );
+
+    final derived = deriveSetupStatusForRecord(preDerive);
+    return preDerive.copyWith(setupStatus: derived);
+  }
+
+  PlatformSetupEvaluation _evaluateCurrentFields() {
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+    final officeId = _officeId();
+    return evaluatePlatformSetup(
+      PlatformSetupRecord(
+        platform: _platform!,
+        officeId: officeId,
+        ownerUserId: uid,
+        connectionMode: _mode!,
+        setupStatus: IntegrationSetupStatus.inProgress,
+        storeName: _storeName.text.trim().isEmpty ? null : _storeName.text.trim(),
+        contactEmail: _email.text.trim().isEmpty ? null : _email.text.trim(),
+        companyInfo: _company.text.trim().isEmpty ? null : _company.text.trim(),
+        transferKey: _transferKey.text.trim().isEmpty ? null : _transferKey.text.trim(),
+        integrationReference: _integrationRef.text.trim().isEmpty ? null : _integrationRef.text.trim(),
+        applicationStatus: _applicationStatus.text.trim().isEmpty ? null : _applicationStatus.text.trim(),
+        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        setupCompleted: _setupFormCompleted,
+        awaitingVerification: _awaitingVerification,
+        deferImportWorkflow: _firstData == _FirstDataChoice.verifyLater,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
   }
 
   Future<void> _saveAndFinish() async {
@@ -150,26 +257,12 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     // Firestore güncelleme kuralı ownerUserId değişimine izin vermez; ilk oluşturan korunur.
     final ownerUserId = existing?.ownerUserId ?? uid;
 
-    final record = PlatformSetupRecord(
-      platform: p,
+    final record = _draftRecordForSave(
+      uid: uid,
       officeId: officeId,
       ownerUserId: ownerUserId,
-      connectionMode: _mode!,
-      setupStatus: _deriveFinalStatus(),
-      storeName: _storeName.text.trim().isEmpty ? null : _storeName.text.trim(),
-      contactEmail: _email.text.trim().isEmpty ? null : _email.text.trim(),
-      companyInfo: _company.text.trim().isEmpty ? null : _company.text.trim(),
-      transferKey: _transferKey.text.trim().isEmpty ? null : _transferKey.text.trim(),
-      integrationReference: _integrationRef.text.trim().isEmpty ? null : _integrationRef.text.trim(),
-      applicationStatus: _applicationStatus.text.trim().isEmpty ? null : _applicationStatus.text.trim(),
-      notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-      setupCompleted: _setupFormCompleted,
-      awaitingVerification: _awaitingVerification,
-      oauthVerified: existing?.oauthVerified ?? false,
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-      lastVerifiedAt: _awaitingVerification ? null : existing?.lastVerifiedAt,
-      lastSyncAt: existing?.lastSyncAt,
+      existing: existing,
+      now: now,
     );
 
     try {
@@ -183,13 +276,35 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
       return;
     }
 
+    final derived = deriveSetupStatusForRecord(record);
+    final eval = evaluatePlatformSetup(record);
+
     HapticFeedback.mediumImpact();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kurulum kaydı alındı. Değişiklikler kaydedildi.')),
-      );
-      setState(() => _step = 4);
+      final snack = _snackMessageForSave(derived, eval, record.deferImportWorkflow);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(snack)));
+      setState(() {
+        _lastSavedDerivedStatus = derived;
+        _lastSavedEvaluation = eval;
+        _lastSavedDeferImport = record.deferImportWorkflow;
+        _step = 4;
+      });
     }
+  }
+
+  String _snackMessageForSave(
+    IntegrationSetupStatus derived,
+    PlatformSetupEvaluation eval,
+    bool deferImport,
+  ) {
+    if (derived == IntegrationSetupStatus.awaitingVerification) {
+      return 'Kurulum kaydı alındı. Doğrulama bekleniyor.';
+    }
+    if (derived == IntegrationSetupStatus.inProgress &&
+        (deferImport || !eval.isComplete)) {
+      return 'Taslak kaydedildi. Kurulum henüz tamamlanmadı.';
+    }
+    return 'Kurulum kaydı alındı. Değişiklikler kaydedildi.';
   }
 
   @override
@@ -320,7 +435,8 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
   }
 
   bool _canFinish() {
-    return _platform != null && _mode != null;
+    if (_platform == null || _mode == null) return false;
+    return _evaluateCurrentFields().isComplete;
   }
 
   void _onNext() {
@@ -618,8 +734,9 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
   }
 
   Widget _step5(AppThemeExtension ext) {
-    final st = _deriveFinalStatus();
-    final copy = _resultCopy(st);
+    final derived = _lastSavedDerivedStatus ?? IntegrationSetupStatus.inProgress;
+    final eval = _lastSavedEvaluation ?? _evaluateCurrentFields();
+    final copy = _resultCopy(derived, eval);
     return _StepSection(
       title: '5 · Sonuç',
       subtitle: copy.title,
@@ -664,14 +781,29 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     );
   }
 
-  _ResultCopy _resultCopy(IntegrationSetupStatus st) {
-    switch (st) {
-      case IntegrationSetupStatus.awaitingVerification:
-        return _ResultCopy(
-          title: 'Doğrulama bekleniyor',
-          body: 'Kurulum kaydı alındı. Partner / platform onayı sonrası canlı adımlar açılacaktır. '
-              'Bu arada mağaza dışa aktarım dosyası ile toplu içe aktarma kullanabilirsiniz.',
-        );
+  _ResultCopy _resultCopy(IntegrationSetupStatus derived, PlatformSetupEvaluation eval) {
+    if (derived == IntegrationSetupStatus.awaitingVerification && eval.isComplete) {
+      return _ResultCopy(
+        title: 'Kurulum kaydı alındı',
+        body: 'Doğrulama bekleniyor. Partner / platform onayı sonrası canlı adımlar açılacaktır. '
+            'Bu arada mağaza dışa aktarım dosyası ile toplu içe aktarma kullanabilirsiniz.',
+      );
+    }
+    if (derived == IntegrationSetupStatus.inProgress && eval.isComplete && (_lastSavedDeferImport == true)) {
+      return _ResultCopy(
+        title: 'Taslak kaydedildi',
+        body: 'Kurulum henüz tamamlanmadı. İçe aktarma veya doğrulama adımlarını başlatmadınız; '
+            'eksik alanları tamamlamak için sihirbaza dönebilirsiniz.',
+      );
+    }
+    if (derived == IntegrationSetupStatus.inProgress && (!eval.isComplete)) {
+      return _ResultCopy(
+        title: 'Taslak kaydedildi',
+        body: 'Kurulum henüz tamamlanmadı. '
+            '${eval.missingHints.isEmpty ? 'Temel bilgileri tamamlayın.' : 'Eksik: ${eval.missingHints.join(', ')}'}',
+      );
+    }
+    switch (derived) {
       case IntegrationSetupStatus.readyForImport:
         return _ResultCopy(
           title: 'İçe aktarıma hazır (dosya önerilir)',
@@ -684,7 +816,7 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
         );
       default:
         return _ResultCopy(
-          title: st.shortLabelTr,
+          title: derived.shortLabelTr,
           body: 'Kayıt güncellendi.',
         );
     }
