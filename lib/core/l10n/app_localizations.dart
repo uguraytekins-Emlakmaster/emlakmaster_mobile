@@ -169,6 +169,12 @@ class AppLocalizations {
       'my_external_listings_connect_cta': 'Bağlı hesapları yönet',
       'my_external_listings_load_error': 'Harici ilanlar yüklenemedi.',
       'my_external_listings_settings_sub': 'Senkronize edilen ilanları görüntüle ve filtrele',
+      'integration_connections_read_only_notice':
+          'Platform bağlantıları ofis yöneticisi tarafından yönetilir.',
+      'settings_section_platform_integrations_manager': 'İlanlar ve platform bağlantıları',
+      'settings_platform_connections_tile': 'Platform bağlantıları (yönetici)',
+      'settings_platform_connections_tile_sub':
+          'Sahibinden, Emlakjet, Hepsiemlak — bağla, senkron, içe aktarma',
       'integration_filter_all': 'Tümü',
 
       // Tasks
@@ -370,6 +376,12 @@ class AppLocalizations {
       'my_external_listings_connect_cta': 'Manage connected accounts',
       'my_external_listings_load_error': 'Could not load external listings.',
       'my_external_listings_settings_sub': 'View and filter synced listings',
+      'integration_connections_read_only_notice':
+          'Platform connections are managed by your office administrator.',
+      'settings_section_platform_integrations_manager': 'Listings & platform connections',
+      'settings_platform_connections_tile': 'Platform connections (admin)',
+      'settings_platform_connections_tile_sub':
+          'Sahibinden, Emlakjet, Hepsiemlak — connect, sync, import',
       'integration_filter_all': 'All',
 
       'title_tasks': 'Tasks',

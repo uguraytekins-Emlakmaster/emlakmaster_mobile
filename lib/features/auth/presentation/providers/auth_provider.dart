@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/auth_service.dart';
+import '../../domain/permissions/feature_permission.dart';
 import '../../../office/data/office_membership_repository.dart';
 import '../../../office/data/office_repository.dart';
 import '../../../office/domain/office_access_state.dart';
@@ -258,6 +259,12 @@ final displayRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
 /// displayRoleProvider’ın valueOrNull hali (Dashboard/buton için).
 final displayRoleOrNullProvider = Provider<AppRole?>((ref) {
   return ref.watch(displayRoleProvider).valueOrNull ?? AppRole.guest;
+});
+
+/// Firestore rolüne göre; platform bağlantısı / içe aktarma motoru yönetimi (override ile büyütülmez).
+final canManagePlatformIntegrationsProvider = Provider<bool>((ref) {
+  final role = ref.watch(currentRoleOrNullProvider) ?? AppRole.guest;
+  return FeaturePermission.canManagePlatformIntegrations(role);
 });
 
 /// Yönetici kullanıcının hangi paneli gördüğü. null = role göre; true = danışman paneli; false = yönetici paneli.

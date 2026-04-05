@@ -13,6 +13,7 @@ import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broke
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/smart_task_suggestions_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/dashboard_kpi_section.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/lean_admin_dashboard_balance_cards.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/manager_platform_connections_summary_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/sovereign_arc_watermark.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/welcome_patron_overlay.dart';
@@ -146,6 +147,7 @@ class DashboardPage extends ConsumerWidget {
                         if (kpiBar) SizedBox(height: gapOp),
                         px(const RainbowAnalyticsCenterCard()),
                         SizedBox(height: gapOp),
+                        px(const ManagerPlatformConnectionsSummaryCard()),
                         if (lean) ...[
                           px(const LeanAdminTodayFocusCard()),
                           px(const LeanAdminOfficePulseCard()),

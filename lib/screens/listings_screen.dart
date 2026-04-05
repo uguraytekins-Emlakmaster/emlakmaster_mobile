@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:emlakmaster_mobile/features/listings/data/listing_row_factory.dart';
 import 'package:emlakmaster_mobile/features/listings/domain/listing_row_view.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/market_feed_rows_provider.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/owned_listing_rows_provider.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
@@ -123,6 +124,7 @@ class _OwnedPane extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     final l10n = AppLocalizations.of(context);
     final async = ref.watch(ownedListingRowsProvider);
+    final canManagePlatformIntegrations = ref.watch(canManagePlatformIntegrationsProvider);
 
     return async.when(
       loading: () => Center(
@@ -144,11 +146,17 @@ class _OwnedPane extends ConsumerWidget {
             premiumVisual: true,
             icon: Icons.home_work_outlined,
             title: l10n.t('empty_listings'),
-            subtitle: l10n.t('empty_listings_sub'),
-            actionLabel: l10n.t('empty_listings_cta_import'),
-            onAction: () => context.push(AppRouter.routeImportHub),
-            outlinedActionLabel: l10n.t('empty_listings_cta_accounts'),
-            onOutlinedAction: () => context.push(AppRouter.routeConnectedAccounts),
+            subtitle: canManagePlatformIntegrations
+                ? l10n.t('empty_listings_sub')
+                : '${l10n.t('empty_listings_sub')}\n\n${l10n.t('integration_connections_read_only_notice')}',
+            actionLabel: canManagePlatformIntegrations ? l10n.t('empty_listings_cta_import') : null,
+            onAction: canManagePlatformIntegrations
+                ? () => context.push(AppRouter.routeImportHub)
+                : null,
+            outlinedActionLabel: canManagePlatformIntegrations ? l10n.t('empty_listings_cta_accounts') : null,
+            onOutlinedAction: canManagePlatformIntegrations
+                ? () => context.push(AppRouter.routeConnectedAccounts)
+                : null,
           );
         }
         return ListView(

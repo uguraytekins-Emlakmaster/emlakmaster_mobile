@@ -18,6 +18,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/role_selection_page.dart';
 import '../../screens/onboarding_page.dart';
+import '../../features/auth/domain/permissions/feature_permission.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/calls/call_screen.dart';
 import '../../features/calls/post_call_wizard.dart';
@@ -128,6 +129,13 @@ class AppRouter {
   static String regionInsightPath(String regionId) =>
       '/region-insight/${Uri.encodeComponent(regionId)}';
 
+  /// Platform bağlantısı / içe aktarma motoru — yalnızca manager-tier (router + UI).
+  static bool isManagerOnlyIntegrationPath(String path) {
+    return path == routeConnectedAccounts ||
+        path == routeImportHub ||
+        path == routeImportHistory;
+  }
+
   static GoRouter create(Ref ref, Listenable refreshListenable) {
     return GoRouter(
       initialLocation: routeLogin,
@@ -148,11 +156,8 @@ class AppRouter {
             if (wsDone) {
               const allowWhileNeedsRole = <String>{
                 routeRoleSelection,
-                routeConnectedAccounts,
                 routeMyExternalListings,
                 routeMyListings,
-                routeImportHub,
-                routeImportHistory,
                 routeMessageCenter,
                 routeMessageThread,
               };
@@ -180,11 +185,8 @@ class AppRouter {
               routeOfficeJoin,
               routeOfficeInviteCreate,
               routeOfficeAdmin,
-              routeConnectedAccounts,
               routeMyExternalListings,
               routeMyListings,
-              routeImportHub,
-              routeImportHistory,
               routeMessageCenter,
               routeMessageThread,
             };
@@ -201,6 +203,14 @@ class AppRouter {
             };
             if (officeSetupPaths.contains(path)) {
               return routeHome;
+            }
+            if (!ref.read(userDocBootstrapPendingProvider)) {
+              final role = ref.read(currentRoleOrNullProvider);
+              if (role != null &&
+                  isManagerOnlyIntegrationPath(path) &&
+                  !FeaturePermission.canManagePlatformIntegrations(role)) {
+                return routeHome;
+              }
             }
           }
           if (user != null &&

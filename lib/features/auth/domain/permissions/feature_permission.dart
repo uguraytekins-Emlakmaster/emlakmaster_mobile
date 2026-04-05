@@ -84,6 +84,10 @@ abstract final class FeaturePermission {
   /// Danışman paneli: kendi özeti, müşteriler, ilanlar, Magic Call, resurrection.
   static bool seesConsultantPanel(AppRole role) => role.isConsultantTier;
 
+  /// Sahibinden / Emlakjet / Hepsiemlak bağlantısı, içe aktarma motoru, senkron tetikleme, entegrasyon yönetimi.
+  /// Danışman bu akışları yönetmez; salt okunur özet görür.
+  static bool canManagePlatformIntegrations(AppRole role) => role.isManagerTier;
+
   /// Müşteri paneli: arama, favoriler, mesajlar, sanal tur, doğrudan iletişim.
   static bool seesClientPanel(AppRole role) => role.isClientTier;
 

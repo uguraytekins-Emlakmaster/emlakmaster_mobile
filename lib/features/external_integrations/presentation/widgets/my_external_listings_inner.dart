@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -36,6 +37,7 @@ class _MyExternalListingsInnerState extends ConsumerState<MyExternalListingsInne
     final ext = AppThemeExtension.of(context);
     final l10n = AppLocalizations.of(context);
     final async = ref.watch(integrationSyncedListingsProvider);
+    final canManage = ref.watch(canManagePlatformIntegrationsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -45,7 +47,7 @@ class _MyExternalListingsInnerState extends ConsumerState<MyExternalListingsInne
             title: l10n.t('listings_tab_my_external'),
             subtitle: l10n.t('my_external_listings_hero_sub'),
             icon: Icons.collections_bookmark_rounded,
-            trailing: widget.showTrailingConnect
+            trailing: widget.showTrailingConnect && canManage
                 ? TextButton(
                     onPressed: () {
                       HapticFeedback.selectionClick();
@@ -54,6 +56,18 @@ class _MyExternalListingsInnerState extends ConsumerState<MyExternalListingsInne
                     child: Text(l10n.t('my_external_listings_connect_cta')),
                   )
                 : null,
+          ),
+        if (!canManage)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Text(
+              l10n.t('integration_connections_read_only_notice'),
+              style: TextStyle(
+                color: ext.foregroundSecondary,
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
           ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -101,9 +115,13 @@ class _MyExternalListingsInnerState extends ConsumerState<MyExternalListingsInne
                       premiumVisual: true,
                       icon: Icons.cloud_sync_outlined,
                       title: l10n.t('my_external_listings_empty_title'),
-                      subtitle: l10n.t('my_external_listings_empty_sub'),
-                      actionLabel: l10n.t('my_external_listings_connect_cta'),
-                      onAction: () => context.push(AppRouter.routeConnectedAccounts),
+                      subtitle: canManage
+                          ? l10n.t('my_external_listings_empty_sub')
+                          : '${l10n.t('my_external_listings_empty_sub')}\n\n${l10n.t('integration_connections_read_only_notice')}',
+                      actionLabel: canManage ? l10n.t('my_external_listings_connect_cta') : null,
+                      onAction: canManage
+                          ? () => context.push(AppRouter.routeConnectedAccounts)
+                          : null,
                     ),
                   ),
                 );

@@ -47,6 +47,7 @@ class SettingsPage extends ConsumerWidget {
     final isAdmin = FeaturePermission.seesAdminPanel(realRole);
     final canBecomeAdmin = user != null &&
         (realRole == AppRole.agent || realRole == AppRole.guest);
+    final canManagePlatformIntegrations = ref.watch(canManagePlatformIntegrationsProvider);
     final flagsAsync = ref.watch(featureFlagsProvider);
 
     final l10n = AppLocalizations.of(context);
@@ -383,7 +384,12 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(title: 'Eşleştirme & Entegrasyonlar', icon: Icons.hub_rounded),
+            _SectionHeader(
+              title: canManagePlatformIntegrations
+                  ? l10n.t('settings_section_platform_integrations_manager')
+                  : 'Eşleştirme & Entegrasyonlar',
+              icon: Icons.hub_rounded,
+            ),
             flagsAsync.when(
               data: (flags) => _sectionCard(context,
                 children: [
@@ -415,26 +421,70 @@ class SettingsPage extends ConsumerWidget {
                             AppConstants.keyFeatureExternalIntegrations, v),
                   ),
                   if (flags[AppConstants.keyFeatureExternalIntegrations] ?? true) ...[
-                    ListTile(
-                      leading: Icon(Icons.link_rounded, color: theme.colorScheme.primary),
-                      title: Text('Bağlı hesapları yönet', style: TextStyle(color: theme.colorScheme.onSurface)),
-                      subtitle: Text(
-                        'Harici ilan hesaplarını bağla veya senkron durumunu gör',
-                        style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                    if (!canManagePlatformIntegrations) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        child: Text(
+                          l10n.t('integration_connections_read_only_notice'),
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        ),
                       ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => context.push(AppRouter.routeConnectedAccounts),
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.collections_bookmark_rounded, color: theme.colorScheme.primary),
-                      title: Text(l10n.t('my_external_listings_title'), style: TextStyle(color: theme.colorScheme.onSurface)),
-                      subtitle: Text(
-                        l10n.t('my_external_listings_settings_sub'),
-                        style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                      ListTile(
+                        leading: Icon(Icons.collections_bookmark_outlined, color: theme.colorScheme.primary),
+                        title: Text(l10n.t('my_external_listings_title'), style: TextStyle(color: theme.colorScheme.onSurface)),
+                        subtitle: Text(
+                          l10n.t('my_external_listings_settings_sub'),
+                          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push(AppRouter.routeMyExternalListings),
                       ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => context.push(AppRouter.routeMyExternalListings),
-                    ),
+                    ] else ...[
+                      ListTile(
+                        leading: Icon(Icons.hub_rounded, color: theme.colorScheme.primary),
+                        title: Text(l10n.t('settings_platform_connections_tile'), style: TextStyle(color: theme.colorScheme.onSurface)),
+                        subtitle: Text(
+                          l10n.t('settings_platform_connections_tile_sub'),
+                          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push(AppRouter.routeConnectedAccounts),
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.upload_file_outlined, color: theme.colorScheme.primary),
+                        title: const Text('İçe aktarma merkezi'),
+                        subtitle: Text(
+                          'URL, dosya ve içe aktarma geçmişi',
+                          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push(AppRouter.routeImportHub),
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.history_rounded, color: theme.colorScheme.primary),
+                        title: const Text('İçe aktarma geçmişi'),
+                        subtitle: Text(
+                          'Görev durumu ve loglar',
+                          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push(AppRouter.routeImportHistory),
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.collections_bookmark_rounded, color: theme.colorScheme.primary),
+                        title: Text(l10n.t('my_external_listings_title'), style: TextStyle(color: theme.colorScheme.onSurface)),
+                        subtitle: Text(
+                          l10n.t('my_external_listings_settings_sub'),
+                          style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.65), fontSize: 12),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push(AppRouter.routeMyExternalListings),
+                      ),
+                    ],
                   ],
                 ],
               ),

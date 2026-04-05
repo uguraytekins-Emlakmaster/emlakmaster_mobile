@@ -25,13 +25,9 @@ class _WorkspaceSetupPageState extends State<WorkspaceSetupPage> {
     super.dispose();
   }
 
-  Future<void> _finish({required bool openPlatforms}) async {
+  Future<void> _finish() async {
     HapticFeedback.mediumImpact();
     await OnboardingStore.instance.setWorkspaceSetupCompleted();
-    if (!mounted) return;
-    if (openPlatforms) {
-      await context.push(AppRouter.routeConnectedAccounts);
-    }
     if (!mounted) return;
     context.go(AppRouter.routeRoleSelection);
   }
@@ -116,8 +112,7 @@ class _WorkspaceSetupPageState extends State<WorkspaceSetupPage> {
                   ),
                   _StepPlatforms(
                     intent: _intent,
-                    onSkip: () => _finish(openPlatforms: false),
-                    onConnect: () => _finish(openPlatforms: true),
+                    onContinue: _finish,
                   ),
                 ],
               ),
@@ -288,13 +283,11 @@ class _ChoiceTile extends StatelessWidget {
 class _StepPlatforms extends StatelessWidget {
   const _StepPlatforms({
     required this.intent,
-    required this.onSkip,
-    required this.onConnect,
+    required this.onContinue,
   });
 
   final _WorkspaceIntent? intent;
-  final VoidCallback onSkip;
-  final VoidCallback onConnect;
+  final VoidCallback onContinue;
 
   @override
   Widget build(BuildContext context) {
@@ -316,7 +309,7 @@ class _StepPlatforms extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Sahibinden, Hepsiemlak ve Emlakjet hesaplarınızı bağlayın; ilanlar «Benim İlanlarım» altında senkron görünür. İsterseniz atlayabilirsiniz.',
+          'Sahibinden, Hepsiemlak ve Emlakjet bağlantıları ofis yöneticisi tarafından Ayarlar → Platform bağlantıları üzerinden kurulur; senkron ilanlar danışmanlara «İlanlar» ve ilgili ekranlarda görünür.',
           style: TextStyle(color: ext.foregroundSecondary, height: 1.45, fontSize: 14),
         ),
         const SizedBox(height: 12),
@@ -339,10 +332,8 @@ class _StepPlatforms extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 28),
-        FilledButton.icon(
-          onPressed: onConnect,
-          icon: const Icon(Icons.link_rounded, size: 22),
-          label: const Text('Platformları bağla'),
+        FilledButton(
+          onPressed: onContinue,
           style: FilledButton.styleFrom(
             backgroundColor: scheme.primary,
             foregroundColor: ext.onBrand,
@@ -351,19 +342,7 @@ class _StepPlatforms extends StatelessWidget {
               borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: onSkip,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: ext.foreground,
-            side: BorderSide(color: ext.border.withValues(alpha: 0.8)),
-            minimumSize: const Size(double.infinity, 52),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-            ),
-          ),
-          child: const Text('Şimdilik atla', style: TextStyle(fontWeight: FontWeight.w600)),
+          child: const Text('Devam', style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ],
     );

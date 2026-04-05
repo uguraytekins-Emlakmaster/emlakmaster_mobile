@@ -1,8 +1,8 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/listing_import/application/listings_filter_service.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listings_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_import/domain/listing_entity.dart';
@@ -52,6 +52,7 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
     final listingsAsync = ref.watch(myListingsProvider);
     final historyAsync = ref.watch(importHistoryProvider);
+    final canManage = ref.watch(canManagePlatformIntegrationsProvider);
 
     return Scaffold(
       backgroundColor: AppThemeExtension.of(context).background,
@@ -73,16 +74,18 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
                         ),
                       ),
                     ),
-                    IconButton(
-                      tooltip: 'İçe aktar',
-                      onPressed: () => context.push(AppRouter.routeImportHub),
-                      icon: Icon(Icons.add_circle_outline_rounded, color: AppThemeExtension.of(context).accent),
-                    ),
-                    IconButton(
-                      tooltip: 'Geçmiş',
-                      onPressed: () => context.push(AppRouter.routeImportHistory),
-                      icon: Icon(Icons.history_rounded, color: AppThemeExtension.of(context).textSecondary),
-                    ),
+                    if (canManage) ...[
+                      IconButton(
+                        tooltip: 'İçe aktar',
+                        onPressed: () => context.push(AppRouter.routeImportHub),
+                        icon: Icon(Icons.add_circle_outline_rounded, color: AppThemeExtension.of(context).accent),
+                      ),
+                      IconButton(
+                        tooltip: 'Geçmiş',
+                        onPressed: () => context.push(AppRouter.routeImportHistory),
+                        icon: Icon(Icons.history_rounded, color: AppThemeExtension.of(context).textSecondary),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -157,12 +160,18 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
                                       premiumVisual: true,
                                       icon: Icons.home_work_outlined,
                                       title: l10n.t('empty_my_listings_title'),
-                                      subtitle: l10n.t('empty_my_listings_sub'),
-                                      actionLabel: l10n.t('empty_my_listings_cta_import'),
-                                      onAction: () => context.push(AppRouter.routeImportHub),
-                                      outlinedActionLabel: l10n.t('empty_my_listings_cta_accounts'),
-                                      onOutlinedAction: () =>
-                                          context.push(AppRouter.routeConnectedAccounts),
+                                      subtitle: canManage
+                                          ? l10n.t('empty_my_listings_sub')
+                                          : '${l10n.t('empty_my_listings_sub')}\n\n${l10n.t('integration_connections_read_only_notice')}',
+                                      actionLabel: canManage ? l10n.t('empty_my_listings_cta_import') : null,
+                                      onAction: canManage
+                                          ? () => context.push(AppRouter.routeImportHub)
+                                          : null,
+                                      outlinedActionLabel:
+                                          canManage ? l10n.t('empty_my_listings_cta_accounts') : null,
+                                      onOutlinedAction: canManage
+                                          ? () => context.push(AppRouter.routeConnectedAccounts)
+                                          : null,
                                     );
                                   }
                                   return const EmptyState(
