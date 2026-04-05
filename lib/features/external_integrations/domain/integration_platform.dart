@@ -5,6 +5,7 @@ import 'integration_platform_id.dart';
 import 'platform_connection_truth_kind.dart';
 import 'platform_connection_ui_state.dart';
 import 'platform_error_ui.dart';
+import 'platform_setup_lifecycle.dart';
 import 'platform_setup_record.dart';
 import 'platform_ui_capabilities.dart';
 
@@ -22,6 +23,7 @@ class IntegrationPlatform extends Equatable {
     this.errorState,
     this.connectedAccountLabel,
     this.setupRecord,
+    this.setupLifecycle,
   });
 
   final IntegrationPlatformId id;
@@ -43,6 +45,9 @@ class IntegrationPlatform extends Equatable {
   /// Ofis kurulum sihirbazı kaydı (varsa kart gerçek ilerlemeyi gösterir).
   final PlatformSetupRecord? setupRecord;
 
+  /// Türetilmiş yaşam döngüsü (ham [setupRecord.setupStatus] yerine gösterim için).
+  final PlatformSetupLifecycleState? setupLifecycle;
+
   @override
   List<Object?> get props => [
         id,
@@ -56,5 +61,6 @@ class IntegrationPlatform extends Equatable {
         errorState,
         connectedAccountLabel,
         setupRecord,
+        setupLifecycle,
       ];
 }

@@ -1,5 +1,4 @@
 import '../domain/integration_connection_mode.dart';
-import '../domain/integration_setup_status.dart';
 import '../domain/platform_setup_record.dart';
 
 /// Sihirbaz ve kartlar için ortak: anlamlı veri / tam kurulum / doğrulamaya hazır.
@@ -26,12 +25,16 @@ class PlatformSetupEvaluation {
 
 bool _nonEmpty(String? s) => s != null && s.trim().isNotEmpty;
 
-/// Basit e-posta kontrolü (tam RFC değil; yanlış pozitif kabul edilebilir).
+/// Üretim için sıkı e-posta kontrolü (tam RFC değil; bilinçli gevşek pozitif yok).
+final RegExp _contactEmailPattern = RegExp(
+  r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+);
+
 bool isPlausibleContactEmail(String? s) {
   if (!_nonEmpty(s)) return false;
   final t = s!.trim();
-  final at = t.indexOf('@');
-  return at > 0 && at < t.length - 1 && !t.contains(' ');
+  if (t.length > 320) return false;
+  return _contactEmailPattern.hasMatch(t);
 }
 
 /// Kayıt alanlarından tamamlanma değerlendirmesi.
@@ -92,42 +95,5 @@ bool _isCompleteForMode({
       return storeNonEmpty && emailOk;
     case IntegrationConnectionMode.transferKey:
       return storeNonEmpty && emailOk && hasTransferOrRef;
-  }
-}
-
-/// Firestore’daki ham [setupStatus] yerine kart ve sihirbaz için tek doğruluk.
-/// [PlatformSetupRecord.deferImportWorkflow]: 4. adımda “önce kayıt” — hazır/akış iddiasını erteler.
-IntegrationSetupStatus deriveSetupStatusForRecord(PlatformSetupRecord r) {
-  if (r.oauthVerified) {
-    return IntegrationSetupStatus.liveEnabled;
-  }
-
-  final e = evaluatePlatformSetup(r);
-
-  if (!e.isMeaningful) {
-    return IntegrationSetupStatus.notStarted;
-  }
-  if (!e.isComplete) {
-    return IntegrationSetupStatus.inProgress;
-  }
-
-  if (r.deferImportWorkflow) {
-    return IntegrationSetupStatus.inProgress;
-  }
-
-  final awaitingAllowed = r.awaitingVerification && e.isVerificationReady;
-  if (awaitingAllowed) {
-    return IntegrationSetupStatus.awaitingVerification;
-  }
-
-  switch (r.connectionMode) {
-    case IntegrationConnectionMode.officialSetup:
-      return r.setupCompleted
-          ? IntegrationSetupStatus.readyForImport
-          : IntegrationSetupStatus.inProgress;
-    case IntegrationConnectionMode.transferKey:
-    case IntegrationConnectionMode.fileImport:
-    case IntegrationConnectionMode.manualOnly:
-      return IntegrationSetupStatus.readyForImport;
   }
 }

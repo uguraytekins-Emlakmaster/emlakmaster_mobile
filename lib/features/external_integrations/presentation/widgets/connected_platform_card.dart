@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/features/external_integrations/domain/integra
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_truth_kind.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_connection_mode.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_setup_status.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_setup_lifecycle.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_capability.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/capability_badge_row.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/platform_status_chip.dart';
@@ -81,7 +82,7 @@ class ConnectedPlatformCard extends StatelessWidget {
                       if (platform.setupRecord != null) ...[
                         const SizedBox(height: 6),
                         Text(
-                          'Kurulum: ${platform.setupRecord!.setupStatus.shortLabelTr} · '
+                          'Kurulum: ${platform.setupLifecycle?.cardSubtitleTr ?? platform.setupRecord!.setupStatus.shortLabelTr} · '
                           '${_connectionModeShort(platform.setupRecord!.connectionMode)}',
                           maxLines: 2,
                           style: TextStyle(
@@ -95,7 +96,10 @@ class ConnectedPlatformCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                PlatformStatusChip(truthKind: platform.truthKind),
+                PlatformStatusChip(
+                  truthKind: platform.truthKind,
+                  labelOverride: platform.setupLifecycle?.chipLabelTr,
+                ),
               ],
             ),
             if (platform.connectedAccountLabel != null) ...[

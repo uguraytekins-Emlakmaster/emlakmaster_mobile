@@ -6,7 +6,9 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_connection_mode.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_platform_id.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/application/platform_setup_completeness.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/application/platform_setup_lifecycle_logic.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_setup_status.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_setup_lifecycle.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_setup_record.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
@@ -48,10 +50,9 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
 
   _FirstDataChoice _firstData = _FirstDataChoice.bulkFile;
 
-  /// Son başarılı kayıttan sonra 5. adım metni (türetilmiş durum + değerlendirme).
-  IntegrationSetupStatus? _lastSavedDerivedStatus;
+  /// Son başarılı kayıttan sonra 5. adım metni.
+  PlatformSetupLifecycleState? _lastSavedLifecycle;
   PlatformSetupEvaluation? _lastSavedEvaluation;
-  bool? _lastSavedDeferImport;
 
   void _onWizardFieldChanged() {
     if (_step == 3) setState(() {});
@@ -276,35 +277,40 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
       return;
     }
 
-    final derived = deriveSetupStatusForRecord(record);
+    final lifecycle = deriveLifecycleState(record);
     final eval = evaluatePlatformSetup(record);
 
     HapticFeedback.mediumImpact();
     if (mounted) {
-      final snack = _snackMessageForSave(derived, eval, record.deferImportWorkflow);
+      final snack = _snackMessageForLifecycle(lifecycle);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(snack)));
       setState(() {
-        _lastSavedDerivedStatus = derived;
+        _lastSavedLifecycle = lifecycle;
         _lastSavedEvaluation = eval;
-        _lastSavedDeferImport = record.deferImportWorkflow;
         _step = 4;
       });
     }
   }
 
-  String _snackMessageForSave(
-    IntegrationSetupStatus derived,
-    PlatformSetupEvaluation eval,
-    bool deferImport,
-  ) {
-    if (derived == IntegrationSetupStatus.awaitingVerification) {
-      return 'Kurulum kaydı alındı. Doğrulama bekleniyor.';
+  String _snackMessageForLifecycle(PlatformSetupLifecycleState lifecycle) {
+    switch (lifecycle) {
+      case PlatformSetupLifecycleState.awaitingVerification:
+        return 'Kurulum kaydı alındı. Doğrulama bekleniyor.';
+      case PlatformSetupLifecycleState.draft:
+      case PlatformSetupLifecycleState.incomplete:
+        return 'Taslak kaydedildi. Kurulum henüz tamamlanmadı.';
+      case PlatformSetupLifecycleState.officialPartnerPending:
+        return 'Kurulum kaydı alındı. Resmi süreç devam ediyor.';
+      case PlatformSetupLifecycleState.readyForImport:
+        return 'Kurulum kaydı alındı. Toplu içe aktarmaya geçebilirsiniz.';
+      case PlatformSetupLifecycleState.liveEnabled:
+        return 'Canlı bağlantı kaydı güncellendi.';
+      case PlatformSetupLifecycleState.error:
+      case PlatformSetupLifecycleState.blocked:
+        return 'Kayıt alındı; durum incelenmeli.';
+      case PlatformSetupLifecycleState.notStarted:
+        return 'Kayıt güncellendi.';
     }
-    if (derived == IntegrationSetupStatus.inProgress &&
-        (deferImport || !eval.isComplete)) {
-      return 'Taslak kaydedildi. Kurulum henüz tamamlanmadı.';
-    }
-    return 'Kurulum kaydı alındı. Değişiklikler kaydedildi.';
   }
 
   @override
@@ -734,9 +740,9 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
   }
 
   Widget _step5(AppThemeExtension ext) {
-    final derived = _lastSavedDerivedStatus ?? IntegrationSetupStatus.inProgress;
+    final lifecycle = _lastSavedLifecycle ?? PlatformSetupLifecycleState.notStarted;
     final eval = _lastSavedEvaluation ?? _evaluateCurrentFields();
-    final copy = _resultCopy(derived, eval);
+    final copy = _resultCopy(lifecycle, eval);
     return _StepSection(
       title: '5 · Sonuç',
       subtitle: copy.title,
@@ -781,43 +787,55 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     );
   }
 
-  _ResultCopy _resultCopy(IntegrationSetupStatus derived, PlatformSetupEvaluation eval) {
-    if (derived == IntegrationSetupStatus.awaitingVerification && eval.isComplete) {
-      return _ResultCopy(
-        title: 'Kurulum kaydı alındı',
-        body: 'Doğrulama bekleniyor. Partner / platform onayı sonrası canlı adımlar açılacaktır. '
-            'Bu arada mağaza dışa aktarım dosyası ile toplu içe aktarma kullanabilirsiniz.',
-      );
-    }
-    if (derived == IntegrationSetupStatus.inProgress && eval.isComplete && (_lastSavedDeferImport == true)) {
-      return _ResultCopy(
-        title: 'Taslak kaydedildi',
-        body: 'Kurulum henüz tamamlanmadı. İçe aktarma veya doğrulama adımlarını başlatmadınız; '
-            'eksik alanları tamamlamak için sihirbaza dönebilirsiniz.',
-      );
-    }
-    if (derived == IntegrationSetupStatus.inProgress && (!eval.isComplete)) {
-      return _ResultCopy(
-        title: 'Taslak kaydedildi',
-        body: 'Kurulum henüz tamamlanmadı. '
-            '${eval.missingHints.isEmpty ? 'Temel bilgileri tamamlayın.' : 'Eksik: ${eval.missingHints.join(', ')}'}',
-      );
-    }
-    switch (derived) {
-      case IntegrationSetupStatus.readyForImport:
+  _ResultCopy _resultCopy(PlatformSetupLifecycleState lifecycle, PlatformSetupEvaluation eval) {
+    switch (lifecycle) {
+      case PlatformSetupLifecycleState.awaitingVerification:
         return _ResultCopy(
-          title: 'İçe aktarıma hazır (dosya önerilir)',
-          body: 'Otomatik canlı senkron henüz zorunlu değil. CSV / JSON / XLSX ile tüm ilanları güvenle aktarın.',
+          title: 'Kurulum kaydı alındı',
+          body: 'Doğrulama bekleniyor. Partner / platform onayı sonrası canlı adımlar açılacaktır. '
+              'Bu arada mağaza dışa aktarım dosyası ile toplu içe aktarma kullanabilirsiniz.',
         );
-      case IntegrationSetupStatus.inProgress:
+      case PlatformSetupLifecycleState.draft:
         return _ResultCopy(
-          title: 'Kurulum kaydedildi',
-          body: 'Taslak güncellendi. İsterseniz toplu dosya veya manuel portföy ile devam edin.',
+          title: 'Taslak kaydedildi',
+          body: 'Kurulum henüz tamamlanmadı. İçe aktarma veya doğrulama adımlarını bilinçli olarak ertelediniz; '
+              'devam etmek için sihirbaza dönebilirsiniz.',
         );
-      default:
+      case PlatformSetupLifecycleState.incomplete:
         return _ResultCopy(
-          title: derived.shortLabelTr,
-          body: 'Kayıt güncellendi.',
+          title: 'Taslak kaydedildi',
+          body: 'Kurulum henüz tamamlanmadı. '
+              '${eval.missingHints.isEmpty ? 'Temel bilgileri tamamlayın.' : 'Eksik: ${eval.missingHints.join(', ')}'}',
+        );
+      case PlatformSetupLifecycleState.officialPartnerPending:
+        return _ResultCopy(
+          title: 'Kurulum kaydı alındı',
+          body: 'Resmi entegrasyon süreci devam ediyor. Partner / API onayı sonrası toplu içe aktarma veya sonraki adımlar açılacaktır.',
+        );
+      case PlatformSetupLifecycleState.readyForImport:
+        return _ResultCopy(
+          title: 'Toplu içe aktarmaya hazırsınız',
+          body: 'Otomatik canlı senkron henüz zorunlu değil. CSV / JSON / XLSX ile ilanları güvenle aktarın.',
+        );
+      case PlatformSetupLifecycleState.liveEnabled:
+        return _ResultCopy(
+          title: 'Canlı bağlantı',
+          body: 'Kayıt güncellendi. Sunucu doğrulaması tamamlandıysa senkron kuralları geçerlidir.',
+        );
+      case PlatformSetupLifecycleState.blocked:
+        return _ResultCopy(
+          title: 'Engellenmiş kayıt',
+          body: 'Bu platform için bağlantı engeli kayıtlı. Yönetici veya destek ile iletişime geçin.',
+        );
+      case PlatformSetupLifecycleState.error:
+        return _ResultCopy(
+          title: 'Hata kaydı',
+          body: 'Kurulum notlarında hata bilgisi olabilir. Sihirbazdan düzenleyin veya destek alın.',
+        );
+      case PlatformSetupLifecycleState.notStarted:
+        return _ResultCopy(
+          title: 'Kayıt güncellendi',
+          body: 'Devam etmek için sihirbazı kullanın.',
         );
     }
   }

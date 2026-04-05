@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_truth_kind.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_ui_state.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_setup_lifecycle.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:flutter/material.dart';
@@ -43,8 +44,11 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
       if (p.truthKind == PlatformConnectionTruthKind.liveConnected) {
         liveOk++;
       }
-      if (p.truthKind == PlatformConnectionTruthKind.setupIncomplete ||
-          p.connectionState == PlatformConnectionUiState.needsAttention) {
+      final needsAttention = p.setupLifecycle != null
+          ? p.setupLifecycle!.countsAsAttentionForDashboard
+          : (p.truthKind == PlatformConnectionTruthKind.setupIncomplete ||
+              p.connectionState == PlatformConnectionUiState.needsAttention);
+      if (needsAttention) {
         attention++;
       }
       final t = p.lastSyncAt;

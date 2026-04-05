@@ -2,11 +2,16 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_truth_kind.dart';
 import 'package:flutter/material.dart';
 
-/// Bağlantı rozeti — [PlatformConnectionTruthKind] gerçek entegrasyon durumunu yansıtır (optimistik "Bağlı" yok).
+/// Bağlantı rozeti — [PlatformConnectionTruthKind] renk; isteğe bağlı [labelOverride] ile metin (yaşam döngüsü).
 class PlatformStatusChip extends StatelessWidget {
-  const PlatformStatusChip({super.key, required this.truthKind});
+  const PlatformStatusChip({
+    super.key,
+    required this.truthKind,
+    this.labelOverride,
+  });
 
   final PlatformConnectionTruthKind truthKind;
+  final String? labelOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +42,7 @@ class PlatformStatusChip extends StatelessWidget {
           ext.foregroundSecondary,
         ),
     };
-    final label = truthKind.shortLabelTr;
+    final label = labelOverride ?? truthKind.shortLabelTr;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(

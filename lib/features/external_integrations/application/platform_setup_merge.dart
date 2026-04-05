@@ -1,10 +1,13 @@
+import '../domain/integration_connection_mode.dart';
 import '../domain/integration_platform.dart';
 import '../domain/integration_setup_status.dart';
 import '../domain/platform_connection_truth_kind.dart';
 import '../domain/platform_connection_ui_state.dart';
 import '../domain/platform_error_ui.dart';
+import '../domain/platform_setup_lifecycle.dart';
 import '../domain/platform_setup_record.dart';
 import 'platform_setup_completeness.dart';
+import 'platform_setup_lifecycle_logic.dart';
 
 /// Mock kart + kurulum kaydı → dürüst görünüm (OAuth yoksa [liveConnected] üretilmez).
 IntegrationPlatform mergePlatformWithSetup({
@@ -13,12 +16,12 @@ IntegrationPlatform mergePlatformWithSetup({
 }) {
   if (record == null) return base;
 
-  final derived = deriveSetupStatusForRecord(record);
+  final lifecycle = deriveLifecycleState(record);
   final evaluation = evaluatePlatformSetup(record);
-  final truth = _truthFromDerived(derived, record);
-  final uiState = _uiStateFromDerived(derived, record);
+  final truth = _truthFromLifecycle(lifecycle, record);
+  final uiState = _uiStateFromLifecycle(lifecycle, record);
 
-  final err = _errorFromDerived(derived, evaluation, record);
+  final err = _errorFromLifecycle(lifecycle, evaluation, record);
 
   return IntegrationPlatform(
     id: base.id,
@@ -32,71 +35,80 @@ IntegrationPlatform mergePlatformWithSetup({
     errorState: err,
     connectedAccountLabel: _labelFromRecord(record),
     setupRecord: record,
+    setupLifecycle: lifecycle,
   );
 }
 
-PlatformConnectionTruthKind _truthFromDerived(
-  IntegrationSetupStatus derived,
+PlatformConnectionTruthKind _truthFromLifecycle(
+  PlatformSetupLifecycleState lifecycle,
   PlatformSetupRecord r,
 ) {
-  if (r.oauthVerified) {
+  if (r.oauthVerified || lifecycle == PlatformSetupLifecycleState.liveEnabled) {
     return PlatformConnectionTruthKind.liveConnected;
   }
-  switch (derived) {
-    case IntegrationSetupStatus.notStarted:
+  switch (lifecycle) {
+    case PlatformSetupLifecycleState.notStarted:
       return PlatformConnectionTruthKind.mockDemo;
-    case IntegrationSetupStatus.inProgress:
-      return PlatformConnectionTruthKind.preparing;
-    case IntegrationSetupStatus.awaitingVerification:
+    case PlatformSetupLifecycleState.incomplete:
       return PlatformConnectionTruthKind.setupIncomplete;
-    case IntegrationSetupStatus.readyForImport:
-      return PlatformConnectionTruthKind.experimentalNotLive;
-    case IntegrationSetupStatus.liveEnabled:
+    case PlatformSetupLifecycleState.draft:
       return PlatformConnectionTruthKind.preparing;
-    case IntegrationSetupStatus.blocked:
+    case PlatformSetupLifecycleState.awaitingVerification:
+      return PlatformConnectionTruthKind.setupIncomplete;
+    case PlatformSetupLifecycleState.officialPartnerPending:
+      return PlatformConnectionTruthKind.preparing;
+    case PlatformSetupLifecycleState.readyForImport:
+      if (r.connectionMode == IntegrationConnectionMode.manualOnly) {
+        return PlatformConnectionTruthKind.preparing;
+      }
+      return PlatformConnectionTruthKind.experimentalNotLive;
+    case PlatformSetupLifecycleState.liveEnabled:
+      return PlatformConnectionTruthKind.liveConnected;
+    case PlatformSetupLifecycleState.blocked:
       return PlatformConnectionTruthKind.liveNotEnabled;
-    case IntegrationSetupStatus.error:
+    case PlatformSetupLifecycleState.error:
       return PlatformConnectionTruthKind.setupIncomplete;
   }
 }
 
-PlatformConnectionUiState _uiStateFromDerived(
-  IntegrationSetupStatus derived,
+PlatformConnectionUiState _uiStateFromLifecycle(
+  PlatformSetupLifecycleState lifecycle,
   PlatformSetupRecord r,
 ) {
-  switch (derived) {
-    case IntegrationSetupStatus.notStarted:
+  switch (lifecycle) {
+    case PlatformSetupLifecycleState.notStarted:
+    case PlatformSetupLifecycleState.incomplete:
+    case PlatformSetupLifecycleState.draft:
       return PlatformConnectionUiState.disconnected;
-    case IntegrationSetupStatus.inProgress:
-      return PlatformConnectionUiState.disconnected;
-    case IntegrationSetupStatus.awaitingVerification:
+    case PlatformSetupLifecycleState.awaitingVerification:
+    case PlatformSetupLifecycleState.officialPartnerPending:
+    case PlatformSetupLifecycleState.blocked:
+    case PlatformSetupLifecycleState.error:
       return PlatformConnectionUiState.needsAttention;
-    case IntegrationSetupStatus.readyForImport:
+    case PlatformSetupLifecycleState.readyForImport:
       return PlatformConnectionUiState.limited;
-    case IntegrationSetupStatus.liveEnabled:
+    case PlatformSetupLifecycleState.liveEnabled:
       return r.oauthVerified
           ? PlatformConnectionUiState.connected
           : PlatformConnectionUiState.limited;
-    case IntegrationSetupStatus.blocked:
-    case IntegrationSetupStatus.error:
-      return PlatformConnectionUiState.needsAttention;
   }
 }
 
-PlatformErrorUi? _errorFromDerived(
-  IntegrationSetupStatus derived,
+PlatformErrorUi? _errorFromLifecycle(
+  PlatformSetupLifecycleState lifecycle,
   PlatformSetupEvaluation evaluation,
   PlatformSetupRecord r,
 ) {
-  if (r.setupStatus == IntegrationSetupStatus.error) {
+  if (lifecycle == PlatformSetupLifecycleState.error ||
+      r.setupStatus == IntegrationSetupStatus.error) {
     return PlatformErrorUi(
       shortMessage: r.notes?.isNotEmpty == true ? r.notes! : 'Kurulum hatası kaydedildi.',
       hint: 'Sihirbazdan düzenleyin veya destek ile iletişime geçin.',
     );
   }
 
-  if (derived == IntegrationSetupStatus.inProgress) {
-    if (evaluation.isMeaningful && !evaluation.isComplete) {
+  switch (lifecycle) {
+    case PlatformSetupLifecycleState.incomplete:
       final hint = evaluation.missingHints.isEmpty
           ? 'Temel bilgiler eksik. Sihirbazı tamamlayın.'
           : 'Eksik: ${evaluation.missingHints.join(', ')}';
@@ -104,31 +116,42 @@ PlatformErrorUi? _errorFromDerived(
         shortMessage: 'Kurulum tamamlanmadı',
         hint: hint,
       );
-    }
-    if (evaluation.isComplete && r.deferImportWorkflow) {
+    case PlatformSetupLifecycleState.draft:
       return const PlatformErrorUi(
         shortMessage: 'Taslak kayıt',
-        hint: 'İçe aktarma veya doğrulama adımları henüz başlatılmadı. Sihirbazı tamamlayın.',
+        hint: 'İçe aktarma veya doğrulama henüz başlatılmadı. Sihirbazı tamamlayın.',
       );
-    }
+    case PlatformSetupLifecycleState.awaitingVerification:
+      return PlatformErrorUi(
+        shortMessage: 'Doğrulama bekleniyor',
+        hint: r.applicationStatus?.isNotEmpty == true
+            ? 'Başvuru: ${r.applicationStatus}'
+            : 'Partner / platform onayı sonrası devam edilecek.',
+      );
+    case PlatformSetupLifecycleState.officialPartnerPending:
+      return const PlatformErrorUi(
+        shortMessage: 'Resmi kurulum sürecinde',
+        hint: 'Partner onayı veya başvuru tamamlanınca ilerleyebilirsiniz.',
+      );
+    case PlatformSetupLifecycleState.readyForImport:
+      if (r.connectionMode == IntegrationConnectionMode.manualOnly) {
+        return const PlatformErrorUi(
+          shortMessage: 'Manuel portföy modu',
+          hint: 'Otomatik platform bağlantısı yok; ilanlar tek tek girilir.',
+        );
+      }
+      return const PlatformErrorUi(
+        shortMessage: 'Canlı otomatik senkron henüz aktif değil.',
+        hint: 'Mağaza dışa aktarım dosyası ile toplu içe aktarmayı kullanın.',
+      );
+    case PlatformSetupLifecycleState.blocked:
+      return const PlatformErrorUi(
+        shortMessage: 'Bağlantı engellendi',
+        hint: 'Yönetici veya destek ile iletişime geçin.',
+      );
+    default:
+      return null;
   }
-
-  if (derived == IntegrationSetupStatus.awaitingVerification) {
-    return PlatformErrorUi(
-      shortMessage: 'Doğrulama bekleniyor',
-      hint: r.applicationStatus?.isNotEmpty == true
-          ? 'Başvuru: ${r.applicationStatus}'
-          : 'Partner / platform onayı sonrası devam edilecek.',
-    );
-  }
-  if (r.oauthVerified) return null;
-  if (derived == IntegrationSetupStatus.readyForImport) {
-    return const PlatformErrorUi(
-      shortMessage: 'Canlı otomatik senkron henüz aktif değil.',
-      hint: 'Mağaza dışa aktarım dosyası ile toplu içe aktarmayı kullanın.',
-    );
-  }
-  return null;
 }
 
 String? _labelFromRecord(PlatformSetupRecord r) {
