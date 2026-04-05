@@ -3,12 +3,19 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/platform/file_stub.dart'
     if (dart.library.io) 'dart:io' as io;
 import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_provider.dart';
-import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:emlakmaster_mobile/core/constants/turkish_cities.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
+import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
+import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/core/services/logo_storage_service.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/office/data/office_logo_storage_service.dart';
+import 'package:emlakmaster_mobile/features/office/data/office_repository.dart';
+import 'package:emlakmaster_mobile/features/office/domain/membership_status.dart';
+import 'package:emlakmaster_mobile/features/office/domain/office_entity.dart';
+import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
 import 'package:emlakmaster_mobile/features/listing_display/data/listing_display_settings_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_display/domain/entities/listing_display_settings_entity.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/providers/listing_display_settings_provider.dart';
@@ -42,7 +49,42 @@ class _ListingDisplaySettingsSectionState
   }
 
   Future<void> _pickAndUploadLogo() async {
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid;
+    if (uid == null) return;
     HapticFeedback.mediumImpact();
+    final docOfficeId = ref.read(userDocStreamProvider(uid)).valueOrNull?.officeId;
+    final hasOfficeContext = docOfficeId != null && docOfficeId.isNotEmpty;
+    final mem = ref.read(primaryMembershipProvider).valueOrNull;
+    final canManageBranding = mem != null &&
+        mem.status == MembershipStatus.active &&
+        (mem.role == OfficeRole.owner || mem.role == OfficeRole.admin || mem.role == OfficeRole.manager);
+    final displayRole = ref.read(displayRoleOrNullProvider);
+    final canGlobalLogo = displayRole != null && displayRole.isManagerTier;
+    final office = ref.read(currentOfficeProvider).valueOrNull;
+    if (hasOfficeContext && office == null) {
+      if (mounted) {
+        AppToaster.warning(context, 'Ofis bilgisi yükleniyor; birkaç saniye sonra tekrar deneyin.');
+      }
+      return;
+    }
+    if (hasOfficeContext && !canManageBranding) {
+      if (mounted) {
+        AppToaster.warning(context, 'Ofis logosunu yalnızca ofis yöneticisi veya ekip lideri değiştirebilir.');
+      }
+      return;
+    }
+    if (!hasOfficeContext && !canGlobalLogo) {
+      if (mounted) {
+        AppToaster.warning(context, 'Bu logo ayarı yalnızca yönetici rolleri içindir.');
+      }
+      return;
+    }
+    if (!await FirebaseStorageAvailability.checkUsable()) {
+      if (mounted) {
+        AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
+      }
+      return;
+    }
     try {
       final x = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -51,6 +93,30 @@ class _ListingDisplaySettingsSectionState
         imageQuality: 85,
       );
       if (x == null || !mounted) return;
+      if (hasOfficeContext) {
+        final bytes = await x.readAsBytes();
+        final result = await OfficeLogoStorageService.instance.uploadOfficeLogoBytes(
+          officeId: docOfficeId,
+          bytes: bytes,
+          previousStoragePath: office?.logoStoragePath,
+        );
+        if (result == null) {
+          if (mounted) {
+            AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
+          }
+          return;
+        }
+        await OfficeRepository.patchOfficeLogo(
+          officeId: docOfficeId,
+          upload: result,
+          ownerUserId: uid,
+        );
+        ref.invalidate(currentOfficeProvider);
+        if (mounted) {
+          AppToaster.success(context, 'Ofis logosu kaydedildi.');
+        }
+        return;
+      }
       final String? url;
       if (kIsWeb) {
         final bytes = await x.readAsBytes();
@@ -67,20 +133,67 @@ class _ListingDisplaySettingsSectionState
       }
       final settings = ref.read(listingDisplaySettingsProvider).valueOrNull ??
           const ListingDisplaySettingsEntity();
-      await ListingDisplaySettingsRepository.set(
-          settings.copyWith(logoUrl: url));
+      await ListingDisplaySettingsRepository.set(settings.copyWith(logoUrl: url));
+      ref.invalidate(listingDisplaySettingsProvider);
       if (mounted) {
-        AppToaster.success(context, 'Logo kaydedildi');
+        AppToaster.success(context, 'Logo kaydedildi.');
       }
     } catch (e) {
       if (mounted) {
         if (FirebaseStorageAvailability.isUnavailableError(e)) {
           AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
         } else {
-          AppToaster.error(context, 'Logo yüklenemedi: $e');
+          AppToaster.error(context, userFacingErrorMessage(e, context: 'listing_display_logo'));
         }
       }
     }
+  }
+
+  Future<void> _removeLogo({
+    required bool hasOfficeContext,
+    required bool canManageBranding,
+    required bool canGlobalLogo,
+    required Office? office,
+    required String uid,
+    required ListingDisplaySettingsEntity settings,
+  }) async {
+    if (hasOfficeContext) {
+      if (!canManageBranding || office == null) return;
+      if (office.logoUrl == null || office.logoUrl!.isEmpty) return;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Logoyu kaldır'),
+          content: const Text('Ofis logosu kaldırılacak. Emin misiniz?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Kaldır')),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+      await OfficeLogoStorageService.instance.deleteStoredObject(office.logoStoragePath);
+      await OfficeRepository.clearOfficeLogoFields(office.id);
+      ref.invalidate(currentOfficeProvider);
+      if (mounted) AppToaster.success(context, 'Ofis logosu kaldırıldı.');
+      return;
+    }
+    if (!canGlobalLogo || settings.logoUrl == null || settings.logoUrl!.isEmpty) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logoyu kaldır'),
+        content: const Text('Kayıtlı logo kaldırılacak. Emin misiniz?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Kaldır')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await ListingDisplaySettingsRepository.set(settings.copyWith(clearLogo: true));
+    ref.invalidate(listingDisplaySettingsProvider);
+    if (mounted) AppToaster.success(context, 'Logo kaldırıldı.');
   }
 
   @override
@@ -107,6 +220,34 @@ class _ListingDisplaySettingsSectionState
         }
         final ext = AppThemeExtension.of(context);
         final hub = widget.embeddedInSettingsHub;
+        final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
+        final office = ref.watch(currentOfficeProvider).valueOrNull;
+        final docOfficeId =
+            uid.isEmpty ? null : ref.watch(userDocStreamProvider(uid)).valueOrNull?.officeId;
+        final hasOfficeContext = docOfficeId != null && docOfficeId.isNotEmpty;
+        final mem = ref.watch(primaryMembershipProvider).valueOrNull;
+        final canManageBranding = mem != null &&
+            mem.status == MembershipStatus.active &&
+            (mem.role == OfficeRole.owner ||
+                mem.role == OfficeRole.admin ||
+                mem.role == OfficeRole.manager);
+        final displayRole = ref.watch(displayRoleOrNullProvider);
+        final canGlobalLogo = displayRole != null && displayRole.isManagerTier;
+        final effectiveLogoUrl = (office != null && (office.logoUrl?.isNotEmpty ?? false))
+            ? office.logoUrl!
+            : settings.logoUrl;
+        final canUploadLogo = storageOk &&
+            ((hasOfficeContext && office != null && canManageBranding) ||
+                (!hasOfficeContext && canGlobalLogo));
+        final logoSubtitle = !storageOk
+            ? '${FirebaseStorageAvailability.unavailableMessage} (logo yüklemesi kapalı.)'
+            : hasOfficeContext && office == null
+                ? 'Ofis bilgisi yükleniyor…'
+                : hasOfficeContext && !canManageBranding
+                    ? 'Logoyu yalnızca ofis yöneticisi veya ekip lideri değiştirebilir.'
+                    : !hasOfficeContext && !canGlobalLogo
+                        ? 'Yalnızca yönetici rolleri logo yükleyebilir.'
+                        : 'Galeriden logo seçin (sahibinden/emlakjet bölge ile kullanılır)';
         final cityTile = ListTile(
           leading: Icon(Icons.location_city_rounded, color: ext.accent),
           title: Text('Şehir', style: TextStyle(color: onSurface)),
@@ -208,11 +349,11 @@ class _ListingDisplaySettingsSectionState
                 ),
               );
         final logoTile = ListTile(
-          leading: settings.logoUrl != null
+          leading: (effectiveLogoUrl != null && effectiveLogoUrl.isNotEmpty)
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
-                    imageUrl: settings.logoUrl!,
+                    imageUrl: effectiveLogoUrl,
                     width: 40,
                     height: 40,
                     fit: BoxFit.cover,
@@ -224,17 +365,24 @@ class _ListingDisplaySettingsSectionState
               : Icon(Icons.business_rounded, color: ext.accent),
           title: Text('Ofis logosu', style: TextStyle(color: onSurface)),
           subtitle: Text(
-            storageOk
-                ? 'Galeriden logo seçin (sahibinden/emlakjet bölge ile kullanılır)'
-                : '${FirebaseStorageAvailability.unavailableMessage} '
-                    '(logo yüklemesi şimdilik kapalı.)',
-            maxLines: 2,
+            logoSubtitle,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(color: onSurfaceVariant, fontSize: 11),
           ),
           trailing: Icon(Icons.chevron_right_rounded, color: onSurfaceVariant),
-          enabled: storageOk,
-          onTap: _pickAndUploadLogo,
+          enabled: canUploadLogo,
+          onTap: canUploadLogo ? _pickAndUploadLogo : null,
+          onLongPress: canUploadLogo
+              ? () => _removeLogo(
+                    hasOfficeContext: hasOfficeContext,
+                    canManageBranding: canManageBranding,
+                    canGlobalLogo: canGlobalLogo,
+                    office: office,
+                    uid: uid,
+                    settings: settings,
+                  )
+              : null,
         );
 
         if (hub) {

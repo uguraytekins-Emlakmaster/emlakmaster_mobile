@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
@@ -133,7 +134,10 @@ class SettingsPage extends ConsumerWidget {
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+                            SnackBar(
+                              content: Text(userFacingErrorMessage(e, context: 'settings_admin_role')),
+                              backgroundColor: Colors.red,
+                            ),
                           );
                         }
                       }
@@ -929,19 +933,22 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
     if (xFile == null) return;
     setState(() => _loading = true);
     try {
-      final String? url;
-      if (kIsWeb) {
-        final bytes = await xFile.readAsBytes();
-        url = await ProfileAvatarService.instance.uploadAvatarFromBytes(uid: widget.userId, bytes: bytes);
-      } else {
-        final file = io.File(xFile.path);
-        url = await ProfileAvatarService.instance.uploadAvatar(uid: widget.userId, file: file);
-      }
+      final result = kIsWeb
+          ? await ProfileAvatarService.instance.uploadAvatarFromBytes(uid: widget.userId, bytes: await xFile.readAsBytes())
+          : await ProfileAvatarService.instance.uploadAvatar(uid: widget.userId, file: io.File(xFile.path));
       if (!mounted) return;
-      if (url != null && url.isNotEmpty) {
+      if (result != null && result.downloadUrl.isNotEmpty) {
+        ref.invalidate(userDocStreamProvider(widget.userId));
         AppToaster.success(context, 'Profil fotoğrafı güncellendi.');
       } else {
-        AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
+        AppToaster.warning(
+          context,
+          FirebaseStorageAvailability.unavailableMessage,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToaster.error(context, userFacingErrorMessage(e, context: 'settings_avatar'));
       }
     } finally {
       if (mounted) setState(() => _loading = false);

@@ -5,11 +5,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
+import 'package:emlakmaster_mobile/core/storage/storage_paths.dart';
+import 'package:emlakmaster_mobile/core/storage/storage_upload_result.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
-/// Profil avatar servisi: Storage upload + users.avatarUrl alanı güncelleme.
+/// Profil avatar: `users/{uid}/avatar/avatar_256.jpg` + Firestore meta.
 /// Mobil: File ile; Web: uploadAvatarFromBytes ile.
 class ProfileAvatarService {
   ProfileAvatarService._();
@@ -32,7 +34,7 @@ class ProfileAvatarService {
   }
 
   /// Profil fotoğrafını yükler (mobil: File; web'de bu metot çağrılmamalı).
-  Future<String?> uploadAvatar({required String uid, required io.File file}) async {
+  Future<StorageUploadResult?> uploadAvatar({required String uid, required io.File file}) async {
     try {
       final data = await _resizeAndCompress(file);
       return _uploadData(uid, data);
@@ -43,7 +45,7 @@ class ProfileAvatarService {
   }
 
   /// Web / bytes ile yükleme (image_picker readAsBytes sonrası).
-  Future<String?> uploadAvatarFromBytes({required String uid, required Uint8List bytes}) async {
+  Future<StorageUploadResult?> uploadAvatarFromBytes({required String uid, required Uint8List bytes}) async {
     try {
       final data = await _resizeAndCompressBytes(bytes);
       return _uploadData(uid, data);
@@ -53,10 +55,14 @@ class ProfileAvatarService {
     }
   }
 
-  Future<String?> _uploadData(String uid, Uint8List data) async {
+  Future<StorageUploadResult?> _uploadData(String uid, Uint8List data) async {
     if (!await FirebaseStorageAvailability.checkUsable()) return null;
+    final storagePath = StoragePaths.userAvatar(uid);
     try {
-      final ref = _storage.ref().child('users').child(uid).child('avatar_256.jpg');
+      // Eski düz dosya adı (users/uid/avatar_256.jpg) — taşıma sonrası temizlik
+      await _storage.ref().child('users').child(uid).child('avatar_256.jpg').delete().catchError((_) {});
+
+      final ref = _storage.ref(storagePath);
       final task = await ref.putData(
         data,
         SettableMetadata(
@@ -65,14 +71,25 @@ class ProfileAvatarService {
         ),
       );
       final url = await task.ref.getDownloadURL();
+      final uploadedAt = DateTime.now();
       await _store.collection(AppConstants.colUsers).doc(uid).set(
         {
           'avatarUrl': url,
+          'avatarStoragePath': storagePath,
+          'avatarMimeType': 'image/jpeg',
+          'avatarSizeBytes': data.length,
+          'avatarUploadedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
       );
-      return url;
+      return StorageUploadResult(
+        downloadUrl: url,
+        storagePath: storagePath,
+        mimeType: 'image/jpeg',
+        sizeBytes: data.length,
+        uploadedAt: uploadedAt,
+      );
     } on FirebaseException catch (e, st) {
       if (kDebugMode) AppLogger.e('ProfileAvatarService._uploadData', e, st);
       if (FirebaseStorageAvailability.isUnavailableError(e)) return null;
@@ -88,12 +105,16 @@ class ProfileAvatarService {
     try {
       final usable = await FirebaseStorageAvailability.checkUsable();
       if (usable) {
-        final ref = _storage.ref().child('users').child(uid).child('avatar_256.jpg');
-        await ref.delete().catchError((_) {});
+        await _storage.ref(StoragePaths.userAvatar(uid)).delete().catchError((_) {});
+        await _storage.ref().child('users').child(uid).child('avatar_256.jpg').delete().catchError((_) {});
       }
       await _store.collection(AppConstants.colUsers).doc(uid).set(
         {
           'avatarUrl': FieldValue.delete(),
+          'avatarStoragePath': FieldValue.delete(),
+          'avatarMimeType': FieldValue.delete(),
+          'avatarSizeBytes': FieldValue.delete(),
+          'avatarUploadedAt': FieldValue.delete(),
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
@@ -103,4 +124,3 @@ class ProfileAvatarService {
     }
   }
 }
-

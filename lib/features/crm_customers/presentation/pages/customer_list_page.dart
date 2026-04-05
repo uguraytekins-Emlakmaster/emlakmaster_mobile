@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -65,7 +66,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Görev eklenemedi (${e.code}): ${e.message ?? ''}'),
+              content: Text(userFacingErrorMessage(e, context: 'customer_list_task')),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -74,7 +75,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.message),
+              content: Text(userFacingErrorMessage(e, context: 'customer_list_task')),
               behavior: SnackBarBehavior.floating,
             ),
           );

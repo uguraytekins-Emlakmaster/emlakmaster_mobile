@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:csv/csv.dart';
+import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_memory_store.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_xlsx.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listings_repository.dart';
@@ -178,7 +179,7 @@ class ListingImportService {
         taskId,
         status: ImportTaskStatus.failed,
         progress: 100,
-        errorMessage: e.toString(),
+        errorMessage: userFacingErrorMessage(e, context: 'listing_import_url'),
         completedAt: DateTime.now(),
       );
     }
@@ -283,7 +284,7 @@ class ListingImportService {
         taskId,
         status: ImportTaskStatus.failed,
         progress: 100,
-        errorMessage: e.toString(),
+        errorMessage: userFacingErrorMessage(e, context: 'listing_import_file'),
         completedAt: DateTime.now(),
       );
     }
@@ -335,7 +336,7 @@ class ListingImportService {
         taskId,
         status: ImportTaskStatus.failed,
         progress: 100,
-        errorMessage: e.toString(),
+        errorMessage: userFacingErrorMessage(e, context: 'listing_import_manual'),
         completedAt: DateTime.now(),
       );
     }

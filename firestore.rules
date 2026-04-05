@@ -92,6 +92,13 @@ service cloud.firestore {
         && m.data.status == 'active'
         && m.data.role in ['owner', 'admin', 'manager'];
     }
+    /// Sadece ofis logosu alanları (Storage ile senkron) — ekip lideri/manager üyeliği yazabilir.
+    function officeLogoOnlyUpdate() {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly([
+        'logoUrl', 'logoStoragePath', 'logoMimeType', 'logoSizeBytes',
+        'logoUploadedAt', 'logoOwnerUserId', 'updatedAt'
+      ]);
+    }
     /// Platform kurulumu: üyelik yöneticisi veya (super_admin + aynı ofiste aktif üye). UI [FeaturePermission] ile uyumlu.
     function canWriteOfficePlatformSetup(officeId) {
       return canManageOfficeMembers(officeId)
@@ -265,7 +272,8 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['name', 'createdBy']);
       allow update: if isManager()
         || (isActiveOfficeMember(officeId)
-            && officeMembershipDoc(request.auth.uid, officeId).data.role in ['owner', 'admin']);
+            && officeMembershipDoc(request.auth.uid, officeId).data.role in ['owner', 'admin'])
+        || (canManageOfficeMembers(officeId) && officeLogoOnlyUpdate());
       allow delete: if false;
 
       match /platform_setups/{platformKey} {

@@ -22,18 +22,25 @@ class RoleBasedShellSelector extends ConsumerWidget {
     if (uid == null || uid.isEmpty) {
       return const _ShellLoading();
     }
-    final docAsync = ref.watch(userDocStreamProvider(uid));
-    return docAsync.when(
+    // Router ile aynı kaynak: currentRoleProvider (+ isteğe bağlı override) → displayRoleProvider.
+    // users/{uid}.role tek başına ofis üyeliği rolüyle çakışmasın diye doc bootstrap / gate’lerde bekle.
+    if (ref.watch(userDocBootstrapPendingProvider)) {
+      return const _ShellLoading();
+    }
+    if (ref.watch(needsRoleSelectionProvider)) {
+      return const _ShellLoading();
+    }
+    if (ref.watch(needsOfficeSetupProvider)) {
+      return const _ShellLoading();
+    }
+    if (ref.watch(needsOfficeRecoveryProvider)) {
+      return const _ShellLoading();
+    }
+    final roleAsync = ref.watch(displayRoleProvider);
+    return roleAsync.when(
       loading: () => const _ShellLoading(),
       error: (_, __) => const _ShellLoading(),
-      data: (doc) {
-        if (doc == null) {
-          // Firestore users/{uid} yok — router rol seçimine göndermeli; yanlışlıkla buradaysak bekle.
-          return const _ShellLoading();
-        }
-        final role = AppRole.fromFirestoreRole(doc.role);
-        return _buildForRole(context, ref, role);
-      },
+      data: (role) => _buildForRole(context, ref, role),
     );
   }
 

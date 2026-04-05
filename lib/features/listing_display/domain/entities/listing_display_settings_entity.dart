@@ -29,6 +29,7 @@ class ListingDisplaySettingsEntity with EquatableMixin {
     String? logoUrl,
     DateTime? updatedAt,
     bool clearDistrict = false,
+    bool clearLogo = false,
   }) {
     return ListingDisplaySettingsEntity(
       cityCode: cityCode ?? this.cityCode,
@@ -36,7 +37,7 @@ class ListingDisplaySettingsEntity with EquatableMixin {
       districtCode: clearDistrict ? null : (districtCode ?? this.districtCode),
       districtName: clearDistrict ? null : (districtName ?? this.districtName),
       companyName: companyName ?? this.companyName,
-      logoUrl: logoUrl ?? this.logoUrl,
+      logoUrl: clearLogo ? null : (logoUrl ?? this.logoUrl),
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

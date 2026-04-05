@@ -23,6 +23,8 @@ class TasksPage extends ConsumerStatefulWidget {
 }
 
 class _TasksPageState extends ConsumerState<TasksPage> {
+  int _tasksRetryKey = 0;
+
   @override
   Widget build(BuildContext context) {
     final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
@@ -42,6 +44,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
               ),
             )
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              key: ValueKey(_tasksRetryKey),
               stream: FirestoreService.tasksByAdvisorStream(uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting &&
@@ -73,6 +76,11 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                               fontWeight: FontWeight.w600,
                             ),
                             textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: DesignTokens.space4),
+                          TextButton(
+                            onPressed: () => setState(() => _tasksRetryKey++),
+                            child: const Text('Tekrar dene'),
                           ),
                         ],
                       ),
@@ -211,7 +219,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
             children: [
               const PremiumBottomSheetHandle(),
               const SizedBox(height: DesignTokens.space4),
-              PremiumSheetHeader(
+              const PremiumSheetHeader(
                 title: 'Yeni görev',
                 subtitle: 'Vade ve müşteri bağlantısı opsiyonel; görevler Görevler sekmesinde listelenir.',
               ),

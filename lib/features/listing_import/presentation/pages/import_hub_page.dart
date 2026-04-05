@@ -4,12 +4,16 @@ import 'dart:io';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:csv/csv.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
+import 'package:emlakmaster_mobile/core/storage/storage_paths.dart';
 import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/office/domain/membership_status.dart';
+import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_functions.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_service.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_xlsx.dart';
@@ -20,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:uuid/uuid.dart';
 
 /// Yönetici mağaza toplu içe aktarma — dosya birincil; URL deneysel ikincil.
 class ImportHubPage extends ConsumerStatefulWidget {
@@ -54,6 +59,18 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     final fromMem = ref.read(primaryMembershipProvider).valueOrNull?.officeId;
     final fromDoc = ref.read(userDocStreamProvider(uid)).valueOrNull?.officeId;
     return (fromMem != null && fromMem.isNotEmpty) ? fromMem : (fromDoc ?? '');
+  }
+
+  /// Sunucu kuyruğu + Storage: ofis yöneticisi / ekip lideri veya süper admin.
+  bool _canUploadOfficeImportServer(WidgetRef ref) {
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid;
+    if (uid == null) return false;
+    final doc = ref.read(userDocStreamProvider(uid)).valueOrNull;
+    if (doc != null && doc.role == 'super_admin') return true;
+    final m = ref.read(primaryMembershipProvider).valueOrNull;
+    return m != null &&
+        m.status == MembershipStatus.active &&
+        (m.role == OfficeRole.owner || m.role == OfficeRole.admin || m.role == OfficeRole.manager);
   }
 
   Map<String, String> _defaultMapping() => {
@@ -112,7 +129,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       _urlCtrl.clear();
       context.push(AppRouter.routeMyListings);
     } catch (e) {
-      if (mounted) _snack('$e');
+      if (mounted) {
+        _snack(userFacingErrorMessage(e, context: 'import_hub_local_url'));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -233,7 +252,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       );
       context.push(AppRouter.routeMyListings);
     } catch (e) {
-      if (mounted) _snack('$e');
+      if (mounted) {
+        _snack(userFacingErrorMessage(e, context: 'import_hub_local_file'));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -318,7 +339,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                             _snack('Manuel ilan eklendi.');
                             context.push(AppRouter.routeMyListings);
                           } catch (e) {
-                            if (mounted) _snack('$e');
+                            if (mounted) {
+                              _snack(userFacingErrorMessage(e, context: 'import_hub_manual'));
+                            }
                           } finally {
                             if (mounted) setState(() => _busy = false);
                           }
@@ -357,10 +380,10 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       _urlCtrl.clear();
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
-      _snack(e.message ?? e.code);
+      _snack(userFacingErrorMessage(e, context: 'import_hub_enqueue_url'));
     } catch (e) {
       if (!mounted) return;
-      _snack('$e');
+      _snack(userFacingErrorMessage(e, context: 'import_hub_enqueue_url'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -377,6 +400,22 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+
+    if (!_canUploadOfficeImportServer(ref)) {
+      if (mounted) {
+        _snackStorageSoft(
+          'Toplu dosya yüklemesi yalnızca ofis yöneticisi, ekip lideri veya süper yönetici içindir.',
+        );
+      }
+      return;
+    }
+    final oid = _officeId(ref, user.uid);
+    if (oid.isEmpty) {
+      if (mounted) {
+        _snackStorageSoft('Önce bir ofise bağlanın.');
+      }
+      return;
+    }
 
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -459,7 +498,8 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       }
 
       final safeName = f.name.isEmpty ? 'import.bin' : f.name;
-      final objectName = 'users/${user.uid}/imports/${DateTime.now().millisecondsSinceEpoch}_$safeName';
+      final sessionId = const Uuid().v4();
+      final objectName = StoragePaths.officeImport(oid, sessionId, safeName);
       final refStorage = FirebaseStorage.instance.ref(objectName);
       await refStorage.putData(bytes, SettableMetadata(contentType: _guessMime(ext)));
 
@@ -469,6 +509,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         storagePath: objectName,
         fileName: safeName,
         mapping: mapping,
+        officeId: oid,
         importMode: _importMode ?? 'skip_duplicates',
         platform: platform,
       );
@@ -479,14 +520,14 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       if (FirebaseStorageAvailability.isUnavailableError(e)) {
         _snackStorageSoft(FirebaseStorageAvailability.unavailableMessage);
       } else {
-        _snackStorageSoft('Storage: ${e.message ?? e.code}');
+        _snackStorageSoft(userFacingErrorMessage(e, context: 'import_hub_storage_upload'));
       }
     } catch (e) {
       if (!mounted) return;
       if (FirebaseStorageAvailability.isUnavailableError(e)) {
         _snackStorageSoft(FirebaseStorageAvailability.unavailableMessage);
       } else {
-        _snack('$e');
+        _snack(userFacingErrorMessage(e, context: 'import_hub_server_file'));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -582,7 +623,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               initialValue: _storePlatform,
               decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
               items: const [
-                DropdownMenuItem(value: null, child: Text('Genel / belirtmiyorum')),
+                DropdownMenuItem(child: Text('Genel / belirtmiyorum')),
                 DropdownMenuItem(value: 'sahibinden', child: Text('Sahibinden vitrin dışa aktarımı')),
                 DropdownMenuItem(value: 'hepsiemlak', child: Text('Hepsiemlak dışa aktarımı')),
                 DropdownMenuItem(value: 'emlakjet', child: Text('Emlakjet dışa aktarımı')),

@@ -10,6 +10,12 @@ class Office {
     this.isActive = true,
     this.planType = 'standard',
     this.settings = const {},
+    this.logoUrl,
+    this.logoStoragePath,
+    this.logoMimeType,
+    this.logoSizeBytes,
+    this.logoUploadedAt,
+    this.logoOwnerUserId,
   });
 
   final String id;
@@ -20,6 +26,14 @@ class Office {
   /// İleride faturalama / paket.
   final String planType;
   final Map<String, dynamic> settings;
+
+  /// Firebase Storage ofis logosu (okuma: tüm ofis üyeleri).
+  final String? logoUrl;
+  final String? logoStoragePath;
+  final String? logoMimeType;
+  final int? logoSizeBytes;
+  final DateTime? logoUploadedAt;
+  final String? logoOwnerUserId;
 
   Map<String, dynamic> toFirestoreCreate() {
     return {
@@ -45,6 +59,12 @@ class Office {
       settings: Map<String, dynamic>.from(
         data['settings'] as Map? ?? const {},
       ),
+      logoUrl: data['logoUrl'] as String?,
+      logoStoragePath: data['logoStoragePath'] as String?,
+      logoMimeType: data['logoMimeType'] as String?,
+      logoSizeBytes: (data['logoSizeBytes'] as num?)?.toInt(),
+      logoUploadedAt: _ts(data['logoUploadedAt']),
+      logoOwnerUserId: data['logoOwnerUserId'] as String?,
     );
   }
 
