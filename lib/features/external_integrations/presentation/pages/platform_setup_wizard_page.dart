@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -64,7 +65,8 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     PlatformSetupRecord? rec;
     try {
       rec = await ref.read(platformSetupRepositoryProvider).get(officeId, p);
-    } on FirebaseException catch (_) {
+    } on FirebaseException catch (e) {
+      logFirebaseException('platform_setup_wizard.load', e);
       rec = null;
     }
     final loaded = rec;
@@ -140,14 +142,18 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     PlatformSetupRecord? existing;
     try {
       existing = await ref.read(platformSetupRepositoryProvider).get(officeId, p);
-    } on FirebaseException catch (_) {
+    } on FirebaseException catch (e) {
+      logFirebaseException('platform_setup_wizard.prefetch', e);
       existing = null;
     }
+
+    // Firestore güncelleme kuralı ownerUserId değişimine izin vermez; ilk oluşturan korunur.
+    final ownerUserId = existing?.ownerUserId ?? uid;
 
     final record = PlatformSetupRecord(
       platform: p,
       officeId: officeId,
-      ownerUserId: uid,
+      ownerUserId: ownerUserId,
       connectionMode: _mode!,
       setupStatus: _deriveFinalStatus(),
       storeName: _storeName.text.trim().isEmpty ? null : _storeName.text.trim(),
@@ -171,14 +177,19 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     } on FirebaseException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Kayıt başarısız')),
+          SnackBar(content: Text(userFacingFirebaseMessage(e))),
         );
       }
       return;
     }
 
     HapticFeedback.mediumImpact();
-    if (mounted) setState(() => _step = 4);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kurulum kaydı alındı. Değişiklikler kaydedildi.')),
+      );
+      setState(() => _step = 4);
+    }
   }
 
   @override

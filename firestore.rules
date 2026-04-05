@@ -92,6 +92,11 @@ service cloud.firestore {
         && m.data.status == 'active'
         && m.data.role in ['owner', 'admin', 'manager'];
     }
+    /// Platform kurulumu: üyelik yöneticisi veya (super_admin + aynı ofiste aktif üye). UI [FeaturePermission] ile uyumlu.
+    function canWriteOfficePlatformSetup(officeId) {
+      return canManageOfficeMembers(officeId)
+        || (isSuperAdminUser() && isActiveOfficeMember(officeId));
+    }
 
     function platformSetupOptionalString(d, key, max) {
       return d.get(key, null) == null || (d.get(key, null) is string && d.get(key, null).size() <= max);
@@ -264,11 +269,11 @@ service cloud.firestore {
 
       match /platform_setups/{platformKey} {
         allow read: if isSignedIn() && (isManager() || isActiveOfficeMember(officeId));
-        allow create: if isSignedIn() && canManageOfficeMembers(officeId)
+        allow create: if isSignedIn() && canWriteOfficePlatformSetup(officeId)
           && platformKey in ['sahibinden', 'hepsiemlak', 'emlakjet']
           && request.resource.data.ownerUserId == request.auth.uid
           && validPlatformSetupWrite(officeId, platformKey);
-        allow update: if isSignedIn() && canManageOfficeMembers(officeId)
+        allow update: if isSignedIn() && canWriteOfficePlatformSetup(officeId)
           && platformKey in ['sahibinden', 'hepsiemlak', 'emlakjet']
           && resource.data.officeId == officeId
           && resource.data.platform == platformKey
