@@ -5,6 +5,7 @@ import 'integration_platform_id.dart';
 import 'platform_connection_truth_kind.dart';
 import 'platform_connection_ui_state.dart';
 import 'platform_error_ui.dart';
+import 'platform_setup_record.dart';
 import 'platform_ui_capabilities.dart';
 
 /// Bağlı platformlar ekranı — tanım + anlık durum (mock veya API’den üretilir).
@@ -20,6 +21,7 @@ class IntegrationPlatform extends Equatable {
     this.lastSyncAt,
     this.errorState,
     this.connectedAccountLabel,
+    this.setupRecord,
   });
 
   final IntegrationPlatformId id;
@@ -38,6 +40,9 @@ class IntegrationPlatform extends Equatable {
   /// Bağlı hesap adı özeti (mock).
   final String? connectedAccountLabel;
 
+  /// Ofis kurulum sihirbazı kaydı (varsa kart gerçek ilerlemeyi gösterir).
+  final PlatformSetupRecord? setupRecord;
+
   @override
   List<Object?> get props => [
         id,
@@ -50,5 +55,6 @@ class IntegrationPlatform extends Equatable {
         lastSyncAt,
         errorState,
         connectedAccountLabel,
+        setupRecord,
       ];
 }

@@ -2,6 +2,8 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_platform.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_connection_truth_kind.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_connection_mode.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_setup_status.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_capability.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/capability_badge_row.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/platform_status_chip.dart';
@@ -76,6 +78,19 @@ class ConnectedPlatformCard extends StatelessWidget {
                           fontSize: 12,
                         ),
                       ),
+                      if (platform.setupRecord != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Kurulum: ${platform.setupRecord!.setupStatus.shortLabelTr} · '
+                          '${_connectionModeShort(platform.setupRecord!.connectionMode)}',
+                          maxLines: 2,
+                          style: TextStyle(
+                            color: ext.accent.withValues(alpha: 0.95),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -173,6 +188,19 @@ class ConnectedPlatformCard extends StatelessWidget {
     final time =
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
     return 'Son senkron: $d · $time';
+  }
+
+  static String _connectionModeShort(IntegrationConnectionMode mode) {
+    switch (mode) {
+      case IntegrationConnectionMode.officialSetup:
+        return 'Resmi kurulum';
+      case IntegrationConnectionMode.transferKey:
+        return 'Transfer anahtarı';
+      case IntegrationConnectionMode.fileImport:
+        return 'Dosya içe aktarma';
+      case IntegrationConnectionMode.manualOnly:
+        return 'Manuel portföy';
+    }
   }
 
   static String _supportLabel(IntegrationSupportLevel l) => switch (l) {

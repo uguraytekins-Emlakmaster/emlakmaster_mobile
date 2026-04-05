@@ -35,6 +35,8 @@ import '../../features/analytics/presentation/pages/intel_report_history_page.da
 import '../../features/analytics/presentation/pages/rainbow_analytics_center_page.dart';
 import '../../features/region_demand_map/presentation/pages/region_insight_page.dart';
 import '../../features/external_integrations/presentation/pages/connected_platforms_page.dart';
+import '../../features/external_integrations/presentation/pages/platform_setup_wizard_page.dart';
+import '../../features/external_integrations/presentation/platform_setup_wizard_args.dart';
 import '../../features/external_integrations/presentation/pages/my_external_listings_page.dart';
 import '../../features/listing_import/presentation/pages/import_history_page.dart';
 import '../../features/listing_import/presentation/pages/import_hub_page.dart';
@@ -118,6 +120,8 @@ class AppRouter {
   /// Market Pulse bölge kartı → harita / özet (`:regionId` = örn. kayapinar).
   static const String routeRegionInsight = '/region-insight/:regionId';
   static const String routeConnectedAccounts = '/settings/connected-accounts';
+  /// Yönetici: resmi entegrasyon / dosya geri dönüş kurulum sihirbazı.
+  static const String routePlatformSetupWizard = '/settings/platform-setup-wizard';
   /// Harici platformlardan senkron ilanlar («Benim ilanlarım»).
   static const String routeMyExternalListings = '/listings/my-external';
   /// Mağaza toplu içe aktarma (dosya birincil; URL deneysel).
@@ -132,6 +136,7 @@ class AppRouter {
   /// Platform bağlantısı / içe aktarma motoru — yalnızca manager-tier (router + UI).
   static bool isManagerOnlyIntegrationPath(String path) {
     return path == routeConnectedAccounts ||
+        path == routePlatformSetupWizard ||
         path == routeImportHub ||
         path == routeImportHistory;
   }
@@ -574,6 +579,22 @@ class AppRouter {
             transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                 FadeTransition(opacity: animation, child: child),
           ),
+        ),
+        GoRoute(
+          path: routePlatformSetupWizard,
+          pageBuilder: (context, state) {
+            final extra = state.extra as PlatformSetupWizardArgs?;
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              name: state.matchedLocation,
+              child: PlatformSetupWizardPage(
+                initialPlatform: extra?.initialPlatform,
+                editMode: extra?.editMode ?? false,
+              ),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
+          },
         ),
         GoRoute(
           path: routeMyExternalListings,

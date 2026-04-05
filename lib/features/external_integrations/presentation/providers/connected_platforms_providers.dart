@@ -1,14 +1,44 @@
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/platform_setup_merge.dart';
 import '../../data/connected_platforms_mock.dart';
+import '../../data/platform_setup_memory_store.dart';
 import '../../domain/admin_platform_connection_row.dart';
 import '../../domain/integration_platform.dart';
 import '../../domain/integration_platform_id.dart';
 import '../../domain/platform_connection_ui_state.dart';
 
-/// Tüm platform satırları (mock). İleride repository ile değiştirilir.
+/// Yerel kurulum kaydı değişince liste yenilenir.
+final platformSetupRevisionProvider = StateProvider<int>((ref) => 0);
+
+/// Mock tanım + ofis kurulum kaydı birleşimi (dürüst kart durumu).
 final platformListProvider = Provider<List<IntegrationPlatform>>((ref) {
-  return ConnectedPlatformsMock.userPlatforms();
+  ref.watch(platformSetupRevisionProvider);
+  ref.watch(currentUserProvider);
+  ref.watch(primaryMembershipProvider);
+
+  final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
+  final officeFromMem = ref.watch(primaryMembershipProvider).valueOrNull?.officeId;
+  final officeFromDoc =
+      uid.isEmpty ? null : ref.watch(userDocStreamProvider(uid)).valueOrNull?.officeId;
+  final officeId = (officeFromMem != null && officeFromMem.isNotEmpty)
+      ? officeFromMem
+      : (officeFromDoc ?? '');
+
+  final store = PlatformSetupMemoryStore.instance;
+  final base = ConnectedPlatformsMock.userPlatforms();
+  if (uid.isEmpty) {
+    return base;
+  }
+  return base
+      .map(
+        (p) => mergePlatformWithSetup(
+          base: p,
+          record: store.get(uid, officeId, p.id),
+        ),
+      )
+      .toList();
 });
 
 /// Tek platform — [platformListProvider] üzerinden türetilir (çift sorgu yok).

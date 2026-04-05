@@ -1,6 +1,8 @@
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/presentation/platform_setup_wizard_args.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/connected_platform_card.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
@@ -27,6 +29,7 @@ class ConnectedPlatformsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
     final platforms = ref.watch(platformListProvider);
+    final canManage = ref.watch(canManagePlatformIntegrationsProvider);
 
     return Scaffold(
       backgroundColor: ext.background,
@@ -58,16 +61,34 @@ class ConnectedPlatformsPage extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                child: Text(
-                  'Resmi OAuth ve canlı API bağlantıları henüz üretimde değil. '
-                  'Aşağıdaki kartlar arayüz önizlemesi ve yol haritasıdır; '
-                  '«Bağlı» veya tam senkron vaadi yoktur. URL içe aktarma deneyseldir — '
-                  'güvenilir veri için CSV/JSON veya manuel giriş kullanın.',
-                  style: TextStyle(
-                    color: ext.foregroundSecondary,
-                    fontSize: 13,
-                    height: 1.45,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Resmi OAuth ve canlı API bağlantıları henüz üretimde değil. '
+                      'Kurulum sihirbazı ile ofis bilgilerinizi kaydedin; «Bağlı» yalnızca gerçek doğrulama sonrası anlam kazanır. '
+                      'Mağaza ilanları için toplu dosya içe aktarma önerilir.',
+                      style: TextStyle(
+                        color: ext.foregroundSecondary,
+                        fontSize: 13,
+                        height: 1.45,
+                      ),
+                    ),
+                    if (canManage) ...[
+                      const SizedBox(height: 10),
+                      FilledButton.icon(
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          context.push(
+                            AppRouter.routePlatformSetupWizard,
+                            extra: const PlatformSetupWizardArgs(),
+                          );
+                        },
+                        icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
+                        label: const Text('Platform kurulum sihirbazı'),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -129,14 +150,20 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                       padding: const EdgeInsets.only(bottom: 16),
                       child: ConnectedPlatformCard(
                         platform: p,
-                        onConnect: () => _toast(
-                          context,
-                          '${p.name}: bağlantı sihirbazı yakında — tarayıcı / OAuth.',
-                        ),
-                        onReconnect: () => _toast(
-                          context,
-                          '${p.name}: oturum yenileme kuyruğa alındı (demo).',
-                        ),
+                        onConnect: () {
+                          HapticFeedback.selectionClick();
+                          context.push(
+                            AppRouter.routePlatformSetupWizard,
+                            extra: PlatformSetupWizardArgs(initialPlatform: p.id),
+                          );
+                        },
+                        onReconnect: () {
+                          HapticFeedback.selectionClick();
+                          context.push(
+                            AppRouter.routePlatformSetupWizard,
+                            extra: PlatformSetupWizardArgs(initialPlatform: p.id, editMode: true),
+                          );
+                        },
                         onSync: () => _toast(
                           context,
                           '${p.name}: senkron isteği gönderildi (demo).',

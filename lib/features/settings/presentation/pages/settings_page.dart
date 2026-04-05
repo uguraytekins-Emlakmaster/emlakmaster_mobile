@@ -16,6 +16,7 @@ import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/features/external_integrations/presentation/platform_setup_wizard_args.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/features/profile/presentation/widgets/profile_avatar.dart';
@@ -453,6 +454,22 @@ class SettingsPage extends ConsumerWidget {
                         ),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => context.push(AppRouter.routeConnectedAccounts),
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.auto_fix_high_outlined, color: theme.colorScheme.primary),
+                        title: const Text('Platform kurulum sihirbazı'),
+                        subtitle: Text(
+                          'Resmi entegrasyon hazırlığı, transfer anahtarı, dosya ile toplu içe aktarma',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => context.push(
+                          AppRouter.routePlatformSetupWizard,
+                          extra: const PlatformSetupWizardArgs(),
+                        ),
                       ),
                       ListTile(
                         leading: Icon(Icons.upload_file_outlined, color: theme.colorScheme.primary),
