@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
@@ -17,6 +18,7 @@ import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 /// Yönetici paneli – Ekonomi & Piyasa: kur, altın, piyasa nabzı, ticker.
 class AdminEconomyPage extends StatelessWidget {
   const AdminEconomyPage({super.key});
@@ -68,8 +70,10 @@ class AdminReportsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentRole = ref.watch(currentRoleOrNullProvider) ?? AppRole.guest;
-    final canManageTeams = FeaturePermission.canManageTeams(currentRole);
+    final role = ref.watch(displayRoleProvider).valueOrNull ?? AppRole.guest;
+    final canManageTeams = FeaturePermission.canManageTeams(role);
+    final canViewPipeline = FeaturePermission.canViewPipeline(role);
+    final showAuditComingSoon = FeaturePermission.canViewAuditLog(role);
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -178,18 +182,26 @@ class AdminReportsPage extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: DesignTokens.space4),
-          const _SectionCard(
-            icon: Icons.history_rounded,
-            title: 'Audit log',
-            subtitle: 'Sistem ve kullanıcı işlem geçmişi',
-          ),
-          const SizedBox(height: DesignTokens.space4),
-          const _SectionCard(
-            icon: Icons.pie_chart_rounded,
-            title: 'Pipeline raporları',
-            subtitle: 'Huni analizi, oranlar ve tahminler',
-          ),
+          if (showAuditComingSoon) ...[
+            const SizedBox(height: DesignTokens.space4),
+            const _ComingSoonReportCard(
+              icon: Icons.history_rounded,
+              title: 'Audit log',
+              subtitle: 'Sistem ve kullanıcı işlem geçmişi — ayrıntılı görüntüleyici yakında',
+            ),
+          ],
+          if (canViewPipeline) ...[
+            const SizedBox(height: DesignTokens.space4),
+            InkWell(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              onTap: () => context.push(AppRouter.routePipeline),
+              child: const _SectionCard(
+                icon: Icons.view_kanban_rounded,
+                title: 'Satış hunisi (Kanban)',
+                subtitle: 'Aşamalar, fırsatlar ve sürükle-bırak — canlı pipeline ekranı',
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -247,10 +259,10 @@ class _AdminReportsPerfSection extends StatelessWidget {
             }
             return const Padding(
               padding: EdgeInsets.only(bottom: DesignTokens.space4),
-              child: _SectionCard(
+              child: _ComingSoonReportCard(
                 icon: Icons.analytics_rounded,
                 title: 'Performans özeti',
-                subtitle: 'Aylık/heftalık çağrı, görüşme ve kapanış metrikleri',
+                subtitle: 'Aylık/heftalık çağrı ve kapanış metrikleri — detaylı rapor yakında',
               ),
             );
           },
@@ -331,6 +343,97 @@ class _AdminPerfErrorCard extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// Rapor kartı: henüz ekranı olmayan veya yakında tamamlanacak özellikler (canlı hissi vermez).
+class _ComingSoonReportCard extends StatelessWidget {
+  const _ComingSoonReportCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final textPrimary = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
+    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
+    final muted = textSecondary.withValues(alpha: 0.85);
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.space5),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        border: Border.all(color: border.withValues(alpha: 0.85)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(DesignTokens.space3),
+            decoration: BoxDecoration(
+              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            ),
+            child: Icon(icon, color: muted, size: 26),
+          ),
+          const SizedBox(width: DesignTokens.space4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: textPrimary.withValues(alpha: 0.92),
+                          fontWeight: FontWeight.w600,
+                          fontSize: DesignTokens.fontSizeMd,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: DesignTokens.space2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+                        border: Border.all(color: border),
+                      ),
+                      child: Text(
+                        'Yakında',
+                        style: TextStyle(
+                          color: textSecondary,
+                          fontSize: DesignTokens.fontSizeXs,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: DesignTokens.fontSizeSm,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
