@@ -1,39 +1,52 @@
-import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 /// Firebase Storage yok veya bucket yapılandırılmamışsa yükleme akışlarını yumuşak şekilde kapatır.
+///
+/// **Önemli:** Kök dizindeki (`__availability_probe_*.bin`) sonda [storage.rules] içindeki
+/// `match /{allPaths=**}` kuralı okumayı reddeder → `storage/unauthorized` gelir ve Storage
+/// aslında açık olsa bile "kapalı" sanılır. Sonda, kurallarda okumaya izin verilen
+/// `users/{uid}/avatar/{fileName}` altında `getMetadata` (nesne yok → object-not-found) kullanılır.
 class FirebaseStorageAvailability {
   FirebaseStorageAvailability._();
 
   static const String unavailableMessage = 'Storage henüz aktif değil';
 
   static bool? _cached;
-  static Future<bool>? _inFlight;
+  static String? _cacheKey;
 
   /// Önbelleği sıfırla (ör. Firebase yeniden yapılandırıldığında).
   static void clearCache() {
     _cached = null;
-    _inFlight = null;
+    _cacheKey = null;
   }
 
   /// Varsayılan bucket ile okuma/yazma bekleniyorsa `true`.
   static Future<bool> checkUsable() async {
-    if (_cached != null) return _cached!;
-    _inFlight ??= _probeOnce();
-    final ok = await _inFlight!;
+    if (Firebase.apps.isEmpty) return false;
+    final bucket = FirebaseStorage.instance.app.options.storageBucket;
+    if (bucket == null || bucket.isEmpty) return false;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final key = '$bucket|${uid ?? ''}';
+    if (_cached != null && _cacheKey == key) return _cached!;
+
+    final ok = await _probe(uid: uid);
     _cached = ok;
+    _cacheKey = key;
     return ok;
   }
 
-  static Future<bool> _probeOnce() async {
+  static Future<bool> _probe({String? uid}) async {
     try {
-      if (Firebase.apps.isEmpty) return false;
-      final bucket = FirebaseStorage.instance.app.options.storageBucket;
-      if (bucket == null || bucket.isEmpty) return false;
+      if (uid == null || uid.isEmpty) {
+        // Console'da bucket atanmış = Storage projede tanımlı; dosya yolu doğrulaması giriş sonrası yapılır.
+        return true;
+      }
       final ref = FirebaseStorage.instance.ref(
-        '__availability_probe_${DateTime.now().millisecondsSinceEpoch}.bin',
+        'users/$uid/avatar/__availability_probe.bin',
       );
       await ref.getMetadata();
       return true;
@@ -41,11 +54,8 @@ class FirebaseStorageAvailability {
       if (e.code == 'storage/object-not-found') {
         return true;
       }
-      if (e.code == 'storage/unauthorized' && isDevMode) {
-        return false;
-      }
       if (_unavailableCodes.contains(e.code)) return false;
-      if (isDevMode) return false;
+      if (e.code.startsWith('storage/')) return false;
       return false;
     } catch (e, st) {
       if (kDebugMode) {

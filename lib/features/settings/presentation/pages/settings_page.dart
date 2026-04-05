@@ -24,6 +24,7 @@ import 'package:emlakmaster_mobile/features/profile/presentation/widgets/profile
 import 'package:emlakmaster_mobile/features/profile/presentation/widgets/profile_avatar_crop_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:emlakmaster_mobile/features/profile/data/profile_avatar_service.dart';
+import 'package:emlakmaster_mobile/widgets/test_role_switch_sheet.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -772,39 +773,7 @@ class SettingsPage extends ConsumerWidget {
   }
 
   void _showRoleSwitcher(BuildContext context, WidgetRef ref, AppRole? currentOverride) {
-    final theme = Theme.of(context);
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: theme.colorScheme.surface,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Test için rol seç (sadece görünüm)',
-                style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600),
-              ),
-            ),
-            ...AppRole.values.map((r) {
-              return ListTile(
-                title: Text(r.label, style: TextStyle(color: theme.colorScheme.onSurface)),
-                trailing: currentOverride == r
-                    ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
-                    : null,
-                onTap: () {
-                  ref.read(overrideRoleProvider.notifier).state =
-                      currentOverride == r ? null : r;
-                  Navigator.pop(ctx);
-                },
-              );
-            }),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
+    showTestRoleSwitchSheet(context, ref, currentOverride);
   }
 
   Widget _sectionCard(BuildContext context, {required List<Widget> children, bool muted = false}) {

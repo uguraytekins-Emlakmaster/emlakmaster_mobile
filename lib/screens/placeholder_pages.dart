@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/widgets/test_role_switch_sheet.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -268,42 +269,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
   }
 
   void _showRoleSwitcher(BuildContext context, WidgetRef ref, AppRole? currentOverride) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final sheetBg = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
-    final textColor = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: sheetBg,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Test için rol seç (sadece görünüm)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: textColor),
-              ),
-            ),
-            ...AppRole.values.map((r) {
-              return ListTile(
-                title: Text(r.label, style: TextStyle(color: textColor)),
-                trailing: currentOverride == r
-                    ? Icon(Icons.check_rounded, color: AppThemeExtension.of(context).accent)
-                    : null,
-                onTap: () {
-                  ref.read(overrideRoleProvider.notifier).state =
-                      currentOverride == r ? null : r;
-                  Navigator.pop(ctx);
-                },
-              );
-            }),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
+    showTestRoleSwitchSheet(context, ref, currentOverride);
   }
 }
 
