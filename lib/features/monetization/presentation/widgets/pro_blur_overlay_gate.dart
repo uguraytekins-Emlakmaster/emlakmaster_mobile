@@ -11,11 +11,13 @@ class ProBlurOverlayGate extends StatelessWidget {
     required this.locked,
     required this.child,
     this.feature = 'revenue_insights',
+    this.previewMessage = 'Bu musteri satisa cok yakin olabilir',
   });
 
   final bool locked;
   final Widget child;
   final String feature;
+  final String previewMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +59,7 @@ class ProBlurOverlayGate extends StatelessWidget {
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     Text(
-                      'Revenue insights and advanced dashboard intelligence stay lightweight, but full context is unlocked on PRO.',
+                      previewMessage,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: ext.textSecondary,

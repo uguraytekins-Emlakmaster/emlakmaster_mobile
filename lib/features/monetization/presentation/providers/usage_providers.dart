@@ -21,14 +21,14 @@ final usageTrackerProvider =
 
 final shouldShowSoftLimitProvider = Provider.autoDispose<bool>((ref) {
   return ref.watch(
-    usageTrackerProvider.select((u) => u.isFree && u.isNearCallLimit),
+    usageTrackerProvider.select((u) => u.isFree && u.isNearAiLimit),
   );
 });
 
 final shouldShowUpgradeNudgeProvider = Provider.autoDispose<bool>((ref) {
   return ref.watch(
     usageTrackerProvider.select(
-      (u) => u.isFree && u.callsThisMonth > 30 && !u.isNearCallLimit,
+      (u) => u.isFree && u.aiUsageThisMonth > 8 && !u.isNearAiLimit,
     ),
   );
 });
@@ -76,18 +76,8 @@ class _UsageTrackerNotifier extends StateNotifier<UsageTracker> {
     await _load();
   }
 
-  Future<void> incrementCall() async {
-    await ensureLoaded();
-    state = await store.incrementCall(state);
-  }
-
   Future<void> incrementAi() async {
     await ensureLoaded();
     state = await store.incrementAi(state);
-  }
-
-  Future<void> incrementCustomer() async {
-    await ensureLoaded();
-    state = await store.incrementCustomer(state);
   }
 }

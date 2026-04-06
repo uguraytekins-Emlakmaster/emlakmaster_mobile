@@ -8,10 +8,6 @@ import 'package:emlakmaster_mobile/features/contact_save/data/save_contact_servi
 import 'package:emlakmaster_mobile/features/contact_save/domain/contact_save_request.dart';
 import 'package:emlakmaster_mobile/features/contact_save/domain/extract_contact_from_voice.dart'
     show logVoiceContactParseDebug, parseVoiceContact;
-import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/usage_limit_banner.dart';
-import 'package:emlakmaster_mobile/features/monetization/services/usage_service.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -223,31 +219,17 @@ class _SaveContactSheetContentState
 
     SaveToDeviceResult deviceResult = SaveToDeviceResult.success;
     bool okApp = false;
-    var customerTrackingLimited = false;
     if (_saveToDevice) {
       deviceResult = await SaveContactService.instance.saveToDevice(_request);
     }
     final okDevice = deviceResult == SaveToDeviceResult.success;
     if (_saveToApp && agentId.isNotEmpty) {
-      final usageService = ref.read(usageServiceProvider);
-      await usageService.warmUp();
-      if (!usageService.canTrackCustomer()) {
-        customerTrackingLimited = true;
-        if (mounted) {
-          await showUpgradeBottomSheet(
-            context,
-            feature: 'customer_limit',
-          );
-        }
-      } else {
-        await usageService.incrementCustomerUsage();
-        final id = await SaveContactService.instance.saveToApp(
-          _request,
-          assignedAgentId: agentId,
-          source: widget.source,
-        );
-        okApp = id != null;
-      }
+      final id = await SaveContactService.instance.saveToApp(
+        _request,
+        assignedAgentId: agentId,
+        source: widget.source,
+      );
+      okApp = id != null;
     } else if (_saveToApp && agentId.isEmpty) {
       okApp = false;
     }
@@ -264,22 +246,6 @@ class _SaveContactSheetContentState
       return;
     }
     if (_saveToApp && !okApp) {
-      if (customerTrackingLimited && okDevice) {
-        Navigator.of(context).pop();
-        HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-                'Rehbere kaydedildi. Uygulamada daha fazla müşteri için PRO gerekir.'),
-            backgroundColor: AppThemeExtension.of(context).accent,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-      if (customerTrackingLimited) {
-        return;
-      }
       setState(
           () => _error = 'Uygulamaya kayıt başarısız. İnternet kontrol edin.');
       return;
@@ -307,11 +273,6 @@ class _SaveContactSheetContentState
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final showCustomerLimitBanner = ref.watch(
-      usageTrackerProvider.select(
-        (u) => u.isFree && u.isNearCustomerLimit,
-      ),
-    );
     return DraggableScrollableSheet(
       initialChildSize: 0.72,
       minChildSize: 0.42,
@@ -334,13 +295,6 @@ class _SaveContactSheetContentState
               subtitle:
                   'Sesli komut veya manuel giriş. Kayıtlar CRM ile eşlenir; rehber izni ayrıca sorulur.',
             ),
-            if (showCustomerLimitBanner) ...[
-              const SizedBox(height: DesignTokens.space3),
-              const UsageLimitBanner(
-                subtitle:
-                    '30 müşteri sınırına yaklaşıyorsunuz. CRM takibini kesintisiz sürdürmek için PRO açabilirsiniz.',
-              ),
-            ],
             const SizedBox(height: DesignTokens.space5),
             DecoratedBox(
               decoration: BoxDecoration(

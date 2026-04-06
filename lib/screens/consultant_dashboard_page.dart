@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/usage_limit_banner.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/sync_delayed_customers_dashboard_card.dart';
@@ -83,17 +84,23 @@ class ConsultantDashboardPage extends ConsumerWidget {
                       if (showSoftLimitBanner) ...[
                         const SizedBox(
                             height: DashboardLayoutTokens.gapOperationalTight),
-                        const UsageLimitBanner(),
+                        const UsageLimitBanner(
+                          message: 'Bu ay AI limitinin %80\'ine ulastin',
+                          subtitle:
+                              'AI onerileri bu ay icin hizla doluyor. Sinirsiz kullanim icin PRO acabilirsiniz.',
+                        ),
                       ] else if (showUpgradeNudge) ...[
                         const SizedBox(
                             height: DashboardLayoutTokens.gapOperationalTight),
                         const UsageLimitBanner(
-                          message:
-                              'You are using this feature very actively 🔥',
+                          message: 'AI onerileri ekip hizini artiriyor',
                           subtitle:
-                              'Çağrı hacminiz büyüyor. PRO ile takip ve AI akışlarını kesintisiz tutabilirsiniz.',
+                              'Bu ay kullandigin AI haklarini burada takip edebilirsin.',
                         ),
                       ],
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperationalTight),
+                      const AiUsageIndicator(),
                       const SizedBox(
                           height: DashboardLayoutTokens.gapOperationalTight),
                       const ConsultantPerformanceStrip(),

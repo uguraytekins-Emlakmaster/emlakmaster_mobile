@@ -26,6 +26,7 @@ import 'package:emlakmaster_mobile/widgets/bento_analytics.dart';
 import 'package:emlakmaster_mobile/widgets/bento_saha_radar.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/pro_blur_overlay_gate.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
@@ -144,6 +145,7 @@ class DashboardPage extends ConsumerWidget {
                             child: BrokerDashboardIntelligenceSummaryCard(),
                           ),
                         ),
+                        px(const AiUsageIndicator()),
                         px(const ManagerRevenueSummaryCard()),
                         px(const ManagerEscalationsCard()),
                         px(const PostCallCaptureDashboardReminder()),

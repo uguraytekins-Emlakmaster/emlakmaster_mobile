@@ -23,6 +23,8 @@ class _UpgradeBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final title = _title(feature);
+    final body = _body(feature);
     return Padding(
       padding: EdgeInsets.fromLTRB(
         DesignTokens.space5,
@@ -35,7 +37,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'You are using this feature very actively 🔥',
+            title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: ext.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -43,7 +45,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
           ),
           const SizedBox(height: DesignTokens.space3),
           Text(
-            'Upgrade to PRO to continue tracking more customers and sales opportunities',
+            body,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: ext.textSecondary,
                   height: 1.35,
@@ -85,16 +87,34 @@ class _UpgradeBottomSheet extends StatelessWidget {
     );
   }
 
+  static String _title(String feature) {
+    switch (feature) {
+      case 'ai_analysis':
+        return 'AI onerileri bu ay icin doldu';
+      case 'revenue_insights':
+        return 'Bu gorunum daha derin sinyaller tasiyor';
+      default:
+        return 'You are using this feature very actively 🔥';
+    }
+  }
+
+  static String _body(String feature) {
+    switch (feature) {
+      case 'ai_analysis':
+        return 'Sinirsiz kullanim icin PRO';
+      case 'revenue_insights':
+        return 'Upgrade to PRO to continue tracking more customers and sales opportunities';
+      default:
+        return 'Upgrade to PRO to continue tracking more customers and sales opportunities';
+    }
+  }
+
   static String _featureLine(String feature) {
     switch (feature) {
-      case 'call_recording':
-        return 'Phone call continues normally; only CRM call tracking is limited.';
       case 'ai_analysis':
-        return 'Core CRM flow continues; advanced AI analysis is paused on free usage.';
-      case 'customer_limit':
-        return 'Existing customers stay available; only new customer tracking is limited.';
+        return 'Temel CRM akisi devam eder; yalnizca AI onerileri bir sonraki doneme kadar durur.';
       case 'revenue_insights':
-        return 'Unlock full insights, ranking and revenue context with PRO.';
+        return 'Tam gelir icgoruleri, ranking ve ileri AI onerileri PRO ile acilir.';
       default:
         return 'PRO unlocks higher limits and deeper CRM intelligence.';
     }

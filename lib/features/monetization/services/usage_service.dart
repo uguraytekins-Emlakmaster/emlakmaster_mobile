@@ -7,21 +7,12 @@ class UsageService {
 
   final Ref ref;
 
-  Future<void> incrementCallUsage() async {
-    await ref.read(usageTrackerProvider.notifier).incrementCall();
-  }
-
   Future<void> incrementAiUsage() async {
     await ref.read(usageTrackerProvider.notifier).incrementAi();
   }
 
-  Future<void> incrementCustomerUsage() async {
-    await ref.read(usageTrackerProvider.notifier).incrementCustomer();
-  }
-
   bool canUseCallRecording() {
-    final usage = getCurrentUsage();
-    return usage.isPro || !usage.isCallLimitReached;
+    return true;
   }
 
   bool canUseAi() {
@@ -30,13 +21,12 @@ class UsageService {
   }
 
   bool canTrackCustomer() {
-    final usage = getCurrentUsage();
-    return usage.isPro || !usage.isCustomerLimitReached;
+    return true;
   }
 
   bool shouldShowSoftLimit() {
     final usage = getCurrentUsage();
-    return usage.isFree && usage.isNearCallLimit;
+    return usage.isFree && usage.isNearAiLimit;
   }
 
   UsageTracker getCurrentUsage() {

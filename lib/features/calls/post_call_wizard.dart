@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
 import 'package:emlakmaster_mobile/features/monetization/services/usage_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
@@ -508,6 +509,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  const AiUsageIndicator(compact: true),
                   const SizedBox(height: 12),
                   if (_isAnalyzing) ...[
                     const _AnalyzingHeader(),

@@ -66,20 +66,8 @@ class UsageHiveStore {
     return reset;
   }
 
-  Future<UsageTracker> incrementCall(UsageTracker usage) async {
-    final next = usage.copyWith(callsThisMonth: usage.callsThisMonth + 1);
-    await saveUsage(next);
-    return next;
-  }
-
   Future<UsageTracker> incrementAi(UsageTracker usage) async {
     final next = usage.copyWith(aiUsageThisMonth: usage.aiUsageThisMonth + 1);
-    await saveUsage(next);
-    return next;
-  }
-
-  Future<UsageTracker> incrementCustomer(UsageTracker usage) async {
-    final next = usage.copyWith(customersTracked: usage.customersTracked + 1);
     await saveUsage(next);
     return next;
   }

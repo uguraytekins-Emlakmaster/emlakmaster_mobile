@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 class UsageLimitBanner extends StatelessWidget {
   const UsageLimitBanner({
     super.key,
-    this.message = 'You have reached 80% of your limit',
-    this.subtitle = 'You are using this feature very actively 🔥',
+    this.message = 'AI limitinin %80\'ine ulastin',
+    this.subtitle =
+        'Bu ay AI onerileri senin icin ciddi deger uretmis gorunuyor.',
   });
 
   final String message;
