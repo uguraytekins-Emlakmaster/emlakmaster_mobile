@@ -44,7 +44,13 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                 title: l10n.t('empty_followup_title'),
                 subtitle: l10n.t('empty_followup_sub'),
                 actionLabel: l10n.t('empty_followup_cta'),
-                onAction: () => context.push(AppRouter.routeCall),
+                onAction: () => context.push(
+                AppRouter.routeCall,
+                extra: const {
+                  'inAppCrmSession': true,
+                  'startedFromScreen': 'consultant_resurrection',
+                },
+              ),
               ),
             );
           }

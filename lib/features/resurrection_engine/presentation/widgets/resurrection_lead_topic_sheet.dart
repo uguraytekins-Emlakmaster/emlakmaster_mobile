@@ -125,11 +125,12 @@ void showResurrectionLeadTopicSheet(
                       extra: {
                         'customerId': item.customerId,
                         if (item.primaryPhone != null) 'phone': item.primaryPhone,
+                        'startedFromScreen': 'resurrection_topic',
                       },
                     );
                   },
                   icon: const Icon(Icons.phone_in_talk_rounded, size: 20),
-                  label: const Text('Hemen ara (Magic Call)'),
+                  label: const Text('Telefon ile ara'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppThemeExtension.of(context).accent,
                     foregroundColor: AppThemeExtension.of(context).onBrand,

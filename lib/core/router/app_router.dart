@@ -401,6 +401,8 @@ class AppRouter {
               child: CallScreen(
                 customerId: extra?['customerId'] as String?,
                 phone: extra?['phone'] as String?,
+                inAppCrmSession: extra?['inAppCrmSession'] as bool? ?? false,
+                startedFromScreen: extra?['startedFromScreen'] as String?,
               ),
               transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                   FadeTransition(opacity: animation, child: child),
@@ -418,6 +420,8 @@ class AppRouter {
                 callDurationSec: extra?['durationSec'] as int?,
                 callOutcome: extra?['outcome'] as String?,
                 linkedCustomerId: extra?['customerId'] as String?,
+                phoneNumber: extra?['phone'] as String?,
+                callSessionId: extra?['callSessionId'] as String?,
               ),
               transitionsBuilder: (context, animation, secondaryAnimation, child) =>
                   FadeTransition(opacity: animation, child: child),

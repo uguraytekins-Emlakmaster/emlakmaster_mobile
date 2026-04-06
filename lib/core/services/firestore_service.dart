@@ -665,6 +665,38 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  /// Sistem telefonuna geçmeden önce hafif CRM oturumu (gerçek GSM süresi burada ölçülmez).
+  static Future<String?> createOutboundCallHandoffSession({
+    required String advisorId,
+    String? customerId,
+    required String phoneNumber,
+    required String startedFromScreen,
+    Map<String, dynamic>? metadata,
+    String officeId = '',
+  }) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final now = FieldValue.serverTimestamp();
+    final doc = await col.add({
+      'officeId': officeId,
+      'advisorId': advisorId,
+      'agentId': advisorId,
+      if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+      'phoneNumber': phoneNumber,
+      'direction': 'outgoing',
+      'source': 'system_handoff',
+      'startedFromScreen': startedFromScreen,
+      'startedAt': now,
+      'createdAt': now,
+      'updatedAt': now,
+      'outcome': 'handoff_pending',
+      'handoffMode': true,
+      if (metadata != null && metadata.isNotEmpty) ...metadata,
+    });
+    return doc.id;
+  }
+
   /// Arama bittiğinde danışmanın "Tüm Çağrılar" listesinde görünmesi için calls koleksiyonuna kayıt ekler.
   static Future<void> createCallRecord({
     required String advisorId,

@@ -120,6 +120,8 @@ abstract final class AppConstants {
   /// Yanlış numara / anlamsız çağrılar AI analizine sokulmaz.
   static const String callOutcomeWrongNumber = 'wrong_number';
   static const String callOutcomeCompleted = 'completed';
+  /// Gerçek arama sistem telefonuna devredildi; süre uygulamada ölçülmez.
+  static const String callOutcomeSystemHandoff = 'system_handoff';
 
   /// Intelligence layer: sadece bu eşik ve üzeri ana ekrana düşer (Signal vs Noise).
   static const double opportunityRadarMinScore = 0.80;

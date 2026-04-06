@@ -115,6 +115,8 @@ class PostCallWizardScreen extends ConsumerStatefulWidget {
     this.callDurationSec,
     this.callOutcome,
     this.linkedCustomerId,
+    this.phoneNumber,
+    this.callSessionId,
   });
 
   /// AI token optimizasyonu: kısa veya yanlış numara ise derin analiz atlanır.
@@ -123,6 +125,12 @@ class PostCallWizardScreen extends ConsumerStatefulWidget {
 
   /// Müşteri detaydan açılan aramada özet bu müşteriye bağlanır.
   final String? linkedCustomerId;
+
+  /// Sistem telefonuna devredilen aramada kullanılan numara (CRM bağlamı).
+  final String? phoneNumber;
+
+  /// `calls` koleksiyonundaki handoff oturumu kimliği (opsiyonel).
+  final String? callSessionId;
 
   @override
   ConsumerState<PostCallWizardScreen> createState() => _PostCallWizardScreenState();
@@ -155,8 +163,9 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       'Bağlar ve Kayapınar bölgelerini istiyor. 15 gün içinde taşınmak istediğini söyledi.';
 
   bool get _skipFullAnalysis {
-    final duration = widget.callDurationSec ?? 999;
     final outcome = widget.callOutcome ?? AppConstants.callOutcomeCompleted;
+    if (outcome == AppConstants.callOutcomeSystemHandoff) return false;
+    final duration = widget.callDurationSec ?? 999;
     return duration < AppConstants.minCallDurationSecForAnalysis ||
         outcome == AppConstants.callOutcomeWrongNumber;
   }
@@ -170,7 +179,18 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2600),
     );
-    if (_skipFullAnalysis) {
+    if ((widget.callOutcome ?? '') == AppConstants.callOutcomeSystemHandoff) {
+      _isAnalyzing = false;
+      _extraction = const CallExtraction(
+        customerIntent: '—',
+        budgetRange: '—',
+        preferredRegions: '—',
+        urgency: '—',
+        nextStepSuggestion: 'Görüşme notlarınızı kaydedin.',
+        sentiment: CallSentiment.uncertain,
+        fullSummary: '',
+      );
+    } else if (_skipFullAnalysis) {
       _isAnalyzing = false;
       _extraction = null;
     } else {
@@ -417,14 +437,34 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                         },
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Çağrı Özeti Sihirbazı',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Çağrı Özeti Sihirbazı',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if ((widget.callOutcome ?? '') ==
+                                AppConstants.callOutcomeSystemHandoff) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.phoneNumber != null &&
+                                        widget.phoneNumber!.trim().isNotEmpty
+                                    ? 'Gerçek arama cihazın telefonunda (${widget.phoneNumber!.trim()}) — süre burada ölçülmez.'
+                                    : 'Gerçek arama cihazın telefonunda yapıldı; süre burada ölçülmez.',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.white70,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                      const Spacer(),
                     ],
                   ),
                   const SizedBox(height: 12),

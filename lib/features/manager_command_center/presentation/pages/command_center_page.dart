@@ -367,7 +367,13 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 title: l10n.t('empty_calls_title'),
                 subtitle: l10n.t('empty_calls_sub'),
                 actionLabel: l10n.t('empty_calls_cta'),
-                onAction: () => context.push(AppRouter.routeCall),
+                onAction: () => context.push(
+                AppRouter.routeCall,
+                extra: const {
+                  'inAppCrmSession': true,
+                  'startedFromScreen': 'command_center',
+                },
+              ),
               );
             }
             return ListView.builder(

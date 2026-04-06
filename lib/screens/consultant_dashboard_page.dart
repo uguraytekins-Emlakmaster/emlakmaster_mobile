@@ -271,7 +271,13 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
           onPressed: () {
             HapticFeedback.mediumImpact();
             AnalyticsService.instance.logEvent(AnalyticsEvents.magicCallTap);
-            context.push(AppRouter.routeCall);
+            context.push(
+              AppRouter.routeCall,
+              extra: const {
+                'inAppCrmSession': true,
+                'startedFromScreen': 'consultant_dashboard',
+              },
+            );
           },
         ),
         const SizedBox(height: 6),
@@ -616,7 +622,13 @@ class _ConsultantAcademyCard extends StatelessWidget {
                             child: FilledButton.icon(
                               onPressed: () {
                                 Navigator.pop(ctx);
-                                context.push(AppRouter.routeCall);
+                                context.push(
+                                  AppRouter.routeCall,
+                                  extra: const {
+                                    'inAppCrmSession': true,
+                                    'startedFromScreen': 'consultant_dashboard',
+                                  },
+                                );
                               },
                               icon: const Icon(Icons.phone_in_talk_rounded, size: 20),
                               label: const Text('Magic Call ile uygula'),

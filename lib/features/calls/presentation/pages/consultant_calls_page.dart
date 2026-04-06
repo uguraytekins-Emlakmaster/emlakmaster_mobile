@@ -443,7 +443,13 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       title: AppLocalizations.of(context).t('empty_calls_title'),
                       subtitle: AppLocalizations.of(context).t('empty_calls_sub'),
                       actionLabel: AppLocalizations.of(context).t('empty_calls_cta'),
-                      onAction: () => context.push(AppRouter.routeCall),
+                      onAction: () => context.push(
+                      AppRouter.routeCall,
+                      extra: const {
+                        'inAppCrmSession': true,
+                        'startedFromScreen': 'consultant_calls',
+                      },
+                    ),
                     ),
                   ),
                 ),

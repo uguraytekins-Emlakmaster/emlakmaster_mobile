@@ -48,7 +48,13 @@ class CustomerDetailPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.call_rounded),
-            onPressed: () => context.push(AppRouter.routeCall, extra: {'customerId': customerId}),
+            onPressed: () => context.push(
+              AppRouter.routeCall,
+              extra: {
+                'customerId': customerId,
+                'startedFromScreen': 'customer_detail',
+              },
+            ),
             tooltip: 'Ara',
           ),
         ],

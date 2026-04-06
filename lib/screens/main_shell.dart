@@ -88,7 +88,13 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
           ),
           if (showMagicDock)
             MagicCallDockedBar(
-              onPressed: () => context.push(AppRouter.routeCall),
+              onPressed: () => context.push(
+                AppRouter.routeCall,
+                extra: const {
+                  'inAppCrmSession': true,
+                  'startedFromScreen': 'main_shell_magic_dock',
+                },
+              ),
               backgroundColor: ext.brandPrimary,
               foregroundColor: ext.onBrand,
             ),

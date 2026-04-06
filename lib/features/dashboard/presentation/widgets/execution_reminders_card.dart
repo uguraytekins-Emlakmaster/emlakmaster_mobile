@@ -293,7 +293,13 @@ class _ReminderRowState extends ConsumerState<_ReminderRow> {
                           ? null
                           : () {
                               HapticFeedback.lightImpact();
-                              context.push(AppRouter.routeCall, extra: {'customerId': r.relatedCustomerId});
+                              context.push(
+                              AppRouter.routeCall,
+                              extra: {
+                                'customerId': r.relatedCustomerId,
+                                'startedFromScreen': 'execution_reminder',
+                              },
+                            );
                             },
                     ),
                   _ActionChip(

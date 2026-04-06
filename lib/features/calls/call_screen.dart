@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/ai_sales_assistant/presentation/widgets/ai_sales_assistant_panel.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/outbound_system_handoff_page.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,10 +25,22 @@ enum CallUIState {
 }
 
 class CallScreen extends ConsumerStatefulWidget {
-  const CallScreen({super.key, this.customerId, this.phone});
+  const CallScreen({
+    super.key,
+    this.customerId,
+    this.phone,
+    this.inAppCrmSession = false,
+    this.startedFromScreen,
+  });
 
   final String? customerId;
   final String? phone;
+
+  /// true: Magic Call / CRM oturumu (uygulama içi; gerçek GSM hattı değildir).
+  final bool inAppCrmSession;
+
+  /// Örn. `customer_detail`, `consultant_dashboard` — handoff oturumu için.
+  final String? startedFromScreen;
 
   @override
   ConsumerState<CallScreen> createState() => _CallScreenState();
@@ -64,9 +77,18 @@ class _CallScreenState extends ConsumerState<CallScreen>
     return uid != null && uid.isNotEmpty ? uid : null;
   }
 
+  /// Gerçek GSM: sistem telefonuna devret; sahte “bağlandı” arayüzünü kullanma.
+  bool get _usesOutboundHandoff =>
+      !widget.inAppCrmSession &&
+      ((widget.phone != null && widget.phone!.trim().isNotEmpty) ||
+          (widget.customerId != null && widget.customerId!.trim().isNotEmpty));
+
   @override
   void initState() {
     super.initState();
+    if (_usesOutboundHandoff) {
+      return;
+    }
     HapticFeedback.lightImpact();
     _isDialMode = widget.phone == null && widget.customerId == null;
     if (!_isDialMode) _dialDigits = widget.phone ?? '';
@@ -323,6 +345,23 @@ class _CallScreenState extends ConsumerState<CallScreen>
                 ],
               ),
             ),
+            if (widget.inAppCrmSession)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space5,
+                  0,
+                  DesignTokens.space5,
+                  DesignTokens.space2,
+                ),
+                child: Text(
+                  'Magic Call — gerçek GSM araması bu ekran değildir; sistem telefonu için müşteri kartından arayın.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: ext.textTertiary,
+                    height: 1.35,
+                  ),
+                ),
+              ),
             Consumer(
               builder: (context, ref, _) {
                 final officeAsync = ref.watch(currentOfficeProvider);
@@ -461,6 +500,13 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_usesOutboundHandoff) {
+      return OutboundSystemHandoffPage(
+        customerId: widget.customerId,
+        phone: widget.phone,
+        startedFromScreen: widget.startedFromScreen ?? 'unknown',
+      );
+    }
     final theme = Theme.of(context);
     final ext = AppThemeExtension.of(context);
     final topPadding = MediaQuery.paddingOf(context).top;
@@ -484,6 +530,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
               isMuted: _isMuted,
               isSpeakerOn: _isSpeakerOn,
               isKeypadOpen: _isKeypadOpen,
+              isMagicCallSession: widget.inAppCrmSession,
               customerId: widget.customerId,
               displayPhone: widget.phone ?? (_dialDigits.isNotEmpty ? _dialDigits : null),
               onPop: () {
@@ -881,9 +928,10 @@ class _DialHeroNumberField extends StatelessWidget {
 }
 
 class _CallStatusChip extends StatelessWidget {
-  const _CallStatusChip({required this.state});
+  const _CallStatusChip({required this.state, required this.isMagicCallSession});
 
   final CallUIState state;
+  final bool isMagicCallSession;
 
   @override
   Widget build(BuildContext context) {
@@ -894,11 +942,11 @@ class _CallStatusChip extends StatelessWidget {
     late final Color fg;
     switch (state) {
       case CallUIState.connecting:
-        label = 'Bağlanıyor';
+        label = isMagicCallSession ? 'Hazırlanıyor' : 'Bağlanıyor';
         bg = ext.warning.withValues(alpha: 0.16);
         fg = ext.warning;
       case CallUIState.connected:
-        label = 'Görüşmede';
+        label = isMagicCallSession ? 'Magic Call · CRM' : 'Görüşmede';
         bg = ext.success.withValues(alpha: 0.14);
         fg = ext.success;
       case CallUIState.ending:
@@ -932,11 +980,13 @@ class _CallHeroCard extends ConsumerWidget {
     required this.customerId,
     required this.displayPhone,
     required this.callState,
+    required this.isMagicCallSession,
   });
 
   final String? customerId;
   final String? displayPhone;
   final CallUIState callState;
+  final bool isMagicCallSession;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -962,8 +1012,11 @@ class _CallHeroCard extends ConsumerWidget {
             ),
             const SizedBox(height: DesignTokens.space2),
             Text(
-              'Doğrudan arama',
+              isMagicCallSession
+                  ? 'Magic Call · CRM (gerçek GSM hattı değil)'
+                  : 'Doğrudan arama',
               style: theme.textTheme.bodySmall?.copyWith(color: ext.textSecondary),
+              textAlign: TextAlign.center,
             ),
           ],
         );
@@ -1017,8 +1070,11 @@ class _CallHeroCard extends ConsumerWidget {
               ],
               const SizedBox(height: DesignTokens.space2),
               Text(
-                'CRM kaydı · AI asistan altta',
+                isMagicCallSession
+                    ? 'Uygulama içi CRM oturumu · AI asistan altta'
+                    : 'CRM kaydı · AI asistan altta',
                 style: theme.textTheme.labelSmall?.copyWith(color: ext.textTertiary),
+                textAlign: TextAlign.center,
               ),
               if (c?.source != null && c!.source!.trim().isNotEmpty) ...[
                 const SizedBox(height: DesignTokens.space2),
@@ -1064,7 +1120,7 @@ class _CallHeroCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _CallStatusChip(state: callState),
+          _CallStatusChip(state: callState, isMagicCallSession: isMagicCallSession),
           const SizedBox(height: DesignTokens.space5),
           identity(),
           const SizedBox(height: DesignTokens.space5),
@@ -1168,6 +1224,7 @@ class _InCallSessionBody extends ConsumerWidget {
     required this.isMuted,
     required this.isSpeakerOn,
     required this.isKeypadOpen,
+    required this.isMagicCallSession,
     required this.customerId,
     required this.displayPhone,
     required this.onPop,
@@ -1184,6 +1241,7 @@ class _InCallSessionBody extends ConsumerWidget {
   final bool isMuted;
   final bool isSpeakerOn;
   final bool isKeypadOpen;
+  final bool isMagicCallSession;
   final String? customerId;
   final String? displayPhone;
   final VoidCallback onPop;
@@ -1255,6 +1313,7 @@ class _InCallSessionBody extends ConsumerWidget {
                     customerId: customerId,
                     displayPhone: displayPhone,
                     callState: callState,
+                    isMagicCallSession: isMagicCallSession,
                   ),
                   const SizedBox(height: DesignTokens.space6),
                   _CallTimerSection(
