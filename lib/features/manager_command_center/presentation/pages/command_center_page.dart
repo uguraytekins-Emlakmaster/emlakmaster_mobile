@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
@@ -9,6 +11,11 @@ import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_ca
 import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/local_call_record_firestore_match.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -56,12 +63,12 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
   }
 }
 
-class _CommandCenterBody extends StatefulWidget {
+class _CommandCenterBody extends ConsumerStatefulWidget {
   const _CommandCenterBody({required int viewIndex}) : _viewIndex = viewIndex;
   final int _viewIndex;
 
   @override
-  State<_CommandCenterBody> createState() => _CommandCenterBodyState();
+  ConsumerState<_CommandCenterBody> createState() => _CommandCenterBodyState();
 }
 
 enum _CommandScope {
@@ -75,7 +82,7 @@ enum _CommandScope {
   pending,
 }
 
-class _CommandCenterBodyState extends State<_CommandCenterBody> {
+class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   late int _viewIndex;
   _CommandScope _commandScope = _CommandScope.all;
   String? _filterTeamId;
@@ -140,6 +147,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
     Map<String, String> agentNames,
     Color fg,
     bool isDark,
+    List<LocalCallRecord> locals,
+    String? currentUid,
   ) {
     final surface =
         isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
@@ -161,6 +170,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
             surface,
             fg,
             isDark,
+            locals,
+            currentUid,
           ),
         );
     }
@@ -173,6 +184,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
     Color surface,
     Color fg,
     bool isDark,
+    List<LocalCallRecord> locals,
+    String? currentUid,
   ) {
     final data = doc.data();
     final id = doc.id;
@@ -198,6 +211,29 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
     final src = CrmCallRecordHelpers.sourceDisplayTr(data);
     final note = (data['quickCaptureNote'] as String? ?? '').trim();
     final noteLine = note.isNotEmpty ? ' · Not: ${note.length > 42 ? '${note.substring(0, 42)}…' : note}' : '';
+    final localMatch = matchLocalCallRecordForFirestoreDoc(
+      locals: locals,
+      docId: id,
+      data: data,
+    );
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    Widget? trailing;
+    if (localMatch != null) {
+      final syncState = deriveLocalCallSyncUiState(localMatch, nowMs: nowMs);
+      VoidCallback? onRetry;
+      if (syncState == LocalCallSyncUiState.failedPermanent &&
+          currentUid != null &&
+          currentUid == localMatch.agentId) {
+        onRetry = () => unawaited(retryLocalCallRecordSync(localMatch));
+      }
+      trailing = Tooltip(
+        message: 'Senkron durumu',
+        child: CallSyncStatusIcon(
+          record: localMatch,
+          onManualRetry: onRetry,
+        ),
+      );
+    }
     return Card(
       margin: const EdgeInsets.only(bottom: DesignTokens.space2),
       color: surface,
@@ -220,6 +256,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
           overflow: TextOverflow.ellipsis,
         ),
         isThreeLine: true,
+        trailing: trailing,
       ),
     );
   }
@@ -624,6 +661,8 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                   return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: _callsStreamForScope(),
                 builder: (context, snapshot) {
+            final locals = ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
+            final currentUid = ref.watch(currentUserProvider).valueOrNull?.uid;
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return Center(
@@ -743,7 +782,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               ),
               );
             }
-            return _buildScopeContent(context, filtered, agentNames, fg, isDark);
+            return _buildScopeContent(context, filtered, agentNames, fg, isDark, locals, currentUid);
           },
         );
       },

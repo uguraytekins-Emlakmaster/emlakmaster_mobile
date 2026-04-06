@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../widgets/customer_card.dart';
 
@@ -235,7 +237,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                       ),
                       data: (entities) {
                         final filtered = _searchQuery.isEmpty
-                            ? entities
+                            ? List<CustomerEntity>.from(entities)
                             : entities.where((e) {
                                 final q = _searchQuery;
                                 final name = (e.fullName ?? '').toLowerCase();
@@ -247,6 +249,15 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                     phone.contains(queryNoSpaces) ||
                                     (queryNoSpaces.isNotEmpty && phone.contains(queryNoSpaces));
                               }).toList();
+                        final riskIds = ref.watch(syncDelayedRiskCustomerIdsProvider);
+                        if (filtered.length > 1) {
+                          filtered.sort((a, b) {
+                            final ar = riskIds.contains(a.id);
+                            final br = riskIds.contains(b.id);
+                            if (ar != br) return ar ? -1 : 1;
+                            return b.updatedAt.compareTo(a.updatedAt);
+                          });
+                        }
                         if (filtered.isEmpty) {
                           final l10n = AppLocalizations.of(context);
                           final noCustomers = entities.isEmpty;

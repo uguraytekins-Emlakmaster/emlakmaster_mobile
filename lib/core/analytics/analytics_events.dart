@@ -23,6 +23,12 @@ abstract final class AnalyticsEvents {
   static const String magicCallTap = 'magic_call_tap';
   static const String consultantCallsTap = 'consultant_calls_tap';
 
+  // —— Yerel çağrı kaydı → Firestore senkron (Hive) ——
+  static const String syncSuccess = 'sync_success';
+  static const String syncFailure = 'sync_failure';
+  static const String syncRetry = 'sync_retry';
+  static const String syncPermanentFailure = 'sync_permanent_failure';
+
   // Param anahtarları (tutarlılık)
   static const String paramCount = 'count';
   static const String paramListingId = 'listing_id';
@@ -32,4 +38,23 @@ abstract final class AnalyticsEvents {
   static const String paramResult = 'result';
   static const String paramPermanently = 'permanently';
   static const String paramSyncedCount = 'synced_count';
+
+  /// Başarı: [LocalCallRecord.createdAt] → senkron tamamlandığı an (ms).
+  /// Sunucuda ortalama: BigQuery / GA4 raporları.
+  static const String paramSyncDelayMs = 'sync_delay_ms';
+
+  /// Başarısız deneme anında kaydın yaşı (oluşturulma → şimdi, ms).
+  static const String paramRecordAgeMs = 'record_age_ms';
+
+  /// Aynı oturumda tahmini başarısızlık oranı (0.0–1.0).
+  static const String paramFailureRate = 'failure_rate';
+
+  /// [recordSyncFailure] sonrası yeni deneme sayacı.
+  static const String paramRetryCount = 'retry_count';
+
+  /// [applyExpiredPermanentWindow] tek partide etkilenen kayıt sayısı.
+  static const String paramBatchCount = 'batch_count';
+
+  /// Parti içi ortalama gecikme (kalıcı başarısızlık anına kadar).
+  static const String paramAvgSyncDelayMs = 'avg_sync_delay_ms';
 }

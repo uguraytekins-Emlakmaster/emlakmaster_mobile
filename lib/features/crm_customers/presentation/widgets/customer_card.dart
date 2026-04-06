@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/broker_customer_alert.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +39,7 @@ class CustomerCard extends ConsumerWidget {
     final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
     final brokerAlert =
         role.isManagerTier && brokerAlertsActiveForCustomer(customer);
+    final syncDelayedRisk = ref.watch(syncDelayedRiskCustomerIdsProvider).contains(customer.id);
     return Semantics(
       label: '${customer.fullName} müşteri kartı',
       button: true,
@@ -124,6 +126,18 @@ class CustomerCard extends ConsumerWidget {
                           Icons.notifications_active_rounded,
                           size: 18,
                           color: AppThemeExtension.of(context).danger,
+                        ),
+                      ),
+                    ),
+                  if (syncDelayedRisk)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Tooltip(
+                        message: 'Veri senkronu gecikmiş olabilir',
+                        child: Icon(
+                          Icons.cloud_off_outlined,
+                          size: 18,
+                          color: AppThemeExtension.of(context).warning.withValues(alpha: 0.9),
                         ),
                       ),
                     ),

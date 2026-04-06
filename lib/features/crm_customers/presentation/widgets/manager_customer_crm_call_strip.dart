@@ -1,18 +1,27 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/local_call_record_firestore_match.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Yönetici: müşteri kartında son CRM çağrı kayıtları (telekom kesinliği yok).
-class ManagerCustomerCrmCallStrip extends StatelessWidget {
+class ManagerCustomerCrmCallStrip extends ConsumerWidget {
   const ManagerCustomerCrmCallStrip({super.key, required this.customerId});
 
   final String customerId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirestoreService.callsByCustomerStream(customerId),
@@ -28,6 +37,8 @@ class ManagerCustomerCrmCallStrip extends StatelessWidget {
         }
         final docs = snap.data?.docs ?? [];
         if (docs.isEmpty) return const SizedBox.shrink();
+        final locals = ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
+        final currentUid = ref.watch(currentUserProvider).valueOrNull?.uid;
         return Padding(
           padding: const EdgeInsets.only(bottom: DesignTokens.space4),
           child: Material(
@@ -62,7 +73,8 @@ class ManagerCustomerCrmCallStrip extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 10),
-                  for (final d in docs.take(5)) _CallLine(doc: d),
+                  for (final d in docs.take(5))
+                    _CallLine(doc: d, locals: locals, currentUid: currentUid),
                 ],
               ),
             ),
@@ -74,9 +86,15 @@ class ManagerCustomerCrmCallStrip extends StatelessWidget {
 }
 
 class _CallLine extends StatelessWidget {
-  const _CallLine({required this.doc});
+  const _CallLine({
+    required this.doc,
+    required this.locals,
+    required this.currentUid,
+  });
 
   final QueryDocumentSnapshot<Map<String, dynamic>> doc;
+  final List<LocalCallRecord> locals;
+  final String? currentUid;
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +112,29 @@ class _CallLine extends StatelessWidget {
       'completed': 'Tamamlandı',
     });
     final cap = CrmCallRecordHelpers.captureStatusTr(data);
+    final localMatch = matchLocalCallRecordForFirestoreDoc(
+      locals: locals,
+      docId: doc.id,
+      data: data,
+    );
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    Widget? syncIcon;
+    if (localMatch != null) {
+      final syncState = deriveLocalCallSyncUiState(localMatch, nowMs: nowMs);
+      VoidCallback? onRetry;
+      if (syncState == LocalCallSyncUiState.failedPermanent &&
+          currentUid != null &&
+          currentUid == localMatch.agentId) {
+        onRetry = () => unawaited(retryLocalCallRecordSync(localMatch));
+      }
+      syncIcon = Tooltip(
+        message: 'Senkron durumu',
+        child: CallSyncStatusIcon(
+          record: localMatch,
+          onManualRetry: onRetry,
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -110,6 +151,7 @@ class _CallLine extends StatelessWidget {
                   ),
             ),
           ),
+          if (syncIcon != null) syncIcon,
         ],
       ),
     );

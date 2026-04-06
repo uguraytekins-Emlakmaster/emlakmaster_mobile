@@ -40,10 +40,10 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<AdaptiveShellScaffold> createState() => _AdaptiveShellScaffoldState();
+  ConsumerState<AdaptiveShellScaffold> createState() => AdaptiveShellScaffoldState();
 }
 
-class _AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
+class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   late PageController _pageController;
   int _currentIndex = 0;
 
@@ -69,6 +69,13 @@ class _AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       duration: DesignTokens.durationNormal,
       curve: Curves.easeInOut,
     );
+  }
+
+  /// Programatik sekme geçişi (ör. gösterge kartından Müşterilerim’e).
+  void jumpToTab(int index) {
+    if (index < 0 || index >= widget.navItems.length) return;
+    if (index == _currentIndex) return;
+    _onNavTap(index);
   }
 
   @override

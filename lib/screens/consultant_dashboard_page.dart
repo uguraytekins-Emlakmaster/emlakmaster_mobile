@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/sync_delayed_customers_dashboard_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
@@ -76,6 +77,8 @@ class ConsultantDashboardPage extends ConsumerWidget {
                     const _MagicCallPrimaryBlock(),
                     const SizedBox(height: DashboardLayoutTokens.gapOperational),
                     const PriorityCallSignalsCard(),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
+                    const SyncDelayedCustomersDashboardCard(),
                     const SizedBox(height: DashboardLayoutTokens.gapOperational),
                     const _QuickStatsCard(compact: true),
                     const SizedBox(height: DashboardLayoutTokens.gapOperational),

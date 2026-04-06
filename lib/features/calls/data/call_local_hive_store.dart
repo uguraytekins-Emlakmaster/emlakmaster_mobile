@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:emlakmaster_mobile/core/analytics/call_sync_analytics.dart';
 import 'package:emlakmaster_mobile/core/cache/app_cache_service.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/features/calls/data/call_record_sync_constants.dart';
@@ -79,12 +80,21 @@ class CallLocalHiveStore {
     final b = _b;
     if (b == null || agentId.isEmpty) return;
     final prefix = '$agentId::';
+    final agesMs = <int>[];
     for (final key in b.keys) {
       if (key is! String || !key.startsWith(prefix)) continue;
       final r = LocalCallRecord.tryDecode(b.get(key));
       if (r == null || r.isSynced || r.syncFailedPermanent) continue;
       if (now <= r.createdAt + CallRecordSyncConstants.maxRetryWindowMs) continue;
+      agesMs.add(now - r.createdAt);
       await putRecord(r.copyWith(syncFailedPermanent: true));
+    }
+    if (agesMs.isNotEmpty) {
+      final sum = agesMs.fold<int>(0, (a, e) => a + e);
+      CallSyncAnalytics.logPermanentFailureBatch(
+        batchCount: agesMs.length,
+        avgSyncDelayMs: sum ~/ agesMs.length,
+      );
     }
   }
 
@@ -151,6 +161,10 @@ class CallLocalHiveStore {
         clearSyncingSince: true,
         clearNextRetry: true,
       ),
+    );
+    CallSyncAnalytics.logSyncSuccess(
+      createdAtMs: existing.createdAt,
+      syncedAtMs: now,
     );
   }
 
@@ -278,6 +292,10 @@ class CallLocalHiveStore {
         clearPendingPatch: clearPendingCapture,
       ),
     );
+    CallSyncAnalytics.logSyncSuccess(
+      createdAtMs: existing.createdAt,
+      syncedAtMs: now,
+    );
   }
 
   Future<void> recordSyncFailure({
@@ -286,7 +304,8 @@ class CallLocalHiveStore {
   }) async {
     final existing = await get(agentId, localId);
     if (existing == null) return;
-    final nextAttempt = existing.syncAttemptCount + 1;
+    final prevAttempts = existing.syncAttemptCount;
+    final nextAttempt = prevAttempts + 1;
     final backoffMs = _computeBackoffMs(nextAttempt);
     await putRecord(
       existing.copyWith(
@@ -297,6 +316,17 @@ class CallLocalHiveStore {
             DateTime.now().millisecondsSinceEpoch + backoffMs,
       ),
     );
+    if (prevAttempts == 0) {
+      CallSyncAnalytics.logSyncFailure(
+        createdAtMs: existing.createdAt,
+        nextRetryCount: nextAttempt,
+      );
+    } else {
+      CallSyncAnalytics.logSyncRetry(
+        createdAtMs: existing.createdAt,
+        nextRetryCount: nextAttempt,
+      );
+    }
   }
 
   Future<void> resetPermanentForManualRetry({
