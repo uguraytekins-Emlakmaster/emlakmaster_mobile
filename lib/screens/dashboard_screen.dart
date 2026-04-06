@@ -25,9 +25,7 @@ import 'package:emlakmaster_mobile/widgets/bento_ai_news.dart';
 import 'package:emlakmaster_mobile/widgets/bento_analytics.dart';
 import 'package:emlakmaster_mobile/widgets/bento_saha_radar.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/pro_blur_overlay_gate.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
@@ -104,7 +102,6 @@ class DashboardPage extends ConsumerWidget {
       );
       final scrollBottomPad =
           DashboardLayoutTokens.shellScrollBottomPadding(context);
-      final blurInsights = ref.watch(shouldBlurRevenueInsightsProvider);
 
       final gapOp = compact
           ? DashboardLayoutTokens.gapOperationalTight
@@ -158,12 +155,7 @@ class DashboardPage extends ConsumerWidget {
                         if (kpiBar) SizedBox(height: gapOp),
                         px(const PriorityCallSignalsCard()),
                         if (kpiBar) SizedBox(height: gapOp),
-                        px(
-                          ProBlurOverlayGate(
-                            locked: blurInsights,
-                            child: const RainbowAnalyticsCenterCard(),
-                          ),
-                        ),
+                        px(const RainbowAnalyticsCenterCard()),
                         SizedBox(height: gapOp),
                         px(const ManagerPlatformConnectionsSummaryCard()),
                         if (lean) ...[

@@ -5,8 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/usage_limit_banner.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/sync_delayed_customers_dashboard_card.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/consultant_performance_strip.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_intelligence_dashboard_section.dart';
@@ -46,8 +44,6 @@ class ConsultantDashboardPage extends ConsumerWidget {
     final summaryBottomPad =
         DashboardLayoutTokens.shellScrollBottomPadding(context);
     final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
-    final showSoftLimitBanner = ref.watch(shouldShowSoftLimitProvider);
-    final showUpgradeNudge = ref.watch(shouldShowUpgradeNudgeProvider);
     final greeting = user?.email != null
         ? 'Merhaba, ${user!.email!.split('@').first}'
         : 'Merhaba';
@@ -81,23 +77,6 @@ class ConsultantDashboardPage extends ConsumerWidget {
                       const SizedBox(
                           height: DashboardLayoutTokens.gapOperationalTight),
                       const _TodayKpiRow(),
-                      if (showSoftLimitBanner) ...[
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperationalTight),
-                        const UsageLimitBanner(
-                          message: 'Bu ay AI limitinin %80\'ine ulastin',
-                          subtitle:
-                              'AI onerileri bu ay icin hizla doluyor. Sinirsiz kullanim icin PRO acabilirsiniz.',
-                        ),
-                      ] else if (showUpgradeNudge) ...[
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperationalTight),
-                        const UsageLimitBanner(
-                          message: 'AI onerileri ekip hizini artiriyor',
-                          subtitle:
-                              'Bu ay kullandigin AI haklarini burada takip edebilirsin.',
-                        ),
-                      ],
                       const SizedBox(
                           height: DashboardLayoutTokens.gapOperationalTight),
                       const AiUsageIndicator(),
