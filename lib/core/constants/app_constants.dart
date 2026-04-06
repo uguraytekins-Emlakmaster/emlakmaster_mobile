@@ -73,6 +73,8 @@ abstract final class AppConstants {
   static const String keyLastUserId = 'last_user_id';
   /// Bekleyen hızlı çağrı kaydı (handoff sonrası) — kullanıcı id soneki ile.
   static const String keyPostCallCaptureDraftV1 = 'post_call_capture_draft_v1';
+  /// Çevrimdışı kalan minimum handoff çağrıları (senkron bekleyen) — kullanıcı id soneki ile.
+  static const String keyPendingHandoffOutboundQueueV1 = 'pending_handoff_outbound_queue_v1';
   /// Yatırım / Fırsat Endeksi için takip edilen bölge id (örn. `kayapinar`).
   static const String keyFavoriteInvestRegion = 'favorite_invest_region_id';
   static const String defaultFavoriteInvestRegionId = 'kayapinar';

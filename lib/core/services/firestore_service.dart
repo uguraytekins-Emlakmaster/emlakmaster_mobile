@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
@@ -793,18 +795,26 @@ class FirestoreService {
     return doc.id;
   }
 
-  /// CRM handoff başarısız + kullanıcı hızlı kayıt yapmadan önce: minimum `calls` satırı (veri kaybını önler).
-  static Future<String> createMinimalFallbackCallRecord({
+  /// [localDraftId] + [advisorId] ile deterministik `calls/{id}` — tekrar yazımda çift kayıt oluşmaz.
+  static String stableFallbackCallDocumentId(String localDraftId, String advisorId) {
+    final digest = sha256.convert(utf8.encode('$localDraftId|$advisorId'));
+    return 'hf_${digest.toString()}';
+  }
+
+  /// Minimum handoff satırı — [documentId] sabit kaldığı için çevrimdışı tekrar denemelerde idempotent.
+  static Future<String> upsertMinimalFallbackCallRecord({
+    required String documentId,
     required String advisorId,
     String? customerId,
     required String phoneNumber,
     required String startedFromScreen,
+    bool flushedFromOfflineQueue = false,
   }) async {
     await ensureInitialized();
     _requireFirestoreReady();
     final now = FieldValue.serverTimestamp();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
-    final doc = await col.add({
+    await col.doc(documentId).set({
       'officeId': '',
       'advisorId': advisorId,
       'agentId': advisorId,
@@ -821,8 +831,27 @@ class FirestoreService {
       'outcome': 'no_capture',
       'handoffMode': true,
       'quickCapturePending': true,
-    });
-    return doc.id;
+      if (flushedFromOfflineQueue) 'syncedFromOfflineFallbackQueue': true,
+    }, SetOptions(merge: true));
+    return documentId;
+  }
+
+  /// CRM handoff başarısız + kullanıcı hızlı kayıt yapmadan önce: minimum `calls` satırı (veri kaybını önler).
+  static Future<String> createMinimalFallbackCallRecord({
+    required String advisorId,
+    required String localDraftId,
+    String? customerId,
+    required String phoneNumber,
+    required String startedFromScreen,
+  }) async {
+    final docId = stableFallbackCallDocumentId(localDraftId, advisorId);
+    return upsertMinimalFallbackCallRecord(
+      documentId: docId,
+      advisorId: advisorId,
+      customerId: customerId,
+      phoneNumber: phoneNumber,
+      startedFromScreen: startedFromScreen,
+    );
   }
 
   /// Müşteri kartına hızlı temas + not (sıcaklık sinyali opsiyonel).

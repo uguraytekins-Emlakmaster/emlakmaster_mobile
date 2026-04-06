@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/data/pending_handoff_outbound_queue.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
@@ -21,6 +22,10 @@ Future<void> applyQuickCallCapture({
 }) async {
   final uid = ref.read(currentUserProvider).valueOrNull?.uid;
   if (uid == null || uid.isEmpty) return;
+
+  if (draft.callSessionId.startsWith(PostCallCaptureDraft.localPrefix)) {
+    await PendingHandoffOutboundQueue.removeByLocalDraftId(uid, draft.callSessionId);
+  }
 
   final label = QuickCallOutcome.labelTr(outcomeCode);
   final trimmed = note?.trim();
