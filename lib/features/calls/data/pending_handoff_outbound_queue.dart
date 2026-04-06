@@ -52,4 +52,14 @@ class PendingHandoffOutboundQueue {
     final next = list.where((e) => e.localDraftId != localDraftId).toList();
     await _save(userId, next);
   }
+
+  /// Upsert öncesi tekrar okuma — hızlı kayıt kuyruğu temizlediyse false.
+  static Future<bool> containsLocalDraftId(
+    String userId,
+    String localDraftId,
+  ) async {
+    if (userId.isEmpty || localDraftId.isEmpty) return false;
+    final list = await load(userId);
+    return list.any((e) => e.localDraftId == localDraftId);
+  }
 }

@@ -23,8 +23,24 @@ Future<void> applyQuickCallCapture({
   final uid = ref.read(currentUserProvider).valueOrNull?.uid;
   if (uid == null || uid.isEmpty) return;
 
+  // Yerel taslak: önce kuyruk flush zincirini bekle (arka planda hf_ oluşmuş olabilir).
   if (draft.callSessionId.startsWith(PostCallCaptureDraft.localPrefix)) {
-    await PendingHandoffOutboundQueue.removeByLocalDraftId(uid, draft.callSessionId);
+    await ref.read(postCallCaptureProvider.notifier).flushPendingOutboundQueue();
+  }
+
+  var effective = draft;
+  final live = ref.read(postCallCaptureProvider);
+  if (live != null &&
+      live.phone == draft.phone &&
+      live.createdAtMs == draft.createdAtMs) {
+    effective = live;
+  }
+
+  if (effective.callSessionId.startsWith(PostCallCaptureDraft.localPrefix)) {
+    await PendingHandoffOutboundQueue.removeByLocalDraftId(
+      uid,
+      effective.callSessionId,
+    );
   }
 
   final label = QuickCallOutcome.labelTr(outcomeCode);
@@ -34,9 +50,9 @@ Future<void> applyQuickCallCapture({
 
   await runWithResilience(
     () async {
-      if (draft.hasFirestoreCallDoc) {
+      if (effective.hasFirestoreCallDoc) {
         await FirestoreService.mergeOutboundCallQuickCapture(
-          callSessionId: draft.callSessionId,
+          callSessionId: effective.callSessionId,
           quickOutcomeCode: outcomeCode,
           quickOutcomeLabelTr: label,
           quickNote: trimmed,
@@ -45,9 +61,9 @@ Future<void> applyQuickCallCapture({
       } else {
         await FirestoreService.createCallRecordWithQuickCapture(
           advisorId: uid,
-          customerId: draft.customerId,
-          phoneNumber: draft.phone,
-          startedFromScreen: draft.startedFromScreen,
+          customerId: effective.customerId,
+          phoneNumber: effective.phone,
+          startedFromScreen: effective.startedFromScreen,
           quickOutcomeCode: outcomeCode,
           quickOutcomeLabelTr: label,
           quickNote: trimmed,
@@ -55,7 +71,7 @@ Future<void> applyQuickCallCapture({
         );
       }
 
-      final cid = draft.customerId;
+      final cid = effective.customerId;
       if (cid != null && cid.isNotEmpty) {
         final noteLine = StringBuffer('📞 Hızlı kayıt: $label');
         if (trimmed != null && trimmed.isNotEmpty) {

@@ -40,6 +40,9 @@ class PostCallCaptureNotifier extends StateNotifier<PostCallCaptureDraft?> {
   Timer? _fallbackTimer;
   StreamSubscription<bool>? _onlineSub;
 
+  /// Ardışık flush — yarışta çift upsert azaltır.
+  Future<void> _flushTail = Future<void>.value();
+
   void disposeFallbackTimer() {
     _fallbackTimer?.cancel();
     _fallbackTimer = null;
@@ -51,7 +54,16 @@ class PostCallCaptureNotifier extends StateNotifier<PostCallCaptureDraft?> {
   }
 
   /// Yerel kuyruktaki çağrıları Firestore'a yazar; çevrimiçi olunca sessiz tekrar.
-  Future<void> flushPendingOutboundQueue() async {
+  Future<void> flushPendingOutboundQueue() {
+    _flushTail = _flushTail
+        .then((_) => _flushPendingOutboundQueueImpl())
+        .catchError((Object e, StackTrace st) {
+      AppLogger.w('flushPendingOutboundQueue chain', e, st);
+    });
+    return _flushTail;
+  }
+
+  Future<void> _flushPendingOutboundQueueImpl() async {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     if (uid.isEmpty) return;
     final items = await PendingHandoffOutboundQueue.load(uid);
@@ -59,6 +71,12 @@ class PostCallCaptureNotifier extends StateNotifier<PostCallCaptureDraft?> {
 
     for (final item in List<PendingHandoffOutboundItem>.from(items)) {
       try {
+        final stillPending = await PendingHandoffOutboundQueue.containsLocalDraftId(
+          uid,
+          item.localDraftId,
+        );
+        if (!stillPending) continue;
+
         final docId = FirestoreService.stableFallbackCallDocumentId(
           item.localDraftId,
           item.advisorId,
