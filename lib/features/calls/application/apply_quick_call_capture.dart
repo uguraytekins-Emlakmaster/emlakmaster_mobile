@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/data/call_local_hive_store.dart';
 import 'package:emlakmaster_mobile/features/calls/data/pending_handoff_outbound_queue.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
@@ -24,7 +25,7 @@ Future<void> applyQuickCallCapture({
   if (uid == null || uid.isEmpty) return;
 
   // Yerel taslak: önce kuyruk flush zincirini bekle (arka planda hf_ oluşmuş olabilir).
-  if (draft.callSessionId.startsWith(PostCallCaptureDraft.localPrefix)) {
+  if (draft.localRecordId.startsWith(PostCallCaptureDraft.localPrefix)) {
     await ref.read(postCallCaptureProvider.notifier).flushPendingOutboundQueue();
   }
 
@@ -36,18 +37,28 @@ Future<void> applyQuickCallCapture({
     effective = live;
   }
 
-  if (effective.callSessionId.startsWith(PostCallCaptureDraft.localPrefix)) {
-    await PendingHandoffOutboundQueue.removeByLocalDraftId(
-      uid,
-      effective.callSessionId,
-    );
-  }
-
   final label = QuickCallOutcome.labelTr(outcomeCode);
   final trimmed = note?.trim();
 
+  await CallLocalHiveStore.instance.ensureInit();
+  await CallLocalHiveStore.instance.patchQuickCapture(
+    agentId: uid,
+    localId: effective.localRecordId,
+    outcomeCode: outcomeCode,
+    notes: trimmed,
+    followUpReminderAtMs: followUpReminderAt?.millisecondsSinceEpoch,
+  );
+
+  if (effective.localRecordId.startsWith(PostCallCaptureDraft.localPrefix)) {
+    await PendingHandoffOutboundQueue.removeByLocalDraftId(
+      uid,
+      effective.localRecordId,
+    );
+  }
+
   final signals = _signalsFor(outcomeCode, heatBand);
 
+  String? newFirestoreCallId;
   await runWithResilience(
     () async {
       if (effective.hasFirestoreCallDoc) {
@@ -59,7 +70,7 @@ Future<void> applyQuickCallCapture({
           followUpReminderAt: followUpReminderAt,
         );
       } else {
-        await FirestoreService.createCallRecordWithQuickCapture(
+        newFirestoreCallId = await FirestoreService.createCallRecordWithQuickCapture(
           advisorId: uid,
           customerId: effective.customerId,
           phoneNumber: effective.phone,
@@ -101,6 +112,18 @@ Future<void> applyQuickCallCapture({
     ref: ref as Ref<Object?>,
   );
 
+  if (newFirestoreCallId != null && newFirestoreCallId!.isNotEmpty) {
+    await CallLocalHiveStore.instance.replaceFirestoreDocumentId(
+      agentId: uid,
+      localId: effective.localRecordId,
+      firestoreDocumentId: newFirestoreCallId!,
+    );
+  }
+
+  await CallLocalHiveStore.instance.markSynced(
+    agentId: uid,
+    localId: effective.localRecordId,
+  );
   await ref.read(postCallCaptureProvider.notifier).clear();
 }
 

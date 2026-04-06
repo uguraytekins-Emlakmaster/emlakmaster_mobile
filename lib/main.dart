@@ -16,7 +16,9 @@ import 'package:emlakmaster_mobile/core/services/push_notification_service.dart'
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/cache/app_cache_service.dart';
+import 'package:emlakmaster_mobile/core/services/call_record_sync_orchestrator.dart';
 import 'package:emlakmaster_mobile/core/services/sync_manager.dart';
+import 'package:emlakmaster_mobile/core/widgets/connectivity_banner.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -282,6 +284,17 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     } catch (e, st) {
       AppLogger.e('AppCacheService init error', e, st);
     }
+    try {
+      CallRecordSyncOrchestrator.instance.start();
+    } catch (e, st) {
+      AppLogger.e('CallRecordSyncOrchestrator start error', e, st);
+    }
+    try {
+      PaintingBinding.instance.imageCache.maximumSize = 200;
+      PaintingBinding.instance.imageCache.maximumSizeBytes = 150 * 1024 * 1024;
+    } catch (e, st) {
+      AppLogger.e('ImageCache tuning', e, st);
+    }
     // Batarya tasarrufu tercihini yükle (animasyonlar buna göre kısılır)
     try {
       AppLifecyclePowerService.powerSaverEnabled =
@@ -383,6 +396,12 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
                       ],
                     ),
                   ),
+                const Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: ConnectivityBanner(),
+                ),
                 if (!kReleaseMode && isDevMode) const DevModeBadge(),
               ],
             ),

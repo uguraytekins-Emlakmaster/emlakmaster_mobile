@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/features/calls/data/call_local_hive_store.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_call_capture_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -85,6 +86,8 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
         return;
       }
 
+      final phone = resolved;
+
       final uid = ref.read(currentUserProvider).valueOrNull?.uid;
       if (uid == null || uid.isEmpty) {
         if (!mounted) return;
@@ -93,6 +96,19 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
       }
 
       await FirestoreService.ensureInitialized();
+
+      final createdAtMs = DateTime.now().millisecondsSinceEpoch;
+      final localRecordId =
+          '${PostCallCaptureDraft.localPrefix}$createdAtMs';
+      await CallLocalHiveStore.instance.ensureInit();
+      await CallLocalHiveStore.instance.insertCallStart(
+        agentId: uid,
+        localId: localRecordId,
+        phoneNumber: phone,
+        createdAtMs: createdAtMs,
+        customerId: widget.customerId,
+        startedFromScreen: widget.startedFromScreen,
+      );
 
       String? sessionId;
       var crmSessionOk = false;
@@ -103,7 +119,7 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
             sessionId = await FirestoreService.createOutboundCallHandoffSession(
               advisorId: uid,
               customerId: widget.customerId,
-              phoneNumber: resolved!,
+              phoneNumber: phone,
               startedFromScreen: widget.startedFromScreen,
             );
           },
@@ -115,10 +131,17 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
         crmSessionOk = false;
       }
 
-      final localHandoffId = sessionId ??
-          '${PostCallCaptureDraft.localPrefix}${DateTime.now().millisecondsSinceEpoch}';
+      if (crmSessionOk && sessionId != null && sessionId!.isNotEmpty) {
+        await CallLocalHiveStore.instance.linkFirestoreSession(
+          agentId: uid,
+          localId: localRecordId,
+          firestoreDocumentId: sessionId!,
+        );
+      }
 
-      final ok = await OutboundPhoneDial.launchDial(resolved);
+      final localHandoffId = sessionId ?? localRecordId;
+
+      final ok = await OutboundPhoneDial.launchDial(phone);
       if (!mounted) return;
 
       if (!ok) {
@@ -152,12 +175,13 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
       unawaited(
         captureNotifier.beginHandoff(
           PostCallCaptureDraft(
+            localRecordId: localRecordId,
             callSessionId: localHandoffId,
             crmSessionTracked: crmSessionOk,
             customerId: widget.customerId,
-            phone: resolved,
+            phone: phone,
             startedFromScreen: widget.startedFromScreen,
-            createdAtMs: DateTime.now().millisecondsSinceEpoch,
+            createdAtMs: createdAtMs,
           ),
         ),
       );
