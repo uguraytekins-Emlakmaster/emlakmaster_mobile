@@ -7,6 +7,9 @@ import 'package:emlakmaster_mobile/features/calls/services/call_record_sync_serv
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Hive’daki yerel çağrı kayıtları (senkron göstergesi için); periyodik yenileme.
+///
+/// Performans: 5 sn aralık + veri parmak izi aynıysa yayın atlama; dakikada bir
+/// zorunlu yayın (zaman tabanlı senkron riski / `now` tüketicileri için).
 final localCallRecordsStreamProvider =
     StreamProvider.autoDispose<List<LocalCallRecord>>((ref) {
   final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
@@ -16,18 +19,44 @@ final localCallRecordsStreamProvider =
 
   final controller = StreamController<List<LocalCallRecord>>();
   Timer? timer;
+  var lastFingerprint = 0;
+  var periodicTick = 0;
 
-  Future<void> emit() async {
+  int fingerprint(List<LocalCallRecord> list) {
+    var h = list.length;
+    for (final r in list) {
+      h = Object.hash(
+        h,
+        r.id,
+        r.isSynced,
+        r.lastSyncAt,
+        r.syncAttemptCount,
+        r.nextRetryAtMs,
+        r.syncFailedPermanent,
+        r.pendingCapturePatchJson?.length ?? 0,
+      );
+    }
+    return h;
+  }
+
+  Future<void> emit({required bool force}) async {
     try {
       await CallLocalHiveStore.instance.ensureInit();
-      if (!controller.isClosed) {
-        controller.add(await CallLocalHiveStore.instance.listAllForAgent(uid));
-      }
+      if (controller.isClosed) return;
+      final list = await CallLocalHiveStore.instance.listAllForAgent(uid);
+      final fp = fingerprint(list);
+      if (!force && fp == lastFingerprint) return;
+      lastFingerprint = fp;
+      if (!controller.isClosed) controller.add(list);
     } catch (_) {}
   }
 
-  unawaited(emit());
-  timer = Timer.periodic(const Duration(seconds: 2), (_) => emit());
+  unawaited(emit(force: true));
+  timer = Timer.periodic(const Duration(seconds: 5), (_) {
+    periodicTick++;
+    final forceMinutePulse = periodicTick % 12 == 0;
+    unawaited(emit(force: forceMinutePulse));
+  });
 
   ref.onDispose(() {
     timer?.cancel();

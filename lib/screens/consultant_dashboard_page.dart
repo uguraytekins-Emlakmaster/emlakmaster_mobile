@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/sync_delayed_customers_dashboard_card.dart';
+import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_intelligence_dashboard_section.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
@@ -71,6 +72,8 @@ class ConsultantDashboardPage extends ConsumerWidget {
                     const _ConsultantTeamLine(),
                     const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
                     const _TodayKpiRow(),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
+                    const RevenueIntelligenceDashboardSection(),
                     const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
                     const ExecutionRemindersCard(surface: ExecutionReminderSurface.consultant),
                     const SizedBox(height: DashboardLayoutTokens.gapOperational),
