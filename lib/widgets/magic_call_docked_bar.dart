@@ -5,22 +5,26 @@ import 'package:flutter/services.dart';
 
 /// Premium docked CTA — sits **above** the bottom navigation, never over scroll content.
 ///
-/// Replaces the floating [MagicCallWizardFab] on shells where the call entry must not
-/// obscure lists or cards.
+/// İki ayrı yol: varsayılan **gerçek telefon** (sistem `tel:`), ikincil **Magic Call CRM**.
 class MagicCallDockedBar extends StatelessWidget {
   const MagicCallDockedBar({
     super.key,
-    required this.onPressed,
+    required this.onPhonePressed,
+    required this.onMagicCrmPressed,
     this.backgroundColor,
     this.foregroundColor,
   });
 
-  final VoidCallback onPressed;
+  /// Sistem telefonu / numara girişi (varsayılan).
+  final VoidCallback onPhonePressed;
+
+  /// Uygulama içi CRM oturumu (Magic Call).
+  final VoidCallback onMagicCrmPressed;
   final Color? backgroundColor;
   final Color? foregroundColor;
 
   /// Visual height of the bar (excluding outer borders).
-  static const double barHeight = 52;
+  static const double barHeight = 56;
 
   @override
   Widget build(BuildContext context) {
@@ -45,60 +49,56 @@ class MagicCallDockedBar extends StatelessWidget {
         ),
         child: SizedBox(
           height: barHeight,
-          child: InkWell(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              onPressed();
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: bg.withValues(alpha: 0.92),
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                      border: Border.all(
-                        color: fg.withValues(alpha: 0.12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    label: 'Telefon ile ara',
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        onPhonePressed();
+                      },
+                      icon: Icon(Icons.call_rounded, size: 18, color: fg),
+                      label: const Text('Telefon'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: bg,
+                        foregroundColor: fg,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                        ),
                       ),
                     ),
-                    child: Icon(Icons.phone_in_talk_rounded, color: fg, size: 22),
                   ),
-                  const SizedBox(width: DesignTokens.space3),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Magic Call',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: ext.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.2,
-                              ),
+                ),
+                const SizedBox(width: DesignTokens.space2),
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    label: 'Magic Call CRM oturumu',
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        onMagicCrmPressed();
+                      },
+                      icon: Icon(Icons.phone_in_talk_rounded, size: 18, color: ext.textPrimary),
+                      label: const Text('Magic CRM'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ext.textPrimary,
+                        side: BorderSide(color: ext.borderSubtle),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                         ),
-                        Text(
-                          'AI özeti ve CRM akışı',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: ext.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: ext.textTertiary,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

@@ -446,7 +446,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       onAction: () => context.push(
                       AppRouter.routeCall,
                       extra: const {
-                        'inAppCrmSession': true,
                         'startedFromScreen': 'consultant_calls',
                       },
                     ),

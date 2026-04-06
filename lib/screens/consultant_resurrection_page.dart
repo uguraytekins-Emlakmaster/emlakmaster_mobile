@@ -47,7 +47,6 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                 onAction: () => context.push(
                 AppRouter.routeCall,
                 extra: const {
-                  'inAppCrmSession': true,
                   'startedFromScreen': 'consultant_resurrection',
                 },
               ),

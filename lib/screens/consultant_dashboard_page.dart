@@ -260,7 +260,7 @@ class _ConsultantTeamLine extends ConsumerWidget {
   }
 }
 
-/// Birincil CTA: Magic Call tam genişlik, ikincil: Tüm çağrılar.
+/// Birincil: gerçek telefon; ikincil: Magic Call CRM; üçüncü: Tüm çağrılar.
 class _MagicCallPrimaryBlock extends StatelessWidget {
   const _MagicCallPrimaryBlock();
 
@@ -270,9 +270,21 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MagicCallPrimaryButton(
+        _PhoneCallPrimaryButton(
           onPressed: () {
             HapticFeedback.mediumImpact();
+            context.push(
+              AppRouter.routeCall,
+              extra: const {
+                'startedFromScreen': 'consultant_dashboard',
+              },
+            );
+          },
+        ),
+        const SizedBox(height: 6),
+        OutlinedButton.icon(
+          onPressed: () {
+            HapticFeedback.selectionClick();
             AnalyticsService.instance.logEvent(AnalyticsEvents.magicCallTap);
             context.push(
               AppRouter.routeCall,
@@ -282,6 +294,21 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
               },
             );
           },
+          style: OutlinedButton.styleFrom(
+            foregroundColor: ext.textPrimary,
+            side: BorderSide(color: ext.borderSubtle),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+            ),
+          ),
+          icon: Icon(Icons.phone_in_talk_rounded, size: 18, color: ext.accent),
+          label: const Text(
+            'Magic Call (CRM)',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         const SizedBox(height: 6),
         Row(
@@ -317,8 +344,8 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
   }
 }
 
-class _MagicCallPrimaryButton extends StatelessWidget {
-  const _MagicCallPrimaryButton({required this.onPressed});
+class _PhoneCallPrimaryButton extends StatelessWidget {
+  const _PhoneCallPrimaryButton({required this.onPressed});
 
   final VoidCallback onPressed;
 
@@ -327,7 +354,7 @@ class _MagicCallPrimaryButton extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return Semantics(
       button: true,
-      label: 'Magic Call',
+      label: 'Telefon ile ara',
       child: Material(
         borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
         color: ext.accent,
@@ -339,10 +366,10 @@ class _MagicCallPrimaryButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.phone_in_talk_rounded, size: 22, color: ext.onBrand),
+                Icon(Icons.call_rounded, size: 22, color: ext.onBrand),
                 const SizedBox(width: 10),
                 Text(
-                  'Magic Call',
+                  'Telefon ile ara',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: ext.onBrand,
                         fontWeight: FontWeight.w700,

@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -138,6 +139,28 @@ class _CallScreenState extends ConsumerState<CallScreen>
     final number = _dialDigits.replaceAll(RegExp(r'\s'), '').trim();
     if (number.isEmpty) return;
     HapticFeedback.mediumImpact();
+
+    // Varsayılan: gerçek GSM — sistem telefonuna devret (Magic Call modunda değilsek).
+    if (!widget.inAppCrmSession) {
+      if (!OutboundPhoneDial.isLikelyCallablePhone(number)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Geçerli bir telefon numarası girin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      context.pushReplacement(
+        AppRouter.routeCall,
+        extra: {
+          'phone': number,
+          'startedFromScreen': widget.startedFromScreen ?? 'call_dial_pad',
+        },
+      );
+      return;
+    }
+
     setState(() {
       _isDialMode = false;
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -355,6 +378,23 @@ class _CallScreenState extends ConsumerState<CallScreen>
                 ),
                 child: Text(
                   'Magic Call — gerçek GSM araması bu ekran değildir; sistem telefonu için müşteri kartından arayın.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: ext.textTertiary,
+                    height: 1.35,
+                  ),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space5,
+                  0,
+                  DesignTokens.space5,
+                  DesignTokens.space2,
+                ),
+                child: Text(
+                  'Numarayı girin; ardından sistem telefonu açılır (gerçek GSM hattı).',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: ext.textTertiary,

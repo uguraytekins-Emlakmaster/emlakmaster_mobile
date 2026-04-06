@@ -738,7 +738,6 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 onAction: () => context.push(
                 AppRouter.routeCall,
                 extra: const {
-                  'inAppCrmSession': true,
                   'startedFromScreen': 'command_center',
                 },
               ),
