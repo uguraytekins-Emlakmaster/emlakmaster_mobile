@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -8,6 +10,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_ca
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -37,6 +40,19 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _run());
+  }
+
+  void _logOutboundHandoffFailure(Object e, StackTrace st) {
+    AppLogger.e('createOutboundCallHandoffSession failed (GSM handoff continues)', e, st);
+    if (kDebugMode) {
+      debugPrint('[OutboundHandoff] ${e.runtimeType}: $e');
+      if (e is FirebaseException) {
+        debugPrint('[OutboundHandoff] Firebase code=${e.code} message=${e.message}');
+      }
+      if (e is StateError) {
+        debugPrint('[OutboundHandoff] StateError: ${e.message}');
+      }
+    }
   }
 
   Future<void> _run() async {
@@ -76,7 +92,10 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
         return;
       }
 
+      await FirestoreService.ensureInitialized();
+
       String? sessionId;
+      var crmSessionOk = false;
       try {
         await runWithResilience(
           ref: ref as Ref<Object?>,
@@ -89,14 +108,15 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
             );
           },
         );
-      } catch (_) {
-        if (!mounted) return;
-        _snackAndPop(
-          router,
-          'Çağrı oturumu kaydedilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.',
-        );
-        return;
+        crmSessionOk = sessionId != null && sessionId!.isNotEmpty;
+      } catch (e, st) {
+        _logOutboundHandoffFailure(e, st);
+        sessionId = null;
+        crmSessionOk = false;
       }
+
+      final localHandoffId =
+          sessionId ?? 'local_${DateTime.now().millisecondsSinceEpoch}';
 
       final ok = await OutboundPhoneDial.launchDial(resolved);
       if (!mounted) return;
@@ -114,22 +134,33 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
         return;
       }
 
-      final captureNotifier = ref.read(postCallCaptureProvider.notifier);
-      router.pop();
-
-      if (sessionId != null && sessionId!.isNotEmpty) {
-        unawaited(
-          captureNotifier.beginHandoff(
-            PostCallCaptureDraft(
-              callSessionId: sessionId!,
-              customerId: widget.customerId,
-              phone: resolved,
-              startedFromScreen: widget.startedFromScreen,
-              createdAtMs: DateTime.now().millisecondsSinceEpoch,
+      if (!crmSessionOk && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'CRM çağrı oturumu açılamadı; arama yine de başlatıldı. '
+              'Görüşmeden sonra hızlı kayıtla CRM\'e ekleyebilirsiniz.',
             ),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
+
+      final captureNotifier = ref.read(postCallCaptureProvider.notifier);
+      router.pop();
+
+      unawaited(
+        captureNotifier.beginHandoff(
+          PostCallCaptureDraft(
+            callSessionId: localHandoffId,
+            crmSessionTracked: crmSessionOk,
+            customerId: widget.customerId,
+            phone: resolved,
+            startedFromScreen: widget.startedFromScreen,
+            createdAtMs: DateTime.now().millisecondsSinceEpoch,
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

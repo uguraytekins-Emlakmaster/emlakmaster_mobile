@@ -9,6 +9,8 @@ class PostCallCaptureDraft {
     required this.startedFromScreen,
     required this.createdAtMs,
     this.dismissedFromStrip = false,
+    /// `false` ise [callSessionId] yalnızca yerel takip anahtarıdır (`local_…`); Firestore `calls` dokümanı handoff sırasında oluşturulmamıştır.
+    this.crmSessionTracked = true,
   });
 
   final String callSessionId;
@@ -17,6 +19,8 @@ class PostCallCaptureDraft {
   final String startedFromScreen;
   final int createdAtMs;
   final bool dismissedFromStrip;
+  /// CRM handoff oturumu Firestore'a yazıldıysa `true`; ağ/kural hatasında `false` (arama yine de yapılabilir).
+  final bool crmSessionTracked;
 
   PostCallCaptureDraft copyWith({
     String? callSessionId,
@@ -25,6 +29,7 @@ class PostCallCaptureDraft {
     String? startedFromScreen,
     int? createdAtMs,
     bool? dismissedFromStrip,
+    bool? crmSessionTracked,
   }) {
     return PostCallCaptureDraft(
       callSessionId: callSessionId ?? this.callSessionId,
@@ -33,6 +38,7 @@ class PostCallCaptureDraft {
       startedFromScreen: startedFromScreen ?? this.startedFromScreen,
       createdAtMs: createdAtMs ?? this.createdAtMs,
       dismissedFromStrip: dismissedFromStrip ?? this.dismissedFromStrip,
+      crmSessionTracked: crmSessionTracked ?? this.crmSessionTracked,
     );
   }
 
@@ -43,6 +49,7 @@ class PostCallCaptureDraft {
         'startedFromScreen': startedFromScreen,
         'createdAtMs': createdAtMs,
         'dismissedFromStrip': dismissedFromStrip,
+        'crmSessionTracked': crmSessionTracked,
       };
 
   static PostCallCaptureDraft? tryFromJson(String? raw) {
@@ -60,6 +67,7 @@ class PostCallCaptureDraft {
         createdAtMs: (m['createdAtMs'] as num?)?.toInt() ??
             DateTime.now().millisecondsSinceEpoch,
         dismissedFromStrip: m['dismissedFromStrip'] as bool? ?? false,
+        crmSessionTracked: m['crmSessionTracked'] as bool? ?? true,
       );
     } catch (_) {
       return null;

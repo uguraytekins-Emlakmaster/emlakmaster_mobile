@@ -29,13 +29,26 @@ Future<void> applyQuickCallCapture({
 
   await runWithResilience(
     () async {
-      await FirestoreService.mergeOutboundCallQuickCapture(
-        callSessionId: draft.callSessionId,
-        quickOutcomeCode: outcomeCode,
-        quickOutcomeLabelTr: label,
-        quickNote: trimmed,
-        followUpReminderAt: followUpReminderAt,
-      );
+      if (draft.crmSessionTracked) {
+        await FirestoreService.mergeOutboundCallQuickCapture(
+          callSessionId: draft.callSessionId,
+          quickOutcomeCode: outcomeCode,
+          quickOutcomeLabelTr: label,
+          quickNote: trimmed,
+          followUpReminderAt: followUpReminderAt,
+        );
+      } else {
+        await FirestoreService.createCallRecordWithQuickCapture(
+          advisorId: uid,
+          customerId: draft.customerId,
+          phoneNumber: draft.phone,
+          startedFromScreen: draft.startedFromScreen,
+          quickOutcomeCode: outcomeCode,
+          quickOutcomeLabelTr: label,
+          quickNote: trimmed,
+          followUpReminderAt: followUpReminderAt,
+        );
+      }
 
       final cid = draft.customerId;
       if (cid != null && cid.isNotEmpty) {

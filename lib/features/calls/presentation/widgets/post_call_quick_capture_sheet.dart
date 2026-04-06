@@ -168,6 +168,17 @@ class _PostCallQuickCaptureBodyState extends ConsumerState<_PostCallQuickCapture
                       height: 1.35,
                     ),
               ),
+              if (!widget.draft.crmSessionTracked) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'CRM çağrı oturumu açılamadı; kayıt yeni bir satır olarak eklenecek.',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: ext.textSecondary,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
               const SizedBox(height: 18),
               Text(
                 'Sonuç',

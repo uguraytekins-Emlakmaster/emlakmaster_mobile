@@ -752,6 +752,45 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  /// Handoff sırasında CRM oturumu oluşturulamadıysa tek `add` ile çağrı + hızlı sonuç (merge yok).
+  static Future<String> createCallRecordWithQuickCapture({
+    required String advisorId,
+    String? customerId,
+    required String phoneNumber,
+    required String startedFromScreen,
+    required String quickOutcomeCode,
+    required String quickOutcomeLabelTr,
+    String? quickNote,
+    DateTime? followUpReminderAt,
+  }) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    final now = FieldValue.serverTimestamp();
+    final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final doc = await col.add({
+      'officeId': '',
+      'advisorId': advisorId,
+      'agentId': advisorId,
+      if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+      'phoneNumber': phoneNumber,
+      'direction': 'outgoing',
+      'source': 'system_handoff',
+      'crmSessionCreationFailed': true,
+      'startedFromScreen': startedFromScreen,
+      'startedAt': now,
+      'createdAt': now,
+      'updatedAt': now,
+      'outcome': quickOutcomeCode,
+      'handoffMode': true,
+      'quickOutcomeCode': quickOutcomeCode,
+      'quickOutcomeLabelTr': quickOutcomeLabelTr,
+      if (quickNote != null && quickNote.trim().isNotEmpty) 'quickCaptureNote': quickNote.trim(),
+      'captureCompletedAt': now,
+      if (followUpReminderAt != null) 'followUpReminderAt': Timestamp.fromDate(followUpReminderAt),
+    });
+    return doc.id;
+  }
+
   /// Müşteri kartına hızlı temas + not (sıcaklık sinyali opsiyonel).
   static Future<void> mergeCustomerAfterQuickCallCapture({
     required String customerId,
