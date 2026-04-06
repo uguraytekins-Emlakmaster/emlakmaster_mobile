@@ -1,78 +1,94 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Emlak Master app icon">
   <defs>
-    <radialGradient id="bgRadial" cx="50%" cy="42%" r="75%">
-      <stop offset="0%" stop-color="#101828"/>
-      <stop offset="50%" stop-color="#06080e"/>
-      <stop offset="100%" stop-color="#010203"/>
+    <radialGradient id="emBgV" cx="50%" cy="43%" r="74%">
+      <stop offset="0%" stop-color="#0e1420"/>
+      <stop offset="55%" stop-color="#060a10"/>
+      <stop offset="100%" stop-color="#000000"/>
     </radialGradient>
-    <linearGradient id="bgEdge" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0c1018"/>
-      <stop offset="100%" stop-color="#020305"/>
+    <linearGradient id="emBgLin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1018"/>
+      <stop offset="100%" stop-color="#000000"/>
     </linearGradient>
-    <linearGradient id="goldMain" x1="20%" y1="6%" x2="80%" y2="94%">
-      <stop offset="0%" stop-color="#261808"/>
-      <stop offset="16%" stop-color="#523810"/>
-      <stop offset="38%" stop-color="#a07828"/>
-      <stop offset="52%" stop-color="#d4a838"/>
-      <stop offset="62%" stop-color="#f2e0a0"/>
-      <stop offset="76%" stop-color="#b89038"/>
-      <stop offset="100%" stop-color="#3d2808"/>
+    <!-- Luxury gold: restrained specular, warm bronze anchor, subtle amber peak -->
+    <linearGradient id="emGold" x1="26%" y1="6%" x2="74%" y2="94%">
+      <stop offset="0%" stop-color="#181004"/>
+      <stop offset="18%" stop-color="#3d2a0c"/>
+      <stop offset="38%" stop-color="#8a6820"/>
+      <stop offset="48%" stop-color="#c9a038"/>
+      <stop offset="58%" stop-color="#e8d090"/>
+      <stop offset="68%" stop-color="#b89028"/>
+      <stop offset="82%" stop-color="#5c4010"/>
+      <stop offset="100%" stop-color="#1c1406"/>
     </linearGradient>
-    <linearGradient id="goldBevel" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#fff8e0" stop-opacity="0.5"/>
-      <stop offset="30%" stop-color="#d4a030" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#140c02" stop-opacity="0.5"/>
+    <linearGradient id="emSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff0d0" stop-opacity="0.28"/>
+      <stop offset="38%" stop-color="#c9a028" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#080402" stop-opacity="0.38"/>
     </linearGradient>
-    <linearGradient id="winGlass" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" stop-color="#fff6d0"/>
-      <stop offset="45%" stop-color="#f0c050"/>
-      <stop offset="100%" stop-color="#784808"/>
+    <linearGradient id="emWinFill" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fff4e8"/>
+      <stop offset="42%" stop-color="#dcb848"/>
+      <stop offset="100%" stop-color="#503008"/>
     </linearGradient>
-    <linearGradient id="winFrame" x1="0%" y1="50%" x2="100%" y2="50%">
-      <stop offset="0%" stop-color="#3a2406"/>
-      <stop offset="50%" stop-color="#d8a030"/>
-      <stop offset="100%" stop-color="#1a1004"/>
+    <linearGradient id="emWinStroke" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#241808"/>
+      <stop offset="50%" stop-color="#d4a838"/>
+      <stop offset="100%" stop-color="#140c04"/>
     </linearGradient>
-    <filter id="haloGold" x="-28%" y="-28%" width="156%" height="156%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="22" result="b"/>
+    <filter id="emHalo" x="-26%" y="-26%" width="152%" height="152%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="b"/>
       <feColorMatrix in="b" type="matrix"
-        values="1 0.72 0.28 0 0  0.88 0.52 0.12 0 0  0.35 0.2 0.05 0 0  0 0 0 0.5 0"/>
+        values="1 0.55 0.18 0 0  0.82 0.48 0.1 0 0  0.28 0.16 0.04 0 0  0 0 0 0.42 0"/>
     </filter>
-    <filter id="softBloom" x="-12%" y="-12%" width="124%" height="124%">
-      <feGaussianBlur stdDeviation="6" result="b"/>
+    <filter id="emBloom" x="-8%" y="-8%" width="116%" height="116%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
       <feColorMatrix in="b" type="matrix"
-        values="1 0.75 0.35 0 0  0.75 0.55 0.18 0 0  0.35 0.22 0.08 0 0  0 0 0 0.28 0"/>
+        values="1 0.48 0.16 0 0  0.62 0.38 0.1 0 0  0.22 0.14 0.04 0 0  0 0 0 0.14 0"/>
     </filter>
+    <linearGradient id="emRim" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a07828" stop-opacity="0.48"/>
+      <stop offset="40%" stop-color="#d4a848" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#907028" stop-opacity="0.4"/>
+    </linearGradient>
   </defs>
 
-  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bgEdge)"/>
-  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bgRadial)" opacity="0.98"/>
+  <rect width="1024" height="1024" rx="218" ry="218" fill="#000000"/>
+  <rect width="1024" height="1024" rx="218" ry="218" fill="url(#emBgLin)"/>
+  <rect width="1024" height="1024" rx="218" ry="218" fill="url(#emBgV)" opacity="0.93"/>
 
-  <!-- M + gable roof + bottom chevron; facade cutout (evenodd) -->
-  <g filter="url(#haloGold)" opacity="0.88">
-    <path fill="#9a7828" fill-rule="evenodd"
-          d="M 168 868 L 268 228 L 512 138 L 756 228 L 856 868 L 652 868 L 512 688 L 372 868 Z
-             M 392 360 L 632 360 L 608 588 L 416 588 Z"/>
-  </g>
-  <g filter="url(#softBloom)" opacity="0.5">
-    <path fill="url(#goldMain)" fill-rule="evenodd"
-          d="M 168 868 L 268 228 L 512 138 L 756 228 L 856 868 L 652 868 L 512 688 L 372 868 Z
-             M 392 360 L 632 360 L 608 588 L 416 588 Z"/>
-  </g>
-  <path fill="url(#goldMain)" fill-rule="evenodd"
-        d="M 168 868 L 268 228 L 512 138 L 756 228 L 856 868 L 652 868 L 512 688 L 372 868 Z
-           M 392 360 L 632 360 L 608 588 L 416 588 Z"/>
-  <path fill="url(#goldBevel)" fill-rule="evenodd" opacity="0.38"
-        d="M 168 868 L 268 228 L 512 138 L 756 228 L 856 868 L 652 868 L 512 688 L 372 868 Z
-           M 392 360 L 632 360 L 608 588 L 416 588 Z"/>
+  <rect x="2" y="2" width="1020" height="1020" rx="216" ry="216" fill="none" stroke="url(#emRim)" stroke-width="1.5" opacity="0.42"/>
 
-  <g transform="translate(512, 472)" opacity="0.98">
-    <rect x="-52" y="-44" width="104" height="88" rx="6" fill="none" stroke="url(#winFrame)" stroke-width="4"/>
-    <line x1="0" y1="-44" x2="0" y2="44" stroke="url(#winFrame)" stroke-width="2.8"/>
-    <line x1="-52" y1="0" x2="52" y2="0" stroke="url(#winFrame)" stroke-width="2.8"/>
-    <rect x="-50" y="-42" width="48" height="40" rx="3" fill="url(#winGlass)" opacity="0.96"/>
-    <rect x="2" y="-42" width="48" height="40" rx="3" fill="url(#winGlass)" opacity="0.9"/>
-    <rect x="-50" y="2" width="48" height="40" rx="3" fill="url(#winGlass)" opacity="0.84"/>
-    <rect x="2" y="2" width="48" height="40" rx="3" fill="url(#winGlass)" opacity="0.78"/>
+  <!--
+    Unified mark (scaled ~8.2%): fills launcher safe area; vertical legs, ridge, chevron, bay + window.
+  -->
+  <g transform="translate(512, 512) scale(1.082) translate(-512, -512)">
+    <g filter="url(#emHalo)" opacity="0.68">
+      <path fill="#705018" fill-rule="evenodd" d="
+        M 194 884 L 194 394 L 512 146 L 830 394 L 830 884 L 640 884 L 512 710 L 384 884 Z
+        M 396 426 L 628 426 Q 636 426 636 434 L 636 610 Q 636 618 628 618 L 396 618 Q 388 618 388 610 L 388 434 Q 388 426 396 426 Z"/>
+    </g>
+    <g filter="url(#emBloom)" opacity="0.34">
+      <path fill="url(#emGold)" fill-rule="evenodd" d="
+        M 194 884 L 194 394 L 512 146 L 830 394 L 830 884 L 640 884 L 512 710 L 384 884 Z
+        M 396 426 L 628 426 Q 636 426 636 434 L 636 610 Q 636 618 628 618 L 396 618 Q 388 618 388 610 L 388 434 Q 388 426 396 426 Z"/>
+    </g>
+    <path fill="url(#emGold)" fill-rule="evenodd" d="
+      M 194 884 L 194 394 L 512 146 L 830 394 L 830 884 L 640 884 L 512 710 L 384 884 Z
+      M 396 426 L 628 426 Q 636 426 636 434 L 636 610 Q 636 618 628 618 L 396 618 Q 388 618 388 610 L 388 434 Q 388 426 396 426 Z"/>
+    <path fill="url(#emSheen)" fill-rule="evenodd" opacity="0.32" d="
+      M 194 884 L 194 394 L 512 146 L 830 394 L 830 884 L 640 884 L 512 710 L 384 884 Z
+      M 396 426 L 628 426 Q 636 426 636 434 L 636 610 Q 636 618 628 618 L 396 618 Q 388 618 388 610 L 388 434 Q 388 426 396 426 Z"/>
+
+    <path d="M 392 416 L 632 416" stroke="#c9a038" stroke-opacity="0.28" stroke-width="1.75" stroke-linecap="round"/>
+
+    <g transform="translate(512, 458)" opacity="0.97">
+      <rect x="-42" y="-30" width="84" height="60" rx="3.5" fill="none" stroke="url(#emWinStroke)" stroke-width="2.8"/>
+      <line x1="0" y1="-30" x2="0" y2="30" stroke="url(#emWinStroke)" stroke-width="2"/>
+      <line x1="-42" y1="0" x2="42" y2="0" stroke="url(#emWinStroke)" stroke-width="2"/>
+      <rect x="-40" y="-28" width="38" height="26" rx="1.25" fill="url(#emWinFill)" opacity="0.94"/>
+      <rect x="2" y="-28" width="38" height="26" rx="1.25" fill="url(#emWinFill)" opacity="0.88"/>
+      <rect x="-40" y="2" width="38" height="26" rx="1.25" fill="url(#emWinFill)" opacity="0.82"/>
+      <rect x="2" y="2" width="38" height="26" rx="1.25" fill="url(#emWinFill)" opacity="0.76"/>
+    </g>
   </g>
 </svg>

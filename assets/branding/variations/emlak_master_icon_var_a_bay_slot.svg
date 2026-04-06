@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Emlak Master variation A bay slot">
+  <defs>
+    <radialGradient id="bgV" cx="50%" cy="44%" r="72%">
+      <stop offset="0%" stop-color="#0c121c"/>
+      <stop offset="75%" stop-color="#05080e"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <linearGradient id="gM" x1="24%" y1="8%" x2="76%" y2="92%">
+      <stop offset="0%" stop-color="#1c1406"/>
+      <stop offset="22%" stop-color="#4a3814"/>
+      <stop offset="44%" stop-color="#9a7828"/>
+      <stop offset="54%" stop-color="#d4b050"/>
+      <stop offset="64%" stop-color="#f5e8b8"/>
+      <stop offset="74%" stop-color="#b89030"/>
+      <stop offset="92%" stop-color="#5c4010"/>
+      <stop offset="100%" stop-color="#241808"/>
+    </linearGradient>
+    <linearGradient id="gHi" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff4dc" stop-opacity="0.38"/>
+      <stop offset="45%" stop-color="#c9a028" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#0c0802" stop-opacity="0.42"/>
+    </linearGradient>
+    <linearGradient id="wG" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fff6e8"/>
+      <stop offset="45%" stop-color="#e0b848"/>
+      <stop offset="100%" stop-color="#583808"/>
+    </linearGradient>
+    <linearGradient id="wF" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#2a1a06"/>
+      <stop offset="50%" stop-color="#d8a838"/>
+      <stop offset="100%" stop-color="#140c04"/>
+    </linearGradient>
+    <filter id="h1" x="-28%" y="-28%" width="156%" height="156%">
+      <feGaussianBlur stdDeviation="18" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="1 0.65 0.22 0 0  0.85 0.5 0.1 0 0  0.32 0.18 0.04 0 0  0 0 0 0.45 0"/>
+    </filter>
+    <filter id="bl" x="-8%" y="-8%" width="116%" height="116%">
+      <feGaussianBlur stdDeviation="4"/>
+      <feColorMatrix type="matrix"
+        values="1 0.55 0.2 0 0  0.65 0.42 0.12 0 0  0.25 0.15 0.05 0 0  0 0 0 0.18 0"/>
+    </filter>
+    <linearGradient id="rim" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b89038" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#d4a848" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#a07828" stop-opacity="0.45"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="218" fill="#000"/>
+  <rect width="1024" height="1024" rx="218" fill="url(#bgV)" opacity="0.94"/>
+  <rect x="2.5" y="2.5" width="1019" height="1019" rx="216" fill="none" stroke="url(#rim)" stroke-width="1.75" opacity="0.45"/>
+  <!-- A: single rounded-rect bay; window anchored to upper third of void -->
+  <g filter="url(#h1)" opacity="0.72">
+    <path fill="#7a6020" fill-rule="evenodd" d="
+      M 194 884 L 194 396 L 512 148 L 830 396 L 830 884 L 642 884 L 512 712 L 382 884 Z
+      M 404 428 L 620 428 Q 628 428 628 436 L 628 608 Q 628 616 620 616 L 404 616 Q 396 616 396 608 L 396 436 Q 396 428 404 428 Z"/>
+  </g>
+  <g filter="url(#bl)" opacity="0.38">
+    <path fill="url(#gM)" fill-rule="evenodd" d="
+      M 194 884 L 194 396 L 512 148 L 830 396 L 830 884 L 642 884 L 512 712 L 382 884 Z
+      M 404 428 L 620 428 Q 628 428 628 436 L 628 608 Q 628 616 620 616 L 404 616 Q 396 616 396 608 L 396 436 Q 396 428 404 428 Z"/>
+  </g>
+  <path fill="url(#gM)" fill-rule="evenodd" d="
+    M 194 884 L 194 396 L 512 148 L 830 396 L 830 884 L 642 884 L 512 712 L 382 884 Z
+    M 404 428 L 620 428 Q 628 428 628 436 L 628 608 Q 628 616 620 616 L 404 616 Q 396 616 396 608 L 396 436 Q 396 428 404 428 Z"/>
+  <path fill="url(#gHi)" fill-rule="evenodd" opacity="0.36" d="
+    M 194 884 L 194 396 L 512 148 L 830 396 L 830 884 L 642 884 L 512 712 L 382 884 Z
+    M 404 428 L 620 428 Q 628 428 628 436 L 628 608 Q 628 616 620 616 L 404 616 Q 396 616 396 608 L 396 436 Q 396 428 404 428 Z"/>
+  <!-- Lintel: ties roof mass to bay -->
+  <path d="M 398 418 L 626 418" stroke="#c9a038" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round"/>
+  <g transform="translate(512, 468)">
+    <rect x="-40" y="-34" width="80" height="68" rx="4" fill="none" stroke="url(#wF)" stroke-width="3"/>
+    <line x1="0" y1="-34" x2="0" y2="34" stroke="url(#wF)" stroke-width="2.2"/>
+    <line x1="-40" y1="0" x2="40" y2="0" stroke="url(#wF)" stroke-width="2.2"/>
+    <rect x="-38" y="-32" width="36" height="30" rx="1.5" fill="url(#wG)" opacity="0.92"/>
+    <rect x="2" y="-32" width="36" height="30" rx="1.5" fill="url(#wG)" opacity="0.86"/>
+    <rect x="-38" y="2" width="36" height="30" rx="1.5" fill="url(#wG)" opacity="0.8"/>
+    <rect x="2" y="2" width="36" height="30" rx="1.5" fill="url(#wG)" opacity="0.74"/>
+  </g>
+</svg>
