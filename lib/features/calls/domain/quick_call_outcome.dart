@@ -8,6 +8,8 @@ abstract final class QuickCallOutcome {
   static const String callbackScheduled = 'callback_scheduled';
   static const String appointmentSet = 'appointment_set';
   static const String offerSent = 'offer_sent';
+  /// Otomatik minimum kayıt (CRM oturumu yok, kullanıcı henüz hızlı kayıt yapmadı).
+  static const String noCaptureYet = 'no_capture';
 
   static const List<QuickCallOutcomeItem> choices = [
     QuickCallOutcomeItem(reached, 'Ulaşıldı'),
@@ -19,6 +21,7 @@ abstract final class QuickCallOutcome {
   ];
 
   static String labelTr(String code) {
+    if (code == noCaptureYet) return 'Sonuç girilmedi';
     for (final c in choices) {
       if (c.code == code) return c.labelTr;
     }

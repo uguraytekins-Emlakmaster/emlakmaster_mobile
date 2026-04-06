@@ -115,8 +115,8 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
         crmSessionOk = false;
       }
 
-      final localHandoffId =
-          sessionId ?? 'local_${DateTime.now().millisecondsSinceEpoch}';
+      final localHandoffId = sessionId ??
+          '${PostCallCaptureDraft.localPrefix}${DateTime.now().millisecondsSinceEpoch}';
 
       final ok = await OutboundPhoneDial.launchDial(resolved);
       if (!mounted) return;

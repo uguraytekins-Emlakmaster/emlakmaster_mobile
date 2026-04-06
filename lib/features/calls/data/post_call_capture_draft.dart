@@ -2,6 +2,9 @@ import 'dart:convert';
 
 /// Gerçek telefon handoff sonrası bekleyen hızlı kayıt (yerel taslak).
 class PostCallCaptureDraft {
+  /// Yerel taslak anahtarı — Firestore `calls` dokümanı henü yok.
+  static const String localPrefix = 'local_';
+
   const PostCallCaptureDraft({
     required this.callSessionId,
     this.customerId,
@@ -21,6 +24,9 @@ class PostCallCaptureDraft {
   final bool dismissedFromStrip;
   /// CRM handoff oturumu Firestore'a yazıldıysa `true`; ağ/kural hatasında `false` (arama yine de yapılabilir).
   final bool crmSessionTracked;
+
+  /// `calls/{id}` zaten var (handoff veya otomatik minimum kayıt); hızlı kayıtta merge kullanılır.
+  bool get hasFirestoreCallDoc => !callSessionId.startsWith(localPrefix);
 
   PostCallCaptureDraft copyWith({
     String? callSessionId,

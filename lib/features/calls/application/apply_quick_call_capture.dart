@@ -29,7 +29,7 @@ Future<void> applyQuickCallCapture({
 
   await runWithResilience(
     () async {
-      if (draft.crmSessionTracked) {
+      if (draft.hasFirestoreCallDoc) {
         await FirestoreService.mergeOutboundCallQuickCapture(
           callSessionId: draft.callSessionId,
           quickOutcomeCode: outcomeCode,

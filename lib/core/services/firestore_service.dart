@@ -748,6 +748,8 @@ class FirestoreService {
       'updatedAt': FieldValue.serverTimestamp(),
       'outcome': quickOutcomeCode,
       'handoffMode': true,
+      'quickCapturePending': false,
+      'autoFallbackMinRecord': false,
       if (followUpReminderAt != null) 'followUpReminderAt': Timestamp.fromDate(followUpReminderAt),
     }, SetOptions(merge: true));
   }
@@ -787,6 +789,38 @@ class FirestoreService {
       if (quickNote != null && quickNote.trim().isNotEmpty) 'quickCaptureNote': quickNote.trim(),
       'captureCompletedAt': now,
       if (followUpReminderAt != null) 'followUpReminderAt': Timestamp.fromDate(followUpReminderAt),
+    });
+    return doc.id;
+  }
+
+  /// CRM handoff başarısız + kullanıcı hızlı kayıt yapmadan önce: minimum `calls` satırı (veri kaybını önler).
+  static Future<String> createMinimalFallbackCallRecord({
+    required String advisorId,
+    String? customerId,
+    required String phoneNumber,
+    required String startedFromScreen,
+  }) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    final now = FieldValue.serverTimestamp();
+    final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final doc = await col.add({
+      'officeId': '',
+      'advisorId': advisorId,
+      'agentId': advisorId,
+      if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+      'phoneNumber': phoneNumber,
+      'direction': 'outgoing',
+      'source': 'system_handoff',
+      'crmSessionCreationFailed': true,
+      'autoFallbackMinRecord': true,
+      'startedFromScreen': startedFromScreen,
+      'startedAt': now,
+      'createdAt': now,
+      'updatedAt': now,
+      'outcome': 'no_capture',
+      'handoffMode': true,
+      'quickCapturePending': true,
     });
     return doc.id;
   }
