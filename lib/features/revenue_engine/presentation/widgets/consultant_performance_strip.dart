@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -33,10 +34,7 @@ class ConsultantPerformanceStrip extends ConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space4,
-        vertical: DesignTokens.space3,
-      ),
+      padding: AppTypography.cardPadding,
       decoration: BoxDecoration(
         color: ext.surfaceElevated,
         borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
@@ -53,33 +51,23 @@ class ConsultantPerformanceStrip extends ConsumerWidget {
               children: [
                 Text(
                   'Performansın',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: ext.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: AppTypography.cardHeading(context)
+                      .copyWith(color: ext.textSecondary),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: DesignTokens.titleSubtitleGap),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
                       '$score',
-                      style: TextStyle(
-                        color: ext.textPrimary,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        height: 1,
-                      ),
+                      style: AppTypography.metricValue(context)
+                          .copyWith(fontSize: 28),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'puan',
-                      style: TextStyle(
-                        color: ext.textTertiary,
-                        fontSize: DesignTokens.fontSizeSm,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: AppTypography.metricLabel(context),
                     ),
                     const Spacer(),
                     Text(
@@ -94,11 +82,7 @@ class ConsultantPerformanceStrip extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Text(
                   explain,
-                  style: TextStyle(
-                    color: ext.textSecondary,
-                    fontSize: DesignTokens.fontSizeXs,
-                    height: 1.3,
-                  ),
+                  style: AppTypography.body(context),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),

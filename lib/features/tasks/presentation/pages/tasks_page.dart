@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
@@ -43,8 +44,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
           ? Center(
               child: Text(
                 'Giriş yapılmamış.',
-                style: TextStyle(
-                    color: AppThemeExtension.of(context).textSecondary),
+                style: AppTypography.body(context),
               ),
             )
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -75,10 +75,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             'Görevler yüklenemedi.',
-                            style: TextStyle(
-                              color: AppThemeExtension.of(context).textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTypography.cardHeading(context),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: DesignTokens.space4),
@@ -131,15 +128,12 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                                 bottom: DesignTokens.space3),
                             child: Text(
                               'Bu dönemdeki görevleriniz',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelLarge
-                                  ?.copyWith(
-                                    color: AppThemeExtension.of(context)
-                                        .textSecondary,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.2,
-                                  ),
+                              style:
+                                  AppTypography.cardHeading(context).copyWith(
+                                color:
+                                    AppThemeExtension.of(context).textSecondary,
+                                fontSize: DesignTokens.fontSizeLg,
+                              ),
                             ),
                           );
                         }
@@ -608,8 +602,8 @@ class _TaskTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space3,
-            vertical: DesignTokens.space2,
+            horizontal: DesignTokens.space4,
+            vertical: DesignTokens.space3,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,25 +623,24 @@ class _TaskTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: done
-                                ? ext.textSecondary.withValues(alpha: 0.72)
-                                : ext.textPrimary,
-                            fontWeight:
-                                done ? FontWeight.w500 : FontWeight.w600,
-                            fontStyle:
-                                done ? FontStyle.italic : FontStyle.normal,
-                            height: 1.25,
-                          ),
+                      style: AppTypography.cardHeading(context).copyWith(
+                        color: done
+                            ? ext.textSecondary.withValues(alpha: 0.72)
+                            : ext.textPrimary,
+                        fontSize: DesignTokens.fontSizeMd,
+                        fontWeight: done ? FontWeight.w500 : FontWeight.w700,
+                        fontStyle: done ? FontStyle.italic : FontStyle.normal,
+                        height: 1.25,
+                      ),
                     ),
                     if (dueAt != null) ...[
                       const SizedBox(height: DesignTokens.space1),
                       Text(
                         _formatDue(dueAt!, isOverdue),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: isOverdue ? ext.danger : ext.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        style: AppTypography.meta(context).copyWith(
+                          color: isOverdue ? ext.danger : ext.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                     if (customerId != null && customerId!.isNotEmpty) ...[

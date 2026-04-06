@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +19,7 @@ Future<T?> showPremiumModalBottomSheet<T>({
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.52),
     builder: (ctx) {
-      final r = BorderRadius.vertical(
+      const r = BorderRadius.vertical(
         top: Radius.circular(DesignTokens.radiusSheet),
       );
       return ClipRRect(
@@ -53,7 +54,8 @@ class PremiumBottomSheetHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: DesignTokens.space3, bottom: DesignTokens.space2),
+      padding: const EdgeInsets.only(
+          top: DesignTokens.space3, bottom: DesignTokens.space2),
       child: Center(
         child: Container(
           width: 40,
@@ -87,19 +89,16 @@ class PremiumSheetHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: ext.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
+          style: AppTypography.pageHeading(context)
+              .copyWith(fontSize: DesignTokens.fontSizeXl),
         ),
         if (subtitle != null && subtitle!.isNotEmpty) ...[
-          const SizedBox(height: DesignTokens.space2),
+          const SizedBox(height: DesignTokens.titleSubtitleGap),
           Text(
             subtitle!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: ext.textSecondary,
-                  height: 1.35,
-                ),
+            style: AppTypography.body(context).copyWith(
+              color: ext.textSecondary,
+            ),
           ),
         ],
       ],

@@ -14,6 +14,7 @@ import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -204,19 +205,14 @@ class _DashboardHeroHeader extends StatelessWidget {
             children: [
               Text(
                 greeting,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: ext.textSecondary,
-                    ),
+                style: AppTypography.pageEyebrow(context),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: DesignTokens.titleSubtitleGap),
               Text(
                 AppLocalizations.of(context).t('my_summary'),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: ext.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: AppTypography.pageHeading(context),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -313,7 +309,7 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: DesignTokens.space2),
         OutlinedButton.icon(
           onPressed: () {
             HapticFeedback.selectionClick();
@@ -329,21 +325,21 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: ext.textPrimary,
             side: BorderSide(color: ext.borderSubtle),
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius:
                   BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
             ),
           ),
           icon: Icon(Icons.phone_in_talk_rounded, size: 18, color: ext.accent),
-          label: const Text(
+          label: Text(
             'Magic Call (CRM)',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            style: AppTypography.secondaryButton(context),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: DesignTokens.space2),
         Row(
           children: [
             Expanded(
@@ -357,16 +353,16 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: ext.textPrimary,
                   side: BorderSide(color: ext.borderSubtle),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
                         DashboardLayoutTokens.radiusCardS),
                   ),
                 ),
                 icon: const Icon(Icons.call_rounded, size: 18),
-                label: const Text(
+                label: Text(
                   'Tüm Çağrılarım',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  style: AppTypography.secondaryButton(context),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -433,12 +429,12 @@ class _TodayKpiRow extends ConsumerWidget {
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     final textStyleLabel = TextStyle(
       color: ext.textSecondary,
-      fontSize: DesignTokens.fontSizeXs,
+      fontSize: DesignTokens.fontSizeSm,
+      fontWeight: FontWeight.w600,
     );
-    final textStyleValue = TextStyle(
+    final textStyleValue = AppTypography.metricValue(context).copyWith(
       color: ext.textPrimary,
-      fontWeight: FontWeight.w700,
-      fontSize: DesignTokens.fontSizeMd,
+      fontSize: DesignTokens.fontSizeXl,
     );
     return Row(
       children: [
@@ -516,8 +512,8 @@ class _KpiChip extends StatelessWidget {
       constraints:
           const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightKpi),
       padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space2,
-        vertical: 6,
+        horizontal: DesignTokens.space3,
+        vertical: DesignTokens.space3,
       ),
       decoration: BoxDecoration(
         color: ext.surfaceElevated,
@@ -532,16 +528,17 @@ class _KpiChip extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: labelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
                 Text(
                   value,
                   style: valueStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: DesignTokens.metricLabelGap),
+                Text(label,
+                    style: labelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -771,7 +768,7 @@ class _WeeklyGoalCard extends ConsumerWidget {
           constraints: const BoxConstraints(
               minHeight: DashboardLayoutTokens.minHeightOperationalCard),
           padding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.space4, vertical: 10),
+              horizontal: DesignTokens.space5, vertical: DesignTokens.space3),
           decoration: BoxDecoration(
             color: ext.surfaceElevated,
             borderRadius:
@@ -787,9 +784,7 @@ class _WeeklyGoalCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       'Bu hafta',
-                      style: TextStyle(
-                          color: ext.textSecondary,
-                          fontSize: DesignTokens.fontSizeSm),
+                      style: AppTypography.metricLabel(context),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -798,11 +793,7 @@ class _WeeklyGoalCard extends ConsumerWidget {
                   Flexible(
                     child: Text(
                       '$current / $weeklyGoal çağrı',
-                      style: TextStyle(
-                        color: ext.textPrimary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: DesignTokens.fontSizeSm,
-                      ),
+                      style: AppTypography.bodyStrong(context),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.end,
@@ -964,12 +955,10 @@ class _QuickStatsCard extends ConsumerWidget {
                     children: [
                       Text(
                         'Takip listesi',
-                        style: TextStyle(
-                          color: ext.textPrimary,
-                          fontWeight: FontWeight.w600,
+                        style: AppTypography.cardHeading(context).copyWith(
                           fontSize: compact
-                              ? DesignTokens.fontSizeSm
-                              : DesignTokens.fontSizeMd,
+                              ? DesignTokens.fontSizeMd
+                              : DesignTokens.fontSizeLg,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -977,10 +966,7 @@ class _QuickStatsCard extends ConsumerWidget {
                       if (isLoading)
                         Text(
                           'Takip listesi yükleniyor...',
-                          style: TextStyle(
-                            color: ext.textSecondary,
-                            fontSize: DesignTokens.fontSizeSm,
-                          ),
+                          style: AppTypography.body(context),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         )
@@ -989,10 +975,7 @@ class _QuickStatsCard extends ConsumerWidget {
                           count == 0
                               ? 'Şu an takip edilecek lead yok'
                               : '$count lead takip bekliyor',
-                          style: TextStyle(
-                            color: ext.textSecondary,
-                            fontSize: DesignTokens.fontSizeSm,
-                          ),
+                          style: AppTypography.body(context),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1003,7 +986,8 @@ class _QuickStatsCard extends ConsumerWidget {
                   TextButton(
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                          horizontal: DesignTokens.space2,
+                          vertical: DesignTokens.space1),
                       visualDensity: VisualDensity.compact,
                       foregroundColor: ext.accent,
                     ),

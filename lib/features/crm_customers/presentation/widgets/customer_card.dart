@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/broker_customer_alert.dart';
@@ -119,21 +120,17 @@ class CustomerCard extends ConsumerWidget {
                         children: [
                           Text(
                             customer.fullName ?? 'İsimsiz',
-                            style: TextStyle(
-                              color: AppThemeExtension.of(context).textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: DesignTokens.fontSizeMd,
-                            ),
+                            style: AppTypography.cardHeading(context)
+                                .copyWith(fontSize: DesignTokens.fontSizeMd),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (customer.primaryPhone != null)
                             Text(
                               customer.primaryPhone!,
-                              style: TextStyle(
+                              style: AppTypography.meta(context).copyWith(
                                 color:
                                     AppThemeExtension.of(context).textSecondary,
-                                fontSize: DesignTokens.fontSizeSm,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -212,10 +209,9 @@ class CustomerCard extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             revenueNextActionLine(revenueSignal),
-                            style: TextStyle(
+                            style: AppTypography.meta(context).copyWith(
                               color: AppThemeExtension.of(context).accent,
-                              fontSize: DesignTokens.fontSizeXs,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -225,10 +221,7 @@ class CustomerCard extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             customer.nextSuggestedAction!,
-                            style: TextStyle(
-                              color: AppThemeExtension.of(context).textTertiary,
-                              fontSize: DesignTokens.fontSizeXs,
-                            ),
+                            style: AppTypography.meta(context),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),

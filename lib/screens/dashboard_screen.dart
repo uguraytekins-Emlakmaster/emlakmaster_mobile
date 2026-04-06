@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/execution_reminders_providers.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_dashboard_alerts_provider.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_smart_task_suggestions_provider.dart';
@@ -107,7 +108,7 @@ class DashboardPage extends ConsumerWidget {
           ? DashboardLayoutTokens.gapOperationalTight
           : DashboardLayoutTokens.gapOperational;
       final gapHero =
-          compact ? 4.0 : DashboardLayoutTokens.gapHeroToOperational.toDouble();
+          compact ? 8.0 : DashboardLayoutTokens.gapHeroToOperational.toDouble();
       final gapInsight = DashboardLayoutTokens.gapInsightSection.toDouble();
       const h = DashboardLayoutTokens.horizontalPadding;
 
@@ -189,7 +190,10 @@ class DashboardPage extends ConsumerWidget {
                               children: [
                                 const RepaintBoundary(
                                     child: BentoPowerAnalytics()),
-                                SizedBox(height: compact ? 16 : 24),
+                                SizedBox(
+                                    height: compact
+                                        ? DesignTokens.space4
+                                        : DesignTokens.space6),
                                 LayoutBuilder(
                                   builder: (context, c) {
                                     final stack = c.maxWidth < 520;
@@ -199,7 +203,10 @@ class DashboardPage extends ConsumerWidget {
                                             CrossAxisAlignment.stretch,
                                         children: [
                                           const BentoSahaRadar(),
-                                          SizedBox(height: compact ? 12 : 16),
+                                          SizedBox(
+                                              height: compact
+                                                  ? DesignTokens.space3
+                                                  : DesignTokens.space4),
                                           const BentoAiNews(),
                                         ],
                                       );
@@ -209,7 +216,10 @@ class DashboardPage extends ConsumerWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         const Expanded(child: BentoSahaRadar()),
-                                        SizedBox(width: compact ? 16 : 24),
+                                        SizedBox(
+                                            width: compact
+                                                ? DesignTokens.space4
+                                                : DesignTokens.space6),
                                         const Expanded(child: BentoAiNews()),
                                       ],
                                     );

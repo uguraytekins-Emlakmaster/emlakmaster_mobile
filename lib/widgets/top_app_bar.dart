@@ -1,5 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/widgets/dashboard_notifications_sheet.dart';
 import 'package:emlakmaster_mobile/widgets/revenue_leak_tracker.dart';
@@ -13,7 +15,8 @@ class DashboardTopAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    final uid = ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
+    final uid =
+        ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -23,7 +26,7 @@ class DashboardTopAppBar extends ConsumerWidget {
             DashboardLayoutTokens.horizontalPadding,
             DashboardLayoutTokens.pageTopInset,
             DashboardLayoutTokens.horizontalPadding,
-            8,
+            DesignTokens.titleSubtitleGap,
           ),
           child: Row(
             children: [
@@ -36,17 +39,16 @@ class DashboardTopAppBar extends ConsumerWidget {
                   children: [
                     Text(
                       'Rainbow Gayrimenkul',
-                      style: TextStyle(
-                        color: ext.textPrimary,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
+                      style: AppTypography.pageHeading(context).copyWith(
+                        fontSize: DesignTokens.fontSizeXl,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: DesignTokens.metricLabelGap),
                     Text(
                       'EmlakMaster Agent Assistant',
-                      style: TextStyle(color: ext.textTertiary, fontSize: 12),
+                      style: AppTypography.meta(context),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -56,8 +58,10 @@ class DashboardTopAppBar extends ConsumerWidget {
               const SizedBox(width: 8),
               IconButton(
                 tooltip: 'Bildirimler',
-                icon: Icon(Icons.notifications_none_rounded, color: ext.textPrimary),
-                onPressed: () => showDashboardNotificationsSheet(context, uid: uid),
+                icon: Icon(Icons.notifications_none_rounded,
+                    color: ext.textPrimary),
+                onPressed: () =>
+                    showDashboardNotificationsSheet(context, uid: uid),
               ),
             ],
           ),

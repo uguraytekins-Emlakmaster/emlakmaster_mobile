@@ -55,6 +55,14 @@ abstract final class DesignTokens {
   static const double fontSizeXl = 20;
   static const double fontSize2xl = 24;
   static const double fontSize3xl = 30;
+  static const double fontSize4xl = 34;
+
+  // ---------- Semantic spacing helpers
+  static const double cardPaddingComfortable = 20;
+  static const double cardPaddingRelaxed = 24;
+  static const double sectionTitleGap = 10;
+  static const double titleSubtitleGap = 6;
+  static const double metricLabelGap = 4;
 
   // ---------- Icon scale
   static const double iconSm = 16;

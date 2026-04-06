@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -98,52 +100,56 @@ class _CommandPaletteContentState
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(DesignTokens.space5),
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,
               decoration: InputDecoration(
                 hintText: 'Sayfa veya müşteri ara...',
-                hintStyle: TextStyle(color: ext.foregroundMuted),
+                hintStyle: AppTypography.body(context)
+                    .copyWith(color: ext.foregroundMuted),
                 prefixIcon:
                     Icon(Icons.search_rounded, color: ext.foregroundSecondary),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
                 filled: true,
                 fillColor: ext.inputBackground,
               ),
-              style: TextStyle(color: ext.inputForeground),
+              style: AppTypography.bodyStrong(context)
+                  .copyWith(color: ext.inputForeground),
             ),
           ),
           Expanded(
             child: ListView(
               controller: widget.scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
               children: [
                 if (filteredActions.isNotEmpty) ...[
                   Text('Sayfalar',
-                      style:
-                          TextStyle(color: ext.foregroundMuted, fontSize: 12)),
-                  const SizedBox(height: 8),
+                      style: AppTypography.sectionLabel(context)
+                          .copyWith(color: ext.foregroundMuted)),
+                  const SizedBox(height: DesignTokens.space2),
                   ...filteredActions.map((action) => _ActionTile(
                         icon: action.icon,
                         label: action.label,
                         onTap: () => onActionTap(action),
                       )),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: DesignTokens.space4),
                 ],
                 if (_query.length >= 2 &&
                     !FeaturePermission.seesClientPanel(role)) ...[
                   Text('Müşteriler',
-                      style:
-                          TextStyle(color: ext.foregroundMuted, fontSize: 12)),
-                  const SizedBox(height: 8),
+                      style: AppTypography.sectionLabel(context)
+                          .copyWith(color: ext.foregroundMuted)),
+                  const SizedBox(height: DesignTokens.space2),
                   StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                     stream: FirestoreService.customersStream(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(DesignTokens.space4),
                           child: Center(
                             child: SizedBox(
                               width: 24,
@@ -181,10 +187,10 @@ class _CommandPaletteContentState
                           .toList();
                       if (filtered.isEmpty) {
                         return Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(DesignTokens.space4),
                           child: Text('Müşteri bulunamadı',
-                              style: TextStyle(
-                                  color: ext.foregroundMuted, fontSize: 13)),
+                              style: AppTypography.body(context)
+                                  .copyWith(color: ext.foregroundMuted)),
                         );
                       }
                       return Column(
@@ -343,7 +349,11 @@ class _ActionTile extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return ListTile(
       leading: Icon(icon, color: ext.accent),
-      title: Text(label, style: TextStyle(color: ext.popoverForeground)),
+      title: Text(
+        label,
+        style: AppTypography.bodyStrong(context)
+            .copyWith(color: ext.popoverForeground),
+      ),
       onTap: onTap,
     );
   }

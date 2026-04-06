@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -41,12 +42,10 @@ class ManagerRevenueSummaryCard extends ConsumerWidget {
         children: [
           Text(
             'Gelir özeti',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: ext.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
+            style: AppTypography.cardHeading(context)
+                .copyWith(color: ext.textSecondary),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: DesignTokens.sectionTitleGap),
           if (anySignals) ...[
             _Row(
               icon: Icons.local_fire_department_outlined,
@@ -151,8 +150,8 @@ class _Row extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     final body = Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space3,
-        vertical: DesignTokens.space2,
+        horizontal: DesignTokens.space4,
+        vertical: DesignTokens.space3,
       ),
       child: Row(
         children: [
@@ -167,20 +166,15 @@ class _Row extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: ext.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        style: AppTypography.cardHeading(context)
+                            .copyWith(fontSize: DesignTokens.fontSizeMd),
                       ),
                     ),
                     if (count != null && count! > 0)
                       Text(
                         '$count',
-                        style: TextStyle(
-                          color: ext.accent,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
+                        style: AppTypography.metricLabel(context)
+                            .copyWith(color: ext.accent),
                       ),
                   ],
                 ),
@@ -188,10 +182,7 @@ class _Row extends StatelessWidget {
                   subtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: ext.textTertiary,
-                        height: 1.25,
-                      ),
+                  style: AppTypography.meta(context),
                 ),
               ],
             ),

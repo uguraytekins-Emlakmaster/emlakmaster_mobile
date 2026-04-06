@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/domain/revenue_models.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_ui_formatters.dart';
@@ -27,7 +28,10 @@ class RevenueBandScoreChip extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     final c = _bandColor(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.space3,
+        vertical: DesignTokens.space2,
+      ),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
@@ -38,20 +42,15 @@ class RevenueBandScoreChip extends StatelessWidget {
         children: [
           Text(
             revenueBandLabelTr(signal.band),
-            style: TextStyle(
-              color: c,
-              fontSize: DesignTokens.fontSizeXs,
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTypography.metricLabel(context).copyWith(color: c),
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 6),
+            padding: const EdgeInsets.only(left: DesignTokens.space2),
             child: Text(
               '${signal.leadScore}',
-              style: TextStyle(
+              style: AppTypography.bodyStrong(context).copyWith(
                 color: ext.textPrimary,
-                fontSize: DesignTokens.fontSizeXs,
-                fontWeight: FontWeight.w800,
+                fontSize: DesignTokens.fontSizeSm,
               ),
             ),
           ),

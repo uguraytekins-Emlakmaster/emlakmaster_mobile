@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_provider.dart';
@@ -1344,12 +1345,12 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: DesignTokens.space2),
           Expanded(
             child: Text(
-              title.toUpperCase(),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: ext.textSecondary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.1,
-                  ),
+              title,
+              style: AppTypography.cardHeading(context).copyWith(
+                color: ext.textSecondary,
+                fontWeight: FontWeight.w700,
+                fontSize: DesignTokens.fontSizeLg,
+              ),
             ),
           ),
         ],
@@ -1378,18 +1379,9 @@ class _SettingSwitch extends StatelessWidget {
     return SwitchListTile(
       secondary:
           Icon(icon, color: AppThemeExtension.of(context).accent, size: 22),
-      title: Text(title,
-          style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontWeight: FontWeight.w500)),
+      title: Text(title, style: AppTypography.bodyStrong(context)),
       subtitle: subtitle != null
-          ? Text(subtitle!,
-              style: TextStyle(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.7),
-                  fontSize: 11))
+          ? Text(subtitle!, style: AppTypography.meta(context))
           : null,
       value: value,
       activeThumbColor: AppThemeExtension.of(context).accent,

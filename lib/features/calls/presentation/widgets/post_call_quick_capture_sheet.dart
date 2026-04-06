@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/application/apply_quick_call_capture.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
@@ -12,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 
 Future<void> showPostCallQuickCaptureSheet({
   required BuildContext context,
@@ -146,72 +148,56 @@ class _PostCallQuickCaptureBodyState
     final ime = MediaQuery.viewInsetsOf(context).bottom;
 
     return Material(
-      color: ext.surfaceElevated,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      color: ext.surface,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(DesignTokens.radiusSheet),
+      ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(20, 12, 20, 16 + bottom + ime),
+        padding: EdgeInsets.fromLTRB(
+          DesignTokens.space5,
+          DesignTokens.space3,
+          DesignTokens.space5,
+          DesignTokens.space5 + bottom + ime,
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: ext.border,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+              const PremiumBottomSheetHandle(),
               Text(
                 'Az önceki arama',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: ext.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: AppTypography.pageHeading(context)
+                    .copyWith(fontSize: DesignTokens.fontSizeXl),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: DesignTokens.titleSubtitleGap),
               Text(
                 widget.draft.phone,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: ext.textSecondary,
-                      letterSpacing: 0.4,
-                    ),
+                style: AppTypography.bodyStrong(context)
+                    .copyWith(color: ext.textSecondary),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: DesignTokens.metricLabelGap),
               Text(
                 'Görüşme cihazınızın telefonunda yapıldı; süre burada ölçülmez.',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: ext.textTertiary,
-                      height: 1.35,
-                    ),
+                style: AppTypography.meta(context),
               ),
               if (!widget.draft.crmSessionTracked) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: DesignTokens.space3),
                 Text(
                   'CRM çağrı oturumu açılamadı; kayıt yeni bir satır olarak eklenecek.',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: ext.textSecondary,
-                        height: 1.35,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: AppTypography.body(context),
                 ),
               ],
-              const SizedBox(height: 18),
+              const SizedBox(height: DesignTokens.space5),
               Text(
                 'Sonuç',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: ext.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: AppTypography.cardHeading(context)
+                    .copyWith(color: ext.textSecondary),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: DesignTokens.sectionTitleGap),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: DesignTokens.space2,
+                runSpacing: DesignTokens.space2,
                 children: [
                   for (final o in QuickCallOutcome.choices)
                     ChoiceChip(
@@ -224,16 +210,17 @@ class _PostCallQuickCaptureBodyState
                             ? ext.textPrimary
                             : ext.textSecondary,
                         fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                        fontSize: DesignTokens.fontSizeSm,
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: DesignTokens.space4),
               TextField(
                 controller: _noteCtrl,
                 maxLines: 2,
-                style: TextStyle(color: ext.textPrimary, fontSize: 14),
+                style: AppTypography.bodyStrong(context)
+                    .copyWith(color: ext.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Kısa not (opsiyonel)',
                   alignLabelWithHint: true,
@@ -245,13 +232,11 @@ class _PostCallQuickCaptureBodyState
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: DesignTokens.space4),
               Text(
                 'Sıcaklık (opsiyonel)',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: ext.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: AppTypography.cardHeading(context)
+                    .copyWith(color: ext.textSecondary),
               ),
               const SizedBox(height: 8),
               Row(
@@ -272,16 +257,16 @@ class _PostCallQuickCaptureBodyState
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: DesignTokens.space4),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(
                   'Görev oluştur',
-                  style: TextStyle(color: ext.textPrimary, fontSize: 14),
+                  style: AppTypography.bodyStrong(context),
                 ),
                 subtitle: Text(
                   'Takip için görev satırı eklenir',
-                  style: TextStyle(color: ext.textTertiary, fontSize: 12),
+                  style: AppTypography.meta(context),
                 ),
                 value: _createTask,
                 onChanged: (v) => setState(() => _createTask = v),
@@ -293,7 +278,7 @@ class _PostCallQuickCaptureBodyState
                   _followUpAt == null
                       ? 'Takip tarihi seç (opsiyonel)'
                       : 'Takip: ${_followUpAt!.day}.${_followUpAt!.month}.${_followUpAt!.year}',
-                  style: TextStyle(color: ext.textPrimary, fontSize: 14),
+                  style: AppTypography.bodyStrong(context),
                 ),
                 trailing: _followUpAt != null
                     ? IconButton(
@@ -303,16 +288,19 @@ class _PostCallQuickCaptureBodyState
                     : null,
                 onTap: _pickDate,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: DesignTokens.space3),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: _saving ? null : _openWizard,
-                      child: const Text('Detaylı sihirbaz'),
+                      child: Text(
+                        'Detaylı sihirbaz',
+                        style: AppTypography.secondaryButton(context),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: DesignTokens.space3),
                   Expanded(
                     flex: 2,
                     child: FilledButton(
@@ -323,7 +311,10 @@ class _PostCallQuickCaptureBodyState
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Kaydet'),
+                          : Text(
+                              'Kaydet',
+                              style: AppTypography.primaryButton(context),
+                            ),
                     ),
                   ),
                 ],

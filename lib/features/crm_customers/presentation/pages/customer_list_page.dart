@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_extension.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/widgets/empty_state.dart';
@@ -36,7 +37,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   void initState() {
     super.initState();
     _searchController.addListener(() {
-      setState(() => _searchQuery = _searchController.text.trim().toLowerCase());
+      setState(
+          () => _searchQuery = _searchController.text.trim().toLowerCase());
     });
   }
 
@@ -46,7 +48,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     super.dispose();
   }
 
-  Future<void> _addSelectedToFollowUp(BuildContext context, WidgetRef ref) async {
+  Future<void> _addSelectedToFollowUp(
+      BuildContext context, WidgetRef ref) async {
     final ext = AppThemeExtension.of(context);
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     if (uid.isEmpty) return;
@@ -68,7 +71,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(userFacingErrorMessage(e, context: 'customer_list_task')),
+              content: Text(
+                  userFacingErrorMessage(e, context: 'customer_list_task')),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -77,7 +81,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(userFacingErrorMessage(e, context: 'customer_list_task')),
+              content: Text(
+                  userFacingErrorMessage(e, context: 'customer_list_task')),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -91,7 +96,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$count müşteri takip listesine eklendi (Görevler\'de görünür).'),
+          content: Text(
+              '$count müşteri takip listesine eklendi (Görevler\'de görünür).'),
           backgroundColor: ext.accent,
           behavior: SnackBarBehavior.floating,
         ),
@@ -102,7 +108,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final uid = ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
+    final uid =
+        ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
     final asyncCustomers = ref.watch(customerListForAgentProvider);
     final showAddDock = uid.isNotEmpty &&
         asyncCustomers.maybeWhen(
@@ -133,12 +140,11 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           Expanded(
                             child: Text(
                               _selectionMode
-                                  ? AppLocalizations.of(context).tArgs('n_selected', ['${_selectedIds.length}'])
-                                  : AppLocalizations.of(context).t('title_customers'),
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    color: ext.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  ? AppLocalizations.of(context).tArgs(
+                                      'n_selected', ['${_selectedIds.length}'])
+                                  : AppLocalizations.of(context)
+                                      .t('title_customers'),
+                              style: AppTypography.pageHeading(context),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -157,17 +163,24 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             const SizedBox(width: DesignTokens.space2),
                             Flexible(
                               child: FilledButton.icon(
-                                onPressed: _selectedIds.isEmpty ? null : () => _addSelectedToFollowUp(context, ref),
-                                icon: const Icon(Icons.playlist_add_rounded, size: 18),
+                                onPressed: _selectedIds.isEmpty
+                                    ? null
+                                    : () =>
+                                        _addSelectedToFollowUp(context, ref),
+                                icon: const Icon(Icons.playlist_add_rounded,
+                                    size: 18),
                                 label: Text(
-                                  AppLocalizations.of(context).tArgs('add_to_follow_up_count', ['${_selectedIds.length}']),
+                                  AppLocalizations.of(context).tArgs(
+                                      'add_to_follow_up_count',
+                                      ['${_selectedIds.length}']),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 style: FilledButton.styleFrom(
                                   backgroundColor: ext.brandPrimary,
                                   foregroundColor: ext.onBrand,
-                                  padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space3),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: DesignTokens.space3),
                                 ),
                               ),
                             ),
@@ -176,28 +189,40 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  tooltip: AppLocalizations.of(context).t('bulk_action'),
-                                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                                  tooltip: AppLocalizations.of(context)
+                                      .t('bulk_action'),
+                                  constraints: const BoxConstraints(
+                                      minWidth: 44, minHeight: 44),
                                   padding: const EdgeInsets.all(10),
-                                  onPressed: () => setState(() => _selectionMode = true),
-                                  icon: Icon(Icons.checklist_rtl_rounded, color: ext.accent),
+                                  onPressed: () =>
+                                      setState(() => _selectionMode = true),
+                                  icon: Icon(Icons.checklist_rtl_rounded,
+                                      color: ext.accent),
                                   visualDensity: VisualDensity.standard,
                                 ),
                                 const SizedBox(width: DesignTokens.space2),
                                 Flexible(
                                   child: FilledButton.icon(
-                                    onPressed: () => context.push(AppRouter.routeBulkCampaign),
-                                    icon: const Icon(Icons.campaign_rounded, size: 18),
+                                    onPressed: () => context
+                                        .push(AppRouter.routeBulkCampaign),
+                                    icon: const Icon(Icons.campaign_rounded,
+                                        size: 18),
                                     label: Text(
-                                      AppLocalizations.of(context).t('bulk_campaign'),
+                                      AppLocalizations.of(context)
+                                          .t('bulk_campaign'),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                      style:
+                                          AppTypography.secondaryButton(context)
+                                              .copyWith(color: ext.onBrand),
                                     ),
                                     style: FilledButton.styleFrom(
                                       backgroundColor: ext.brandPrimary,
                                       foregroundColor: ext.onBrand,
-                                      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: DesignTokens.space4,
+                                        vertical: 14,
+                                      ),
                                       visualDensity: VisualDensity.standard,
                                     ),
                                   ),
@@ -210,11 +235,13 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.space6),
                       child: _SearchBar(controller: _searchController),
                     ),
                   ),
-                  const SliverPadding(padding: EdgeInsets.only(top: DesignTokens.space3)),
+                  const SliverPadding(
+                      padding: EdgeInsets.only(top: DesignTokens.space3)),
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: asyncCustomers.when(
@@ -230,8 +257,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           child: EmptyState(
                             premiumVisual: true,
                             icon: Icons.cloud_off_rounded,
-                            title: AppLocalizations.of(context).t('customer_list_load_error'),
-                            subtitle: 'Bağlantıyı kontrol edin veya bir süre sonra yeniden deneyin.',
+                            title: AppLocalizations.of(context)
+                                .t('customer_list_load_error'),
+                            subtitle:
+                                'Bağlantıyı kontrol edin veya bir süre sonra yeniden deneyin.',
                           ),
                         ),
                       ),
@@ -241,15 +270,19 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             : entities.where((e) {
                                 final q = _searchQuery;
                                 final name = (e.fullName ?? '').toLowerCase();
-                                final phone = (e.primaryPhone ?? '').replaceAll(RegExp(r'\s'), '');
+                                final phone = (e.primaryPhone ?? '')
+                                    .replaceAll(RegExp(r'\s'), '');
                                 final email = (e.email ?? '').toLowerCase();
-                                final queryNoSpaces = q.replaceAll(RegExp(r'\s'), '');
+                                final queryNoSpaces =
+                                    q.replaceAll(RegExp(r'\s'), '');
                                 return name.contains(q) ||
                                     email.contains(q) ||
                                     phone.contains(queryNoSpaces) ||
-                                    (queryNoSpaces.isNotEmpty && phone.contains(queryNoSpaces));
+                                    (queryNoSpaces.isNotEmpty &&
+                                        phone.contains(queryNoSpaces));
                               }).toList();
-                        final riskIds = ref.watch(syncDelayedRiskCustomerIdsProvider);
+                        final riskIds =
+                            ref.watch(syncDelayedRiskCustomerIdsProvider);
                         if (filtered.length > 1) {
                           filtered.sort((a, b) {
                             final ar = riskIds.contains(a.id);
@@ -261,7 +294,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         if (filtered.isEmpty) {
                           final l10n = AppLocalizations.of(context);
                           final noCustomers = entities.isEmpty;
-                          final noSearchHits = !noCustomers && _searchQuery.isNotEmpty;
+                          final noSearchHits =
+                              !noCustomers && _searchQuery.isNotEmpty;
                           return Padding(
                             padding: EdgeInsets.only(
                               top: noCustomers ? DesignTokens.space2 : 0,
@@ -276,13 +310,17 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                   ? l10n.t('empty_search_title')
                                   : l10n.t('empty_customers_title'),
                               subtitle: noSearchHits
-                                  ? l10n.tArgs('empty_search_subtitle', [_searchController.text.trim()])
+                                  ? l10n.tArgs('empty_search_subtitle',
+                                      [_searchController.text.trim()])
                                   : l10n.t('empty_customers_subtitle'),
-                              actionLabel: noCustomers ? l10n.t('empty_customers_cta') : null,
+                              actionLabel: noCustomers
+                                  ? l10n.t('empty_customers_cta')
+                                  : null,
                               onAction: noCustomers
                                   ? () {
                                       HapticFeedback.lightImpact();
-                                      showSaveContactSheet(context, source: 'crm_empty_state');
+                                      showSaveContactSheet(context,
+                                          source: 'crm_empty_state');
                                     }
                                   : null,
                             ),
@@ -303,7 +341,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             final isSelected = _selectedIds.contains(entity.id);
                             return RepaintBoundary(
                               child: Padding(
-                                padding: const EdgeInsets.only(bottom: DesignTokens.space3),
+                                padding: const EdgeInsets.only(
+                                    bottom: DesignTokens.space3),
                                 child: CustomerCard(
                                   customer: entity,
                                   onTap: () {
@@ -317,7 +356,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                       });
                                     } else {
                                       if (entity.id.startsWith('__dev_demo_')) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           const SnackBar(
                                             content: Text(
                                               'Demo kayıt — gerçek müşteri için arama veya müşteri oluşturun.',
@@ -327,7 +367,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                         );
                                         return;
                                       }
-                                      context.push(AppRouter.routeCustomerDetail.replaceFirst(':id', entity.id));
+                                      context.push(AppRouter.routeCustomerDetail
+                                          .replaceFirst(':id', entity.id));
                                     }
                                   },
                                   selectionMode: _selectionMode,
@@ -426,10 +467,13 @@ class _SearchBar extends StatelessWidget {
         controller: controller,
         decoration: InputDecoration(
           hintText: AppLocalizations.of(context).t('search_customers'),
-          hintStyle: TextStyle(color: ext.textTertiary, fontSize: DesignTokens.fontSizeBase),
-          prefixIcon: Icon(Icons.search_rounded, color: ext.textTertiary, size: 22),
+          hintStyle: TextStyle(
+              color: ext.textTertiary, fontSize: DesignTokens.fontSizeBase),
+          prefixIcon:
+              Icon(Icons.search_rounded, color: ext.textTertiary, size: 22),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space4, vertical: 12),
         ),
         style: TextStyle(color: ext.textPrimary),
       ),

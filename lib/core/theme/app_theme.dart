@@ -34,6 +34,13 @@ abstract final class AppTheme {
         foregroundColor: ThemePalette.textPrimaryDark,
         elevation: 0,
         centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: ThemePalette.textPrimaryDark,
+          fontSize: DesignTokens.fontSizeXl,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -0.2,
+        ),
         iconTheme: IconThemeData(
           color: ThemePalette.antiqueGold,
           size: 22,
@@ -60,7 +67,8 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          borderSide: const BorderSide(color: ThemePalette.antiqueGold, width: 1.2),
+          borderSide:
+              const BorderSide(color: ThemePalette.antiqueGold, width: 1.2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: DesignTokens.space4,
@@ -99,46 +107,84 @@ abstract final class AppTheme {
   static TextTheme get _textThemeDark => const TextTheme(
         displayLarge: TextStyle(
           color: ThemePalette.textPrimaryDark,
+          fontSize: DesignTokens.fontSize4xl,
+          fontWeight: FontWeight.w800,
+          height: 1.05,
+          letterSpacing: -0.7,
+        ),
+        displayMedium: TextStyle(
+          color: ThemePalette.textPrimaryDark,
           fontSize: DesignTokens.fontSize3xl,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
+          height: 1.0,
           letterSpacing: -0.5,
         ),
         headlineMedium: TextStyle(
           color: ThemePalette.antiqueGold,
           fontSize: DesignTokens.fontSize2xl,
           fontWeight: FontWeight.w700,
+          height: 1.1,
           letterSpacing: -0.3,
+        ),
+        headlineSmall: TextStyle(
+          color: ThemePalette.textPrimaryDark,
+          fontSize: DesignTokens.fontSize2xl,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -0.4,
         ),
         titleLarge: TextStyle(
           color: ThemePalette.textPrimaryDark,
-          fontSize: DesignTokens.fontSizeMd,
-          fontWeight: FontWeight.w600,
+          fontSize: DesignTokens.fontSizeLg,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
         ),
         titleMedium: TextStyle(
-          color: ThemePalette.textSecondaryDark,
-          fontSize: DesignTokens.fontSizeSm,
-          fontWeight: FontWeight.w600,
+          color: ThemePalette.textPrimaryDark,
+          fontSize: DesignTokens.fontSizeMd,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
           letterSpacing: 0.2,
+        ),
+        titleSmall: TextStyle(
+          color: ThemePalette.textSecondaryDark,
+          fontSize: DesignTokens.fontSizeBase,
+          fontWeight: FontWeight.w600,
+          height: 1.25,
         ),
         bodyLarge: TextStyle(
           color: ThemePalette.textSecondaryDark,
-          fontSize: DesignTokens.fontSizeBase,
-          height: 1.45,
+          fontSize: DesignTokens.fontSizeMd,
+          height: 1.55,
         ),
         bodyMedium: TextStyle(
           color: ThemePalette.textSecondaryDark,
           fontSize: DesignTokens.fontSizeBase,
-          height: 1.45,
+          height: 1.55,
         ),
         bodySmall: TextStyle(
           color: ThemePalette.textTertiaryDark,
           fontSize: DesignTokens.fontSizeSm,
+          height: 1.4,
           fontWeight: FontWeight.w400,
         ),
         labelLarge: TextStyle(
           color: ThemePalette.textPrimaryDark,
           fontSize: DesignTokens.fontSizeBase,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
+        labelMedium: TextStyle(
+          color: ThemePalette.textSecondaryDark,
+          fontSize: DesignTokens.fontSizeSm,
           fontWeight: FontWeight.w600,
+          height: 1.25,
+        ),
+        labelSmall: TextStyle(
+          color: ThemePalette.textTertiaryDark,
+          fontSize: DesignTokens.fontSizeXs,
+          fontWeight: FontWeight.w600,
+          height: 1.35,
         ),
       );
 
@@ -167,6 +213,13 @@ abstract final class AppTheme {
         foregroundColor: ThemePalette.textPrimaryLight,
         elevation: 0,
         centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: ThemePalette.textPrimaryLight,
+          fontSize: DesignTokens.fontSizeXl,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -0.2,
+        ),
         iconTheme: IconThemeData(
           color: ThemePalette.antiqueGold,
           size: 22,
@@ -193,7 +246,8 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          borderSide: const BorderSide(color: ThemePalette.antiqueGold, width: 1.2),
+          borderSide:
+              const BorderSide(color: ThemePalette.antiqueGold, width: 1.2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: DesignTokens.space4,
@@ -233,46 +287,84 @@ abstract final class AppTheme {
   static TextTheme get _textThemeLight => const TextTheme(
         displayLarge: TextStyle(
           color: ThemePalette.textPrimaryLight,
+          fontSize: DesignTokens.fontSize4xl,
+          fontWeight: FontWeight.w800,
+          height: 1.05,
+          letterSpacing: -0.7,
+        ),
+        displayMedium: TextStyle(
+          color: ThemePalette.textPrimaryLight,
           fontSize: DesignTokens.fontSize3xl,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
+          height: 1.0,
           letterSpacing: -0.5,
         ),
         headlineMedium: TextStyle(
           color: ThemePalette.antiqueGold,
           fontSize: DesignTokens.fontSize2xl,
           fontWeight: FontWeight.w700,
+          height: 1.1,
           letterSpacing: -0.3,
+        ),
+        headlineSmall: TextStyle(
+          color: ThemePalette.textPrimaryLight,
+          fontSize: DesignTokens.fontSize2xl,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -0.4,
         ),
         titleLarge: TextStyle(
           color: ThemePalette.textPrimaryLight,
-          fontSize: DesignTokens.fontSizeMd,
-          fontWeight: FontWeight.w600,
+          fontSize: DesignTokens.fontSizeLg,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
         ),
         titleMedium: TextStyle(
-          color: ThemePalette.textSecondaryLight,
-          fontSize: DesignTokens.fontSizeSm,
-          fontWeight: FontWeight.w600,
+          color: ThemePalette.textPrimaryLight,
+          fontSize: DesignTokens.fontSizeMd,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
           letterSpacing: 0.2,
+        ),
+        titleSmall: TextStyle(
+          color: ThemePalette.textSecondaryLight,
+          fontSize: DesignTokens.fontSizeBase,
+          fontWeight: FontWeight.w600,
+          height: 1.25,
         ),
         bodyLarge: TextStyle(
           color: ThemePalette.textSecondaryLight,
-          fontSize: DesignTokens.fontSizeBase,
-          height: 1.45,
+          fontSize: DesignTokens.fontSizeMd,
+          height: 1.55,
         ),
         bodyMedium: TextStyle(
           color: ThemePalette.textSecondaryLight,
           fontSize: DesignTokens.fontSizeBase,
-          height: 1.45,
+          height: 1.55,
         ),
         bodySmall: TextStyle(
           color: ThemePalette.textTertiaryLight,
           fontSize: DesignTokens.fontSizeSm,
+          height: 1.4,
           fontWeight: FontWeight.w400,
         ),
         labelLarge: TextStyle(
           color: ThemePalette.textPrimaryLight,
           fontSize: DesignTokens.fontSizeBase,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
+        labelMedium: TextStyle(
+          color: ThemePalette.textSecondaryLight,
+          fontSize: DesignTokens.fontSizeSm,
           fontWeight: FontWeight.w600,
+          height: 1.25,
+        ),
+        labelSmall: TextStyle(
+          color: ThemePalette.textTertiaryLight,
+          fontSize: DesignTokens.fontSizeXs,
+          fontWeight: FontWeight.w600,
+          height: 1.35,
         ),
       );
 }

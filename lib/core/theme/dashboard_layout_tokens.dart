@@ -9,18 +9,18 @@ abstract final class DashboardLayoutTokens {
 
   // —— Page rhythm ——
   static const double horizontalPadding = DesignTokens.space6;
-  static const double pageTopInset = DesignTokens.space2;
-  static const double pageBottomInset = DesignTokens.space3;
+  static const double pageTopInset = DesignTokens.space3;
+  static const double pageBottomInset = DesignTokens.space4;
 
   /// Hero (selam) → Operasyonel (KPI, CTA, takip) arası
-  static const double gapHeroToOperational = 6;
+  static const double gapHeroToOperational = 10;
 
   /// Operasyonel blok içi (KPI ↔ CTA ↔ kartlar)
-  static const double gapOperationalTight = 6;
-  static const double gapOperational = 8;
+  static const double gapOperationalTight = 10;
+  static const double gapOperational = 14;
 
   /// Insight katmanı bölümleri (pipeline, keşif, ticker, …)
-  static const double gapInsightSection = 10;
+  static const double gapInsightSection = 18;
 
   // —— Card scale (S / M / L / XL) ——
   static const double radiusCardS = DesignTokens.radiusMd;
@@ -35,7 +35,8 @@ abstract final class DashboardLayoutTokens {
 
   /// Scroll içeriğinin son satırı ile alt krom (nav / dock) arasında nefes payı.
   /// Yüzen FAB kaldırıldı; alan çoğunlukla [Scaffold] gövdesinde rezerve.
-  static double bottomScrollPadding(BuildContext context, {required bool showFab}) {
+  static double bottomScrollPadding(BuildContext context,
+      {required bool showFab}) {
     return contentScrollBottomInset(context);
   }
 

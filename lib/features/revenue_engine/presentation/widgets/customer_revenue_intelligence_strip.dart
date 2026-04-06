@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/pro_blur_overlay_gate.dart';
@@ -42,7 +43,7 @@ class CustomerRevenueIntelligenceStrip extends ConsumerWidget {
       child: ProBlurOverlayGate(
         locked: blurLocked,
         child: Container(
-          padding: const EdgeInsets.all(DesignTokens.space4),
+          padding: AppTypography.cardPadding,
           decoration: BoxDecoration(
             color: ext.surfaceElevated,
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
@@ -57,14 +58,11 @@ class CustomerRevenueIntelligenceStrip extends ConsumerWidget {
                   const SizedBox(width: DesignTokens.space2),
                   Text(
                     'Gelir zekâsı',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: ext.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    style: AppTypography.cardHeading(context),
                   ),
                 ],
               ),
-              const SizedBox(height: DesignTokens.space3),
+              const SizedBox(height: DesignTokens.space4),
               _kv(context, 'Lead skoru', '${signal.leadScore}'),
               const SizedBox(height: DesignTokens.space2),
               _kv(context, 'Sıcaklık', band),
@@ -73,11 +71,7 @@ class CustomerRevenueIntelligenceStrip extends ConsumerWidget {
               const SizedBox(height: DesignTokens.space3),
               Text(
                 why,
-                style: TextStyle(
-                  color: ext.textSecondary,
-                  fontSize: DesignTokens.fontSizeSm,
-                  height: 1.35,
-                ),
+                style: AppTypography.body(context),
               ),
               if (signal.syncDelayedRisk) ...[
                 const SizedBox(height: DesignTokens.space2),
@@ -106,7 +100,6 @@ class CustomerRevenueIntelligenceStrip extends ConsumerWidget {
   }
 
   static Widget _kv(BuildContext context, String k, String v) {
-    final ext = AppThemeExtension.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -114,18 +107,13 @@ class CustomerRevenueIntelligenceStrip extends ConsumerWidget {
           width: 128,
           child: Text(
             k,
-            style: TextStyle(
-                color: ext.textTertiary, fontSize: DesignTokens.fontSizeSm),
+            style: AppTypography.meta(context),
           ),
         ),
         Expanded(
           child: Text(
             v,
-            style: TextStyle(
-              color: ext.textPrimary,
-              fontSize: DesignTokens.fontSizeSm,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTypography.bodyStrong(context),
           ),
         ),
       ],

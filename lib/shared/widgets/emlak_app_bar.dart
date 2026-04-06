@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,9 +22,8 @@ PreferredSizeWidget emlakAppBar(
       theme.appBarTheme.foregroundColor ??
       theme.colorScheme.onSurface;
   final canPop = context.canPop();
-  final titleStyle = theme.appBarTheme.titleTextStyle ??
-      theme.textTheme.titleLarge ??
-      const TextStyle(fontSize: 20, fontWeight: FontWeight.w600);
+  final titleStyle =
+      theme.appBarTheme.titleTextStyle ?? AppTypography.pageHeading(context);
   final maxTitleWidth = MediaQuery.sizeOf(context).width - 112;
   return AppBar(
     leading: canPop ? const AppBackButton() : null,
