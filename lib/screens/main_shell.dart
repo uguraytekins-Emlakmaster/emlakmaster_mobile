@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -69,6 +70,7 @@ class _MainShellPageState extends ConsumerState<MainShellPage> {
       backgroundColor: ext.background,
       body: Column(
         children: [
+          const PostCallCaptureShellStrip(),
           Expanded(
             child: PageView(
               controller: _pageController,

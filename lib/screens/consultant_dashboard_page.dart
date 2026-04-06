@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
@@ -64,6 +65,8 @@ class ConsultantDashboardPage extends ConsumerWidget {
                   children: [
                     _DashboardHeroHeader(greeting: greeting),
                     const SizedBox(height: DashboardLayoutTokens.gapHeroToOperational),
+                    const PostCallCaptureDashboardReminder(),
+                    const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
                     const _ConsultantTeamLine(),
                     const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
                     const _TodayKpiRow(),

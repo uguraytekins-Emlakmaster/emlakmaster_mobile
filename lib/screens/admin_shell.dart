@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/pages/command_center_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/features/war_room/presentation/pages/war_room_page.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
@@ -49,6 +50,7 @@ class AdminShellPage extends ConsumerWidget {
     return Column(
       children: [
         const SyncStatusBanner(compact: true),
+        const PostCallCaptureShellStrip(),
         Expanded(
           child: AdaptiveShellScaffold(
             navItems: navItems,

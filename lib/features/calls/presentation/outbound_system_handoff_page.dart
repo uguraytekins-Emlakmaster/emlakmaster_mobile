@@ -1,8 +1,8 @@
-import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
-import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_call_capture_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
@@ -112,19 +112,19 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
         return;
       }
 
-      final extra = <String, dynamic>{
-        'outcome': AppConstants.callOutcomeSystemHandoff,
-        'durationSec': null,
-        if (widget.customerId != null && widget.customerId!.isNotEmpty)
-          'customerId': widget.customerId,
-        'phone': resolved,
-        if (sessionId != null && sessionId!.isNotEmpty) 'callSessionId': sessionId,
-      };
+      if (sessionId != null && sessionId!.isNotEmpty) {
+        await ref.read(postCallCaptureProvider.notifier).beginHandoff(
+              PostCallCaptureDraft(
+                callSessionId: sessionId!,
+                customerId: widget.customerId,
+                phone: resolved,
+                startedFromScreen: widget.startedFromScreen,
+                createdAtMs: DateTime.now().millisecondsSinceEpoch,
+              ),
+            );
+      }
 
       router.pop();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        router.push(AppRouter.routeCallSummary, extra: extra);
-      });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

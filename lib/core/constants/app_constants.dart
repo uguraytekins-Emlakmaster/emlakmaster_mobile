@@ -71,6 +71,8 @@ abstract final class AppConstants {
   static const String keyNotificationsEnabled = 'notifications_enabled';
   static const String keyLocale = 'locale';
   static const String keyLastUserId = 'last_user_id';
+  /// Bekleyen hızlı çağrı kaydı (handoff sonrası) — kullanıcı id soneki ile.
+  static const String keyPostCallCaptureDraftV1 = 'post_call_capture_draft_v1';
   /// Yatırım / Fırsat Endeksi için takip edilen bölge id (örn. `kayapinar`).
   static const String keyFavoriteInvestRegion = 'favorite_invest_region_id';
   static const String defaultFavoriteInvestRegionId = 'kayapinar';

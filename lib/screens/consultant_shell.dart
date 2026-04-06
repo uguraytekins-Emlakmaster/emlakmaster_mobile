@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/pages/consultant_calls_page.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/pages/customer_list_page.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
@@ -38,6 +39,7 @@ class ConsultantShellPage extends StatelessWidget {
     return Column(
       children: [
         const SyncStatusBanner(compact: true),
+        const PostCallCaptureShellStrip(),
         Expanded(
           child: AdaptiveShellScaffold(
             navItems: _navItems,

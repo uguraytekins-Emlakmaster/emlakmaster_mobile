@@ -697,6 +697,53 @@ class FirestoreService {
     return doc.id;
   }
 
+  /// Handoff oturumuna hızlı sonuç (süre iddiası yok; gerçek görüşme cihazda).
+  static Future<void> mergeOutboundCallQuickCapture({
+    required String callSessionId,
+    required String quickOutcomeCode,
+    required String quickOutcomeLabelTr,
+    String? quickNote,
+    DateTime? followUpReminderAt,
+  }) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    final doc = FirebaseFirestore.instance.collection(AppConstants.colCalls).doc(callSessionId);
+    await doc.set({
+      'quickOutcomeCode': quickOutcomeCode,
+      'quickOutcomeLabelTr': quickOutcomeLabelTr,
+      if (quickNote != null && quickNote.trim().isNotEmpty) 'quickCaptureNote': quickNote.trim(),
+      'captureCompletedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'outcome': quickOutcomeCode,
+      'handoffMode': true,
+      if (followUpReminderAt != null) 'followUpReminderAt': Timestamp.fromDate(followUpReminderAt),
+    }, SetOptions(merge: true));
+  }
+
+  /// Müşteri kartına hızlı temas + not (sıcaklık sinyali opsiyonel).
+  static Future<void> mergeCustomerAfterQuickCallCapture({
+    required String customerId,
+    required String advisorId,
+    required String noteLine,
+    Map<String, dynamic>? lastCallSummarySignalsPayload,
+  }) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    final ref = FirebaseFirestore.instance.collection(AppConstants.colCustomers).doc(customerId);
+    final data = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastInteractionAt': FieldValue.serverTimestamp(),
+    };
+    if (lastCallSummarySignalsPayload != null && lastCallSummarySignalsPayload.isNotEmpty) {
+      data['lastCallSummarySignals'] = {
+        ...lastCallSummarySignalsPayload,
+        'extractedAt': FieldValue.serverTimestamp(),
+      };
+    }
+    await ref.set(data, SetOptions(merge: true));
+    await saveNote(customerId: customerId, content: noteLine, advisorId: advisorId);
+  }
+
   /// Arama bittiğinde danışmanın "Tüm Çağrılar" listesinde görünmesi için calls koleksiyonuna kayıt ekler.
   static Future<void> createCallRecord({
     required String advisorId,

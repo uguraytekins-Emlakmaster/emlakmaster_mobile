@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/exe
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_dashboard_alerts_provider.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_smart_task_suggestions_provider.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/manager_escalations_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/manager_escalations_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broker_dashboard_intelligence_summary_card.dart';
@@ -137,6 +138,7 @@ class DashboardPage extends ConsumerWidget {
                           ),
                         ),
                         px(const ManagerEscalationsCard()),
+                        px(const PostCallCaptureDashboardReminder()),
                         px(const BrokerDashboardAlertsCard()),
                         px(const SmartTaskSuggestionsCard()),
                         px(const ExecutionRemindersCard(surface: ExecutionReminderSurface.broker)),
