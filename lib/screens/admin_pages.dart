@@ -74,6 +74,7 @@ class AdminReportsPage extends ConsumerWidget {
     final canManageTeams = FeaturePermission.canManageTeams(role);
     final canViewPipeline = FeaturePermission.canViewPipeline(role);
     final showAuditComingSoon = FeaturePermission.canViewAuditLog(role);
+    final canViewCallCenter = FeaturePermission.canViewAllCalls(role);
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -90,6 +91,19 @@ class AdminReportsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(DesignTokens.space6),
         children: [
+          if (canViewCallCenter) ...[
+            InkWell(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              onTap: () => context.push(AppRouter.routeCommandCenter),
+              child: _SectionCard(
+                icon: Icons.phone_callback_rounded,
+                title: 'CRM çağrı kayıtları merkezi',
+                subtitle:
+                    'Danışman / müşteri / eksik kayıt görünümleri — uygulama verisi; operatör doğrulamalı hat süresi yoktur',
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space4),
+          ],
           if (canManageTeams)
             StreamBuilder<List<TeamDoc>>(
               stream: FirestoreService.teamsStream(),

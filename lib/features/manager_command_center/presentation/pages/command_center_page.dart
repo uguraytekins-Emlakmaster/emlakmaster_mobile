@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
+import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -63,8 +64,20 @@ class _CommandCenterBody extends StatefulWidget {
   State<_CommandCenterBody> createState() => _CommandCenterBodyState();
 }
 
+enum _CommandScope {
+  /// Tüm CRM çağrı kayıtları (son N)
+  all,
+  /// Danışman bazlı özet
+  consultant,
+  /// Müşteri bazlı özet
+  customer,
+  /// Sonuç bekleyen handoff oturumları
+  pending,
+}
+
 class _CommandCenterBodyState extends State<_CommandCenterBody> {
   late int _viewIndex;
+  _CommandScope _commandScope = _CommandScope.all;
   String? _filterTeamId;
   String? _filterAgentId;
   String? _filterOutcome;
@@ -104,7 +117,276 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
     'no_answer': 'Cevap yok',
     'busy': 'Meşgul',
     'failed': 'Başarısız',
+    'handoff_pending': 'Sonuç bekleniyor',
+    'completed': 'Tamamlandı (uygulama içi)',
+    'reached': 'Ulaşıldı',
+    'callback_scheduled': 'Tekrar aranacak',
+    'appointment_set': 'Randevu oluşturuldu',
+    'offer_sent': 'Teklif verildi',
   };
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _callsStreamForScope() {
+    switch (_commandScope) {
+      case _CommandScope.pending:
+        return FirestoreService.callsHandoffPendingStream();
+      default:
+        return FirestoreService.callsStream();
+    }
+  }
+
+  Widget _buildScopeContent(
+    BuildContext context,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
+    Map<String, String> agentNames,
+    Color fg,
+    bool isDark,
+  ) {
+    final surface =
+        isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    switch (_commandScope) {
+      case _CommandScope.consultant:
+        return _buildConsultantGroupedList(context, filtered, agentNames, surface, fg, isDark);
+      case _CommandScope.customer:
+        return _buildCustomerGroupedList(context, filtered, agentNames, surface, fg, isDark);
+      case _CommandScope.all:
+      case _CommandScope.pending:
+        return ListView.builder(
+          padding: const EdgeInsets.all(DesignTokens.space4),
+          itemCount: filtered.length,
+          cacheExtent: 300,
+          itemBuilder: (context, index) => _buildCrmRecordTile(
+            context,
+            filtered[index],
+            agentNames,
+            surface,
+            fg,
+            isDark,
+          ),
+        );
+    }
+  }
+
+  Widget _buildCrmRecordTile(
+    BuildContext context,
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    Map<String, String> agentNames,
+    Color surface,
+    Color fg,
+    bool isDark,
+  ) {
+    final data = doc.data();
+    final id = doc.id;
+    final agentId = CrmCallRecordHelpers.agentIdOf(data);
+    final displayAgent = agentNames[agentId] ?? agentId;
+    final duration = data['durationSec'] as num?;
+    final durationStr = duration != null ? '${duration.toInt()} sn' : '—';
+    final outcomeStr =
+        CrmCallRecordHelpers.outcomeDisplayTr(data, _outcomeLabels);
+    final phone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
+    final cust = CrmCallRecordHelpers.customerIdOf(data);
+    final createdAt = data['createdAt'];
+    String timeStr = '—';
+    if (createdAt is Timestamp) {
+      final dt = createdAt.toDate();
+      timeStr =
+          '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+    }
+    final ts = isDark
+        ? AppThemeExtension.of(context).textSecondary
+        : AppThemeExtension.of(context).textSecondary;
+    final cap = CrmCallRecordHelpers.captureStatusTr(data);
+    final src = CrmCallRecordHelpers.sourceDisplayTr(data);
+    final note = (data['quickCaptureNote'] as String? ?? '').trim();
+    final noteLine = note.isNotEmpty ? ' · Not: ${note.length > 42 ? '${note.substring(0, 42)}…' : note}' : '';
+    return Card(
+      margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+      color: surface,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppThemeExtension.of(context).accent,
+          child: Icon(Icons.call_rounded, color: AppThemeExtension.of(context).onBrand, size: 20),
+        ),
+        title: Text(
+          'CRM kayıt ${id.length > 8 ? id.substring(0, 8) : id}',
+          style: TextStyle(color: fg, fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          '$displayAgent · $phone · $outcomeStr · $timeStr'
+          '${durationStr != '—' ? ' · Kayıtlı süre (CRM): $durationStr' : ''}\n'
+          '$src · $cap$noteLine'
+          '${cust != null ? ' · Müşteri: $cust' : ''}',
+          style: TextStyle(color: ts, fontSize: 12, height: 1.35),
+          maxLines: 4,
+          overflow: TextOverflow.ellipsis,
+        ),
+        isThreeLine: true,
+      ),
+    );
+  }
+
+  Widget _buildConsultantGroupedList(
+    BuildContext context,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
+    Map<String, String> agentNames,
+    Color surface,
+    Color fg,
+    bool isDark,
+  ) {
+    final grouped = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    for (final d in filtered) {
+      final aid = CrmCallRecordHelpers.agentIdOf(d.data());
+      if (aid.isEmpty) continue;
+      grouped.putIfAbsent(aid, () => []).add(d);
+    }
+    for (final list in grouped.values) {
+      list.sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    }
+    final entries = grouped.entries.toList()
+      ..sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.value.first.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.value.first.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    if (entries.isEmpty) {
+      return EmptyState(
+        compact: true,
+        anchorAboveCenter: true,
+        anchorAlignmentY: -0.52,
+        grouped: true,
+        icon: Icons.groups_rounded,
+        title: 'Danışman özeti yok',
+        subtitle: 'Filtrelere uyan veya müşteri/danışman bağlantılı kayıt bulunamadı.',
+        outlinedActionLabel: 'Filtreleri temizle',
+        onOutlinedAction: _clearFilters,
+      );
+    }
+    final ts = isDark
+        ? AppThemeExtension.of(context).textSecondary
+        : AppThemeExtension.of(context).textSecondary;
+    return ListView.builder(
+      padding: const EdgeInsets.all(DesignTokens.space4),
+      itemCount: entries.length,
+      itemBuilder: (context, index) {
+        final e = entries[index];
+        final list = e.value;
+        final name = agentNames[e.key] ?? e.key;
+        final pending = list.where((d) => CrmCallRecordHelpers.isHandoffPending(d.data())).length;
+        final completed = list.where((d) => CrmCallRecordHelpers.hasCaptureCompleted(d.data())).length;
+        final handoffs = list.where((d) => CrmCallRecordHelpers.isSystemHandoff(d.data())).length;
+        final last = list.first;
+        final dt = CrmCallRecordHelpers.createdAtOf(last.data());
+        final timeStr = dt != null
+            ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
+            : '—';
+        return Card(
+          margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+          color: surface,
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+              child: Text(
+                name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            title: Text(name, style: TextStyle(color: fg, fontWeight: FontWeight.w700)),
+            subtitle: Text(
+              'Son kayıt: $timeStr · Toplam: ${list.length} · Handoff: $handoffs · '
+              'Tamamlanan: $completed · Bekleyen: $pending',
+              style: TextStyle(color: ts, fontSize: 12, height: 1.35),
+            ),
+            isThreeLine: true,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomerGroupedList(
+    BuildContext context,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
+    Map<String, String> agentNames,
+    Color surface,
+    Color fg,
+    bool isDark,
+  ) {
+    final grouped = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    for (final d in filtered) {
+      final cid = CrmCallRecordHelpers.customerIdOf(d.data());
+      if (cid == null) continue;
+      grouped.putIfAbsent(cid, () => []).add(d);
+    }
+    for (final list in grouped.values) {
+      list.sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    }
+    final entries = grouped.entries.toList()
+      ..sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.value.first.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.value.first.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    if (entries.isEmpty) {
+      return EmptyState(
+        compact: true,
+        anchorAboveCenter: true,
+        anchorAlignmentY: -0.52,
+        grouped: true,
+        icon: Icons.person_off_rounded,
+        title: 'Müşteri bağlantılı kayıt yok',
+        subtitle: 'Filtrelere uyan ve müşteri ID’si içeren CRM çağrı kaydı yok.',
+        outlinedActionLabel: 'Filtreleri temizle',
+        onOutlinedAction: _clearFilters,
+      );
+    }
+    final ts = isDark
+        ? AppThemeExtension.of(context).textSecondary
+        : AppThemeExtension.of(context).textSecondary;
+    return ListView.builder(
+      padding: const EdgeInsets.all(DesignTokens.space4),
+      itemCount: entries.length,
+      itemBuilder: (context, index) {
+        final e = entries[index];
+        final list = e.value;
+        final last = list.first;
+        final data = last.data();
+        final agent = CrmCallRecordHelpers.agentIdOf(data);
+        final displayAgent = agentNames[agent] ?? agent;
+        final outcome = CrmCallRecordHelpers.outcomeDisplayTr(data, _outcomeLabels);
+        final dt = CrmCallRecordHelpers.createdAtOf(data);
+        final timeStr = dt != null
+            ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
+            : '—';
+        final pending = list.where((d) => CrmCallRecordHelpers.isHandoffPending(d.data())).length;
+        return Card(
+          margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+          color: surface,
+          child: ListTile(
+            leading: const Icon(Icons.person_rounded, size: 28),
+            title: Text(
+              'Müşteri ${e.key.length > 12 ? '${e.key.substring(0, 12)}…' : e.key}',
+              style: TextStyle(color: fg, fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(
+              'Son temas: $timeStr · $displayAgent · $outcome · Kayıt: ${list.length} · Bekleyen: $pending',
+              style: TextStyle(color: ts, fontSize: 12, height: 1.35),
+            ),
+            isThreeLine: true,
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildSearchBar() {
     final theme = Theme.of(context);
@@ -123,7 +405,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               focusNode: _searchFocusNode,
               style: TextStyle(color: textPrimary, fontSize: 15),
               decoration: InputDecoration(
-                hintText: 'Telefon, danışman, sonuç...',
+                hintText: 'Telefon, müşteri id, danışman, sonuç, not...',
                 hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.7), fontSize: 14),
                 prefixIcon: Icon(Icons.search_rounded, color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9), size: 22),
                 suffixIcon: _searchQuery.isNotEmpty
@@ -180,7 +462,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
       backgroundColor: bg,
       appBar: emlakAppBar(
         context,
-        title: const Text('Çağrı Merkezi'),
+        title: const Text('CRM çağrı kayıtları'),
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         actions: [
@@ -210,6 +492,76 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
       body: SafeArea(
         child: Column(
           children: [
+            Material(
+              color: surface,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space4,
+                  DesignTokens.space3,
+                  DesignTokens.space4,
+                  DesignTokens.space2,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 20,
+                      color: AppThemeExtension.of(context).accent,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'CRM çağrı kaydı: handoff oturumu, kayıtlı sonuç ve notlar. '
+                        'Operatör doğrulamalı hat süresi veya kesin bağlantı durumu burada yoktur; telekom dinlemesi değildir.',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: isDark
+                              ? AppThemeExtension.of(context).textSecondary
+                              : AppThemeExtension.of(context).textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(DesignTokens.space4, 0, DesignTokens.space4, DesignTokens.space2),
+              child: SegmentedButton<_CommandScope>(
+                segments: const [
+                  ButtonSegment(
+                    value: _CommandScope.all,
+                    label: Text('Tüm kayıtlar'),
+                    icon: Icon(Icons.list_alt_rounded, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: _CommandScope.consultant,
+                    label: Text('Danışman'),
+                    icon: Icon(Icons.person_search_rounded, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: _CommandScope.customer,
+                    label: Text('Müşteri'),
+                    icon: Icon(Icons.people_alt_rounded, size: 16),
+                  ),
+                  ButtonSegment(
+                    value: _CommandScope.pending,
+                    label: Text('Eksik kayıt'),
+                    icon: Icon(Icons.pending_actions_rounded, size: 16),
+                  ),
+                ],
+                selected: {_commandScope},
+                onSelectionChanged: (s) => setState(() => _commandScope = s.first),
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  padding: WidgetStateProperty.all(
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  ),
+                ),
+              ),
+            ),
             Material(
               color: surface,
               child: Padding(
@@ -262,7 +614,15 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
             _buildSearchBar(),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: FirestoreService.callsStream(),
+                stream: FirestoreService.agentsStream(),
+                builder: (context, agentSnap) {
+                  final agentDocs = agentSnap.data?.docs ?? [];
+                  final agentNames = {
+                    for (final d in agentDocs)
+                      d.id: d.data()['displayName'] as String? ?? d.id,
+                  };
+                  return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _callsStreamForScope(),
                 builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
@@ -315,7 +675,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
             final q = _searchQuery.toLowerCase();
             final filtered = docs.where((d) {
               final data = d.data();
-              final agentId = data['agentId'] as String? ?? '';
+              final agentId = CrmCallRecordHelpers.agentIdOf(data);
               if (_filterTeamId != null &&
                   _teamMemberIds.isNotEmpty &&
                   !_teamMemberIds.contains(agentId)) {
@@ -333,8 +693,16 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 final phone = ((data['phoneNumber'] ?? data['phone']) ?? '').toString().toLowerCase();
                 final outcomeRaw = data['outcome'] as String? ?? data['callOutcome'] as String? ?? '';
                 final outcomeLabel = outcomeRaw.isNotEmpty ? (_outcomeLabels[outcomeRaw] ?? outcomeRaw).toLowerCase() : '';
-                final matches = id.contains(q) || agentId.toLowerCase().contains(q) ||
-                    phone.contains(q) || outcomeLabel.contains(q);
+                final cust = (data['customerId'] as String? ?? '').toLowerCase();
+                final note = (data['quickCaptureNote'] as String? ?? '').toLowerCase();
+                final ql = (data['quickOutcomeLabelTr'] as String? ?? '').toLowerCase();
+                final matches = id.contains(q) ||
+                    agentId.toLowerCase().contains(q) ||
+                    phone.contains(q) ||
+                    outcomeLabel.contains(q) ||
+                    cust.contains(q) ||
+                    note.contains(q) ||
+                    ql.contains(q);
                 if (!matches) return false;
               }
               return true;
@@ -376,65 +744,11 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
               ),
               );
             }
-            return ListView.builder(
-              padding: const EdgeInsets.all(DesignTokens.space4),
-              itemCount: filtered.length,
-              cacheExtent: 300,
-              itemBuilder: (context, index) {
-                final doc = filtered[index];
-                final data = doc.data();
-                final id = doc.id;
-                final agentId = data['agentId'] as String? ?? '—';
-                final duration = data['durationSec'] as num?;
-                final durationStr =
-                    duration != null ? '${duration.toInt()} sn' : '—';
-                final outcomeRaw = data['outcome'] as String? ?? data['callOutcome'] as String?;
-                final outcomeStr = outcomeRaw != null
-                    ? _outcomeLabels[outcomeRaw] ?? outcomeRaw
-                    : '—';
-                final createdAt = data['createdAt'];
-                String timeStr = '—';
-                if (createdAt is Timestamp) {
-                  final dt = createdAt.toDate();
-                  timeStr = '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
-                } else if (createdAt != null) {
-                  timeStr = createdAt.toString();
-                }
-                final cardTheme = Theme.of(context);
-                final cardIsDark = cardTheme.brightness == Brightness.dark;
-                final surface = cardIsDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
-                final tp = cardIsDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-                final ts = cardIsDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
-                return Card(
-                  margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-                  color: surface,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: AppThemeExtension.of(context).accent,
-                      child: Icon(Icons.call_rounded, color: AppThemeExtension.of(context).onBrand, size: 20),
-                    ),
-                    title: Text(
-                      'Çağrı ${id.length > 8 ? id.substring(0, 8) : id}',
-                      style: TextStyle(
-                        color: tp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Danışman: $agentId · $durationStr · $outcomeStr · $timeStr',
-                      style: TextStyle(
-                        color: ts,
-                        fontSize: 12,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                );
-              },
-            );
+            return _buildScopeContent(context, filtered, agentNames, fg, isDark);
           },
-        ),
+        );
+      },
+    ),
             ),
           ],
         ),
@@ -554,6 +868,7 @@ class _CommandCenterFilters extends StatelessWidget {
                           DropdownMenuItem(value: 'no_answer', child: Text('Cevap yok', style: TextStyle(color: textColor))),
                           DropdownMenuItem(value: 'busy', child: Text('Meşgul', style: TextStyle(color: textColor))),
                           DropdownMenuItem(value: 'failed', child: Text('Başarısız', style: TextStyle(color: textColor))),
+                          DropdownMenuItem(value: 'handoff_pending', child: Text('Sonuç bekleniyor (handoff)', style: TextStyle(color: textColor))),
                         ],
                         onChanged: (v) => onOutcomeChanged(v),
                       ),

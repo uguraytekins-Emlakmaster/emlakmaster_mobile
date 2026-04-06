@@ -9,6 +9,8 @@ import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
+import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/manager_customer_crm_call_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_insight_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_smart_task_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_last_call_signals_section.dart';
@@ -76,6 +78,15 @@ class CustomerDetailPage extends ConsumerWidget {
                         final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
                         if (!role.isManagerTier) return const SizedBox.shrink();
                         return CustomerSmartTaskStrip(customerId: customerId);
+                      },
+                    ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final role = ref.watch(displayRoleProvider).valueOrNull ?? AppRole.guest;
+                        if (!FeaturePermission.canViewAllCalls(role)) {
+                          return const SizedBox.shrink();
+                        }
+                        return ManagerCustomerCrmCallStrip(customerId: customerId);
                       },
                     ),
                     CustomerLastCallSignalsSection(customerId: customerId),

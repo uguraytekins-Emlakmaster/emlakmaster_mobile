@@ -4,20 +4,32 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 String callsToCsv(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
   const bom = '\uFEFF';
   final sb = StringBuffer(bom);
-  sb.writeln('id,agentId,durationSec,outcome,createdAt');
+  sb.writeln(
+    'id,agentId,customerId,phoneNumber,source,handoffMode,outcome,quickOutcomeLabelTr,quickCaptureNote,captureCompletedAt,durationSec,createdAt',
+  );
   for (final d in docs) {
     final data = d.data();
     final id = d.id;
-    final agentId = data['agentId'] as String? ?? '';
-    final duration = data['durationSec'] as num?;
+    final agentId = data['agentId'] as String? ?? data['advisorId'] as String? ?? '';
+    final customerId = data['customerId'] as String? ?? '';
+    final phone = data['phoneNumber'] as String? ?? data['phone'] as String? ?? '';
+    final source = data['source'] as String? ?? '';
+    final handoff = data['handoffMode'] == true ? 'true' : '';
     final outcome = data['outcome'] as String? ?? data['callOutcome'] as String? ?? '';
+    final quickLabel = data['quickOutcomeLabelTr'] as String? ?? '';
+    final quickNote = (data['quickCaptureNote'] as String? ?? '').replaceAll('"', '""');
+    final cap = data['captureCompletedAt'];
+    String capStr = '';
+    if (cap is Timestamp) capStr = cap.toDate().toIso8601String();
+    final duration = data['durationSec'] as num?;
     final createdAt = data['createdAt'];
     String createdAtStr = '';
     if (createdAt is Timestamp) {
-      final dt = createdAt.toDate();
-      createdAtStr = dt.toIso8601String();
+      createdAtStr = createdAt.toDate().toIso8601String();
     }
-    sb.writeln('"$id","$agentId",${duration?.toInt() ?? ''},"$outcome","$createdAtStr"');
+    sb.writeln(
+      '"$id","$agentId","$customerId","$phone","$source","$handoff","$outcome","$quickLabel","$quickNote","$capStr",${duration?.toInt() ?? ''},"$createdAtStr"',
+    );
   }
   return sb.toString();
 }

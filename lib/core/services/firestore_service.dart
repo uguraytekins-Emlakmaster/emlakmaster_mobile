@@ -611,7 +611,39 @@ class FirestoreService {
     yield* FirebaseFirestore.instance
         .collection('calls')
         .orderBy('createdAt', descending: true)
-        .limit(100)
+        .limit(500)
+        .snapshots();
+  }
+
+  /// `handoff_pending` — sistem telefonuna devredildi, danışman henüz sonuç girmedi.
+  static Stream<QuerySnapshot<Map<String, dynamic>>> callsHandoffPendingStream() async* {
+    await ensureInitialized();
+    if (!_initialized) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .where('outcome', isEqualTo: 'handoff_pending')
+        .orderBy('createdAt', descending: true)
+        .limit(200)
+        .snapshots();
+  }
+
+  /// Müşteriye bağlı CRM çağrı kayıtları (yönetici görünürlüğü).
+  static Stream<QuerySnapshot<Map<String, dynamic>>> callsByCustomerStream(
+    String customerId,
+  ) async* {
+    await ensureInitialized();
+    if (!_initialized || customerId.isEmpty) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .where('customerId', isEqualTo: customerId)
+        .orderBy('createdAt', descending: true)
+        .limit(25)
         .snapshots();
   }
 
