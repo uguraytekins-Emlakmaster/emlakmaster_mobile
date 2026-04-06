@@ -144,11 +144,20 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-# Ana ekran / mağaza ikonları — kaynak: kanonik master amblem PNG
+# Ana ekran / mağaza ikonları — kaynak: 4096×4096 MASTER (aşağı örnekleme en net)
 flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: assets/branding/emlak_master_app_icon_MASTER.png
+    background_color: "#0A0A0C"
+    theme_color: "#0A0A0C"
+  windows:
+    generate: true
+    image_path: assets/branding/emlak_master_app_icon_MASTER.png
+    icon_size: 256
   macos:
     generate: true
     image_path: assets/branding/emlak_master_app_icon_MASTER.png
