@@ -1,10 +1,13 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/application/apply_quick_call_capture.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,8 +76,16 @@ class _PostCallQuickCaptureBodyState
       return;
     }
     setState(() => _saving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     try {
-      await applyQuickCallCapture(
+      if (kDebugMode) {
+        AppLogger.d(
+          '[quick_capture_sheet] save tap code=$code heat=${_heatBand ?? '-'} '
+          'task=$_createTask due=${_followUpAt?.toIso8601String() ?? '-'}',
+        );
+      }
+      final result = await applyQuickCallCapture(
         ref: ref,
         context: context,
         draft: widget.draft,
@@ -86,19 +97,26 @@ class _PostCallQuickCaptureBodyState
       );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Çağrı kaydı güncellendi.'),
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            result.taskCreated
+                ? 'Çağrı kaydı ve takip görevi kaydedildi.'
+                : 'Çağrı kaydı kaydedildi.',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
+      if (kDebugMode) {
+        AppLogger.e('[quick_capture_sheet] save failed', e, st);
+      }
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
-          content: Text('Kayıt başarısız: $e'),
+          content: Text(FirestoreService.userFacingErrorMessage(e)),
           behavior: SnackBarBehavior.floating,
         ),
       );

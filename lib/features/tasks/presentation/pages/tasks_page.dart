@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 /// Danışman görevleri: vade tarihine göre liste, yapıldı işaretleme, görev ekleme.
 class TasksPage extends ConsumerStatefulWidget {
   const TasksPage({super.key});
@@ -24,10 +25,12 @@ class TasksPage extends ConsumerStatefulWidget {
 
 class _TasksPageState extends ConsumerState<TasksPage> {
   int _tasksRetryKey = 0;
+  final Set<String> _deletingIds = <String>{};
 
   @override
   Widget build(BuildContext context) {
-    final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    final uid =
+        ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return Scaffold(
       backgroundColor: AppThemeExtension.of(context).background,
       appBar: emlakAppBar(
@@ -40,7 +43,8 @@ class _TasksPageState extends ConsumerState<TasksPage> {
           ? Center(
               child: Text(
                 'Giriş yapılmamış.',
-                style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
+                style: TextStyle(
+                    color: AppThemeExtension.of(context).textSecondary),
               ),
             )
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -87,15 +91,19 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     ),
                   );
                 }
-                final docs = snapshot.data?.docs ?? [];
+                final docs = (snapshot.data?.docs ?? [])
+                    .where((d) => !_deletingIds.contains(d.id))
+                    .toList();
                 if (docs.isEmpty) {
                   return Center(
                     child: EmptyState(
                       premiumVisual: true,
                       icon: Icons.task_alt_rounded,
                       title: AppLocalizations.of(context).t('empty_tasks'),
-                      subtitle: AppLocalizations.of(context).t('empty_tasks_sub'),
-                      actionLabel: AppLocalizations.of(context).t('empty_tasks_cta'),
+                      subtitle:
+                          AppLocalizations.of(context).t('empty_tasks_sub'),
+                      actionLabel:
+                          AppLocalizations.of(context).t('empty_tasks_cta'),
                       onAction: () => _showAddTaskDialog(context, ref, uid),
                     ),
                   );
@@ -119,11 +127,16 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                       itemBuilder: (context, index) {
                         if (lowDensity && index == 0) {
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: DesignTokens.space3),
+                            padding: const EdgeInsets.only(
+                                bottom: DesignTokens.space3),
                             child: Text(
                               'Bu dönemdeki görevleriniz',
-                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    color: AppThemeExtension.of(context).textSecondary,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(
+                                    color: AppThemeExtension.of(context)
+                                        .textSecondary,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.2,
                                   ),
@@ -144,10 +157,11 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                           dueAt: dueAt,
                           done: done,
                           customerId: customerId,
-                          isOverdue: dueAt != null &&
-                              dueAt.isBefore(today) &&
-                              !done,
+                          isDeleting: _deletingIds.contains(id),
+                          isOverdue:
+                              dueAt != null && dueAt.isBefore(today) && !done,
                           onToggleDone: () => _toggleDone(id, d, !done),
+                          onDelete: () => _confirmDeleteTask(id, title),
                           onTap: () => _toggleDone(id, d, !done),
                         );
                       },
@@ -159,7 +173,8 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                       child: SafeArea(
                         top: false,
                         child: _TasksDockedAddBar(
-                          onPressed: () => _showAddTaskDialog(context, ref, uid),
+                          onPressed: () =>
+                              _showAddTaskDialog(context, ref, uid),
                         ),
                       ),
                     ),
@@ -184,15 +199,13 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         'id': id,
         'done': done,
       });
-      if (!wasDone &&
-          done &&
-          customerId != null &&
-          customerId.isNotEmpty) {
+      if (!wasDone && done && customerId != null && customerId.isNotEmpty) {
         try {
           await FirestoreService.mergeCustomerCrmAfterTaskCompleted(customerId);
           ref.invalidate(customerInsightProvider(customerId));
         } catch (e, st) {
-          AppLogger.w('Müşteri CRM geri bildirimi (görev sonrası) yazılamadı', e, st);
+          AppLogger.w(
+              'Müşteri CRM geri bildirimi (görev sonrası) yazılamadı', e, st);
         }
       }
     } on FirebaseException catch (e) {
@@ -208,6 +221,89 @@ class _TasksPageState extends ConsumerState<TasksPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _confirmDeleteTask(String id, String title) async {
+    HapticFeedback.lightImpact();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final ext = AppThemeExtension.of(ctx);
+        return AlertDialog(
+          backgroundColor: ext.surface,
+          title: Text(
+            'Görev silinsin mi?',
+            style: TextStyle(color: ext.textPrimary),
+          ),
+          content: Text(
+            '"$title" görevi kalıcı olarak silinecek.',
+            style: TextStyle(color: ext.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(
+                'Vazgeç',
+                style: TextStyle(color: ext.textSecondary),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: ext.danger,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Sil'),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true || !mounted) return;
+    await _deleteTask(id);
+  }
+
+  Future<void> _deleteTask(String id) async {
+    if (_deletingIds.contains(id)) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _deletingIds.add(id));
+    try {
+      await FirestoreService.deleteTask(id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Görev silindi.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      setState(() => _deletingIds.remove(id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Görev silinemedi: ${e.message ?? e.code}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on StateError catch (e) {
+      if (!mounted) return;
+      setState(() => _deletingIds.remove(id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _deletingIds.remove(id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Görev silinemedi: $e'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -231,7 +327,8 @@ class _TasksPageState extends ConsumerState<TasksPage> {
           padding: EdgeInsets.only(bottom: bottomPad),
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -240,140 +337,163 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   const SizedBox(height: DesignTokens.space4),
                   const PremiumSheetHeader(
                     title: 'Yeni görev',
-                    subtitle: 'Vade ve müşteri bağlantısı opsiyonel; görevler Görevler sekmesinde listelenir.',
+                    subtitle:
+                        'Vade ve müşteri bağlantısı opsiyonel; görevler Görevler sekmesinde listelenir.',
                   ),
-                  SizedBox(height: viewInsets.bottom > 0 ? DesignTokens.space5 : DesignTokens.space4),
+                  SizedBox(
+                      height: viewInsets.bottom > 0
+                          ? DesignTokens.space5
+                          : DesignTokens.space4),
                   TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'Görev başlığı',
-                  labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
-                  filled: true,
-                  fillColor: AppThemeExtension.of(context).background,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Görev başlığı',
+                      labelStyle: TextStyle(
+                          color: AppThemeExtension.of(context).textSecondary),
+                      filled: true,
+                      fillColor: AppThemeExtension.of(context).background,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusMd),
+                      ),
+                    ),
+                    style: TextStyle(
+                        color: AppThemeExtension.of(context).textPrimary),
+                    autofocus: true,
                   ),
-                ),
-                style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
-                autofocus: true,
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              TextField(
-                controller: customerIdController,
-                decoration: InputDecoration(
-                  labelText: 'Müşteri ID (opsiyonel)',
-                  hintText: 'Müşteri detaydan kopyalayabilirsiniz',
-                  labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
-                  filled: true,
-                  fillColor: AppThemeExtension.of(context).background,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  const SizedBox(height: DesignTokens.space4),
+                  TextField(
+                    controller: customerIdController,
+                    decoration: InputDecoration(
+                      labelText: 'Müşteri ID (opsiyonel)',
+                      hintText: 'Müşteri detaydan kopyalayabilirsiniz',
+                      labelStyle: TextStyle(
+                          color: AppThemeExtension.of(context).textSecondary),
+                      filled: true,
+                      fillColor: AppThemeExtension.of(context).background,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusMd),
+                      ),
+                    ),
+                    style: TextStyle(
+                        color: AppThemeExtension.of(context).textPrimary),
                   ),
-                ),
-                style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              StatefulBuilder(
-                builder: (ctx, setModalState) {
-                  return OutlinedButton.icon(
-                    onPressed: () async {
-                      final date = await showDatePicker(
-                        context: ctx,
-                        initialDate: DateTime.now().add(const Duration(days: 1)),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                  const SizedBox(height: DesignTokens.space4),
+                  StatefulBuilder(
+                    builder: (ctx, setModalState) {
+                      return OutlinedButton.icon(
+                        onPressed: () async {
+                          final date = await showDatePicker(
+                            context: ctx,
+                            initialDate:
+                                DateTime.now().add(const Duration(days: 1)),
+                            firstDate: DateTime.now(),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (date != null) {
+                            setModalState(() => pickedDate = date);
+                          }
+                        },
+                        icon: Icon(
+                          Icons.calendar_today_rounded,
+                          size: 18,
+                          color: AppThemeExtension.of(context).accent,
+                        ),
+                        label: Text(
+                          pickedDate != null
+                              ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
+                              : 'Vade tarihi seç',
+                          style: TextStyle(
+                              color: AppThemeExtension.of(context).accent),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppThemeExtension.of(context).accent,
+                          side: BorderSide(
+                              color: AppThemeExtension.of(context).accent),
+                        ),
                       );
-                      if (date != null) {
-                        setModalState(() => pickedDate = date);
-                      }
                     },
-                    icon: Icon(
-                      Icons.calendar_today_rounded,
-                      size: 18,
-                      color: AppThemeExtension.of(context).accent,
-                    ),
-                    label: Text(
-                      pickedDate != null
-                          ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
-                          : 'Vade tarihi seç',
-                      style: TextStyle(color: AppThemeExtension.of(context).accent),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppThemeExtension.of(context).accent,
-                      side: BorderSide(color: AppThemeExtension.of(context).accent),
-                    ),
-                  );
-                },
-              ),
-              SizedBox(height: viewInsets.bottom > 0 ? DesignTokens.space5 : DesignTokens.space6),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text(
-                        'İptal',
-                        style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
-                      ),
-                    ),
                   ),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () async {
-                        final title = titleController.text.trim();
-                        if (title.isEmpty) return;
-                        Navigator.pop(ctx);
-                        final custId = customerIdController.text.trim();
-                        try {
-                          await FirestoreService.setTask({
-                            'advisorId': uid,
-                            'title': title,
-                            'dueAt': pickedDate != null
-                                ? Timestamp.fromDate(pickedDate!)
-                                : Timestamp.fromDate(
-                                    DateTime.now().add(const Duration(days: 1)),
+                  SizedBox(
+                      height: viewInsets.bottom > 0
+                          ? DesignTokens.space5
+                          : DesignTokens.space6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(
+                            'İptal',
+                            style: TextStyle(
+                                color: AppThemeExtension.of(context)
+                                    .textSecondary),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () async {
+                            final title = titleController.text.trim();
+                            if (title.isEmpty) return;
+                            Navigator.pop(ctx);
+                            final custId = customerIdController.text.trim();
+                            try {
+                              await FirestoreService.setTask({
+                                'advisorId': uid,
+                                'title': title,
+                                'dueAt': pickedDate != null
+                                    ? Timestamp.fromDate(pickedDate!)
+                                    : Timestamp.fromDate(
+                                        DateTime.now()
+                                            .add(const Duration(days: 1)),
+                                      ),
+                                'done': false,
+                                if (custId.isNotEmpty) 'customerId': custId,
+                              });
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: const Text('Görev eklendi.'),
+                                    backgroundColor:
+                                        AppThemeExtension.of(context).accent,
+                                    behavior: SnackBarBehavior.floating,
                                   ),
-                            'done': false,
-                            if (custId.isNotEmpty) 'customerId': custId,
-                          });
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: const Text('Görev eklendi.'),
-                                backgroundColor: AppThemeExtension.of(context).accent,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        } on FirebaseException catch (e) {
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text('Görev eklenemedi: ${e.message ?? e.code}'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        } on StateError catch (e) {
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text(e.message),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppThemeExtension.of(context).accent,
-                        foregroundColor: Colors.black,
+                                );
+                              }
+                            } on FirebaseException catch (e) {
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        'Görev eklenemedi: ${e.message ?? e.code}'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } on StateError catch (e) {
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text(e.message),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                AppThemeExtension.of(context).accent,
+                            foregroundColor: Colors.black,
+                          ),
+                          child: const Text('Ekle'),
+                        ),
                       ),
-                      child: const Text('Ekle'),
-                    ),
+                    ],
                   ),
-                ],
-              ),
                   const SizedBox(height: DesignTokens.space2),
                 ],
               ),
@@ -450,8 +570,10 @@ class _TaskTile extends StatelessWidget {
     this.dueAt,
     required this.done,
     this.customerId,
+    required this.isDeleting,
     required this.isOverdue,
     required this.onToggleDone,
+    required this.onDelete,
     required this.onTap,
   });
 
@@ -460,8 +582,10 @@ class _TaskTile extends StatelessWidget {
   final DateTime? dueAt;
   final bool done;
   final String? customerId;
+  final bool isDeleting;
   final bool isOverdue;
   final VoidCallback onToggleDone;
+  final VoidCallback onDelete;
   final VoidCallback onTap;
 
   @override
@@ -492,7 +616,7 @@ class _TaskTile extends StatelessWidget {
             children: [
               Checkbox(
                 value: done,
-                onChanged: (_) => onToggleDone(),
+                onChanged: isDeleting ? null : (_) => onToggleDone(),
                 activeColor: ext.accent,
                 side: BorderSide(color: ext.border.withValues(alpha: 0.8)),
                 fillColor: WidgetStateProperty.resolveWith((_) {
@@ -509,8 +633,10 @@ class _TaskTile extends StatelessWidget {
                             color: done
                                 ? ext.textSecondary.withValues(alpha: 0.72)
                                 : ext.textPrimary,
-                            fontWeight: done ? FontWeight.w500 : FontWeight.w600,
-                            fontStyle: done ? FontStyle.italic : FontStyle.normal,
+                            fontWeight:
+                                done ? FontWeight.w500 : FontWeight.w600,
+                            fontStyle:
+                                done ? FontStyle.italic : FontStyle.normal,
                             height: 1.25,
                           ),
                     ),
@@ -535,15 +661,34 @@ class _TaskTile extends StatelessWidget {
                         ),
                         child: Text(
                           'Müşteriye git →',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: ext.accent,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: ext.accent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                         ),
                       ),
                     ],
                   ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'Görevi sil',
+                onPressed: isDeleting ? null : onDelete,
+                icon: isDeleting
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: ext.danger,
+                        ),
+                      )
+                    : Icon(
+                        Icons.delete_outline_rounded,
+                        color: ext.danger,
+                      ),
               ),
             ],
           ),
