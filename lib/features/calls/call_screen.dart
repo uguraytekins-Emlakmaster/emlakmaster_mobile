@@ -57,8 +57,10 @@ class _CallScreenState extends ConsumerState<CallScreen>
   double? _keypadDragValue;
   int _elapsedSeconds = 0;
   Timer? _ticker;
-  /// Numara girişi (Magic Call açıldığında numara yoksa)
+  /// Numara girişi (Magic / görüşme özeti; çevir modunda [ValueNotifier] tercih edilir)
   String _dialDigits = '';
+  /// Çevir modu: tuş takımı — yalnızca bu alt ağaç [ValueListenableBuilder] ile yenilenir.
+  ValueNotifier<String>? _dialEntryNotifier;
   /// Arama ekranı: true = sadece numara gir / tuş takımı; false = arama simülasyonu
   bool _isDialMode = false;
   /// Tuş takımından basılan rakamlar (aramada DTMF gösterimi)
@@ -70,8 +72,9 @@ class _CallScreenState extends ConsumerState<CallScreen>
   static const Duration _keypadSnapDuration = Duration(milliseconds: 280);
   static const Curve _keypadSnapCurve = Curves.easeOutCubic;
 
-  late AnimationController _keypadPanelController;
-  late Animation<double> _keypadPanelAnimation;
+  /// Görüşme içi sürüklenen tuş takımı paneli — [OutboundSystemHandoffPage] rotasında oluşturulmaz.
+  AnimationController? _keypadPanelController;
+  Animation<double>? _keypadPanelAnimation;
 
   String? get _signedInUid {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
@@ -92,17 +95,21 @@ class _CallScreenState extends ConsumerState<CallScreen>
     }
     HapticFeedback.lightImpact();
     _isDialMode = widget.phone == null && widget.customerId == null;
-    if (!_isDialMode) _dialDigits = widget.phone ?? '';
+    if (_isDialMode) {
+      _dialEntryNotifier = ValueNotifier<String>('');
+    } else {
+      _dialDigits = widget.phone ?? '';
+    }
 
     _keypadPanelController = AnimationController(
       vsync: this,
       duration: _keypadSnapDuration,
     );
     _keypadPanelAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _keypadPanelController, curve: _keypadSnapCurve),
+      CurvedAnimation(parent: _keypadPanelController!, curve: _keypadSnapCurve),
     );
-    _keypadPanelController.addListener(() => setState(() {}));
-    _keypadPanelController.addStatusListener((status) {
+    _keypadPanelController!.addListener(() => setState(() {}));
+    _keypadPanelController!.addStatusListener((status) {
       if (status == AnimationStatus.dismissed && _isKeypadOpen) {
         setState(() => _isKeypadOpen = false);
       }
@@ -136,13 +143,17 @@ class _CallScreenState extends ConsumerState<CallScreen>
   }
 
   void _startCallWithDialNumber() {
-    final number = _dialDigits.replaceAll(RegExp(r'\s'), '').trim();
+    final rawEntry = _dialEntryNotifier?.value ?? _dialDigits;
+    final number = OutboundPhoneDial.sanitizeDialEntry(rawEntry)
+        .replaceAll(RegExp(r'\s'), '')
+        .trim();
     if (number.isEmpty) return;
     HapticFeedback.mediumImpact();
 
     // Varsayılan: gerçek GSM — sistem telefonuna devret (Magic Call modunda değilsek).
     if (!widget.inAppCrmSession) {
       if (!OutboundPhoneDial.isLikelyCallablePhone(number)) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Geçerli bir telefon numarası girin.'),
@@ -151,16 +162,21 @@ class _CallScreenState extends ConsumerState<CallScreen>
         );
         return;
       }
-      context.pushReplacement(
-        AppRouter.routeCall,
-        extra: {
-          'phone': number,
-          'startedFromScreen': widget.startedFromScreen ?? 'call_dial_pad',
-        },
-      );
+      final started = widget.startedFromScreen ?? 'call_dial_pad';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.pushReplacement(
+          AppRouter.routeCall,
+          extra: {
+            'phone': number,
+            'startedFromScreen': started,
+          },
+        );
+      });
       return;
     }
 
+    _dialDigits = OutboundPhoneDial.sanitizeDialEntry(rawEntry);
     setState(() {
       _isDialMode = false;
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -187,22 +203,23 @@ class _CallScreenState extends ConsumerState<CallScreen>
   @override
   void dispose() {
     _ticker?.cancel();
-    _keypadPanelController.dispose();
+    _dialEntryNotifier?.dispose();
+    _keypadPanelController?.dispose();
     super.dispose();
   }
 
   void _openKeypadPanel() {
     setState(() => _isKeypadOpen = true);
-    _keypadPanelController.forward(from: 0);
+    _keypadPanelController?.forward(from: 0);
   }
 
   void _closeKeypadPanel() {
-    _keypadPanelController.reverse();
+    _keypadPanelController?.reverse();
   }
 
   void _onKeypadDragStart(DragStartDetails details) {
     _keypadDragStartY = details.globalPosition.dy;
-    _keypadDragStartFraction = _keypadDragValue ?? _keypadPanelAnimation.value;
+    _keypadDragStartFraction = _keypadDragValue ?? _keypadPanelAnimation?.value ?? 0;
   }
 
   void _onKeypadDragUpdate(DragUpdateDetails details, double sheetHeight) {
@@ -212,14 +229,16 @@ class _CallScreenState extends ConsumerState<CallScreen>
   }
 
   void _onKeypadDragEnd(double sheetHeight) {
-    final current = _keypadDragValue ?? _keypadPanelAnimation.value;
+    final current = _keypadDragValue ?? _keypadPanelAnimation?.value ?? 0;
     setState(() => _keypadDragValue = null);
+    final c = _keypadPanelController;
+    if (c == null) return;
     if (current < 0.5) {
-      _keypadPanelController.value = current;
-      _keypadPanelController.reverse();
+      c.value = current;
+      c.reverse();
     } else {
-      _keypadPanelController.value = current;
-      _keypadPanelController.forward();
+      c.value = current;
+      c.forward();
     }
   }
 
@@ -228,7 +247,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
   Widget _buildDraggableKeypadSheet(double screenHeight, AppThemeExtension ext) {
     final sheetHeight = screenHeight * _keypadSheetMaxFraction;
-    final effectiveFraction = _keypadDragValue ?? _keypadPanelAnimation.value;
+    final effectiveFraction = _keypadDragValue ?? _keypadPanelAnimation?.value ?? 0;
     final currentHeight = sheetHeight * effectiveFraction;
     const r = BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusSheet));
 
@@ -331,6 +350,10 @@ class _CallScreenState extends ConsumerState<CallScreen>
     AppThemeExtension ext,
     double bottomInset,
   ) {
+    final entry = _dialEntryNotifier;
+    if (entry == null) {
+      return const SizedBox.shrink();
+    }
     return Positioned.fill(
       child: SafeArea(
         child: Column(
@@ -404,87 +427,103 @@ class _CallScreenState extends ConsumerState<CallScreen>
               ),
             Consumer(
               builder: (context, ref, _) {
-                final officeAsync = ref.watch(currentOfficeProvider);
+                final officeName = ref.watch(
+                  currentOfficeProvider.select((o) => o.valueOrNull?.name),
+                );
                 return _DialModeLineContext(
                   theme: theme,
                   ext: ext,
-                  officeName: officeAsync.valueOrNull?.name,
+                  officeName: officeName,
                 );
               },
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: DesignTokens.space1),
-                    Expanded(
-                      child: Center(
-                        child: _DialModeDialSurface(
-                          ext: ext,
-                          hero: _DialHeroNumberField(
-                            digits: _dialDigits,
-                            ext: ext,
-                            theme: theme,
-                            embedded: true,
-                            onBackspace: () {
-                              HapticFeedback.lightImpact();
-                              setState(() => _dialDigits = _dialDigits.isEmpty
-                                  ? ''
-                                  : _dialDigits.substring(0, _dialDigits.length - 1));
-                            },
+              child: ValueListenableBuilder<String>(
+                valueListenable: entry,
+                builder: (context, digits, _) {
+                  final canStart = OutboundPhoneDial.hasDialEntryContent(digits);
+                  final displayDigits = widget.inAppCrmSession
+                      ? digits
+                      : OutboundPhoneDial.formatDialDisplayTurkeyFirst(digits);
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
+                    child: RepaintBoundary(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: DesignTokens.space1),
+                          Expanded(
+                            child: Center(
+                              child: _DialModeDialSurface(
+                                ext: ext,
+                                hero: _DialHeroNumberField(
+                                  digits: displayDigits,
+                                  ext: ext,
+                                  theme: theme,
+                                  embedded: true,
+                                  onBackspace: () {
+                                    HapticFeedback.lightImpact();
+                                    final n = entry;
+                                    final v = n.value;
+                                    n.value = v.isEmpty
+                                        ? ''
+                                        : v.substring(0, v.length - 1);
+                                  },
+                                ),
+                                keypad: _KeypadSheet(
+                                  dialMode: true,
+                                  embeddedDial: true,
+                                  onKeyPressed: (key) {
+                                    final n = entry;
+                                    n.value = OutboundPhoneDial.sanitizeDialEntry(n.value + key);
+                                  },
+                                ),
+                              ),
+                            ),
                           ),
-                          keypad: _KeypadSheet(
-                            dialMode: true,
-                            embeddedDial: true,
-                            onKeyPressed: (key) {
-                              setState(() => _dialDigits += key);
-                            },
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              0,
+                              DesignTokens.space4,
+                              0,
+                              bottomInset + DesignTokens.space4,
+                            ),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: canStart ? _startCallWithDialNumber : null,
+                                icon: Icon(Icons.call_rounded, size: 22, color: ext.onBrand),
+                                label: Padding(
+                                  padding: const EdgeInsets.only(left: 2),
+                                  child: Text(
+                                    'Aramayı başlat',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      color: ext.onBrand,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.15,
+                                    ),
+                                  ),
+                                ),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: ext.accent,
+                                  foregroundColor: ext.onBrand,
+                                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                                  minimumSize: const Size(double.infinity, 56),
+                                  alignment: Alignment.center,
+                                  elevation: 0,
+                                  shadowColor: ext.shadowColor.withValues(alpha: 0.2),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                DesignTokens.space5,
-                DesignTokens.space4,
-                DesignTokens.space5,
-                bottomInset + DesignTokens.space4,
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _dialDigits.trim().isEmpty ? null : _startCallWithDialNumber,
-                  icon: Icon(Icons.call_rounded, size: 22, color: ext.onBrand),
-                  label: Padding(
-                    padding: const EdgeInsets.only(left: 2),
-                    child: Text(
-                      'Aramayı başlat',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: ext.onBrand,
-                        fontWeight: FontWeight.w700,
-                        height: 1.15,
-                      ),
-                    ),
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: ext.accent,
-                    foregroundColor: ext.onBrand,
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-                    minimumSize: const Size(double.infinity, 56),
-                    alignment: Alignment.center,
-                    elevation: 0,
-                    shadowColor: ext.shadowColor.withValues(alpha: 0.2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
-                    ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ],
@@ -813,7 +852,7 @@ class _DialModeLineContext extends StatelessWidget {
           ),
           const SizedBox(height: DesignTokens.space2),
           Text(
-            'Numarayı girin veya yapıştırın',
+            'Numarayı tuş takımıyla girin (yalnızca rakam ve * #)',
             textAlign: TextAlign.center,
             style: theme.textTheme.labelSmall?.copyWith(
               color: ext.textTertiary,
@@ -844,6 +883,7 @@ class _DialHeroNumberField extends StatelessWidget {
   final bool embedded;
 
   static double _letterSpacingForDigits(String d) {
+    // Boşluklar görüntü; yoğunluk için anlamlı karakter sayısı (rakam + olası +).
     final n = d.replaceAll(RegExp(r'\s'), '').length;
     if (n <= 11) return 1.35;
     if (n <= 15) return 1.0;

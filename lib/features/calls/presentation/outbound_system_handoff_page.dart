@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -112,19 +114,22 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
         return;
       }
 
-      if (sessionId != null && sessionId!.isNotEmpty) {
-        await ref.read(postCallCaptureProvider.notifier).beginHandoff(
-              PostCallCaptureDraft(
-                callSessionId: sessionId!,
-                customerId: widget.customerId,
-                phone: resolved,
-                startedFromScreen: widget.startedFromScreen,
-                createdAtMs: DateTime.now().millisecondsSinceEpoch,
-              ),
-            );
-      }
-
+      final captureNotifier = ref.read(postCallCaptureProvider.notifier);
       router.pop();
+
+      if (sessionId != null && sessionId!.isNotEmpty) {
+        unawaited(
+          captureNotifier.beginHandoff(
+            PostCallCaptureDraft(
+              callSessionId: sessionId!,
+              customerId: widget.customerId,
+              phone: resolved,
+              startedFromScreen: widget.startedFromScreen,
+              createdAtMs: DateTime.now().millisecondsSinceEpoch,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
