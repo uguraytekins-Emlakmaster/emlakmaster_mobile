@@ -102,10 +102,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final ext = AppThemeExtension.of(context);
     final uid = ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
     final asyncCustomers = ref.watch(customerListForAgentProvider);
-    final hasSearch = _searchQuery.trim().isNotEmpty;
     final showAddDock = uid.isNotEmpty &&
         asyncCustomers.maybeWhen(
-          data: (entities) => entities.isNotEmpty || hasSearch,
+          data: (_) => true,
           orElse: () => false,
         );
 
@@ -122,11 +121,12 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(
                         DesignTokens.space6,
-                        DesignTokens.space4,
+                        DesignTokens.space5,
                         DesignTokens.space6,
-                        DesignTokens.space2,
+                        DesignTokens.space3,
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Text(
@@ -179,9 +179,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                   padding: const EdgeInsets.all(10),
                                   onPressed: () => setState(() => _selectionMode = true),
                                   icon: Icon(Icons.checklist_rtl_rounded, color: ext.accent),
-                                  visualDensity: VisualDensity.compact,
+                                  visualDensity: VisualDensity.standard,
                                 ),
-                                const SizedBox(width: DesignTokens.space1),
+                                const SizedBox(width: DesignTokens.space2),
                                 Flexible(
                                   child: FilledButton.icon(
                                     onPressed: () => context.push(AppRouter.routeBulkCampaign),
@@ -195,8 +195,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                     style: FilledButton.styleFrom(
                                       backgroundColor: ext.brandPrimary,
                                       foregroundColor: ext.onBrand,
-                                      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space3, vertical: 10),
-                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 12),
+                                      visualDensity: VisualDensity.standard,
                                     ),
                                   ),
                                 ),
@@ -251,24 +251,30 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           final l10n = AppLocalizations.of(context);
                           final noCustomers = entities.isEmpty;
                           final noSearchHits = !noCustomers && _searchQuery.isNotEmpty;
-                          return EmptyState(
-                            premiumVisual: true,
-                            grouped: noCustomers,
-                            anchorAboveCenter: true,
-                            icon: Icons.people_rounded,
-                            title: noSearchHits
-                                ? l10n.t('empty_search_title')
-                                : l10n.t('empty_customers_title'),
-                            subtitle: noSearchHits
-                                ? l10n.tArgs('empty_search_subtitle', [_searchController.text.trim()])
-                                : l10n.t('empty_customers_subtitle'),
-                            actionLabel: noCustomers ? l10n.t('empty_customers_cta') : null,
-                            onAction: noCustomers
-                                ? () {
-                                    HapticFeedback.lightImpact();
-                                    showSaveContactSheet(context, source: 'crm_empty_state');
-                                  }
-                                : null,
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              top: noCustomers ? DesignTokens.space2 : 0,
+                            ),
+                            child: EmptyState(
+                              premiumVisual: true,
+                              grouped: noCustomers,
+                              anchorAboveCenter: true,
+                              anchorAlignmentY: noCustomers ? -0.48 : -0.4,
+                              icon: Icons.people_rounded,
+                              title: noSearchHits
+                                  ? l10n.t('empty_search_title')
+                                  : l10n.t('empty_customers_title'),
+                              subtitle: noSearchHits
+                                  ? l10n.tArgs('empty_search_subtitle', [_searchController.text.trim()])
+                                  : l10n.t('empty_customers_subtitle'),
+                              actionLabel: noCustomers ? l10n.t('empty_customers_cta') : null,
+                              onAction: noCustomers
+                                  ? () {
+                                      HapticFeedback.lightImpact();
+                                      showSaveContactSheet(context, source: 'crm_empty_state');
+                                    }
+                                  : null,
+                            ),
                           );
                         }
                         return ListView.builder(

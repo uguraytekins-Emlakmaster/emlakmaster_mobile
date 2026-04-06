@@ -25,6 +25,8 @@ class EmptyState extends StatefulWidget {
     this.grouped = false,
     /// Dikeyde ortanın üstüne hizalar; üst kontroller ile boş içerik arası "çöl" hissini azaltır.
     this.anchorAboveCenter = false,
+    /// [anchorAboveCenter] iken dikey hizalama: -1 üst, 0 orta, 1 alt. Varsayılan ~üst-orta.
+    this.anchorAlignmentY = -0.4,
   });
 
   final IconData icon;
@@ -44,6 +46,9 @@ class EmptyState extends StatefulWidget {
   final bool grouped;
 
   final bool anchorAboveCenter;
+
+  /// [anchorAboveCenter] için [Align] y-ekseni; daha negatif = daha yukarı.
+  final double anchorAlignmentY;
 
   @override
   State<EmptyState> createState() => _EmptyStateState();
@@ -257,7 +262,7 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
               child: Align(
                 alignment: Alignment(
                   0,
-                  widget.compact ? -0.28 : -0.4,
+                  widget.compact ? -0.28 : widget.anchorAlignmentY,
                 ),
                 child: Padding(
                   padding: pad,

@@ -887,10 +887,9 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
   Future<void> _pickAndUpload() async {
     if (_loading) return;
     final storageAsync = ref.read(firebaseStorageAvailableProvider);
-    final storageOk = storageAsync.when(
+    final storageOk = storageAsync.maybeWhen(
       data: (ok) => ok,
-      loading: () => true,
-      error: (_, __) => false,
+      orElse: () => true,
     );
     if (!storageOk) {
       AppToaster.warning(context, FirebaseStorageAvailability.unavailableMessage);
@@ -950,11 +949,16 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
   @override
   Widget build(BuildContext context) {
     final storageAsync = ref.watch(firebaseStorageAvailableProvider);
-    final storageOk = storageAsync.when(
-      data: (ok) => ok,
-      loading: () => true,
-      error: (_, __) => false,
+    final showInactiveHint = storageAsync.maybeWhen(
+      data: (ok) => !ok,
+      orElse: () => false,
     );
+    final canPickPhoto = !_loading &&
+        storageAsync.maybeWhen(
+          data: (ok) => ok,
+          orElse: () => true,
+        );
+    final showChecking = storageAsync.isLoading;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Column(
@@ -971,7 +975,7 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
                 ),
               ),
               TextButton(
-                onPressed: (_loading || !storageOk) ? null : _pickAndUpload,
+                onPressed: canPickPhoto ? _pickAndUpload : null,
                 child: Text(_loading ? 'Yükleniyor…' : 'Fotoğraf seç'),
               ),
               const SizedBox(width: 4),
@@ -981,7 +985,21 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
               ),
             ],
           ),
-          if (!storageOk) ...[
+          if (showChecking) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 28),
+              child: Text(
+                'Depolama durumu kontrol ediliyor…',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ] else if (showInactiveHint) ...[
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.only(left: 28),

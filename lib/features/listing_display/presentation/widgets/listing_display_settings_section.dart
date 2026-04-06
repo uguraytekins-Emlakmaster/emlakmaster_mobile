@@ -207,10 +207,13 @@ class _ListingDisplaySettingsSectionState
     final onSurfaceDim = onSurface.withValues(alpha: 0.5);
     final async = ref.watch(listingDisplaySettingsProvider);
     final storageAsync = ref.watch(firebaseStorageAvailableProvider);
-    final storageOk = storageAsync.when(
+    final storageOk = storageAsync.maybeWhen(
       data: (ok) => ok,
-      loading: () => true,
-      error: (_, __) => false,
+      orElse: () => true,
+    );
+    final storageKnownInactive = storageAsync.maybeWhen(
+      data: (ok) => !ok,
+      orElse: () => false,
     );
     return async.when(
       data: (settings) {
@@ -239,8 +242,10 @@ class _ListingDisplaySettingsSectionState
         final canUploadLogo = storageOk &&
             ((hasOfficeContext && office != null && canManageBranding) ||
                 (!hasOfficeContext && canGlobalLogo));
-        final logoSubtitle = !storageOk
+        final logoSubtitle = storageKnownInactive
             ? '${FirebaseStorageAvailability.unavailableMessage} (logo yüklemesi kapalı.)'
+            : storageAsync.isLoading
+                ? 'Depolama kontrol ediliyor…'
             : hasOfficeContext && office == null
                 ? 'Ofis bilgisi yükleniyor…'
                 : hasOfficeContext && !canManageBranding

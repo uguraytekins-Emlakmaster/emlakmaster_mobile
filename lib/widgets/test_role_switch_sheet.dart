@@ -6,7 +6,7 @@ import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Debug / test: tüm [AppRole] listesi — küçük ekranda taşmayı önlemek için kaydırılabilir.
+/// Debug / test: tüm [AppRole] listesi — [DraggableScrollableSheet] + güvenli yükseklik (taşma yok).
 void showTestRoleSwitchSheet(
   BuildContext context,
   WidgetRef ref,
@@ -16,58 +16,67 @@ void showTestRoleSwitchSheet(
   showPremiumModalBottomSheet<void>(
     context: context,
     builder: (ctx) {
-      final padding = MediaQuery.paddingOf(ctx);
-      final maxH = MediaQuery.sizeOf(ctx).height - padding.top - padding.bottom;
+      final viewPadding = MediaQuery.paddingOf(ctx);
+      final sheetH = MediaQuery.sizeOf(ctx).height * 0.88;
       final ext = AppThemeExtension.of(ctx);
       return SafeArea(
         top: false,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxH * 0.92),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const PremiumBottomSheetHandle(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space4,
-                  0,
-                  DesignTokens.space4,
-                  DesignTokens.space2,
-                ),
-                child: Text(
-                  'Test için rol seç (sadece görünüm)',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.only(
-                    bottom: padding.bottom + DesignTokens.space4,
-                  ),
+        child: SizedBox(
+          height: sheetH,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: viewPadding.bottom),
+            child: DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.72,
+              minChildSize: 0.38,
+              maxChildSize: 0.94,
+              builder: (context, scrollController) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final r in AppRole.values)
-                      ListTile(
-                        title: Text(
-                          r.label,
-                          style: TextStyle(color: theme.colorScheme.onSurface),
-                        ),
-                        trailing: currentOverride == r
-                            ? Icon(Icons.check_rounded, color: ext.accent)
-                            : null,
-                        onTap: () {
-                          ref.read(overrideRoleProvider.notifier).state =
-                              currentOverride == r ? null : r;
-                          Navigator.of(ctx).pop();
-                        },
+                    const PremiumBottomSheetHandle(),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        DesignTokens.space4,
+                        0,
+                        DesignTokens.space4,
+                        DesignTokens.space2,
                       ),
+                      child: Text(
+                        'Test için rol seç (sadece görünüm)',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.only(bottom: DesignTokens.space4),
+                        children: [
+                          for (final r in AppRole.values)
+                            ListTile(
+                              title: Text(
+                                r.label,
+                                style: TextStyle(color: theme.colorScheme.onSurface),
+                              ),
+                              trailing: currentOverride == r
+                                  ? Icon(Icons.check_rounded, color: ext.accent)
+                                  : null,
+                              onTap: () {
+                                ref.read(overrideRoleProvider.notifier).state =
+                                    currentOverride == r ? null : r;
+                                Navigator.of(ctx).pop();
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
         ),
       );

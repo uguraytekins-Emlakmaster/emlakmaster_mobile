@@ -551,10 +551,13 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final storageAsync = ref.watch(firebaseStorageAvailableProvider);
-    final storageOk = storageAsync.when(
+    final storageOk = storageAsync.maybeWhen(
       data: (ok) => ok,
-      loading: () => true,
-      error: (_, __) => false,
+      orElse: () => true,
+    );
+    final storageKnownInactive = storageAsync.maybeWhen(
+      data: (ok) => !ok,
+      orElse: () => false,
     );
     return Scaffold(
       backgroundColor: ext.background,
@@ -681,7 +684,16 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               onPressed: (_busy || !storageOk) ? null : _pickAndUploadServer,
               child: const Text('Dosyayı Storage’a yükle ve kuyruğa al'),
             ),
-            if (!storageOk)
+            if (storageAsync.isLoading)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Depolama durumu kontrol ediliyor…',
+                  maxLines: 2,
+                  style: TextStyle(color: ext.foreground.withValues(alpha: 0.5), fontSize: 12),
+                ),
+              )
+            else if (storageKnownInactive)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(

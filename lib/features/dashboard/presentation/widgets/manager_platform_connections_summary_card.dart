@@ -59,14 +59,14 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
 
     final connectionLine = liveOk > 0
         ? 'Canlı bağlantı: $liveOk/$total'
-        : 'Canlı OAuth/API: henüz yok (demo/önizleme)';
+        : 'Canlı platform bağlantısı henüz aktif değil';
     final String healthLine;
     final Color healthColor;
     if (attention > 0) {
       healthLine = 'Kurulum veya inceleme gerekebilir (canlı senkron kapalı olabilir)';
       healthColor = ext.warning;
     } else if (liveOk == 0) {
-      healthLine = 'Resmi entegrasyonlar beta öncesi — kartlar yol haritası';
+      healthLine = 'Kurulum veya doğrulama gerekebilir; bağlantıları Ayarlar’dan yönetin';
       healthColor = ext.textSecondary;
     } else {
       healthLine = 'Canlı entegrasyonlar aktif görünüyor';

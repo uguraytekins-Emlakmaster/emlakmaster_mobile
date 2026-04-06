@@ -349,6 +349,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 return EmptyState(
                   compact: true,
                   anchorAboveCenter: true,
+                  anchorAlignmentY: -0.52,
                   grouped: true,
                   icon: Icons.call_rounded,
                   title: 'Uygun çağrı yok',
@@ -361,6 +362,7 @@ class _CommandCenterBodyState extends State<_CommandCenterBody> {
                 premiumVisual: true,
                 grouped: true,
                 anchorAboveCenter: true,
+                anchorAlignmentY: -0.52,
                 icon: Icons.call_rounded,
                 title: l10n.t('empty_calls_title'),
                 subtitle: l10n.t('empty_calls_sub'),

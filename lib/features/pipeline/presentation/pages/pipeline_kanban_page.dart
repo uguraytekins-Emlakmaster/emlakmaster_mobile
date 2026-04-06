@@ -126,6 +126,12 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                     );
                   }).toList();
 
+                  if (items.isEmpty) {
+                    return _PipelineEmptyState(
+                      onAddTap: () => _showAddToPipelineSheet(context, ref, uid),
+                    );
+                  }
+
                   return _KanbanBoard(
                     items: items,
                     onStageTap: (item, newStage) =>
@@ -296,6 +302,81 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
   }
 }
 
+/// Veri yokken: bilinçli boş durum (yarım ekran hissi vermez).
+class _PipelineEmptyState extends StatelessWidget {
+  const _PipelineEmptyState({required this.onAddTap});
+
+  final VoidCallback onAddTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.space6,
+        DesignTokens.space4,
+        DesignTokens.space6,
+        DesignTokens.space8,
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(DesignTokens.space6),
+            decoration: BoxDecoration(
+              color: ext.surfaceElevated,
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.view_kanban_rounded, size: 48, color: ext.accent.withValues(alpha: 0.85)),
+                const SizedBox(height: DesignTokens.space4),
+                Text(
+                  'Henüz pipeline kaydı yok',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: ext.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: DesignTokens.fontSizeMd,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space2),
+                Text(
+                  'Müşterileri aşamalara sürükleyerek takip edin. İlk kaydı eklemek için aşağıdaki düğmeyi kullanın veya sağ alttaki + ile hızlıca ekleyin.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: ext.textSecondary,
+                    fontSize: DesignTokens.fontSizeSm,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space5),
+                FilledButton.icon(
+                  onPressed: onAddTap,
+                  icon: Icon(Icons.add_rounded, color: ext.onBrand, size: 20),
+                  label: const Text('Pipeline\'a müşteri ekle'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ext.accent,
+                    foregroundColor: ext.onBrand,
+                    minimumSize: const Size.fromHeight(DesignTokens.championButtonHeight),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space4),
+          Text(
+            'Aşamaları görmek için veri eklendikten sonra sütunlar yatay kaydırılır.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: ext.textTertiary, fontSize: DesignTokens.fontSizeXs),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PipelineCardData {
   _PipelineCardData({
     required this.id,
@@ -332,9 +413,11 @@ class _KanbanBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space4,
-        vertical: DesignTokens.space6,
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.space4,
+        DesignTokens.space3,
+        DesignTokens.space4,
+        DesignTokens.space8,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

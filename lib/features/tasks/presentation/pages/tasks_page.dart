@@ -102,20 +102,36 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 }
                 final now = DateTime.now();
                 final today = DateTime(now.year, now.month, now.day);
+                final lowDensity = docs.isNotEmpty && docs.length <= 4;
+                final headerCount = lowDensity ? 1 : 0;
                 return Stack(
                   clipBehavior: Clip.none,
                   children: [
                     ListView.builder(
                       padding: const EdgeInsets.fromLTRB(
                         DesignTokens.space6,
-                        DesignTokens.space2,
+                        DesignTokens.space4,
                         DesignTokens.space6,
                         88,
                       ),
-                      itemCount: docs.length,
+                      itemCount: docs.length + headerCount,
                       cacheExtent: 300,
                       itemBuilder: (context, index) {
-                        final doc = docs[index];
+                        if (lowDensity && index == 0) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: DesignTokens.space3),
+                            child: Text(
+                              'Bu dönemdeki görevleriniz',
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: AppThemeExtension.of(context).textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
+                                  ),
+                            ),
+                          );
+                        }
+                        final docIndex = index - headerCount;
+                        final doc = docs[docIndex];
                         final d = doc.data();
                         final id = doc.id;
                         final title = d['title'] as String? ?? 'Görev';
@@ -207,24 +223,27 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     showPremiumModalBottomSheet<void>(
       context: context,
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: DesignTokens.space6,
-            right: DesignTokens.space6,
-            bottom: MediaQuery.viewInsetsOf(ctx).bottom + DesignTokens.space6,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const PremiumBottomSheetHandle(),
-              const SizedBox(height: DesignTokens.space4),
-              const PremiumSheetHeader(
-                title: 'Yeni görev',
-                subtitle: 'Vade ve müşteri bağlantısı opsiyonel; görevler Görevler sekmesinde listelenir.',
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              TextField(
+        final viewInsets = MediaQuery.viewInsetsOf(ctx);
+        final bottomPad = viewInsets.bottom + DesignTokens.space6;
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.only(bottom: bottomPad),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const PremiumBottomSheetHandle(),
+                  const SizedBox(height: DesignTokens.space4),
+                  const PremiumSheetHeader(
+                    title: 'Yeni görev',
+                    subtitle: 'Vade ve müşteri bağlantısı opsiyonel; görevler Görevler sekmesinde listelenir.',
+                  ),
+                  SizedBox(height: viewInsets.bottom > 0 ? DesignTokens.space5 : DesignTokens.space4),
+                  TextField(
                 controller: titleController,
                 decoration: InputDecoration(
                   labelText: 'Görev başlığı',
@@ -286,7 +305,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   );
                 },
               ),
-              const SizedBox(height: DesignTokens.space6),
+              SizedBox(height: viewInsets.bottom > 0 ? DesignTokens.space5 : DesignTokens.space6),
               Row(
                 children: [
                   Expanded(
@@ -355,7 +374,10 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   ),
                 ],
               ),
-            ],
+                  const SizedBox(height: DesignTokens.space2),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -484,9 +506,11 @@ class _TaskTile extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: done ? ext.textTertiary : ext.textPrimary,
-                            fontWeight: FontWeight.w600,
-                            decoration: done ? TextDecoration.lineThrough : null,
+                            color: done
+                                ? ext.textSecondary.withValues(alpha: 0.72)
+                                : ext.textPrimary,
+                            fontWeight: done ? FontWeight.w500 : FontWeight.w600,
+                            fontStyle: done ? FontStyle.italic : FontStyle.normal,
                             height: 1.25,
                           ),
                     ),
