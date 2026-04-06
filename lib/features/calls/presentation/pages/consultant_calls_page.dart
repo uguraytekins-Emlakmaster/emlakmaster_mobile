@@ -13,13 +13,18 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/calls/data/device_call_log_sync_service.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:async';
 
 /// Danışmanın tüm çağrıları (gelen/giden), numaralar, toplu veri export ve toplu SMS.
 class ConsultantCallsPage extends ConsumerStatefulWidget {
@@ -251,6 +256,16 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     });
   }
 
+  String _syncSubtitleHint(LocalCallSyncUiState s) {
+    return switch (s) {
+      LocalCallSyncUiState.pending => 'Senkron bekleniyor',
+      LocalCallSyncUiState.syncing => 'Senkronize ediliyor',
+      LocalCallSyncUiState.synced => 'Buluta kayıtlı',
+      LocalCallSyncUiState.failedRetry => 'Tekrar denenecek',
+      LocalCallSyncUiState.failedPermanent => 'Senkron başarısız (süre aşımı)',
+    };
+  }
+
   Widget _buildIosInfoBanner(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Padding(
@@ -427,7 +442,29 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         ),
         data: (docs) {
           _docs = docs;
-          if (_docs.isEmpty) {
+          final locals = ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
+          final docIds = docs.map((d) => d.id).toSet();
+          final byFirestoreId = <String, LocalCallRecord>{};
+          for (final r in locals) {
+            final fid = r.firestoreDocumentId;
+            if (fid != null && fid.isNotEmpty) {
+              byFirestoreId[fid] = r;
+            }
+          }
+          final nowMs = DateTime.now().millisecondsSinceEpoch;
+          final localStandalone = <LocalCallRecord>[];
+          for (final r in locals) {
+            final fid = r.firestoreDocumentId;
+            if (fid != null && docIds.contains(fid)) continue;
+            if (deriveLocalCallSyncUiState(r, nowMs: nowMs) ==
+                LocalCallSyncUiState.synced) {
+              continue;
+            }
+            localStandalone.add(r);
+          }
+          localStandalone.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+          if (_docs.isEmpty && localStandalone.isEmpty) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -444,17 +481,18 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       subtitle: AppLocalizations.of(context).t('empty_calls_sub'),
                       actionLabel: AppLocalizations.of(context).t('empty_calls_cta'),
                       onAction: () => context.push(
-                      AppRouter.routeCall,
-                      extra: const {
-                        'startedFromScreen': 'consultant_calls',
-                      },
-                    ),
+                        AppRouter.routeCall,
+                        extra: const {
+                          'startedFromScreen': 'consultant_calls',
+                        },
+                      ),
                     ),
                   ),
                 ),
               ],
             );
           }
+          final totalCount = localStandalone.length + _docs.length;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -471,7 +509,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   child: Row(
                     children: [
                       Text(
-                        '${_docs.length} kayıt',
+                        '$totalCount kayıt',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                               color: textSecondary,
                               fontWeight: FontWeight.w600,
@@ -495,10 +533,69 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.all(DesignTokens.space2),
-                  itemCount: _docs.length,
+                  itemCount: totalCount,
                   cacheExtent: 300,
                   itemBuilder: (context, index) {
-                    final doc = _docs[index];
+                    if (index < localStandalone.length) {
+                      final r = localStandalone[index];
+                      final dt = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
+                      final dateStr =
+                          '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+                      final outcomeStr = r.outcome ?? '—';
+                      final syncHint = _syncSubtitleHint(
+                        deriveLocalCallSyncUiState(r, nowMs: nowMs),
+                      );
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+                        color: surface,
+                        child: CheckboxListTile(
+                          value: false,
+                          onChanged: null,
+                          title: Row(
+                            children: [
+                              Icon(
+                                Icons.cloud_off_outlined,
+                                size: 18,
+                                color: textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  r.phoneNumber,
+                                  style: TextStyle(
+                                    color: fg,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              CallSyncStatusIcon(
+                                record: r,
+                                onManualRetry:
+                                    deriveLocalCallSyncUiState(r, nowMs: nowMs) ==
+                                            LocalCallSyncUiState.failedPermanent
+                                        ? () => unawaited(retryLocalCallRecordSync(r))
+                                        : null,
+                              ),
+                            ],
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '$dateStr · Yerel · $outcomeStr · $syncHint',
+                              style: TextStyle(color: textSecondary, fontSize: 12),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          activeColor: AppThemeExtension.of(context).accent,
+                        ),
+                      );
+                    }
+                    final doc = _docs[index - localStandalone.length];
                     final data = doc.data();
                     final id = doc.id;
                     final direction = data['direction'] as String? ?? data['callDirection'] as String? ?? '';
@@ -516,6 +613,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     }
                     final selected = _selectedIds.contains(id);
                     final hasPhone = (data['phoneNumber'] as String? ?? data['phone'] as String?).toString().trim().isNotEmpty;
+                    final match = byFirestoreId[id];
+                    final firestoreSubtitle = match != null
+                        ? '$dateStr · $durationStr · $outcomeStr · ${_syncSubtitleHint(deriveLocalCallSyncUiState(match, nowMs: nowMs))}'
+                        : '$dateStr · $durationStr · $outcomeStr · Sunucu';
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: DesignTokens.space2),
@@ -543,14 +644,26 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            const SizedBox(width: 4),
+                            if (match != null)
+                              CallSyncStatusIcon(
+                                record: match,
+                                onManualRetry:
+                                    deriveLocalCallSyncUiState(match, nowMs: nowMs) ==
+                                            LocalCallSyncUiState.failedPermanent
+                                        ? () => unawaited(retryLocalCallRecordSync(match))
+                                        : null,
+                              )
+                            else
+                              const ServerOnlyCallSourceIcon(),
                           ],
                         ),
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            '$dateStr · $durationStr · $outcomeStr',
+                            firestoreSubtitle,
                             style: TextStyle(color: textSecondary, fontSize: 12),
-                            maxLines: 2,
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),

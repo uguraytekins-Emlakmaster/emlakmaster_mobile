@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:emlakmaster_mobile/features/calls/data/call_record_sync_constants.dart';
 import 'package:equatable/equatable.dart';
 
 /// Yerel çağrı kaydı — Hive’da tutulur; senkron öncesi tek kaynak.
@@ -19,6 +20,10 @@ class LocalCallRecord extends Equatable {
     this.customerId,
     required this.startedFromScreen,
     this.followUpReminderAtMs,
+    this.isSyncing = false,
+    this.syncingSinceMs,
+    this.syncFailedPermanent = false,
+    this.pendingCapturePatchJson,
   });
 
   /// `local_<timestamp>` veya `local_…` biçimi.
@@ -39,8 +44,27 @@ class LocalCallRecord extends Equatable {
   final String startedFromScreen;
   final int? followUpReminderAtMs;
 
+  /// Senkron işlemi sırasında kullanıcı düzenlemesini korumak için yumuşak kilit.
+  final bool isSyncing;
+  final int? syncingSinceMs;
+
+  /// 24 saat penceresi aşıldı veya manuel kalıcı başarısız.
+  final bool syncFailedPermanent;
+
+  /// [isSyncing] iken gelen hızlı kayıt — senkron bitince uygulanır (JSON).
+  final String? pendingCapturePatchJson;
+
   bool get hasQuickCapturePayload =>
       outcome != null && outcome!.trim().isNotEmpty;
+
+  /// Sunucu güvenli tekilleştirme anahtarı (dakika yuvarlama).
+  String get dedupeKeyMinute =>
+      '$agentId|$phoneNumber|${createdAt ~/ 60000}';
+
+  bool get isPastMaxRetryWindow {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return !isSynced && now > createdAt + CallRecordSyncConstants.maxRetryWindowMs;
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -57,6 +81,10 @@ class LocalCallRecord extends Equatable {
         if (customerId != null && customerId!.isNotEmpty) 'customerId': customerId,
         'startedFromScreen': startedFromScreen,
         if (followUpReminderAtMs != null) 'followUpReminderAtMs': followUpReminderAtMs,
+        'isSyncing': isSyncing,
+        if (syncingSinceMs != null) 'syncingSinceMs': syncingSinceMs,
+        'syncFailedPermanent': syncFailedPermanent,
+        if (pendingCapturePatchJson != null) 'pendingCapturePatchJson': pendingCapturePatchJson,
       };
 
   factory LocalCallRecord.fromJson(Map<String, dynamic> m) {
@@ -75,6 +103,10 @@ class LocalCallRecord extends Equatable {
       customerId: m['customerId'] as String?,
       startedFromScreen: (m['startedFromScreen'] as String?) ?? 'unknown',
       followUpReminderAtMs: (m['followUpReminderAtMs'] as num?)?.toInt(),
+      isSyncing: m['isSyncing'] as bool? ?? false,
+      syncingSinceMs: (m['syncingSinceMs'] as num?)?.toInt(),
+      syncFailedPermanent: m['syncFailedPermanent'] as bool? ?? false,
+      pendingCapturePatchJson: m['pendingCapturePatchJson'] as String?,
     );
   }
 
@@ -102,11 +134,17 @@ class LocalCallRecord extends Equatable {
     String? customerId,
     String? startedFromScreen,
     int? followUpReminderAtMs,
+    bool? isSyncing,
+    int? syncingSinceMs,
+    bool? syncFailedPermanent,
+    String? pendingCapturePatchJson,
     bool clearOutcome = false,
     bool clearNotes = false,
     bool clearFirestoreDocumentId = false,
     bool clearFollowUpReminder = false,
     bool clearNextRetry = false,
+    bool clearSyncingSince = false,
+    bool clearPendingPatch = false,
   }) {
     return LocalCallRecord(
       id: id ?? this.id,
@@ -128,6 +166,13 @@ class LocalCallRecord extends Equatable {
       followUpReminderAtMs: clearFollowUpReminder
           ? null
           : (followUpReminderAtMs ?? this.followUpReminderAtMs),
+      isSyncing: isSyncing ?? this.isSyncing,
+      syncingSinceMs:
+          clearSyncingSince ? null : (syncingSinceMs ?? this.syncingSinceMs),
+      syncFailedPermanent: syncFailedPermanent ?? this.syncFailedPermanent,
+      pendingCapturePatchJson: clearPendingPatch
+          ? null
+          : (pendingCapturePatchJson ?? this.pendingCapturePatchJson),
     );
   }
 
@@ -147,5 +192,9 @@ class LocalCallRecord extends Equatable {
         customerId,
         startedFromScreen,
         followUpReminderAtMs,
+        isSyncing,
+        syncingSinceMs,
+        syncFailedPermanent,
+        pendingCapturePatchJson,
       ];
 }

@@ -123,6 +123,7 @@ Future<void> applyQuickCallCapture({
   await CallLocalHiveStore.instance.markSynced(
     agentId: uid,
     localId: effective.localRecordId,
+    clearPendingCapture: true,
   );
   await ref.read(postCallCaptureProvider.notifier).clear();
 }

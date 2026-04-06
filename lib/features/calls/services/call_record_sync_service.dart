@@ -54,53 +54,98 @@ class CallRecordSyncService {
     final uid = r.agentId;
     if (uid.isEmpty) return;
 
-    late final String firestoreId;
-    if (r.firestoreDocumentId == null) {
-      firestoreId = FirestoreService.stableFallbackCallDocumentId(r.id, uid);
-      await FirestoreService.upsertMinimalFallbackCallRecord(
-        documentId: firestoreId,
-        advisorId: uid,
-        customerId: r.customerId,
-        phoneNumber: r.phoneNumber,
-        startedFromScreen: r.startedFromScreen,
-        flushedFromOfflineQueue: true,
-      );
-      await CallLocalHiveStore.instance.replaceFirestoreDocumentId(
+    await CallLocalHiveStore.instance.setSyncing(agentId: uid, localId: r.id, syncing: true);
+    try {
+      await CallLocalHiveStore.instance.applyPendingCapturePatchIfAny(
         agentId: uid,
         localId: r.id,
-        firestoreDocumentId: firestoreId,
       );
-    } else {
-      firestoreId = r.firestoreDocumentId!;
-    }
+      var fresh = await CallLocalHiveStore.instance.get(uid, r.id);
+      if (fresh == null) return;
+      if (fresh.syncFailedPermanent) return;
 
-    if (r.hasQuickCapturePayload) {
-      final label = QuickCallOutcome.labelTr(r.outcome!.trim());
-      await FirestoreService.mergeOutboundCallQuickCapture(
-        callSessionId: firestoreId,
-        quickOutcomeCode: r.outcome!.trim(),
-        quickOutcomeLabelTr: label,
-        quickNote: r.notes,
-        followUpReminderAt: r.followUpReminderAtMs != null
-            ? DateTime.fromMillisecondsSinceEpoch(r.followUpReminderAtMs!)
-            : null,
-      );
-      await CallLocalHiveStore.instance.markSynced(agentId: uid, localId: r.id);
-      return;
-    }
-
-    if (!r.hasQuickCapturePayload) {
-      if (firestoreId.startsWith('hf_')) {
-        await FirestoreService.upsertMinimalFallbackCallRecord(
-          documentId: firestoreId,
+      late final String firestoreId;
+      if (fresh.firestoreDocumentId == null) {
+        final deduped = await FirestoreService.findExistingCallInDedupeWindow(
           advisorId: uid,
-          customerId: r.customerId,
-          phoneNumber: r.phoneNumber,
-          startedFromScreen: r.startedFromScreen,
-          flushedFromOfflineQueue: true,
+          phoneNumber: fresh.phoneNumber,
+          createdAtMs: fresh.createdAt,
         );
+        if (deduped != null) {
+          firestoreId = deduped;
+          await CallLocalHiveStore.instance.replaceFirestoreDocumentId(
+            agentId: uid,
+            localId: fresh.id,
+            firestoreDocumentId: firestoreId,
+          );
+        } else {
+          firestoreId = FirestoreService.stableFallbackCallDocumentId(fresh.id, uid);
+          await FirestoreService.upsertMinimalFallbackCallRecord(
+            documentId: firestoreId,
+            advisorId: uid,
+            customerId: fresh.customerId,
+            phoneNumber: fresh.phoneNumber,
+            startedFromScreen: fresh.startedFromScreen,
+            flushedFromOfflineQueue: true,
+          );
+          await CallLocalHiveStore.instance.replaceFirestoreDocumentId(
+            agentId: uid,
+            localId: fresh.id,
+            firestoreDocumentId: firestoreId,
+          );
+        }
+      } else {
+        firestoreId = fresh.firestoreDocumentId!;
       }
-      await CallLocalHiveStore.instance.markSynced(agentId: uid, localId: r.id);
+
+      fresh = await CallLocalHiveStore.instance.get(uid, r.id);
+      if (fresh == null) return;
+
+      if (fresh.hasQuickCapturePayload) {
+        final label = QuickCallOutcome.labelTr(fresh.outcome!.trim());
+        await FirestoreService.mergeOutboundCallQuickCapture(
+          callSessionId: firestoreId,
+          quickOutcomeCode: fresh.outcome!.trim(),
+          quickOutcomeLabelTr: label,
+          quickNote: fresh.notes,
+          followUpReminderAt: fresh.followUpReminderAtMs != null
+              ? DateTime.fromMillisecondsSinceEpoch(fresh.followUpReminderAtMs!)
+              : null,
+        );
+        await CallLocalHiveStore.instance.markSynced(agentId: uid, localId: fresh.id);
+        await _maybeApplyQueuedAndResync(uid, fresh.id);
+        return;
+      }
+
+      if (!fresh.hasQuickCapturePayload) {
+        if (firestoreId.startsWith('hf_')) {
+          await FirestoreService.upsertMinimalFallbackCallRecord(
+            documentId: firestoreId,
+            advisorId: uid,
+            customerId: fresh.customerId,
+            phoneNumber: fresh.phoneNumber,
+            startedFromScreen: fresh.startedFromScreen,
+            flushedFromOfflineQueue: true,
+          );
+        }
+        await CallLocalHiveStore.instance.markSynced(agentId: uid, localId: fresh.id);
+        await _maybeApplyQueuedAndResync(uid, fresh.id);
+      }
+    } finally {
+      await CallLocalHiveStore.instance.setSyncing(agentId: uid, localId: r.id, syncing: false);
+    }
+  }
+
+  static Future<void> _maybeApplyQueuedAndResync(String uid, String localId) async {
+    await CallLocalHiveStore.instance.applyPendingCapturePatchIfAny(
+      agentId: uid,
+      localId: localId,
+    );
+    final after = await CallLocalHiveStore.instance.get(uid, localId);
+    if (after != null &&
+        after.hasQuickCapturePayload &&
+        !after.isSynced) {
+      unawaited(syncForCurrentUser());
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/models/invite_doc.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
@@ -756,6 +757,55 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  static const int _callDedupeWindowMs = 2 * 60 * 1000;
+
+  /// Aynı danışman + telefon + [createdAtMs] ±2 dk içinde oluşturulmuş çağrı (çift kayıt önleme).
+  /// Index: `firestore.indexes.json` — advisorId + phoneNumber + createdAt.
+  ///
+  /// İndeks henüz deploy edilmediyse veya sorgu başarısızsa **null** döner; uygulama
+  /// normal şekilde yeni doküman oluşturmaya devam eder (çökme yok).
+  static Future<String?> findExistingCallInDedupeWindow({
+    required String advisorId,
+    required String phoneNumber,
+    required int createdAtMs,
+  }) async {
+    try {
+      await ensureInitialized();
+      _requireFirestoreReady();
+      final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+      final start = Timestamp.fromMillisecondsSinceEpoch(createdAtMs - _callDedupeWindowMs);
+      final end = Timestamp.fromMillisecondsSinceEpoch(createdAtMs + _callDedupeWindowMs);
+      final q = await col
+          .where('advisorId', isEqualTo: advisorId)
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .where('createdAt', isGreaterThanOrEqualTo: start)
+          .where('createdAt', isLessThanOrEqualTo: end)
+          .limit(1)
+          .get();
+      if (q.docs.isEmpty) return null;
+      return q.docs.first.id;
+    } on FirebaseException catch (e, st) {
+      final msg = e.message?.toLowerCase() ?? '';
+      final isIndexIssue = e.code == 'failed-precondition' ||
+          e.code == 'unimplemented' ||
+          msg.contains('index') ||
+          msg.contains('requires an index');
+      if (isIndexIssue) {
+        AppLogger.w(
+          'findExistingCallInDedupeWindow: indeks/sorgu hazır değil, dedupe atlanıyor (${e.code})',
+          e,
+          st,
+        );
+      } else {
+        AppLogger.w('findExistingCallInDedupeWindow', e, st);
+      }
+      return null;
+    } catch (e, st) {
+      AppLogger.w('findExistingCallInDedupeWindow (dedupe atlandı)', e, st);
+      return null;
+    }
+  }
+
   /// Handoff sırasında CRM oturumu oluşturulamadıysa tek `add` ile çağrı + hızlı sonuç (merge yok).
   static Future<String> createCallRecordWithQuickCapture({
     required String advisorId,
@@ -769,6 +819,22 @@ class FirestoreService {
   }) async {
     await ensureInitialized();
     _requireFirestoreReady();
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final existingId = await findExistingCallInDedupeWindow(
+      advisorId: advisorId,
+      phoneNumber: phoneNumber,
+      createdAtMs: nowMs,
+    );
+    if (existingId != null) {
+      await mergeOutboundCallQuickCapture(
+        callSessionId: existingId,
+        quickOutcomeCode: quickOutcomeCode,
+        quickOutcomeLabelTr: quickOutcomeLabelTr,
+        quickNote: quickNote,
+        followUpReminderAt: followUpReminderAt,
+      );
+      return existingId;
+    }
     final now = FieldValue.serverTimestamp();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
     final doc = await col.add({
