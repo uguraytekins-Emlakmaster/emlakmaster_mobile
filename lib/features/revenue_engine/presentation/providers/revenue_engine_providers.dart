@@ -24,10 +24,90 @@ class AdvisorTasksMeta {
   final int overdueCount;
 }
 
+class _SignalsCache {
+  int? _lastHash;
+  Map<String, CustomerRevenueSignals> _lastValue = const {};
+
+  Map<String, CustomerRevenueSignals> run({
+    required int inputHash,
+    required Map<String, CustomerRevenueSignals> Function() builder,
+  }) {
+    if (_lastHash == inputHash) return _lastValue;
+    _lastHash = inputHash;
+    _lastValue = builder();
+    return _lastValue;
+  }
+}
+
+int _hashCustomersForRevenue(List<CustomerEntity> customers) {
+  var h = customers.length;
+  for (final c in customers) {
+    h = Object.hash(
+      h,
+      c.id,
+      c.offersCount,
+      c.assignedAdvisorId,
+      c.lastInteractionAt?.millisecondsSinceEpoch ?? 0,
+      c.updatedAt.millisecondsSinceEpoch,
+    );
+  }
+  return h;
+}
+
+int _hashCallDocs(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+  var h = docs.length;
+  for (final d in docs) {
+    final data = d.data();
+    h = Object.hash(
+      h,
+      d.id,
+      CrmCallRecordHelpers.customerIdOf(data),
+      normalizeCallOutcomeCode(data),
+      CrmCallRecordHelpers.createdAtOf(data)?.millisecondsSinceEpoch ?? 0,
+    );
+  }
+  return h;
+}
+
+int _hashLocalCalls(List<dynamic> rows) {
+  var h = rows.length;
+  for (final r in rows) {
+    h = Object.hash(
+      h,
+      r.id,
+      r.customerId,
+      r.createdAt,
+      r.isSynced,
+      r.firestoreDocumentId,
+      r.pendingCapturePatchJson?.length ?? 0,
+    );
+  }
+  return h;
+}
+
+int _hashStringSet(Set<String> values) {
+  var h = values.length;
+  final sorted = values.toList()..sort();
+  for (final v in sorted) {
+    h = Object.hash(h, v);
+  }
+  return h;
+}
+
+final _customerSignalsCacheProvider =
+    Provider.autoDispose<_SignalsCache>((ref) {
+  return _SignalsCache();
+});
+
+final _officeSignalsCacheProvider = Provider.autoDispose<_SignalsCache>((ref) {
+  return _SignalsCache();
+});
+
 final advisorTasksMetaProvider = StreamProvider<AdvisorTasksMeta>((ref) {
   final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
   if (uid == null || uid.isEmpty) {
-    return Stream.value(const AdvisorTasksMeta(openCustomerIds: {}, overdueCount: 0));
+    return Stream.value(
+        const AdvisorTasksMeta(openCustomerIds: {}, overdueCount: 0));
   }
   return FirestoreService.tasksByAdvisorStream(uid).map((snap) {
     final open = <String>{};
@@ -60,16 +140,30 @@ final customerRevenueSignalsMapProvider =
   final locals = ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
   final tasksMeta = ref.watch(advisorTasksMetaProvider).valueOrNull;
   final syncRisk = ref.watch(syncDelayedRiskCustomerIdsProvider);
+  final cache = ref.watch(_customerSignalsCacheProvider);
 
   return customersAsync.maybeWhen(
-    data: (customers) => buildCustomerRevenueSignalsMap(
-      customers: customers,
-      callDocs: calls,
-      localCalls: locals,
-      openTaskCustomerIds: tasksMeta?.openCustomerIds ?? {},
-      syncDelayedRiskCustomerIds: syncRisk,
-      now: DateTime.now(),
-    ),
+    data: (customers) {
+      final inputHash = Object.hash(
+        _hashCustomersForRevenue(customers),
+        _hashCallDocs(calls),
+        _hashLocalCalls(locals),
+        _hashStringSet(tasksMeta?.openCustomerIds ?? const {}),
+        tasksMeta?.overdueCount ?? 0,
+        _hashStringSet(syncRisk),
+      );
+      return cache.run(
+        inputHash: inputHash,
+        builder: () => buildCustomerRevenueSignalsMap(
+          customers: customers,
+          callDocs: calls,
+          localCalls: locals,
+          openTaskCustomerIds: tasksMeta?.openCustomerIds ?? {},
+          syncDelayedRiskCustomerIds: syncRisk,
+          now: DateTime.now(),
+        ),
+      );
+    },
     orElse: () => <String, CustomerRevenueSignals>{},
   );
 });
@@ -136,19 +230,21 @@ CustomerRevenueSignals? customerRevenueSignalsFor(
 }
 
 /// Son 500 çağrı (ofis gelir özeti için müşteri kümesine süzülür).
-final brokerCallsDocumentsProvider =
-    StreamProvider.autoDispose<List<QueryDocumentSnapshot<Map<String, dynamic>>>>((ref) {
+final brokerCallsDocumentsProvider = StreamProvider.autoDispose<
+    List<QueryDocumentSnapshot<Map<String, dynamic>>>>((ref) {
   return FirestoreService.callsStream().map((s) => s.docs);
 });
 
 /// Ofis müşterileri için gelir motoru haritası (yönetici paneli).
 final officeCustomerRevenueSignalsMapProvider =
-    Provider.family<Map<String, CustomerRevenueSignals>, String>((ref, officeId) {
+    Provider.family<Map<String, CustomerRevenueSignals>, String>(
+        (ref, officeId) {
   if (officeId.isEmpty) return {};
   final customersAsync = ref.watch(officeWideCustomerListProvider(officeId));
   final allDocs = ref.watch(brokerCallsDocumentsProvider).valueOrNull ?? [];
   final locals = ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
   final syncRisk = ref.watch(syncDelayedRiskCustomerIdsProvider);
+  final cache = ref.watch(_officeSignalsCacheProvider);
 
   return customersAsync.maybeWhen(
     data: (customers) {
@@ -158,13 +254,23 @@ final officeCustomerRevenueSignalsMapProvider =
         final cid = CrmCallRecordHelpers.customerIdOf(d.data());
         return cid != null && ids.contains(cid);
       }).toList();
-      return buildCustomerRevenueSignalsMap(
-        customers: customers,
-        callDocs: filtered,
-        localCalls: locals,
-        openTaskCustomerIds: const {},
-        syncDelayedRiskCustomerIds: syncRisk,
-        now: DateTime.now(),
+      final inputHash = Object.hash(
+        officeId,
+        _hashCustomersForRevenue(customers),
+        _hashCallDocs(filtered),
+        _hashLocalCalls(locals),
+        _hashStringSet(syncRisk),
+      );
+      return cache.run(
+        inputHash: inputHash,
+        builder: () => buildCustomerRevenueSignalsMap(
+          customers: customers,
+          callDocs: filtered,
+          localCalls: locals,
+          openTaskCustomerIds: const {},
+          syncDelayedRiskCustomerIds: syncRisk,
+          now: DateTime.now(),
+        ),
       );
     },
     orElse: () => <String, CustomerRevenueSignals>{},
@@ -172,7 +278,8 @@ final officeCustomerRevenueSignalsMapProvider =
 });
 
 /// Yönetici dashboard’u: ofis müşterileri + son çağrılar üzerinden özet + danışman sıralaması.
-final brokerRevenueDashboardSnapshotProvider = Provider<RevenueDashboardSnapshot>((ref) {
+final brokerRevenueDashboardSnapshotProvider =
+    Provider<RevenueDashboardSnapshot>((ref) {
   final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
   if (uid.isEmpty) {
     return const RevenueDashboardSnapshot(
@@ -183,7 +290,8 @@ final brokerRevenueDashboardSnapshotProvider = Provider<RevenueDashboardSnapshot
       leaderboard: [],
     );
   }
-  final officeId = ref.watch(userDocStreamProvider(uid)).valueOrNull?.officeId ?? '';
+  final officeId =
+      ref.watch(userDocStreamProvider(uid)).valueOrNull?.officeId ?? '';
   if (officeId.isEmpty) {
     return const RevenueDashboardSnapshot(
       hotCustomers: [],
@@ -215,14 +323,16 @@ final brokerRevenueDashboardSnapshotProvider = Provider<RevenueDashboardSnapshot
         filteredForRollup.add(d);
       }
 
-      final byAdvisor = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+      final byAdvisor =
+          <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
       for (final d in filteredForRollup) {
         final aid = CrmCallRecordHelpers.agentIdOf(d.data());
         if (aid.isEmpty || !officeAdvisorIds.contains(aid)) continue;
         byAdvisor.putIfAbsent(aid, () => []).add(d);
       }
 
-      int scoreForDocs(String advisorId, List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+      int scoreForDocs(String advisorId,
+          List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
         if (docs.isEmpty) return 0;
         final rollup = buildRollupForAdvisor(
           advisorId: advisorId,
@@ -234,13 +344,15 @@ final brokerRevenueDashboardSnapshotProvider = Provider<RevenueDashboardSnapshot
       }
 
       final sortedAdvisors = byAdvisor.entries.toList()
-        ..sort((a, b) => scoreForDocs(b.key, b.value).compareTo(scoreForDocs(a.key, a.value)));
+        ..sort((a, b) => scoreForDocs(b.key, b.value)
+            .compareTo(scoreForDocs(a.key, a.value)));
 
       final leaderboard = <ConsultantLeaderboardEntry>[];
       var rank = 1;
       for (final e in sortedAdvisors.take(8)) {
         final sc = scoreForDocs(e.key, e.value);
-        final short = e.key.length >= 4 ? e.key.substring(e.key.length - 4) : e.key;
+        final short =
+            e.key.length >= 4 ? e.key.substring(e.key.length - 4) : e.key;
         leaderboard.add(
           ConsultantLeaderboardEntry(
             advisorId: e.key,

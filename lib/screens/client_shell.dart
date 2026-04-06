@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:flutter/material.dart';
 
@@ -40,6 +41,13 @@ class _ClientShellPageState extends State<ClientShellPage> {
             navItems: _navItems,
             pages: _pages,
             title: 'EmlakMaster',
+            shortcutMap: {
+              MainShellShortcut.openHomeTab: 0,
+              MainShellShortcut.openFavoritesTab: 1,
+              MainShellShortcut.openMessagesTab: 2,
+              MainShellShortcut.openVirtualTourTab: 3,
+              MainShellShortcut.openAccountTab: 4,
+            },
           ),
         ),
       ],

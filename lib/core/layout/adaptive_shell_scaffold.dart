@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
+
 /// Nav item for [AdaptiveShellScaffold].
 class AdaptiveNavItem {
   const AdaptiveNavItem(this.icon, this.label);
@@ -24,6 +25,7 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
     this.fab,
     this.fabLocation,
     this.onIndexChanged,
+    this.shortcutMap = const {},
   });
 
   final List<AdaptiveNavItem> navItems;
@@ -33,6 +35,7 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
   final Widget? fab;
   final FloatingActionButtonLocation? fabLocation;
   final void Function(int index)? onIndexChanged;
+  final Map<MainShellShortcut, int> shortcutMap;
 
   /// True when width >= [DesignTokens.breakpointWide] (sidebar layout).
   static bool isWide(BuildContext context) {
@@ -40,7 +43,8 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<AdaptiveShellScaffold> createState() => AdaptiveShellScaffoldState();
+  ConsumerState<AdaptiveShellScaffold> createState() =>
+      AdaptiveShellScaffoldState();
 }
 
 class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
@@ -82,7 +86,12 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   Widget build(BuildContext context) {
     ref.listen(mainShellShortcutProvider, (prev, next) {
       if (next == null) return;
-      final idx = widget.navItems.length - 1;
+      final idx = switch (next) {
+        MainShellShortcut.openAccountTab =>
+          widget.shortcutMap[next] ?? (widget.navItems.length - 1),
+        MainShellShortcut.openHomeTab => widget.shortcutMap[next] ?? 0,
+        _ => widget.shortcutMap[next] ?? -1,
+      };
       ref.read(mainShellShortcutProvider.notifier).state = null;
       if (idx >= 0 && idx < widget.navItems.length) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -102,7 +111,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       children: [
         if (widget.title != null && isWide)
           Padding(
-            padding: const EdgeInsets.fromLTRB(DesignTokens.space4, DesignTokens.space4, DesignTokens.space4, DesignTokens.space2),
+            padding: const EdgeInsets.fromLTRB(DesignTokens.space4,
+                DesignTokens.space4, DesignTokens.space4, DesignTokens.space2),
             child: Row(
               children: [
                 Text(
@@ -143,7 +153,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
               onDestinationSelected: _onNavTap,
               backgroundColor: surface,
               selectedIconTheme: IconThemeData(color: primary, size: 24),
-              unselectedIconTheme: IconThemeData(color: onSurfaceVariant, size: 22),
+              unselectedIconTheme:
+                  IconThemeData(color: onSurfaceVariant, size: 22),
               labelType: NavigationRailLabelType.all,
               destinations: widget.navItems
                   .map((e) => NavigationRailDestination(
@@ -163,11 +174,13 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       backgroundColor: ext.background,
       body: body,
       floatingActionButton: widget.fab,
-      floatingActionButtonLocation: widget.fabLocation ?? FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation:
+          widget.fabLocation ?? FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: surface,
-          border: Border(top: BorderSide(color: ext.border.withValues(alpha: 0.55))),
+          border: Border(
+              top: BorderSide(color: ext.border.withValues(alpha: 0.55))),
         ),
         child: SafeArea(
           child: Padding(
@@ -182,7 +195,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () => _onNavTap(i),
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusMd),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
@@ -198,7 +212,9 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                               item.label,
                               style: TextStyle(
                                 fontSize: 10,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
                                 color: isSelected ? primary : onSurfaceVariant,
                               ),
                               maxLines: 1,

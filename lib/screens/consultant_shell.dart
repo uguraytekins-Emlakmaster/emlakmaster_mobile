@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/pages/consultant_calls_page.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/pages/customer_list_page.dart';
@@ -10,6 +11,7 @@ import 'package:emlakmaster_mobile/features/tasks/presentation/pages/tasks_page.
 import 'package:emlakmaster_mobile/screens/listings_screen.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
+
 /// Danışman paneli: özetim, müşteriler, ilanlar, takip, görevler, ayarlar.
 /// Web/Desktop: sidebar; Mobile: bottom nav. Magic Call: Özetim üzerindeki birincil aksiyon bloğu.
 class ConsultantShellPage extends StatefulWidget {
@@ -57,6 +59,15 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
               navItems: ConsultantShellPage._navItems,
               pages: ConsultantShellPage._pages,
               title: 'Danışman Paneli',
+              shortcutMap: const {
+                MainShellShortcut.openHomeTab: 0,
+                MainShellShortcut.openCallsTab: 1,
+                MainShellShortcut.openCustomersTab: 2,
+                MainShellShortcut.openListingsTab: 3,
+                MainShellShortcut.openFollowUpTab: 4,
+                MainShellShortcut.openTasksTab: 5,
+                MainShellShortcut.openAccountTab: 6,
+              },
             ),
           ),
         ],

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/data/call_local_hive_store.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
@@ -19,6 +20,7 @@ final localCallRecordsStreamProvider =
 
   final controller = StreamController<List<LocalCallRecord>>();
   Timer? timer;
+  StreamSubscription<void>? resumedSub;
   var lastFingerprint = 0;
   var periodicTick = 0;
 
@@ -52,14 +54,18 @@ final localCallRecordsStreamProvider =
   }
 
   unawaited(emit(force: true));
-  timer = Timer.periodic(const Duration(seconds: 5), (_) {
+  resumedSub = AppLifecyclePowerService.onAppResumed.listen((_) {
+    unawaited(emit(force: true));
+  });
+  timer = Timer.periodic(const Duration(seconds: 12), (_) {
     periodicTick++;
-    final forceMinutePulse = periodicTick % 12 == 0;
+    final forceMinutePulse = periodicTick % 5 == 0;
     unawaited(emit(force: forceMinutePulse));
   });
 
   ref.onDispose(() {
     timer?.cancel();
+    resumedSub?.cancel();
     unawaited(controller.close());
   });
 

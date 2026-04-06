@@ -51,6 +51,7 @@ import '../../features/office/presentation/pages/office_admin_page.dart';
 import '../../features/office/presentation/pages/office_gate_page.dart';
 import '../../features/office/presentation/pages/office_recovery_page.dart';
 import '../intelligence/region_heatmap_defaults.dart';
+
 /// go_router ile merkezi routing. Login router içinde; beyaz ekran önlenir.
 class AppRouter {
   AppRouter._();
@@ -58,17 +59,22 @@ class AppRouter {
   static const String routeLogin = '/login';
   static const String routeRegister = '/register';
   static const String routeOnboarding = '/onboarding';
+
   /// İlk giriş: ofis oluştur / katıl + isteğe bağlı platform.
   static const String routeWorkspaceSetup = '/workspace-setup';
+
   /// Çok kiracılı: ofis yokken merkezi kapı.
   static const String routeOfficeGate = '/office';
   static const String routeOfficeCreate = '/office/create';
   static const String routeOfficeJoin = '/office/join';
   static const String routeOfficeInviteCreate = '/office/invite/create';
+
   /// Üyelik / işaretçi tutarsızlığı, askı, davet tamamlanmadı.
   static const String routeOfficeRecovery = '/office/recovery';
+
   /// Üye ve davet yönetimi (owner / admin / manager).
   static const String routeOfficeAdmin = '/office/admin';
+
   /// Birleşik mesaj merkezi (platform API’leri bağlanınca dolar).
   static const String routeMessageCenter = '/messages';
   static const String routeMessageThread = '/messages/thread';
@@ -117,16 +123,22 @@ class AppRouter {
   static const String routeBulkCampaign = '/campaigns/bulk';
   static const String routeRainbowAnalytics = '/rainbow-analytics';
   static const String routeRainbowIntelHistory = '/rainbow-intel-history';
+
   /// Market Pulse bölge kartı → harita / özet (`:regionId` = örn. kayapinar).
   static const String routeRegionInsight = '/region-insight/:regionId';
   static const String routeConnectedAccounts = '/settings/connected-accounts';
+
   /// Yönetici: resmi entegrasyon / dosya geri dönüş kurulum sihirbazı.
-  static const String routePlatformSetupWizard = '/settings/platform-setup-wizard';
+  static const String routePlatformSetupWizard =
+      '/settings/platform-setup-wizard';
+
   /// Harici platformlardan senkron ilanlar («Benim ilanlarım»).
   static const String routeMyExternalListings = '/listings/my-external';
+
   /// Mağaza toplu içe aktarma (dosya birincil; URL deneysel).
   static const String routeImportHub = '/settings/import-engine';
   static const String routeImportHistory = '/settings/import-history';
+
   /// İçe aktarılan ilanlar (yerel motor — Phase 1.5).
   static const String routeMyListings = '/listings/my-imported';
 
@@ -156,8 +168,10 @@ class AppRouter {
           final needsOfficeRecovery = ref.read(needsOfficeRecoveryProvider);
           if (user != null && needsRole) {
             final wsDone = OnboardingStore.instance.workspaceSetupCompletedSync;
-            if (!wsDone && path != routeWorkspaceSetup) return routeWorkspaceSetup;
-            if (wsDone && path == routeWorkspaceSetup) return routeRoleSelection;
+            if (!wsDone && path != routeWorkspaceSetup)
+              return routeWorkspaceSetup;
+            if (wsDone && path == routeWorkspaceSetup)
+              return routeRoleSelection;
             if (wsDone) {
               const allowWhileNeedsRole = <String>{
                 routeRoleSelection,
@@ -182,7 +196,10 @@ class AppRouter {
             }
             return null;
           }
-          if (user != null && !needsRole && !needsOffice && needsOfficeRecovery) {
+          if (user != null &&
+              !needsRole &&
+              !needsOffice &&
+              needsOfficeRecovery) {
             const allowWhileRecovery = <String>{
               routeOfficeRecovery,
               routeOfficeGate,
@@ -200,7 +217,10 @@ class AppRouter {
             }
             return null;
           }
-          if (user != null && !needsRole && !needsOffice && !needsOfficeRecovery) {
+          if (user != null &&
+              !needsRole &&
+              !needsOffice &&
+              !needsOfficeRecovery) {
             const officeSetupPaths = <String>{
               routeOfficeGate,
               routeOfficeCreate,
@@ -219,9 +239,12 @@ class AppRouter {
             }
           }
           if (user != null &&
-              (path == routeLogin || path == routeOnboarding || path == routeRegister)) {
+              (path == routeLogin ||
+                  path == routeOnboarding ||
+                  path == routeRegister)) {
             if (needsRole) {
-              if (!OnboardingStore.instance.workspaceSetupCompletedSync) return routeWorkspaceSetup;
+              if (!OnboardingStore.instance.workspaceSetupCompletedSync)
+                return routeWorkspaceSetup;
               return routeRoleSelection;
             }
             if (needsOffice) return routeOfficeGate;
@@ -234,7 +257,9 @@ class AppRouter {
             return routeHome;
           }
           if (user == null && path == routeOnboarding) return null;
-          if (user == null && path == routeLogin && !OnboardingStore.instance.completedSync) return routeOnboarding;
+          if (user == null &&
+              path == routeLogin &&
+              !OnboardingStore.instance.completedSync) return routeOnboarding;
           if (user == null &&
               path != routeLogin &&
               path != routeOnboarding &&
@@ -245,7 +270,10 @@ class AppRouter {
             return routeLogin;
           }
           final role = ref.read(displayRoleOrNullProvider);
-          if (user != null && role != null && role.isClientTier && _isStaffOnlyPath(path)) return routeHome;
+          if (user != null &&
+              role != null &&
+              role.isClientTier &&
+              _isStaffOnlyPath(path)) return routeHome;
           return null;
         } catch (e, st) {
           AppLogger.e('GoRouter redirect', e, st);
@@ -286,8 +314,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const WorkspaceSetupPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -304,8 +333,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const CreateOfficePage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -314,8 +344,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const JoinOfficePage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -324,8 +355,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const CreateOfficeInvitePage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -334,8 +366,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const OfficeRecoveryPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -344,8 +377,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const OfficeAdminPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -354,8 +388,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const MessageCenterPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -370,8 +405,9 @@ class AppRouter {
                 listingRef: extra['listingRef'] as String? ?? '—',
                 platformLabel: extra['platformLabel'] as String? ?? '',
               ),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -404,8 +440,9 @@ class AppRouter {
                 inAppCrmSession: extra?['inAppCrmSession'] as bool? ?? false,
                 startedFromScreen: extra?['startedFromScreen'] as String?,
               ),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -423,8 +460,9 @@ class AppRouter {
                 phoneNumber: extra?['phone'] as String?,
                 callSessionId: extra?['callSessionId'] as String?,
               ),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -434,8 +472,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ConsultantCallsPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -444,8 +483,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ConsultantResurrectionPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -454,8 +494,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const LazyCommandCenterPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -464,8 +505,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const LazyWarRoomPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -474,8 +516,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const LazyBrokerCommandPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -486,8 +529,9 @@ class AppRouter {
               key: state.pageKey,
               name: state.matchedLocation,
               child: CustomerDetailPage(customerId: id),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -499,8 +543,9 @@ class AppRouter {
               key: state.pageKey,
               name: state.matchedLocation,
               child: ListingDetailPage(listingId: id),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -510,8 +555,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const PipelineKanbanPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -520,8 +566,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const NotificationsCenterPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -530,8 +577,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const BulkCampaignPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -542,8 +590,9 @@ class AppRouter {
               key: state.pageKey,
               name: state.matchedLocation,
               child: RainbowAnalyticsCenterPage(prefillListingId: listingId),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -553,8 +602,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const IntelReportHistoryPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -569,8 +619,9 @@ class AppRouter {
               key: state.pageKey,
               name: state.matchedLocation,
               child: RegionInsightPage(region: region),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -580,8 +631,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ConnectedPlatformsPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -595,8 +647,9 @@ class AppRouter {
                 initialPlatform: extra?.initialPlatform,
                 editMode: extra?.editMode ?? false,
               ),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -606,8 +659,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const MyExternalListingsPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -619,8 +673,9 @@ class AppRouter {
               key: state.pageKey,
               name: state.matchedLocation,
               child: MyListingsPage(initialImportTaskId: taskId),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                  FadeTransition(opacity: animation, child: child),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -630,8 +685,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ImportHubPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -640,8 +696,9 @@ class AppRouter {
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ImportHistoryPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-                FadeTransition(opacity: animation, child: child),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) =>
+                    FadeTransition(opacity: animation, child: child),
           ),
         ),
       ],
@@ -707,12 +764,14 @@ class _HomeShellRoleErrorScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline_rounded, size: 64, color: AppThemeExtension.of(context).accent),
+              Icon(Icons.error_outline_rounded,
+                  size: 64, color: AppThemeExtension.of(context).accent),
               const SizedBox(height: 24),
               Text(
                 text,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: onSurface.withValues(alpha: 0.9), fontSize: 16),
+                style: TextStyle(
+                    color: onSurface.withValues(alpha: 0.9), fontSize: 16),
               ),
               if (detail != null) ...[
                 const SizedBox(height: 12),
@@ -721,7 +780,8 @@ class _HomeShellRoleErrorScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: onSurface.withValues(alpha: 0.55), fontSize: 11),
+                  style: TextStyle(
+                      color: onSurface.withValues(alpha: 0.55), fontSize: 11),
                 ),
               ],
               const SizedBox(height: 32),
@@ -733,7 +793,8 @@ class _HomeShellRoleErrorScreen extends ConsumerWidget {
                 label: const Text('Tekrar dene'),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppThemeExtension.of(context).accent,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),
               const SizedBox(height: 12),
@@ -746,7 +807,8 @@ class _HomeShellRoleErrorScreen extends ConsumerWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: onSurface.withValues(alpha: 0.9),
                   side: BorderSide(color: onSurface.withValues(alpha: 0.4)),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),
             ],
@@ -773,7 +835,9 @@ class _RouteLoadingScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'Yükleniyor...',
-              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.9), fontSize: 14),
+              style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                  fontSize: 14),
             ),
           ],
         ),
@@ -845,6 +909,7 @@ class _ErrorFallbackScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
+    final canPop = Navigator.of(context).canPop();
     return Scaffold(
       backgroundColor: AppThemeExtension.of(context).background,
       body: SafeArea(
@@ -868,19 +933,33 @@ class _ErrorFallbackScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Lütfen tekrar deneyin veya ana sayfaya dönün.',
+                message,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: onSurface.withValues(alpha: 0.9), fontSize: 14),
+                style: TextStyle(
+                    color: onSurface.withValues(alpha: 0.9), fontSize: 14),
               ),
               const SizedBox(height: 32),
-              FilledButton.icon(
-                onPressed: () => context.go(AppRouter.routeHome),
-                icon: const Icon(Icons.home_rounded),
-                label: const Text('Ana Sayfaya Dön'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppThemeExtension.of(context).accent,
-                  foregroundColor: AppThemeExtension.of(context).onBrand,
-                ),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => context.go(AppRouter.routeHome),
+                    icon: const Icon(Icons.home_rounded),
+                    label: const Text('Ana Sayfaya Dön'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppThemeExtension.of(context).accent,
+                      foregroundColor: AppThemeExtension.of(context).onBrand,
+                    ),
+                  ),
+                  if (canPop)
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      label: const Text('Geri Dön'),
+                    ),
+                ],
               ),
             ],
           ),

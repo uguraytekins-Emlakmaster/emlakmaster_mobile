@@ -372,6 +372,8 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
           shortcuts: const <ShortcutActivator, Intent>{
             SingleActivator(LogicalKeyboardKey.keyK, meta: true):
                 _OpenCommandPaletteIntent(),
+            SingleActivator(LogicalKeyboardKey.keyK, control: true):
+                _OpenCommandPaletteIntent(),
           },
           child: Actions(
             actions: <Type, Action<Intent>>{

@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 /// Arama ekranı state makinesi: connecting → connected → ending → (summary).
 enum CallUIState {
   connecting,
@@ -53,18 +54,24 @@ class _CallScreenState extends ConsumerState<CallScreen>
   bool _isMuted = false;
   bool _isSpeakerOn = false;
   bool _isKeypadOpen = false;
+
   /// Sürükleme sırasında anlık değer (animasyonsuz); null = panel fraction kullan
   double? _keypadDragValue;
   int _elapsedSeconds = 0;
   Timer? _ticker;
+
   /// Numara girişi (Magic / görüşme özeti; çevir modunda [ValueNotifier] tercih edilir)
   String _dialDigits = '';
+
   /// Çevir modu: tuş takımı — yalnızca bu alt ağaç [ValueListenableBuilder] ile yenilenir.
   ValueNotifier<String>? _dialEntryNotifier;
+
   /// Arama ekranı: true = sadece numara gir / tuş takımı; false = arama simülasyonu
   bool _isDialMode = false;
+
   /// Tuş takımından basılan rakamlar (aramada DTMF gösterimi)
   String _keypadDigits = '';
+
   /// Sürükleme başlangıç Y ve fraction (drag callback için)
   double _keypadDragStartY = 0;
   double _keypadDragStartFraction = 0;
@@ -116,30 +123,35 @@ class _CallScreenState extends ConsumerState<CallScreen>
     });
 
     if (!_isDialMode) {
-      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      if (_callState != CallUIState.connected) return;
+      _startElapsedTicker();
+
+      // connecting → connected (kısa gecikme ile arama “açılıyor” hissi)
+      Future<void>.delayed(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        setState(() => _callState = CallUIState.connected);
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final agentId = _signedInUid;
+        if (agentId == null) return;
+        unawaited(runWithResilience(
+          ref: ref as Ref<Object?>,
+          () => FirestoreService.setAgentStatus(
+              agentId: agentId, status: 'Görüşmede'),
+        ));
+      });
+    }
+  }
+
+  void _startElapsedTicker() {
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _callState != CallUIState.connected) return;
       setState(() {
         _elapsedSeconds++;
       });
     });
-
-    // connecting → connected (kısa gecikme ile arama “açılıyor” hissi)
-    Future<void>.delayed(const Duration(milliseconds: 800), () {
-      if (!mounted) return;
-      setState(() => _callState = CallUIState.connected);
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final agentId = _signedInUid;
-      if (agentId == null) return;
-      unawaited(runWithResilience(
-        ref: ref as Ref<Object?>,
-        () => FirestoreService.setAgentStatus(agentId: agentId, status: 'Görüşmede'),
-      ));
-    });
-    }
   }
 
   void _startCallWithDialNumber() {
@@ -179,12 +191,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
     _dialDigits = OutboundPhoneDial.sanitizeDialEntry(rawEntry);
     setState(() {
       _isDialMode = false;
-      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (!mounted) return;
-        if (_callState != CallUIState.connected) return;
-        setState(() => _elapsedSeconds++);
-      });
     });
+    _startElapsedTicker();
     Future<void>.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;
       setState(() => _callState = CallUIState.connected);
@@ -195,7 +203,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
       if (agentId == null) return;
       unawaited(runWithResilience(
         ref: ref as Ref<Object?>,
-        () => FirestoreService.setAgentStatus(agentId: agentId, status: 'Görüşmede'),
+        () => FirestoreService.setAgentStatus(
+            agentId: agentId, status: 'Görüşmede'),
       ));
     });
   }
@@ -219,12 +228,14 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
   void _onKeypadDragStart(DragStartDetails details) {
     _keypadDragStartY = details.globalPosition.dy;
-    _keypadDragStartFraction = _keypadDragValue ?? _keypadPanelAnimation?.value ?? 0;
+    _keypadDragStartFraction =
+        _keypadDragValue ?? _keypadPanelAnimation?.value ?? 0;
   }
 
   void _onKeypadDragUpdate(DragUpdateDetails details, double sheetHeight) {
     final delta = details.globalPosition.dy - _keypadDragStartY;
-    final newFraction = (_keypadDragStartFraction - delta / sheetHeight).clamp(0.0, 1.0);
+    final newFraction =
+        (_keypadDragStartFraction - delta / sheetHeight).clamp(0.0, 1.0);
     setState(() => _keypadDragValue = newFraction);
   }
 
@@ -245,18 +256,22 @@ class _CallScreenState extends ConsumerState<CallScreen>
   /// Kompakt tuş takımı + tutamaç + güvenli alan için yeterli yükseklik (kesilme önleme).
   static const double _keypadSheetMaxFraction = 0.58;
 
-  Widget _buildDraggableKeypadSheet(double screenHeight, AppThemeExtension ext) {
+  Widget _buildDraggableKeypadSheet(
+      double screenHeight, AppThemeExtension ext) {
     final sheetHeight = screenHeight * _keypadSheetMaxFraction;
-    final effectiveFraction = _keypadDragValue ?? _keypadPanelAnimation?.value ?? 0;
+    final effectiveFraction =
+        _keypadDragValue ?? _keypadPanelAnimation?.value ?? 0;
     final currentHeight = sheetHeight * effectiveFraction;
-    const r = BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusSheet));
+    const r =
+        BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusSheet));
 
     return GestureDetector(
       onVerticalDragStart: _onKeypadDragStart,
       onVerticalDragUpdate: (d) => _onKeypadDragUpdate(d, sheetHeight),
       onVerticalDragEnd: (_) => _onKeypadDragEnd(sheetHeight),
       child: AnimatedContainer(
-        duration: _keypadDragValue != null ? Duration.zero : _keypadSnapDuration,
+        duration:
+            _keypadDragValue != null ? Duration.zero : _keypadSnapDuration,
         curve: _keypadSnapCurve,
         height: currentHeight,
         child: ClipRRect(
@@ -278,13 +293,15 @@ class _CallScreenState extends ConsumerState<CallScreen>
                       child: Column(
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(top: DesignTokens.space3),
+                            padding:
+                                const EdgeInsets.only(top: DesignTokens.space3),
                             child: Center(
                               child: Container(
                                 width: 40,
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: ext.textTertiary.withValues(alpha: 0.45),
+                                  color:
+                                      ext.textTertiary.withValues(alpha: 0.45),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
@@ -303,7 +320,10 @@ class _CallScreenState extends ConsumerState<CallScreen>
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(
                                       color: ext.textSecondary,
                                     ),
                               ),
@@ -312,7 +332,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
                             child: LayoutBuilder(
                               builder: (context, constraints) {
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: DesignTokens.space2),
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: ConstrainedBox(
@@ -369,7 +390,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.keyboard_arrow_down_rounded, color: ext.textSecondary),
+                    icon: Icon(Icons.keyboard_arrow_down_rounded,
+                        color: ext.textSecondary),
                     onPressed: () {
                       HapticFeedback.lightImpact();
                       context.pop();
@@ -441,12 +463,14 @@ class _CallScreenState extends ConsumerState<CallScreen>
               child: ValueListenableBuilder<String>(
                 valueListenable: entry,
                 builder: (context, digits, _) {
-                  final canStart = OutboundPhoneDial.hasDialEntryContent(digits);
+                  final canStart =
+                      OutboundPhoneDial.hasDialEntryContent(digits);
                   final displayDigits = widget.inAppCrmSession
                       ? digits
                       : OutboundPhoneDial.formatDialDisplayTurkeyFirst(digits);
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.space5),
                     child: RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -475,7 +499,9 @@ class _CallScreenState extends ConsumerState<CallScreen>
                                   embeddedDial: true,
                                   onKeyPressed: (key) {
                                     final n = entry;
-                                    n.value = OutboundPhoneDial.sanitizeDialEntry(n.value + key);
+                                    n.value =
+                                        OutboundPhoneDial.sanitizeDialEntry(
+                                            n.value + key);
                                   },
                                 ),
                               ),
@@ -491,8 +517,10 @@ class _CallScreenState extends ConsumerState<CallScreen>
                             child: SizedBox(
                               width: double.infinity,
                               child: FilledButton.icon(
-                                onPressed: canStart ? _startCallWithDialNumber : null,
-                                icon: Icon(Icons.call_rounded, size: 22, color: ext.onBrand),
+                                onPressed:
+                                    canStart ? _startCallWithDialNumber : null,
+                                icon: Icon(Icons.call_rounded,
+                                    size: 22, color: ext.onBrand),
                                 label: Padding(
                                   padding: const EdgeInsets.only(left: 2),
                                   child: Text(
@@ -507,13 +535,16 @@ class _CallScreenState extends ConsumerState<CallScreen>
                                 style: FilledButton.styleFrom(
                                   backgroundColor: ext.accent,
                                   foregroundColor: ext.onBrand,
-                                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 22, vertical: 16),
                                   minimumSize: const Size(double.infinity, 56),
                                   alignment: Alignment.center,
                                   elevation: 0,
-                                  shadowColor: ext.shadowColor.withValues(alpha: 0.2),
+                                  shadowColor:
+                                      ext.shadowColor.withValues(alpha: 0.2),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                                    borderRadius: BorderRadius.circular(
+                                        DesignTokens.radiusControl),
                                   ),
                                 ),
                               ),
@@ -537,7 +568,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
     HapticFeedback.heavyImpact();
     setState(() => _callState = CallUIState.ending);
     final uid = _signedInUid;
-    final phone = widget.phone ?? (_dialDigits.trim().isNotEmpty ? _dialDigits.trim() : null);
+    final phone = widget.phone ??
+        (_dialDigits.trim().isNotEmpty ? _dialDigits.trim() : null);
     try {
       if (uid != null) {
         await runWithResilience(
@@ -569,7 +601,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
         'outcome': AppConstants.callOutcomeCompleted,
       };
       final customerId = widget.customerId;
-      if (customerId != null && customerId.isNotEmpty) extra['customerId'] = customerId;
+      if (customerId != null && customerId.isNotEmpty)
+        extra['customerId'] = customerId;
       if (phone != null && phone.isNotEmpty) extra['phone'] = phone;
       context.push(AppRouter.routeCallSummary, extra: extra);
     } catch (e) {
@@ -611,7 +644,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
               isKeypadOpen: _isKeypadOpen,
               isMagicCallSession: widget.inAppCrmSession,
               customerId: widget.customerId,
-              displayPhone: widget.phone ?? (_dialDigits.isNotEmpty ? _dialDigits : null),
+              displayPhone:
+                  widget.phone ?? (_dialDigits.isNotEmpty ? _dialDigits : null),
               onPop: () {
                 HapticFeedback.lightImpact();
                 context.pop();
@@ -656,7 +690,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
                         },
                         child: Container(
                           color: ext.shadowColor.withValues(alpha: 0.55),
-                          height: screenHeight * (1.0 - _keypadSheetMaxFraction),
+                          height:
+                              screenHeight * (1.0 - _keypadSheetMaxFraction),
                         ),
                       ),
                       _buildDraggableKeypadSheet(screenHeight, ext),
@@ -744,7 +779,8 @@ class _DialModeDialSurface extends StatelessWidget {
             children: [
               hero,
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
                 child: Container(
                   height: 1,
                   decoration: BoxDecoration(
@@ -810,11 +846,13 @@ class _DialModeLineContext extends StatelessWidget {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.corporate_fare_rounded, size: 18, color: ext.accent),
+                      Icon(Icons.corporate_fare_rounded,
+                          size: 18, color: ext.accent),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -879,6 +917,7 @@ class _DialHeroNumberField extends StatelessWidget {
   final AppThemeExtension ext;
   final ThemeData theme;
   final VoidCallback onBackspace;
+
   /// [_DialModeDialSurface] içinde: dış kart yok, tek kompozisyon hissi.
   final bool embedded;
 
@@ -935,7 +974,8 @@ class _DialHeroNumberField extends StatelessWidget {
       children: [
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space1),
+            padding:
+                const EdgeInsets.symmetric(horizontal: DesignTokens.space1),
             child: numberBlock,
           ),
         ),
@@ -952,7 +992,8 @@ class _DialHeroNumberField extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+                    border:
+                        Border.all(color: ext.border.withValues(alpha: 0.5)),
                     color: ext.surface.withValues(alpha: 0.65),
                   ),
                   child: Padding(
@@ -1008,7 +1049,8 @@ class _DialHeroNumberField extends StatelessWidget {
 }
 
 class _CallStatusChip extends StatelessWidget {
-  const _CallStatusChip({required this.state, required this.isMagicCallSession});
+  const _CallStatusChip(
+      {required this.state, required this.isMagicCallSession});
 
   final CallUIState state;
   final bool isMagicCallSession;
@@ -1079,7 +1121,8 @@ class _CallHeroCard extends ConsumerWidget {
         final phone = displayPhone?.trim();
         return Column(
           children: [
-            Icon(Icons.phone_in_talk_rounded, size: 44, color: ext.accent.withValues(alpha: 0.9)),
+            Icon(Icons.phone_in_talk_rounded,
+                size: 44, color: ext.accent.withValues(alpha: 0.9)),
             const SizedBox(height: DesignTokens.space4),
             Text(
               phone != null && phone.isNotEmpty ? phone : 'Numara belirtilmedi',
@@ -1095,7 +1138,8 @@ class _CallHeroCard extends ConsumerWidget {
               isMagicCallSession
                   ? 'Magic Call · CRM (gerçek GSM hattı değil)'
                   : 'Doğrudan arama',
-              style: theme.textTheme.bodySmall?.copyWith(color: ext.textSecondary),
+              style:
+                  theme.textTheme.bodySmall?.copyWith(color: ext.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1104,8 +1148,11 @@ class _CallHeroCard extends ConsumerWidget {
       final async = ref.watch(customerEntityByIdProvider(customerId!));
       return async.when(
         data: (c) {
-          final name = c?.fullName?.trim().isNotEmpty == true ? c!.fullName!.trim() : 'Müşteri';
-          final initial = name.isEmpty ? '?' : name.substring(0, 1).toUpperCase();
+          final name = c?.fullName?.trim().isNotEmpty == true
+              ? c!.fullName!.trim()
+              : 'Müşteri';
+          final initial =
+              name.isEmpty ? '?' : name.substring(0, 1).toUpperCase();
           final phoneLine = c?.primaryPhone?.trim();
           return Column(
             children: [
@@ -1153,7 +1200,8 @@ class _CallHeroCard extends ConsumerWidget {
                 isMagicCallSession
                     ? 'Uygulama içi CRM oturumu · AI asistan altta'
                     : 'CRM kaydı · AI asistan altta',
-                style: theme.textTheme.labelSmall?.copyWith(color: ext.textTertiary),
+                style: theme.textTheme.labelSmall
+                    ?.copyWith(color: ext.textTertiary),
                 textAlign: TextAlign.center,
               ),
               if (c?.source != null && c!.source!.trim().isNotEmpty) ...[
@@ -1172,7 +1220,9 @@ class _CallHeroCard extends ConsumerWidget {
         },
         loading: () => Padding(
           padding: const EdgeInsets.all(DesignTokens.space6),
-          child: Center(child: CircularProgressIndicator(color: ext.accent, strokeWidth: 2)),
+          child: Center(
+              child:
+                  CircularProgressIndicator(color: ext.accent, strokeWidth: 2)),
         ),
         error: (_, __) => Text(
           'Müşteri bilgisi alınamadı',
@@ -1200,7 +1250,8 @@ class _CallHeroCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _CallStatusChip(state: callState, isMagicCallSession: isMagicCallSession),
+          _CallStatusChip(
+              state: callState, isMagicCallSession: isMagicCallSession),
           const SizedBox(height: DesignTokens.space5),
           identity(),
           const SizedBox(height: DesignTokens.space5),
@@ -1220,7 +1271,8 @@ class _CallHeroCard extends ConsumerWidget {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.place_outlined, size: 16, color: ext.textTertiary),
+                    Icon(Icons.place_outlined,
+                        size: 16, color: ext.textTertiary),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
@@ -1240,7 +1292,8 @@ class _CallHeroCard extends ConsumerWidget {
             Text(
               'Hat konumu: profilden tanımlanır',
               textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(color: ext.textTertiary),
+              style:
+                  theme.textTheme.labelSmall?.copyWith(color: ext.textTertiary),
             ),
         ],
       ),
@@ -1339,11 +1392,13 @@ class _InCallSessionBody extends ConsumerWidget {
         children: [
           SizedBox(height: topPadding),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space2),
+            padding:
+                const EdgeInsets.symmetric(horizontal: DesignTokens.space2),
             child: Row(
               children: [
                 IconButton(
-                  icon: Icon(Icons.keyboard_arrow_down_rounded, color: ext.textSecondary),
+                  icon: Icon(Icons.keyboard_arrow_down_rounded,
+                      color: ext.textSecondary),
                   onPressed: onPop,
                 ),
                 const Spacer(),
@@ -1352,21 +1407,27 @@ class _InCallSessionBody extends ConsumerWidget {
                     final async = ref.watch(currentOfficeProvider);
                     final name = async.valueOrNull?.name;
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
-                        border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusPill),
+                        border: Border.all(
+                            color: ext.border.withValues(alpha: 0.45)),
                         color: ext.surfaceElevated.withValues(alpha: 0.9),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.business_rounded, size: 16, color: ext.accent),
+                          Icon(Icons.business_rounded,
+                              size: 16, color: ext.accent),
                           const SizedBox(width: 6),
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 200),
                             child: Text(
-                              name != null && name.isNotEmpty ? name : 'Ofis hattı',
+                              name != null && name.isNotEmpty
+                                  ? name
+                                  : 'Ofis hattı',
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.labelLarge?.copyWith(
                                 color: ext.textPrimary,
@@ -1384,7 +1445,8 @@ class _InCallSessionBody extends ConsumerWidget {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -1677,7 +1739,8 @@ class _RoundIconButton extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: ext.shadowColor.withValues(alpha: isActive ? 0.16 : 0.1),
+                      color: ext.shadowColor
+                          .withValues(alpha: isActive ? 0.16 : 0.1),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -1734,6 +1797,7 @@ class _KeypadSheet extends StatelessWidget {
   static const double _keyDiameterDial = 88.0;
   static const double _dialGapH = 17.0;
   static const double _dialGapV = 15.0;
+
   /// ITU E.161 — tanıdık çevir hissi; marka renkleriyle, Apple kopyası değil.
   static const Map<String, String> _dialLetterRow = {
     '2': 'ABC',
@@ -1767,10 +1831,18 @@ class _KeypadSheet extends StatelessWidget {
     final padV = dialMode ? DesignTokens.space5 : DesignTokens.space4;
 
     final keys = [
-      '1', '2', '3',
-      '4', '5', '6',
-      '7', '8', '9',
-      '*', '0', '#',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '*',
+      '0',
+      '#',
     ];
 
     if (embeddedDial && dialMode) {
@@ -1813,7 +1885,8 @@ class _KeypadSheet extends StatelessWidget {
               center: const Alignment(0, -0.32),
               radius: 1.4,
               colors: [
-                Color.lerp(ext.surfaceElevated, ext.accent, 0.055)!.withValues(alpha: 0.5),
+                Color.lerp(ext.surfaceElevated, ext.accent, 0.055)!
+                    .withValues(alpha: 0.5),
                 ext.surfaceElevated.withValues(alpha: 0.0),
               ],
               stops: const [0.0, 1.0],
@@ -1906,6 +1979,7 @@ class _KeypadDialKey extends StatelessWidget {
   final double diameter;
   final double labelFontSize;
   final bool dialMode;
+
   /// ITU E.161 harf satırı (2–9, 0 altında +); * / # boş.
   final String? letterRow;
   final AppThemeExtension ext;
@@ -1917,7 +1991,8 @@ class _KeypadDialKey extends StatelessWidget {
     final charcoalTop = Color.lerp(ext.surface, ext.surfaceElevated, 0.55)!;
     final charcoalMid = Color.lerp(ext.surface, ext.background, 0.35)!;
     final charcoalBottom = Color.lerp(ext.surface, ext.background, 0.55)!;
-    final goldRim = Color.lerp(ext.border, ext.accent, 0.28)!.withValues(alpha: 0.42);
+    final goldRim =
+        Color.lerp(ext.border, ext.accent, 0.28)!.withValues(alpha: 0.42);
     return BoxDecoration(
       shape: BoxShape.circle,
       gradient: LinearGradient(
@@ -1975,10 +2050,10 @@ class _KeypadDialKey extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasLetters = letterRow != null && letterRow!.isNotEmpty;
-    final warmSplash =
-        Color.lerp(ext.accent, ext.surfaceElevated, 0.18)!.withValues(alpha: dialMode ? 0.22 : 0.14);
-    final warmHighlight =
-        Color.lerp(ext.accent, ext.surfaceElevated, 0.3)!.withValues(alpha: dialMode ? 0.095 : 0.07);
+    final warmSplash = Color.lerp(ext.accent, ext.surfaceElevated, 0.18)!
+        .withValues(alpha: dialMode ? 0.22 : 0.14);
+    final warmHighlight = Color.lerp(ext.accent, ext.surfaceElevated, 0.3)!
+        .withValues(alpha: dialMode ? 0.095 : 0.07);
 
     final digitColor = dialMode
         ? Color.lerp(ext.textPrimary, ext.accent, 0.06)
@@ -2033,7 +2108,8 @@ class _KeypadDialKey extends StatelessWidget {
         child: Ink(
           height: diameter,
           width: diameter,
-          decoration: dialMode ? _dialModeFaceDecoration() : _compactFaceDecoration(),
+          decoration:
+              dialMode ? _dialModeFaceDecoration() : _compactFaceDecoration(),
           child: Center(child: content),
         ),
       ),

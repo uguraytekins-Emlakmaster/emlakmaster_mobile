@@ -1,7 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Ana kabuk (danışman / yönetici / müşteri) bir sonraki karede hesap sekmesine geçsin.
-/// [AdaptiveShellScaffold] dinler; indeks her kabukta son sekmedir (Ayarlar veya Profil).
-enum MainShellShortcut { openAccountTab }
+/// Ana kabuk içinde bir sonraki karede hedef sekmeye git.
+enum MainShellShortcut {
+  openHomeTab,
+  openCallsTab,
+  openCustomersTab,
+  openListingsTab,
+  openFollowUpTab,
+  openTasksTab,
+  openFavoritesTab,
+  openMessagesTab,
+  openVirtualTourTab,
+  openAccountTab,
+}
 
-final mainShellShortcutProvider = StateProvider<MainShellShortcut?>((ref) => null);
+final mainShellShortcutProvider =
+    StateProvider<MainShellShortcut?>((ref) => null);
