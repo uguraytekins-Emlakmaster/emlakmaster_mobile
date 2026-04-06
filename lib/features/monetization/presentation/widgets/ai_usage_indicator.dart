@@ -16,9 +16,13 @@ class AiUsageIndicator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final usage = ref.watch(usageTrackerProvider);
     final ext = AppThemeExtension.of(context);
-    final label = usage.isPro
-        ? 'Bu ay ${usage.aiUsageThisMonth} AI önerisi kullandın · PRO sınırsız'
-        : 'Bu ay ${usage.aiUsageThisMonth} / 20 AI hakkı kullandın';
+    final label = compact
+        ? usage.isPro
+            ? 'AI: ${usage.aiUsageThisMonth} kullanım · PRO sınırsız'
+            : 'AI: ${usage.aiUsageThisMonth} / 20 bu ay'
+        : usage.isPro
+            ? 'Bu ay ${usage.aiUsageThisMonth} AI önerisi kullandın · PRO sınırsız'
+            : 'Bu ay ${usage.aiUsageThisMonth} / 20 AI hakkı kullandın';
     final tone = usage.isFree && usage.isNearAiLimit ? ext.warning : ext.info;
 
     return Container(
@@ -27,9 +31,10 @@ class AiUsageIndicator extends ConsumerWidget {
         vertical: compact ? DesignTokens.space2 : DesignTokens.space3,
       ),
       decoration: BoxDecoration(
-        color: tone.withValues(alpha: 0.12),
+        color: tone.withValues(alpha: compact ? 0.08 : 0.12),
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: tone.withValues(alpha: 0.28)),
+        border:
+            Border.all(color: tone.withValues(alpha: compact ? 0.18 : 0.28)),
       ),
       child: Row(
         children: [

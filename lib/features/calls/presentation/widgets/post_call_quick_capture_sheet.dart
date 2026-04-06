@@ -5,7 +5,6 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/application/apply_quick_call_capture.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -183,8 +182,6 @@ class _PostCallQuickCaptureBodyState
                       ),
                 ),
               ],
-              const SizedBox(height: 14),
-              const AiUsageIndicator(compact: true),
               const SizedBox(height: 18),
               Text(
                 'Sonuç',

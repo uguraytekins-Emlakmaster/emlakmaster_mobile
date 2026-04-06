@@ -50,7 +50,7 @@ class ProBlurOverlayGate extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Unlock full insights with PRO',
+                      'PRO ile tam içgörüyü aç',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: ext.textPrimary,
@@ -76,7 +76,7 @@ class ProBlurOverlayGate extends StatelessWidget {
                         backgroundColor: ext.accent,
                         foregroundColor: Colors.black,
                       ),
-                      child: const Text('Upgrade to PRO'),
+                      child: const Text('PRO\'yu Gör'),
                     ),
                   ],
                 ),

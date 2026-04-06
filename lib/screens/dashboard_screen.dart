@@ -145,7 +145,7 @@ class DashboardPage extends ConsumerWidget {
                             child: BrokerDashboardIntelligenceSummaryCard(),
                           ),
                         ),
-                        px(const AiUsageIndicator()),
+                        px(const AiUsageIndicator(compact: true)),
                         px(const ManagerRevenueSummaryCard()),
                         px(const ManagerEscalationsCard()),
                         px(const PostCallCaptureDashboardReminder()),
