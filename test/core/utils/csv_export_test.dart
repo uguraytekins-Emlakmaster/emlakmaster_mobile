@@ -68,7 +68,12 @@ void main() {
     test('empty list returns header with BOM', () {
       final csv = callsToCsv([]);
       expect(csv.startsWith('\uFEFF'), isTrue);
-      expect(csv.contains('id,agentId,durationSec,outcome,createdAt'), isTrue);
+      expect(
+        csv.contains(
+          'id,agentId,customerId,phoneNumber,source,handoffMode,outcome,quickOutcomeLabelTr,quickCaptureNote,captureCompletedAt,durationSec,createdAt',
+        ),
+        isTrue,
+      );
     });
   });
 }
