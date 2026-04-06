@@ -16,6 +16,7 @@ import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/c
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_last_call_signals_section.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_post_call_ai_insight_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_timeline_intelligence_strip.dart';
+import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/customer_revenue_intelligence_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_transcript_hint_strip.dart';
 import 'package:emlakmaster_mobile/features/smart_matching_engine/presentation/providers/portfolio_match_provider.dart';
 import 'package:flutter/material.dart';
@@ -71,6 +72,7 @@ class CustomerDetailPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _CustomerHeader(customerId: customerId),
+                    CustomerRevenueIntelligenceStrip(customerId: customerId),
                     CustomerTimelineIntelligenceStrip(customerId: customerId),
                     CustomerInsightStrip(customerId: customerId),
                     Consumer(

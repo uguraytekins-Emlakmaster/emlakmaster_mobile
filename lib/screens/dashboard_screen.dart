@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/manager_escalations_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broker_dashboard_intelligence_summary_card.dart';
+import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/manager_revenue_summary_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broker_dashboard_alerts_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/smart_task_suggestions_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/dashboard_kpi_section.dart';
@@ -24,6 +25,8 @@ import 'package:emlakmaster_mobile/widgets/bento_ai_news.dart';
 import 'package:emlakmaster_mobile/widgets/bento_analytics.dart';
 import 'package:emlakmaster_mobile/widgets/bento_saha_radar.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/pro_blur_overlay_gate.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
@@ -43,8 +46,10 @@ class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
   Future<void> _onRefresh(WidgetRef ref) async {
-    final lean =
-        ref.read(featureFlagsProvider).valueOrNull?[AppConstants.keyV1LeanProduct] ?? true;
+    final lean = ref
+            .read(featureFlagsProvider)
+            .valueOrNull?[AppConstants.keyV1LeanProduct] ??
+        true;
     ref.invalidate(externalListingsStreamProvider);
     if (!lean) {
       ref.invalidate(marketHeatmapProvider);
@@ -96,7 +101,9 @@ class DashboardPage extends ConsumerWidget {
               !(m?[AppConstants.keyV1LeanProduct] ?? true);
         }),
       );
-      final scrollBottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
+      final scrollBottomPad =
+          DashboardLayoutTokens.shellScrollBottomPadding(context);
+      final blurInsights = ref.watch(shouldBlurRevenueInsightsProvider);
 
       final gapOp = compact
           ? DashboardLayoutTokens.gapOperationalTight
@@ -137,17 +144,24 @@ class DashboardPage extends ConsumerWidget {
                             child: BrokerDashboardIntelligenceSummaryCard(),
                           ),
                         ),
+                        px(const ManagerRevenueSummaryCard()),
                         px(const ManagerEscalationsCard()),
                         px(const PostCallCaptureDashboardReminder()),
                         px(const BrokerDashboardAlertsCard()),
                         px(const SmartTaskSuggestionsCard()),
-                        px(const ExecutionRemindersCard(surface: ExecutionReminderSurface.broker)),
+                        px(const ExecutionRemindersCard(
+                            surface: ExecutionReminderSurface.broker)),
                         // —— Layer 2: Operational — KPI, komuta, acil, özet ——
                         if (kpiBar) px(const DashboardKpiSection()),
                         if (kpiBar) SizedBox(height: gapOp),
                         px(const PriorityCallSignalsCard()),
                         if (kpiBar) SizedBox(height: gapOp),
-                        px(const RainbowAnalyticsCenterCard()),
+                        px(
+                          ProBlurOverlayGate(
+                            locked: blurInsights,
+                            child: const RainbowAnalyticsCenterCard(),
+                          ),
+                        ),
                         SizedBox(height: gapOp),
                         px(const ManagerPlatformConnectionsSummaryCard()),
                         if (lean) ...[
@@ -179,14 +193,16 @@ class DashboardPage extends ConsumerWidget {
                           px(
                             Column(
                               children: [
-                                const RepaintBoundary(child: BentoPowerAnalytics()),
+                                const RepaintBoundary(
+                                    child: BentoPowerAnalytics()),
                                 SizedBox(height: compact ? 16 : 24),
                                 LayoutBuilder(
                                   builder: (context, c) {
                                     final stack = c.maxWidth < 520;
                                     if (stack) {
                                       return Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           const BentoSahaRadar(),
                                           SizedBox(height: compact ? 12 : 16),
@@ -195,7 +211,8 @@ class DashboardPage extends ConsumerWidget {
                                       );
                                     }
                                     return Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         const Expanded(child: BentoSahaRadar()),
                                         SizedBox(width: compact ? 16 : 24),

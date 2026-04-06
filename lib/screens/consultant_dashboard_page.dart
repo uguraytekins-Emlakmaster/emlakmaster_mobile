@@ -4,7 +4,10 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/usage_limit_banner.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/sync_delayed_customers_dashboard_card.dart';
+import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/consultant_performance_strip.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_intelligence_dashboard_section.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
@@ -42,6 +45,8 @@ class ConsultantDashboardPage extends ConsumerWidget {
     final summaryBottomPad =
         DashboardLayoutTokens.shellScrollBottomPadding(context);
     final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
+    final showSoftLimitBanner = ref.watch(shouldShowSoftLimitProvider);
+    final showUpgradeNudge = ref.watch(shouldShowUpgradeNudgeProvider);
     final greeting = user?.email != null
         ? 'Merhaba, ${user!.email!.split('@').first}'
         : 'Merhaba';
@@ -51,105 +56,139 @@ class ConsultantDashboardPage extends ConsumerWidget {
       body: SafeArea(
         child: RepaintBoundary(
           child: CustomScrollView(
-          cacheExtent: 380,
-          slivers: [
-            // —— Layer 1–2: Hero + Operational (above-the-fold) ——
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DashboardLayoutTokens.horizontalPadding,
-                  DashboardLayoutTokens.pageTopInset,
-                  DashboardLayoutTokens.horizontalPadding,
-                  DashboardLayoutTokens.pageBottomInset,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _DashboardHeroHeader(greeting: greeting),
-                    const SizedBox(height: DashboardLayoutTokens.gapHeroToOperational),
-                    const PostCallCaptureDashboardReminder(),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
-                    const _ConsultantTeamLine(),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
-                    const _TodayKpiRow(),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
-                    const RevenueIntelligenceDashboardSection(),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperationalTight),
-                    const ExecutionRemindersCard(surface: ExecutionReminderSurface.consultant),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
-                    const _MagicCallPrimaryBlock(),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
-                    const PriorityCallSignalsCard(),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
-                    const SyncDelayedCustomersDashboardCard(),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
-                    const _QuickStatsCard(compact: true),
-                    const SizedBox(height: DashboardLayoutTokens.gapOperational),
-                    const _WeeklyGoalCard(),
-                  ],
-                ),
-              ),
-            ),
-            // —— Layer 3: Insight — V1 odaklı modda kapatılır (piyasa/ticker/akademi ağırlığı)
-            if (!lean) ...[
-              const SliverToBoxAdapter(
-                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-              ),
-              const SliverToBoxAdapter(
+            cacheExtent: 380,
+            slivers: [
+              // —— Layer 1–2: Hero + Operational (above-the-fold) ——
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: DashboardLayoutTokens.horizontalPadding,
+                  padding: const EdgeInsets.fromLTRB(
+                    DashboardLayoutTokens.horizontalPadding,
+                    DashboardLayoutTokens.pageTopInset,
+                    DashboardLayoutTokens.horizontalPadding,
+                    DashboardLayoutTokens.pageBottomInset,
                   ),
-                  child: _PipelineChampionCard(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _DashboardHeroHeader(greeting: greeting),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapHeroToOperational),
+                      const PostCallCaptureDashboardReminder(),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperationalTight),
+                      const _ConsultantTeamLine(),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperationalTight),
+                      const _TodayKpiRow(),
+                      if (showSoftLimitBanner) ...[
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperationalTight),
+                        const UsageLimitBanner(),
+                      ] else if (showUpgradeNudge) ...[
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperationalTight),
+                        const UsageLimitBanner(
+                          message:
+                              'You are using this feature very actively 🔥',
+                          subtitle:
+                              'Çağrı hacminiz büyüyor. PRO ile takip ve AI akışlarını kesintisiz tutabilirsiniz.',
+                        ),
+                      ],
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperationalTight),
+                      const ConsultantPerformanceStrip(),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperationalTight),
+                      const RevenueIntelligenceDashboardSection(),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperationalTight),
+                      const ExecutionRemindersCard(
+                          surface: ExecutionReminderSurface.consultant),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperational),
+                      const _MagicCallPrimaryBlock(),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperational),
+                      const PriorityCallSignalsCard(),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperational),
+                      const SyncDelayedCustomersDashboardCard(),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperational),
+                      const _QuickStatsCard(compact: true),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperational),
+                      const _WeeklyGoalCard(),
+                    ],
+                  ),
                 ),
               ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-              ),
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: DashboardLayoutTokens.horizontalPadding,
-                  ),
-                  child: DiscoveryPanel(),
+              // —— Layer 3: Insight — V1 odaklı modda kapatılır (piyasa/ticker/akademi ağırlığı)
+              if (!lean) ...[
+                const SliverToBoxAdapter(
+                  child:
+                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
                 ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-              ),
-              const SliverToBoxAdapter(child: MasterTicker()),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-              ),
-              const SliverToBoxAdapter(child: FinanceBar()),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-              ),
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: DashboardLayoutTokens.horizontalPadding,
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: DashboardLayoutTokens.horizontalPadding,
+                    ),
+                    child: _PipelineChampionCard(),
                   ),
-                  child: MarketPulsePanel(),
                 ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-              ),
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: DashboardLayoutTokens.horizontalPadding,
+                const SliverToBoxAdapter(
+                  child:
+                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+                ),
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: DashboardLayoutTokens.horizontalPadding,
+                    ),
+                    child: DiscoveryPanel(),
                   ),
-                  child: _ConsultantAcademyCard(),
                 ),
+                const SliverToBoxAdapter(
+                  child:
+                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+                ),
+                const SliverToBoxAdapter(child: MasterTicker()),
+                const SliverToBoxAdapter(
+                  child:
+                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+                ),
+                const SliverToBoxAdapter(child: FinanceBar()),
+                const SliverToBoxAdapter(
+                  child:
+                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+                ),
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: DashboardLayoutTokens.horizontalPadding,
+                    ),
+                    child: MarketPulsePanel(),
+                  ),
+                ),
+                const SliverToBoxAdapter(
+                  child:
+                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+                ),
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: DashboardLayoutTokens.horizontalPadding,
+                    ),
+                    child: _ConsultantAcademyCard(),
+                  ),
+                ),
+              ],
+              SliverToBoxAdapter(
+                child: SizedBox(height: summaryBottomPad + DesignTokens.space3),
               ),
             ],
-            SliverToBoxAdapter(
-              child: SizedBox(height: summaryBottomPad + DesignTokens.space3),
-            ),
-          ],
-        ),
+          ),
         ),
       ),
     );
@@ -242,7 +281,8 @@ class _ConsultantTeamLine extends ConsumerWidget {
                   : Future.value(),
               builder: (context, managerSnap) {
                 final teamName = team?.name ?? '—';
-                final managerName = managerSnap.data?.name ?? managerSnap.data?.email ?? '—';
+                final managerName =
+                    managerSnap.data?.name ?? managerSnap.data?.email ?? '—';
                 return Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
@@ -305,7 +345,8 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
             side: BorderSide(color: ext.borderSubtle),
             padding: const EdgeInsets.symmetric(vertical: 10),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+              borderRadius:
+                  BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
             ),
           ),
           icon: Icon(Icons.phone_in_talk_rounded, size: 18, color: ext.accent),
@@ -323,7 +364,8 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () {
                   HapticFeedback.selectionClick();
-                  AnalyticsService.instance.logEvent(AnalyticsEvents.consultantCallsTap);
+                  AnalyticsService.instance
+                      .logEvent(AnalyticsEvents.consultantCallsTap);
                   context.push(AppRouter.routeConsultantCalls);
                 },
                 style: OutlinedButton.styleFrom(
@@ -331,7 +373,8 @@ class _MagicCallPrimaryBlock extends StatelessWidget {
                   side: BorderSide(color: ext.borderSubtle),
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+                    borderRadius: BorderRadius.circular(
+                        DashboardLayoutTokens.radiusCardS),
                   ),
                 ),
                 icon: const Icon(Icons.call_rounded, size: 18),
@@ -366,9 +409,11 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
         color: ext.accent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+          borderRadius:
+              BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: DesignTokens.space4),
+            padding: const EdgeInsets.symmetric(
+                vertical: 12, horizontal: DesignTokens.space4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -398,7 +443,8 @@ class _TodayKpiRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    final uid =
+        ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     final textStyleLabel = TextStyle(
       color: ext.textSecondary,
       fontSize: DesignTokens.fontSizeXs,
@@ -481,7 +527,8 @@ class _KpiChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Container(
-      constraints: const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightKpi),
+      constraints:
+          const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightKpi),
       padding: const EdgeInsets.symmetric(
         horizontal: DesignTokens.space2,
         vertical: 6,
@@ -499,7 +546,10 @@ class _KpiChip extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: labelStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(label,
+                    style: labelStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
                 Text(
                   value,
                   style: valueStyle,
@@ -538,9 +588,11 @@ class _ConsultantAcademyCard extends StatelessWidget {
                 padding: const EdgeInsets.all(DesignTokens.space3),
                 decoration: BoxDecoration(
                   color: ext.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+                  borderRadius:
+                      BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
                 ),
-                child: Icon(Icons.workspace_premium_rounded, color: ext.accent, size: 22),
+                child: Icon(Icons.workspace_premium_rounded,
+                    color: ext.accent, size: 22),
               ),
               const SizedBox(width: DesignTokens.space3),
               Expanded(
@@ -600,7 +652,8 @@ class _ConsultantAcademyCard extends StatelessWidget {
                   isScrollControlled: true,
                   backgroundColor: ext.surface,
                   shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
+                    borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(DesignTokens.radiusLg)),
                   ),
                   builder: (ctx) => DraggableScrollableSheet(
                     initialChildSize: 0.55,
@@ -615,7 +668,8 @@ class _ConsultantAcademyCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.school_rounded, color: ext.accent, size: 28),
+                              Icon(Icons.school_rounded,
+                                  color: ext.accent, size: 28),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
@@ -632,17 +686,26 @@ class _ConsultantAcademyCard extends StatelessWidget {
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             'Açılış cümlesi',
-                            style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w700, fontSize: 13),
+                            style: TextStyle(
+                                color: ext.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             '“Anlıyorum; bütçenizi zorlamadan size uygun seçenekleri birlikte netleştirelim.”',
-                            style: TextStyle(color: ext.textSecondary, fontSize: 13, height: 1.45),
+                            style: TextStyle(
+                                color: ext.textSecondary,
+                                fontSize: 13,
+                                height: 1.45),
                           ),
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             'Adım adım',
-                            style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w700, fontSize: 13),
+                            style: TextStyle(
+                                color: ext.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -650,7 +713,10 @@ class _ConsultantAcademyCard extends StatelessWidget {
                             '2) Çerçevele: Aynı bölgede son dönem kapanan örnekleri (m² fiyatı) kısaca paylaş.\n\n'
                             '3) Alternatif sun: Daha küçük metrekare veya komşu mahallede 1–2 seçenek öner.\n\n'
                             '4) Sonraki adım: “Yarın aynı saatte iki ilanı yerinde gösterebilir miyim?” diye net randevu iste.',
-                            style: TextStyle(color: ext.textTertiary, fontSize: 12, height: 1.5),
+                            style: TextStyle(
+                                color: ext.textTertiary,
+                                fontSize: 12,
+                                height: 1.5),
                           ),
                           const SizedBox(height: DesignTokens.space5),
                           SizedBox(
@@ -666,12 +732,14 @@ class _ConsultantAcademyCard extends StatelessWidget {
                                   },
                                 );
                               },
-                              icon: const Icon(Icons.phone_in_talk_rounded, size: 20),
+                              icon: const Icon(Icons.phone_in_talk_rounded,
+                                  size: 20),
                               label: const Text('Magic Call ile uygula'),
                               style: FilledButton.styleFrom(
                                 backgroundColor: ext.accent,
                                 foregroundColor: ext.onBrand,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
                               ),
                             ),
                           ),
@@ -705,18 +773,23 @@ class _WeeklyGoalCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    final uid =
+        ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return StreamBuilder<int>(
       stream: FirestoreService.agentWeeklyCallCountStream(uid),
       builder: (context, snap) {
         final current = snap.data ?? 0;
-        final progress = weeklyGoal > 0 ? (current / weeklyGoal).clamp(0.0, 1.0) : 0.0;
+        final progress =
+            weeklyGoal > 0 ? (current / weeklyGoal).clamp(0.0, 1.0) : 0.0;
         return Container(
-          constraints: const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightOperationalCard),
-          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: 10),
+          constraints: const BoxConstraints(
+              minHeight: DashboardLayoutTokens.minHeightOperationalCard),
+          padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space4, vertical: 10),
           decoration: BoxDecoration(
             color: ext.surfaceElevated,
-            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+            borderRadius:
+                BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
             border: Border.all(color: ext.borderSubtle),
           ),
           child: Column(
@@ -728,7 +801,9 @@ class _WeeklyGoalCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       'Bu hafta',
-                      style: TextStyle(color: ext.textSecondary, fontSize: DesignTokens.fontSizeSm),
+                      style: TextStyle(
+                          color: ext.textSecondary,
+                          fontSize: DesignTokens.fontSizeSm),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -782,11 +857,14 @@ class _PipelineChampionCard extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
         child: Container(
-          constraints: const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightInsightCard),
-          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space4),
+          constraints: const BoxConstraints(
+              minHeight: DashboardLayoutTokens.minHeightInsightCard),
+          padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space4, vertical: DesignTokens.space4),
           decoration: BoxDecoration(
             color: ext.surfaceElevated,
-            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+            borderRadius:
+                BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
             border: Border.all(color: ext.border),
           ),
           child: Row(
@@ -795,7 +873,8 @@ class _PipelineChampionCard extends StatelessWidget {
                 padding: const EdgeInsets.all(DesignTokens.space3),
                 decoration: BoxDecoration(
                   color: ext.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+                  borderRadius:
+                      BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
                 ),
                 child: Icon(
                   Icons.account_tree_rounded,
@@ -861,113 +940,121 @@ class _QuickStatsCard extends ConsumerWidget {
     final iconSize = compact ? 20.0 : 24.0;
     return RepaintBoundary(
       child: Container(
-      constraints: BoxConstraints(
-        minHeight: compact ? DashboardLayoutTokens.minHeightOperationalCard : DashboardLayoutTokens.minHeightInsightCard,
-      ),
-      padding: EdgeInsets.all(pad),
-      decoration: BoxDecoration(
-        color: ext.surface,
-        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
-        border: Border.all(color: ext.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(iconBox),
-                decoration: BoxDecoration(
-                  color: ext.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
-                ),
-                child: Icon(
-                  Icons.replay_rounded,
-                  color: ext.accent,
-                  size: iconSize,
-                ),
-              ),
-              SizedBox(width: compact ? DesignTokens.space3 : DesignTokens.space4),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Takip listesi',
-                      style: TextStyle(
-                        color: ext.textPrimary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: compact ? DesignTokens.fontSizeSm : DesignTokens.fontSizeMd,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (isLoading)
-                      Text(
-                        'Takip listesi yükleniyor...',
-                        style: TextStyle(
-                          color: ext.textSecondary,
-                          fontSize: DesignTokens.fontSizeSm,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    else
-                      Text(
-                        count == 0
-                            ? 'Şu an takip edilecek lead yok'
-                            : '$count lead takip bekliyor',
-                        style: TextStyle(
-                          color: ext.textSecondary,
-                          fontSize: DesignTokens.fontSizeSm,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-              if (count > 0)
-                TextButton(
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    visualDensity: VisualDensity.compact,
-                    foregroundColor: ext.accent,
+        constraints: BoxConstraints(
+          minHeight: compact
+              ? DashboardLayoutTokens.minHeightOperationalCard
+              : DashboardLayoutTokens.minHeightInsightCard,
+        ),
+        padding: EdgeInsets.all(pad),
+        decoration: BoxDecoration(
+          color: ext.surface,
+          borderRadius:
+              BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+          border: Border.all(color: ext.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(iconBox),
+                  decoration: BoxDecoration(
+                    color: ext.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(
+                        DashboardLayoutTokens.radiusCardS),
                   ),
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    context.push(AppRouter.routeResurrection);
-                  },
-                  child: const Text('Görüntüle'),
+                  child: Icon(
+                    Icons.replay_rounded,
+                    color: ext.accent,
+                    size: iconSize,
+                  ),
                 ),
+                SizedBox(
+                    width: compact ? DesignTokens.space3 : DesignTokens.space4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Takip listesi',
+                        style: TextStyle(
+                          color: ext.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: compact
+                              ? DesignTokens.fontSizeSm
+                              : DesignTokens.fontSizeMd,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (isLoading)
+                        Text(
+                          'Takip listesi yükleniyor...',
+                          style: TextStyle(
+                            color: ext.textSecondary,
+                            fontSize: DesignTokens.fontSizeSm,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      else
+                        Text(
+                          count == 0
+                              ? 'Şu an takip edilecek lead yok'
+                              : '$count lead takip bekliyor',
+                          style: TextStyle(
+                            color: ext.textSecondary,
+                            fontSize: DesignTokens.fontSizeSm,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                if (count > 0)
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      visualDensity: VisualDensity.compact,
+                      foregroundColor: ext.accent,
+                    ),
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      context.push(AppRouter.routeResurrection);
+                    },
+                    child: const Text('Görüntüle'),
+                  ),
+              ],
+            ),
+            if (!compact) ...[
+              const SizedBox(height: DesignTokens.space4),
+              Text(
+                'Magic Call ile aradığın müşterilerin özeti otomatik kaydedilir; '
+                'takip sekmesinden sessiz kalan lead\'lere ulaşabilirsin.',
+                style: TextStyle(
+                  color: ext.textTertiary,
+                  fontSize: DesignTokens.fontSizeXs,
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 6),
+              Text(
+                'Sessiz kalan lead\'ler için yeniden kazanım.',
+                style: TextStyle(
+                  color: ext.textTertiary,
+                  fontSize: DesignTokens.fontSizeXs,
+                  height: 1.25,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
-          ),
-          if (!compact) ...[
-            const SizedBox(height: DesignTokens.space4),
-            Text(
-              'Magic Call ile aradığın müşterilerin özeti otomatik kaydedilir; '
-              'takip sekmesinden sessiz kalan lead\'lere ulaşabilirsin.',
-              style: TextStyle(
-                color: ext.textTertiary,
-                fontSize: DesignTokens.fontSizeXs,
-              ),
-            ),
-          ] else ...[
-            const SizedBox(height: 6),
-            Text(
-              'Sessiz kalan lead\'ler için yeniden kazanım.',
-              style: TextStyle(
-                color: ext.textTertiary,
-                fontSize: DesignTokens.fontSizeXs,
-                height: 1.25,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
           ],
-        ],
+        ),
       ),
-    ),
     );
   }
 }

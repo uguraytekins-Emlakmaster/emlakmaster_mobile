@@ -4,9 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
+import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/features/calls/data/call_local_hive_store.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
+import 'package:emlakmaster_mobile/features/monetization/services/usage_service.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_call_capture_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -34,7 +38,8 @@ class OutboundSystemHandoffPage extends ConsumerStatefulWidget {
       _OutboundSystemHandoffPageState();
 }
 
-class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandoffPage> {
+class _OutboundSystemHandoffPageState
+    extends ConsumerState<OutboundSystemHandoffPage> {
   bool _started = false;
 
   @override
@@ -44,11 +49,15 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
   }
 
   void _logOutboundHandoffFailure(Object e, StackTrace st) {
-    AppLogger.e('createOutboundCallHandoffSession failed (GSM handoff continues)', e, st);
+    AppLogger.e(
+        'createOutboundCallHandoffSession failed (GSM handoff continues)',
+        e,
+        st);
     if (kDebugMode) {
       debugPrint('[OutboundHandoff] ${e.runtimeType}: $e');
       if (e is FirebaseException) {
-        debugPrint('[OutboundHandoff] Firebase code=${e.code} message=${e.message}');
+        debugPrint(
+            '[OutboundHandoff] Firebase code=${e.code} message=${e.message}');
       }
       if (e is StateError) {
         debugPrint('[OutboundHandoff] StateError: ${e.message}');
@@ -82,7 +91,8 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
 
       if (!OutboundPhoneDial.isLikelyCallablePhone(resolved)) {
         if (!mounted) return;
-        _snackAndPop(router, 'Geçerli bir telefon numarası değil. Numarayı kontrol edin.');
+        _snackAndPop(router,
+            'Geçerli bir telefon numarası değil. Numarayı kontrol edin.');
         return;
       }
 
@@ -95,40 +105,57 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
         return;
       }
 
+      final usageService = ref.read(usageServiceProvider);
+      await usageService.warmUp();
+      final canTrackCall = usageService.canUseCallRecording();
+      if (canTrackCall) {
+        await usageService.incrementCallUsage();
+      } else {
+        AnalyticsService.instance.logEvent(
+          AnalyticsEvents.limitReachedCall,
+          {AnalyticsEvents.paramFeature: 'call_recording'},
+        );
+      }
+
       await FirestoreService.ensureInitialized();
 
       final createdAtMs = DateTime.now().millisecondsSinceEpoch;
-      final localRecordId =
-          '${PostCallCaptureDraft.localPrefix}$createdAtMs';
-      await CallLocalHiveStore.instance.ensureInit();
-      await CallLocalHiveStore.instance.insertCallStart(
-        agentId: uid,
-        localId: localRecordId,
-        phoneNumber: phone,
-        createdAtMs: createdAtMs,
-        customerId: widget.customerId,
-        startedFromScreen: widget.startedFromScreen,
-      );
+      final localRecordId = '${PostCallCaptureDraft.localPrefix}$createdAtMs';
+
+      if (canTrackCall) {
+        await CallLocalHiveStore.instance.ensureInit();
+        await CallLocalHiveStore.instance.insertCallStart(
+          agentId: uid,
+          localId: localRecordId,
+          phoneNumber: phone,
+          createdAtMs: createdAtMs,
+          customerId: widget.customerId,
+          startedFromScreen: widget.startedFromScreen,
+        );
+      }
 
       String? sessionId;
       var crmSessionOk = false;
-      try {
-        await runWithResilience(
-          ref: ref as Ref<Object?>,
-          () async {
-            sessionId = await FirestoreService.createOutboundCallHandoffSession(
-              advisorId: uid,
-              customerId: widget.customerId,
-              phoneNumber: phone,
-              startedFromScreen: widget.startedFromScreen,
-            );
-          },
-        );
-        crmSessionOk = sessionId != null && sessionId!.isNotEmpty;
-      } catch (e, st) {
-        _logOutboundHandoffFailure(e, st);
-        sessionId = null;
-        crmSessionOk = false;
+      if (canTrackCall) {
+        try {
+          await runWithResilience(
+            ref: ref as Ref<Object?>,
+            () async {
+              sessionId =
+                  await FirestoreService.createOutboundCallHandoffSession(
+                advisorId: uid,
+                customerId: widget.customerId,
+                phoneNumber: phone,
+                startedFromScreen: widget.startedFromScreen,
+              );
+            },
+          );
+          crmSessionOk = sessionId != null && sessionId!.isNotEmpty;
+        } catch (e, st) {
+          _logOutboundHandoffFailure(e, st);
+          sessionId = null;
+          crmSessionOk = false;
+        }
       }
 
       if (crmSessionOk && sessionId != null && sessionId!.isNotEmpty) {
@@ -153,6 +180,16 @@ class _OutboundSystemHandoffPageState extends ConsumerState<OutboundSystemHandof
             behavior: SnackBarBehavior.floating,
           ),
         );
+        router.pop();
+        return;
+      }
+
+      if (!canTrackCall) {
+        await showUpgradeBottomSheet(
+          context,
+          feature: 'call_recording',
+        );
+        if (!mounted) return;
         router.pop();
         return;
       }

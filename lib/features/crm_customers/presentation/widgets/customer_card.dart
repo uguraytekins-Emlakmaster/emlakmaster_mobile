@@ -3,6 +3,9 @@ import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/broker_customer_alert.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
+import 'package:emlakmaster_mobile/features/revenue_engine/presentation/providers/revenue_engine_providers.dart';
+import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_customer_row_badges.dart';
+import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_ui_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +42,11 @@ class CustomerCard extends ConsumerWidget {
     final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
     final brokerAlert =
         role.isManagerTier && brokerAlertsActiveForCustomer(customer);
-    final syncDelayedRisk = ref.watch(syncDelayedRiskCustomerIdsProvider).contains(customer.id);
+    final revenueSignal = ref.watch(
+      customerRevenueSignalsMapProvider.select((m) => m[customer.id]),
+    );
+    final syncDelayedRisk = revenueSignal?.syncDelayedRisk ??
+        ref.watch(syncDelayedRiskCustomerIdsProvider).contains(customer.id);
     return Semantics(
       label: '${customer.fullName} müşteri kartı',
       button: true,
@@ -113,7 +120,9 @@ class CustomerCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  if (customer.leadTemperature != null)
+                  if (revenueSignal != null)
+                    RevenueBandScoreChip(signal: revenueSignal)
+                  else if (customer.leadTemperature != null)
                     _TemperatureChip(value: customer.leadTemperature!)
                   else
                     _LeadScoreChip(score: temperatureScore.score, level: temperatureScore.level),
@@ -160,7 +169,9 @@ class CustomerCard extends ConsumerWidget {
                     ),
                 ],
               ),
-              if (customer.lastInteractionAt != null || customer.nextSuggestedAction != null) ...[
+              if (customer.lastInteractionAt != null ||
+                  customer.nextSuggestedAction != null ||
+                  (revenueSignal != null && !revenueSignal.recommendationSuppressed)) ...[
                 const SizedBox(height: DesignTokens.space2),
                 Row(
                   children: [
@@ -168,7 +179,20 @@ class CustomerCard extends ConsumerWidget {
                       _LastContactChip(lastAt: customer.lastInteractionAt),
                       const SizedBox(width: DesignTokens.space2),
                     ],
-                    if (customer.nextSuggestedAction != null)
+                    if (revenueSignal != null && !revenueSignal.recommendationSuppressed)
+                      Expanded(
+                        child: Text(
+                          revenueNextActionLine(revenueSignal),
+                          style: TextStyle(
+                            color: AppThemeExtension.of(context).accent,
+                            fontSize: DesignTokens.fontSizeXs,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )
+                    else if (customer.nextSuggestedAction != null)
                       Expanded(
                         child: Text(
                           customer.nextSuggestedAction!,

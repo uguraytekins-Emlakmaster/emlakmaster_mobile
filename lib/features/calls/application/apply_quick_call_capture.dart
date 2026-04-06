@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
+import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -7,17 +9,22 @@ import 'package:emlakmaster_mobile/features/calls/data/pending_handoff_outbound_
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
+import 'package:emlakmaster_mobile/features/monetization/services/usage_service.dart';
+import 'package:flutter/material.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_call_capture_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Hızlı çağrı kaydını Firestore’a uygular ve bekleyen taslağı temizler.
 Future<void> applyQuickCallCapture({
   required WidgetRef ref,
+  BuildContext? context,
   required PostCallCaptureDraft draft,
   required String outcomeCode,
   String? note,
   DateTime? followUpReminderAt,
   bool createFollowUpTask = false,
+
   /// `hot` | `warm` | `cold` — opsiyonel sıcaklık ipucu
   String? heatBand,
 }) async {
@@ -26,7 +33,9 @@ Future<void> applyQuickCallCapture({
 
   // Yerel taslak: önce kuyruk flush zincirini bekle (arka planda hf_ oluşmuş olabilir).
   if (draft.localRecordId.startsWith(PostCallCaptureDraft.localPrefix)) {
-    await ref.read(postCallCaptureProvider.notifier).flushPendingOutboundQueue();
+    await ref
+        .read(postCallCaptureProvider.notifier)
+        .flushPendingOutboundQueue();
   }
 
   var effective = draft;
@@ -56,7 +65,29 @@ Future<void> applyQuickCallCapture({
     );
   }
 
-  final signals = _signalsFor(outcomeCode, heatBand);
+  final cid = effective.customerId;
+  var canUseAi = true;
+  if (cid != null && cid.isNotEmpty) {
+    final usageService = ref.read(usageServiceProvider);
+    await usageService.warmUp();
+    canUseAi = usageService.canUseAi();
+    if (canUseAi) {
+      await usageService.incrementAiUsage();
+    } else {
+      AnalyticsService.instance.logEvent(
+        AnalyticsEvents.limitReachedAi,
+        {AnalyticsEvents.paramFeature: 'ai_analysis'},
+      );
+      if (context != null && context.mounted) {
+        await showUpgradeBottomSheet(
+          context,
+          feature: 'ai_analysis',
+        );
+      }
+    }
+  }
+
+  final signals = canUseAi ? _signalsFor(outcomeCode, heatBand) : null;
 
   String? newFirestoreCallId;
   await runWithResilience(
@@ -70,7 +101,8 @@ Future<void> applyQuickCallCapture({
           followUpReminderAt: followUpReminderAt,
         );
       } else {
-        newFirestoreCallId = await FirestoreService.createCallRecordWithQuickCapture(
+        newFirestoreCallId =
+            await FirestoreService.createCallRecordWithQuickCapture(
           advisorId: uid,
           customerId: effective.customerId,
           phoneNumber: effective.phone,
@@ -82,7 +114,6 @@ Future<void> applyQuickCallCapture({
         );
       }
 
-      final cid = effective.customerId;
       if (cid != null && cid.isNotEmpty) {
         final noteLine = StringBuffer('📞 Hızlı kayıt: $label');
         if (trimmed != null && trimmed.isNotEmpty) {
@@ -98,8 +129,8 @@ Future<void> applyQuickCallCapture({
       }
 
       if (createFollowUpTask && cid != null && cid.isNotEmpty) {
-        final due = followUpReminderAt ??
-            DateTime.now().add(const Duration(days: 1));
+        final due =
+            followUpReminderAt ?? DateTime.now().add(const Duration(days: 1));
         await FirestoreService.setTask({
           'advisorId': uid,
           'customerId': cid,

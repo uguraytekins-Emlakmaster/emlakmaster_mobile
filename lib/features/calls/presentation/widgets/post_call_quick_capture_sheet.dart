@@ -33,7 +33,8 @@ class _PostCallQuickCaptureBody extends ConsumerStatefulWidget {
       _PostCallQuickCaptureBodyState();
 }
 
-class _PostCallQuickCaptureBodyState extends ConsumerState<_PostCallQuickCaptureBody> {
+class _PostCallQuickCaptureBodyState
+    extends ConsumerState<_PostCallQuickCaptureBody> {
   String? _outcomeCode;
   final _noteCtrl = TextEditingController();
   bool _createTask = false;
@@ -75,6 +76,7 @@ class _PostCallQuickCaptureBodyState extends ConsumerState<_PostCallQuickCapture
     try {
       await applyQuickCallCapture(
         ref: ref,
+        context: context,
         draft: widget.draft,
         outcomeCode: code,
         note: _noteCtrl.text,
@@ -110,7 +112,8 @@ class _PostCallQuickCaptureBodyState extends ConsumerState<_PostCallQuickCapture
       extra: {
         'outcome': AppConstants.callOutcomeSystemHandoff,
         'durationSec': null,
-        if (widget.draft.customerId != null && widget.draft.customerId!.isNotEmpty)
+        if (widget.draft.customerId != null &&
+            widget.draft.customerId!.isNotEmpty)
           'customerId': widget.draft.customerId,
         'phone': widget.draft.phone,
         'callSessionId': widget.draft.callSessionId,
@@ -196,8 +199,7 @@ class _PostCallQuickCaptureBodyState extends ConsumerState<_PostCallQuickCapture
                     ChoiceChip(
                       label: Text(o.labelTr),
                       selected: _outcomeCode == o.code,
-                      onSelected: (_) =>
-                          setState(() => _outcomeCode = o.code),
+                      onSelected: (_) => setState(() => _outcomeCode = o.code),
                       selectedColor: ext.accent.withValues(alpha: 0.22),
                       labelStyle: TextStyle(
                         color: _outcomeCode == o.code
@@ -220,7 +222,8 @@ class _PostCallQuickCaptureBodyState extends ConsumerState<_PostCallQuickCapture
                   filled: true,
                   fillColor: ext.surface.withValues(alpha: 0.6),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusControl),
                   ),
                 ),
               ),
@@ -245,8 +248,8 @@ class _PostCallQuickCaptureBodyState extends ConsumerState<_PostCallQuickCapture
                       child: ChoiceChip(
                         label: Text(h.$2),
                         selected: _heatBand == h.$1,
-                        onSelected: (_) =>
-                            setState(() => _heatBand = _heatBand == h.$1 ? null : h.$1),
+                        onSelected: (_) => setState(
+                            () => _heatBand = _heatBand == h.$1 ? null : h.$1),
                       ),
                     ),
                 ],

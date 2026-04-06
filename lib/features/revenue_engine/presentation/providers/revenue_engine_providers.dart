@@ -4,7 +4,9 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/office_wide_customers_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
+import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/data/customer_revenue_signals_builder.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/domain/consultant_performance_engine.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/domain/revenue_models.dart';
@@ -132,3 +134,137 @@ CustomerRevenueSignals? customerRevenueSignalsFor(
 ) {
   return map[customer.id];
 }
+
+/// Son 500 çağrı (ofis gelir özeti için müşteri kümesine süzülür).
+final brokerCallsDocumentsProvider =
+    StreamProvider.autoDispose<List<QueryDocumentSnapshot<Map<String, dynamic>>>>((ref) {
+  return FirestoreService.callsStream().map((s) => s.docs);
+});
+
+/// Ofis müşterileri için gelir motoru haritası (yönetici paneli).
+final officeCustomerRevenueSignalsMapProvider =
+    Provider.family<Map<String, CustomerRevenueSignals>, String>((ref, officeId) {
+  if (officeId.isEmpty) return {};
+  final customersAsync = ref.watch(officeWideCustomerListProvider(officeId));
+  final allDocs = ref.watch(brokerCallsDocumentsProvider).valueOrNull ?? [];
+  final locals = ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
+  final syncRisk = ref.watch(syncDelayedRiskCustomerIdsProvider);
+
+  return customersAsync.maybeWhen(
+    data: (customers) {
+      if (customers.isEmpty) return <String, CustomerRevenueSignals>{};
+      final ids = customers.map((c) => c.id).toSet();
+      final filtered = allDocs.where((d) {
+        final cid = CrmCallRecordHelpers.customerIdOf(d.data());
+        return cid != null && ids.contains(cid);
+      }).toList();
+      return buildCustomerRevenueSignalsMap(
+        customers: customers,
+        callDocs: filtered,
+        localCalls: locals,
+        openTaskCustomerIds: const {},
+        syncDelayedRiskCustomerIds: syncRisk,
+        now: DateTime.now(),
+      );
+    },
+    orElse: () => <String, CustomerRevenueSignals>{},
+  );
+});
+
+/// Yönetici dashboard’u: ofis müşterileri + son çağrılar üzerinden özet + danışman sıralaması.
+final brokerRevenueDashboardSnapshotProvider = Provider<RevenueDashboardSnapshot>((ref) {
+  final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
+  if (uid.isEmpty) {
+    return const RevenueDashboardSnapshot(
+      hotCustomers: [],
+      actionToday: [],
+      atRiskSync: [],
+      selfPerformanceScore: 0,
+      leaderboard: [],
+    );
+  }
+  final officeId = ref.watch(userDocStreamProvider(uid)).valueOrNull?.officeId ?? '';
+  if (officeId.isEmpty) {
+    return const RevenueDashboardSnapshot(
+      hotCustomers: [],
+      actionToday: [],
+      atRiskSync: [],
+      selfPerformanceScore: 0,
+      leaderboard: [],
+    );
+  }
+
+  final signals = ref.watch(officeCustomerRevenueSignalsMapProvider(officeId));
+  final customersAsync = ref.watch(officeWideCustomerListProvider(officeId));
+  final allDocs = ref.watch(brokerCallsDocumentsProvider).valueOrNull ?? [];
+
+  return customersAsync.maybeWhen(
+    data: (customers) {
+      final byId = {for (final c in customers) c.id: c};
+      final officeAdvisorIds = customers
+          .map((c) => c.assignedAdvisorId)
+          .whereType<String>()
+          .where((s) => s.trim().isNotEmpty)
+          .toSet();
+
+      final filteredForRollup = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      final customerIds = customers.map((c) => c.id).toSet();
+      for (final d in allDocs) {
+        final cid = CrmCallRecordHelpers.customerIdOf(d.data());
+        if (cid == null || !customerIds.contains(cid)) continue;
+        filteredForRollup.add(d);
+      }
+
+      final byAdvisor = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+      for (final d in filteredForRollup) {
+        final aid = CrmCallRecordHelpers.agentIdOf(d.data());
+        if (aid.isEmpty || !officeAdvisorIds.contains(aid)) continue;
+        byAdvisor.putIfAbsent(aid, () => []).add(d);
+      }
+
+      int scoreForDocs(String advisorId, List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+        if (docs.isEmpty) return 0;
+        final rollup = buildRollupForAdvisor(
+          advisorId: advisorId,
+          callDocs: docs,
+          missedFollowUps: 0,
+          inactivityDays: 0,
+        );
+        return computeConsultantPerformanceScore(rollup);
+      }
+
+      final sortedAdvisors = byAdvisor.entries.toList()
+        ..sort((a, b) => scoreForDocs(b.key, b.value).compareTo(scoreForDocs(a.key, a.value)));
+
+      final leaderboard = <ConsultantLeaderboardEntry>[];
+      var rank = 1;
+      for (final e in sortedAdvisors.take(8)) {
+        final sc = scoreForDocs(e.key, e.value);
+        final short = e.key.length >= 4 ? e.key.substring(e.key.length - 4) : e.key;
+        leaderboard.add(
+          ConsultantLeaderboardEntry(
+            advisorId: e.key,
+            displayLabel: '···$short',
+            performanceScore: sc,
+            rank: rank++,
+          ),
+        );
+      }
+
+      return buildRevenueDashboardSnapshot(
+        signals: signals,
+        customerById: byId,
+        selfPerformanceScore: 0,
+        leaderboard: leaderboard,
+        now: DateTime.now(),
+      );
+    },
+    orElse: () => const RevenueDashboardSnapshot(
+      hotCustomers: [],
+      actionToday: [],
+      atRiskSync: [],
+      selfPerformanceScore: 0,
+      leaderboard: [],
+    ),
+  );
+});

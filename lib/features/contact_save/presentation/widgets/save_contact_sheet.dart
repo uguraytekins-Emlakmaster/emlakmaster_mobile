@@ -8,10 +8,15 @@ import 'package:emlakmaster_mobile/features/contact_save/data/save_contact_servi
 import 'package:emlakmaster_mobile/features/contact_save/domain/contact_save_request.dart';
 import 'package:emlakmaster_mobile/features/contact_save/domain/extract_contact_from_voice.dart'
     show logVoiceContactParseDebug, parseVoiceContact;
+import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/usage_limit_banner.dart';
+import 'package:emlakmaster_mobile/features/monetization/services/usage_service.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 /// Rehbere ve uygulamaya kaydet: sesli komut (AI yardımı) + manuel giriş.
 /// Pro: tam AI asistan; Normal: sesli komut ile rehber + uygulama kaydı.
 void showSaveContactSheet(
@@ -59,7 +64,8 @@ class _SaveContactSheetContent extends ConsumerStatefulWidget {
       _SaveContactSheetContentState();
 }
 
-class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetContent> {
+class _SaveContactSheetContentState
+    extends ConsumerState<_SaveContactSheetContent> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
@@ -125,8 +131,10 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
               Navigator.of(ctx).pop();
               await ContactPermissionHelper.instance.openSystemSettings();
             },
-            style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
-            child: const Text('Ayarlara git', style: TextStyle(color: Colors.black)),
+            style: FilledButton.styleFrom(
+                backgroundColor: AppThemeExtension.of(context).accent),
+            child: const Text('Ayarlara git',
+                style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -211,22 +219,35 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
       _saving = true;
       _error = null;
     });
-    final agentId =
-        ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+    final agentId = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
 
     SaveToDeviceResult deviceResult = SaveToDeviceResult.success;
     bool okApp = false;
+    var customerTrackingLimited = false;
     if (_saveToDevice) {
       deviceResult = await SaveContactService.instance.saveToDevice(_request);
     }
     final okDevice = deviceResult == SaveToDeviceResult.success;
     if (_saveToApp && agentId.isNotEmpty) {
-      final id = await SaveContactService.instance.saveToApp(
-        _request,
-        assignedAgentId: agentId,
-        source: widget.source,
-      );
-      okApp = id != null;
+      final usageService = ref.read(usageServiceProvider);
+      await usageService.warmUp();
+      if (!usageService.canTrackCustomer()) {
+        customerTrackingLimited = true;
+        if (mounted) {
+          await showUpgradeBottomSheet(
+            context,
+            feature: 'customer_limit',
+          );
+        }
+      } else {
+        await usageService.incrementCustomerUsage();
+        final id = await SaveContactService.instance.saveToApp(
+          _request,
+          assignedAgentId: agentId,
+          source: widget.source,
+        );
+        okApp = id != null;
+      }
     } else if (_saveToApp && agentId.isEmpty) {
       okApp = false;
     }
@@ -238,11 +259,29 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
         _showContactPermissionSettingsDialog(context);
         return;
       }
-      setState(() => _error = 'Rehbere kayıt için izin verin veya tekrar deneyin.');
+      setState(
+          () => _error = 'Rehbere kayıt için izin verin veya tekrar deneyin.');
       return;
     }
     if (_saveToApp && !okApp) {
-      setState(() => _error = 'Uygulamaya kayıt başarısız. İnternet kontrol edin.');
+      if (customerTrackingLimited && okDevice) {
+        Navigator.of(context).pop();
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+                'Rehbere kaydedildi. Uygulamada daha fazla müşteri için PRO gerekir.'),
+            backgroundColor: AppThemeExtension.of(context).accent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      if (customerTrackingLimited) {
+        return;
+      }
+      setState(
+          () => _error = 'Uygulamaya kayıt başarısız. İnternet kontrol edin.');
       return;
     }
     if (okApp) {
@@ -268,6 +307,11 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final showCustomerLimitBanner = ref.watch(
+      usageTrackerProvider.select(
+        (u) => u.isFree && u.isNearCustomerLimit,
+      ),
+    );
     return DraggableScrollableSheet(
       initialChildSize: 0.72,
       minChildSize: 0.42,
@@ -285,11 +329,18 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
           children: [
             const PremiumBottomSheetHandle(),
             const SizedBox(height: DesignTokens.space4),
-            PremiumSheetHeader(
+            const PremiumSheetHeader(
               title: 'Rehbere ve uygulamaya kaydet',
               subtitle:
                   'Sesli komut veya manuel giriş. Kayıtlar CRM ile eşlenir; rehber izni ayrıca sorulur.',
             ),
+            if (showCustomerLimitBanner) ...[
+              const SizedBox(height: DesignTokens.space3),
+              const UsageLimitBanner(
+                subtitle:
+                    '30 müşteri sınırına yaklaşıyorsunuz. CRM takibini kesintisiz sürdürmek için PRO açabilirsiniz.',
+              ),
+            ],
             const SizedBox(height: DesignTokens.space5),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -315,10 +366,11 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                         Expanded(
                           child: Text(
                             'Basılı tutun, ad ve telefon söyleyin',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: ext.textSecondary,
-                                  height: 1.3,
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: ext.textSecondary,
+                                      height: 1.3,
+                                    ),
                           ),
                         ),
                         PushToTalkButton(
@@ -357,17 +409,20 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                     ? 'Sesli girişte eksik veya belirsiz — lütfen doğrulayın'
                     : null,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                   borderSide: BorderSide(
                     color: _highlightName ? ext.warning : ext.border,
                     width: _highlightName ? 1.5 : 1,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                   borderSide: BorderSide(
                     color: _highlightName ? ext.warning : ext.accent,
                     width: _highlightName ? 1.5 : 2,
@@ -393,17 +448,20 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                     ? 'Numara algılanamadı veya belirsiz — lütfen doğrulayın'
                     : null,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                   borderSide: BorderSide(
                     color: _highlightPhone ? ext.warning : ext.border,
                     width: _highlightPhone ? 1.5 : 1,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                   borderSide: BorderSide(
                     color: _highlightPhone ? ext.warning : ext.accent,
                     width: _highlightPhone ? 1.5 : 2,
@@ -422,14 +480,17 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                 labelText: 'E-posta (isteğe bağlı)',
                 labelStyle: TextStyle(color: ext.textSecondary),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                   borderSide: BorderSide(color: ext.border),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                   borderSide: BorderSide(color: ext.accent, width: 1.5),
                 ),
                 filled: true,
@@ -446,14 +507,17 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                 hintText: 'Arama notu, bütçe vb.',
                 labelStyle: TextStyle(color: ext.textSecondary),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                   borderSide: BorderSide(color: ext.border),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                   borderSide: BorderSide(color: ext.accent, width: 1.5),
                 ),
                 filled: true,
@@ -489,7 +553,8 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
               const SizedBox(height: 8),
               Text(
                 _error!,
-                style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13),
+                style: TextStyle(
+                    color: AppThemeExtension.of(context).danger, fontSize: 13),
               ),
             ],
             const SizedBox(height: DesignTokens.space5),
@@ -500,9 +565,11 @@ class _SaveContactSheetContentState extends ConsumerState<_SaveContactSheetConte
                 style: FilledButton.styleFrom(
                   backgroundColor: ext.accent,
                   foregroundColor: ext.onBrand,
-                  padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: DesignTokens.space4),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusControl),
                   ),
                 ),
                 child: _saving

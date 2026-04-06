@@ -17,4 +17,9 @@ export 'package:emlakmaster_mobile/features/revenue_engine/domain/high_value_ran
 export 'package:emlakmaster_mobile/features/revenue_engine/domain/lead_score_engine.dart';
 export 'package:emlakmaster_mobile/features/revenue_engine/domain/revenue_models.dart';
 export 'package:emlakmaster_mobile/features/revenue_engine/presentation/providers/revenue_engine_providers.dart';
+export 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/consultant_performance_strip.dart';
+export 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/customer_revenue_intelligence_strip.dart';
+export 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/manager_revenue_summary_card.dart';
+export 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_customer_row_badges.dart';
 export 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_intelligence_dashboard_section.dart';
+export 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_ui_formatters.dart';

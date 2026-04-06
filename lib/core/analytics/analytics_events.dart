@@ -17,11 +17,16 @@ abstract final class AnalyticsEvents {
   static const String callsBulkSms = 'calls_bulk_sms';
   static const String callsBulkWhatsappStart = 'calls_bulk_whatsapp_start';
   static const String callsDeviceSyncResult = 'calls_device_sync_result';
-  static const String callsDevicePermissionDenied = 'calls_device_permission_denied';
+  static const String callsDevicePermissionDenied =
+      'calls_device_permission_denied';
   static const String callsDeviceSyncSuccess = 'calls_device_sync_success';
   static const String callsDeviceSyncError = 'calls_device_sync_error';
   static const String magicCallTap = 'magic_call_tap';
   static const String consultantCallsTap = 'consultant_calls_tap';
+  static const String limitReachedCall = 'limit_reached_call';
+  static const String limitReachedAi = 'limit_reached_ai';
+  static const String upgradeClicked = 'upgrade_clicked';
+  static const String upgradeConverted = 'upgrade_converted';
 
   // —— Yerel çağrı kaydı → Firestore senkron (Hive) ——
   static const String syncSuccess = 'sync_success';
@@ -36,6 +41,7 @@ abstract final class AnalyticsEvents {
   static const String paramSetting = 'setting';
   static const String paramError = 'error';
   static const String paramResult = 'result';
+  static const String paramFeature = 'feature';
   static const String paramPermanently = 'permanently';
   static const String paramSyncedCount = 'synced_count';
 

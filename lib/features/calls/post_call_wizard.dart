@@ -2,12 +2,16 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:math' as math;
 
 import 'package:emlakmaster_mobile/core/ai/ai_gate.dart';
+import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
+import 'package:emlakmaster_mobile/features/monetization/services/usage_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
@@ -29,11 +33,11 @@ import 'package:go_router/go_router.dart';
 /// (kullanıcı transkript alanını elle değiştirmediyse) `lastCallTranscript` için [mergeSpeechToTextHandoffIfPresent] ile kaydedilir.
 /// Duygu durumu: AI görüşme tonuna göre 5 seçenekten biri.
 enum CallSentiment {
-  veryPositive,   // 🤩 Çok Heyecanlı/Pozitif
-  uncertain,      // 🤔 Kararsız/Düşünceli
-  analytical,     // 🧐 Analitik/Sorgulayıcı
-  lowInterest,   // 📉 Düşük İlgi
-  urgent,         // ⚠️ Acelesi Var
+  veryPositive, // 🤩 Çok Heyecanlı/Pozitif
+  uncertain, // 🤔 Kararsız/Düşünceli
+  analytical, // 🧐 Analitik/Sorgulayıcı
+  lowInterest, // 📉 Düşük İlgi
+  urgent, // ⚠️ Acelesi Var
 }
 
 /// Arama bittiğinde AI'ın çıkardığı 4 kritik alan + sonraki adım + duygu.
@@ -65,11 +69,16 @@ String _normalizeTranscriptLanguage(String? localeId) {
 
 String sentimentToStorage(CallSentiment s) {
   switch (s) {
-    case CallSentiment.veryPositive: return 'very_positive';
-    case CallSentiment.uncertain: return 'uncertain';
-    case CallSentiment.analytical: return 'analytical';
-    case CallSentiment.lowInterest: return 'low_interest';
-    case CallSentiment.urgent: return 'urgent';
+    case CallSentiment.veryPositive:
+      return 'very_positive';
+    case CallSentiment.uncertain:
+      return 'uncertain';
+    case CallSentiment.analytical:
+      return 'analytical';
+    case CallSentiment.lowInterest:
+      return 'low_interest';
+    case CallSentiment.urgent:
+      return 'urgent';
   }
 }
 
@@ -83,18 +92,26 @@ CallExtraction extractFromConversation(String conversationText) {
   final sentiment = _allSentiments[rnd.nextInt(_allSentiments.length)];
 
   final summaries = {
-    CallSentiment.veryPositive: 'Müşteri 3+1 oturumluk, Bağlar/Kayapınar bölgesinde 5-8M TL bütçeyle 15 gün içinde taşınmak istiyor. Çok istekli.',
-    CallSentiment.uncertain: 'Müşteri 3+1 düşünüyor, bütçe 5-8M TL. Bağlar/Kayapınar ilgi var ama henüz karar vermedi.',
-    CallSentiment.analytical: 'Müşteri 3+1 için detaylı sorular sordu: metrekare, aidat, deprem. 5-8M TL, Bağlar/Kayapınar.',
-    CallSentiment.lowInterest: 'Müşteri 3+1 ve 5-8M TL dedi ama acil değil; takip listesine alındı.',
-    CallSentiment.urgent: 'Müşteri 15 gün içinde taşınmak istiyor, 3+1 Bağlar/Kayapınar 5-8M TL. Sıcak fırsat.',
+    CallSentiment.veryPositive:
+        'Müşteri 3+1 oturumluk, Bağlar/Kayapınar bölgesinde 5-8M TL bütçeyle 15 gün içinde taşınmak istiyor. Çok istekli.',
+    CallSentiment.uncertain:
+        'Müşteri 3+1 düşünüyor, bütçe 5-8M TL. Bağlar/Kayapınar ilgi var ama henüz karar vermedi.',
+    CallSentiment.analytical:
+        'Müşteri 3+1 için detaylı sorular sordu: metrekare, aidat, deprem. 5-8M TL, Bağlar/Kayapınar.',
+    CallSentiment.lowInterest:
+        'Müşteri 3+1 ve 5-8M TL dedi ama acil değil; takip listesine alındı.',
+    CallSentiment.urgent:
+        'Müşteri 15 gün içinde taşınmak istiyor, 3+1 Bağlar/Kayapınar 5-8M TL. Sıcak fırsat.',
   };
 
   final nextSteps = {
-    CallSentiment.veryPositive: 'Müşteriye yarın sabah portföydeki 3+1 Bağlar dairesinin sunumunu gönder.',
+    CallSentiment.veryPositive:
+        'Müşteriye yarın sabah portföydeki 3+1 Bağlar dairesinin sunumunu gönder.',
     CallSentiment.uncertain: 'Bir hafta içinde tekrar arayıp kararını sor.',
-    CallSentiment.analytical: 'Detaylı fiyat/kullanım özeti ve kıyaslama tablosu hazırla.',
-    CallSentiment.lowInterest: 'Takip listesine ekle; 2 hafta sonra hatırlatma notu at.',
+    CallSentiment.analytical:
+        'Detaylı fiyat/kullanım özeti ve kıyaslama tablosu hazırla.',
+    CallSentiment.lowInterest:
+        'Takip listesine ekle; 2 hafta sonra hatırlatma notu at.',
     CallSentiment.urgent: 'Müşteriye bugün içinde 3 uygun ilan listesi gönder.',
   };
 
@@ -133,7 +150,8 @@ class PostCallWizardScreen extends ConsumerStatefulWidget {
   final String? callSessionId;
 
   @override
-  ConsumerState<PostCallWizardScreen> createState() => _PostCallWizardScreenState();
+  ConsumerState<PostCallWizardScreen> createState() =>
+      _PostCallWizardScreenState();
 }
 
 class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
@@ -145,10 +163,13 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
 
   /// Kayıtta kullanılacak düzenlenebilir özet (AI metni + sesle eklenenler).
   final TextEditingController _summaryController = TextEditingController();
+
   /// v1: manuel / yapıştırılmış ham transkript (`lastCallTranscript`); özet alanından ayrı.
   final TextEditingController _transcriptController = TextEditingController();
+
   /// Yalnızca programatik (PTT) eklemelerde true; kullanıcı transkript alanını düzenlerse false.
   bool _suppressTranscriptUserEdit = false;
+
   /// Elle yapıştırma / düzenleme yapıldıysa true; yalnızca PTT ile dolduysa false → kayıtta STT handoff.
   bool _transcriptUserEditedOnce = false;
   double? _lastSttConfidence;
@@ -290,7 +311,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     if (customerId == null || customerId.isEmpty) {
       setState(() {
         _isSaving = false;
-        _saveError = 'Müşteri bağlantısı yok. Müşteriyle açılan aramadan kaydedin.';
+        _saveError =
+            'Müşteri bağlantısı yok. Müşteriyle açılan aramadan kaydedin.';
       });
       return;
     }
@@ -340,7 +362,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       final sentimentForAi = sentimentToStorage(_extraction!.sentiment);
       CustomerHeatLevel? heatForEnrich;
       try {
-        final ent = await ref.read(customerEntityByIdProvider(customerId).future);
+        final ent =
+            await ref.read(customerEntityByIdProvider(customerId).future);
         if (ent != null) {
           heatForEnrich = computeCustomerHeat(ent).heatLevel;
         }
@@ -351,7 +374,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             await PostCallTranscriptIngestion.mergeSpeechToTextHandoffIfPresent(
               customerId: customerId,
               rawTranscriptText: transcriptForAi,
-              transcriptLanguage: _normalizeTranscriptLanguage(_lastSttLocaleId),
+              transcriptLanguage:
+                  _normalizeTranscriptLanguage(_lastSttLocaleId),
               transcriptConfidence: _lastSttConfidence,
               sourceMetadata: const {'channel': 'post_call_ptt'},
             );
@@ -379,12 +403,28 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
         );
       }
       final featureMap = ref.read(featureFlagsProvider).valueOrNull;
-      final callSummaryEnabled = featureMap?[AppConstants.keyFeatureCallSummary] ?? true;
+      final callSummaryEnabled =
+          featureMap?[AppConstants.keyFeatureCallSummary] ?? true;
       final allowRemote = AiGate.allowPostCallRemote(
         input: enrichmentInput,
         featureCallSummaryEnabled: callSummaryEnabled,
         callDurationSec: widget.callDurationSec,
       );
+      final usageService = ref.read(usageServiceProvider);
+      await usageService.warmUp();
+      final canUseAi = usageService.canUseAi();
+      if (!canUseAi) {
+        AnalyticsService.instance.logEvent(
+          AnalyticsEvents.limitReachedAi,
+          {AnalyticsEvents.paramFeature: 'ai_analysis'},
+        );
+        if (!mounted) return;
+        await showUpgradeBottomSheet(context, feature: 'ai_analysis');
+        if (!mounted) return;
+        context.go(AppRouter.routeHome);
+        return;
+      }
+      await usageService.incrementAiUsage();
       Future.microtask(() async {
         try {
           final enrichment = await PostCallAiEnrichmentService.instance.enrich(
@@ -401,6 +441,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
           AppLogger.e('Post-call AI enrichment merge failed', e, stack);
         }
       });
+      if (!mounted) return;
       context.go(AppRouter.routeHome);
     } catch (e, st) {
       if (!mounted) return;
@@ -491,7 +532,9 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               voiceStatus: _voiceStatus,
                               onSpeechResult: _onPostCallSpeechResult,
                               onPhaseChanged: (phase) {
-                                if (mounted) setState(() => _voiceStatus = phase);
+                                if (mounted) {
+                                  setState(() => _voiceStatus = phase);
+                                }
                               },
                             ),
                             if (_voiceReviewHint != null) ...[
@@ -519,14 +562,16 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                                     Icon(
                                       Icons.info_outline_rounded,
                                       size: 18,
-                                      color: AppThemeExtension.of(context).warning,
+                                      color:
+                                          AppThemeExtension.of(context).warning,
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
                                         _voiceReviewHint!,
                                         style: TextStyle(
-                                          color: Colors.white.withValues(alpha: 0.9),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.9),
                                           fontSize: 12,
                                           height: 1.35,
                                         ),
@@ -572,7 +617,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               },
                             ),
                             Theme(
-                              data: Theme.of(context).copyWith(dividerColor: Colors.white24),
+                              data: Theme.of(context)
+                                  .copyWith(dividerColor: Colors.white24),
                               child: ExpansionTile(
                                 tilePadding: EdgeInsets.zero,
                                 title: Row(
@@ -580,7 +626,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                                     Icon(
                                       Icons.subtitles_outlined,
                                       size: 18,
-                                      color: AppThemeExtension.of(context).accent,
+                                      color:
+                                          AppThemeExtension.of(context).accent,
                                     ),
                                     const SizedBox(width: 8),
                                     const Expanded(
@@ -611,21 +658,26 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                                     controller: _transcriptController,
                                     maxLines: 6,
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.92),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.92),
                                       fontSize: 13,
                                       height: 1.35,
                                     ),
                                     decoration: InputDecoration(
                                       filled: true,
-                                      fillColor: Colors.white.withValues(alpha: 0.06),
+                                      fillColor:
+                                          Colors.white.withValues(alpha: 0.06),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide(
-                                          color: Colors.white.withValues(alpha: 0.12),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.12),
                                         ),
                                       ),
                                       hintText: 'Ham transkript…',
-                                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+                                      hintStyle: TextStyle(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.35)),
                                     ),
                                   ),
                                 ],
@@ -662,7 +714,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppThemeExtension.of(context).accent,
+                                  backgroundColor:
+                                      AppThemeExtension.of(context).accent,
                                   foregroundColor: Colors.black,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
@@ -699,7 +752,9 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                                 String? phone;
                                 if (widget.linkedCustomerId != null) {
                                   final c = await ref.read(
-                                    customerEntityByIdProvider(widget.linkedCustomerId!).future,
+                                    customerEntityByIdProvider(
+                                            widget.linkedCustomerId!)
+                                        .future,
                                   );
                                   name = c?.fullName;
                                   phone = c?.primaryPhone;
@@ -709,17 +764,23 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                                   context,
                                   initialName: name,
                                   initialPhone: phone,
-                                  initialNote: _summaryController.text.trim().isEmpty
-                                      ? null
-                                      : _summaryController.text.trim(),
+                                  initialNote:
+                                      _summaryController.text.trim().isEmpty
+                                          ? null
+                                          : _summaryController.text.trim(),
                                   source: 'rehber_aramasi',
                                 );
                               },
-                              icon: const Icon(Icons.contact_phone_rounded, size: 20),
-                              label: const Text('Rehbere ve uygulamaya kaydet (sesli / manuel)'),
+                              icon: const Icon(Icons.contact_phone_rounded,
+                                  size: 20),
+                              label: const Text(
+                                  'Rehbere ve uygulamaya kaydet (sesli / manuel)'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppThemeExtension.of(context).accent,
-                                side: BorderSide(color: AppThemeExtension.of(context).accent),
+                                foregroundColor:
+                                    AppThemeExtension.of(context).accent,
+                                side: BorderSide(
+                                    color:
+                                        AppThemeExtension.of(context).accent),
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -751,20 +812,22 @@ class _SkippedAnalysisCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.timer_off_rounded, size: 56, color: Colors.white54),
+            const Icon(Icons.timer_off_rounded,
+                size: 56, color: Colors.white54),
             const SizedBox(height: 16),
             Text(
               'AI analizi atlandı',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             const Text(
               'Çok kısa arama veya yanlış numara. Derinlemesine analiz yapılmadı; bütçe ve işlemci korundu.',
-              style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+              style:
+                  TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -830,7 +893,8 @@ class _AnalyzingProgressBar extends StatelessWidget {
         child: LinearProgressIndicator(
           value: value,
           backgroundColor: Colors.transparent,
-          valueColor: AlwaysStoppedAnimation<Color>(AppThemeExtension.of(context).accent),
+          valueColor: AlwaysStoppedAnimation<Color>(
+              AppThemeExtension.of(context).accent),
         ),
       ),
     );
@@ -1112,7 +1176,8 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             color: Colors.white.withValues(alpha: 0.04),
             border: Border.all(
-              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.35),
+              color:
+                  AppThemeExtension.of(context).accent.withValues(alpha: 0.35),
             ),
           ),
           child: Column(
@@ -1275,7 +1340,8 @@ class _ResultSummaryWithSentiment extends StatelessWidget {
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                     border: InputBorder.none,
-                    hintText: 'Özeti düzenleyebilir veya sesle ekleyebilirsiniz',
+                    hintText:
+                        'Özeti düzenleyebilir veya sesle ekleyebilirsiniz',
                     hintStyle: TextStyle(color: Colors.white38),
                   ),
                 ),
@@ -1297,9 +1363,12 @@ class _ExtractionBentoGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cards = <_BentoItem>[
-      _BentoItem('Müşteri Niyeti', extraction.customerIntent, Icons.touch_app_rounded),
-      _BentoItem('Bütçe Aralığı', extraction.budgetRange, Icons.account_balance_wallet_rounded),
-      _BentoItem('Tercih Edilen Bölgeler', extraction.preferredRegions, Icons.location_on_rounded),
+      _BentoItem(
+          'Müşteri Niyeti', extraction.customerIntent, Icons.touch_app_rounded),
+      _BentoItem('Bütçe Aralığı', extraction.budgetRange,
+          Icons.account_balance_wallet_rounded),
+      _BentoItem('Tercih Edilen Bölgeler', extraction.preferredRegions,
+          Icons.location_on_rounded),
       _BentoItem('Aciliyet Durumu', extraction.urgency, Icons.schedule_rounded),
     ];
 
@@ -1322,9 +1391,12 @@ class _ExtractionBentoGrid extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+                    color: AppThemeExtension.of(context)
+                        .accent
+                        .withValues(alpha: 0.2),
                   ),
-                  child: Icon(e.icon, color: AppThemeExtension.of(context).accent, size: 20),
+                  child: Icon(e.icon,
+                      color: AppThemeExtension.of(context).accent, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1379,7 +1451,8 @@ class _NextStepCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: AppThemeExtension.of(context).accent.withValues(alpha: 0.12),
-        border: Border.all(color: AppThemeExtension.of(context).accent.withValues(alpha: 0.3)),
+        border: Border.all(
+            color: AppThemeExtension.of(context).accent.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
