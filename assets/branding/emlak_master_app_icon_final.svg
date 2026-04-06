@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Emlak Master app icon">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#03050c"/>
+      <stop offset="42%" stop-color="#0a1428"/>
+      <stop offset="100%" stop-color="#050812"/>
+    </linearGradient>
+    <linearGradient id="goldStroke" x1="18%" y1="6%" x2="82%" y2="94%">
+      <stop offset="0%" stop-color="#3d2a0a"/>
+      <stop offset="22%" stop-color="#7a5a1c"/>
+      <stop offset="48%" stop-color="#c9a038"/>
+      <stop offset="62%" stop-color="#e8d078"/>
+      <stop offset="78%" stop-color="#a67c28"/>
+      <stop offset="100%" stop-color="#4a320c"/>
+    </linearGradient>
+    <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f4e8c0" stop-opacity="0.5"/>
+      <stop offset="35%" stop-color="#d4a830" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#1a1004" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="winFill" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fff0c8"/>
+      <stop offset="45%" stop-color="#d8a830"/>
+      <stop offset="100%" stop-color="#6a4810"/>
+    </linearGradient>
+    <linearGradient id="winFrame" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#4a340c"/>
+      <stop offset="50%" stop-color="#b89230"/>
+      <stop offset="100%" stop-color="#3a2808"/>
+    </linearGradient>
+    <filter id="glowSoft" x="-18%" y="-18%" width="136%" height="136%">
+      <feGaussianBlur stdDeviation="12" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0.9 0.75 0.35 0 0  0.7 0.55 0.2 0 0  0.35 0.25 0.1 0 0  0 0 0 0.32 0"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#bg)"/>
+  <!-- M: iki net tepe + ust merkez centik (Helvetica-tipi); siluet B/W'de harf okunur -->
+  <g filter="url(#glowSoft)" opacity="0.85">
+    <path fill="none" stroke="#8a6820" stroke-width="102" stroke-linecap="butt" stroke-linejoin="miter"
+          d="M 186 832 L 284 188 L 512 312 L 740 188 L 838 832"/>
+  </g>
+  <path fill="none" stroke="url(#goldStroke)" stroke-width="102" stroke-linecap="butt" stroke-linejoin="miter"
+        d="M 186 832 L 284 188 L 512 312 L 740 188 L 838 832"/>
+  <path fill="none" stroke="url(#goldRim)" stroke-width="102" stroke-linecap="butt" stroke-linejoin="miter" opacity="0.55"
+        d="M 186 832 L 284 188 L 512 312 L 740 188 L 838 832"/>
+  <!-- Pencere: ust centik bolgesinde, kucuk, destekleyici -->
+  <g transform="translate(512, 248)" opacity="0.92">
+    <rect x="-44" y="-28" width="88" height="56" rx="5" fill="none" stroke="url(#winFrame)" stroke-width="3.5"/>
+    <line x1="0" y1="-28" x2="0" y2="28" stroke="url(#winFrame)" stroke-width="2.5"/>
+    <line x1="-44" y1="0" x2="44" y2="0" stroke="url(#winFrame)" stroke-width="2.5"/>
+    <rect x="-42" y="-26" width="40" height="24" rx="2" fill="url(#winFill)" opacity="0.9"/>
+    <rect x="2" y="-26" width="40" height="24" rx="2" fill="url(#winFill)" opacity="0.85"/>
+    <rect x="-42" y="2" width="40" height="24" rx="2" fill="url(#winFill)" opacity="0.8"/>
+    <rect x="2" y="2" width="40" height="24" rx="2" fill="url(#winFill)" opacity="0.75"/>
+  </g>
+</svg>
