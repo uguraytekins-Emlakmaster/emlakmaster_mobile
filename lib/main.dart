@@ -11,7 +11,6 @@ import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_functions_bootstrap.dart';
-import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/services/push_notification_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
@@ -24,7 +23,6 @@ import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/monetization/data/usage_hive_store.dart';
 import 'package:emlakmaster_mobile/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -40,6 +38,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+bool get _isFlutterTest {
+  final bindingName = WidgetsBinding.instance.runtimeType.toString();
+  return bindingName.contains('TestWidgetsFlutterBinding') ||
+      bindingName.contains('AutomatedTestWidgetsFlutterBinding') ||
+      bindingName.contains('LiveTestWidgetsFlutterBinding');
+}
 
 Future<void> main() async {
   // ensureInitialized ve runApp aynı zone'da olmalı (zone mismatch hatası önlemi)
@@ -145,17 +150,6 @@ Future<void> main() async {
     } catch (e, st) {
       AppLogger.e('Firebase init error', e, st);
     }
-    try {
-      await FirestoreService.ensureInitialized();
-      configureFirebaseFunctionsForDebug();
-      if (!kIsWeb && Firebase.apps.isNotEmpty) {
-        FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-        await PushNotificationService.instance.initialize();
-      }
-    } catch (e, st) {
-      AppLogger.e('Firebase init error', e, st);
-    }
-
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       final isOverflow = details.toString().contains('overflowed');
@@ -239,13 +233,11 @@ Future<void> _runApp() async {
     AppLogger.e('OnboardingStore warmUp error (pre-runApp)', e, st);
   }
 
-  // Ağır init'leri ilk frame sonrasına ertele — uygulama anında açılsın (No-Lag Rule).
-  final themeIndex = await SettingsService.instance.getThemeModeIndex();
   runApp(
     ProviderScope(
       observers: kDebugMode ? [DebugRiverpodObserver()] : null,
       overrides: [
-        initialThemeModeIndexProvider.overrideWithValue(themeIndex),
+        initialThemeModeIndexProvider.overrideWithValue(2),
       ],
       child: const EmlakMasterApp(),
     ),
@@ -267,7 +259,14 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     super.initState();
     AppLifecyclePowerService.instance.ensureObserved();
     WidgetsBinding.instance.addPostFrameCallback((_) => _runDeferredInit());
-    unawaited(RegionDeepLinkBootstrap.attach(ref));
+    if (!_isFlutterTest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future<void>.delayed(
+          const Duration(milliseconds: 450),
+          () => RegionDeepLinkBootstrap.attach(ref),
+        );
+      });
+    }
   }
 
   @override
@@ -285,24 +284,41 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     } catch (e, st) {
       AppLogger.e('SyncManager init error', e, st);
     }
-    try {
-      await OnboardingStore.instance.warmUp();
-    } catch (e, st) {
-      AppLogger.e('OnboardingStore warmUp error', e, st);
-    }
     // Hive cache: ağır işlem ilk frame sonrası
     try {
-      await AppCacheService.instance.ensureInit();
+      Future<void>.delayed(
+        const Duration(milliseconds: 300),
+        () => AppCacheService.instance.ensureInit(),
+      );
     } catch (e, st) {
       AppLogger.e('AppCacheService init error', e, st);
     }
     try {
-      await UsageHiveStore.instance.ensureInit();
+      configureFirebaseFunctionsForDebug();
     } catch (e, st) {
-      AppLogger.e('UsageHiveStore init error', e, st);
+      AppLogger.e('Firebase functions bootstrap error', e, st);
     }
     try {
-      CallRecordSyncOrchestrator.instance.start();
+      if (!kIsWeb && Firebase.apps.isNotEmpty) {
+        FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      }
+    } catch (e, st) {
+      AppLogger.e('Crashlytics enable error', e, st);
+    }
+    try {
+      if (!_isFlutterTest) {
+        Future<void>.delayed(
+          const Duration(seconds: 2),
+          () => PushNotificationService.instance.initialize(),
+        );
+      }
+    } catch (e, st) {
+      AppLogger.e('Push init defer error', e, st);
+    }
+    try {
+      if (!_isFlutterTest) {
+        CallRecordSyncOrchestrator.instance.start();
+      }
     } catch (e, st) {
       AppLogger.e('CallRecordSyncOrchestrator start error', e, st);
     }

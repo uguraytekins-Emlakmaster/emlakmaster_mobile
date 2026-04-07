@@ -169,17 +169,33 @@ final customerRevenueSignalsMapProvider =
 });
 
 /// Danışman performans skoru — çağrı + görev tek yerde; snapshot tekrar sorgu izlemez.
-final advisorPerformanceScoreProvider = Provider<int>((ref) {
+final advisorPerformanceRollupProvider =
+    Provider<ConsultantActivityRollup>((ref) {
   final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
-  if (uid.isEmpty) return 0;
+  if (uid.isEmpty) {
+    return const ConsultantActivityRollup(
+      advisorId: '',
+      callsMade: 0,
+      successfulCalls: 0,
+      appointmentsCreated: 0,
+      offersRecorded: 0,
+      missedFollowUps: 0,
+      inactivityPenaltyDays: 0,
+    );
+  }
   final calls = ref.watch(consultantCallsStreamProvider).valueOrNull ?? [];
   final tasksMeta = ref.watch(advisorTasksMetaProvider).valueOrNull;
-  final rollup = buildRollupForAdvisor(
+  return buildRollupForAdvisor(
     advisorId: uid,
     callDocs: calls,
     missedFollowUps: tasksMeta?.overdueCount ?? 0,
     inactivityDays: 0,
   );
+});
+
+final advisorPerformanceScoreProvider = Provider<int>((ref) {
+  final rollup = ref.watch(advisorPerformanceRollupProvider);
+  if (rollup.advisorId.isEmpty) return 0;
   return computeConsultantPerformanceScore(rollup);
 });
 
@@ -343,14 +359,16 @@ final brokerRevenueDashboardSnapshotProvider =
         return computeConsultantPerformanceScore(rollup);
       }
 
+      final scores = <String, int>{
+        for (final e in byAdvisor.entries) e.key: scoreForDocs(e.key, e.value),
+      };
       final sortedAdvisors = byAdvisor.entries.toList()
-        ..sort((a, b) => scoreForDocs(b.key, b.value)
-            .compareTo(scoreForDocs(a.key, a.value)));
+        ..sort((a, b) => (scores[b.key] ?? 0).compareTo(scores[a.key] ?? 0));
 
       final leaderboard = <ConsultantLeaderboardEntry>[];
       var rank = 1;
       for (final e in sortedAdvisors.take(8)) {
-        final sc = scoreForDocs(e.key, e.value);
+        final sc = scores[e.key] ?? 0;
         final short =
             e.key.length >= 4 ? e.key.substring(e.key.length - 4) : e.key;
         leaderboard.add(

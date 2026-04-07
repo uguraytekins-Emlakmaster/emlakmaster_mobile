@@ -2,9 +2,6 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
-import 'package:emlakmaster_mobile/features/revenue_engine/data/customer_revenue_signals_builder.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/domain/revenue_models.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/providers/revenue_engine_providers.dart';
 import 'package:flutter/material.dart';
@@ -17,16 +14,8 @@ class ConsultantPerformanceStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
     final score = ref.watch(advisorPerformanceScoreProvider);
-    final calls = ref.watch(consultantCallsStreamProvider).valueOrNull ?? [];
-    final tasksMeta = ref.watch(advisorTasksMetaProvider).valueOrNull;
-    final rollup = buildRollupForAdvisor(
-      advisorId: uid,
-      callDocs: calls,
-      missedFollowUps: tasksMeta?.overdueCount ?? 0,
-      inactivityDays: 0,
-    );
+    final rollup = ref.watch(advisorPerformanceRollupProvider);
     final explain = _explainTr(rollup);
 
     if (rollup.callsMade == 0 && score == 0) {

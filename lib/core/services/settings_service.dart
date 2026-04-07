@@ -68,6 +68,18 @@ class SettingsService {
     return prefs.getBool(key) ?? defaultValue;
   }
 
+  Future<Map<String, bool>> getFeatureFlagsSnapshot(
+    List<String> keys, {
+    required bool Function(String key) defaultFor,
+  }) async {
+    final prefs = await _storage;
+    final out = <String, bool>{};
+    for (final key in keys) {
+      out[key] = prefs.getBool(key) ?? defaultFor(key);
+    }
+    return out;
+  }
+
   Future<void> setFeatureFlag(String key, bool value) async {
     final prefs = await _storage;
     await prefs.setBool(key, value);
@@ -111,11 +123,13 @@ class SettingsService {
       getFeatureFlag(AppConstants.keyHapticFeedback);
   Future<bool> getSoundEffectsEnabled() =>
       getFeatureFlag(AppConstants.keySoundEffects, defaultValue: false);
+
   /// Batarya tasarrufu: animasyonları azaltır. Varsayılan false.
   Future<bool> getPowerSaverEnabled() async {
     final prefs = await _storage;
     return prefs.getBool(AppConstants.keyPowerSaver) ?? false;
   }
+
   Future<void> setPowerSaverEnabled(bool value) async {
     final prefs = await _storage;
     await prefs.setBool(AppConstants.keyPowerSaver, value);
@@ -126,7 +140,8 @@ class SettingsService {
     final prefs = await _storage;
     final saved = prefs.getString(AppConstants.keyLocale);
     if (saved != null && saved.isNotEmpty) return saved;
-    final platform = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    final platform =
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
     return (platform == 'tr' || platform == 'en') ? platform : 'tr';
   }
 

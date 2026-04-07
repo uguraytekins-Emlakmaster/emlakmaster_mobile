@@ -7,24 +7,39 @@ import 'package:emlakmaster_mobile/features/calls/services/call_record_sync_serv
 /// Uygulama açılışı, bağlantı, periyodik zamanlayıcı ve öne gelince yerel çağrı senkronu.
 class CallRecordSyncOrchestrator {
   CallRecordSyncOrchestrator._();
-  static final CallRecordSyncOrchestrator instance = CallRecordSyncOrchestrator._();
+  static final CallRecordSyncOrchestrator instance =
+      CallRecordSyncOrchestrator._();
 
   bool _started = false;
+  bool _syncInFlight = false;
+
+  Future<void> _runSyncIfNeeded() async {
+    if (_syncInFlight) return;
+    if (AppLifecyclePowerService.isInBackground.value) return;
+    _syncInFlight = true;
+    try {
+      await CallRecordSyncService.syncForCurrentUser();
+    } finally {
+      _syncInFlight = false;
+    }
+  }
 
   void start() {
     if (_started) return;
     _started = true;
-    Timer.periodic(const Duration(seconds: 45), (_) {
-      unawaited(CallRecordSyncService.syncForCurrentUser());
+    Future<void>.delayed(const Duration(seconds: 10), () {
+      unawaited(_runSyncIfNeeded());
+    });
+    Timer.periodic(const Duration(minutes: 2), (_) {
+      unawaited(_runSyncIfNeeded());
     });
     SyncManager.onlineStreamDebounced.listen((online) {
       if (online) {
-        unawaited(CallRecordSyncService.syncForCurrentUser());
+        unawaited(_runSyncIfNeeded());
       }
     });
     AppLifecyclePowerService.onAppResumed.listen((_) {
-      unawaited(CallRecordSyncService.syncForCurrentUser());
+      unawaited(_runSyncIfNeeded());
     });
-    unawaited(CallRecordSyncService.syncForCurrentUser());
   }
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -27,15 +28,16 @@ class BentoSahaRadar extends StatelessWidget {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirestoreService.agentsStream(),
       builder: (context, snapshot) {
-        final agents = snapshot.hasData ? snapshot.data!.docs : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-        final withLocation = agents
-            .where((d) {
-              final data = d.data();
-              final city = data['locationCity'] as String?;
-              final district = data['locationDistrict'] as String?;
-              return (city != null && city.isNotEmpty) || (district != null && district.isNotEmpty);
-            })
-            .toList();
+        final agents = snapshot.hasData
+            ? snapshot.data!.docs
+            : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+        final withLocation = agents.where((d) {
+          final data = d.data();
+          final city = data['locationCity'] as String?;
+          final district = data['locationDistrict'] as String?;
+          return (city != null && city.isNotEmpty) ||
+              (district != null && district.isNotEmpty);
+        }).toList();
         final subtitle = snapshot.hasData
             ? '${withLocation.length} danışman harita üzerinde'
             : 'Yükleniyor...';
@@ -57,17 +59,21 @@ class BentoSahaRadar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusLg),
                       color: ext.surfaceElevated,
-                      border: Border.all(color: ext.accent.withValues(alpha: 0.12)),
+                      border:
+                          Border.all(color: ext.accent.withValues(alpha: 0.12)),
                     ),
                     child: snapshot.hasData
                         ? CustomPaint(
                             painter: DiyarbakirMapPainter(
                               agents: withLocation,
                               accent: ext.accent,
-                              borderStroke: ext.foreground.withValues(alpha: 0.08),
-                              labelMuted: ext.textTertiary.withValues(alpha: 0.25),
+                              borderStroke:
+                                  ext.foreground.withValues(alpha: 0.08),
+                              labelMuted:
+                                  ext.textTertiary.withValues(alpha: 0.25),
                             ),
                             size: Size.infinite,
                           )
@@ -176,11 +182,13 @@ class DiyarbakirMapPainter extends CustomPainter {
       final data = doc.data();
       final district = (data['locationDistrict'] as String?)?.trim();
       final city = (data['locationCity'] as String?)?.trim();
-      if ((district == null || district.isEmpty) && (city == null || city.isEmpty)) continue;
+      if ((district == null || district.isEmpty) &&
+          (city == null || city.isEmpty)) {
+        continue;
+      }
 
-      final key = (district != null && district.isNotEmpty)
-          ? district
-          : (city ?? '');
+      final key =
+          (district != null && district.isNotEmpty) ? district : (city ?? '');
       Offset? pos = _districtPositions[key];
       if (pos == null && key.isNotEmpty) {
         pos = _districtPositions.isNotEmpty
@@ -209,7 +217,8 @@ class DiyarbakirMapPainter extends CustomPainter {
     )..layout();
     textPainter.paint(
       canvas,
-      Offset(left + w - textPainter.width - 8, top + h - textPainter.height - 6),
+      Offset(
+          left + w - textPainter.width - 8, top + h - textPainter.height - 6),
     );
   }
 
@@ -228,10 +237,31 @@ class _HeatmapPulseChart extends StatefulWidget {
   State<_HeatmapPulseChart> createState() => _HeatmapPulseChartState();
 }
 
-class _HeatmapPulseChartState extends State<_HeatmapPulseChart> with SingleTickerProviderStateMixin {
+class _HeatmapPulseChartState extends State<_HeatmapPulseChart>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
-  static const List<double> _trendValues = [0.3, 0.5, 0.45, 0.7, 0.6, 0.85, 0.75, 0.9, 0.8];
+  static const List<double> _trendValues = [
+    0.3,
+    0.5,
+    0.45,
+    0.7,
+    0.6,
+    0.85,
+    0.75,
+    0.9,
+    0.8
+  ];
+
+  void _syncAnimationState() {
+    final reduce = AppLifecyclePowerService.shouldReduceMotion;
+    if (reduce) {
+      _controller.stop();
+      _controller.value = 1;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
+  }
 
   @override
   void initState() {
@@ -239,11 +269,20 @@ class _HeatmapPulseChartState extends State<_HeatmapPulseChart> with SingleTicke
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
-    )..repeat();
+    );
+    AppLifecyclePowerService.isInBackground.addListener(_syncAnimationState);
+    _syncAnimationState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimationState();
   }
 
   @override
   void dispose() {
+    AppLifecyclePowerService.isInBackground.removeListener(_syncAnimationState);
     _controller.dispose();
     super.dispose();
   }

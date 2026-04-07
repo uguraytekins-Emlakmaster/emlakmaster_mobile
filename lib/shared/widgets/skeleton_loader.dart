@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/services/app_lifecycle_power_service.dart';
 import '../../core/theme/design_tokens.dart';
 
 /// Premium skeleton loader; loading state'lerde kullanılır.
@@ -30,14 +31,26 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
+    AppLifecyclePowerService.isInBackground.addListener(_syncAnimationState);
+    _syncAnimationState();
     _animation = Tween<double>(begin: 0.3, end: 0.6).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
 
+  void _syncAnimationState() {
+    if (AppLifecyclePowerService.shouldReduceMotion) {
+      _controller.stop();
+      _controller.value = 0.4;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
   @override
   void dispose() {
+    AppLifecyclePowerService.isInBackground.removeListener(_syncAnimationState);
     _controller.dispose();
     super.dispose();
   }
@@ -51,8 +64,8 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
-            borderRadius:
-                widget.borderRadius ?? BorderRadius.circular(DesignTokens.radiusMd),
+            borderRadius: widget.borderRadius ??
+                BorderRadius.circular(DesignTokens.radiusMd),
             color: Colors.white.withValues(alpha: _animation.value * 0.12),
           ),
         );

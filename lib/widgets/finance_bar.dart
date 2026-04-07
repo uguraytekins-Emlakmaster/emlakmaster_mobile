@@ -38,8 +38,8 @@ class FinanceBarLive extends StatelessWidget {
             return r.usdTry > 0 || r.eurTry > 0 || r.gramGoldTry > 0;
           }
 
-          final awaitingFirst =
-              rates == null && snapshot.connectionState == ConnectionState.waiting;
+          final awaitingFirst = rates == null &&
+              snapshot.connectionState == ConnectionState.waiting;
           final awaitingValidRates = rates != null &&
               !hasValidRates(rates) &&
               snapshot.connectionState == ConnectionState.waiting;
@@ -247,6 +247,16 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulse;
 
+  void _syncAnimationState() {
+    final reduce = AppLifecyclePowerService.shouldReduceMotion;
+    if (reduce) {
+      _pulse.stop();
+      _pulse.value = 1;
+    } else if (!_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -255,15 +265,19 @@ class _EconomyLiveHeaderState extends State<_EconomyLiveHeader>
       vsync: this,
       duration: Duration(milliseconds: reduce ? 0 : 1600),
     );
-    if (!reduce) {
-      _pulse.repeat(reverse: true);
-    } else {
-      _pulse.value = 1;
-    }
+    AppLifecyclePowerService.isInBackground.addListener(_syncAnimationState);
+    _syncAnimationState();
+  }
+
+  @override
+  void didUpdateWidget(covariant _EconomyLiveHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncAnimationState();
   }
 
   @override
   void dispose() {
+    AppLifecyclePowerService.isInBackground.removeListener(_syncAnimationState);
     _pulse.dispose();
     super.dispose();
   }
@@ -436,7 +450,8 @@ class _EconomyFintechCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final numStyle = _sfProDisplayNumber(context, fontSize: 17, color: ext.textPrimary);
+    final numStyle =
+        _sfProDisplayNumber(context, fontSize: 17, color: ext.textPrimary);
     final symStyle = GoogleFonts.inter(
       fontSize: 10,
       fontWeight: FontWeight.w500,
@@ -657,7 +672,8 @@ class _FinanceBarShimmer extends StatelessWidget {
                         padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
                         decoration: BoxDecoration(
                           color: ext.surfaceElevated,
-                          borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+                          borderRadius: BorderRadius.circular(
+                              DashboardLayoutTokens.radiusCardM),
                           boxShadow: [
                             BoxShadow(
                               color: ext.shadowColor.withValues(alpha: 0.3),
@@ -672,19 +688,22 @@ class _FinanceBarShimmer extends StatelessWidget {
                             ShimmerPlaceholder(
                               width: 44,
                               height: 10,
-                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(4)),
                             ),
                             SizedBox(height: 10),
                             ShimmerPlaceholder(
                               width: 64,
                               height: 18,
-                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(4)),
                             ),
                             SizedBox(height: 10),
                             ShimmerPlaceholder(
                               width: 72,
                               height: 28,
-                              borderRadius: BorderRadius.all(Radius.circular(4)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(4)),
                             ),
                           ],
                         ),

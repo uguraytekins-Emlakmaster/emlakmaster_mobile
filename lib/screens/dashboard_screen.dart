@@ -170,65 +170,73 @@ class DashboardPage extends ConsumerWidget {
                           SizedBox(height: gapOp),
                         ],
                         if (dailyBrief) px(const DailyBriefPanel()),
-                        if (!lean) ...[
-                          SizedBox(height: gapInsight),
-                          // —— Layer 3: Insight — pipeline, ekonomi, ticker, harita, analitik ——
-                          px(const DiscoveryPanel()),
-                          SizedBox(height: gapInsight),
-                          const FinanceBar(),
-                          SizedBox(height: gapInsight),
-                          if (marketPulse) px(const MarketPulsePanel()),
-                          if (marketPulse) SizedBox(height: gapInsight),
-                          px(const MasterTicker()),
-                          SizedBox(height: gapInsight),
-                          px(const OpportunityRadarWidget()),
-                          SizedBox(height: gapInsight),
-                          px(const RegionDemandMapPanel()),
-                          SizedBox(height: gapInsight),
-                          px(
-                            Column(
+                        if (!lean)
+                          _DeferredDashboardSection(
+                            delay: const Duration(milliseconds: 450),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const RepaintBoundary(
-                                    child: BentoPowerAnalytics()),
-                                SizedBox(
-                                    height: compact
-                                        ? DesignTokens.space4
-                                        : DesignTokens.space6),
-                                LayoutBuilder(
-                                  builder: (context, c) {
-                                    final stack = c.maxWidth < 520;
-                                    if (stack) {
-                                      return Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          const BentoSahaRadar(),
-                                          SizedBox(
-                                              height: compact
-                                                  ? DesignTokens.space3
-                                                  : DesignTokens.space4),
-                                          const BentoAiNews(),
-                                        ],
-                                      );
-                                    }
-                                    return Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Expanded(child: BentoSahaRadar()),
-                                        SizedBox(
-                                            width: compact
-                                                ? DesignTokens.space4
-                                                : DesignTokens.space6),
-                                        const Expanded(child: BentoAiNews()),
-                                      ],
-                                    );
-                                  },
+                                SizedBox(height: gapInsight),
+                                px(const DiscoveryPanel()),
+                                SizedBox(height: gapInsight),
+                                const FinanceBar(),
+                                SizedBox(height: gapInsight),
+                                if (marketPulse) px(const MarketPulsePanel()),
+                                if (marketPulse) SizedBox(height: gapInsight),
+                                px(const MasterTicker()),
+                                SizedBox(height: gapInsight),
+                                px(const OpportunityRadarWidget()),
+                                SizedBox(height: gapInsight),
+                                px(const RegionDemandMapPanel()),
+                                SizedBox(height: gapInsight),
+                                px(
+                                  Column(
+                                    children: [
+                                      const RepaintBoundary(
+                                          child: BentoPowerAnalytics()),
+                                      SizedBox(
+                                          height: compact
+                                              ? DesignTokens.space4
+                                              : DesignTokens.space6),
+                                      LayoutBuilder(
+                                        builder: (context, c) {
+                                          final stack = c.maxWidth < 520;
+                                          if (stack) {
+                                            return Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                const BentoSahaRadar(),
+                                                SizedBox(
+                                                    height: compact
+                                                        ? DesignTokens.space3
+                                                        : DesignTokens.space4),
+                                                const BentoAiNews(),
+                                              ],
+                                            );
+                                          }
+                                          return Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Expanded(
+                                                  child: BentoSahaRadar()),
+                                              SizedBox(
+                                                  width: compact
+                                                      ? DesignTokens.space4
+                                                      : DesignTokens.space6),
+                                              const Expanded(
+                                                  child: BentoAiNews()),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
                       ],
                     ),
                   ),
@@ -253,5 +261,41 @@ class DashboardPage extends ConsumerWidget {
         ),
       );
     }
+  }
+}
+
+class _DeferredDashboardSection extends StatefulWidget {
+  const _DeferredDashboardSection({
+    required this.child,
+    required this.delay,
+  });
+
+  final Widget child;
+  final Duration delay;
+
+  @override
+  State<_DeferredDashboardSection> createState() =>
+      _DeferredDashboardSectionState();
+}
+
+class _DeferredDashboardSectionState extends State<_DeferredDashboardSection> {
+  bool _enabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future<void>.delayed(widget.delay, () {
+        if (mounted) {
+          setState(() => _enabled = true);
+        }
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_enabled) return const SizedBox.shrink();
+    return widget.child;
   }
 }

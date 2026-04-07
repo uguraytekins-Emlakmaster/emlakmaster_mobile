@@ -31,28 +31,25 @@ final _allKeys = [
 
 /// Tüm özellik bayrakları tek provider'da; ayar ekranı ve uygulama buradan okur.
 final featureFlagsProvider =
-    StateNotifierProvider<FeatureFlagsNotifier, AsyncValue<Map<String, bool>>>((ref) {
+    StateNotifierProvider<FeatureFlagsNotifier, AsyncValue<Map<String, bool>>>(
+        (ref) {
   return FeatureFlagsNotifier();
 });
 
-class FeatureFlagsNotifier extends StateNotifier<AsyncValue<Map<String, bool>>> {
-  FeatureFlagsNotifier() : super(const AsyncValue.loading()) {
+class FeatureFlagsNotifier
+    extends StateNotifier<AsyncValue<Map<String, bool>>> {
+  FeatureFlagsNotifier() : super(AsyncValue.data(_defaultFlagsMap())) {
     _load();
   }
 
   Future<void> _load() async {
     try {
-      final map = <String, bool>{};
-      for (final key in _allKeys) {
-        if (key == AppConstants.keyPowerSaver) {
-          map[key] = await SettingsService.instance.getPowerSaverEnabled();
-        } else {
-          map[key] = await SettingsService.instance.getFeatureFlag(
-            key,
-            defaultValue: _defaultFeatureFlag(key),
-          );
-        }
-      }
+      final map = await SettingsService.instance.getFeatureFlagsSnapshot(
+        _allKeys,
+        defaultFor: _defaultFeatureFlag,
+      );
+      map[AppConstants.keyPowerSaver] =
+          await SettingsService.instance.getPowerSaverEnabled();
       state = AsyncValue.data(map);
       AppLifecyclePowerService.powerSaverEnabled =
           map[AppConstants.keyPowerSaver] ?? false;
@@ -80,11 +77,18 @@ class FeatureFlagsNotifier extends StateNotifier<AsyncValue<Map<String, bool>>> 
   }
 }
 
+Map<String, bool> _defaultFlagsMap() {
+  return {
+    for (final key in _allKeys) key: _defaultFeatureFlag(key),
+  };
+}
+
 bool _defaultFeatureFlag(String key) {
   if (key == AppConstants.keyPowerSaver) return false;
   if (key == AppConstants.keyFeatureOfficialMarketFeed) return false;
   if (key == AppConstants.keyV1LeanProduct) return true;
-  if (key == AppConstants.keyCompactDashboard || key == AppConstants.keySoundEffects) {
+  if (key == AppConstants.keyCompactDashboard ||
+      key == AppConstants.keySoundEffects) {
     return false;
   }
   return true;

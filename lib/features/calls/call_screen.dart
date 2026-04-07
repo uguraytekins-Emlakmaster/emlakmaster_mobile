@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/features/ai_sales_assistant/presentation/widgets/ai_sales_assistant_panel.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/outbound_system_handoff_page.dart';
@@ -601,8 +602,9 @@ class _CallScreenState extends ConsumerState<CallScreen>
         'outcome': AppConstants.callOutcomeCompleted,
       };
       final customerId = widget.customerId;
-      if (customerId != null && customerId.isNotEmpty)
+      if (customerId != null && customerId.isNotEmpty) {
         extra['customerId'] = customerId;
+      }
       if (phone != null && phone.isNotEmpty) extra['phone'] = phone;
       context.push(AppRouter.routeCallSummary, extra: extra);
     } catch (e) {
@@ -1634,17 +1636,41 @@ class _SiriWaveBarsAnimatedState extends State<_SiriWaveBarsAnimated>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
+  void _syncAnimationState() {
+    final shouldAnimate =
+        widget.isActive && !AppLifecyclePowerService.shouldReduceMotion;
+    if (shouldAnimate) {
+      if (!_controller.isAnimating) {
+        _controller.repeat(reverse: true);
+      }
+    } else {
+      _controller.stop();
+      _controller.value = 0;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
-    )..repeat(reverse: true);
+    );
+    AppLifecyclePowerService.isInBackground.addListener(_syncAnimationState);
+    _syncAnimationState();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SiriWaveBarsAnimated oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive != widget.isActive) {
+      _syncAnimationState();
+    }
   }
 
   @override
   void dispose() {
+    AppLifecyclePowerService.isInBackground.removeListener(_syncAnimationState);
     _controller.dispose();
     super.dispose();
   }
