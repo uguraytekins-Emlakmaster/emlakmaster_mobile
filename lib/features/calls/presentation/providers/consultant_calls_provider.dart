@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,15 @@ final consultantCallsStreamProvider = StreamProvider.autoDispose<
   QuerySnapshot<Map<String, dynamic>>? lastAdvisor;
   QuerySnapshot<Map<String, dynamic>>? lastAgent;
   var lastFingerprint = 0;
+  var resolvedOnce = false;
+
+  void emitFallbackEmpty(String reason) {
+    if (resolvedOnce || controller.isClosed) return;
+    resolvedOnce = true;
+    lastFingerprint = 0;
+    AppLogger.w('[consultantCallsStreamProvider] fallback empty: $reason');
+    controller.add(const []);
+  }
 
   int fingerprint(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
     var h = docs.length;
@@ -57,33 +67,43 @@ final consultantCallsStreamProvider = StreamProvider.autoDispose<
       return bt.compareTo(at);
     });
     final nextFingerprint = fingerprint(docs);
-    if (nextFingerprint == lastFingerprint) return;
+    if (nextFingerprint == lastFingerprint && resolvedOnce) return;
+    resolvedOnce = true;
     lastFingerprint = nextFingerprint;
     if (!controller.isClosed) controller.add(docs);
   }
 
   void onAdvisorError(Object e, StackTrace st) {
     debugPrint('[consultantCallsStreamProvider] advisor: $e');
+    AppLogger.w('[consultantCallsStreamProvider] advisor error', e, st);
     lastAdvisor = null;
     mergeAndEmit();
   }
 
   void onAgentError(Object e, StackTrace st) {
     debugPrint('[consultantCallsStreamProvider] agent: $e');
+    AppLogger.w('[consultantCallsStreamProvider] agent error', e, st);
     lastAgent = null;
     mergeAndEmit();
   }
 
+  final fallbackTimer = Timer(const Duration(seconds: 2), () {
+    emitFallbackEmpty('initial remote data timeout');
+  });
+
   final sub1 = byAdvisor.listen((s) {
+    fallbackTimer.cancel();
     lastAdvisor = s;
     mergeAndEmit();
   }, onError: onAdvisorError, onDone: () {});
   final sub2 = byAgent.listen((s) {
+    fallbackTimer.cancel();
     lastAgent = s;
     mergeAndEmit();
   }, onError: onAgentError, onDone: () {});
 
   ref.onDispose(() {
+    fallbackTimer.cancel();
     sub1.cancel();
     sub2.cancel();
     controller.close();

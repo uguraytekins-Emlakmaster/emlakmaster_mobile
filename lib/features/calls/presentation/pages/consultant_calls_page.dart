@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
 import 'package:emlakmaster_mobile/core/utils/sms_launcher.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/data/device_call_log_sync_service.dart';
@@ -53,6 +54,17 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   };
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs = [];
+
+  void _retryCallsLoad() {
+    HapticFeedback.lightImpact();
+    ref.invalidate(consultantCallsStreamProvider);
+    ref.invalidate(localCallRecordsStreamProvider);
+    if (mounted) {
+      setState(() {
+        _selectedIds.clear();
+      });
+    }
+  }
 
   void _selectAll(bool select) {
     setState(() {
@@ -414,6 +426,16 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         ? AppThemeExtension.of(context).textSecondary
         : AppThemeExtension.of(context).textSecondary;
     final callsAsync = ref.watch(consultantCallsStreamProvider);
+    ref.listen(consultantCallsStreamProvider, (prev, next) {
+      next.whenOrNull(
+        data: (docs) {
+          AppLogger.i('[consultant_calls] resolved docs=${docs.length}');
+        },
+        error: (e, st) {
+          AppLogger.e('[consultant_calls] load error', e, st);
+        },
+      );
+    });
 
     final queue = _whatsappQueue;
     final hasQueue =
@@ -460,8 +482,18 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       ),
       body: callsAsync.when(
         loading: () => Center(
-          child: CircularProgressIndicator(
-              color: AppThemeExtension.of(context).accent),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                  color: AppThemeExtension.of(context).accent),
+              const SizedBox(height: DesignTokens.space4),
+              Text(
+                'Çağrılar hazırlanıyor...',
+                style: AppTypography.body(context),
+              ),
+            ],
+          ),
         ),
         error: (e, _) => Center(
           child: Padding(
@@ -481,6 +513,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                 Text('$e',
                     style: TextStyle(color: textSecondary, fontSize: 12),
                     textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: _retryCallsLoad,
+                  child: const Text('Tekrar dene'),
+                ),
               ],
             ),
           ),
