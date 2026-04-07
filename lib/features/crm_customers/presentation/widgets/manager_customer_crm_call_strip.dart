@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
@@ -17,129 +16,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Yönetici: müşteri kartında son CRM çağrı kayıtları (telekom kesinliği yok).
-class ManagerCustomerCrmCallStrip extends ConsumerStatefulWidget {
+class ManagerCustomerCrmCallStrip extends ConsumerWidget {
   const ManagerCustomerCrmCallStrip({super.key, required this.customerId});
 
   final String customerId;
 
   @override
-  ConsumerState<ManagerCustomerCrmCallStrip> createState() =>
-      _ManagerCustomerCrmCallStripState();
-}
-
-class _ManagerCustomerCrmCallStripState
-    extends ConsumerState<ManagerCustomerCrmCallStrip> {
-  bool _loadingFallback = false;
-  Timer? _loadingTimer;
-  int _retrySeed = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _armLoadingFallback();
-  }
-
-  @override
-  void dispose() {
-    _loadingTimer?.cancel();
-    super.dispose();
-  }
-
-  void _armLoadingFallback() {
-    _loadingTimer?.cancel();
-    _loadingFallback = false;
-    _loadingTimer = Timer(const Duration(seconds: 2), () {
-      if (mounted) {
-        AppLogger.w(
-          '[manager_customer_crm_call_strip] fallback loading timeout customer=${widget.customerId}',
-        );
-        setState(() => _loadingFallback = true);
-      }
-    });
-  }
-
-  void _retry() {
-    _armLoadingFallback();
-    setState(() => _retrySeed++);
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      key: ValueKey('${widget.customerId}::$_retrySeed'),
-      stream: FirestoreService.callsByCustomerStream(widget.customerId),
+      stream: FirestoreService.callsByCustomerStream(customerId),
       builder: (context, snap) {
-        if (snap.hasData || snap.hasError) {
-          _loadingTimer?.cancel();
-          _loadingFallback = false;
-        }
         if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
-          if (_loadingFallback) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-              child: Container(
-                padding: const EdgeInsets.all(DesignTokens.space4),
-                decoration: BoxDecoration(
-                  color: ext.surfaceElevated,
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                  border: Border.all(color: ext.border.withValues(alpha: 0.45)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'CRM çağrı kayıtları geç yanıt veriyor.',
-                        style: AppTypography.body(context),
-                      ),
-                    ),
-                    const SizedBox(width: DesignTokens.space3),
-                    TextButton(
-                      onPressed: _retry,
-                      child: const Text('Tekrar dene'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
           return const Padding(
             padding: EdgeInsets.only(bottom: DesignTokens.space4),
             child: LinearProgressIndicator(minHeight: 2),
           );
         }
         if (snap.hasError) {
-          AppLogger.e(
-            '[manager_customer_crm_call_strip] stream error',
-            snap.error,
-            snap.stackTrace,
-          );
-          return Padding(
-            padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-            child: Container(
-              padding: const EdgeInsets.all(DesignTokens.space4),
-              decoration: BoxDecoration(
-                color: ext.surfaceElevated,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                border: Border.all(color: ext.border.withValues(alpha: 0.45)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'CRM çağrı kayıtları yüklenemedi.',
-                      style: AppTypography.body(context),
-                    ),
-                  ),
-                  const SizedBox(width: DesignTokens.space3),
-                  TextButton(
-                    onPressed: _retry,
-                    child: const Text('Tekrar dene'),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return const SizedBox.shrink();
         }
         final docs = snap.data?.docs ?? [];
         if (docs.isEmpty) return const SizedBox.shrink();
