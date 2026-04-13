@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/logging/app_logger.dart';
-import '../domain/membership_status.dart';
 import '../domain/office_membership_entity.dart';
 
 class OfficeMembershipRepository {
@@ -29,24 +28,9 @@ class OfficeMembershipRepository {
     });
   }
 
-  /// Geriye dönük: yalnızca `active` üyelik (çoklu ofis senaryosunda yanıltıcı olabilir).
-  @Deprecated('Use watchPrimaryMembershipForUser with users.officeId')
-  static Stream<OfficeMembership?> watchActiveMembershipForUser(String userId) {
-    return _db
-        .collection(_col)
-        .where('userId', isEqualTo: userId)
-        .where('status', isEqualTo: MembershipStatus.active.name)
-        .limit(1)
-        .snapshots()
-        .map((snap) {
-      if (snap.docs.isEmpty) return null;
-      final d = snap.docs.first;
-      return OfficeMembership.fromFirestore(d.id, d.data());
-    });
-  }
-
   /// Ofisteki tüm üyelikler (yönetici listesi).
-  static Stream<List<OfficeMembership>> watchMembershipsForOffice(String officeId) {
+  static Stream<List<OfficeMembership>> watchMembershipsForOffice(
+      String officeId) {
     return _db
         .collection(_col)
         .where('officeId', isEqualTo: officeId)
@@ -75,7 +59,8 @@ class OfficeMembershipRepository {
       if (!s.exists) return null;
       return OfficeMembership.fromFirestore(s.id, s.data());
     } catch (e, st) {
-      if (kDebugMode) AppLogger.e('OfficeMembershipRepository.getMembershipDoc', e, st);
+      if (kDebugMode)
+        AppLogger.e('OfficeMembershipRepository.getMembershipDoc', e, st);
       rethrow;
     }
   }

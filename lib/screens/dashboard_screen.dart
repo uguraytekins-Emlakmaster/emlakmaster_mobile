@@ -101,6 +101,11 @@ class DashboardPage extends ConsumerWidget {
               !(m?[AppConstants.keyV1LeanProduct] ?? true);
         }),
       );
+      final analyticsEnabled = ref.watch(
+        featureFlagsProvider.select(
+          (a) => a.valueOrNull?[AppConstants.keyFeatureAnalytics] ?? true,
+        ),
+      );
       final scrollBottomPad =
           DashboardLayoutTokens.shellScrollBottomPadding(context);
 
@@ -155,9 +160,10 @@ class DashboardPage extends ConsumerWidget {
                         if (kpiBar) px(const DashboardKpiSection()),
                         if (kpiBar) SizedBox(height: gapOp),
                         px(const PriorityCallSignalsCard()),
-                        if (kpiBar) SizedBox(height: gapOp),
-                        px(const RainbowAnalyticsCenterCard()),
-                        SizedBox(height: gapOp),
+                        if (analyticsEnabled) SizedBox(height: gapOp),
+                        if (analyticsEnabled)
+                          px(const RainbowAnalyticsCenterCard()),
+                        if (analyticsEnabled) SizedBox(height: gapOp),
                         px(const ManagerPlatformConnectionsSummaryCard()),
                         if (lean) ...[
                           px(const LeanAdminTodayFocusCard()),

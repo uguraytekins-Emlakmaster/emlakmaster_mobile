@@ -44,7 +44,8 @@ final ensureUserDocProvider =
 
 /// `users.officeId` ile uyumlu birincil üyelik (`{uid}_{officeId}`).
 /// Durum [deriveOfficeAccessState] ile birleştirilir; rol için [currentRoleProvider].
-final primaryMembershipProvider = StreamProvider.autoDispose<OfficeMembership?>((ref) {
+final primaryMembershipProvider =
+    StreamProvider.autoDispose<OfficeMembership?>((ref) {
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) {
     return Stream<OfficeMembership?>.value(null);
@@ -56,16 +57,14 @@ final primaryMembershipProvider = StreamProvider.autoDispose<OfficeMembership?>(
       );
     }
     final oid = doc?.officeId;
-    return OfficeMembershipRepository.watchPrimaryMembershipForUser(user.uid, oid);
+    return OfficeMembershipRepository.watchPrimaryMembershipForUser(
+        user.uid, oid);
   });
 });
 
-/// Geriye dönük uyumluluk.
-@Deprecated('Use primaryMembershipProvider')
-final membershipProvider = primaryMembershipProvider;
-
 /// Ofis erişim durumu (routing / shell).
-final officeAccessStateProvider = Provider<AsyncValue<OfficeAccessState>>((ref) {
+final officeAccessStateProvider =
+    Provider<AsyncValue<OfficeAccessState>>((ref) {
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) {
     return const AsyncValue.data(OfficeAccessState.noOfficeContext);
@@ -76,10 +75,12 @@ final officeAccessStateProvider = Provider<AsyncValue<OfficeAccessState>>((ref) 
     return const AsyncValue.loading();
   }
   if (docAsync.hasError) {
-    return AsyncValue.error(docAsync.error!, docAsync.stackTrace ?? StackTrace.current);
+    return AsyncValue.error(
+        docAsync.error!, docAsync.stackTrace ?? StackTrace.current);
   }
   if (memAsync.hasError) {
-    return AsyncValue.error(memAsync.error!, memAsync.stackTrace ?? StackTrace.current);
+    return AsyncValue.error(
+        memAsync.error!, memAsync.stackTrace ?? StackTrace.current);
   }
   final doc = docAsync.valueOrNull;
   final mem = memAsync.valueOrNull;
