@@ -1,112 +1,94 @@
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Emlak Master app icon">
   <defs>
-    <linearGradient id="bgGradient" x1="140" y1="110" x2="884" y2="914" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#17181D"/>
-      <stop offset="0.55" stop-color="#0F1014"/>
-      <stop offset="1" stop-color="#08090C"/>
-    </linearGradient>
-
-    <radialGradient id="bgVignette" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
-      gradientTransform="translate(512 412) rotate(90) scale(520 560)">
-      <stop offset="0" stop-color="#252831" stop-opacity="0.34"/>
-      <stop offset="0.52" stop-color="#15171D" stop-opacity="0.16"/>
-      <stop offset="1" stop-color="#050608" stop-opacity="0"/>
+    <radialGradient id="emBgV" cx="50%" cy="43%" r="74%">
+      <stop offset="0%" stop-color="#0e1420"/>
+      <stop offset="55%" stop-color="#060a10"/>
+      <stop offset="100%" stop-color="#000000"/>
     </radialGradient>
-
-    <linearGradient id="goldMain" x1="290" y1="154" x2="778" y2="822" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFF1B5"/>
-      <stop offset="0.14" stop-color="#F8D97A"/>
-      <stop offset="0.38" stop-color="#D8A93B"/>
-      <stop offset="0.62" stop-color="#F0C760"/>
-      <stop offset="0.82" stop-color="#B97A19"/>
-      <stop offset="1" stop-color="#7E4E0D"/>
+    <linearGradient id="emBgLin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1018"/>
+      <stop offset="100%" stop-color="#000000"/>
     </linearGradient>
-
-    <linearGradient id="goldEdge" x1="364" y1="166" x2="706" y2="790" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFF4CB"/>
-      <stop offset="0.45" stop-color="#E9BC53"/>
-      <stop offset="1" stop-color="#8C5710"/>
+    <!-- Luxury gold: restrained specular, warm bronze anchor, subtle amber peak -->
+    <linearGradient id="emGold" x1="26%" y1="6%" x2="74%" y2="94%">
+      <stop offset="0%" stop-color="#181004"/>
+      <stop offset="18%" stop-color="#3d2a0c"/>
+      <stop offset="38%" stop-color="#8a6820"/>
+      <stop offset="48%" stop-color="#c9a038"/>
+      <stop offset="58%" stop-color="#e8d090"/>
+      <stop offset="68%" stop-color="#b89028"/>
+      <stop offset="82%" stop-color="#5c4010"/>
+      <stop offset="100%" stop-color="#1c1406"/>
     </linearGradient>
-
-    <linearGradient id="windowGold" x1="466" y1="516" x2="558" y2="608" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFF4C9"/>
-      <stop offset="0.45" stop-color="#F1D06E"/>
-      <stop offset="1" stop-color="#B97A19"/>
+    <linearGradient id="emSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff0d0" stop-opacity="0.28"/>
+      <stop offset="38%" stop-color="#c9a028" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#080402" stop-opacity="0.38"/>
     </linearGradient>
-
-    <filter id="symbolGlow" x="112" y="118" width="800" height="792" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feOffset dy="8"/>
-      <feGaussianBlur stdDeviation="26"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0.902 0 0 0 0 0.714 0 0 0 0 0.259 0 0 0 0.28 0"/>
-      <feBlend in2="SourceGraphic" result="shape"/>
+    <linearGradient id="emWinFill" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fff4e8"/>
+      <stop offset="42%" stop-color="#dcb848"/>
+      <stop offset="100%" stop-color="#503008"/>
+    </linearGradient>
+    <linearGradient id="emWinStroke" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#241808"/>
+      <stop offset="50%" stop-color="#d4a838"/>
+      <stop offset="100%" stop-color="#140c04"/>
+    </linearGradient>
+    <filter id="emHalo" x="-26%" y="-26%" width="152%" height="152%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="1 0.55 0.18 0 0  0.82 0.48 0.1 0 0  0.28 0.16 0.04 0 0  0 0 0 0.42 0"/>
     </filter>
-
-    <filter id="softAura" x="190" y="132" width="644" height="624" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="54"/>
+    <filter id="emBloom" x="-8%" y="-8%" width="116%" height="116%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="1 0.48 0.16 0 0  0.62 0.38 0.1 0 0  0.22 0.14 0.04 0 0  0 0 0 0.14 0"/>
     </filter>
-
-    <filter id="windowGlow" x="430" y="482" width="164" height="164" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="14"/>
-    </filter>
-
-    <filter id="innerShadow" x="64" y="64" width="896" height="896" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feOffset dy="10"/>
-      <feGaussianBlur stdDeviation="18"/>
-      <feComposite in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0"/>
-      <feBlend in2="SourceGraphic" result="shape"/>
-    </filter>
+    <linearGradient id="emRim" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a07828" stop-opacity="0.48"/>
+      <stop offset="40%" stop-color="#d4a848" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#907028" stop-opacity="0.4"/>
+    </linearGradient>
   </defs>
 
-  <g filter="url(#innerShadow)">
-    <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#bgGradient)"/>
-    <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#bgVignette)"/>
-    <rect x="83" y="83" width="858" height="858" rx="189" stroke="rgba(255,255,255,0.06)" stroke-width="2"/>
+  <rect width="1024" height="1024" rx="218" ry="218" fill="#000000"/>
+  <rect width="1024" height="1024" rx="218" ry="218" fill="url(#emBgLin)"/>
+  <rect width="1024" height="1024" rx="218" ry="218" fill="url(#emBgV)" opacity="0.93"/>
+
+  <rect x="2" y="2" width="1020" height="1020" rx="216" ry="216" fill="none" stroke="url(#emRim)" stroke-width="1.5" opacity="0.42"/>
+
+  <!--
+    Unified mark (scaled ~8.2%): fills launcher safe area; vertical legs, ridge, chevron, bay + window.
+  -->
+  <g transform="translate(512, 512) scale(1.082) translate(-512, -512)">
+    <g filter="url(#emHalo)" opacity="0.68">
+      <path fill="#705018" fill-rule="evenodd" d="
+        M 194 884 L 194 394 L 512 146 L 830 394 L 830 884 L 640 884 L 512 710 L 384 884 Z
+        M 396 426 L 628 426 Q 636 426 636 434 L 636 610 Q 636 618 628 618 L 396 618 Q 388 618 388 610 L 388 434 Q 388 426 396 426 Z"/>
+    </g>
+    <g filter="url(#emBloom)" opacity="0.34">
+      <path fill="url(#emGold)" fill-rule="evenodd" d="
+        M 194 884 L 194 394 L 512 146 L 830 394 L 830 884 L 640 884 L 512 710 L 384 884 Z
+        M 396 426 L 628 426 Q 636 426 636 434 L 636 610 Q 636 618 628 618 L 396 618 Q 388 618 388 610 L 388 434 Q 388 426 396 426 Z"/>
+    </g>
+    <path fill="url(#emGold)" fill-rule="evenodd" d="
+      M 194 884 L 194 394 L 512 146 L 830 394 L 830 884 L 640 884 L 512 710 L 384 884 Z
+      M 396 426 L 628 426 Q 636 426 636 434 L 636 610 Q 636 618 628 618 L 396 618 Q 388 618 388 610 L 388 434 Q 388 426 396 426 Z"/>
+    <path fill="url(#emSheen)" fill-rule="evenodd" opacity="0.32" d="
+      M 194 884 L 194 394 L 512 146 L 830 394 L 830 884 L 640 884 L 512 710 L 384 884 Z
+      M 396 426 L 628 426 Q 636 426 636 434 L 636 610 Q 636 618 628 618 L 396 618 Q 388 618 388 610 L 388 434 Q 388 426 396 426 Z"/>
+
+    <path d="M 392 416 L 632 416" stroke="#c9a038" stroke-opacity="0.28" stroke-width="1.75" stroke-linecap="round"/>
+
+    <g transform="translate(512, 458)" opacity="0.97">
+      <rect x="-42" y="-30" width="84" height="60" rx="3.5" fill="none" stroke="url(#emWinStroke)" stroke-width="2.8"/>
+      <line x1="0" y1="-30" x2="0" y2="30" stroke="url(#emWinStroke)" stroke-width="2"/>
+      <line x1="-42" y1="0" x2="42" y2="0" stroke="url(#emWinStroke)" stroke-width="2"/>
+      <rect x="-40" y="-28" width="38" height="26" rx="1.25" fill="url(#emWinFill)" opacity="0.94"/>
+      <rect x="2" y="-28" width="38" height="26" rx="1.25" fill="url(#emWinFill)" opacity="0.88"/>
+      <rect x="-40" y="2" width="38" height="26" rx="1.25" fill="url(#emWinFill)" opacity="0.82"/>
+      <rect x="2" y="2" width="38" height="26" rx="1.25" fill="url(#emWinFill)" opacity="0.76"/>
+    </g>
   </g>
-
-  <ellipse cx="512" cy="432" rx="204" ry="168" fill="#E8B445" fill-opacity="0.16" filter="url(#softAura)"/>
-
-  <g filter="url(#symbolGlow)">
-    <path
-      d="M188 804V392L388 188C403 173 423 164 444 164H470C492 164 512 173 527 188L512 332L497 188C512 173 532 164 554 164H580C601 164 621 173 636 188L836 392V804H692V448L512 256L332 448V804H188Z"
-      fill="url(#goldMain)"
-    />
-    <path
-      d="M188 804V392L388 188C403 173 423 164 444 164H470C492 164 512 173 527 188L512 332L497 188C512 173 532 164 554 164H580C601 164 621 173 636 188L836 392V804H692V448L512 256L332 448V804H188Z"
-      stroke="url(#goldEdge)"
-      stroke-width="10"
-      stroke-linejoin="round"
-    />
-  </g>
-
-  <path
-    d="M512 338L654 486V756H370V486L512 338Z"
-    fill="#0B0C10"
-  />
-
-  <path
-    d="M512 372L626 490V732H398V490L512 372Z"
-    fill="#111318"
-    opacity="0.92"
-  />
-
-  <g filter="url(#windowGlow)" opacity="0.85">
-    <rect x="454" y="506" width="116" height="116" rx="22" fill="#E8B445" fill-opacity="0.22"/>
-  </g>
-
-  <g>
-    <rect x="468" y="520" width="42" height="42" rx="8" fill="url(#windowGold)"/>
-    <rect x="514" y="520" width="42" height="42" rx="8" fill="url(#windowGold)"/>
-    <rect x="468" y="566" width="42" height="42" rx="8" fill="url(#windowGold)"/>
-    <rect x="514" y="566" width="42" height="42" rx="8" fill="url(#windowGold)"/>
-
-    <rect x="510" y="520" width="4" height="88" rx="2" fill="#3A2508" fill-opacity="0.72"/>
-    <rect x="468" y="562" width="88" height="4" rx="2" fill="#3A2508" fill-opacity="0.72"/>
-  </g>
-
-  <path
-    d="M512 338L654 486V756H370V486L512 338Z"
-    stroke="rgba(255,255,255,0.05)"
-    stroke-width="2"
-  />
 </svg>
