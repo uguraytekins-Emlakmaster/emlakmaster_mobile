@@ -170,6 +170,12 @@ class _PostCallQuickCaptureBodyState
                 style: AppTypography.pageHeading(context)
                     .copyWith(fontSize: DesignTokens.fontSizeXl),
               ),
+              const SizedBox(height: DesignTokens.titleSubtitleGap),
+              Text(
+                widget.draft.phone,
+                style: AppTypography.bodyStrong(context)
+                    .copyWith(color: ext.textSecondary),
+              ),
               const SizedBox(height: DesignTokens.space3),
               Container(
                 padding: const EdgeInsets.all(DesignTokens.space4),
@@ -183,48 +189,24 @@ class _PostCallQuickCaptureBodyState
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: ext.accent.withValues(alpha: 0.12),
-                            borderRadius:
-                                BorderRadius.circular(DesignTokens.radiusSm),
-                          ),
-                          child: Icon(
-                            Icons.call_rounded,
-                            color: ext.accent,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: DesignTokens.space3),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.draft.phone,
-                                style: AppTypography.bodyStrong(context)
-                                    .copyWith(color: ext.textPrimary),
-                              ),
-                              const SizedBox(
-                                  height: DesignTokens.metricLabelGap),
-                              Text(
-                                widget.draft.customerId != null &&
-                                        widget.draft.customerId!.isNotEmpty
-                                    ? 'CRM müşterisine bağlı arama'
-                                    : 'Numara üzerinden hızlı kayıt yapılacak',
-                                style: AppTypography.meta(context),
-                              ),
-                            ],
-                          ),
+                        Icon(Icons.bolt_rounded, color: ext.accent, size: 18),
+                        const SizedBox(width: DesignTokens.space2),
+                        Text(
+                          'Kaydettiğinde ne olur?',
+                          style: AppTypography.cardHeading(context)
+                              .copyWith(fontSize: DesignTokens.fontSizeMd),
                         ),
                       ],
                     ),
-                    const SizedBox(height: DesignTokens.space3),
+                    const SizedBox(height: DesignTokens.space2),
                     Text(
-                      'Kaydedince çağrı sonucu işlenir, müşteri notu güncellenir ve istersen takip görevi açılır.',
+                      'Çağrı sonucu işlenir, müşteri akışı güncellenir ve istersen hemen takip görevi açılır.',
                       style: AppTypography.body(context),
+                    ),
+                    const SizedBox(height: DesignTokens.space2),
+                    Text(
+                      'Görüşme cihazınızın telefonunda yapıldı; süre burada ölçülmez.',
+                      style: AppTypography.meta(context),
                     ),
                   ],
                 ),
@@ -243,20 +225,34 @@ class _PostCallQuickCaptureBodyState
                     .copyWith(color: ext.textSecondary),
               ),
               const SizedBox(height: DesignTokens.sectionTitleGap),
-              Wrap(
-                spacing: DesignTokens.space2,
-                runSpacing: DesignTokens.space2,
-                children: [
-                  for (final o in QuickCallOutcome.choices)
-                    _OutcomeOptionCard(
-                      label: o.labelTr,
-                      subtitle: _outcomeSubtitle(o.code),
-                      icon: _outcomeIcon(o.code),
-                      selected: _outcomeCode == o.code,
-                      onTap: () => setState(() => _outcomeCode = o.code),
-                    ),
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width =
+                      (constraints.maxWidth - DesignTokens.space2) / 2;
+                  return Wrap(
+                    spacing: DesignTokens.space2,
+                    runSpacing: DesignTokens.space2,
+                    children: [
+                      for (final o in QuickCallOutcome.choices)
+                        SizedBox(
+                          width: width,
+                          child: _OutcomeOptionCard(
+                            item: o,
+                            selected: _outcomeCode == o.code,
+                            onTap: () => setState(() => _outcomeCode = o.code),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
+              if (_outcomeCode != null) ...[
+                const SizedBox(height: DesignTokens.space3),
+                Text(
+                  _outcomeHint(_outcomeCode!),
+                  style: AppTypography.body(context),
+                ),
+              ],
               const SizedBox(height: DesignTokens.space4),
               TextField(
                 controller: _noteCtrl,
@@ -369,105 +365,96 @@ class _PostCallQuickCaptureBodyState
   }
 }
 
+String _outcomeHint(String code) {
+  switch (code) {
+    case QuickCallOutcome.reached:
+      return 'Müşteriyle temas kuruldu. Kısa not ve sıcaklık seçimiyle kaydı tamamlayabilirsin.';
+    case QuickCallOutcome.noAnswer:
+      return 'Müşteriye ulaşılamadı. İstersen hemen bir takip görevi planlayabilirsin.';
+    case QuickCallOutcome.busy:
+      return 'Müşteri meşguldü. Uygun bir takip tarihi seçmek iyi olur.';
+    case QuickCallOutcome.callbackScheduled:
+      return 'Geri dönüş planlandı. Takip tarihi ekleyerek akışı netleştirebilirsin.';
+    case QuickCallOutcome.appointmentSet:
+      return 'Randevu oluşturuldu. Bu kayıt müşteri akışını güçlendirecek.';
+    case QuickCallOutcome.offerSent:
+      return 'Teklif paylaşıldı. Not düşerek satış bağlamını koruyabilirsin.';
+    default:
+      return 'Çağrı sonucunu kaydettiğinde CRM akışı hemen güncellenir.';
+  }
+}
+
+IconData _outcomeIcon(String code) {
+  switch (code) {
+    case QuickCallOutcome.reached:
+      return Icons.check_circle_rounded;
+    case QuickCallOutcome.noAnswer:
+      return Icons.phone_missed_rounded;
+    case QuickCallOutcome.busy:
+      return Icons.do_not_disturb_on_total_silence_rounded;
+    case QuickCallOutcome.callbackScheduled:
+      return Icons.schedule_rounded;
+    case QuickCallOutcome.appointmentSet:
+      return Icons.event_available_rounded;
+    case QuickCallOutcome.offerSent:
+      return Icons.description_rounded;
+    default:
+      return Icons.call_rounded;
+  }
+}
+
 class _OutcomeOptionCard extends StatelessWidget {
   const _OutcomeOptionCard({
-    required this.label,
-    required this.subtitle,
-    required this.icon,
+    required this.item,
     required this.selected,
     required this.onTap,
   });
 
-  final String label;
-  final String subtitle;
-  final IconData icon;
+  final QuickCallOutcomeItem item;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final borderColor = selected
-        ? ext.accent.withValues(alpha: 0.55)
-        : ext.border.withValues(alpha: 0.45);
-    return SizedBox(
-      width: 156,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-          child: Ink(
-            padding: const EdgeInsets.all(DesignTokens.space3),
-            decoration: BoxDecoration(
+    return Material(
+      color:
+          selected ? ext.accent.withValues(alpha: 0.14) : ext.surfaceElevated,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Container(
+          padding: const EdgeInsets.all(DesignTokens.space3),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            border: Border.all(
               color: selected
-                  ? ext.accent.withValues(alpha: 0.14)
-                  : ext.surfaceElevated,
-              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              border: Border.all(color: borderColor),
+                  ? ext.accent.withValues(alpha: 0.45)
+                  : ext.border.withValues(alpha: 0.45),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon,
-                    size: 18, color: selected ? ext.accent : ext.textSecondary),
-                const SizedBox(height: DesignTokens.space2),
-                Text(
-                  label,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _outcomeIcon(item.code),
+                size: 18,
+                color: selected ? ext.accent : ext.textSecondary,
+              ),
+              const SizedBox(width: DesignTokens.space2),
+              Expanded(
+                child: Text(
+                  item.labelTr,
                   style: AppTypography.bodyStrong(context).copyWith(
-                    color: selected ? ext.textPrimary : ext.textPrimary,
+                    color: selected ? ext.textPrimary : ext.textSecondary,
+                    fontSize: DesignTokens.fontSizeBase,
                   ),
                 ),
-                const SizedBox(height: DesignTokens.metricLabelGap),
-                Text(
-                  subtitle,
-                  style: AppTypography.meta(context),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
-  }
-}
-
-IconData _outcomeIcon(String code) {
-  switch (code) {
-    case 'reached':
-      return Icons.call_rounded;
-    case 'callback_scheduled':
-      return Icons.schedule_rounded;
-    case 'appointment_set':
-      return Icons.event_available_rounded;
-    case 'offer_sent':
-      return Icons.send_rounded;
-    case 'busy':
-      return Icons.phone_paused_rounded;
-    case 'no_answer':
-      return Icons.phone_missed_rounded;
-    default:
-      return Icons.check_circle_outline_rounded;
-  }
-}
-
-String _outcomeSubtitle(String code) {
-  switch (code) {
-    case 'reached':
-      return 'Görüşme oldu, kısa özet ve sonraki adım yazılabilir.';
-    case 'callback_scheduled':
-      return 'Kısa sürede yeniden dönüş planlanır.';
-    case 'appointment_set':
-      return 'Randevu bilgisi ve takip akışı netleşir.';
-    case 'offer_sent':
-      return 'Teklif süreci görünür olur.';
-    case 'busy':
-      return 'Daha uygun saat için takip açılabilir.';
-    case 'no_answer':
-      return 'Ulaşılamadı, tekrar arama için işaretlenir.';
-    default:
-      return 'Çağrı sonucu CRM akışına işlenir.';
   }
 }

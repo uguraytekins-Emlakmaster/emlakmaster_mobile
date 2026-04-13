@@ -21,16 +21,8 @@ final consultantCallsStreamProvider = StreamProvider.autoDispose<
       List<QueryDocumentSnapshot<Map<String, dynamic>>>>.broadcast();
   QuerySnapshot<Map<String, dynamic>>? lastAdvisor;
   QuerySnapshot<Map<String, dynamic>>? lastAgent;
-  var lastFingerprint = 0;
-  var resolvedOnce = false;
-
-  void emitFallbackEmpty(String reason) {
-    if (resolvedOnce || controller.isClosed) return;
-    resolvedOnce = true;
-    lastFingerprint = 0;
-    AppLogger.w('[consultantCallsStreamProvider] fallback empty: $reason');
-    controller.add(const []);
-  }
+  int? lastFingerprint;
+  var hasEmittedInitial = false;
 
   int fingerprint(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
     var h = docs.length;
@@ -67,43 +59,49 @@ final consultantCallsStreamProvider = StreamProvider.autoDispose<
       return bt.compareTo(at);
     });
     final nextFingerprint = fingerprint(docs);
-    if (nextFingerprint == lastFingerprint && resolvedOnce) return;
-    resolvedOnce = true;
+    if (nextFingerprint == lastFingerprint && hasEmittedInitial) return;
     lastFingerprint = nextFingerprint;
-    if (!controller.isClosed) controller.add(docs);
+    hasEmittedInitial = true;
+    if (!controller.isClosed) {
+      controller.add(docs);
+      AppLogger.d(
+        '[consultantCallsStreamProvider] emit docs=${docs.length} '
+        'advisor=${lastAdvisor?.docs.length ?? 0} agent=${lastAgent?.docs.length ?? 0}',
+      );
+    }
   }
 
   void onAdvisorError(Object e, StackTrace st) {
     debugPrint('[consultantCallsStreamProvider] advisor: $e');
-    AppLogger.w('[consultantCallsStreamProvider] advisor error', e, st);
     lastAdvisor = null;
     mergeAndEmit();
   }
 
   void onAgentError(Object e, StackTrace st) {
     debugPrint('[consultantCallsStreamProvider] agent: $e');
-    AppLogger.w('[consultantCallsStreamProvider] agent error', e, st);
     lastAgent = null;
     mergeAndEmit();
   }
 
-  final fallbackTimer = Timer(const Duration(seconds: 2), () {
-    emitFallbackEmpty('initial remote data timeout');
-  });
-
   final sub1 = byAdvisor.listen((s) {
-    fallbackTimer.cancel();
     lastAdvisor = s;
     mergeAndEmit();
   }, onError: onAdvisorError, onDone: () {});
   final sub2 = byAgent.listen((s) {
-    fallbackTimer.cancel();
     lastAgent = s;
     mergeAndEmit();
   }, onError: onAgentError, onDone: () {});
 
+  scheduleMicrotask(() {
+    if (!controller.isClosed && !hasEmittedInitial) {
+      hasEmittedInitial = true;
+      lastFingerprint = fingerprint(const []);
+      controller.add(const []);
+      AppLogger.d('[consultantCallsStreamProvider] initial empty emit');
+    }
+  });
+
   ref.onDispose(() {
-    fallbackTimer.cancel();
     sub1.cancel();
     sub2.cancel();
     controller.close();

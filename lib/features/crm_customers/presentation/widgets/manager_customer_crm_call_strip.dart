@@ -59,11 +59,7 @@ class ManagerCustomerCrmCallStrip extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           'CRM çağrı kayıtları (yönetici)',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    color: ext.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          style: AppTypography.cardHeading(context),
                         ),
                       ),
                     ],
@@ -86,7 +82,7 @@ class ManagerCustomerCrmCallStrip extends ConsumerWidget {
   }
 }
 
-class _CallLine extends ConsumerWidget {
+class _CallLine extends StatelessWidget {
   const _CallLine({
     required this.doc,
     required this.locals,
@@ -98,18 +94,10 @@ class _CallLine extends ConsumerWidget {
   final String? currentUid;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final data = doc.data();
     final agent = CrmCallRecordHelpers.agentIdOf(data);
-    final consultantDoc = agent.isEmpty
-        ? null
-        : ref.watch(userDocStreamProvider(agent)).valueOrNull;
-    final consultantName = (consultantDoc?.name?.trim().isNotEmpty ?? false)
-        ? consultantDoc!.name!.trim()
-        : (consultantDoc?.email?.trim().isNotEmpty ?? false)
-            ? consultantDoc!.email!.trim()
-            : (agent.isEmpty ? 'Danışman bilgisi yok' : _shortAgent(agent));
     final created = CrmCallRecordHelpers.createdAtOf(data);
     final timeStr = created != null
         ? '${created.day}.${created.month}.${created.year} ${created.hour}:${created.minute.toString().padLeft(2, '0')}'
@@ -121,11 +109,10 @@ class _CallLine extends ConsumerWidget {
       'completed': 'Tamamlandı',
     });
     final cap = CrmCallRecordHelpers.captureStatusTr(data);
-    final note = (data['quickCaptureNote'] as String? ?? '').trim();
-    final phone = _formatPhone(
-      (data['phoneNumber'] as String? ?? data['phone'] as String? ?? '—')
-          .trim(),
-    );
+    final quickNote =
+        (data['quickCaptureNote'] as String?)?.trim().isNotEmpty == true
+            ? (data['quickCaptureNote'] as String).trim()
+            : null;
     final localMatch = matchLocalCallRecordForFirestoreDoc(
       locals: locals,
       docId: doc.id,
@@ -162,67 +149,50 @@ class _CallLine extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: ext.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
               ),
-              child: Icon(Icons.call_rounded, color: ext.accent, size: 18),
+              child: Icon(Icons.call_rounded, size: 18, color: ext.accent),
             ),
             const SizedBox(width: DesignTokens.space3),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    phone,
-                    style: AppTypography.cardHeading(context)
-                        .copyWith(fontSize: DesignTokens.fontSizeMd),
-                  ),
-                  const SizedBox(height: DesignTokens.metricLabelGap),
                   Wrap(
                     spacing: DesignTokens.space2,
-                    runSpacing: DesignTokens.space1,
+                    runSpacing: DesignTokens.space2,
                     children: [
-                      _MetaPill(label: outcome, accent: ext.accent),
-                      _MetaPill(
-                        label: cap,
-                        accent: cap.contains('tamamlandı')
-                            ? ext.success
-                            : ext.warning,
-                      ),
+                      _ManagerCallBadge(label: outcome, color: ext.accent),
+                      _ManagerCallBadge(label: cap, color: ext.textSecondary),
                     ],
                   ),
                   const SizedBox(height: DesignTokens.space2),
                   Text(
-                    'Danışman: $consultantName',
-                    style: AppTypography.body(context),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    'Danışman: ${agent.isEmpty ? '—' : _shortAgent(agent)}',
+                    style: AppTypography.bodyStrong(context),
                   ),
                   const SizedBox(height: DesignTokens.space1),
                   Text(
                     timeStr,
                     style: AppTypography.meta(context),
                   ),
-                  if (note.isNotEmpty) ...[
+                  if (quickNote != null) ...[
                     const SizedBox(height: DesignTokens.space2),
                     Text(
-                      note,
-                      style: AppTypography.meta(context)
-                          .copyWith(color: ext.textSecondary),
+                      quickNote,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body(context),
                     ),
                   ],
                 ],
               ),
             ),
-            if (syncIcon != null) ...[
-              const SizedBox(width: DesignTokens.space2),
-              syncIcon,
-            ],
+            if (syncIcon != null) syncIcon,
           ],
         ),
       ),
@@ -230,44 +200,39 @@ class _CallLine extends ConsumerWidget {
   }
 }
 
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.label, required this.accent});
+String _shortAgent(String value) {
+  final v = value.trim();
+  if (v.length <= 8) return v;
+  return '${v.substring(0, 4)}...${v.substring(v.length - 4)}';
+}
+
+class _ManagerCallBadge extends StatelessWidget {
+  const _ManagerCallBadge({
+    required this.label,
+    required this.color,
+  });
 
   final String label;
-  final Color accent;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: DesignTokens.space2,
-        vertical: DesignTokens.space1,
+        vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: AppTypography.metricLabel(context).copyWith(color: accent),
+        style: AppTypography.meta(context).copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
-}
-
-String _shortAgent(String agent) {
-  final trimmed = agent.trim();
-  if (trimmed.length <= 6) return trimmed;
-  return '...${trimmed.substring(trimmed.length - 6)}';
-}
-
-String _formatPhone(String raw) {
-  final digits = raw.replaceAll(RegExp(r'\D'), '');
-  if (digits.length == 10) {
-    return '${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6, 8)} ${digits.substring(8)}';
-  }
-  if (digits.length == 11 && digits.startsWith('0')) {
-    return '${digits.substring(0, 4)} ${digits.substring(4, 7)} ${digits.substring(7, 9)} ${digits.substring(9)}';
-  }
-  return raw;
 }

@@ -3,25 +3,30 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
     if (dart.library.io) 'dart:io' as io;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
 import 'package:emlakmaster_mobile/core/utils/sms_launcher.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
-import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
+import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/data/device_call_log_sync_service.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
+import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -54,17 +59,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   };
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs = [];
-
-  void _retryCallsLoad() {
-    HapticFeedback.lightImpact();
-    ref.invalidate(consultantCallsStreamProvider);
-    ref.invalidate(localCallRecordsStreamProvider);
-    if (mounted) {
-      setState(() {
-        _selectedIds.clear();
-      });
-    }
-  }
 
   void _selectAll(bool select) {
     setState(() {
@@ -426,16 +420,21 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         ? AppThemeExtension.of(context).textSecondary
         : AppThemeExtension.of(context).textSecondary;
     final callsAsync = ref.watch(consultantCallsStreamProvider);
-    ref.listen(consultantCallsStreamProvider, (prev, next) {
-      next.whenOrNull(
-        data: (docs) {
-          AppLogger.i('[consultant_calls] resolved docs=${docs.length}');
-        },
-        error: (e, st) {
-          AppLogger.e('[consultant_calls] load error', e, st);
-        },
+    final currentUid =
+        ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    final customers = ref.watch(customerListForAgentProvider).valueOrNull ??
+        const <CustomerEntity>[];
+    final customerById = {for (final c in customers) c.id: c};
+    if (kDebugMode && callsAsync.isLoading) {
+      AppLogger.d('[consultant_calls] loading...');
+    }
+    if (kDebugMode && callsAsync.hasError) {
+      AppLogger.w(
+        '[consultant_calls] error',
+        callsAsync.error,
+        callsAsync.stackTrace,
       );
-    });
+    }
 
     final queue = _whatsappQueue;
     final hasQueue =
@@ -482,18 +481,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       ),
       body: callsAsync.when(
         loading: () => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(
-                  color: AppThemeExtension.of(context).accent),
-              const SizedBox(height: DesignTokens.space4),
-              Text(
-                'Çağrılar hazırlanıyor...',
-                style: AppTypography.body(context),
-              ),
-            ],
-          ),
+          child: CircularProgressIndicator(
+              color: AppThemeExtension.of(context).accent),
         ),
         error: (e, _) => Center(
           child: Padding(
@@ -506,17 +495,20 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                 const SizedBox(height: 16),
                 Text(
                   'Çağrılar yüklenemedi.',
-                  style: TextStyle(color: fg, fontWeight: FontWeight.w600),
+                  style: AppTypography.cardHeading(context),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                Text('$e',
-                    style: TextStyle(color: textSecondary, fontSize: 12),
+                Text(FirestoreService.userFacingErrorMessage(e),
+                    style: AppTypography.body(context)
+                        .copyWith(color: textSecondary),
                     textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: _retryCallsLoad,
-                  child: const Text('Tekrar dene'),
+                const SizedBox(height: DesignTokens.space4),
+                FilledButton.icon(
+                  onPressed: () =>
+                      ref.invalidate(consultantCallsStreamProvider),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Tekrar dene'),
                 ),
               ],
             ),
@@ -524,6 +516,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         ),
         data: (docs) {
           _docs = docs;
+          if (kDebugMode) {
+            AppLogger.d('[consultant_calls] loaded docs=${docs.length}');
+          }
           final locals =
               ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
           final docIds = docs.map((d) => d.id).toSet();
@@ -636,57 +631,27 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       final syncHint = _syncSubtitleHint(
                         deriveLocalCallSyncUiState(r, nowMs: nowMs),
                       );
-                      return Card(
-                        margin:
-                            const EdgeInsets.only(bottom: DesignTokens.space2),
-                        color: surface,
-                        child: CheckboxListTile(
-                          value: false,
-                          onChanged: null,
-                          title: Row(
-                            children: [
-                              Icon(
-                                Icons.cloud_off_outlined,
-                                size: 18,
-                                color: textSecondary,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  r.phoneNumber,
-                                  style: TextStyle(
-                                    color: fg,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              CallSyncStatusIcon(
-                                record: r,
-                                onManualRetry: deriveLocalCallSyncUiState(r,
-                                            nowMs: nowMs) ==
-                                        LocalCallSyncUiState.failedPermanent
-                                    ? () =>
-                                        unawaited(retryLocalCallRecordSync(r))
-                                    : null,
-                              ),
-                            ],
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              '$dateStr · Yerel · $outcomeStr · $syncHint',
-                              style:
-                                  TextStyle(color: textSecondary, fontSize: 12),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          activeColor: AppThemeExtension.of(context).accent,
+                      return _LocalCallRecordCard(
+                        title: r.customerId != null && r.customerId!.isNotEmpty
+                            ? 'CRM müşterisine bağlı kayıt'
+                            : 'Kaydedilmemiş çağrı',
+                        phone: _formatPhone(r.phoneNumber),
+                        dateStr: dateStr,
+                        outcome: QuickCallOutcome.labelTr(outcomeStr),
+                        syncHint: syncHint,
+                        note: r.notes,
+                        syncIcon: CallSyncStatusIcon(
+                          record: r,
+                          onManualRetry:
+                              deriveLocalCallSyncUiState(r, nowMs: nowMs) ==
+                                      LocalCallSyncUiState.failedPermanent
+                                  ? () => unawaited(retryLocalCallRecordSync(r))
+                                  : null,
                         ),
+                        surface: surface,
+                        fg: fg,
+                        textSecondary: textSecondary,
+                        ext: AppThemeExtension.of(context),
                       );
                     }
                     final doc = _docs[index - localStandalone.length];
@@ -696,9 +661,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         data['callDirection'] as String? ??
                         '';
                     final isIncoming = direction == 'incoming';
-                    final phone = data['phoneNumber'] as String? ??
+                    final rawPhone = data['phoneNumber'] as String? ??
                         data['phone'] as String? ??
                         '—';
+                    final phone = _formatPhone(rawPhone);
                     final duration = data['durationSec'] as num?;
                     final durationStr =
                         duration != null ? '${duration.toInt()} sn' : '—';
@@ -715,75 +681,73 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
                     }
                     final selected = _selectedIds.contains(id);
-                    final hasPhone = (data['phoneNumber'] as String? ??
-                            data['phone'] as String?)
-                        .toString()
-                        .trim()
-                        .isNotEmpty;
+                    final hasPhone = rawPhone.trim().isNotEmpty;
                     final match = byFirestoreId[id];
-                    final firestoreSubtitle = match != null
-                        ? '$dateStr · $durationStr · $outcomeStr · ${_syncSubtitleHint(deriveLocalCallSyncUiState(match, nowMs: nowMs))}'
-                        : '$dateStr · $durationStr · $outcomeStr · Sunucu';
+                    final customerId = (data['customerId'] as String?)?.trim();
+                    final customerName =
+                        customerId != null && customerId.isNotEmpty
+                            ? customerById[customerId]?.fullName
+                            : null;
+                    final note = (data['quickCaptureNote'] as String?)
+                                ?.trim()
+                                .isNotEmpty ==
+                            true
+                        ? (data['quickCaptureNote'] as String).trim()
+                        : (data['quickNote'] as String?)?.trim().isNotEmpty ==
+                                true
+                            ? (data['quickNote'] as String).trim()
+                            : (data['note'] as String?)?.trim().isNotEmpty ==
+                                    true
+                                ? (data['note'] as String).trim()
+                                : null;
+                    final advisorId = (data['advisorId'] as String?)?.trim() ??
+                        (data['agentId'] as String?)?.trim() ??
+                        '';
+                    final advisorLabel = advisorId.isEmpty
+                        ? 'Danışman: —'
+                        : advisorId == currentUid
+                            ? 'Danışman: Sen'
+                            : 'Danışman: ${_shortId(advisorId)}';
+                    final completionLabel = data['quickCapturePending'] == true
+                        ? 'Sonuç bekleniyor'
+                        : data['captureCompletedAt'] != null
+                            ? 'Kayıt tamamlandı'
+                            : 'Sunucuda';
 
-                    return Card(
-                      margin:
-                          const EdgeInsets.only(bottom: DesignTokens.space2),
-                      color: surface,
-                      child: CheckboxListTile(
-                        value: selected,
-                        onChanged:
-                            hasPhone ? (_) => _toggleSelection(id) : null,
-                        title: Row(
-                          children: [
-                            Icon(
-                              isIncoming
-                                  ? Icons.call_received_rounded
-                                  : Icons.call_made_rounded,
-                              size: 18,
-                              color: isIncoming
-                                  ? AppThemeExtension.of(context).success
-                                  : AppThemeExtension.of(context).info,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                phone,
-                                style: TextStyle(
-                                  color: fg,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            if (match != null)
-                              CallSyncStatusIcon(
-                                record: match,
-                                onManualRetry: deriveLocalCallSyncUiState(match,
-                                            nowMs: nowMs) ==
-                                        LocalCallSyncUiState.failedPermanent
-                                    ? () => unawaited(
-                                        retryLocalCallRecordSync(match))
-                                    : null,
-                              )
-                            else
-                              const ServerOnlyCallSourceIcon(),
-                          ],
-                        ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            firestoreSubtitle,
-                            style:
-                                TextStyle(color: textSecondary, fontSize: 12),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        activeColor: AppThemeExtension.of(context).accent,
-                      ),
+                    return _FirestoreCallRecordCard(
+                      selected: selected,
+                      enabled: hasPhone,
+                      onSelect: hasPhone ? () => _toggleSelection(id) : null,
+                      title: customerName?.trim().isNotEmpty == true
+                          ? customerName!.trim()
+                          : 'Telefon görüşmesi',
+                      phone: phone,
+                      outcome: outcomeStr,
+                      advisorLabel: advisorLabel,
+                      dateStr: dateStr,
+                      durationStr: durationStr,
+                      stateLabel: completionLabel,
+                      note: note,
+                      technicalMeta: customerId != null && customerId.isNotEmpty
+                          ? 'CRM ID: ${_shortId(customerId)}'
+                          : null,
+                      leadingIcon: isIncoming
+                          ? Icons.call_received_rounded
+                          : Icons.call_made_rounded,
+                      leadingColor: isIncoming
+                          ? AppThemeExtension.of(context).success
+                          : AppThemeExtension.of(context).info,
+                      trailing: match != null
+                          ? CallSyncStatusIcon(
+                              record: match,
+                              onManualRetry: deriveLocalCallSyncUiState(match,
+                                          nowMs: nowMs) ==
+                                      LocalCallSyncUiState.failedPermanent
+                                  ? () =>
+                                      unawaited(retryLocalCallRecordSync(match))
+                                  : null,
+                            )
+                          : const ServerOnlyCallSourceIcon(),
                     );
                   },
                 ),
@@ -837,6 +801,293 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               ),
             )
           : null,
+    );
+  }
+}
+
+String _formatPhone(String phone) {
+  final digits = phone.replaceAll(RegExp(r'\D'), '');
+  if (digits.length == 10) {
+    return '0${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6, 8)} ${digits.substring(8)}';
+  }
+  if (digits.length == 11 && digits.startsWith('0')) {
+    return '${digits.substring(0, 4)} ${digits.substring(4, 7)} ${digits.substring(7, 9)} ${digits.substring(9)}';
+  }
+  if (digits.length == 12 && digits.startsWith('90')) {
+    return '+90 ${digits.substring(2, 5)} ${digits.substring(5, 8)} ${digits.substring(8, 10)} ${digits.substring(10)}';
+  }
+  return phone;
+}
+
+String _shortId(String value) {
+  final v = value.trim();
+  if (v.length <= 8) return v;
+  return '${v.substring(0, 4)}...${v.substring(v.length - 4)}';
+}
+
+class _CallBadge extends StatelessWidget {
+  const _CallBadge({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.space2,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.meta(context).copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _LocalCallRecordCard extends StatelessWidget {
+  const _LocalCallRecordCard({
+    required this.title,
+    required this.phone,
+    required this.dateStr,
+    required this.outcome,
+    required this.syncHint,
+    required this.note,
+    required this.syncIcon,
+    required this.surface,
+    required this.fg,
+    required this.textSecondary,
+    required this.ext,
+  });
+
+  final String title;
+  final String phone;
+  final String dateStr;
+  final String outcome;
+  final String syncHint;
+  final String? note;
+  final Widget syncIcon;
+  final Color surface;
+  final Color fg;
+  final Color textSecondary;
+  final AppThemeExtension ext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+      color: surface,
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.space4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: textSecondary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              ),
+              child: Icon(Icons.cloud_off_outlined, color: textSecondary),
+            ),
+            const SizedBox(width: DesignTokens.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTypography.cardHeading(context)),
+                  const SizedBox(height: 2),
+                  Text(
+                    phone,
+                    style:
+                        AppTypography.bodyStrong(context).copyWith(color: fg),
+                  ),
+                  const SizedBox(height: DesignTokens.space2),
+                  Wrap(
+                    spacing: DesignTokens.space2,
+                    runSpacing: DesignTokens.space2,
+                    children: [
+                      _CallBadge(label: outcome, color: ext.warning),
+                      _CallBadge(label: syncHint, color: textSecondary),
+                    ],
+                  ),
+                  const SizedBox(height: DesignTokens.space2),
+                  Text(
+                    dateStr,
+                    style: AppTypography.meta(context).copyWith(
+                      color: textSecondary,
+                    ),
+                  ),
+                  if (note != null && note!.trim().isNotEmpty) ...[
+                    const SizedBox(height: DesignTokens.space2),
+                    Text(
+                      note!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body(context),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: DesignTokens.space2),
+            syncIcon,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FirestoreCallRecordCard extends StatelessWidget {
+  const _FirestoreCallRecordCard({
+    required this.selected,
+    required this.enabled,
+    required this.onSelect,
+    required this.title,
+    required this.phone,
+    required this.outcome,
+    required this.advisorLabel,
+    required this.dateStr,
+    required this.durationStr,
+    required this.stateLabel,
+    required this.note,
+    required this.technicalMeta,
+    required this.leadingIcon,
+    required this.leadingColor,
+    required this.trailing,
+  });
+
+  final bool selected;
+  final bool enabled;
+  final VoidCallback? onSelect;
+  final String title;
+  final String phone;
+  final String outcome;
+  final String advisorLabel;
+  final String dateStr;
+  final String? durationStr;
+  final String stateLabel;
+  final String? note;
+  final String? technicalMeta;
+  final IconData leadingIcon;
+  final Color leadingColor;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+      color: ext.surface,
+      child: InkWell(
+        onTap: enabled ? onSelect : null,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+        child: Padding(
+          padding: const EdgeInsets.all(DesignTokens.space4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Checkbox(
+                value: selected,
+                onChanged: enabled ? (_) => onSelect?.call() : null,
+                activeColor: ext.accent,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: leadingColor.withValues(alpha: 0.12),
+                            borderRadius:
+                                BorderRadius.circular(DesignTokens.radiusMd),
+                          ),
+                          child:
+                              Icon(leadingIcon, color: leadingColor, size: 18),
+                        ),
+                        const SizedBox(width: DesignTokens.space3),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: AppTypography.cardHeading(context)
+                                    .copyWith(
+                                        fontSize: DesignTokens.fontSizeMd),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                phone,
+                                style: AppTypography.bodyStrong(context),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: DesignTokens.space2),
+                        trailing,
+                      ],
+                    ),
+                    const SizedBox(height: DesignTokens.space2),
+                    Wrap(
+                      spacing: DesignTokens.space2,
+                      runSpacing: DesignTokens.space2,
+                      children: [
+                        _CallBadge(label: outcome, color: ext.accent),
+                        _CallBadge(label: stateLabel, color: ext.textSecondary),
+                      ],
+                    ),
+                    const SizedBox(height: DesignTokens.space2),
+                    Text(
+                      '$advisorLabel · $dateStr${durationStr != null ? ' · $durationStr' : ''}',
+                      style: AppTypography.meta(context),
+                    ),
+                    if (note != null && note!.trim().isNotEmpty) ...[
+                      const SizedBox(height: DesignTokens.space2),
+                      Text(
+                        note!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body(context),
+                      ),
+                    ],
+                    if (technicalMeta != null) ...[
+                      const SizedBox(height: DesignTokens.space1),
+                      Text(
+                        technicalMeta!,
+                        style: AppTypography.meta(context).copyWith(
+                          color: ext.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
