@@ -696,10 +696,17 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         : (data['quickNote'] as String?)?.trim().isNotEmpty ==
                                 true
                             ? (data['quickNote'] as String).trim()
-                            : (data['note'] as String?)?.trim().isNotEmpty ==
+                            : (data['postCallSummaryText'] as String?)
+                                        ?.trim()
+                                        .isNotEmpty ==
                                     true
-                                ? (data['note'] as String).trim()
-                                : null;
+                                ? (data['postCallSummaryText'] as String).trim()
+                                : (data['note'] as String?)
+                                            ?.trim()
+                                            .isNotEmpty ==
+                                        true
+                                    ? (data['note'] as String).trim()
+                                    : null;
                     final advisorId = (data['advisorId'] as String?)?.trim() ??
                         (data['agentId'] as String?)?.trim() ??
                         '';

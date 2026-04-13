@@ -23,15 +23,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class QuickCaptureSaveResult {
   const QuickCaptureSaveResult({
+    required this.savedSuccessfully,
     required this.callSaved,
     required this.taskCreated,
+    required this.customerLinked,
+    required this.detachedCallSummarySaved,
     required this.aiLimited,
     this.customerId,
     this.firestoreCallId,
   });
 
+  final bool savedSuccessfully;
   final bool callSaved;
   final bool taskCreated;
+  final bool customerLinked;
+  final bool detachedCallSummarySaved;
   final bool aiLimited;
   final String? customerId;
   final String? firestoreCallId;
@@ -208,8 +214,11 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     );
   }
   return QuickCaptureSaveResult(
+    savedSuccessfully: true,
     callSaved: true,
     taskCreated: taskCreated,
+    customerLinked: cid != null && cid.isNotEmpty,
+    detachedCallSummarySaved: false,
     aiLimited: !canUseAi,
     customerId: cid,
     firestoreCallId: newFirestoreCallId ?? effective.callSessionId,

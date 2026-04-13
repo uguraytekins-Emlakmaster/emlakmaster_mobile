@@ -109,9 +109,13 @@ class _CallLine extends StatelessWidget {
       'completed': 'Tamamlandı',
     });
     final cap = CrmCallRecordHelpers.captureStatusTr(data);
-    final quickNote =
-        (data['quickCaptureNote'] as String?)?.trim().isNotEmpty == true
-            ? (data['quickCaptureNote'] as String).trim()
+    final quickNote = (data['quickCaptureNote'] as String?)
+                ?.trim()
+                .isNotEmpty ==
+            true
+        ? (data['quickCaptureNote'] as String).trim()
+        : (data['postCallSummaryText'] as String?)?.trim().isNotEmpty == true
+            ? (data['postCallSummaryText'] as String).trim()
             : null;
     final localMatch = matchLocalCallRecordForFirestoreDoc(
       locals: locals,

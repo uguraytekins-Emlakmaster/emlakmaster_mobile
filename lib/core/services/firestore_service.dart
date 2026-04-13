@@ -1193,6 +1193,75 @@ class FirestoreService {
     if (last != null) throw last;
   }
 
+  static Future<String> saveStructuredCallSummaryDoc({
+    String? id,
+    required String assignedAgentId,
+    String? callId,
+    String? customerId,
+    String? phoneNumber,
+    required String customerIntent,
+    required String budgetRange,
+    required String preferredRegions,
+    required String urgency,
+    required String nextStepSuggestion,
+    required String sentiment,
+    required String fullSummary,
+    required bool detachedFromCustomer,
+  }) async {
+    final summaryId = id ??
+        FirebaseFirestore.instance
+            .collection(AppConstants.colCallSummaries)
+            .doc()
+            .id;
+    await saveCallSummaryDoc({
+      'id': summaryId,
+      'callId': callId,
+      if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+      if (phoneNumber != null && phoneNumber.isNotEmpty)
+        'phoneNumber': phoneNumber,
+      'agentId': assignedAgentId,
+      'assignedAgentId': assignedAgentId,
+      'customerIntent': customerIntent,
+      'budgetRange': budgetRange,
+      'preferredRegions': preferredRegions,
+      'urgency': urgency,
+      'nextStepSuggestion': nextStepSuggestion,
+      'sentiment': sentiment,
+      'shortSummary': fullSummary,
+      'longSummary': fullSummary,
+      'detachedFromCustomer': detachedFromCustomer,
+      'source': 'post_call_wizard',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return summaryId;
+  }
+
+  static Future<void> mergePostCallSummaryIntoCallRecord({
+    required String callSessionId,
+    required String fullSummary,
+    required String nextStepSuggestion,
+    required String sentiment,
+    bool detachedFromCustomer = false,
+    String? customerId,
+  }) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    if (callSessionId.trim().isEmpty) return;
+    await FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .doc(callSessionId.trim())
+        .set({
+      'postCallSummaryText': fullSummary,
+      'postCallNextStepSuggestion': nextStepSuggestion,
+      'postCallSentiment': sentiment,
+      'postCallSummarySavedAt': FieldValue.serverTimestamp(),
+      'postCallSummaryDetached': detachedFromCustomer,
+      if (customerId != null && customerId.trim().isNotEmpty)
+        'customerId': customerId.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   // ---------- Tasks ----------
   static Stream<QuerySnapshot<Map<String, dynamic>>> tasksByAdvisorStream(
       String advisorId) async* {

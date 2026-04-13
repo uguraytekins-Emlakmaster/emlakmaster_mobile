@@ -16,6 +16,9 @@ import 'package:emlakmaster_mobile/features/monetization/services/usage_service.
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_insight_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_ai_enrichment_service.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_transcript_ingestion.dart';
@@ -60,6 +63,28 @@ class CallExtraction {
     required this.sentiment,
     required this.fullSummary,
   });
+}
+
+class PostCallSummarySaveResult {
+  const PostCallSummarySaveResult({
+    required this.savedSuccessfully,
+    required this.taskCreated,
+    required this.customerLinked,
+    required this.detachedCallSummarySaved,
+    required this.aiLimited,
+    this.firestoreCallId,
+    this.customerId,
+    this.callSummaryId,
+  });
+
+  final bool savedSuccessfully;
+  final bool taskCreated;
+  final bool customerLinked;
+  final bool detachedCallSummarySaved;
+  final bool aiLimited;
+  final String? firestoreCallId;
+  final String? customerId;
+  final String? callSummaryId;
 }
 
 String _normalizeTranscriptLanguage(String? localeId) {
@@ -302,18 +327,17 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     });
     final agentId = ref.read(currentUserProvider).valueOrNull?.uid;
     final customerId = widget.linkedCustomerId;
+    final callSessionId = widget.callSessionId?.trim();
+    if (kDebugMode) {
+      AppLogger.d(
+        '[post_call_wizard] save start customer=${customerId ?? '-'} '
+        'callSession=${callSessionId ?? '-'} summaryChars=${summaryText.length}',
+      );
+    }
     if (agentId == null || agentId.isEmpty) {
       setState(() {
         _isSaving = false;
         _saveError = 'Oturum bulunamadı. Giriş yapıp tekrar deneyin.';
-      });
-      return;
-    }
-    if (customerId == null || customerId.isEmpty) {
-      setState(() {
-        _isSaving = false;
-        _saveError =
-            'Müşteri bağlantısı yok. Müşteriyle açılan aramadan kaydedin.';
       });
       return;
     }
@@ -328,12 +352,37 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     }
 
     try {
+      final customerLinked = customerId != null && customerId.isNotEmpty;
+      String? callSummaryId;
       await runWithResilience(
         ref: ref as Ref<Object?>,
         () async {
-          await FirestoreService.saveCallExtractionToCustomer(
-            customerId: customerId,
+          if (customerLinked) {
+            await FirestoreService.saveCallExtractionToCustomer(
+              customerId: customerId,
+              assignedAgentId: agentId,
+              customerIntent: _extraction!.customerIntent,
+              budgetRange: _extraction!.budgetRange,
+              preferredRegions: _extraction!.preferredRegions,
+              urgency: _extraction!.urgency,
+              nextStepSuggestion: _extraction!.nextStepSuggestion,
+              sentiment: sentimentToStorage(_extraction!.sentiment),
+              fullSummary: summaryText,
+              lastCallSummarySignals: summarySignalsPayload,
+            );
+            if (summaryText.isNotEmpty) {
+              await FirestoreService.saveNote(
+                customerId: customerId,
+                content: '📞 Çağrı özeti (AI): $summaryText',
+                advisorId: agentId,
+              );
+            }
+          }
+          callSummaryId = await FirestoreService.saveStructuredCallSummaryDoc(
             assignedAgentId: agentId,
+            callId: callSessionId,
+            customerId: customerLinked ? customerId : null,
+            phoneNumber: widget.phoneNumber,
             customerIntent: _extraction!.customerIntent,
             budgetRange: _extraction!.budgetRange,
             preferredRegions: _extraction!.preferredRegions,
@@ -341,13 +390,18 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             nextStepSuggestion: _extraction!.nextStepSuggestion,
             sentiment: sentimentToStorage(_extraction!.sentiment),
             fullSummary: summaryText,
-            lastCallSummarySignals: summarySignalsPayload,
+            detachedFromCustomer: !customerLinked,
           );
-          if (summaryText.isNotEmpty) {
-            await FirestoreService.saveNote(
-              customerId: customerId,
-              content: '📞 Çağrı özeti (AI): $summaryText',
-              advisorId: agentId,
+          if (callSessionId != null &&
+              callSessionId.isNotEmpty &&
+              summaryText.isNotEmpty) {
+            await FirestoreService.mergePostCallSummaryIntoCallRecord(
+              callSessionId: callSessionId,
+              fullSummary: summaryText,
+              nextStepSuggestion: _extraction!.nextStepSuggestion,
+              sentiment: sentimentToStorage(_extraction!.sentiment),
+              detachedFromCustomer: !customerLinked,
+              customerId: customerLinked ? customerId : null,
             );
           }
           await FirestoreService.incrementAgentStatsAfterSummary(
@@ -356,40 +410,47 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
         },
       );
       if (!mounted) return;
-      AppLogger.i('Call summary saved');
+      AppLogger.i(
+        customerLinked
+            ? '[post_call_wizard] linked summary saved'
+            : '[post_call_wizard] detached summary saved',
+      );
       final enrichCustomerId = customerId;
       final summaryForAi = summaryText;
       final transcriptForAi = _transcriptController.text.trim();
       final sentimentForAi = sentimentToStorage(_extraction!.sentiment);
       CustomerHeatLevel? heatForEnrich;
-      try {
-        final ent =
-            await ref.read(customerEntityByIdProvider(customerId).future);
-        if (ent != null) {
-          heatForEnrich = computeCustomerHeat(ent).heatLevel;
-        }
-      } catch (_) {}
-      if (transcriptForAi.isNotEmpty) {
+      if (customerLinked) {
         try {
-          if (!_transcriptUserEditedOnce) {
-            await PostCallTranscriptIngestion.mergeSpeechToTextHandoffIfPresent(
-              customerId: customerId,
-              rawTranscriptText: transcriptForAi,
-              transcriptLanguage:
-                  _normalizeTranscriptLanguage(_lastSttLocaleId),
-              transcriptConfidence: _lastSttConfidence,
-              sourceMetadata: const {'channel': 'post_call_ptt'},
-            );
-          } else {
-            await PostCallTranscriptIngestion.mergePayloadIfPresent(
-              customerId: customerId,
-              payload: TranscriptIngestPayload.manual(
-                rawTranscriptText: transcriptForAi,
-              ),
-            );
+          final ent =
+              await ref.read(customerEntityByIdProvider(customerId).future);
+          if (ent != null) {
+            heatForEnrich = computeCustomerHeat(ent).heatLevel;
           }
-        } catch (e, st) {
-          AppLogger.w('Transkript Firestore kaydı atlandı', e, st);
+        } catch (_) {}
+        if (transcriptForAi.isNotEmpty) {
+          try {
+            if (!_transcriptUserEditedOnce) {
+              await PostCallTranscriptIngestion
+                  .mergeSpeechToTextHandoffIfPresent(
+                customerId: customerId,
+                rawTranscriptText: transcriptForAi,
+                transcriptLanguage:
+                    _normalizeTranscriptLanguage(_lastSttLocaleId),
+                transcriptConfidence: _lastSttConfidence,
+                sourceMetadata: const {'channel': 'post_call_ptt'},
+              );
+            } else {
+              await PostCallTranscriptIngestion.mergePayloadIfPresent(
+                customerId: customerId,
+                payload: TranscriptIngestPayload.manual(
+                  rawTranscriptText: transcriptForAi,
+                ),
+              );
+            }
+          } catch (e, st) {
+            AppLogger.w('Transkript Firestore kaydı atlandı', e, st);
+          }
         }
       }
       if (!mounted) return;
@@ -414,35 +475,64 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       final usageService = ref.read(usageServiceProvider);
       await usageService.warmUp();
       final canUseAi = usageService.canUseAi();
+      var aiLimited = false;
       if (!canUseAi) {
+        aiLimited = true;
         AnalyticsService.instance.logEvent(
           AnalyticsEvents.limitReachedAi,
           {AnalyticsEvents.paramFeature: 'ai_analysis'},
         );
         if (!mounted) return;
         await showUpgradeBottomSheet(context, feature: 'ai_analysis');
-        if (!mounted) return;
-        context.go(AppRouter.routeHome);
-        return;
-      }
-      await usageService.incrementAiUsage();
-      Future.microtask(() async {
-        try {
-          final enrichment = await PostCallAiEnrichmentService.instance.enrich(
-            input: enrichmentInput,
-            sentimentStorage: sentimentForAi,
-            heatLevel: heatForEnrich,
-            allowRemoteModel: allowRemote,
-          );
-          await FirestoreService.mergePostCallAiEnrichment(
-            enrichCustomerId,
-            enrichment.toFirestoreMap(),
-          );
-        } catch (e, stack) {
-          AppLogger.e('Post-call AI enrichment merge failed', e, stack);
+      } else {
+        await usageService.incrementAiUsage();
+        if (customerLinked) {
+          Future.microtask(() async {
+            try {
+              final enrichment =
+                  await PostCallAiEnrichmentService.instance.enrich(
+                input: enrichmentInput,
+                sentimentStorage: sentimentForAi,
+                heatLevel: heatForEnrich,
+                allowRemoteModel: allowRemote,
+              );
+              await FirestoreService.mergePostCallAiEnrichment(
+                enrichCustomerId!,
+                enrichment.toFirestoreMap(),
+              );
+            } catch (e, stack) {
+              AppLogger.e('Post-call AI enrichment merge failed', e, stack);
+            }
+          });
         }
-      });
+      }
+      ref.invalidate(consultantCallsStreamProvider);
+      ref.invalidate(customerListForAgentProvider);
+      if (customerLinked) {
+        ref.invalidate(customerInsightProvider(customerId));
+      }
       if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final result = PostCallSummarySaveResult(
+        savedSuccessfully: true,
+        taskCreated: false,
+        customerLinked: customerLinked,
+        detachedCallSummarySaved: !customerLinked,
+        aiLimited: aiLimited,
+        firestoreCallId: callSessionId,
+        customerId: customerLinked ? customerId : null,
+        callSummaryId: callSummaryId,
+      );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            result.customerLinked
+                ? 'Çağrı özeti CRM müşterisine kaydedildi.'
+                : 'Çağrı özeti müşteri bağlantısı olmadan çağrı kaydı olarak saklandı.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       context.go(AppRouter.routeHome);
     } catch (e, st) {
       if (!mounted) return;
