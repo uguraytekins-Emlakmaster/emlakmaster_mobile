@@ -24,6 +24,7 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
+
 /// Yönetici çağrı merkezi: tüm çağrılar. Sadece canViewAllCalls rolleri erişebilir.
 class CommandCenterPage extends ConsumerStatefulWidget {
   const CommandCenterPage({super.key});
@@ -40,12 +41,15 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
     final roleAsync = ref.watch(displayRoleProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final loadingBg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final loadingBg = isDark
+        ? AppThemeExtension.of(context).background
+        : AppThemeExtension.of(context).background;
     return roleAsync.when(
       loading: () => Scaffold(
         backgroundColor: loadingBg,
         body: Center(
-          child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
+          child: CircularProgressIndicator(
+              color: AppThemeExtension.of(context).accent),
         ),
       ),
       error: (_, __) => const UnauthorizedScreen(
@@ -54,7 +58,8 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
       data: (role) {
         if (!FeaturePermission.canViewAllCalls(role)) {
           return const UnauthorizedScreen(
-            message: 'Çağrı Merkezi ekranına sadece yönetici ve operasyon rolleri erişebilir.',
+            message:
+                'Çağrı Merkezi ekranına sadece yönetici ve operasyon rolleri erişebilir.',
           );
         }
         return _CommandCenterBody(viewIndex: _viewIndex);
@@ -74,10 +79,13 @@ class _CommandCenterBody extends ConsumerStatefulWidget {
 enum _CommandScope {
   /// Tüm CRM çağrı kayıtları (son N)
   all,
+
   /// Danışman bazlı özet
   consultant,
+
   /// Müşteri bazlı özet
   customer,
+
   /// Sonuç bekleyen handoff oturumları
   pending,
 }
@@ -98,7 +106,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   void initState() {
     super.initState();
     _viewIndex = widget._viewIndex;
-    _searchController.addListener(() => setState(() => _searchQuery = _searchController.text.trim()));
+    _searchController.addListener(
+        () => setState(() => _searchQuery = _searchController.text.trim()));
   }
 
   @override
@@ -150,13 +159,16 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     List<LocalCallRecord> locals,
     String? currentUid,
   ) {
-    final surface =
-        isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
     switch (_commandScope) {
       case _CommandScope.consultant:
-        return _buildConsultantGroupedList(context, filtered, agentNames, surface, fg, isDark);
+        return _buildConsultantGroupedList(
+            context, filtered, agentNames, surface, fg, isDark);
       case _CommandScope.customer:
-        return _buildCustomerGroupedList(context, filtered, agentNames, surface, fg, isDark);
+        return _buildCustomerGroupedList(
+            context, filtered, agentNames, surface, fg, isDark);
       case _CommandScope.all:
       case _CommandScope.pending:
         return ListView.builder(
@@ -192,11 +204,10 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     final agentId = CrmCallRecordHelpers.agentIdOf(data);
     final displayAgent = agentNames[agentId] ?? agentId;
     final duration = data['durationSec'] as num?;
-    final durationStr = duration != null ? '${duration.toInt()} sn' : '—';
+    final durationStr = duration != null ? '${duration.toInt()} sn' : null;
     final outcomeStr =
         CrmCallRecordHelpers.outcomeDisplayTr(data, _outcomeLabels);
     final phone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
-    final cust = CrmCallRecordHelpers.customerIdOf(data);
     final createdAt = data['createdAt'];
     String timeStr = '—';
     if (createdAt is Timestamp) {
@@ -208,9 +219,10 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         ? AppThemeExtension.of(context).textSecondary
         : AppThemeExtension.of(context).textSecondary;
     final cap = CrmCallRecordHelpers.captureStatusTr(data);
-    final src = CrmCallRecordHelpers.sourceDisplayTr(data);
     final note = (data['quickCaptureNote'] as String? ?? '').trim();
-    final noteLine = note.isNotEmpty ? ' · Not: ${note.length > 42 ? '${note.substring(0, 42)}…' : note}' : '';
+    final shortNote = note.isEmpty
+        ? null
+        : (note.length > 64 ? '${note.substring(0, 64)}…' : note);
     final localMatch = matchLocalCallRecordForFirestoreDoc(
       locals: locals,
       docId: id,
@@ -240,22 +252,23 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: AppThemeExtension.of(context).accent,
-          child: Icon(Icons.call_rounded, color: AppThemeExtension.of(context).onBrand, size: 20),
+          child: Icon(Icons.call_rounded,
+              color: AppThemeExtension.of(context).onBrand, size: 20),
         ),
         title: Text(
-          'CRM kayıt ${id.length > 8 ? id.substring(0, 8) : id}',
-          style: TextStyle(color: fg, fontWeight: FontWeight.w600),
+          phone.isNotEmpty ? phone : 'CRM çağrı kaydı',
+          style: TextStyle(color: fg, fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
-          '$displayAgent · $phone · $outcomeStr · $timeStr'
-          '${durationStr != '—' ? ' · Kayıtlı süre (CRM): $durationStr' : ''}\n'
-          '$src · $cap$noteLine'
-          '${cust != null ? ' · Müşteri: $cust' : ''}',
+          '$outcomeStr · $timeStr'
+          '${durationStr != null ? ' · $durationStr' : ''}\n'
+          '$cap · ${displayAgent.isNotEmpty ? displayAgent : 'Danışman yok'}'
+          '${shortNote != null ? ' · Not: $shortNote' : ''}',
           style: TextStyle(color: ts, fontSize: 12, height: 1.35),
-          maxLines: 4,
+          maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
-        isThreeLine: true,
+        isThreeLine: false,
         trailing: trailing,
       ),
     );
@@ -269,7 +282,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     Color fg,
     bool isDark,
   ) {
-    final grouped = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    final grouped =
+        <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
     for (final d in filtered) {
       final aid = CrmCallRecordHelpers.agentIdOf(d.data());
       if (aid.isEmpty) continue;
@@ -296,7 +310,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         grouped: true,
         icon: Icons.groups_rounded,
         title: 'Danışman özeti yok',
-        subtitle: 'Filtrelere uyan veya müşteri/danışman bağlantılı kayıt bulunamadı.',
+        subtitle:
+            'Filtrelere uyan veya müşteri/danışman bağlantılı kayıt bulunamadı.',
         outlinedActionLabel: 'Filtreleri temizle',
         onOutlinedAction: _clearFilters,
       );
@@ -311,9 +326,15 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         final e = entries[index];
         final list = e.value;
         final name = agentNames[e.key] ?? e.key;
-        final pending = list.where((d) => CrmCallRecordHelpers.isHandoffPending(d.data())).length;
-        final completed = list.where((d) => CrmCallRecordHelpers.hasCaptureCompleted(d.data())).length;
-        final handoffs = list.where((d) => CrmCallRecordHelpers.isSystemHandoff(d.data())).length;
+        final pending = list
+            .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
+            .length;
+        final completed = list
+            .where((d) => CrmCallRecordHelpers.hasCaptureCompleted(d.data()))
+            .length;
+        final handoffs = list
+            .where((d) => CrmCallRecordHelpers.isSystemHandoff(d.data()))
+            .length;
         final last = list.first;
         final dt = CrmCallRecordHelpers.createdAtOf(last.data());
         final timeStr = dt != null
@@ -324,7 +345,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           color: surface,
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+              backgroundColor:
+                  AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
               child: Text(
                 name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
                 style: TextStyle(
@@ -333,7 +355,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 ),
               ),
             ),
-            title: Text(name, style: TextStyle(color: fg, fontWeight: FontWeight.w700)),
+            title: Text(name,
+                style: TextStyle(color: fg, fontWeight: FontWeight.w700)),
             subtitle: Text(
               'Son kayıt: $timeStr · Toplam: ${list.length} · Handoff: $handoffs · '
               'Tamamlanan: $completed · Bekleyen: $pending',
@@ -354,7 +377,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     Color fg,
     bool isDark,
   ) {
-    final grouped = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    final grouped =
+        <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
     for (final d in filtered) {
       final cid = CrmCallRecordHelpers.customerIdOf(d.data());
       if (cid == null) continue;
@@ -381,7 +405,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         grouped: true,
         icon: Icons.person_off_rounded,
         title: 'Müşteri bağlantılı kayıt yok',
-        subtitle: 'Filtrelere uyan ve müşteri ID’si içeren CRM çağrı kaydı yok.',
+        subtitle:
+            'Filtrelere uyan ve müşteri ID’si içeren CRM çağrı kaydı yok.',
         outlinedActionLabel: 'Filtreleri temizle',
         onOutlinedAction: _clearFilters,
       );
@@ -399,12 +424,15 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         final data = last.data();
         final agent = CrmCallRecordHelpers.agentIdOf(data);
         final displayAgent = agentNames[agent] ?? agent;
-        final outcome = CrmCallRecordHelpers.outcomeDisplayTr(data, _outcomeLabels);
+        final outcome =
+            CrmCallRecordHelpers.outcomeDisplayTr(data, _outcomeLabels);
         final dt = CrmCallRecordHelpers.createdAtOf(data);
         final timeStr = dt != null
             ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
             : '—';
-        final pending = list.where((d) => CrmCallRecordHelpers.isHandoffPending(d.data())).length;
+        final pending = list
+            .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
+            .length;
         return Card(
           margin: const EdgeInsets.only(bottom: DesignTokens.space2),
           color: surface,
@@ -428,12 +456,21 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   Widget _buildSearchBar() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surfaceCard = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
-    final textPrimary = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final surfaceCard = isDark
+        ? AppThemeExtension.of(context).card
+        : AppThemeExtension.of(context).surface;
+    final textPrimary = isDark
+        ? AppThemeExtension.of(context).textPrimary
+        : AppThemeExtension.of(context).textPrimary;
+    final textSecondary = isDark
+        ? AppThemeExtension.of(context).textSecondary
+        : AppThemeExtension.of(context).textSecondary;
+    final border = isDark
+        ? AppThemeExtension.of(context).border
+        : AppThemeExtension.of(context).border;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
+      padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
       child: Row(
         children: [
           Expanded(
@@ -443,11 +480,17 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               style: TextStyle(color: textPrimary, fontSize: 15),
               decoration: InputDecoration(
                 hintText: 'Telefon, müşteri id, danışman, sonuç, not...',
-                hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.7), fontSize: 14),
-                prefixIcon: Icon(Icons.search_rounded, color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9), size: 22),
+                hintStyle: TextStyle(
+                    color: textSecondary.withValues(alpha: 0.7), fontSize: 14),
+                prefixIcon: Icon(Icons.search_rounded,
+                    color: AppThemeExtension.of(context)
+                        .accent
+                        .withValues(alpha: 0.9),
+                    size: 22),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.clear_rounded, size: 20, color: textSecondary),
+                        icon: Icon(Icons.clear_rounded,
+                            size: 20, color: textSecondary),
                         onPressed: () {
                           _searchController.clear();
                           _searchFocusNode.unfocus();
@@ -467,9 +510,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide: BorderSide(color: AppThemeExtension.of(context).accent, width: 1.2),
+                  borderSide: BorderSide(
+                      color: AppThemeExtension.of(context).accent, width: 1.2),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ),
@@ -492,9 +537,15 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
-    final fg = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final bg = isDark
+        ? AppThemeExtension.of(context).background
+        : AppThemeExtension.of(context).background;
+    final fg = isDark
+        ? AppThemeExtension.of(context).textPrimary
+        : AppThemeExtension.of(context).textPrimary;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
     return Scaffold(
       backgroundColor: bg,
       appBar: emlakAppBar(
@@ -517,7 +568,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               Clipboard.setData(ClipboardData(text: csv));
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('CSV panoya kopyalandı. Excel\'e yapıştırabilirsiniz.'),
+                  content: const Text(
+                      'CSV panoya kopyalandı. Excel\'e yapıştırabilirsiniz.'),
                   backgroundColor: AppThemeExtension.of(context).accent,
                 ),
               );
@@ -549,8 +601,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'CRM çağrı kaydı: handoff oturumu, kayıtlı sonuç ve notlar. '
-                        'Operatör doğrulamalı hat süresi veya kesin bağlantı durumu burada yoktur; telekom dinlemesi değildir.',
+                        'Bu ekranda çağrıların CRM özeti görünür: sonuç, saat ve kısa not.',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: isDark
                               ? AppThemeExtension.of(context).textSecondary
@@ -565,7 +616,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(DesignTokens.space4, 0, DesignTokens.space4, DesignTokens.space2),
+              padding: const EdgeInsets.fromLTRB(DesignTokens.space4, 0,
+                  DesignTokens.space4, DesignTokens.space2),
               child: SegmentedButton<_CommandScope>(
                 segments: const [
                   ButtonSegment(
@@ -590,7 +642,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                   ),
                 ],
                 selected: {_commandScope},
-                onSelectionChanged: (s) => setState(() => _commandScope = s.first),
+                onSelectionChanged: (s) =>
+                    setState(() => _commandScope = s.first),
                 style: ButtonStyle(
                   visualDensity: VisualDensity.compact,
                   padding: WidgetStateProperty.all(
@@ -613,22 +666,33 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                     Text(
                       'Görünüm',
                       style: theme.textTheme.labelMedium?.copyWith(
-                        color: isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary,
+                        color: isDark
+                            ? AppThemeExtension.of(context).textSecondary
+                            : AppThemeExtension.of(context).textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const Spacer(),
                     SegmentedButton<int>(
                       segments: const [
-                        ButtonSegment(value: 0, icon: Icon(Icons.table_rows_rounded, size: 18)),
-                        ButtonSegment(value: 1, icon: Icon(Icons.grid_view_rounded, size: 18)),
-                        ButtonSegment(value: 2, icon: Icon(Icons.timeline_rounded, size: 18)),
+                        ButtonSegment(
+                            value: 0,
+                            icon: Icon(Icons.table_rows_rounded, size: 18)),
+                        ButtonSegment(
+                            value: 1,
+                            icon: Icon(Icons.grid_view_rounded, size: 18)),
+                        ButtonSegment(
+                            value: 2,
+                            icon: Icon(Icons.timeline_rounded, size: 18)),
                       ],
                       selected: {_viewIndex},
-                      onSelectionChanged: (s) => setState(() => _viewIndex = s.first),
+                      onSelectionChanged: (s) =>
+                          setState(() => _viewIndex = s.first),
                       style: ButtonStyle(
                         visualDensity: VisualDensity.compact,
-                        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
+                        padding: WidgetStateProperty.all(
+                            const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6)),
                       ),
                     ),
                   ],
@@ -646,7 +710,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 if (id != null) _filterAgentId = null;
               }),
               onAgentChanged: (id) => setState(() => _filterAgentId = id),
-              onOutcomeChanged: (outcome) => setState(() => _filterOutcome = outcome),
+              onOutcomeChanged: (outcome) =>
+                  setState(() => _filterOutcome = outcome),
             ),
             _buildSearchBar(),
             Expanded(
@@ -659,134 +724,167 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                       d.id: d.data()['displayName'] as String? ?? d.id,
                   };
                   return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _callsStreamForScope(),
-                builder: (context, snapshot) {
-            final locals = ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
-            final currentUid = ref.watch(currentUserProvider).valueOrNull?.uid;
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                !snapshot.hasData) {
-              return Center(
-                child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
-              );
-            }
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.error_outline_rounded,
-                          color: AppThemeExtension.of(context).textSecondary, size: 48),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Çağrılar yüklenemedi.',
-                        style: TextStyle(
-                          color: fg,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Lütfen tekrar deneyin.',
-                        style: TextStyle(
-                          color: isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary,
-                          fontSize: 13,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      TextButton.icon(
-                        onPressed: () => setState(() {}),
-                        icon: const Icon(Icons.refresh_rounded, size: 20),
-                        label: const Text('Tekrar dene'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppThemeExtension.of(context).accent,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-            final docs = snapshot.data?.docs ?? [];
-            final q = _searchQuery.toLowerCase();
-            final filtered = docs.where((d) {
-              final data = d.data();
-              final agentId = CrmCallRecordHelpers.agentIdOf(data);
-              if (_filterTeamId != null &&
-                  _teamMemberIds.isNotEmpty &&
-                  !_teamMemberIds.contains(agentId)) {
-                return false;
-              }
-              if (_filterAgentId != null && agentId != _filterAgentId) {
-                return false;
-              }
-              if (_filterOutcome != null &&
-                  (data['outcome'] as String? ?? data['callOutcome'] as String?) != _filterOutcome) {
-                return false;
-              }
-              if (q.isNotEmpty) {
-                final id = d.id.toLowerCase();
-                final phone = ((data['phoneNumber'] ?? data['phone']) ?? '').toString().toLowerCase();
-                final outcomeRaw = data['outcome'] as String? ?? data['callOutcome'] as String? ?? '';
-                final outcomeLabel = outcomeRaw.isNotEmpty ? (_outcomeLabels[outcomeRaw] ?? outcomeRaw).toLowerCase() : '';
-                final cust = (data['customerId'] as String? ?? '').toLowerCase();
-                final note = (data['quickCaptureNote'] as String? ?? '').toLowerCase();
-                final ql = (data['quickOutcomeLabelTr'] as String? ?? '').toLowerCase();
-                final matches = id.contains(q) ||
-                    agentId.toLowerCase().contains(q) ||
-                    phone.contains(q) ||
-                    outcomeLabel.contains(q) ||
-                    cust.contains(q) ||
-                    note.contains(q) ||
-                    ql.contains(q);
-                if (!matches) return false;
-              }
-              return true;
-            }).toList();
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() => _lastFilteredDocs = filtered);
-            });
-            if (filtered.isEmpty) {
-              final hasAnyDocs = docs.isNotEmpty;
-              final l10n = AppLocalizations.of(context);
-              if (hasAnyDocs) {
-                return EmptyState(
-                  compact: true,
-                  anchorAboveCenter: true,
-                  anchorAlignmentY: -0.52,
-                  grouped: true,
-                  icon: Icons.call_rounded,
-                  title: 'Uygun çağrı yok',
-                  subtitle: 'Arama veya filtrelere uygun kayıt bulunamadı.',
-                  outlinedActionLabel: 'Filtreleri temizle',
-                  onOutlinedAction: _clearFilters,
-                );
-              }
-              return EmptyState(
-                premiumVisual: true,
-                grouped: true,
-                anchorAboveCenter: true,
-                anchorAlignmentY: -0.52,
-                icon: Icons.call_rounded,
-                title: l10n.t('empty_calls_title'),
-                subtitle: l10n.t('empty_calls_sub'),
-                actionLabel: l10n.t('empty_calls_cta'),
-                onAction: () => context.push(
-                AppRouter.routeCall,
-                extra: const {
-                  'startedFromScreen': 'command_center',
+                    stream: _callsStreamForScope(),
+                    builder: (context, snapshot) {
+                      final locals = ref
+                              .watch(localCallRecordsStreamProvider)
+                              .valueOrNull ??
+                          [];
+                      final currentUid =
+                          ref.watch(currentUserProvider).valueOrNull?.uid;
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                              color: AppThemeExtension.of(context).accent),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.error_outline_rounded,
+                                    color: AppThemeExtension.of(context)
+                                        .textSecondary,
+                                    size: 48),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Çağrılar yüklenemedi.',
+                                  style: TextStyle(
+                                    color: fg,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Lütfen tekrar deneyin.',
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? AppThemeExtension.of(context)
+                                            .textSecondary
+                                        : AppThemeExtension.of(context)
+                                            .textSecondary,
+                                    fontSize: 13,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 20),
+                                TextButton.icon(
+                                  onPressed: () => setState(() {}),
+                                  icon: const Icon(Icons.refresh_rounded,
+                                      size: 20),
+                                  label: const Text('Tekrar dene'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor:
+                                        AppThemeExtension.of(context).accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      final docs = snapshot.data?.docs ?? [];
+                      final q = _searchQuery.toLowerCase();
+                      final filtered = docs.where((d) {
+                        final data = d.data();
+                        final agentId = CrmCallRecordHelpers.agentIdOf(data);
+                        if (_filterTeamId != null &&
+                            _teamMemberIds.isNotEmpty &&
+                            !_teamMemberIds.contains(agentId)) {
+                          return false;
+                        }
+                        if (_filterAgentId != null &&
+                            agentId != _filterAgentId) {
+                          return false;
+                        }
+                        if (_filterOutcome != null &&
+                            (data['outcome'] as String? ??
+                                    data['callOutcome'] as String?) !=
+                                _filterOutcome) {
+                          return false;
+                        }
+                        if (q.isNotEmpty) {
+                          final id = d.id.toLowerCase();
+                          final phone =
+                              ((data['phoneNumber'] ?? data['phone']) ?? '')
+                                  .toString()
+                                  .toLowerCase();
+                          final outcomeRaw = data['outcome'] as String? ??
+                              data['callOutcome'] as String? ??
+                              '';
+                          final outcomeLabel = outcomeRaw.isNotEmpty
+                              ? (_outcomeLabels[outcomeRaw] ?? outcomeRaw)
+                                  .toLowerCase()
+                              : '';
+                          final cust = (data['customerId'] as String? ?? '')
+                              .toLowerCase();
+                          final note =
+                              (data['quickCaptureNote'] as String? ?? '')
+                                  .toLowerCase();
+                          final ql =
+                              (data['quickOutcomeLabelTr'] as String? ?? '')
+                                  .toLowerCase();
+                          final matches = id.contains(q) ||
+                              agentId.toLowerCase().contains(q) ||
+                              phone.contains(q) ||
+                              outcomeLabel.contains(q) ||
+                              cust.contains(q) ||
+                              note.contains(q) ||
+                              ql.contains(q);
+                          if (!matches) return false;
+                        }
+                        return true;
+                      }).toList();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() => _lastFilteredDocs = filtered);
+                        }
+                      });
+                      if (filtered.isEmpty) {
+                        final hasAnyDocs = docs.isNotEmpty;
+                        final l10n = AppLocalizations.of(context);
+                        if (hasAnyDocs) {
+                          return EmptyState(
+                            compact: true,
+                            anchorAboveCenter: true,
+                            anchorAlignmentY: -0.52,
+                            grouped: true,
+                            icon: Icons.call_rounded,
+                            title: 'Uygun çağrı yok',
+                            subtitle:
+                                'Arama veya filtrelere uygun kayıt bulunamadı.',
+                            outlinedActionLabel: 'Filtreleri temizle',
+                            onOutlinedAction: _clearFilters,
+                          );
+                        }
+                        return EmptyState(
+                          premiumVisual: true,
+                          grouped: true,
+                          anchorAboveCenter: true,
+                          anchorAlignmentY: -0.52,
+                          icon: Icons.call_rounded,
+                          title: l10n.t('empty_calls_title'),
+                          subtitle: l10n.t('empty_calls_sub'),
+                          actionLabel: l10n.t('empty_calls_cta'),
+                          onAction: () => context.push(
+                            AppRouter.routeCall,
+                            extra: const {
+                              'startedFromScreen': 'command_center',
+                            },
+                          ),
+                        );
+                      }
+                      return _buildScopeContent(context, filtered, agentNames,
+                          fg, isDark, locals, currentUid);
+                    },
+                  );
                 },
               ),
-              );
-            }
-            return _buildScopeContent(context, filtered, agentNames, fg, isDark, locals, currentUid);
-          },
-        );
-      },
-    ),
             ),
           ],
         ),
@@ -825,20 +923,33 @@ class _CommandCenterFilters extends StatelessWidget {
             final agents = agentSnap.data?.docs ?? [];
             var agentIds = agents.map((d) => d.id).toList();
             if (filterTeamId != null && teamMemberIds.isNotEmpty) {
-              agentIds = agentIds.where((id) => teamMemberIds.contains(id)).toList();
+              agentIds =
+                  agentIds.where((id) => teamMemberIds.contains(id)).toList();
             }
             final agentNames = {
-              for (final d in agents) d.id: d.data()['displayName'] as String? ?? d.id,
+              for (final d in agents)
+                d.id: d.data()['displayName'] as String? ?? d.id,
             };
             final theme = Theme.of(context);
             final isDark = theme.brightness == Brightness.dark;
-            final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
-            final surfaceCard = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
-            final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
-            final textColor = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-            final hintColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+            final surface = isDark
+                ? AppThemeExtension.of(context).surface
+                : AppThemeExtension.of(context).surface;
+            final surfaceCard = isDark
+                ? AppThemeExtension.of(context).card
+                : AppThemeExtension.of(context).surface;
+            final border = isDark
+                ? AppThemeExtension.of(context).border
+                : AppThemeExtension.of(context).border;
+            final textColor = isDark
+                ? AppThemeExtension.of(context).textPrimary
+                : AppThemeExtension.of(context).textPrimary;
+            final hintColor =
+                theme.colorScheme.onSurface.withValues(alpha: 0.7);
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: DesignTokens.space4,
+                  vertical: DesignTokens.space2),
               decoration: BoxDecoration(
                 color: surface,
                 border: Border(bottom: BorderSide(color: border)),
@@ -851,13 +962,19 @@ class _CommandCenterFilters extends StatelessWidget {
                         child: DropdownButton<String?>(
                           value: filterTeamId,
                           isExpanded: true,
-                          hint: Text('Ekip', style: TextStyle(color: hintColor, fontSize: 13)),
+                          hint: Text('Ekip',
+                              style: TextStyle(color: hintColor, fontSize: 13)),
                           dropdownColor: surfaceCard,
                           items: [
-                            DropdownMenuItem(child: Text('Tüm ekipler', style: TextStyle(color: textColor))),
+                            DropdownMenuItem(
+                                child: Text('Tüm ekipler',
+                                    style: TextStyle(color: textColor))),
                             ...teams.map((t) => DropdownMenuItem(
                                   value: t.id,
-                                  child: Text(t.name, style: TextStyle(color: textColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  child: Text(t.name,
+                                      style: TextStyle(color: textColor),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
                                 )),
                           ],
                           onChanged: (v) {
@@ -866,25 +983,33 @@ class _CommandCenterFilters extends StatelessWidget {
                               return;
                             }
                             final t = teams.where((x) => x.id == v).toList();
-                            final memberIds = t.isEmpty ? <String>[] : t.first.memberIds;
+                            final memberIds =
+                                t.isEmpty ? <String>[] : t.first.memberIds;
                             onTeamChanged(v, memberIds);
                           },
                         ),
                       ),
                     ),
-                  if (teams.isNotEmpty) const SizedBox(width: DesignTokens.space3),
+                  if (teams.isNotEmpty)
+                    const SizedBox(width: DesignTokens.space3),
                   Expanded(
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String?>(
                         value: filterAgentId,
                         isExpanded: true,
-                        hint: Text('Danışman', style: TextStyle(color: hintColor, fontSize: 13)),
+                        hint: Text('Danışman',
+                            style: TextStyle(color: hintColor, fontSize: 13)),
                         dropdownColor: surfaceCard,
                         items: [
-                          DropdownMenuItem(child: Text('Tümü', style: TextStyle(color: textColor))),
+                          DropdownMenuItem(
+                              child: Text('Tümü',
+                                  style: TextStyle(color: textColor))),
                           ...agentIds.map((id) => DropdownMenuItem(
                                 value: id,
-                                child: Text(agentNames[id] ?? id, style: TextStyle(color: textColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                child: Text(agentNames[id] ?? id,
+                                    style: TextStyle(color: textColor),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
                               )),
                         ],
                         onChanged: (v) => onAgentChanged(v),
@@ -897,16 +1022,37 @@ class _CommandCenterFilters extends StatelessWidget {
                       child: DropdownButton<String?>(
                         value: filterOutcome,
                         isExpanded: true,
-                        hint: Text('Sonuç', style: TextStyle(color: hintColor, fontSize: 13)),
+                        hint: Text('Sonuç',
+                            style: TextStyle(color: hintColor, fontSize: 13)),
                         dropdownColor: surfaceCard,
                         items: [
-                          DropdownMenuItem(child: Text('Tümü', style: TextStyle(color: textColor))),
-                          DropdownMenuItem(value: 'connected', child: Text('Bağlandı', style: TextStyle(color: textColor))),
-                          DropdownMenuItem(value: 'missed', child: Text('Cevapsız', style: TextStyle(color: textColor))),
-                          DropdownMenuItem(value: 'no_answer', child: Text('Cevap yok', style: TextStyle(color: textColor))),
-                          DropdownMenuItem(value: 'busy', child: Text('Meşgul', style: TextStyle(color: textColor))),
-                          DropdownMenuItem(value: 'failed', child: Text('Başarısız', style: TextStyle(color: textColor))),
-                          DropdownMenuItem(value: 'handoff_pending', child: Text('Sonuç bekleniyor (handoff)', style: TextStyle(color: textColor))),
+                          DropdownMenuItem(
+                              child: Text('Tümü',
+                                  style: TextStyle(color: textColor))),
+                          DropdownMenuItem(
+                              value: 'connected',
+                              child: Text('Bağlandı',
+                                  style: TextStyle(color: textColor))),
+                          DropdownMenuItem(
+                              value: 'missed',
+                              child: Text('Cevapsız',
+                                  style: TextStyle(color: textColor))),
+                          DropdownMenuItem(
+                              value: 'no_answer',
+                              child: Text('Cevap yok',
+                                  style: TextStyle(color: textColor))),
+                          DropdownMenuItem(
+                              value: 'busy',
+                              child: Text('Meşgul',
+                                  style: TextStyle(color: textColor))),
+                          DropdownMenuItem(
+                              value: 'failed',
+                              child: Text('Başarısız',
+                                  style: TextStyle(color: textColor))),
+                          DropdownMenuItem(
+                              value: 'handoff_pending',
+                              child: Text('Sonuç bekleniyor (handoff)',
+                                  style: TextStyle(color: textColor))),
                         ],
                         onChanged: (v) => onOutcomeChanged(v),
                       ),
@@ -944,8 +1090,12 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surfaceCard = isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surface;
-    final borderColor = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final surfaceCard = isDark
+        ? AppThemeExtension.of(context).card
+        : AppThemeExtension.of(context).surface;
+    final borderColor = isDark
+        ? AppThemeExtension.of(context).border
+        : AppThemeExtension.of(context).border;
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
@@ -954,12 +1104,15 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 80),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
+        padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
         decoration: BoxDecoration(
           color: surfaceCard,
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           border: Border.all(
-            color: _pressed ? AppThemeExtension.of(context).accent.withValues(alpha: 0.5) : borderColor,
+            color: _pressed
+                ? AppThemeExtension.of(context).accent.withValues(alpha: 0.5)
+                : borderColor,
             width: _pressed ? 1.2 : 0.8,
           ),
           boxShadow: [
@@ -971,7 +1124,9 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
             ),
             if (!_pressed)
               BoxShadow(
-                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.08),
+                color: AppThemeExtension.of(context)
+                    .accent
+                    .withValues(alpha: 0.08),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -980,7 +1135,8 @@ class _TapShadowButtonState extends State<_TapShadowButton> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(widget.icon, size: 20, color: AppThemeExtension.of(context).accent),
+            Icon(widget.icon,
+                size: 20, color: AppThemeExtension.of(context).accent),
             if (widget.label != null) ...[
               const SizedBox(width: 6),
               Text(

@@ -142,10 +142,29 @@ class _PostCallQuickCaptureBodyState
         );
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ex = AppThemeExtension.of(context);
         messenger.showSnackBar(
           SnackBar(
-            content: Text(okMessage),
             behavior: SnackBarBehavior.floating,
+            backgroundColor: ex.surface.withValues(alpha: 0.9),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: ex.border.withValues(alpha: 0.5)),
+            ),
+            content: Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: ex.success, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    okMessage,
+                    style: AppTypography.bodyStrong(context)
+                        .copyWith(color: ex.textPrimary),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
         AppLogger.forensic(
@@ -186,15 +205,6 @@ class _PostCallQuickCaptureBodyState
       'customer=${widget.draft.customerId ?? '-'} '
       'task=$_createTask followUp=${_followUpAt?.toIso8601String() ?? '-'}',
     );
-    if (kDebugMode) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('DEBUG: Kaydet dokunusu alindi'),
-          duration: Duration(milliseconds: 900),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
     if (_saving) {
       AppLogger.forensic(
         'quick_capture_sheet: EARLY_RETURN blocked because saving=true',
