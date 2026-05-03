@@ -31,6 +31,11 @@ final class AppLogger {
     _logger.e(message, error: error, stackTrace: stackTrace);
   }
 
+  /// Kayıt akışı teşhisi (release’te de warning seviyesinde görünür; PII yazmayın).
+  static void forensic(String message) {
+    _logger.w('[forensic] $message');
+  }
+
   /// Yönlendirme / navigator (yalnızca debug/profile).
   static void nav(String message) {
     if (kReleaseMode) return;

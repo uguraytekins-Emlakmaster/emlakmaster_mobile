@@ -324,7 +324,9 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   }
 
   Future<void> _onSaveAndClose() async {
-    if (_extraction == null || _isSaving) return;
+    if (_extraction == null || _isSaving) {
+      return;
+    }
     final summaryText = _summaryController.text.trim();
     HapticFeedback.mediumImpact();
     setState(() {
@@ -334,6 +336,11 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     final agentId = ref.read(currentUserProvider).valueOrNull?.uid;
     final customerId = widget.linkedCustomerId;
     final callSessionId = widget.callSessionId?.trim();
+    AppLogger.forensic(
+      'post_call_wizard: Özeti Kaydet pressed linked='
+      '${customerId != null && customerId.isNotEmpty} '
+      'session=${callSessionId ?? '-'} summaryLen=${summaryText.length}',
+    );
     if (kDebugMode) {
       AppLogger.d(
         '[post_call_wizard] save start customer=${customerId ?? '-'} '
@@ -341,10 +348,13 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       );
     }
     if (agentId == null || agentId.isEmpty) {
-      setState(() {
-        _isSaving = false;
-        _saveError = 'Oturum bulunamadı. Giriş yapıp tekrar deneyin.';
-      });
+      AppLogger.forensic('post_call_wizard: ABORT no agentId');
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+          _saveError = 'Oturum bulunamadı. Giriş yapıp tekrar deneyin.';
+        });
+      }
       return;
     }
     Map<String, dynamic>? summarySignalsPayload;
@@ -360,8 +370,10 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     try {
       final customerLinked = customerId != null && customerId.isNotEmpty;
       String? callSummaryId;
+      AppLogger.forensic(
+        'post_call_wizard: Firestore runWithResilience start linked=$customerLinked',
+      );
       await runWithResilience(
-        ref: ref as Ref<Object?>,
         () async {
           if (customerLinked) {
             await FirestoreService.saveCallExtractionToCustomer(
@@ -414,8 +426,15 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             agentId: agentId,
           );
         },
+        ref: ref as Ref<Object?>,
       );
-      if (!mounted) return;
+      AppLogger.forensic('post_call_wizard: Firestore runWithResilience done');
+      if (!mounted) {
+        AppLogger.forensic(
+          'post_call_wizard: unmounted after Firestore (no UI completion)',
+        );
+        return;
+      }
       AppLogger.i(
         customerLinked
             ? '[post_call_wizard] linked summary saved'
@@ -459,7 +478,12 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
           }
         }
       }
-      if (!mounted) return;
+      if (!mounted) {
+        AppLogger.forensic(
+          'post_call_wizard: unmounted after transcript (no UI completion)',
+        );
+        return;
+      }
       final enrichmentInput = PostCallAiEnrichmentInput.resolve(
         summary: summaryForAi,
         transcript: transcriptForAi.isEmpty ? null : transcriptForAi,
@@ -488,8 +512,16 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
           AnalyticsEvents.limitReachedAi,
           {AnalyticsEvents.paramFeature: 'ai_analysis'},
         );
-        if (!mounted) return;
+        AppLogger.forensic(
+            'post_call_wizard: AI limit — showing upgrade sheet');
+        if (!mounted) {
+          AppLogger.forensic(
+            'post_call_wizard: unmounted before upgrade sheet',
+          );
+          return;
+        }
         await showUpgradeBottomSheet(context, feature: 'ai_analysis');
+        AppLogger.forensic('post_call_wizard: upgrade sheet dismissed');
       } else {
         await usageService.incrementAiUsage();
         if (customerLinked) {
@@ -512,12 +544,25 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
           });
         }
       }
+      if (!mounted) {
+        AppLogger.forensic(
+          'post_call_wizard: unmounted after AI gate (no UI completion)',
+        );
+        return;
+      }
+      AppLogger.forensic('post_call_wizard: provider invalidate start');
       ref.invalidate(consultantCallsStreamProvider);
       ref.invalidate(customerListForAgentProvider);
       if (customerLinked) {
         ref.invalidate(customerInsightProvider(customerId));
       }
-      if (!mounted) return;
+      AppLogger.forensic('post_call_wizard: provider invalidate done');
+      if (!mounted) {
+        AppLogger.forensic(
+          'post_call_wizard: unmounted after invalidate (no UI completion)',
+        );
+        return;
+      }
       final messenger = ScaffoldMessenger.of(context);
       final result = PostCallSummarySaveResult(
         savedSuccessfully: true,
@@ -529,6 +574,11 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
         customerId: customerLinked ? customerId : null,
         callSummaryId: callSummaryId,
       );
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
       messenger.showSnackBar(
         SnackBar(
           content: Text(
@@ -539,14 +589,35 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
           behavior: SnackBarBehavior.floating,
         ),
       );
-      context.go(AppRouter.routeHome);
+      AppLogger.forensic('post_call_wizard: success SnackBar shown');
+      try {
+        AppLogger.forensic('post_call_wizard: context.go(routeHome)');
+        context.go(AppRouter.routeHome);
+        AppLogger.forensic('post_call_wizard: FINAL completion (navigated)');
+      } catch (e, st) {
+        AppLogger.e('post_call_wizard: context.go failed after save', e, st);
+        AppLogger.forensic('post_call_wizard: FINAL navigate error');
+        if (mounted) {
+          setState(() {
+            _saveError =
+                'Kayıt tamamlandı; ana ekrana geçiş başarısız. Geri ile çıkıp kontrol edin.';
+          });
+        }
+      }
     } catch (e, st) {
-      if (!mounted) return;
       AppLogger.e('PostCallWizard save failed', e, st);
-      setState(() {
-        _isSaving = false;
-        _saveError = FirestoreService.userFacingErrorMessage(e);
-      });
+      AppLogger.forensic('post_call_wizard: FINAL error ${e.runtimeType}');
+      if (mounted) {
+        setState(() {
+          _saveError = FirestoreService.userFacingErrorMessage(e);
+        });
+      }
+    } finally {
+      if (mounted && _isSaving) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 

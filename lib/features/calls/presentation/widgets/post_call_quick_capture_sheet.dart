@@ -81,6 +81,9 @@ class _PostCallQuickCaptureBodyState
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
+      AppLogger.forensic(
+        'quick_capture_sheet: Kaydet pressed code=$code task=$_createTask',
+      );
       if (kDebugMode) {
         AppLogger.d(
           '[quick_capture_sheet] save tap code=$code heat=${_heatBand ?? '-'} '
@@ -97,31 +100,48 @@ class _PostCallQuickCaptureBodyState
         createFollowUpTask: _createTask,
         heatBand: _heatBand,
       );
-      if (!mounted) return;
-      HapticFeedback.mediumImpact();
-      navigator.pop();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            result.taskCreated
-                ? 'Çağrı kaydı ve takip görevi kaydedildi.'
-                : 'Çağrı kaydı kaydedildi.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e, st) {
-      if (kDebugMode) {
-        AppLogger.e('[quick_capture_sheet] save failed', e, st);
+      AppLogger.forensic('quick_capture_sheet: engine returned ok');
+      if (!mounted) {
+        AppLogger.forensic(
+          'quick_capture_sheet: unmounted after save (no sheet pop)',
+        );
+        return;
       }
-      if (!mounted) return;
-      setState(() => _saving = false);
+      HapticFeedback.mediumImpact();
+      final okMessage = result.taskCreated
+          ? 'Çağrı kaydı ve takip görevi kaydedildi.'
+          : 'Çağrı kaydı kaydedildi.';
+      navigator.pop();
+      AppLogger.forensic('quick_capture_sheet: Navigator.pop done');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(okMessage),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        AppLogger.forensic(
+            'quick_capture_sheet: SnackBar scheduled post-frame');
+      });
+      AppLogger.forensic('quick_capture_sheet: FINAL completion reached');
+    } catch (e, st) {
+      AppLogger.forensic(
+        'quick_capture_sheet: FINAL error ${e.runtimeType}',
+      );
+      AppLogger.e('[quick_capture_sheet] save failed', e, st);
+      if (!mounted) {
+        return;
+      }
       messenger.showSnackBar(
         SnackBar(
           content: Text(FirestoreService.userFacingErrorMessage(e)),
           behavior: SnackBarBehavior.floating,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 

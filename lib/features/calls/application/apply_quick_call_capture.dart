@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
@@ -58,8 +60,18 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
 }) async {
   final uid = ref.read(currentUserProvider).valueOrNull?.uid;
   if (uid == null || uid.isEmpty) {
+    AppLogger.forensic(
+      'quick_capture: ABORT no uid',
+    );
     throw StateError('Oturum bulunamadı. Tekrar giriş yapıp deneyin.');
   }
+  final customerLinked =
+      draft.customerId != null && draft.customerId!.isNotEmpty;
+  AppLogger.forensic(
+    'quick_capture: button/engine start local=${draft.localRecordId} '
+    'session=${draft.callSessionId} linked=$customerLinked '
+    'createTask=$createFollowUpTask outcome=$outcomeCode',
+  );
   if (kDebugMode) {
     AppLogger.d(
       '[quick_capture] save start local=${draft.localRecordId} '
@@ -70,9 +82,18 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
 
   // Yerel taslak: önce kuyruk flush zincirini bekle (arka planda hf_ oluşmuş olabilir).
   if (draft.localRecordId.startsWith(PostCallCaptureDraft.localPrefix)) {
-    await ref
-        .read(postCallCaptureProvider.notifier)
-        .flushPendingOutboundQueue();
+    AppLogger.forensic('quick_capture: flushPendingOutboundQueue start');
+    try {
+      await ref
+          .read(postCallCaptureProvider.notifier)
+          .flushPendingOutboundQueue()
+          .timeout(const Duration(seconds: 25));
+    } on TimeoutException catch (_) {
+      AppLogger.forensic(
+        'quick_capture: flushPendingOutboundQueue TIMEOUT 25s — continuing save',
+      );
+    }
+    AppLogger.forensic('quick_capture: flushPendingOutboundQueue end');
   }
 
   var effective = draft;
@@ -91,6 +112,7 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
   final trimmed = note?.trim();
 
   await CallLocalHiveStore.instance.ensureInit();
+  AppLogger.forensic('quick_capture: hive patchQuickCapture start');
   await CallLocalHiveStore.instance.patchQuickCapture(
     agentId: uid,
     localId: effective.localRecordId,
@@ -98,6 +120,7 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     notes: trimmed,
     followUpReminderAtMs: followUpReminderAt?.millisecondsSinceEpoch,
   );
+  AppLogger.forensic('quick_capture: hive patchQuickCapture done');
 
   final cid = effective.customerId;
   var canUseAi = true;
@@ -129,6 +152,9 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
 
   String? newFirestoreCallId;
   var taskCreated = false;
+  AppLogger.forensic(
+    'quick_capture: Firestore runWithResilience start hasDoc=${effective.hasFirestoreCallDoc}',
+  );
   await runWithResilience(
     () async {
       if (effective.hasFirestoreCallDoc) {
@@ -184,6 +210,9 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     },
     ref: ref as Ref<Object?>,
   );
+  AppLogger.forensic(
+    'quick_capture: Firestore runWithResilience done newId=${newFirestoreCallId ?? '-'} task=$taskCreated',
+  );
 
   if (newFirestoreCallId != null && newFirestoreCallId!.isNotEmpty) {
     await CallLocalHiveStore.instance.replaceFirestoreDocumentId(
@@ -199,6 +228,7 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     clearPendingCapture: true,
   );
   await ref.read(postCallCaptureProvider.notifier).clear();
+  AppLogger.forensic('quick_capture: provider invalidate start');
   ref.invalidate(localCallRecordsStreamProvider);
   ref.invalidate(consultantCallsStreamProvider);
   ref.invalidate(customerListForAgentProvider);
@@ -206,6 +236,7 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
   if (cid != null && cid.isNotEmpty) {
     ref.invalidate(customerInsightProvider(cid));
   }
+  AppLogger.forensic('quick_capture: provider invalidate done');
   if (kDebugMode) {
     AppLogger.i(
       '[quick_capture] save success local=${effective.localRecordId} '
@@ -213,6 +244,9 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
       'taskCreated=$taskCreated aiLimited=${!canUseAi}',
     );
   }
+  AppLogger.forensic(
+    'quick_capture: RETURN success linked=${cid != null && cid.isNotEmpty}',
+  );
   return QuickCaptureSaveResult(
     savedSuccessfully: true,
     callSaved: true,
