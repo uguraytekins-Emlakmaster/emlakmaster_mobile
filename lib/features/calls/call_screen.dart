@@ -136,8 +136,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
         if (!mounted) return;
         final agentId = _signedInUid;
         if (agentId == null) return;
-        unawaited(runWithResilience(
-          ref: ref as Ref<Object?>,
+        unawaited(runWithResilienceWidget(
+          ref: ref,
           () => FirestoreService.setAgentStatus(
               agentId: agentId, status: 'Görüşmede'),
         ));
@@ -202,8 +202,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
       if (!mounted) return;
       final agentId = _signedInUid;
       if (agentId == null) return;
-      unawaited(runWithResilience(
-        ref: ref as Ref<Object?>,
+      unawaited(runWithResilienceWidget(
+        ref: ref,
         () => FirestoreService.setAgentStatus(
             agentId: agentId, status: 'Görüşmede'),
       ));
@@ -573,12 +573,12 @@ class _CallScreenState extends ConsumerState<CallScreen>
         (_dialDigits.trim().isNotEmpty ? _dialDigits.trim() : null);
     try {
       if (uid != null) {
-        await runWithResilience(
-          ref: ref as Ref<Object?>,
+        await runWithResilienceWidget(
+          ref: ref,
           () => FirestoreService.setAgentStatus(agentId: uid, status: 'Müsait'),
         );
-        await runWithResilience(
-          ref: ref as Ref<Object?>,
+        await runWithResilienceWidget(
+          ref: ref,
           () => FirestoreService.createCallRecord(
             advisorId: uid,
             direction: 'outgoing',

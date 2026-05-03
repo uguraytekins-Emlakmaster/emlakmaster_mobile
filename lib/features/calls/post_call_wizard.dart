@@ -373,7 +373,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       AppLogger.forensic(
         'post_call_wizard: Firestore runWithResilience start linked=$customerLinked',
       );
-      await runWithResilience(
+      await runWithResilienceWidget(
         () async {
           if (customerLinked) {
             await FirestoreService.saveCallExtractionToCustomer(
@@ -426,7 +426,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             agentId: agentId,
           );
         },
-        ref: ref as Ref<Object?>,
+        ref: ref,
       );
       AppLogger.forensic('post_call_wizard: Firestore runWithResilience done');
       if (!mounted) {

@@ -118,8 +118,8 @@ class _OutboundSystemHandoffPageState
       String? sessionId;
       var crmSessionOk = false;
       try {
-        await runWithResilience(
-          ref: ref as Ref<Object?>,
+        await runWithResilienceWidget(
+          ref: ref,
           () async {
             sessionId = await FirestoreService.createOutboundCallHandoffSession(
               advisorId: uid,

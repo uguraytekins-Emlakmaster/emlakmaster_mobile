@@ -156,7 +156,7 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     'quick_capture: Firestore runWithResilience start hasDoc=${effective.hasFirestoreCallDoc}',
   );
   try {
-    await runWithResilience(
+    await runWithResilienceWidget(
       () async {
         if (effective.hasFirestoreCallDoc) {
           await FirestoreService.mergeOutboundCallQuickCapture(
@@ -211,7 +211,7 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
           AppLogger.forensic('quick_capture: task create done');
         }
       },
-      ref: ref as Ref<Object?>,
+      ref: ref,
     );
   } catch (e, st) {
     AppLogger.forensic(

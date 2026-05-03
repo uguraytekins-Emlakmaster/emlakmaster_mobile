@@ -221,12 +221,12 @@ class CustomerDetailPage extends ConsumerWidget {
                     return;
                   }
                   try {
-                    await runWithResilience(
+                    await runWithResilienceWidget(
                       () => FirestoreService.saveNote(
                           customerId: customerId,
                           content: content,
                           advisorId: uid),
-                      ref: ref as Ref<Object?>,
+                      ref: ref,
                     );
                     HapticFeedback.mediumImpact();
                     if (ctx.mounted) {
