@@ -39,9 +39,7 @@ class AppLocalizations {
   }
 
   String t(String key) {
-    return _values[locale.languageCode]?[key] ??
-        _values['en']?[key] ??
-        key;
+    return _values[locale.languageCode]?[key] ?? _values['en']?[key] ?? key;
   }
 
   /// Placeholder destekli: {0}, {1} ile değiştir.
@@ -104,7 +102,7 @@ class AppLocalizations {
       'search_customers': 'Müşteri ara (isim, telefon, e-posta)',
       'empty_customers_title': 'Henüz müşteri yok',
       'empty_customers_subtitle':
-          'Çağrı özeti veya CRM kaydı oluştukça kartlar burada birikir.',
+          'İlk müşterini ekle veya çağrı sonrası özeti kaydet; portföyün burada büyür.',
       'empty_customers_cta': 'İlk müşteriyi ekle',
       'empty_search_title': 'Sonuç yok',
       'empty_search_subtitle': '"{0}" aramasına uygun müşteri bulunamadı.',
@@ -123,7 +121,8 @@ class AppLocalizations {
       'ai_suggesting': 'Öneri hazırlanıyor...',
       'ai_suggest_ready': 'AI metin önerisi hazır.',
       'ai_suggest_error': 'Metin önerisi alınamadı: {0}',
-      'message_hint': 'Kampanya mesajınızı buraya yazın veya AI\'dan öneri isteyin.',
+      'message_hint':
+          'Kampanya mesajınızı buraya yazın veya AI\'dan öneri isteyin.',
       'whatsapp': 'WhatsApp',
       'sms': 'SMS',
 
@@ -168,10 +167,12 @@ class AppLocalizations {
           'Bağlı hesaplardan gelen ilanlar burada listelenir. Ayarlar → Bağlı hesapları yönet üzerinden bağlantı ekleyin.',
       'my_external_listings_connect_cta': 'Bağlı hesapları yönet',
       'my_external_listings_load_error': 'Harici ilanlar yüklenemedi.',
-      'my_external_listings_settings_sub': 'Senkronize edilen ilanları görüntüle ve filtrele',
+      'my_external_listings_settings_sub':
+          'Senkronize edilen ilanları görüntüle ve filtrele',
       'integration_connections_read_only_notice':
           'Platform bağlantıları ofis yöneticisi tarafından yönetilir.',
-      'settings_section_platform_integrations_manager': 'İlanlar ve platform bağlantıları',
+      'settings_section_platform_integrations_manager':
+          'İlanlar ve platform bağlantıları',
       'settings_platform_connections_tile': 'Platform bağlantıları (yönetici)',
       'settings_platform_connections_tile_sub':
           'Sahibinden, Emlakjet, Hepsiemlak — bağla, senkron, içe aktarma',
@@ -180,12 +181,14 @@ class AppLocalizations {
       // Tasks
       'title_tasks': 'Görevler',
       'task': 'Görev',
-      'empty_tasks': 'Görev kutun hazır',
-      'empty_tasks_sub': 'Vade ve hatırlatma için görev ekleyin.',
-      'empty_tasks_cta': 'Görev oluştur',
-      'empty_calls_title': 'Çağrı geçmişin burada',
-      'empty_calls_sub': 'Magic Call ve cihaz kayıtları otomatik listelenir.',
-      'empty_calls_cta': 'Çağrı başlat',
+      'empty_tasks': 'Görev listesi boş',
+      'empty_tasks_sub':
+          'Takip tarihi ve hatırlatma için görev ekle; günün akışını buradan yönet.',
+      'empty_tasks_cta': 'Yeni görev',
+      'empty_calls_title': 'Henüz çağrı kaydı yok',
+      'empty_calls_sub':
+          'Telefon ve CRM aramaların burada toplanır. İlk kayıt için hemen ara.',
+      'empty_calls_cta': 'Ara ve kaydet',
       'empty_followup_title': 'Takipte bekleyen lead yok',
       'empty_followup_sub':
           'Sessiz müşteriler oluştuğunda burada önceliklendirilirsiniz.',
@@ -230,7 +233,8 @@ class AppLocalizations {
       'title_admin_teams': 'Ekipler',
       'action_add_team': 'Yeni ekip',
       'empty_teams_title': 'Henüz ekip yok',
-      'empty_teams_subtitle': 'Yeni ekip oluşturup danışmanları atayabilirsiniz.',
+      'empty_teams_subtitle':
+          'Yeni ekip oluşturup danışmanları atayabilirsiniz.',
       'label_team_name': 'Ekip adı',
       'label_team': 'Ekip',
       'label_manager': 'Yönetici',
@@ -240,7 +244,8 @@ class AppLocalizations {
       'action_add_member': 'Üye ekle',
       'empty_team_members': 'Bu ekipte henüz üye yok.',
       'action_remove_from_team': 'Ekipten çıkar',
-      'confirm_remove_from_team': 'Bu üyeyi ekipten çıkarmak istediğinize emin misiniz?',
+      'confirm_remove_from_team':
+          'Bu üyeyi ekipten çıkarmak istediğinize emin misiniz?',
       'member_removed': 'Üye ekipten çıkarıldı.',
       'no_consultants_to_add': 'Eklenecek danışman kalmadı.',
       'access_denied': 'Bu sayfaya erişim yetkiniz yok.',
@@ -253,12 +258,14 @@ class AppLocalizations {
       'filter_role_all': 'Tüm roller',
       'filter_team_all': 'Tüm ekipler',
       'edit_consultant': 'Danışmanı düzenle',
-      'password_reset_info': 'Şifre sıfırlama için Firebase Console veya e-posta ile gönderilen bağlantı kullanılır.',
+      'password_reset_info':
+          'Şifre sıfırlama için Firebase Console veya e-posta ile gönderilen bağlantı kullanılır.',
       'full_name': 'Ad Soyad',
       'is_active': 'Aktif',
       'label_email': 'E-posta',
       'saved_success': 'Kaydedildi.',
-      'consultant_invite_saved': 'Davet kaydedildi; bu e-posta ile giriş yaptığında rol ve ekip atanacak.',
+      'consultant_invite_saved':
+          'Davet kaydedildi; bu e-posta ile giriş yaptığında rol ve ekip atanacak.',
       'manager_updated': 'Yönetici güncellendi.',
 
       // Common empty / error
@@ -313,7 +320,7 @@ class AppLocalizations {
       'search_customers': 'Search (name, phone, email)',
       'empty_customers_title': 'No customers yet',
       'empty_customers_subtitle':
-          'Cards appear here as call summaries or CRM records are created.',
+          'Add a customer or save a post-call summary — your book of business grows here.',
       'empty_customers_cta': 'Add your first customer',
       'empty_search_title': 'No results',
       'empty_search_subtitle': 'No customers match "{0}".',
@@ -338,8 +345,7 @@ class AppLocalizations {
       'title_listings': 'Listing Portfolio',
       'listing': 'Listing',
       'empty_listings': 'Your portfolio is empty',
-      'empty_listings_sub':
-          'Import listings or sync from connected platforms.',
+      'empty_listings_sub': 'Import listings or sync from connected platforms.',
       'empty_listings_cta_import': 'Import listings',
       'empty_listings_cta_accounts': 'Manage connected accounts',
       'listings_load_error': 'Could not load listings.',
@@ -378,7 +384,8 @@ class AppLocalizations {
       'my_external_listings_settings_sub': 'View and filter synced listings',
       'integration_connections_read_only_notice':
           'Platform connections are managed by your office administrator.',
-      'settings_section_platform_integrations_manager': 'Listings & platform connections',
+      'settings_section_platform_integrations_manager':
+          'Listings & platform connections',
       'settings_platform_connections_tile': 'Platform connections (admin)',
       'settings_platform_connections_tile_sub':
           'Sahibinden, Emlakjet, Hepsiemlak — connect, sync, import',
@@ -386,12 +393,14 @@ class AppLocalizations {
 
       'title_tasks': 'Tasks',
       'task': 'Task',
-      'empty_tasks': 'Your task inbox is ready',
-      'empty_tasks_sub': 'Add tasks for due dates and reminders.',
-      'empty_tasks_cta': 'Create task',
-      'empty_calls_title': 'Calls will appear here',
-      'empty_calls_sub': 'Magic Call and device logs are listed automatically.',
-      'empty_calls_cta': 'Start a call',
+      'empty_tasks': 'No tasks yet',
+      'empty_tasks_sub':
+          'Add follow-ups and reminders so nothing slips through the cracks.',
+      'empty_tasks_cta': 'New task',
+      'empty_calls_title': 'No calls logged yet',
+      'empty_calls_sub':
+          'Phone and in-app calls show up here. Start a call to create your first entry.',
+      'empty_calls_cta': 'Call and log',
       'empty_followup_title': 'No leads to revive',
       'empty_followup_sub':
           'When customers go quiet, they will be prioritized here.',
@@ -444,7 +453,8 @@ class AppLocalizations {
       'action_add_member': 'Add member',
       'empty_team_members': 'No members in this team yet.',
       'action_remove_from_team': 'Remove from team',
-      'confirm_remove_from_team': 'Are you sure you want to remove this member from the team?',
+      'confirm_remove_from_team':
+          'Are you sure you want to remove this member from the team?',
       'member_removed': 'Member removed from team.',
       'no_consultants_to_add': 'No consultants left to add.',
       'access_denied': 'You do not have access to this page.',
@@ -457,12 +467,14 @@ class AppLocalizations {
       'filter_role_all': 'All roles',
       'filter_team_all': 'All teams',
       'edit_consultant': 'Edit consultant',
-      'password_reset_info': 'Use Firebase Console or the link sent by email for password reset.',
+      'password_reset_info':
+          'Use Firebase Console or the link sent by email for password reset.',
       'full_name': 'Full name',
       'is_active': 'Active',
       'label_email': 'Email',
       'saved_success': 'Saved.',
-      'consultant_invite_saved': 'Invite saved; role and team will be assigned when they sign in with this email.',
+      'consultant_invite_saved':
+          'Invite saved; role and team will be assigned when they sign in with this email.',
       'manager_updated': 'Manager updated.',
 
       'data_updating': 'Updating data…',
@@ -524,7 +536,8 @@ const Map<String, String> _de = {
   'add_to_follow_up': 'Zur Nachverfolgung',
   'search_customers': 'Suchen (Name, Telefon, E-Mail)',
   'empty_customers_title': 'Kundenliste',
-  'empty_customers_subtitle': 'Noch keine Kunden. Sie erscheinen hier, wenn Sie Anrufzusammenfassungen speichern.',
+  'empty_customers_subtitle':
+      'Noch keine Kunden. Sie erscheinen hier, wenn Sie Anrufzusammenfassungen speichern.',
   'empty_search_title': 'Keine Ergebnisse',
   'empty_search_subtitle': 'Keine Kunden passen zu „{0}".',
   'customer_list_load_error': 'Kundenliste konnte nicht geladen werden.',
@@ -562,15 +575,18 @@ const Map<String, String> _de = {
   'my_external_listings_empty_sub':
       'Inserate erscheinen hier. Verbindung unter Einstellungen → Verknüpfte Konten hinzufügen.',
   'my_external_listings_connect_cta': 'Verknüpfte Konten verwalten',
-  'my_external_listings_load_error': 'Externe Inserate konnten nicht geladen werden.',
-  'my_external_listings_settings_sub': 'Synchronisierte Inserate anzeigen und filtern',
+  'my_external_listings_load_error':
+      'Externe Inserate konnten nicht geladen werden.',
+  'my_external_listings_settings_sub':
+      'Synchronisierte Inserate anzeigen und filtern',
   'integration_filter_all': 'Alle',
   'title_tasks': 'Aufgaben',
   'task': 'Aufgabe',
   'empty_tasks': 'Noch keine Aufgaben',
   'title_notifications': 'Benachrichtigungen',
   'empty_notifications_title': 'Noch keine Benachrichtigungen',
-  'empty_notifications_subtitle': 'Heiße Leads, Aufgaben-Erinnerungen und Updates erscheinen hier.',
+  'empty_notifications_subtitle':
+      'Heiße Leads, Aufgaben-Erinnerungen und Updates erscheinen hier.',
   'my_summary': 'Meine Übersicht',
   'today_calls': 'Anrufe heute',
   'open_tasks': 'Offene Aufgaben',
@@ -579,7 +595,8 @@ const Map<String, String> _de = {
   'today_brief': 'Empfohlene Aktionen in der Liste',
   'notifications': 'Benachrichtigungen',
   'title_admin_consultants': 'Berater',
-  'admin_consultants_placeholder': 'Beraterliste und Teamzuweisungen erscheinen hier.',
+  'admin_consultants_placeholder':
+      'Beraterliste und Teamzuweisungen erscheinen hier.',
   'search_consultants': 'Berater suchen (Name, E-Mail)',
   'title_admin_teams': 'Teams',
   'action_add_team': 'Neues Team',
@@ -594,24 +611,28 @@ const Map<String, String> _de = {
   'action_add_member': 'Mitglied hinzufügen',
   'empty_team_members': 'Diesem Team sind noch keine Mitglieder zugewiesen.',
   'action_remove_from_team': 'Aus Team entfernen',
-  'confirm_remove_from_team': 'Dieses Mitglied wirklich aus dem Team entfernen?',
+  'confirm_remove_from_team':
+      'Dieses Mitglied wirklich aus dem Team entfernen?',
   'member_removed': 'Mitglied aus Team entfernt.',
   'no_consultants_to_add': 'Keine weiteren Berater zum Hinzufügen.',
   'access_denied': 'Sie haben keinen Zugriff auf diese Seite.',
   'filter_all_teams': 'Alle Teams',
-  'consultant_invite_info': 'Diese Person meldet sich mit dieser E-Mail an und wählt die Berater-Rolle.',
+  'consultant_invite_info':
+      'Diese Person meldet sich mit dieser E-Mail an und wählt die Berater-Rolle.',
   'action_add_consultant': 'Neuer Berater',
   'label_role': 'Rolle',
   'empty_consultants': 'Keine Berater gefunden.',
   'filter_role_all': 'Alle Rollen',
   'filter_team_all': 'Alle Teams',
   'edit_consultant': 'Berater bearbeiten',
-  'password_reset_info': 'Passwort zurücksetzen über Firebase Console oder E-Mail-Link.',
+  'password_reset_info':
+      'Passwort zurücksetzen über Firebase Console oder E-Mail-Link.',
   'full_name': 'Vollständiger Name',
   'is_active': 'Aktiv',
   'label_email': 'E-Mail',
   'saved_success': 'Gespeichert.',
-  'consultant_invite_saved': 'Einladung gespeichert; Rolle und Team werden bei Anmeldung zugewiesen.',
+  'consultant_invite_saved':
+      'Einladung gespeichert; Rolle und Team werden bei Anmeldung zugewiesen.',
   'manager_updated': 'Manager aktualisiert.',
   'data_updating': 'Daten werden aktualisiert…',
   'retry': 'Erneut versuchen',
@@ -662,7 +683,8 @@ const Map<String, String> _fr = {
   'add_to_follow_up': 'Ajouter au suivi',
   'search_customers': 'Rechercher (nom, téléphone, e-mail)',
   'empty_customers_title': 'Liste des clients',
-  'empty_customers_subtitle': 'Aucun client pour l\'instant. Ils apparaîtront lorsque vous enregistrerez des résumés d\'appels.',
+  'empty_customers_subtitle':
+      'Aucun client pour l\'instant. Ils apparaîtront lorsque vous enregistrerez des résumés d\'appels.',
   'empty_search_title': 'Aucun résultat',
   'empty_search_subtitle': 'Aucun client ne correspond à « {0} ».',
   'customer_list_load_error': 'Impossible de charger la liste des clients.',
@@ -677,7 +699,8 @@ const Map<String, String> _fr = {
   'ai_suggesting': 'Suggestion en cours...',
   'ai_suggest_ready': 'Suggestion IA prête.',
   'ai_suggest_error': 'Échec de la suggestion : {0}',
-  'message_hint': 'Rédigez votre message de campagne ou demandez une suggestion à l\'IA.',
+  'message_hint':
+      'Rédigez votre message de campagne ou demandez une suggestion à l\'IA.',
   'whatsapp': 'WhatsApp',
   'sms': 'SMS',
   'title_listings': 'Portefeuille d\'annonces',
@@ -700,15 +723,18 @@ const Map<String, String> _fr = {
   'my_external_listings_empty_sub':
       'Les annonces des comptes connectés apparaissent ici. Ajoutez une connexion dans Réglages.',
   'my_external_listings_connect_cta': 'Gérer les comptes connectés',
-  'my_external_listings_load_error': 'Impossible de charger les annonces externes.',
-  'my_external_listings_settings_sub': 'Voir et filtrer les annonces synchronisées',
+  'my_external_listings_load_error':
+      'Impossible de charger les annonces externes.',
+  'my_external_listings_settings_sub':
+      'Voir et filtrer les annonces synchronisées',
   'integration_filter_all': 'Tous',
   'title_tasks': 'Tâches',
   'task': 'Tâche',
   'empty_tasks': 'Aucune tâche pour l\'instant',
   'title_notifications': 'Notifications',
   'empty_notifications_title': 'Aucune notification',
-  'empty_notifications_subtitle': 'Leads chauds, rappels de tâches et mises à jour apparaîtront ici.',
+  'empty_notifications_subtitle':
+      'Leads chauds, rappels de tâches et mises à jour apparaîtront ici.',
   'my_summary': 'Mon résumé',
   'today_calls': 'Appels du jour',
   'open_tasks': 'Tâches ouvertes',
@@ -717,7 +743,8 @@ const Map<String, String> _fr = {
   'today_brief': 'Actions suggérées dans la liste',
   'notifications': 'Notifications',
   'title_admin_consultants': 'Conseillers',
-  'admin_consultants_placeholder': 'Liste des conseillers et affectations d\'équipe ici.',
+  'admin_consultants_placeholder':
+      'Liste des conseillers et affectations d\'équipe ici.',
   'search_consultants': 'Rechercher des conseillers (nom, e-mail)',
   'title_admin_teams': 'Équipes',
   'action_add_team': 'Nouvelle équipe',
@@ -737,19 +764,22 @@ const Map<String, String> _fr = {
   'no_consultants_to_add': 'Aucun conseiller à ajouter.',
   'access_denied': 'Vous n\'avez pas accès à cette page.',
   'filter_all_teams': 'Toutes les équipes',
-  'consultant_invite_info': 'Cette personne se connectera avec cet e-mail et sélectionnera le rôle Conseiller.',
+  'consultant_invite_info':
+      'Cette personne se connectera avec cet e-mail et sélectionnera le rôle Conseiller.',
   'action_add_consultant': 'Nouveau conseiller',
   'label_role': 'Rôle',
   'empty_consultants': 'Aucun conseiller trouvé.',
   'filter_role_all': 'Tous les rôles',
   'filter_team_all': 'Toutes les équipes',
   'edit_consultant': 'Modifier le conseiller',
-  'password_reset_info': 'Réinitialisation du mot de passe via la console Firebase ou le lien e-mail.',
+  'password_reset_info':
+      'Réinitialisation du mot de passe via la console Firebase ou le lien e-mail.',
   'full_name': 'Nom complet',
   'is_active': 'Actif',
   'label_email': 'E-mail',
   'saved_success': 'Enregistré.',
-  'consultant_invite_saved': 'Invitation enregistrée ; rôle et équipe assignés à la connexion.',
+  'consultant_invite_saved':
+      'Invitation enregistrée ; rôle et équipe assignés à la connexion.',
   'manager_updated': 'Manager mis à jour.',
   'data_updating': 'Mise à jour des données…',
   'retry': 'Réessayer',
@@ -800,7 +830,8 @@ const Map<String, String> _es = {
   'add_to_follow_up': 'Añadir al seguimiento',
   'search_customers': 'Buscar (nombre, teléfono, correo)',
   'empty_customers_title': 'Lista de clientes',
-  'empty_customers_subtitle': 'Aún no hay clientes. Aparecerán al guardar resúmenes de llamadas.',
+  'empty_customers_subtitle':
+      'Aún no hay clientes. Aparecerán al guardar resúmenes de llamadas.',
   'empty_search_title': 'Sin resultados',
   'empty_search_subtitle': 'Ningún cliente coincide con «{0}».',
   'customer_list_load_error': 'No se pudo cargar la lista de clientes.',
@@ -815,7 +846,8 @@ const Map<String, String> _es = {
   'ai_suggesting': 'Sugiriendo...',
   'ai_suggest_ready': 'Sugerencia IA lista.',
   'ai_suggest_error': 'Sugerencia fallida: {0}',
-  'message_hint': 'Escriba el mensaje de campaña o pida una sugerencia a la IA.',
+  'message_hint':
+      'Escriba el mensaje de campaña o pida una sugerencia a la IA.',
   'whatsapp': 'WhatsApp',
   'sms': 'SMS',
   'title_listings': 'Portafolio de anuncios',
@@ -838,7 +870,8 @@ const Map<String, String> _es = {
   'my_external_listings_empty_sub':
       'Los anuncios de cuentas conectadas aparecen aquí. Añade una conexión en Ajustes.',
   'my_external_listings_connect_cta': 'Gestionar cuentas conectadas',
-  'my_external_listings_load_error': 'No se pudieron cargar los anuncios externos.',
+  'my_external_listings_load_error':
+      'No se pudieron cargar los anuncios externos.',
   'my_external_listings_settings_sub': 'Ver y filtrar anuncios sincronizados',
   'integration_filter_all': 'Todos',
   'title_tasks': 'Tareas',
@@ -846,7 +879,8 @@ const Map<String, String> _es = {
   'empty_tasks': 'Aún no hay tareas',
   'title_notifications': 'Notificaciones',
   'empty_notifications_title': 'Aún no hay notificaciones',
-  'empty_notifications_subtitle': 'Leads calientes, recordatorios y actualizaciones aparecerán aquí.',
+  'empty_notifications_subtitle':
+      'Leads calientes, recordatorios y actualizaciones aparecerán aquí.',
   'my_summary': 'Mi resumen',
   'today_calls': 'Llamadas de hoy',
   'open_tasks': 'Tareas abiertas',
@@ -855,7 +889,8 @@ const Map<String, String> _es = {
   'today_brief': 'Acciones sugeridas en la lista',
   'notifications': 'Notificaciones',
   'title_admin_consultants': 'Asesores',
-  'admin_consultants_placeholder': 'Lista de asesores y asignaciones de equipo aquí.',
+  'admin_consultants_placeholder':
+      'Lista de asesores y asignaciones de equipo aquí.',
   'search_consultants': 'Buscar asesores (nombre, correo)',
   'title_admin_teams': 'Equipos',
   'action_add_team': 'Nuevo equipo',
@@ -875,19 +910,22 @@ const Map<String, String> _es = {
   'no_consultants_to_add': 'No quedan asesores por añadir.',
   'access_denied': 'No tiene acceso a esta página.',
   'filter_all_teams': 'Todos los equipos',
-  'consultant_invite_info': 'Esta persona iniciará sesión con este correo y seleccionará el rol Asesor.',
+  'consultant_invite_info':
+      'Esta persona iniciará sesión con este correo y seleccionará el rol Asesor.',
   'action_add_consultant': 'Nuevo asesor',
   'label_role': 'Rol',
   'empty_consultants': 'No se encontraron asesores.',
   'filter_role_all': 'Todos los roles',
   'filter_team_all': 'Todos los equipos',
   'edit_consultant': 'Editar asesor',
-  'password_reset_info': 'Restablecer contraseña desde la consola Firebase o el enlace por correo.',
+  'password_reset_info':
+      'Restablecer contraseña desde la consola Firebase o el enlace por correo.',
   'full_name': 'Nombre completo',
   'is_active': 'Activo',
   'label_email': 'Correo',
   'saved_success': 'Guardado.',
-  'consultant_invite_saved': 'Invitación guardada; rol y equipo se asignan al iniciar sesión.',
+  'consultant_invite_saved':
+      'Invitación guardada; rol y equipo se asignan al iniciar sesión.',
   'manager_updated': 'Manager actualizado.',
   'data_updating': 'Actualizando datos…',
   'retry': 'Reintentar',
@@ -984,7 +1022,8 @@ const Map<String, String> _ar = {
   'empty_tasks': 'لا مهام بعد',
   'title_notifications': 'الإشعارات',
   'empty_notifications_title': 'لا إشعارات بعد',
-  'empty_notifications_subtitle': 'العروض الساخنة وتذكيرات المهام والتحديثات ستظهر هنا.',
+  'empty_notifications_subtitle':
+      'العروض الساخنة وتذكيرات المهام والتحديثات ستظهر هنا.',
   'my_summary': 'ملخصي',
   'today_calls': 'مكالمات اليوم',
   'open_tasks': 'مهام مفتوحة',
@@ -1013,19 +1052,22 @@ const Map<String, String> _ar = {
   'no_consultants_to_add': 'لا مستشارين متبقين للإضافة.',
   'access_denied': 'ليس لديك صلاحية الوصول لهذه الصفحة.',
   'filter_all_teams': 'كل الفرق',
-  'consultant_invite_info': 'هذا الشخص سيسجل الدخول بهذا البريد ويختار دور المستشار.',
+  'consultant_invite_info':
+      'هذا الشخص سيسجل الدخول بهذا البريد ويختار دور المستشار.',
   'action_add_consultant': 'مستشار جديد',
   'label_role': 'الدور',
   'empty_consultants': 'لم يتم العثور على مستشارين.',
   'filter_role_all': 'كل الأدوار',
   'filter_team_all': 'كل الفرق',
   'edit_consultant': 'تعديل المستشار',
-  'password_reset_info': 'إعادة تعيين كلمة المرور عبر وحدة Firebase أو الرابط المرسل بالبريد.',
+  'password_reset_info':
+      'إعادة تعيين كلمة المرور عبر وحدة Firebase أو الرابط المرسل بالبريد.',
   'full_name': 'الاسم الكامل',
   'is_active': 'نشط',
   'label_email': 'البريد',
   'saved_success': 'تم الحفظ.',
-  'consultant_invite_saved': 'تم حفظ الدعوة؛ سيُعيَّن الدور والفريق عند تسجيل الدخول.',
+  'consultant_invite_saved':
+      'تم حفظ الدعوة؛ سيُعيَّن الدور والفريق عند تسجيل الدخول.',
   'manager_updated': 'تم تحديث المدير.',
   'data_updating': 'جاري تحديث البيانات…',
   'retry': 'إعادة المحاولة',
@@ -1076,7 +1118,8 @@ const Map<String, String> _ru = {
   'add_to_follow_up': 'В сопровождение',
   'search_customers': 'Поиск (имя, телефон, email)',
   'empty_customers_title': 'Список клиентов',
-  'empty_customers_subtitle': 'Пока нет клиентов. Они появятся при сохранении итогов звонков.',
+  'empty_customers_subtitle':
+      'Пока нет клиентов. Они появятся при сохранении итогов звонков.',
   'empty_search_title': 'Нет результатов',
   'empty_search_subtitle': 'Нет клиентов по запросу «{0}».',
   'customer_list_load_error': 'Не удалось загрузить список клиентов.',
@@ -1115,14 +1158,16 @@ const Map<String, String> _ru = {
       'Объявления с подключённых аккаунтов отображаются здесь. Добавьте подключение в настройках.',
   'my_external_listings_connect_cta': 'Управление подключёнными аккаунтами',
   'my_external_listings_load_error': 'Не удалось загрузить внешние объявления.',
-  'my_external_listings_settings_sub': 'Просмотр и фильтрация синхронизированных объявлений',
+  'my_external_listings_settings_sub':
+      'Просмотр и фильтрация синхронизированных объявлений',
   'integration_filter_all': 'Все',
   'title_tasks': 'Задачи',
   'task': 'Задача',
   'empty_tasks': 'Пока нет задач',
   'title_notifications': 'Уведомления',
   'empty_notifications_title': 'Пока нет уведомлений',
-  'empty_notifications_subtitle': 'Горячие лиды, напоминания и обновления появятся здесь.',
+  'empty_notifications_subtitle':
+      'Горячие лиды, напоминания и обновления появятся здесь.',
   'my_summary': 'Моя сводка',
   'today_calls': 'Звонки за сегодня',
   'open_tasks': 'Открытые задачи',
@@ -1131,7 +1176,8 @@ const Map<String, String> _ru = {
   'today_brief': 'Рекомендуемые действия в списке',
   'notifications': 'Уведомления',
   'title_admin_consultants': 'Консультанты',
-  'admin_consultants_placeholder': 'Список консультантов и назначения команд здесь.',
+  'admin_consultants_placeholder':
+      'Список консультантов и назначения команд здесь.',
   'search_consultants': 'Поиск консультантов (имя, email)',
   'title_admin_teams': 'Команды',
   'action_add_team': 'Новая команда',
@@ -1151,19 +1197,22 @@ const Map<String, String> _ru = {
   'no_consultants_to_add': 'Нет консультантов для добавления.',
   'access_denied': 'У вас нет доступа к этой странице.',
   'filter_all_teams': 'Все команды',
-  'consultant_invite_info': 'Этот пользователь войдёт по этому email и выберет роль консультанта.',
+  'consultant_invite_info':
+      'Этот пользователь войдёт по этому email и выберет роль консультанта.',
   'action_add_consultant': 'Новый консультант',
   'label_role': 'Роль',
   'empty_consultants': 'Консультанты не найдены.',
   'filter_role_all': 'Все роли',
   'filter_team_all': 'Все команды',
   'edit_consultant': 'Редактировать консультанта',
-  'password_reset_info': 'Сброс пароля через консоль Firebase или ссылку из письма.',
+  'password_reset_info':
+      'Сброс пароля через консоль Firebase или ссылку из письма.',
   'full_name': 'Полное имя',
   'is_active': 'Активен',
   'label_email': 'Email',
   'saved_success': 'Сохранено.',
-  'consultant_invite_saved': 'Приглашение сохранено; роль и команда будут назначены при входе.',
+  'consultant_invite_saved':
+      'Приглашение сохранено; роль и команда будут назначены при входе.',
   'manager_updated': 'Менеджер обновлён.',
   'data_updating': 'Обновление данных…',
   'retry': 'Повторить',
@@ -1214,7 +1263,8 @@ const Map<String, String> _az = {
   'add_to_follow_up': 'İzləməyə əlavə et',
   'search_customers': 'Axtarış (ad, telefon, e-poçt)',
   'empty_customers_title': 'Müştəri siyahısı',
-  'empty_customers_subtitle': 'Hələ müştəri yoxdur. Zəng xülasələrini saxladıqda burada görünəcək.',
+  'empty_customers_subtitle':
+      'Hələ müştəri yoxdur. Zəng xülasələrini saxladıqda burada görünəcək.',
   'empty_search_title': 'Nəticə yoxdur',
   'empty_search_subtitle': '«{0}» axtarışına uyğun müştəri tapılmadı.',
   'customer_list_load_error': 'Müştəri siyahısı yüklənə bilmədi.',
@@ -1253,14 +1303,16 @@ const Map<String, String> _az = {
       'Bağlı hesablardan gələn elanlar burada görünür. Parametrlərdə əlaqə əlavə edin.',
   'my_external_listings_connect_cta': 'Bağlı hesabları idarə et',
   'my_external_listings_load_error': 'Xarici elanlar yüklənmədi.',
-  'my_external_listings_settings_sub': 'Sinxronlaşdırılmış elanlara baxın və süzün',
+  'my_external_listings_settings_sub':
+      'Sinxronlaşdırılmış elanlara baxın və süzün',
   'integration_filter_all': 'Hamısı',
   'title_tasks': 'Tapşırıqlar',
   'task': 'Tapşırıq',
   'empty_tasks': 'Hələ tapşırıq yoxdur',
   'title_notifications': 'Bildirişlər',
   'empty_notifications_title': 'Hələ bildiriş yoxdur',
-  'empty_notifications_subtitle': 'İsti leadlər, tapşırıq xatırlatmaları və yeniləmələr burada görünəcək.',
+  'empty_notifications_subtitle':
+      'İsti leadlər, tapşırıq xatırlatmaları və yeniləmələr burada görünəcək.',
   'my_summary': 'Mənim xülasəm',
   'today_calls': 'Bugünkü zənglər',
   'open_tasks': 'Açıq tapşırıqlar',
@@ -1269,7 +1321,8 @@ const Map<String, String> _az = {
   'today_brief': 'Tövsiyə olunan addımlar siyahıda',
   'notifications': 'Bildirişlər',
   'title_admin_consultants': 'Məsləhətçilər',
-  'admin_consultants_placeholder': 'Məsləhətçi siyahısı və komanda təyinatları burada.',
+  'admin_consultants_placeholder':
+      'Məsləhətçi siyahısı və komanda təyinatları burada.',
   'search_consultants': 'Məsləhətçi axtar (ad, e-poçt)',
   'title_admin_teams': 'Komandalar',
   'action_add_team': 'Yeni komanda',
@@ -1284,24 +1337,28 @@ const Map<String, String> _az = {
   'action_add_member': 'Üzv əlavə et',
   'empty_team_members': 'Bu komandada hələ üzv yoxdur.',
   'action_remove_from_team': 'Komandadan çıxar',
-  'confirm_remove_from_team': 'Bu üzvü komandadan çıxarmaq istədiyinizə əminsiniz?',
+  'confirm_remove_from_team':
+      'Bu üzvü komandadan çıxarmaq istədiyinizə əminsiniz?',
   'member_removed': 'Üzv komandadan çıxarıldı.',
   'no_consultants_to_add': 'Əlavə ediləcək məsləhətçi qalmayıb.',
   'access_denied': 'Bu səhifəyə giriş hüququnuz yoxdur.',
   'filter_all_teams': 'Bütün komandalar',
-  'consultant_invite_info': 'Bu şəxs bu e-poçtla daxil olub Məsləhətçi rolunu seçəcək.',
+  'consultant_invite_info':
+      'Bu şəxs bu e-poçtla daxil olub Məsləhətçi rolunu seçəcək.',
   'action_add_consultant': 'Yeni məsləhətçi',
   'label_role': 'Rol',
   'empty_consultants': 'Məsləhətçi tapılmadı.',
   'filter_role_all': 'Bütün rollar',
   'filter_team_all': 'Bütün komandalar',
   'edit_consultant': 'Məsləhətçini redaktə et',
-  'password_reset_info': 'Parol sıfırlama üçün Firebase konsolu və ya e-poçt linki istifadə edin.',
+  'password_reset_info':
+      'Parol sıfırlama üçün Firebase konsolu və ya e-poçt linki istifadə edin.',
   'full_name': 'Ad Soyad',
   'is_active': 'Aktiv',
   'label_email': 'E-poçt',
   'saved_success': 'Saxlanıldı.',
-  'consultant_invite_saved': 'Dəvət saxlanıldı; bu e-poçtla girişdə rol və komanda təyin olunacaq.',
+  'consultant_invite_saved':
+      'Dəvət saxlanıldı; bu e-poçtla girişdə rol və komanda təyin olunacaq.',
   'manager_updated': 'Menecer yeniləndi.',
   'data_updating': 'Məlumatlar yenilənir…',
   'retry': 'Yenidən cəhd et',
@@ -1352,7 +1409,8 @@ const Map<String, String> _nl = {
   'add_to_follow_up': 'Toevoegen aan opvolging',
   'search_customers': 'Zoeken (naam, telefoon, e-mail)',
   'empty_customers_title': 'Klantenlijst',
-  'empty_customers_subtitle': 'Nog geen klanten. Ze verschijnen hier wanneer u gesprekssamenvattingen opslaat.',
+  'empty_customers_subtitle':
+      'Nog geen klanten. Ze verschijnen hier wanneer u gesprekssamenvattingen opslaat.',
   'empty_search_title': 'Geen resultaten',
   'empty_search_subtitle': 'Geen klanten gevonden voor „{0}".',
   'customer_list_load_error': 'Klantenlijst kon niet worden geladen.',
@@ -1390,15 +1448,18 @@ const Map<String, String> _nl = {
   'my_external_listings_empty_sub':
       'Advertenties van gekoppelde accounts verschijnen hier. Voeg een koppeling toe in Instellingen.',
   'my_external_listings_connect_cta': 'Gekoppelde accounts beheren',
-  'my_external_listings_load_error': 'Externe advertenties konden niet worden geladen.',
-  'my_external_listings_settings_sub': 'Gesynchroniseerde advertenties bekijken en filteren',
+  'my_external_listings_load_error':
+      'Externe advertenties konden niet worden geladen.',
+  'my_external_listings_settings_sub':
+      'Gesynchroniseerde advertenties bekijken en filteren',
   'integration_filter_all': 'Alle',
   'title_tasks': 'Taken',
   'task': 'Taak',
   'empty_tasks': 'Nog geen taken',
   'title_notifications': 'Meldingen',
   'empty_notifications_title': 'Nog geen meldingen',
-  'empty_notifications_subtitle': 'Hot leads, taakherinneringen en updates verschijnen hier.',
+  'empty_notifications_subtitle':
+      'Hot leads, taakherinneringen en updates verschijnen hier.',
   'my_summary': 'Mijn overzicht',
   'today_calls': 'Oproepen vandaag',
   'open_tasks': 'Open taken',
@@ -1427,19 +1488,22 @@ const Map<String, String> _nl = {
   'no_consultants_to_add': 'Geen consultants meer om toe te voegen.',
   'access_denied': 'U heeft geen toegang tot deze pagina.',
   'filter_all_teams': 'Alle teams',
-  'consultant_invite_info': 'Deze persoon meldt zich aan met dit e-mailadres en kiest de rol Consultant.',
+  'consultant_invite_info':
+      'Deze persoon meldt zich aan met dit e-mailadres en kiest de rol Consultant.',
   'action_add_consultant': 'Nieuwe consultant',
   'label_role': 'Rol',
   'empty_consultants': 'Geen consultants gevonden.',
   'filter_role_all': 'Alle rollen',
   'filter_team_all': 'Alle teams',
   'edit_consultant': 'Consultant bewerken',
-  'password_reset_info': 'Wachtwoord resetten via Firebase Console of e-maillink.',
+  'password_reset_info':
+      'Wachtwoord resetten via Firebase Console of e-maillink.',
   'full_name': 'Volledige naam',
   'is_active': 'Actief',
   'label_email': 'E-mail',
   'saved_success': 'Opgeslagen.',
-  'consultant_invite_saved': 'Uitnodiging opgeslagen; rol en team worden bij aanmelding toegewezen.',
+  'consultant_invite_saved':
+      'Uitnodiging opgeslagen; rol en team worden bij aanmelding toegewezen.',
   'manager_updated': 'Manager bijgewerkt.',
   'data_updating': 'Gegevens bijwerken…',
   'retry': 'Opnieuw proberen',
@@ -1490,7 +1554,8 @@ const Map<String, String> _pt = {
   'add_to_follow_up': 'Adicionar ao seguimento',
   'search_customers': 'Pesquisar (nome, telefone, e-mail)',
   'empty_customers_title': 'Lista de clientes',
-  'empty_customers_subtitle': 'Ainda sem clientes. Aparecerão ao guardar resumos de chamadas.',
+  'empty_customers_subtitle':
+      'Ainda sem clientes. Aparecerão ao guardar resumos de chamadas.',
   'empty_search_title': 'Sem resultados',
   'empty_search_subtitle': 'Nenhum cliente corresponde a «{0}».',
   'customer_list_load_error': 'Não foi possível carregar a lista de clientes.',
@@ -1528,7 +1593,8 @@ const Map<String, String> _pt = {
   'my_external_listings_empty_sub':
       'Anúncios de contas conectadas aparecem aqui. Adicione uma ligação em Definições.',
   'my_external_listings_connect_cta': 'Gerir contas conectadas',
-  'my_external_listings_load_error': 'Não foi possível carregar anúncios externos.',
+  'my_external_listings_load_error':
+      'Não foi possível carregar anúncios externos.',
   'my_external_listings_settings_sub': 'Ver e filtrar anúncios sincronizados',
   'integration_filter_all': 'Todos',
   'title_tasks': 'Tarefas',
@@ -1536,7 +1602,8 @@ const Map<String, String> _pt = {
   'empty_tasks': 'Ainda sem tarefas',
   'title_notifications': 'Notificações',
   'empty_notifications_title': 'Ainda sem notificações',
-  'empty_notifications_subtitle': 'Leads quentes, lembretes e atualizações aparecerão aqui.',
+  'empty_notifications_subtitle':
+      'Leads quentes, lembretes e atualizações aparecerão aqui.',
   'my_summary': 'O meu resumo',
   'today_calls': 'Chamadas de hoje',
   'open_tasks': 'Tarefas em aberto',
@@ -1545,7 +1612,8 @@ const Map<String, String> _pt = {
   'today_brief': 'Ações sugeridas na lista',
   'notifications': 'Notificações',
   'title_admin_consultants': 'Consultores',
-  'admin_consultants_placeholder': 'Lista de consultores e atribuições de equipa aqui.',
+  'admin_consultants_placeholder':
+      'Lista de consultores e atribuições de equipa aqui.',
   'search_consultants': 'Pesquisar consultores (nome, e-mail)',
   'title_admin_teams': 'Equipas',
   'action_add_team': 'Nova equipa',
@@ -1565,19 +1633,22 @@ const Map<String, String> _pt = {
   'no_consultants_to_add': 'Não há mais consultores a adicionar.',
   'access_denied': 'Não tem acesso a esta página.',
   'filter_all_teams': 'Todas as equipas',
-  'consultant_invite_info': 'Esta pessoa iniciará sessão com este e-mail e escolherá o papel de Consultor.',
+  'consultant_invite_info':
+      'Esta pessoa iniciará sessão com este e-mail e escolherá o papel de Consultor.',
   'action_add_consultant': 'Novo consultor',
   'label_role': 'Papel',
   'empty_consultants': 'Nenhum consultor encontrado.',
   'filter_role_all': 'Todos os papéis',
   'filter_team_all': 'Todas as equipas',
   'edit_consultant': 'Editar consultor',
-  'password_reset_info': 'Repor palavra-passe pela consola Firebase ou link por e-mail.',
+  'password_reset_info':
+      'Repor palavra-passe pela consola Firebase ou link por e-mail.',
   'full_name': 'Nome completo',
   'is_active': 'Ativo',
   'label_email': 'E-mail',
   'saved_success': 'Guardado.',
-  'consultant_invite_saved': 'Convite guardado; papel e equipa serão atribuídos ao iniciar sessão.',
+  'consultant_invite_saved':
+      'Convite guardado; papel e equipa serão atribuídos ao iniciar sessão.',
   'manager_updated': 'Gestor atualizado.',
   'data_updating': 'A atualizar dados…',
   'retry': 'Tentar novamente',
@@ -1589,7 +1660,8 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
 
   @override
   bool isSupported(Locale locale) {
-    return ['tr', 'en', 'de', 'fr', 'es', 'ar', 'ru', 'az', 'nl', 'pt'].contains(locale.languageCode);
+    return ['tr', 'en', 'de', 'fr', 'es', 'ar', 'ru', 'az', 'nl', 'pt']
+        .contains(locale.languageCode);
   }
 
   @override

@@ -18,6 +18,7 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
@@ -80,6 +81,14 @@ class ConsultantDashboardPage extends ConsumerWidget {
                       const _TodayKpiRow(),
                       const SizedBox(
                           height: DashboardLayoutTokens.gapOperationalTight),
+                      Text(
+                        'Bugünün aksiyonu',
+                        style: AppTypography.sectionLabel(context),
+                      ),
+                      const SizedBox(height: DesignTokens.space2),
+                      const _MagicCallPrimaryBlock(),
+                      const SizedBox(
+                          height: DashboardLayoutTokens.gapOperationalTight),
                       const AiUsageIndicator(),
                       const SizedBox(
                           height: DashboardLayoutTokens.gapOperationalTight),
@@ -91,9 +100,6 @@ class ConsultantDashboardPage extends ConsumerWidget {
                           height: DashboardLayoutTokens.gapOperationalTight),
                       const ExecutionRemindersCard(
                           surface: ExecutionReminderSurface.consultant),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperational),
-                      const _MagicCallPrimaryBlock(),
                       const SizedBox(
                           height: DashboardLayoutTokens.gapOperational),
                       const PriorityCallSignalsCard(),
@@ -395,7 +401,7 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
               BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-                vertical: 12, horizontal: DesignTokens.space4),
+                vertical: 14, horizontal: DesignTokens.space4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -403,11 +409,8 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   'Telefon ile ara',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: ext.onBrand,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
+                  style: AppTypography.primaryButton(context)
+                      .copyWith(color: ext.onBrand),
                 ),
               ],
             ),
@@ -427,6 +430,23 @@ class _TodayKpiRow extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    void openCalls() {
+      HapticFeedback.lightImpact();
+      context.push(AppRouter.routeConsultantCalls);
+    }
+
+    void openTasks() {
+      HapticFeedback.lightImpact();
+      ref.read(mainShellShortcutProvider.notifier).state =
+          MainShellShortcut.openTasksTab;
+      context.go(AppRouter.routeHome);
+    }
+
+    void openPipeline() {
+      HapticFeedback.lightImpact();
+      context.push(AppRouter.routePipeline);
+    }
+
     final textStyleLabel = TextStyle(
       color: ext.textSecondary,
       fontSize: DesignTokens.fontSizeSm,
@@ -449,6 +469,7 @@ class _TodayKpiRow extends ConsumerWidget {
                 value: '$value',
                 labelStyle: textStyleLabel,
                 valueStyle: textStyleValue,
+                onTap: openCalls,
               );
             },
           ),
@@ -465,6 +486,7 @@ class _TodayKpiRow extends ConsumerWidget {
                 value: '$value',
                 labelStyle: textStyleLabel,
                 valueStyle: textStyleValue,
+                onTap: openTasks,
               );
             },
           ),
@@ -481,6 +503,7 @@ class _TodayKpiRow extends ConsumerWidget {
                 value: '$value',
                 labelStyle: textStyleLabel,
                 valueStyle: textStyleValue,
+                onTap: openPipeline,
               );
             },
           ),
@@ -497,6 +520,7 @@ class _KpiChip extends StatelessWidget {
     required this.value,
     required this.labelStyle,
     required this.valueStyle,
+    this.onTap,
   });
 
   final IconData icon;
@@ -504,11 +528,13 @@ class _KpiChip extends StatelessWidget {
   final String value;
   final TextStyle labelStyle;
   final TextStyle valueStyle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return Container(
+    final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardS);
+    final child = Container(
       constraints:
           const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightKpi),
       padding: const EdgeInsets.symmetric(
@@ -517,7 +543,7 @@ class _KpiChip extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: ext.surfaceElevated,
-        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+        borderRadius: radius,
         border: Border.all(color: ext.borderSubtle),
       ),
       child: Row(
@@ -543,6 +569,18 @@ class _KpiChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+    if (onTap == null) {
+      return child;
+    }
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: radius,
+        onTap: onTap,
+        splashColor: ext.accent.withValues(alpha: 0.12),
+        child: child,
       ),
     );
   }

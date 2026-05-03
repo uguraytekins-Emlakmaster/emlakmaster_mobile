@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/execution_reminders_providers.dart';
@@ -143,6 +144,16 @@ class DashboardPage extends ConsumerWidget {
                         // —— Layer 1: Hero — ofis kimliği, uyarı şeridi ——
                         const DashboardTopAppBar(),
                         SizedBox(height: gapHero),
+                        px(
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Operasyon özeti',
+                              style: AppTypography.sectionLabel(context),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: DesignTokens.space2),
                         px(
                           const RepaintBoundary(
                             child: BrokerDashboardIntelligenceSummaryCard(),

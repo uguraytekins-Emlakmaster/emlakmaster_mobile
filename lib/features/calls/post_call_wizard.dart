@@ -1,4 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'dart:math' as math;
 
 import 'package:emlakmaster_mobile/core/ai/ai_gate.dart';
@@ -204,6 +206,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   String? _voiceReviewHint;
 
   late AnimationController _progressController;
+  late final PageController _wizardPageController;
+  int _wizardStepIndex = 0;
 
   static const String _demoConversation =
       'Müşteri 3+1 daire arıyor, oturumluk. Bütçe 5 ile 8 milyon lira arası. '
@@ -221,6 +225,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   void initState() {
     super.initState();
     HapticFeedback.mediumImpact();
+    _wizardPageController = PageController();
 
     _progressController = AnimationController(
       vsync: this,
@@ -263,6 +268,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   @override
   void dispose() {
     _transcriptController.removeListener(_onTranscriptUserEdit);
+    _wizardPageController.dispose();
     _progressController.dispose();
     _summaryController.dispose();
     _transcriptController.dispose();
@@ -544,6 +550,274 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     }
   }
 
+  Future<void> _openSaveContactSheet() async {
+    String? name;
+    String? phone;
+    if (widget.linkedCustomerId != null) {
+      final c = await ref.read(
+        customerEntityByIdProvider(widget.linkedCustomerId!).future,
+      );
+      name = c?.fullName;
+      phone = c?.primaryPhone;
+    }
+    if (!mounted) {
+      return;
+    }
+    showSaveContactSheet(
+      context,
+      initialName: name,
+      initialPhone: phone,
+      initialNote: _summaryController.text.trim().isEmpty
+          ? null
+          : _summaryController.text.trim(),
+      source: 'rehber_aramasi',
+    );
+  }
+
+  Widget _buildWizardStepSummary() {
+    final ext = AppThemeExtension.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: DesignTokens.space6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _PostCallVoiceRow(
+            voiceStatus: _voiceStatus,
+            onSpeechResult: _onPostCallSpeechResult,
+            onPhaseChanged: (phase) {
+              if (mounted) {
+                setState(() => _voiceStatus = phase);
+              }
+            },
+          ),
+          if (_voiceReviewHint != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: ext.warning.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: ext.warning.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: ext.warning,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _voiceReviewHint!,
+                      style: TextStyle(
+                        color: ext.textPrimary.withValues(alpha: 0.9),
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: DesignTokens.space4),
+          _ResultSummaryWithSentiment(
+            extraction: _extraction!,
+            summaryController: _summaryController,
+            onSummaryEdited: () {
+              if (_voiceReviewHint != null) {
+                setState(() => _voiceReviewHint = null);
+              }
+            },
+          ),
+          const SizedBox(height: DesignTokens.space4),
+          Text(
+            'İpucu: Özeti kısa tutun; bütçe ve bölge gibi ayrıntıları sonraki adımda düzenleyebilirsiniz.',
+            style: AppTypography.meta(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWizardStepDetails() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: DesignTokens.space6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _summaryController,
+            builder: (context, value, _) {
+              return _SummarySignalsPreview(summaryText: value.text);
+            },
+          ),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.white24),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.subtitles_outlined,
+                    size: 18,
+                    color: AppThemeExtension.of(context).accent,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Transkript (opsiyonel)',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              subtitle: const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text(
+                  'STT veya metin yapıştırın. Özet ana kayıt; transkript ayrı saklanır.',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 11,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              children: [
+                TextField(
+                  controller: _transcriptController,
+                  maxLines: 6,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.06),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
+                    ),
+                    hintText: 'Ham transkript…',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Kritik bilgiler',
+            style: TextStyle(
+              color: AppThemeExtension.of(context).textSecondary,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _ExtractionBentoGrid(extraction: _extraction!),
+          const SizedBox(height: 16),
+          _NextStepCard(suggestion: _extraction!.nextStepSuggestion),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _summaryController,
+            builder: (context, value, _) {
+              return ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _transcriptController,
+                builder: (context, tvalue, _) {
+                  return _PostCallAiEnrichmentInsightPreview(
+                    summaryText: value.text,
+                    transcriptText: tvalue.text,
+                    sentimentStorage:
+                        sentimentToStorage(_extraction!.sentiment),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWizardStepReview() {
+    final ext = AppThemeExtension.of(context);
+    final linked = widget.linkedCustomerId != null &&
+        widget.linkedCustomerId!.trim().isNotEmpty;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: DesignTokens.space6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Kayıt öncesi kontrol',
+            style: AppTypography.cardHeading(context),
+          ),
+          const SizedBox(height: DesignTokens.space2),
+          Text(
+            linked
+                ? 'Özet, bağlı müşteri kartına ve çağrı kaydına işlenecek.'
+                : 'Müşteri bağlantısı yok; özet yine de çağrı kaydı olarak saklanır.',
+            style: AppTypography.meta(context),
+          ),
+          const SizedBox(height: DesignTokens.space4),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _summaryController,
+            builder: (context, value, _) {
+              final t = value.text.trim();
+              if (t.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: AppTypography.cardPadding,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                    color: ext.surfaceElevated,
+                    border: Border.all(color: ext.borderSubtle),
+                  ),
+                  child: Text(
+                    'Özet boş görünüyor. 1. adıma dönüp bir-iki cümle yazın veya sesle ekleyin.',
+                    style: AppTypography.body(context),
+                  ),
+                );
+              }
+              final preview = t.length > 240 ? '${t.substring(0, 240)}…' : t;
+              return Container(
+                width: double.infinity,
+                padding: AppTypography.cardPadding,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  color: ext.surfaceElevated,
+                  border: Border.all(color: ext.borderSubtle),
+                ),
+                child: Text(
+                  preview,
+                  style: AppTypography.body(context)
+                      .copyWith(color: ext.textPrimary),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -574,10 +848,17 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Çağrı Özeti Sihirbazı',
-                              style: theme.textTheme.titleMedium?.copyWith(
+                              'Çağrı özeti',
+                              style:
+                                  AppTypography.cardHeading(context).copyWith(
                                 color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: DesignTokens.space1),
+                            Text(
+                              'Özet → detay → kayıt',
+                              style: AppTypography.meta(context).copyWith(
+                                color: Colors.white70,
                               ),
                             ),
                             if ((widget.callOutcome ?? '') ==
@@ -617,268 +898,59 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                     ),
                   ] else if (_extraction != null) ...[
                     Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _PostCallVoiceRow(
-                              voiceStatus: _voiceStatus,
-                              onSpeechResult: _onPostCallSpeechResult,
-                              onPhaseChanged: (phase) {
-                                if (mounted) {
-                                  setState(() => _voiceStatus = phase);
-                                }
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _WizardProgressHeader(
+                            currentStep: _wizardStepIndex,
+                            onStepTap: (i) {
+                              _wizardPageController.animateToPage(
+                                i,
+                                duration: const Duration(milliseconds: 280),
+                                curve: Curves.easeOutCubic,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          Expanded(
+                            child: PageView(
+                              controller: _wizardPageController,
+                              onPageChanged: (i) {
+                                setState(() => _wizardStepIndex = i);
                               },
+                              children: [
+                                _buildWizardStepSummary(),
+                                _buildWizardStepDetails(),
+                                _buildWizardStepReview(),
+                              ],
                             ),
-                            if (_voiceReviewHint != null) ...[
-                              const SizedBox(height: 10),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  color: AppThemeExtension.of(context)
-                                      .warning
-                                      .withValues(alpha: 0.12),
-                                  border: Border.all(
-                                    color: AppThemeExtension.of(context)
-                                        .warning
-                                        .withValues(alpha: 0.35),
-                                  ),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline_rounded,
-                                      size: 18,
-                                      color:
-                                          AppThemeExtension.of(context).warning,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        _voiceReviewHint!,
-                                        style: TextStyle(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.9),
-                                          fontSize: 12,
-                                          height: 1.35,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            _ResultSummaryWithSentiment(
-                              extraction: _extraction!,
-                              summaryController: _summaryController,
-                              onSummaryEdited: () {
-                                if (_voiceReviewHint != null) {
-                                  setState(() => _voiceReviewHint = null);
-                                }
-                              },
-                            ),
-                            ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _summaryController,
-                              builder: (context, value, _) {
-                                return _SummarySignalsPreview(
-                                  summaryText: value.text,
-                                );
-                              },
-                            ),
-                            ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _summaryController,
-                              builder: (context, value, _) {
-                                return ValueListenableBuilder<TextEditingValue>(
-                                  valueListenable: _transcriptController,
-                                  builder: (context, tvalue, _) {
-                                    return _PostCallAiEnrichmentInsightPreview(
-                                      summaryText: value.text,
-                                      transcriptText: tvalue.text,
-                                      sentimentStorage: sentimentToStorage(
-                                        _extraction!.sentiment,
-                                      ),
+                          ),
+                          _PostCallWizardBottomBar(
+                            stepIndex: _wizardStepIndex,
+                            isSaving: _isSaving,
+                            saveError: _saveError,
+                            onBack: _wizardStepIndex <= 0
+                                ? null
+                                : () {
+                                    _wizardPageController.previousPage(
+                                      duration:
+                                          const Duration(milliseconds: 280),
+                                      curve: Curves.easeOutCubic,
                                     );
                                   },
-                                );
-                              },
-                            ),
-                            Theme(
-                              data: Theme.of(context)
-                                  .copyWith(dividerColor: Colors.white24),
-                              child: ExpansionTile(
-                                tilePadding: EdgeInsets.zero,
-                                title: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.subtitles_outlined,
-                                      size: 18,
-                                      color:
-                                          AppThemeExtension.of(context).accent,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Expanded(
-                                      child: Text(
-                                        'Transkript (opsiyonel)',
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                subtitle: const Padding(
-                                  padding: EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    'STT veya metin yapıştırın. Özet ana kayıt; transkript ayrı saklanır.',
-                                    style: TextStyle(
-                                      color: Colors.white54,
-                                      fontSize: 11,
-                                      height: 1.35,
-                                    ),
-                                  ),
-                                ),
-                                children: [
-                                  TextField(
-                                    controller: _transcriptController,
-                                    maxLines: 6,
-                                    style: TextStyle(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.92),
-                                      fontSize: 13,
-                                      height: 1.35,
-                                    ),
-                                    decoration: InputDecoration(
-                                      filled: true,
-                                      fillColor:
-                                          Colors.white.withValues(alpha: 0.06),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.12),
-                                        ),
-                                      ),
-                                      hintText: 'Ham transkript…',
-                                      hintStyle: TextStyle(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.35)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            const Text(
-                              'Kritik bilgiler',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            _ExtractionBentoGrid(extraction: _extraction!),
-                            const SizedBox(height: 16),
-                            _NextStepCard(
-                                suggestion: _extraction!.nextStepSuggestion),
-                            if (_saveError != null) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                _saveError!,
-                                style: TextStyle(
-                                  color: AppThemeExtension.of(context).danger,
-                                  fontSize: 13,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      AppThemeExtension.of(context).accent,
-                                  foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  disabledBackgroundColor: Colors.white24,
-                                  disabledForegroundColor: Colors.white54,
-                                ),
-                                onPressed: _isSaving ? null : _onSaveAndClose,
-                                child: _isSaving
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.black,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Özeti Kaydet',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              onPressed: () async {
-                                String? name;
-                                String? phone;
-                                if (widget.linkedCustomerId != null) {
-                                  final c = await ref.read(
-                                    customerEntityByIdProvider(
-                                            widget.linkedCustomerId!)
-                                        .future,
-                                  );
-                                  name = c?.fullName;
-                                  phone = c?.primaryPhone;
-                                }
-                                if (!context.mounted) return;
-                                showSaveContactSheet(
-                                  context,
-                                  initialName: name,
-                                  initialPhone: phone,
-                                  initialNote:
-                                      _summaryController.text.trim().isEmpty
-                                          ? null
-                                          : _summaryController.text.trim(),
-                                  source: 'rehber_aramasi',
-                                );
-                              },
-                              icon: const Icon(Icons.contact_phone_rounded,
-                                  size: 20),
-                              label: const Text(
-                                  'Rehbere ve uygulamaya kaydet (sesli / manuel)'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor:
-                                    AppThemeExtension.of(context).accent,
-                                side: BorderSide(
-                                    color:
-                                        AppThemeExtension.of(context).accent),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                        ),
+                            onNext: _wizardStepIndex >= 2
+                                ? null
+                                : () {
+                                    _wizardPageController.nextPage(
+                                      duration:
+                                          const Duration(milliseconds: 280),
+                                      curve: Curves.easeOutCubic,
+                                    );
+                                  },
+                            onSave: _onSaveAndClose,
+                            onSaveContact: _openSaveContactSheet,
+                          ),
+                        ],
                       ),
                     ),
                   ] else
@@ -888,6 +960,195 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _WizardProgressHeader extends StatelessWidget {
+  const _WizardProgressHeader({
+    required this.currentStep,
+    required this.onStepTap,
+  });
+
+  final int currentStep;
+  final ValueChanged<int> onStepTap;
+
+  static const List<String> _labels = ['Özet', 'Detaylar', 'Kayıt'];
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Row(
+      children: List.generate(3, (i) {
+        final active = i == currentStep;
+        final done = i < currentStep;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: () => onStepTap(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? ext.accent.withValues(alpha: 0.18)
+                        : ext.surfaceElevated.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: active
+                          ? ext.accent.withValues(alpha: 0.5)
+                          : ext.borderSubtle,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (done) ...[
+                        Icon(Icons.check_rounded, size: 14, color: ext.accent),
+                        const SizedBox(width: 4),
+                      ],
+                      Flexible(
+                        child: Text(
+                          _labels[i],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.meta(context).copyWith(
+                            color: active ? ext.textPrimary : ext.textSecondary,
+                            fontWeight:
+                                active ? FontWeight.w800 : FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _PostCallWizardBottomBar extends StatelessWidget {
+  const _PostCallWizardBottomBar({
+    required this.stepIndex,
+    required this.isSaving,
+    required this.onSave,
+    required this.onSaveContact,
+    this.onBack,
+    this.onNext,
+    this.saveError,
+  });
+
+  final int stepIndex;
+  final bool isSaving;
+  final VoidCallback onSave;
+  final Future<void> Function() onSaveContact;
+  final VoidCallback? onBack;
+  final VoidCallback? onNext;
+  final String? saveError;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final ime = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(
+        top: DesignTokens.space3,
+        bottom: ime + DesignTokens.space3,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (saveError != null &&
+              saveError!.trim().isNotEmpty &&
+              stepIndex == 2) ...[
+            Text(
+              saveError!,
+              style: TextStyle(
+                color: ext.danger,
+                fontSize: 13,
+                height: 1.35,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: DesignTokens.space2),
+          ],
+          if (stepIndex < 2)
+            Row(
+              children: [
+                if (onBack != null)
+                  TextButton(
+                    onPressed: onBack,
+                    child: const Text('Geri'),
+                  )
+                else
+                  const SizedBox(width: 8),
+                const Spacer(),
+                FilledButton(
+                  onPressed: onNext,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ext.accent,
+                    foregroundColor: ext.onBrand,
+                  ),
+                  child: Text(
+                    'İleri',
+                    style: AppTypography.primaryButton(context)
+                        .copyWith(color: ext.onBrand),
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: ext.accent,
+                foregroundColor: ext.onBrand,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              onPressed: isSaving ? null : onSave,
+              child: isSaving
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: ext.onBrand,
+                      ),
+                    )
+                  : Text(
+                      'Özeti Kaydet',
+                      style: AppTypography.primaryButton(context)
+                          .copyWith(color: ext.onBrand),
+                    ),
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await onSaveContact();
+              },
+              icon: const Icon(Icons.contact_phone_rounded, size: 20),
+              label:
+                  const Text('Rehbere ve uygulamaya kaydet (sesli / manuel)'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ext.accent,
+                side: BorderSide(color: ext.accent),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
