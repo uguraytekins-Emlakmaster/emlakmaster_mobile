@@ -840,11 +840,10 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                         }
                         return true;
                       }).toList();
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          setState(() => _lastFilteredDocs = filtered);
-                        }
-                      });
+                      // Avoid build -> postFrame -> setState feedback loop.
+                      // Keep the latest filtered snapshot for export actions
+                      // without triggering an extra rebuild every frame.
+                      _lastFilteredDocs = filtered;
                       if (filtered.isEmpty) {
                         final hasAnyDocs = docs.isNotEmpty;
                         final l10n = AppLocalizations.of(context);

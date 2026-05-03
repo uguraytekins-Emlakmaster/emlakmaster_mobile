@@ -33,6 +33,7 @@ final class AppLogger {
 
   /// Kayıt akışı teşhisi (release’te de warning seviyesinde görünür; PII yazmayın).
   static void forensic(String message) {
+    if (!kDebugMode) return;
     _logger.w('[forensic] $message');
   }
 
