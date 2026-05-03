@@ -46,6 +46,8 @@ class _PostCallQuickCaptureBodyState
   DateTime? _followUpAt;
   String? _heatBand;
   bool _saving = false;
+  String? _lastSaveButtonLogKey;
+  String? _completedMessage;
 
   @override
   void dispose() {
@@ -68,7 +70,13 @@ class _PostCallQuickCaptureBodyState
 
   Future<void> _save() async {
     final code = _outcomeCode;
+    AppLogger.forensic(
+      'quick_capture_sheet: _save entered saving=$_saving outcome=${code ?? '-'}',
+    );
     if (code == null) {
+      AppLogger.forensic(
+        'quick_capture_sheet: EARLY_RETURN no outcome selected',
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Önce bir sonuç seçin.'),
@@ -78,6 +86,9 @@ class _PostCallQuickCaptureBodyState
       return;
     }
     setState(() => _saving = true);
+    AppLogger.forensic(
+      'quick_capture_sheet: saving state set true',
+    );
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
@@ -111,8 +122,25 @@ class _PostCallQuickCaptureBodyState
       final okMessage = result.taskCreated
           ? 'Çağrı kaydı ve takip görevi kaydedildi.'
           : 'Çağrı kaydı kaydedildi.';
-      navigator.pop();
-      AppLogger.forensic('quick_capture_sheet: Navigator.pop done');
+      var closed = false;
+      final rootNavigator = Navigator.of(context, rootNavigator: true);
+      if (rootNavigator.canPop()) {
+        rootNavigator.pop();
+        closed = true;
+        AppLogger.forensic(
+          'quick_capture_sheet: rootNavigator.pop done',
+        );
+      } else if (navigator.canPop()) {
+        navigator.pop();
+        closed = true;
+        AppLogger.forensic(
+          'quick_capture_sheet: local Navigator.pop done',
+        );
+      } else {
+        AppLogger.forensic(
+          'quick_capture_sheet: no navigator pop target, showing completed state',
+        );
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         messenger.showSnackBar(
           SnackBar(
@@ -123,6 +151,11 @@ class _PostCallQuickCaptureBodyState
         AppLogger.forensic(
             'quick_capture_sheet: SnackBar scheduled post-frame');
       });
+      if (!closed && mounted) {
+        setState(() {
+          _completedMessage = okMessage;
+        });
+      }
       AppLogger.forensic('quick_capture_sheet: FINAL completion reached');
     } catch (e, st) {
       AppLogger.forensic(
@@ -143,6 +176,32 @@ class _PostCallQuickCaptureBodyState
         setState(() => _saving = false);
       }
     }
+  }
+
+  Future<void> _onSavePressed() async {
+    AppLogger.forensic(
+      'quick_capture_sheet: onPressed first line '
+      'saving=$_saving outcome=${_outcomeCode ?? '-'} '
+      'session=${widget.draft.callSessionId} '
+      'customer=${widget.draft.customerId ?? '-'} '
+      'task=$_createTask followUp=${_followUpAt?.toIso8601String() ?? '-'}',
+    );
+    if (kDebugMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('DEBUG: Kaydet dokunusu alindi'),
+          duration: Duration(milliseconds: 900),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+    if (_saving) {
+      AppLogger.forensic(
+        'quick_capture_sheet: EARLY_RETURN blocked because saving=true',
+      );
+      return;
+    }
+    await _save();
   }
 
   void _openWizard() {
@@ -166,6 +225,20 @@ class _PostCallQuickCaptureBodyState
     final ext = AppThemeExtension.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
     final ime = MediaQuery.viewInsetsOf(context).bottom;
+    final saveOnPressed = _saving ? null : _onSavePressed;
+    final buttonLogKey = [
+      saveOnPressed == null ? 'disabled' : 'enabled',
+      'saving=$_saving',
+      'outcome=${_outcomeCode ?? '-'}',
+      'task=$_createTask',
+      'crmTracked=${widget.draft.crmSessionTracked}',
+    ].join('|');
+    if (_lastSaveButtonLogKey != buttonLogKey) {
+      _lastSaveButtonLogKey = buttonLogKey;
+      AppLogger.forensic(
+        'quick_capture_sheet: button wiring $buttonLogKey',
+      );
+    }
 
     return Material(
       color: ext.surface,
@@ -212,7 +285,7 @@ class _PostCallQuickCaptureBodyState
                         Icon(Icons.bolt_rounded, color: ext.accent, size: 18),
                         const SizedBox(width: DesignTokens.space2),
                         Text(
-                          'Kaydettiğinde ne olur?',
+                          'Cagri zaten kayitli',
                           style: AppTypography.cardHeading(context)
                               .copyWith(fontSize: DesignTokens.fontSizeMd),
                         ),
@@ -220,7 +293,7 @@ class _PostCallQuickCaptureBodyState
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     Text(
-                      'Çağrı sonucu işlenir, müşteri akışı güncellenir ve istersen hemen takip görevi açılır.',
+                      'Bu adimda cagriya sadece detay eklersin: sonuc, kisa not ve gerekirse takip gorevi.',
                       style: AppTypography.body(context),
                     ),
                     const SizedBox(height: DesignTokens.space2),
@@ -362,7 +435,7 @@ class _PostCallQuickCaptureBodyState
                   Expanded(
                     flex: 2,
                     child: FilledButton(
-                      onPressed: _saving ? null : _save,
+                      onPressed: saveOnPressed,
                       child: _saving
                           ? const SizedBox(
                               height: 20,
@@ -377,6 +450,24 @@ class _PostCallQuickCaptureBodyState
                   ),
                 ],
               ),
+              if (_completedMessage != null) ...[
+                const SizedBox(height: DesignTokens.space3),
+                Container(
+                  padding: const EdgeInsets.all(DesignTokens.space3),
+                  decoration: BoxDecoration(
+                    color: ext.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                    border: Border.all(
+                      color: ext.success.withValues(alpha: 0.45),
+                    ),
+                  ),
+                  child: Text(
+                    _completedMessage!,
+                    style: AppTypography.bodyStrong(context)
+                        .copyWith(color: ext.success),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

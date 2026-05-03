@@ -87,10 +87,10 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
       await ref
           .read(postCallCaptureProvider.notifier)
           .flushPendingOutboundQueue()
-          .timeout(const Duration(seconds: 25));
+          .timeout(const Duration(seconds: 6));
     } on TimeoutException catch (_) {
       AppLogger.forensic(
-        'quick_capture: flushPendingOutboundQueue TIMEOUT 25s — continuing save',
+        'quick_capture: flushPendingOutboundQueue TIMEOUT 6s — continuing save',
       );
     }
     AppLogger.forensic('quick_capture: flushPendingOutboundQueue end');
@@ -155,61 +155,70 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
   AppLogger.forensic(
     'quick_capture: Firestore runWithResilience start hasDoc=${effective.hasFirestoreCallDoc}',
   );
-  await runWithResilience(
-    () async {
-      if (effective.hasFirestoreCallDoc) {
-        await FirestoreService.mergeOutboundCallQuickCapture(
-          callSessionId: effective.callSessionId,
-          quickOutcomeCode: outcomeCode,
-          quickOutcomeLabelTr: label,
-          quickNote: trimmed,
-          followUpReminderAt: followUpReminderAt,
-        );
-      } else {
-        newFirestoreCallId =
-            await FirestoreService.createCallRecordWithQuickCapture(
-          advisorId: uid,
-          customerId: effective.customerId,
-          phoneNumber: effective.phone,
-          startedFromScreen: effective.startedFromScreen,
-          quickOutcomeCode: outcomeCode,
-          quickOutcomeLabelTr: label,
-          quickNote: trimmed,
-          followUpReminderAt: followUpReminderAt,
-        );
-      }
-
-      if (cid != null && cid.isNotEmpty) {
-        final noteLine = StringBuffer('📞 Hızlı kayıt: $label');
-        if (trimmed != null && trimmed.isNotEmpty) {
-          noteLine.write(' — $trimmed');
+  try {
+    await runWithResilience(
+      () async {
+        if (effective.hasFirestoreCallDoc) {
+          await FirestoreService.mergeOutboundCallQuickCapture(
+            callSessionId: effective.callSessionId,
+            quickOutcomeCode: outcomeCode,
+            quickOutcomeLabelTr: label,
+            quickNote: trimmed,
+            followUpReminderAt: followUpReminderAt,
+          );
+        } else {
+          newFirestoreCallId =
+              await FirestoreService.createCallRecordWithQuickCapture(
+            advisorId: uid,
+            customerId: effective.customerId,
+            phoneNumber: effective.phone,
+            startedFromScreen: effective.startedFromScreen,
+            quickOutcomeCode: outcomeCode,
+            quickOutcomeLabelTr: label,
+            quickNote: trimmed,
+            followUpReminderAt: followUpReminderAt,
+          );
         }
-        noteLine.write(' (cihaz telefonu, süre uygulamada ölçülmedi)');
-        await FirestoreService.mergeCustomerAfterQuickCallCapture(
-          customerId: cid,
-          advisorId: uid,
-          noteLine: noteLine.toString(),
-          lastCallSummarySignalsPayload: signals,
-        );
-      }
 
-      if (createFollowUpTask) {
-        final due =
-            followUpReminderAt ?? DateTime.now().add(const Duration(days: 1));
-        await FirestoreService.setTask({
-          'advisorId': uid,
-          'title': 'Takip: $label',
-          'dueAt': Timestamp.fromDate(due),
-          'done': false,
-          if (cid != null && cid.isNotEmpty) 'customerId': cid,
-          'phoneNumber': effective.phone,
-          'source': 'post_call_quick_capture',
-        });
-        taskCreated = true;
-      }
-    },
-    ref: ref as Ref<Object?>,
-  );
+        if (cid != null && cid.isNotEmpty) {
+          final noteLine = StringBuffer('📞 Hızlı kayıt: $label');
+          if (trimmed != null && trimmed.isNotEmpty) {
+            noteLine.write(' — $trimmed');
+          }
+          noteLine.write(' (cihaz telefonu, süre uygulamada ölçülmedi)');
+          await FirestoreService.mergeCustomerAfterQuickCallCapture(
+            customerId: cid,
+            advisorId: uid,
+            noteLine: noteLine.toString(),
+            lastCallSummarySignalsPayload: signals,
+          );
+        }
+
+        if (createFollowUpTask) {
+          AppLogger.forensic('quick_capture: task create start');
+          final due =
+              followUpReminderAt ?? DateTime.now().add(const Duration(days: 1));
+          await FirestoreService.setTask({
+            'advisorId': uid,
+            'title': 'Takip: $label',
+            'dueAt': Timestamp.fromDate(due),
+            'done': false,
+            if (cid != null && cid.isNotEmpty) 'customerId': cid,
+            'phoneNumber': effective.phone,
+            'source': 'post_call_quick_capture',
+          });
+          taskCreated = true;
+          AppLogger.forensic('quick_capture: task create done');
+        }
+      },
+      ref: ref as Ref<Object?>,
+    );
+  } catch (e, st) {
+    AppLogger.forensic(
+        'quick_capture: Firestore path FINAL error ${e.runtimeType}');
+    AppLogger.e('quick_capture: Firestore path failed', e, st);
+    rethrow;
+  }
   AppLogger.forensic(
     'quick_capture: Firestore runWithResilience done newId=${newFirestoreCallId ?? '-'} task=$taskCreated',
   );
