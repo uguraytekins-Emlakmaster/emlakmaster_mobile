@@ -55,7 +55,9 @@ class PremiumBottomSheetHandle extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.only(
-          top: DesignTokens.space3, bottom: DesignTokens.space2),
+        top: DesignTokens.space3,
+        bottom: DesignTokens.space3,
+      ),
       child: Center(
         child: Container(
           width: 40,
@@ -76,29 +78,49 @@ class PremiumSheetHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    /// Alt sayfa / önizleme gibi dar yüzeylerde daha sakin tipografi.
+    this.compact = false,
   });
 
   final String title;
   final String? subtitle;
 
+  /// Alt sayfa / önizleme gibi dar yüzeylerde daha sakin tipografi.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final titleStyle = compact
+        ? AppTypography.cardHeading(context)
+            .copyWith(fontSize: DesignTokens.fontSizeLg, height: 1.2)
+        : AppTypography.pageHeading(context)
+            .copyWith(fontSize: DesignTokens.fontSizeXl);
+    final subtitleStyle = compact
+        ? AppTypography.body(context).copyWith(
+            color: ext.textSecondary,
+            fontSize: DesignTokens.fontSizeSm,
+            height: 1.45,
+          )
+        : AppTypography.body(context).copyWith(
+            color: ext.textSecondary,
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           title,
-          style: AppTypography.pageHeading(context)
-              .copyWith(fontSize: DesignTokens.fontSizeXl),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: titleStyle,
         ),
         if (subtitle != null && subtitle!.isNotEmpty) ...[
           const SizedBox(height: DesignTokens.titleSubtitleGap),
           Text(
             subtitle!,
-            style: AppTypography.body(context).copyWith(
-              color: ext.textSecondary,
-            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: subtitleStyle,
           ),
         ],
       ],

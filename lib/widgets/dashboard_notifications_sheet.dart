@@ -1,25 +1,25 @@
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/widgets/pressable_scale_button.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 /// Üst bardaki bildirim ikonu: konu = bildirimler → kısa önizleme paneli (tam sayfa değil).
 void showDashboardNotificationsSheet(BuildContext context, {required String uid}) {
-  final theme = Theme.of(context);
-  final isDark = theme.brightness == Brightness.dark;
-  final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
-  final fg = theme.colorScheme.onSurface;
+  final rootContext = context;
 
-  showModalBottomSheet<void>(
+  showPremiumModalBottomSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
-    ),
     builder: (ctx) {
+      final ext = AppThemeExtension.of(ctx);
+      final fg = ext.textPrimary;
+
       return DraggableScrollableSheet(
         initialChildSize: 0.45,
         minChildSize: 0.3,
@@ -29,89 +29,157 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const PremiumBottomSheetHandle(),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space5,
+                  DesignTokens.space2,
+                  DesignTokens.space4,
+                  DesignTokens.space3,
+                ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.notifications_active_rounded, color: AppThemeExtension.of(context).accent, size: 22),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Bildirimler',
-                      style: TextStyle(
-                        color: fg,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
+                    Icon(
+                      Icons.notifications_outlined,
+                      size: DesignTokens.iconLg,
+                      color: ext.accent.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: DesignTokens.space3),
+                    const Expanded(
+                      child: PremiumSheetHeader(
+                        compact: true,
+                        title: 'Bildirimler',
+                        subtitle: 'Son güncellemeler',
                       ),
                     ),
-                    const Spacer(),
                     IconButton(
-                      icon: Icon(Icons.close_rounded, color: fg.withValues(alpha: 0.6)),
+                      tooltip: 'Kapat',
+                      style: IconButton.styleFrom(
+                        foregroundColor: ext.textTertiary,
+                      ),
                       onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded),
                     ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Son güncellemeler',
-                  style: TextStyle(color: fg.withValues(alpha: 0.55), fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 8),
               Expanded(
                 child: uid.isEmpty
-                    ? Center(
-                        child: Text(
-                          'Bildirimler için giriş yapın.',
-                          style: TextStyle(color: fg.withValues(alpha: 0.7)),
-                        ),
+                    ? CustomScrollView(
+                        controller: scroll,
+                        slivers: const [
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: EmptyState(
+                              icon: Icons.notifications_outlined,
+                              title: 'Giriş gerekli',
+                              subtitle:
+                                  'Bildirimleri görmek için oturum açın. Özetler hesabınıza bağlıdır.',
+                              compact: true,
+                              grouped: true,
+                            ),
+                          ),
+                        ],
                       )
                     : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                         stream: FirestoreService.notificationsByUserStream(uid),
                         builder: (context, snap) {
                           if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
-                            return Center(
-                              child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent, strokeWidth: 2),
+                            return CustomScrollView(
+                              controller: scroll,
+                              slivers: [
+                                SliverFillRemaining(
+                                  hasScrollBody: false,
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 28,
+                                      height: 28,
+                                      child: CircularProgressIndicator(
+                                        color: ext.accent,
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             );
                           }
                           final docs = snap.data?.docs ?? [];
                           if (docs.isEmpty) {
-                            return ListView(
+                            return CustomScrollView(
                               controller: scroll,
-                              padding: const EdgeInsets.all(24),
-                              children: [
-                                Icon(Icons.notifications_none_rounded, size: 48, color: fg.withValues(alpha: 0.25)),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Henüz bildirim yok',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: fg, fontWeight: FontWeight.w700),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Lead ve görev bildirimleri burada özetlenir.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: fg.withValues(alpha: 0.65), fontSize: 13),
+                              slivers: const [
+                                SliverFillRemaining(
+                                  hasScrollBody: false,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: DesignTokens.space4,
+                                    ),
+                                    child: EmptyState(
+                                      icon: Icons.notifications_none_rounded,
+                                      title: 'Henüz bildirim yok',
+                                      subtitle:
+                                          'Lead ve görev bildirimleri burada özetlenir.',
+                                      compact: true,
+                                      grouped: true,
+                                    ),
+                                  ),
                                 ),
                               ],
                             );
                           }
                           final take = docs.length > 8 ? 8 : docs.length;
-                          return ListView.builder(
+                          return ListView.separated(
                             controller: scroll,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.fromLTRB(
+                              DesignTokens.space4,
+                              0,
+                              DesignTokens.space4,
+                              DesignTokens.space3,
+                            ),
                             itemCount: take,
+                            separatorBuilder: (_, __) => Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: ext.border.withValues(alpha: 0.35),
+                            ),
                             itemBuilder: (_, i) {
                               final d = docs[i].data();
-                              final title = d['title'] as String? ?? d['body'] as String? ?? 'Bildirim';
+                              final title = d['title'] as String? ??
+                                  d['body'] as String? ??
+                                  'Bildirim';
                               final body = d['body'] as String? ?? '';
                               return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                                leading: Icon(Icons.circle_notifications_rounded, color: AppThemeExtension.of(context).accent, size: 22),
-                                title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 14)),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: DesignTokens.space2,
+                                  horizontal: DesignTokens.space2,
+                                ),
+                                minLeadingWidth: 40,
+                                leading: Icon(
+                                  Icons.notifications_outlined,
+                                  size: DesignTokens.iconMd,
+                                  color: ext.textSecondary,
+                                ),
+                                title: Text(
+                                  title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.bodyStrong(context).copyWith(
+                                    fontSize: DesignTokens.fontSizeBase,
+                                    color: fg,
+                                  ),
+                                ),
                                 subtitle: body.isNotEmpty
-                                    ? Text(body, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg.withValues(alpha: 0.65), fontSize: 12))
+                                    ? Text(
+                                        body,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.body(context).copyWith(
+                                          fontSize: DesignTokens.fontSizeSm,
+                                          color: ext.textSecondary,
+                                        ),
+                                      )
                                     : null,
                               );
                             },
@@ -120,18 +188,28 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
                       ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.paddingOf(ctx).bottom + 16),
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    context.push(AppRouter.routeNotifications);
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppThemeExtension.of(context).accent,
-                    foregroundColor: AppThemeExtension.of(context).onBrand,
-                    minimumSize: const Size(double.infinity, 48),
+                padding: EdgeInsets.fromLTRB(
+                  DesignTokens.space5,
+                  DesignTokens.space2,
+                  DesignTokens.space5,
+                  MediaQuery.paddingOf(ctx).bottom + DesignTokens.space4,
+                ),
+                child: PressableScaleButton(
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      rootContext.push(AppRouter.routeNotifications);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: ext.accent,
+                      foregroundColor: ext.onBrand,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                      ),
+                    ),
+                    child: const Text('Bildirim merkezi'),
                   ),
-                  child: const Text('Tüm bildirim merkezi'),
                 ),
               ),
             ],

@@ -148,24 +148,24 @@ class CustomerCard extends ConsumerWidget {
                           level: temperatureScore.level),
                     if (brokerAlert)
                       Padding(
-                        padding: const EdgeInsets.only(left: 4),
+                        padding: const EdgeInsets.only(left: DesignTokens.space2),
                         child: Tooltip(
                           message: 'Operasyon uyarısı',
                           child: Icon(
                             Icons.notifications_active_rounded,
-                            size: 18,
+                            size: DesignTokens.iconSm,
                             color: AppThemeExtension.of(context).danger,
                           ),
                         ),
                       ),
                     if (syncDelayedRisk)
                       Padding(
-                        padding: const EdgeInsets.only(left: 4),
+                        padding: const EdgeInsets.only(left: DesignTokens.space2),
                         child: Tooltip(
                           message: 'Veri senkronu gecikmiş olabilir',
                           child: Icon(
                             Icons.cloud_off_outlined,
-                            size: 18,
+                            size: DesignTokens.iconSm,
                             color: AppThemeExtension.of(context)
                                 .warning
                                 .withValues(alpha: 0.9),
@@ -178,8 +178,10 @@ class CustomerCard extends ConsumerWidget {
                         constraints:
                             const BoxConstraints(minWidth: 44, minHeight: 44),
                         padding: const EdgeInsets.all(10),
-                        icon:
-                            const Icon(Icons.contact_phone_outlined, size: 22),
+                        icon: const Icon(
+                          Icons.contact_phone_outlined,
+                          size: DesignTokens.iconMd,
+                        ),
                         color: AppThemeExtension.of(context).textSecondary,
                         onPressed: () {
                           HapticFeedback.lightImpact();

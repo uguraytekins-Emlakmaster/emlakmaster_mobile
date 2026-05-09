@@ -322,22 +322,54 @@ class _TasksPageState extends ConsumerState<TasksPage> {
           child: SingleChildScrollView(
             child: Padding(
               padding:
-                  const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+                  const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const PremiumBottomSheetHandle(),
-                  const SizedBox(height: DesignTokens.space4),
-                  const PremiumSheetHeader(
-                    title: 'Yeni görev',
-                    subtitle:
-                        'Vade ve müşteri bağlantısı opsiyonel; görevler Görevler sekmesinde listelenir.',
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      0,
+                      DesignTokens.space2,
+                      0,
+                      DesignTokens.space3,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.task_alt_outlined,
+                          size: DesignTokens.iconLg,
+                          color: AppThemeExtension.of(ctx)
+                              .accent
+                              .withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(width: DesignTokens.space3),
+                        const Expanded(
+                          child: PremiumSheetHeader(
+                            compact: true,
+                            title: 'Yeni görev',
+                            subtitle:
+                                'Vade ve müşteri bağlantısı isteğe bağlı. Görevler sekmesinde listelenir.',
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Kapat',
+                          style: IconButton.styleFrom(
+                            foregroundColor:
+                                AppThemeExtension.of(ctx).textTertiary,
+                          ),
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
                   ),
                   SizedBox(
                       height: viewInsets.bottom > 0
-                          ? DesignTokens.space5
-                          : DesignTokens.space4),
+                          ? DesignTokens.space4
+                          : DesignTokens.space3),
                   TextField(
                     controller: titleController,
                     decoration: InputDecoration(
@@ -392,7 +424,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                         },
                         icon: Icon(
                           Icons.calendar_today_rounded,
-                          size: 18,
+                          size: DesignTokens.iconMd,
                           color: AppThemeExtension.of(context).accent,
                         ),
                         label: Text(
@@ -404,8 +436,15 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppThemeExtension.of(context).accent,
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              DesignTokens.radiusControl,
+                            ),
+                          ),
                           side: BorderSide(
-                              color: AppThemeExtension.of(context).accent),
+                            color: AppThemeExtension.of(context).accent,
+                          ),
                         ),
                       );
                     },
@@ -481,7 +520,14 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                           style: FilledButton.styleFrom(
                             backgroundColor:
                                 AppThemeExtension.of(context).accent,
-                            foregroundColor: Colors.black,
+                            foregroundColor:
+                                AppThemeExtension.of(context).onBrand,
+                            minimumSize: const Size(0, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                DesignTokens.radiusControl,
+                              ),
+                            ),
                           ),
                           child: const Text('Ekle'),
                         ),

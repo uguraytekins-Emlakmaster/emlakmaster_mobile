@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -291,9 +292,10 @@ class _SaveContactSheetContentState
             const PremiumBottomSheetHandle(),
             const SizedBox(height: DesignTokens.space4),
             const PremiumSheetHeader(
+              compact: true,
               title: 'Rehbere ve uygulamaya kaydet',
               subtitle:
-                  'Sesli komut veya manuel giriş. Kayıtlar CRM ile eşlenir; rehber izni ayrıca sorulur.',
+                  'Ses veya yazı ile girin. CRM eşlemesi korunur; rehber izni ayrı sorulur.',
             ),
             const SizedBox(height: DesignTokens.space5),
             DecoratedBox(
@@ -309,22 +311,20 @@ class _SaveContactSheetContentState
                   children: [
                     Text(
                       'Sesli giriş',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: ext.textPrimary,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      style: AppTypography.cardHeading(context).copyWith(
+                        fontSize: DesignTokens.fontSizeMd,
+                      ),
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     Row(
                       children: [
                         Expanded(
                           child: Text(
-                            'Basılı tutun, ad ve telefon söyleyin',
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: ext.textSecondary,
-                                      height: 1.3,
-                                    ),
+                            'Basılı tutun; ad ve telefonu söyleyin',
+                            style: AppTypography.body(context).copyWith(
+                              fontSize: DesignTokens.fontSizeSm,
+                              height: 1.35,
+                            ),
                           ),
                         ),
                         PushToTalkButton(
@@ -340,9 +340,7 @@ class _SaveContactSheetContentState
                       const SizedBox(height: DesignTokens.space2),
                       Text(
                         _voiceStatus,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: ext.textTertiary,
-                            ),
+                        style: AppTypography.meta(context),
                       ),
                     ],
                   ],
@@ -486,7 +484,8 @@ class _SaveContactSheetContentState
               onChanged: (v) => setState(() => _saveToDevice = v ?? true),
               title: Text(
                 'Rehbere kaydet (telefon rehberi)',
-                style: TextStyle(color: ext.textPrimary, fontSize: 14),
+                style: AppTypography.bodyStrong(context)
+                    .copyWith(fontSize: DesignTokens.fontSizeBase),
               ),
               activeColor: ext.accent,
               contentPadding: EdgeInsets.zero,
@@ -497,18 +496,21 @@ class _SaveContactSheetContentState
               onChanged: (v) => setState(() => _saveToApp = v ?? true),
               title: Text(
                 'Uygulamaya kaydet (CRM müşteri)',
-                style: TextStyle(color: ext.textPrimary, fontSize: 14),
+                style: AppTypography.bodyStrong(context)
+                    .copyWith(fontSize: DesignTokens.fontSizeBase),
               ),
               activeColor: ext.accent,
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
             ),
             if (_error != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: DesignTokens.space2),
               Text(
                 _error!,
-                style: TextStyle(
-                    color: AppThemeExtension.of(context).danger, fontSize: 13),
+                style: AppTypography.body(context).copyWith(
+                  color: ext.danger,
+                  fontSize: DesignTokens.fontSizeSm,
+                ),
               ),
             ],
             const SizedBox(height: DesignTokens.space5),
@@ -519,8 +521,9 @@ class _SaveContactSheetContentState
                 style: FilledButton.styleFrom(
                   backgroundColor: ext.accent,
                   foregroundColor: ext.onBrand,
+                  minimumSize: const Size(double.infinity, 48),
                   padding:
-                      const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+                      const EdgeInsets.symmetric(vertical: DesignTokens.space3),
                   shape: RoundedRectangleBorder(
                     borderRadius:
                         BorderRadius.circular(DesignTokens.radiusControl),
@@ -537,10 +540,10 @@ class _SaveContactSheetContentState
                       )
                     : Text(
                         'Kaydet',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: ext.onBrand,
-                            ),
+                        style: AppTypography.bodyStrong(context).copyWith(
+                          color: ext.onBrand,
+                          fontSize: DesignTokens.fontSizeMd,
+                        ),
                       ),
               ),
             ),

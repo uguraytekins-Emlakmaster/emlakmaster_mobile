@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/branding/brand_emblem.dart';
 import '../../core/theme/app_theme_extension.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/design_tokens.dart';
 import '../../core/widgets/pressable_scale_button.dart';
 
@@ -162,21 +163,23 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
           textAlign: TextAlign.center,
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: ext.foreground,
-                fontWeight: FontWeight.w600,
-              ),
+          style: widget.compact
+              ? AppTypography.bodyStrong(context).copyWith(
+                  color: ext.foreground,
+                  fontSize: DesignTokens.fontSizeMd,
+                )
+              : AppTypography.cardHeading(context),
         ),
         if (widget.subtitle != null) ...[
-          const SizedBox(height: DesignTokens.space2),
+          const SizedBox(height: DesignTokens.titleSubtitleGap),
           Text(
             widget.subtitle!,
             textAlign: TextAlign.center,
             maxLines: 6,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: AppTypography.body(context).copyWith(
                   color: textColor.withValues(alpha: 0.88),
-                  height: 1.4,
+                  height: 1.45,
                 ),
           ),
         ],
@@ -189,14 +192,21 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
                 HapticFeedback.lightImpact();
                 widget.onOutlinedAction!();
               },
-              icon: Icon(Icons.add_rounded, size: 18, color: brand),
+              icon: Icon(Icons.add_rounded, size: DesignTokens.iconMd, color: brand),
               label: Text(
                 widget.outlinedActionLabel!,
                 style: TextStyle(color: brand, fontWeight: FontWeight.w600),
               ),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: brand.withValues(alpha: 0.85)),
-                padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                ),
+                side: BorderSide(color: ext.borderSubtle),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: DesignTokens.space4,
+                  vertical: DesignTokens.space3,
+                ),
               ),
             ),
           ),
@@ -211,12 +221,19 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
                   HapticFeedback.mediumImpact();
                   widget.onAction!();
                 },
-                icon: const Icon(Icons.add_rounded, size: 20),
+                icon: const Icon(Icons.add_rounded, size: DesignTokens.iconMd),
                 label: Text(widget.actionLabel!),
                 style: FilledButton.styleFrom(
                   backgroundColor: brand,
                   foregroundColor: ext.onBrand,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: DesignTokens.space4),
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: DesignTokens.space3,
+                    horizontal: DesignTokens.space4,
+                  ),
                 ),
               ),
             ),
