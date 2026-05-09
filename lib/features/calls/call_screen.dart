@@ -14,6 +14,7 @@ import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dar
 import 'package:emlakmaster_mobile/features/ai_sales_assistant/presentation/widgets/ai_sales_assistant_panel.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/outbound_system_handoff_page.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_ios_dialer.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -414,199 +415,21 @@ class _CallScreenState extends ConsumerState<CallScreen>
     );
   }
 
-  Widget _buildDialMode(
-    ThemeData theme,
-    AppThemeExtension ext,
-    double bottomInset,
-  ) {
+  Widget _buildDialMode(double bottomInset) {
     final entry = _dialEntryNotifier;
     if (entry == null) {
       return const SizedBox.shrink();
     }
     return Positioned.fill(
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                DesignTokens.space2,
-                DesignTokens.space1,
-                DesignTokens.space2,
-                0,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.keyboard_arrow_down_rounded,
-                        color: ext.textSecondary),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      context.pop();
-                    },
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Yeni arama',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: ext.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
-                        height: 1.12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-            if (widget.inAppCrmSession)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space5,
-                  0,
-                  DesignTokens.space5,
-                  DesignTokens.space2,
-                ),
-                child: Text(
-                  'Magic Call — gerçek GSM araması bu ekran değildir; sistem telefonu için müşteri kartından arayın.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: ext.textTertiary,
-                    height: 1.35,
-                  ),
-                ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space5,
-                  0,
-                  DesignTokens.space5,
-                  DesignTokens.space2,
-                ),
-                child: Text(
-                  'Numarayı girin; ardından sistem telefonu açılır (gerçek GSM hattı).',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: ext.textTertiary,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-            Consumer(
-              builder: (context, ref, _) {
-                final officeName = ref.watch(
-                  currentOfficeProvider.select((o) => o.valueOrNull?.name),
-                );
-                return _DialModeLineContext(
-                  theme: theme,
-                  ext: ext,
-                  officeName: officeName,
-                );
-              },
-            ),
-            Expanded(
-              child: ValueListenableBuilder<String>(
-                valueListenable: entry,
-                builder: (context, digits, _) {
-                  final canStart =
-                      OutboundPhoneDial.hasDialEntryContent(digits);
-                  final displayDigits = widget.inAppCrmSession
-                      ? digits
-                      : OutboundPhoneDial.formatDialDisplayTurkeyFirst(digits);
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: DesignTokens.space5),
-                    child: RepaintBoundary(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: DesignTokens.space1),
-                          Expanded(
-                            child: Center(
-                              child: _DialModeDialSurface(
-                                ext: ext,
-                                hero: _DialHeroNumberField(
-                                  digits: displayDigits,
-                                  ext: ext,
-                                  theme: theme,
-                                  embedded: true,
-                                  onBackspace: () {
-                                    HapticFeedback.lightImpact();
-                                    final n = entry;
-                                    final v = n.value;
-                                    n.value = v.isEmpty
-                                        ? ''
-                                        : v.substring(0, v.length - 1);
-                                  },
-                                ),
-                                keypad: _KeypadSheet(
-                                  dialMode: true,
-                                  embeddedDial: true,
-                                  onKeyPressed: (key) {
-                                    final n = entry;
-                                    n.value =
-                                        OutboundPhoneDial.sanitizeDialEntry(
-                                            n.value + key);
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              0,
-                              DesignTokens.space4,
-                              0,
-                              bottomInset + DesignTokens.space4,
-                            ),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: FilledButton.icon(
-                                onPressed:
-                                    canStart ? _startCallWithDialNumber : null,
-                                icon: Icon(Icons.call_rounded,
-                                    size: 22, color: ext.onBrand),
-                                label: Padding(
-                                  padding: const EdgeInsets.only(left: 2),
-                                  child: Text(
-                                    'Aramayı başlat',
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      color: ext.onBrand,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.15,
-                                    ),
-                                  ),
-                                ),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: ext.accent,
-                                  foregroundColor: ext.onBrand,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 22, vertical: 16),
-                                  minimumSize: const Size(double.infinity, 56),
-                                  alignment: Alignment.center,
-                                  elevation: 0,
-                                  shadowColor:
-                                      ext.shadowColor.withValues(alpha: 0.2),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                        DesignTokens.radiusControl),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+      child: CrmIosDialerShell(
+        dialNotifier: entry,
+        inAppCrmSession: widget.inAppCrmSession,
+        bottomInset: bottomInset,
+        onDismiss: () {
+          HapticFeedback.lightImpact();
+          context.pop();
+        },
+        onStartCall: _startCallWithDialNumber,
       ),
     );
   }
@@ -668,7 +491,6 @@ class _CallScreenState extends ConsumerState<CallScreen>
         startedFromScreen: widget.startedFromScreen ?? 'unknown',
       );
     }
-    final theme = Theme.of(context);
     final ext = AppThemeExtension.of(context);
     final topPadding = MediaQuery.paddingOf(context).top;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
@@ -681,7 +503,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
         fit: StackFit.expand,
         children: [
           Positioned.fill(child: _CallSessionBackdrop(ext: ext)),
-          if (_isDialMode) _buildDialMode(theme, ext, bottomInset),
+          if (_isDialMode) _buildDialMode(bottomInset),
           if (!_isDialMode)
             _InCallSessionBody(
               topPadding: topPadding,
@@ -781,318 +603,6 @@ class _CallSessionBackdrop extends StatelessWidget {
           stops: const [0.0, 0.5, 1.0],
         ),
       ),
-    );
-  }
-}
-
-/// Tek yüzey: numara + ince ayırıcı + tuş takımı — ayrı bloklar yerine tek “çevir” kompozisyonu.
-class _DialModeDialSurface extends StatelessWidget {
-  const _DialModeDialSurface({
-    required this.ext,
-    required this.hero,
-    required this.keypad,
-  });
-
-  final AppThemeExtension ext;
-  final Widget hero;
-  final Widget keypad;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 400),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
-          border: Border.all(color: ext.accent.withValues(alpha: 0.22)),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              ext.surfaceElevated,
-              Color.lerp(ext.surfaceElevated, ext.background, 0.1)!,
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: ext.shadowColor.withValues(alpha: 0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              hero,
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
-                child: Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        ext.border.withValues(alpha: 0.0),
-                        ext.border.withValues(alpha: 0.45),
-                        ext.border.withValues(alpha: 0.0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              keypad,
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Çevir ekranı: ofis hattı + kısa yardım — ürünleşmiş satır.
-class _DialModeLineContext extends StatelessWidget {
-  const _DialModeLineContext({
-    required this.theme,
-    required this.ext,
-    required this.officeName,
-  });
-
-  final ThemeData theme;
-  final AppThemeExtension ext;
-  final String? officeName;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasName = officeName != null && officeName!.trim().isNotEmpty;
-    final lineTitle = hasName ? officeName!.trim() : 'Kurumsal çıkış hattı';
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space5,
-        DesignTokens.space1,
-        DesignTokens.space5,
-        DesignTokens.space1,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 340),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
-                  border: Border.all(color: ext.border.withValues(alpha: 0.42)),
-                  color: ext.surfaceElevated.withValues(alpha: 0.88),
-                  boxShadow: [
-                    BoxShadow(
-                      color: ext.shadowColor.withValues(alpha: 0.07),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.corporate_fare_rounded,
-                          size: 18, color: ext.accent),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Giden hat',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: ext.textTertiary,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.35,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              lineTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: ext.textPrimary,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.05,
-                                height: 1.15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: DesignTokens.space2),
-          Text(
-            'Numarayı tuş takımıyla girin (yalnızca rakam ve * #)',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: ext.textTertiary,
-              letterSpacing: 0.12,
-              height: 1.25,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DialHeroNumberField extends StatelessWidget {
-  const _DialHeroNumberField({
-    required this.digits,
-    required this.ext,
-    required this.theme,
-    required this.onBackspace,
-    this.embedded = false,
-  });
-
-  final String digits;
-  final AppThemeExtension ext;
-  final ThemeData theme;
-  final VoidCallback onBackspace;
-
-  /// [_DialModeDialSurface] içinde: dış kart yok, tek kompozisyon hissi.
-  final bool embedded;
-
-  static double _letterSpacingForDigits(String d) {
-    // Boşluklar görüntü; yoğunluk için anlamlı karakter sayısı (rakam + olası +).
-    final n = d.replaceAll(RegExp(r'\s'), '').length;
-    if (n <= 11) return 1.35;
-    if (n <= 15) return 1.0;
-    if (n <= 19) return 0.65;
-    if (n <= 24) return 0.42;
-    return 0.28;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final numberBlock = digits.isEmpty
-        ? Text(
-            'Numara girin',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: ext.textTertiary,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
-              height: 1.12,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          )
-        : LayoutBuilder(
-            builder: (context, constraints) {
-              final style = theme.textTheme.headlineMedium?.copyWith(
-                color: ext.textPrimary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: _letterSpacingForDigits(digits),
-                height: 1.12,
-              );
-              return FittedBox(
-                fit: BoxFit.scaleDown,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                  child: Text(
-                    digits,
-                    style: style,
-                    textAlign: TextAlign.center,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              );
-            },
-          );
-
-    final row = Row(
-      children: [
-        Expanded(
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: DesignTokens.space1),
-            child: numberBlock,
-          ),
-        ),
-        if (digits.isNotEmpty)
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onBackspace,
-              customBorder: const CircleBorder(),
-              splashColor: ext.accent.withValues(alpha: 0.12),
-              highlightColor: ext.accent.withValues(alpha: 0.05),
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border:
-                        Border.all(color: ext.border.withValues(alpha: 0.5)),
-                    color: ext.surface.withValues(alpha: 0.65),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(6),
-                    child: Icon(
-                      Icons.backspace_rounded,
-                      size: 20,
-                      color: ext.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-
-    if (embedded) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(
-          DesignTokens.space4,
-          DesignTokens.space5,
-          DesignTokens.space4,
-          DesignTokens.space4,
-        ),
-        child: row,
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space4,
-        DesignTokens.space4,
-        DesignTokens.space3,
-        DesignTokens.space4,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
-        color: ext.surfaceElevated,
-        border: Border.all(color: ext.accent.withValues(alpha: 0.24)),
-        boxShadow: [
-          BoxShadow(
-            color: ext.shadowColor.withValues(alpha: 0.14),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: row,
     );
   }
 }
@@ -1849,29 +1359,13 @@ class _RoundIconButton extends StatelessWidget {
 }
 
 class _KeypadSheet extends StatelessWidget {
-  const _KeypadSheet({
-    this.onKeyPressed,
-    this.dialMode = false,
-    this.embeddedDial = false,
-  });
+  const _KeypadSheet({this.onKeyPressed});
 
   final void Function(String key)? onKeyPressed;
-
-  /// Çevir ekranı: daha büyük tuşlar ve panel; görüşme içi tuş takımı: kompakt.
-  final bool dialMode;
-
-  /// [_DialModeDialSurface] içinde: dış kutu yok; klasik *0# öncesi ekstra nefes.
-  final bool embeddedDial;
 
   static const double _keyDiameterCompact = 72.0;
   static const double _keySpacingCompact = 12.0;
 
-  /// Çevir modu: daha geniş dokunma, klasik telefon ritmi (yatay/dikey boşluk ayrı ayarlı).
-  static const double _keyDiameterDial = 88.0;
-  static const double _dialGapH = 17.0;
-  static const double _dialGapV = 15.0;
-
-  /// ITU E.161 — tanıdık çevir hissi; marka renkleriyle, Apple kopyası değil.
   static const Map<String, String> _dialLetterRow = {
     '2': 'ABC',
     '3': 'DEF',
@@ -1896,98 +1390,25 @@ class _KeypadSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final theme = Theme.of(context);
-    final d = dialMode ? _keyDiameterDial : _keyDiameterCompact;
-    final gapH = dialMode ? _dialGapH : _keySpacingCompact;
-    final gapV = dialMode ? _dialGapV : _keySpacingCompact;
-    final labelSize = dialMode ? 31.0 : 24.0;
-    final padH = dialMode ? DesignTokens.space5 : DesignTokens.space4;
-    final padV = dialMode ? DesignTokens.space5 : DesignTokens.space4;
+    const d = _keyDiameterCompact;
+    const gapH = _keySpacingCompact;
+    const gapV = _keySpacingCompact;
+    const labelSize = 24.0;
+    const padH = DesignTokens.space4;
+    const padV = DesignTokens.space4;
 
-    final keys = [
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      '*',
-      '0',
-      '#',
+    const keys = <String>[
+      '1', '2', '3',
+      '4', '5', '6',
+      '7', '8', '9',
+      '*', '0', '#',
     ];
 
-    if (embeddedDial && dialMode) {
-      final rowW = _columns * d + (_columns - 1) * gapH;
-      final extraBeforeBottomRow = gapV * 0.52;
-
-      Widget keyCell(String label) {
-        return _KeypadDialKey(
-          label: label,
-          diameter: d,
-          labelFontSize: labelSize,
-          dialMode: true,
-          letterRow: _dialLetterRow[label],
-          ext: ext,
-          theme: theme,
-          onTap: () => _tapKey(label),
-        );
-      }
-
-      Widget row3(int a, int b, int c) {
-        return SizedBox(
-          width: rowW,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              keyCell(keys[a]),
-              keyCell(keys[b]),
-              keyCell(keys[c]),
-            ],
-          ),
-        );
-      }
-
-      return Padding(
-        padding: EdgeInsets.fromLTRB(padH, DesignTokens.space4, padH, padV),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
-            gradient: RadialGradient(
-              center: const Alignment(0, -0.32),
-              radius: 1.4,
-              colors: [
-                Color.lerp(ext.surfaceElevated, ext.accent, 0.055)!
-                    .withValues(alpha: 0.5),
-                ext.surfaceElevated.withValues(alpha: 0.0),
-              ],
-              stops: const [0.0, 1.0],
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              row3(0, 1, 2),
-              SizedBox(height: gapV),
-              row3(3, 4, 5),
-              SizedBox(height: gapV),
-              row3(6, 7, 8),
-              SizedBox(height: gapV + extraBeforeBottomRow),
-              row3(9, 10, 11),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
+      padding: const EdgeInsets.symmetric(horizontal: padH, vertical: padV),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
-        border: Border.all(
-          color: ext.border.withValues(alpha: dialMode ? 0.52 : 0.48),
-        ),
+        border: Border.all(color: ext.border.withValues(alpha: 0.48)),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -1998,9 +1419,9 @@ class _KeypadSheet extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: ext.shadowColor.withValues(alpha: dialMode ? 0.26 : 0.22),
-            blurRadius: dialMode ? 18 : 14,
-            offset: Offset(0, dialMode ? 7 : 6),
+            color: ext.shadowColor.withValues(alpha: 0.22),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -2010,7 +1431,7 @@ class _KeypadSheet extends StatelessWidget {
         child: GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: _columns,
             mainAxisSpacing: gapV,
             crossAxisSpacing: gapH,
@@ -2023,8 +1444,8 @@ class _KeypadSheet extends StatelessWidget {
               label: keyLabel,
               diameter: d,
               labelFontSize: labelSize,
-              dialMode: dialMode,
-              letterRow: dialMode ? _dialLetterRow[keyLabel] : null,
+              dialMode: false,
+              letterRow: _dialLetterRow[keyLabel],
               ext: ext,
               theme: theme,
               onTap: () => _tapKey(keyLabel),
