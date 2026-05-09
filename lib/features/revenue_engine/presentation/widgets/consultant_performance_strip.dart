@@ -17,66 +17,133 @@ class ConsultantPerformanceStrip extends ConsumerWidget {
     final score = ref.watch(advisorPerformanceScoreProvider);
     final rollup = ref.watch(advisorPerformanceRollupProvider);
     final explain = _explainTr(rollup);
+    final radius =
+        BorderRadius.circular(DashboardLayoutTokens.radiusCardM);
 
     if (rollup.callsMade == 0 && score == 0) {
-      return const SizedBox.shrink();
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space5,
+          vertical: DesignTokens.space4,
+        ),
+        decoration: BoxDecoration(
+          color: ext.surfaceElevated,
+          borderRadius: radius,
+          border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(DesignTokens.space3),
+              decoration: BoxDecoration(
+                color: ext.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(
+                    DashboardLayoutTokens.radiusCardS),
+              ),
+              child: Icon(Icons.trending_up_rounded,
+                  color: ext.accent, size: 22),
+            ),
+            const SizedBox(width: DesignTokens.space4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Skorun şekilleniyor',
+                    style: AppTypography.cardHeading(context),
+                  ),
+                  const SizedBox(height: DesignTokens.space2),
+                  Text(
+                    'İlk kayıtlı çağrından itibaren puanın ve sıralaman burada güçlenir. '
+                    'Her ulaşım, randevu ve teklif seni ileri taşır.',
+                    style: AppTypography.body(context).copyWith(
+                      color: ext.textTertiary,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return Container(
-      padding: AppTypography.cardPadding,
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.space5,
+        vertical: DesignTokens.space4,
+      ),
       decoration: BoxDecoration(
         color: ext.surfaceElevated,
-        borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+        borderRadius: radius,
         border: Border.all(color: ext.border.withValues(alpha: 0.5)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.speed_rounded, color: ext.accent, size: 22),
-          const SizedBox(width: DesignTokens.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Performansın',
-                  style: AppTypography.cardHeading(context)
-                      .copyWith(color: ext.textSecondary),
+          Row(
+            children: [
+              Icon(Icons.speed_rounded, color: ext.accent, size: 22),
+              const SizedBox(width: DesignTokens.space2),
+              Expanded(
+                child: Text(
+                  'Bugünkü momentum',
+                  style: AppTypography.metricLabel(context).copyWith(
+                    color: ext.textSecondary,
+                    letterSpacing: 0.2,
+                  ),
                 ),
-                const SizedBox(height: DesignTokens.titleSubtitleGap),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '$score',
-                      style: AppTypography.metricValue(context)
-                          .copyWith(fontSize: 28),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'puan',
-                      style: AppTypography.metricLabel(context),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Sıra: —',
-                      style: TextStyle(
-                        color: ext.textTertiary,
-                        fontSize: DesignTokens.fontSizeXs,
-                      ),
-                    ),
-                  ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: DesignTokens.space3,
+                  vertical: DesignTokens.space1 + 1,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  explain,
-                  style: AppTypography.body(context),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
+                decoration: BoxDecoration(
+                  color: ext.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(
+                      DashboardLayoutTokens.radiusCardS),
                 ),
-              ],
-            ),
+                child: Text(
+                  'Sıra: —',
+                  style: TextStyle(
+                    color: ext.accent,
+                    fontSize: DesignTokens.fontSizeXs,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.space4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$score',
+                style: AppTypography.metricValue(context).copyWith(
+                  fontSize: 36,
+                  height: 0.95,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  'puan',
+                  style: AppTypography.metricLabel(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: DesignTokens.space3),
+          Text(
+            explain,
+            style: AppTypography.body(context).copyWith(height: 1.45),
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

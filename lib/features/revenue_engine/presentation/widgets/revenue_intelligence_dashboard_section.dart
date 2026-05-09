@@ -16,14 +16,50 @@ class RevenueIntelligenceDashboardSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final full = ref.watch(revenueDashboardSnapshotProvider);
-    if (full.hotCustomers.isEmpty &&
+    final ext = AppThemeExtension.of(context);
+    final allQuiet = full.hotCustomers.isEmpty &&
         full.actionToday.isEmpty &&
         full.atRiskSync.isEmpty &&
-        full.selfPerformanceScore == 0) {
-      return const SizedBox.shrink();
-    }
+        full.selfPerformanceScore == 0;
 
-    final ext = AppThemeExtension.of(context);
+    if (allQuiet) {
+      return Container(
+        padding: const EdgeInsets.all(DesignTokens.space5),
+        decoration: BoxDecoration(
+          color: ext.surface.withValues(alpha: 0.55),
+          borderRadius:
+              BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+          border: Border.all(color: ext.borderSubtle),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.verified_outlined, color: ext.accent, size: 22),
+            const SizedBox(width: DesignTokens.space3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Gelir motoru — kontrol tamam',
+                    style: AppTypography.cardHeading(context),
+                  ),
+                  const SizedBox(height: DesignTokens.space2),
+                  Text(
+                    'Sistem baktı: sıcak alarm, bugünkü hatırlatma veya senkron riski yok. '
+                    'Yeni sinyaller oluşunca burada öne çıkar; şimdilik odak çağrı ve portföyde.',
+                    style: AppTypography.body(context).copyWith(
+                      color: ext.textTertiary,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,44 +73,48 @@ class RevenueIntelligenceDashboardSection extends ConsumerWidget {
         _MiniRow(
           icon: Icons.local_fire_department_outlined,
           iconColor: ext.warning,
-          title: '🔥 Sıcak müşteriler',
+          title: 'Sıcak müşteriler',
           subtitle: full.hotCustomers.isEmpty
-              ? 'Şu an sıcak skorlu müşteri yok'
+              ? 'Öncelikli sıcak skor yok — portföyün dengede'
               : full.hotCustomers.map((e) => e.displayName).take(3).join(', '),
           count: full.hotCustomers.length,
           onTap: () => ConsultantShellNav.goToCustomersTab(context),
+          relaxed: full.hotCustomers.isEmpty,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: DesignTokens.space2),
         _MiniRow(
           icon: Icons.phone_callback_outlined,
           iconColor: ext.accent,
-          title: '📞 Bugün aksiyon',
+          title: 'Bugün aksiyon',
           subtitle: full.actionToday.isEmpty
-              ? 'Bugün için planlı hatırlatma yok'
+              ? 'Planlı hatırlatma yok — günü çağrıyla doldurabilirsin'
               : full.actionToday.map((e) => e.displayName).take(3).join(', '),
           count: full.actionToday.length,
           onTap: () => ConsultantShellNav.goToCustomersTab(context),
+          relaxed: full.actionToday.isEmpty,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: DesignTokens.space2),
         _MiniRow(
           icon: Icons.sync_problem_outlined,
           iconColor: ext.textSecondary,
-          title: '⏳ Senkron / veri riski',
+          title: 'Senkron / veri riski',
           subtitle: full.atRiskSync.isEmpty
               ? 'Geciken senkron uyarısı yok'
               : full.atRiskSync.map((e) => e.displayName).take(3).join(', '),
           count: full.atRiskSync.length,
           onTap: () => ConsultantShellNav.goToCustomersTab(context),
+          relaxed: full.atRiskSync.isEmpty,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: DesignTokens.space2),
         _MiniRow(
           icon: Icons.emoji_events_outlined,
           iconColor: ext.success,
-          title: '🏆 Performans puanın',
+          title: 'Liderlik görünümü',
           subtitle: full.leaderboard.isEmpty
-              ? '—'
+              ? 'Skorun oluşunca tablo burada netleşir'
               : '${full.leaderboard.first.displayLabel}: ${full.selfPerformanceScore}',
           onTap: () => context.push(AppRouter.routeConsultantCalls),
+          relaxed: full.leaderboard.isEmpty,
         ),
       ],
     );
@@ -89,6 +129,7 @@ class _MiniRow extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.count,
+    this.relaxed = false,
   });
 
   final IconData icon;
@@ -97,20 +138,25 @@ class _MiniRow extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
   final int? count;
+  final bool relaxed;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final bg = relaxed
+        ? ext.surface.withValues(alpha: 0.45)
+        : ext.surfaceElevated;
     return Material(
-      color: ext.surfaceElevated,
+      color: bg,
       borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+        splashColor: ext.accent.withValues(alpha: 0.08),
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: DesignTokens.space4,
-            vertical: DesignTokens.space3,
+            vertical: DesignTokens.space3 + 1,
           ),
           child: Row(
             children: [
@@ -126,7 +172,11 @@ class _MiniRow extends StatelessWidget {
                           child: Text(
                             title,
                             style: AppTypography.cardHeading(context)
-                                .copyWith(fontSize: DesignTokens.fontSizeMd),
+                                .copyWith(
+                              fontSize: DesignTokens.fontSizeMd,
+                              fontWeight:
+                                  relaxed ? FontWeight.w600 : FontWeight.w700,
+                            ),
                           ),
                         ),
                         if (count != null && count! > 0)
@@ -141,7 +191,10 @@ class _MiniRow extends StatelessWidget {
                       subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.meta(context),
+                      style: AppTypography.meta(context).copyWith(
+                        color: relaxed ? ext.textTertiary : null,
+                        height: 1.35,
+                      ),
                     ),
                   ],
                 ),

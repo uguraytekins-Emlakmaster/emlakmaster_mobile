@@ -18,6 +18,11 @@ class ConsultantShellNav extends InheritedWidget {
     maybeOf(context)?.goToTab(2);
   }
 
+  /// Çağrılar sekmesi (danışman kabuğunda indeks 1).
+  static void goToCallsTab(BuildContext context) {
+    maybeOf(context)?.goToTab(1);
+  }
+
   @override
   bool updateShouldNotify(covariant ConsultantShellNav oldWidget) => false;
 }

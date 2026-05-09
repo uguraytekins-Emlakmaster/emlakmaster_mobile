@@ -46,9 +46,20 @@ class ConsultantDashboardPage extends ConsumerWidget {
     final summaryBottomPad =
         DashboardLayoutTokens.shellScrollBottomPadding(context);
     final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
-    final greeting = user?.email != null
-        ? 'Merhaba, ${user!.email!.split('@').first}'
-        : 'Merhaba';
+    final hour = DateTime.now().hour;
+    final salutation = hour < 12
+        ? 'Günaydın'
+        : (hour < 18 ? 'İyi günler' : 'İyi akşamlar');
+    final String firstName;
+    final dn = user?.displayName?.trim();
+    if (dn != null && dn.isNotEmpty) {
+      firstName = dn.split(RegExp(r'\s+')).first;
+    } else if (user?.email != null) {
+      firstName = user!.email!.split('@').first;
+    } else {
+      firstName = 'Danışman';
+    }
+    final greeting = '$salutation, $firstName';
 
     return Scaffold(
       backgroundColor: ext.background,
@@ -69,7 +80,11 @@ class ConsultantDashboardPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _DashboardHeroHeader(greeting: greeting),
+                      _DashboardHeroHeader(
+                        greeting: greeting,
+                        tagline:
+                            'Bugünkü oyun alanın — çağrı, müşteri ve momentum tek ekranda.',
+                      ),
                       const SizedBox(
                           height: DashboardLayoutTokens.gapHeroToOperational),
                       const PostCallCaptureDashboardReminder(),
@@ -77,16 +92,16 @@ class ConsultantDashboardPage extends ConsumerWidget {
                           height: DashboardLayoutTokens.gapOperationalTight),
                       const _ConsultantTeamLine(),
                       const SizedBox(
-                          height: DashboardLayoutTokens.gapOperationalTight),
-                      const _TodayKpiRow(),
+                          height: DashboardLayoutTokens.gapOperational),
+                      const _ConsultantActionAnchor(),
                       const SizedBox(
-                          height: DashboardLayoutTokens.gapOperationalTight),
+                          height: DashboardLayoutTokens.gapOperational),
                       Text(
-                        'Bugünün aksiyonu',
+                        'Hızlı durum',
                         style: AppTypography.sectionLabel(context),
                       ),
                       const SizedBox(height: DesignTokens.space2),
-                      const _MagicCallPrimaryBlock(),
+                      const _TodayKpiRow(),
                       const SizedBox(
                           height: DashboardLayoutTokens.gapOperationalTight),
                       const AiUsageIndicator(),
@@ -94,7 +109,12 @@ class ConsultantDashboardPage extends ConsumerWidget {
                           height: DashboardLayoutTokens.gapOperationalTight),
                       const ConsultantPerformanceStrip(),
                       const SizedBox(
-                          height: DashboardLayoutTokens.gapOperationalTight),
+                          height: DashboardLayoutTokens.gapOperational),
+                      Text(
+                        'Fırsat ve gelir motoru',
+                        style: AppTypography.sectionLabel(context),
+                      ),
+                      const SizedBox(height: DesignTokens.space2),
                       const RevenueIntelligenceDashboardSection(),
                       const SizedBox(
                           height: DashboardLayoutTokens.gapOperationalTight),
@@ -188,11 +208,15 @@ class ConsultantDashboardPage extends ConsumerWidget {
   }
 }
 
-/// Hero katmanı: selam + başlık + bildirim (tek odak alanı).
+/// Hero katmanı: selam + başlık + günlük bağlam + bildirim.
 class _DashboardHeroHeader extends StatelessWidget {
-  const _DashboardHeroHeader({required this.greeting});
+  const _DashboardHeroHeader({
+    required this.greeting,
+    required this.tagline,
+  });
 
   final String greeting;
+  final String tagline;
 
   @override
   Widget build(BuildContext context) {
@@ -202,9 +226,9 @@ class _DashboardHeroHeader extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.only(top: 2),
-          child: SessionAvatarButton(size: 40),
+          child: SessionAvatarButton(size: 44),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,11 +239,21 @@ class _DashboardHeroHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: DesignTokens.titleSubtitleGap),
+              const SizedBox(height: DesignTokens.space1),
               Text(
                 AppLocalizations.of(context).t('my_summary'),
                 style: AppTypography.pageHeading(context),
-                maxLines: 1,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: DesignTokens.space2),
+              Text(
+                tagline,
+                style: AppTypography.meta(context).copyWith(
+                  color: ext.textTertiary,
+                  height: 1.35,
+                ),
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -294,89 +328,188 @@ class _ConsultantTeamLine extends ConsumerWidget {
   }
 }
 
-/// Birincil: gerçek telefon; ikincil: Magic Call CRM; üçüncü: Tüm çağrılar.
-class _MagicCallPrimaryBlock extends StatelessWidget {
-  const _MagicCallPrimaryBlock();
+/// Danışman panelinin aksiyon sabiti: birincil arama + ikincil CRM / geçmiş.
+class _ConsultantActionAnchor extends StatelessWidget {
+  const _ConsultantActionAnchor();
+
+  static const double _narrowActionBreakpoint = 360;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _PhoneCallPrimaryButton(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            context.push(
-              AppRouter.routeCall,
-              extra: const {
-                'startedFromScreen': 'consultant_dashboard',
-              },
-            );
-          },
-        ),
-        const SizedBox(height: DesignTokens.space2),
-        OutlinedButton.icon(
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            AnalyticsService.instance.logEvent(AnalyticsEvents.magicCallTap);
-            context.push(
-              AppRouter.routeCall,
-              extra: const {
-                'inAppCrmSession': true,
-                'startedFromScreen': 'consultant_dashboard',
-              },
-            );
-          },
-          style: OutlinedButton.styleFrom(
-            foregroundColor: ext.textPrimary,
-            side: BorderSide(color: ext.borderSubtle),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
-            ),
+    final radius =
+        BorderRadius.circular(DashboardLayoutTokens.radiusCardM);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        color: ext.surfaceElevated,
+        border: Border.all(color: ext.border.withValues(alpha: 0.55)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-          icon: Icon(Icons.phone_in_talk_rounded, size: 18, color: ext.accent),
-          label: Text(
-            'Magic Call (CRM)',
-            style: AppTypography.secondaryButton(context),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(height: DesignTokens.space2),
-        Row(
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: Stack(
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  AnalyticsService.instance
-                      .logEvent(AnalyticsEvents.consultantCallsTap);
-                  context.push(AppRouter.routeConsultantCalls);
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ext.textPrimary,
-                  side: BorderSide(color: ext.borderSubtle),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                        DashboardLayoutTokens.radiusCardS),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: 3,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      ext.accent.withValues(alpha: 0.85),
+                      ext.accent.withValues(alpha: 0.15),
+                    ],
                   ),
                 ),
-                icon: const Icon(Icons.call_rounded, size: 18),
-                label: Text(
-                  'Tüm Çağrılarım',
-                  style: AppTypography.secondaryButton(context),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.space4,
+                DesignTokens.space5,
+                DesignTokens.space4,
+                DesignTokens.space4,
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final narrow =
+                      constraints.maxWidth < _narrowActionBreakpoint;
+                  final secondaryBorder =
+                      BorderSide(color: ext.border.withValues(alpha: 0.72));
+                  final secondaryShape = RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                        DashboardLayoutTokens.radiusCardS),
+                  );
+                  ButtonStyle secondaryStyle() =>
+                      OutlinedButton.styleFrom(
+                        foregroundColor: ext.textPrimary,
+                        side: secondaryBorder,
+                        minimumSize: const Size(0, 48),
+                        padding: EdgeInsets.symmetric(
+                          vertical: narrow ? 14 : 12,
+                          horizontal: narrow ? 10 : 8,
+                        ),
+                        shape: secondaryShape,
+                        visualDensity: VisualDensity.standard,
+                      );
+                  final secondaryChildren = [
+                    Semantics(
+                      button: true,
+                      label: 'Magic Call — uygulama içi CRM ile ara',
+                      child: Tooltip(
+                        message: 'Uygulama içi CRM oturumu',
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            AnalyticsService.instance
+                                .logEvent(AnalyticsEvents.magicCallTap);
+                            context.push(
+                              AppRouter.routeCall,
+                              extra: const {
+                                'inAppCrmSession': true,
+                                'startedFromScreen': 'consultant_dashboard',
+                              },
+                            );
+                          },
+                          style: secondaryStyle(),
+                          icon: Icon(Icons.phone_in_talk_rounded,
+                              size: 22, color: ext.accent),
+                          label: Text(
+                            'Magic Call',
+                            style: AppTypography.secondaryButton(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (!narrow) const SizedBox(width: DesignTokens.space2),
+                    if (narrow) const SizedBox(height: DesignTokens.space2),
+                    Semantics(
+                      button: true,
+                      label: 'Tüm çağrılarımı aç',
+                      child: Tooltip(
+                        message: 'Kayıtlı çağrı geçmişi',
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            AnalyticsService.instance
+                                .logEvent(AnalyticsEvents.consultantCallsTap);
+                            context.push(AppRouter.routeConsultantCalls);
+                          },
+                          style: secondaryStyle(),
+                          icon: Icon(Icons.history_rounded,
+                              size: 22, color: ext.textSecondary),
+                          label: Text(
+                            narrow ? 'Çağrılar' : 'Çağrılarım',
+                            style: AppTypography.secondaryButton(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Bugünün birinci adımı',
+                        style: AppTypography.sectionLabel(context),
+                      ),
+                      const SizedBox(height: DesignTokens.space1),
+                      Text(
+                        narrow
+                            ? 'Çağrı momentumu başlatır; özet ve görevler arkadan gelir.'
+                            : 'Bir çağrı momentumu başlatır; özet ve görevler arkasından gelir.',
+                        style: AppTypography.meta(context).copyWith(
+                          color: ext.textTertiary,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.space4),
+                      _PhoneCallPrimaryButton(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          context.push(
+                            AppRouter.routeCall,
+                            extra: const {
+                              'startedFromScreen': 'consultant_dashboard',
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: DesignTokens.space3),
+                      if (narrow)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: secondaryChildren,
+                        )
+                      else
+                        Row(
+                          children: [
+                            Expanded(child: secondaryChildren[0]),
+                            secondaryChildren[1],
+                            Expanded(child: secondaryChildren[2]),
+                          ],
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -386,12 +519,21 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
 
   final VoidCallback onPressed;
 
+  static const String _subtitleFull =
+      'Kayıtlı arama — CRM özeti ve görevler seni takip eder';
+  static const String _subtitleShort =
+      'Kayıtlı arama — özet ve görevler CRM’de';
+
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final ts = MediaQuery.textScalerOf(context);
+    final textScaleRatio =
+        ts.scale(DesignTokens.fontSizeBase) / DesignTokens.fontSizeBase;
     return Semantics(
       button: true,
-      label: 'Telefon ile ara',
+      label:
+          'Telefon ile ara. Kayıtlı aramada CRM özeti ve görevler seni takip eder.',
       child: Material(
         borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
         color: ext.accent,
@@ -399,21 +541,57 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius:
               BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                vertical: 14, horizontal: DesignTokens.space4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.call_rounded, size: 22, color: ext.onBrand),
-                const SizedBox(width: 10),
-                Text(
-                  'Telefon ile ara',
-                  style: AppTypography.primaryButton(context)
-                      .copyWith(color: ext.onBrand),
+          splashColor: ext.onBrand.withValues(alpha: 0.14),
+          highlightColor: ext.onBrand.withValues(alpha: 0.08),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final useShortSubtitle = constraints.maxWidth < 304 ||
+                  textScaleRatio > 1.18;
+              return ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: DesignTokens.space4,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.call_rounded, size: 24, color: ext.onBrand),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              'Telefon ile ara',
+                              style: AppTypography.primaryButton(context)
+                                  .copyWith(color: ext.onBrand),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        useShortSubtitle ? _subtitleShort : _subtitleFull,
+                        style: TextStyle(
+                          color: ext.onBrand.withValues(alpha: 0.92),
+                          fontSize: DesignTokens.fontSizeXs,
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
@@ -470,6 +648,7 @@ class _TodayKpiRow extends ConsumerWidget {
                 labelStyle: textStyleLabel,
                 valueStyle: textStyleValue,
                 onTap: openCalls,
+                emphasized: true,
               );
             },
           ),
@@ -521,6 +700,7 @@ class _KpiChip extends StatelessWidget {
     required this.labelStyle,
     required this.valueStyle,
     this.onTap,
+    this.emphasized = false,
   });
 
   final IconData icon;
@@ -529,26 +709,35 @@ class _KpiChip extends StatelessWidget {
   final TextStyle labelStyle;
   final TextStyle valueStyle;
   final VoidCallback? onTap;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardS);
+    final borderColor = emphasized
+        ? ext.accent.withValues(alpha: 0.45)
+        : ext.borderSubtle;
     final child = Container(
-      constraints:
-          const BoxConstraints(minHeight: DashboardLayoutTokens.minHeightKpi),
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space3,
+      constraints: BoxConstraints(
+        minHeight: emphasized
+            ? DashboardLayoutTokens.minHeightKpi + 4
+            : DashboardLayoutTokens.minHeightKpi,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: emphasized ? DesignTokens.space3 + 1 : DesignTokens.space3,
         vertical: DesignTokens.space3,
       ),
       decoration: BoxDecoration(
-        color: ext.surfaceElevated,
+        color: emphasized
+            ? ext.accent.withValues(alpha: 0.06)
+            : ext.surfaceElevated,
         borderRadius: radius,
-        border: Border.all(color: ext.borderSubtle),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: ext.accent),
+          Icon(icon, size: emphasized ? 20 : 18, color: ext.accent),
           const SizedBox(width: DesignTokens.space2),
           Expanded(
             child: Column(
@@ -556,7 +745,12 @@ class _KpiChip extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: valueStyle,
+                  style: emphasized
+                      ? valueStyle.copyWith(
+                          fontSize: DesignTokens.fontSizeXl + 2,
+                          fontWeight: FontWeight.w800,
+                        )
+                      : valueStyle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
