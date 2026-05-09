@@ -1,4 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/dashboard/domain/broker_dashboard_intelligence_summary.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_dashboard_intelligence_summary_provider.dart';
@@ -15,49 +17,46 @@ class BrokerDashboardIntelligenceSummaryCard extends ConsumerWidget {
     final async = ref.watch(brokerDashboardIntelligenceSummaryProvider);
     return async.when(
       data: (BrokerDashboardIntelligenceLines lines) {
-        if (!lines.hasAny) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.only(bottom: DesignTokens.space5),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  ext.surfaceElevated,
-                  ext.surface.withValues(alpha: 0.94),
+        if (!lines.hasAny) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: DesignTokens.space5),
+            child: _CommandCardFrame(
+              ext: ext,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _CommandCardHeader(
+                    ext: ext,
+                    title: 'Ofis komuta özeti',
+                    subtitle: 'Sistem kontrolü',
+                  ),
+                  const SizedBox(height: DesignTokens.space3),
+                  Text(
+                    'Şu an özet satırı yok; veri akışı izleniyor ve sakin bir tablo görünüyorsunuz. '
+                    'Kritik sinyaller oluştuğunda burada tek bakışta listelenir.',
+                    style: AppTypography.body(context).copyWith(
+                      color: ext.textTertiary,
+                      height: 1.45,
+                    ),
+                  ),
                 ],
               ),
-              border: Border.all(color: ext.accent.withValues(alpha: 0.42)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
-                ),
-              ],
             ),
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: DesignTokens.space5),
+          child: _CommandCardFrame(
+            ext: ext,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.hub_outlined, size: 20, color: ext.accent),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Operasyon özeti',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: ext.textPrimary,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.2,
-                          ),
-                    ),
-                  ],
+                _CommandCardHeader(
+                  ext: ext,
+                  title: 'Ofis komuta özeti',
+                  subtitle: 'Canlı ofis hikâyesi',
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: DesignTokens.space4),
                 if (lines.recentLine != null && lines.recentLine!.trim().isNotEmpty)
                   _Row(
                     icon: Icons.update_rounded,
@@ -101,12 +100,134 @@ class BrokerDashboardIntelligenceSummaryCard extends ConsumerWidget {
       error: (_, __) => Padding(
             padding: const EdgeInsets.only(bottom: DesignTokens.space3),
             child: Text(
-              'Operasyon özeti yüklenemedi.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              'Komuta özeti şu an yüklenemedi; bir süre sonra yenileyin.',
+              style: AppTypography.body(context).copyWith(
                     color: ext.textTertiary,
                   ),
             ),
           ),
+    );
+  }
+}
+
+class _CommandCardFrame extends StatelessWidget {
+  const _CommandCardFrame({
+    required this.ext,
+    required this.child,
+  });
+
+  final AppThemeExtension ext;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardL);
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            ext.surfaceElevated,
+            ext.surface.withValues(alpha: 0.92),
+          ],
+        ),
+        border: Border.all(color: ext.accent.withValues(alpha: 0.38)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: 3,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      ext.accent.withValues(alpha: 0.85),
+                      ext.accent.withValues(alpha: 0.12),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.space5,
+                DesignTokens.space5 + 2,
+                DesignTokens.space5,
+                DesignTokens.space5,
+              ),
+              child: child,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CommandCardHeader extends StatelessWidget {
+  const _CommandCardHeader({
+    required this.ext,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final AppThemeExtension ext;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(DesignTokens.space3),
+          decoration: BoxDecoration(
+            color: ext.accent.withValues(alpha: 0.1),
+            borderRadius:
+                BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+          ),
+          child: Icon(Icons.apartment_rounded,
+              size: 22, color: ext.accent),
+        ),
+        const SizedBox(width: DesignTokens.space3),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTypography.cardHeading(context).copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: AppTypography.meta(context).copyWith(
+                  color: ext.textTertiary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -129,28 +250,27 @@ class _Row extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: ext.accent.withValues(alpha: 0.92)),
-        const SizedBox(width: 8),
+        Icon(icon, size: 18, color: ext.accent.withValues(alpha: 0.9)),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: ext.textTertiary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.35,
-                    ),
+                style: AppTypography.metricLabel(context).copyWith(
+                  color: ext.textTertiary,
+                  letterSpacing: 0.4,
+                ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 text,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: ext.textSecondary,
-                      height: 1.38,
-                      fontWeight: FontWeight.w500,
-                    ),
+                style: AppTypography.body(context).copyWith(
+                  color: ext.textSecondary,
+                  height: 1.42,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),

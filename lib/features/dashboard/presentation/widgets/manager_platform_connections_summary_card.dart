@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -63,140 +64,196 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
     final String healthLine;
     final Color healthColor;
     if (attention > 0) {
-      healthLine = 'Kurulum veya inceleme gerekebilir (canlı senkron kapalı olabilir)';
+      healthLine =
+          'Bazı kanallarda kurulum veya doğrulama bekleniyor; canlı senkron kapanmış olabilir.';
       healthColor = ext.warning;
     } else if (liveOk == 0) {
-      healthLine = 'Kurulum veya doğrulama gerekebilir; bağlantıları Ayarlar’dan yönetin';
+      healthLine =
+          'Canlı bağlantı henüz yok; ilan akışını Ayarlar üzerinden tamamlayın.';
       healthColor = ext.textSecondary;
     } else {
-      healthLine = 'Canlı entegrasyonlar aktif görünüyor';
-      healthColor = ext.accent.withValues(alpha: 0.9);
+      healthLine = 'Canlı entegrasyonlar dengede; ofis ilan akışı izleniyor.';
+      healthColor = ext.accent.withValues(alpha: 0.92);
     }
 
     final syncHint = latestSync != null
         ? 'Son senkron: ${DateFormat('d MMM HH:mm', 'tr_TR').format(latestSync)}'
-        : 'Son senkron: — (demo modunda örnek tarih yok)';
+        : 'Son senkron kaydı henüz oluşmadı';
+
+    final calm = attention == 0 && liveOk > 0;
+    final borderColor = calm
+        ? ext.accent.withValues(alpha: 0.32)
+        : ext.border.withValues(alpha: 0.55);
 
     return RepaintBoundary(
       child: Padding(
         padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-        child: Material(
-          color: ext.surfaceElevated,
-          borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
-          child: InkWell(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              context.push(AppRouter.routeConnectedAccounts);
-            },
-            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(DesignTokens.space4),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
-                border: Border.all(color: ext.border.withValues(alpha: 0.5)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        child: Semantics(
+          label:
+              'Bağlantı hazırlığı. $connectionLine. $healthLine. $syncHint. Ayarlar için çift dokunun.',
+          button: true,
+          child: Material(
+            color: Colors.transparent,
+            borderRadius:
+                BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.push(AppRouter.routeConnectedAccounts);
+              },
+              borderRadius:
+                  BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+              splashColor: ext.accent.withValues(alpha: 0.08),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius:
+                      BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+                  color: calm
+                      ? ext.accent.withValues(alpha: 0.04)
+                      : ext.surfaceElevated,
+                  border: Border.all(color: borderColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(Icons.hub_outlined, size: 20, color: ext.accent),
-                      const SizedBox(width: DesignTokens.space2),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Platform bağlantıları',
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    color: ext.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.15,
-                                  ),
+                      if (calm)
+                        Container(
+                          width: 4,
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.horizontal(
+                              left: Radius.circular(
+                                  DashboardLayoutTokens.radiusCardM - 1),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Ofis ilan entegrasyonu',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: ext.textTertiary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                            ),
-                          ],
+                            color: ext.accent.withValues(alpha: 0.75),
+                          ),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          HapticFeedback.selectionClick();
-                          context.push(AppRouter.routeConnectedAccounts);
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          foregroundColor: ext.accent,
-                        ),
-                        child: const Text('Yönet'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: DesignTokens.space3),
-                  Text(
-                    connectionLine,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: ext.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          height: 1.35,
-                        ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.health_and_safety_outlined,
-                        size: 16,
-                        color: healthColor,
-                      ),
-                      const SizedBox(width: 6),
                       Expanded(
-                        child: Text(
-                          healthLine,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: healthColor,
-                                height: 1.35,
+                        child: Padding(
+                          padding: const EdgeInsets.all(DesignTokens.space5),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.link_rounded,
+                                      size: 22, color: ext.accent),
+                                  const SizedBox(width: DesignTokens.space3),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Bağlantı hazırlığı',
+                                          style: AppTypography.cardHeading(
+                                              context),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'İlan kanalları ve senkron durumu',
+                                          style: AppTypography.meta(context)
+                                              .copyWith(
+                                            color: ext.textTertiary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      HapticFeedback.selectionClick();
+                                      context.push(
+                                          AppRouter.routeConnectedAccounts);
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 8),
+                                      minimumSize: const Size(44, 40),
+                                      foregroundColor: ext.accent,
+                                    ),
+                                    child: const Text('Yönet'),
+                                  ),
+                                ],
                               ),
+                              const SizedBox(height: DesignTokens.space4),
+                              Text(
+                                connectionLine,
+                                style: AppTypography.bodyStrong(context)
+                                    .copyWith(height: 1.35),
+                              ),
+                              const SizedBox(height: DesignTokens.space2),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.verified_user_outlined,
+                                    size: 18,
+                                    color: healthColor,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: LayoutBuilder(
+                                      builder: (context, c) {
+                                        final narrow = c.maxWidth < 300;
+                                        final ts =
+                                            MediaQuery.textScalerOf(context);
+                                        final ratio = ts.scale(
+                                                DesignTokens.fontSizeBase) /
+                                            DesignTokens.fontSizeBase;
+                                        return Text(
+                                          healthLine,
+                                          style: AppTypography.body(context)
+                                              .copyWith(
+                                            color: healthColor,
+                                            height: 1.38,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: narrow || ratio > 1.15
+                                                ? DesignTokens.fontSizeSm
+                                                : null,
+                                          ),
+                                          maxLines: 4,
+                                          overflow: TextOverflow.ellipsis,
+                                          softWrap: true,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: DesignTokens.space2),
+                              Text(
+                                syncHint,
+                                style: AppTypography.meta(context).copyWith(
+                                  color: ext.textTertiary,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: DesignTokens.space3),
+                              Text(
+                                'İçe aktarma ve geçmiş: Ayarlar → İlanlar ve platform bağlantıları',
+                                style: AppTypography.meta(context).copyWith(
+                                  color: ext.textTertiary.withValues(alpha: 0.95),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    syncHint,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: ext.textTertiary,
-                          height: 1.3,
-                        ),
-                  ),
-                  const SizedBox(height: DesignTokens.space2),
-                  Text(
-                    'İçe aktarma ve geçmiş: Ayarlar → İlanlar ve platform bağlantıları',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: ext.textTertiary.withValues(alpha: 0.9),
-                          fontSize: 11,
-                          height: 1.35,
-                        ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

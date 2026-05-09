@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/broker_customer_alert.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/crm_intelligence_explanations.dart';
@@ -26,7 +27,7 @@ class BrokerDashboardAlertsCard extends ConsumerWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
               color: ext.surfaceElevated,
-              border: Border.all(color: ext.danger.withValues(alpha: 0.35)),
+              border: Border.all(color: ext.danger.withValues(alpha: 0.28)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.14),
@@ -40,15 +41,13 @@ class BrokerDashboardAlertsCard extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.notifications_active_rounded, size: 20, color: ext.danger),
+                    Icon(Icons.manage_accounts_outlined,
+                        size: 22, color: ext.danger.withValues(alpha: 0.92)),
                     const SizedBox(width: DesignTokens.space2),
                     Expanded(
                       child: Text(
-                        'Operasyon uyarıları',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: ext.textPrimary,
-                              fontWeight: FontWeight.w800,
-                            ),
+                        'Öncelikli müşteri sinyalleri',
+                        style: AppTypography.cardHeading(context),
                       ),
                     ),
                     Text(
@@ -62,10 +61,11 @@ class BrokerDashboardAlertsCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: DesignTokens.space1),
                 Text(
-                  'Sıcaklık, çağrı sinyalleri ve temas zamanlamasına göre',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  'Sıcaklık, çağrı ve temas ritmine göre sıralanır — müdahale için dokunun.',
+                  style: AppTypography.meta(context).copyWith(
                         color: ext.textTertiary,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
                       ),
                 ),
                 const SizedBox(height: DesignTokens.space3),

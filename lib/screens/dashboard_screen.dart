@@ -145,20 +145,11 @@ class DashboardPage extends ConsumerWidget {
                         const DashboardTopAppBar(),
                         SizedBox(height: gapHero),
                         px(
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Operasyon özeti',
-                              style: AppTypography.sectionLabel(context),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: DesignTokens.space2),
-                        px(
                           const RepaintBoundary(
                             child: BrokerDashboardIntelligenceSummaryCard(),
                           ),
                         ),
+                        SizedBox(height: gapOp * 0.85),
                         px(const AiUsageIndicator(compact: true)),
                         px(const ManagerRevenueSummaryCard()),
                         px(const ManagerEscalationsCard()),
@@ -167,16 +158,61 @@ class DashboardPage extends ConsumerWidget {
                         px(const SmartTaskSuggestionsCard()),
                         px(const ExecutionRemindersCard(
                             surface: ExecutionReminderSurface.broker)),
-                        // —— Layer 2: Operational — KPI, komuta, acil, özet ——
-                        if (kpiBar) px(const DashboardKpiSection()),
+                        // —— Ofis momentumu — KPI ——
+                        if (kpiBar) ...[
+                          SizedBox(height: gapOp),
+                          px(
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Ofis momentumu',
+                                style: AppTypography.sectionLabel(context),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.space2),
+                          px(const DashboardKpiSection()),
+                        ],
                         if (kpiBar) SizedBox(height: gapOp),
                         px(const PriorityCallSignalsCard()),
-                        if (analyticsEnabled) SizedBox(height: gapOp),
-                        if (analyticsEnabled)
+                        if (analyticsEnabled) ...[
+                          SizedBox(height: gapOp),
+                          px(
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'İçgörü ve analitik',
+                                style: AppTypography.sectionLabel(context),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.space2),
                           px(const RainbowAnalyticsCenterCard()),
-                        if (analyticsEnabled) SizedBox(height: gapOp),
+                        ],
+                        SizedBox(height: gapOp),
+                        px(
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Bağlantı ve sistem',
+                              style: AppTypography.sectionLabel(context),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: DesignTokens.space2),
                         px(const ManagerPlatformConnectionsSummaryCard()),
                         if (lean) ...[
+                          SizedBox(height: gapOp * 0.75),
+                          px(
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Operasyonel odak',
+                                style: AppTypography.sectionLabel(context),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.space2),
                           px(const LeanAdminTodayFocusCard()),
                           px(const LeanAdminOfficePulseCard()),
                         ],

@@ -26,12 +26,16 @@ class DashboardTopAppBar extends ConsumerWidget {
             DashboardLayoutTokens.horizontalPadding,
             DashboardLayoutTokens.pageTopInset,
             DashboardLayoutTokens.horizontalPadding,
-            DesignTokens.titleSubtitleGap,
+            DesignTokens.space4,
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SessionAvatarButton(),
-              const SizedBox(width: 10),
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: SessionAvatarButton(size: 44),
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,25 +45,29 @@ class DashboardTopAppBar extends ConsumerWidget {
                       'Rainbow Gayrimenkul',
                       style: AppTypography.pageHeading(context).copyWith(
                         fontSize: DesignTokens.fontSizeXl,
+                        height: 1.12,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: DesignTokens.metricLabelGap),
+                    const SizedBox(height: DesignTokens.space2),
                     Text(
-                      'EmlakMaster Agent Assistant',
-                      style: AppTypography.meta(context),
-                      maxLines: 1,
+                      'Yönetici komuta ekranı · ofis, risk ve performans tek bakışta',
+                      style: AppTypography.meta(context).copyWith(
+                        color: ext.textTertiary,
+                        height: 1.35,
+                      ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
               IconButton(
                 tooltip: 'Bildirimler',
-                icon: Icon(Icons.notifications_none_rounded,
-                    color: ext.textPrimary),
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                icon: Icon(Icons.notifications_outlined,
+                    color: ext.textSecondary, size: 24),
                 onPressed: () =>
                     showDashboardNotificationsSheet(context, uid: uid),
               ),

@@ -51,23 +51,31 @@ class KpiBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // [DashboardPage] zaten yatay px veriyor; sol 0 ile birincil chip içerikle hizalı, sağda kaydırma payı.
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space4,
-        vertical: DesignTokens.space3,
+      padding: const EdgeInsets.fromLTRB(
+        0,
+        DesignTokens.space3,
+        DesignTokens.space4,
+        DesignTokens.space3,
       ),
       child: Row(
         children: [
           _KpiChip(
-              label: 'Çağrı', value: '$totalCalls', icon: Icons.call_rounded),
+            label: 'Çağrı',
+            value: '$totalCalls',
+            icon: Icons.call_rounded,
+            primary: true,
+          ),
           const SizedBox(width: DesignTokens.space2),
           _KpiChip(label: 'Cevaplanan', value: '$answeredCalls'),
           const SizedBox(width: DesignTokens.space2),
           _KpiChip(
-              label: 'Lead',
-              value: '$leadsCreated',
-              icon: Icons.leaderboard_rounded),
+            label: 'Lead',
+            value: '$leadsCreated',
+            icon: Icons.leaderboard_rounded,
+          ),
           const SizedBox(width: DesignTokens.space2),
           _KpiChip(label: 'Sıcak', value: '$hotOpportunities', highlight: true),
           const SizedBox(width: DesignTokens.space2),
@@ -88,12 +96,14 @@ class _KpiChip extends StatefulWidget {
     required this.value,
     this.icon,
     this.highlight = false,
+    this.primary = false,
   });
 
   final String label;
   final String value;
   final IconData? icon;
   final bool highlight;
+  final bool primary;
 
   @override
   State<_KpiChip> createState() => _KpiChipState();
@@ -106,91 +116,104 @@ class _KpiChipState extends State<_KpiChip> {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final active = _hover;
-    final emphasized = active || widget.highlight;
+    final emphasized = active || widget.highlight || widget.primary;
+
+    final tip = _aiRecommendationFor(widget.label, widget.value);
+    final semanticLabel = widget.primary
+        ? 'Birincil KPI, ${widget.label}: ${widget.value}. $tip'
+        : '${widget.label}: ${widget.value}. $tip';
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Tooltip(
-        message: _aiRecommendationFor(widget.label, widget.value),
+        message: tip,
         preferBelow: false,
-        child: Container(
-          constraints: const BoxConstraints(
-              minHeight: DashboardLayoutTokens.minHeightKpi),
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space4,
-            vertical: DesignTokens.space3,
-          ),
-          decoration: BoxDecoration(
-            color: ext.surfaceElevated,
-            borderRadius:
-                BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
-            border: Border.all(
-              color: emphasized
-                  ? ext.accent.withValues(alpha: 0.35)
-                  : ext.borderSubtle,
-              width: 0.8,
+        child: Semantics(
+          label: semanticLabel,
+          child: Container(
+            constraints: BoxConstraints(
+              minHeight: DashboardLayoutTokens.minHeightKpi,
+              minWidth: widget.primary ? 52 : 0,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: ext.shadowColor.withValues(alpha: 0.25),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+            padding: EdgeInsets.symmetric(
+              horizontal:
+                  widget.primary ? DesignTokens.space4 + 2 : DesignTokens.space4,
+              vertical: DesignTokens.space3,
+            ),
+            decoration: BoxDecoration(
+              color: widget.primary
+                  ? ext.accent.withValues(alpha: 0.07)
+                  : ext.surfaceElevated,
+              borderRadius:
+                  BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+              border: Border.all(
+                color: emphasized
+                    ? ext.accent.withValues(alpha: widget.primary ? 0.48 : 0.35)
+                    : ext.borderSubtle,
+                width: widget.primary ? 1 : 0.8,
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(
-                  widget.icon,
-                  size: 16,
-                  color: emphasized ? ext.accent : ext.textSecondary,
+              boxShadow: [
+                BoxShadow(
+                  color: ext.shadowColor.withValues(alpha: 0.25),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-                const SizedBox(width: DesignTokens.space1),
               ],
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.value,
-                    style: AppTypography.metricValue(context).copyWith(
-                      fontSize: DesignTokens.fontSizeLg,
-                      color: emphasized ? ext.accent : ext.textPrimary,
-                      shadows: emphasized
-                          ? [
-                              Shadow(
-                                color: ext.accent.withValues(alpha: 0.25),
-                                blurRadius: 6,
-                              ),
-                            ]
-                          : null,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(
+                    widget.icon,
+                    size: widget.primary ? 18 : 16,
+                    color: emphasized ? ext.accent : ext.textSecondary,
                   ),
-                  const SizedBox(height: DesignTokens.metricLabelGap),
-                  Text(
-                    widget.label,
-                    style: AppTypography.metricLabel(context).copyWith(
-                      color: emphasized
-                          ? ext.accent.withValues(alpha: 0.9)
-                          : ext.textTertiary,
+                  SizedBox(
+                      width: widget.primary
+                          ? DesignTokens.space2
+                          : DesignTokens.space1),
+                ],
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.value,
+                      style: AppTypography.metricValue(context).copyWith(
+                        fontSize: widget.primary
+                            ? DesignTokens.fontSizeXl
+                            : DesignTokens.fontSizeLg,
+                        color: emphasized ? ext.accent : ext.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: DesignTokens.metricLabelGap),
+                    Text(
+                      widget.label,
+                      style: AppTypography.metricLabel(context).copyWith(
+                        color: emphasized
+                            ? ext.accent.withValues(alpha: 0.88)
+                            : ext.textTertiary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+                if (!widget.primary) ...[
+                  const SizedBox(width: DesignTokens.space1),
+                  Icon(
+                    Icons.auto_awesome,
+                    size: 12,
+                    color: ext.accent.withValues(alpha: 0.55),
                   ),
                 ],
-              ),
-              const SizedBox(width: DesignTokens.space1),
-              Icon(
-                Icons.auto_awesome,
-                size: 12,
-                color: ext.accent.withValues(alpha: 0.7),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

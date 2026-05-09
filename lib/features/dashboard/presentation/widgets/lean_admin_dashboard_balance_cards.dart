@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -34,8 +35,9 @@ class LeanAdminTodayFocusCard extends ConsumerWidget {
     if (remindersAsync.isLoading || tasksAsync.isLoading || escAsync.isLoading) {
       return _LeanCardShell(
         title: 'Bugünün odağı',
-        subtitle: 'Acil takip, taşıma ve görev öncelikleri',
+        subtitle: 'Ekip önceliği ve müşteri taşıma sırası',
         icon: Icons.center_focus_strong_outlined,
+        featured: true,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
           child: Center(
@@ -64,8 +66,9 @@ class LeanAdminTodayFocusCard extends ConsumerWidget {
 
     return _LeanCardShell(
       title: 'Bugünün odağı',
-      subtitle: 'Acil takip, taşıma ve görev öncelikleri',
+      subtitle: 'Ekip önceliği ve müşteri taşıma sırası',
       icon: Icons.center_focus_strong_outlined,
+      featured: true,
       child: rows.isEmpty
           ? Padding(
               padding: const EdgeInsets.only(top: DesignTokens.space1),
@@ -76,10 +79,10 @@ class LeanAdminTodayFocusCard extends ConsumerWidget {
                   const SizedBox(width: DesignTokens.space2),
                   Expanded(
                     child: Text(
-                      'Öncelik kuyruğu sakin; yeni sinyaller geldiğinde burada listelenir.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      'Öncelik kuyruğu sakin. Sistem izlemeye devam ediyor; yeni sinyaller burada öne çıkar.',
+                      style: AppTypography.body(context).copyWith(
                             color: AppThemeExtension.of(context).textSecondary,
-                            height: 1.35,
+                            height: 1.4,
                           ),
                     ),
                   ),
@@ -215,10 +218,10 @@ class LeanAdminOfficePulseCard extends ConsumerWidget {
         final ext = AppThemeExtension.of(context);
         final body = top == null
             ? Text(
-                'Öncelikli ofis uyarısı yok; müşteri sinyalleri izleniyor.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                'Öncelikli uyarı yok; müşteri sinyalleri izleniyor ve tablo dengede.',
+                style: AppTypography.body(context).copyWith(
                       color: ext.textSecondary,
-                      height: 1.38,
+                      height: 1.4,
                     ),
               )
             : Column(
@@ -247,7 +250,7 @@ class LeanAdminOfficePulseCard extends ConsumerWidget {
 
         return _LeanCardShell(
           title: 'Ofis nabzı',
-          subtitle: 'Güncel risk / fırsat sinyali',
+          subtitle: 'Anlık risk ve fırsat sinyali',
           icon: Icons.monitor_heart_outlined,
           dense: true,
           trailing: top != null
@@ -270,7 +273,7 @@ class LeanAdminOfficePulseCard extends ConsumerWidget {
       },
       loading: () => _LeanCardShell(
         title: 'Ofis nabzı',
-        subtitle: 'Güncel risk / fırsat sinyali',
+        subtitle: 'Anlık risk ve fırsat sinyali',
         icon: Icons.monitor_heart_outlined,
         dense: true,
         child: Padding(
@@ -365,6 +368,7 @@ class _LeanCardShell extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     this.dense = false,
+    this.featured = false,
     this.trailing,
     required this.child,
   });
@@ -373,12 +377,16 @@ class _LeanCardShell extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final bool dense;
+  final bool featured;
   final Widget? trailing;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final borderColor = featured
+        ? ext.accent.withValues(alpha: 0.34)
+        : ext.border.withValues(alpha: 0.48);
     return RepaintBoundary(
       child: Padding(
         padding: const EdgeInsets.only(bottom: DesignTokens.space4),
@@ -387,12 +395,14 @@ class _LeanCardShell extends StatelessWidget {
           padding: EdgeInsets.all(dense ? DesignTokens.space3 : DesignTokens.space4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
-            color: ext.surfaceElevated,
-            border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+            color: featured
+                ? ext.accent.withValues(alpha: 0.045)
+                : ext.surfaceElevated,
+            border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 10,
+                color: Colors.black.withValues(alpha: featured ? 0.1 : 0.08),
+                blurRadius: featured ? 14 : 10,
                 offset: const Offset(0, 4),
               ),
             ],
@@ -403,7 +413,7 @@ class _LeanCardShell extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(icon, size: dense ? 19 : 20, color: ext.accent),
+                  Icon(icon, size: dense ? 20 : 22, color: ext.accent),
                   const SizedBox(width: DesignTokens.space2),
                   Expanded(
                     child: Column(
@@ -411,18 +421,16 @@ class _LeanCardShell extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: ext.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.15,
+                          style: AppTypography.cardHeading(context).copyWith(
+                                fontWeight: FontWeight.w800,
                               ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
                           subtitle,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          style: AppTypography.meta(context).copyWith(
                                 color: ext.textTertiary,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                         ),
                       ],

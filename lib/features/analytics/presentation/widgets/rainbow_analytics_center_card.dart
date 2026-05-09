@@ -1,6 +1,8 @@
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/providers/investment_opportunity_providers.dart';
 import 'package:flutter/material.dart';
@@ -19,97 +21,201 @@ class RainbowAnalyticsCenterCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final ui = ref.watch(analyticsCenterCardUiProvider);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-        onTap: () => context.push(AppRouter.routeRainbowAnalytics),
-        child: RepaintBoundary(
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(DesignTokens.space5),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  ext.surfaceElevated,
-                  Color.alphaBlend(
-                    ext.foreground.withValues(alpha: 0.03),
-                    ext.surface,
+    final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardL);
+    return Semantics(
+      button: true,
+      label: 'Analitik merkezi — bölge ve yatırım içgörüsüne git',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: radius,
+          splashColor: ext.accent.withValues(alpha: 0.1),
+          onTap: () => context.push(AppRouter.routeRainbowAnalytics),
+          child: RepaintBoundary(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    ext.surfaceElevated,
+                    Color.alphaBlend(
+                      ext.foreground.withValues(alpha: 0.04),
+                      ext.surface,
+                    ),
+                  ],
+                ),
+                border: Border.all(color: ext.accent.withValues(alpha: 0.42)),
+                boxShadow: [
+                  BoxShadow(
+                    color: ext.shadowColor.withValues(alpha: 0.14),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
-              border: Border.all(color: ext.accent.withValues(alpha: 0.38)),
-              boxShadow: [
-                BoxShadow(
-                  color: ext.shadowColor.withValues(alpha: 0.12),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: ext.accent.withValues(alpha: 0.45)),
-                    color: ext.surface.withValues(alpha: 0.65),
-                  ),
-                  child: Icon(Icons.auto_graph_rounded, color: ext.accent, size: 28),
-                ),
-                const SizedBox(width: DesignTokens.space4),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Rainbow Analytics Center',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: ext.accent,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.15,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+              child: ClipRRect(
+                borderRadius: radius,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      height: 3,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              ext.accent.withValues(alpha: 0.9),
+                              ext.accent.withValues(alpha: 0.1),
+                            ],
                           ),
-                          _PhaseChip(phase: ui.phase, ext: ext, theme: theme),
-                        ],
-                      ),
-                      const SizedBox(height: DesignTokens.space2),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 220),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeInCubic,
-                        child: _SubtitleBlock(
-                          key: ValueKey<String>(
-                            '${ui.phase}_${ui.pulseLine}_${ui.error?.hashCode ?? 0}',
-                          ),
-                          ui: ui,
-                          ext: ext,
-                          theme: theme,
-                          onRetry: () => _retry(ref),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        DesignTokens.space5,
+                        DesignTokens.space5 + 4,
+                        DesignTokens.space5,
+                        DesignTokens.space5,
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final narrow = constraints.maxWidth < 340;
+                          final titleSize = narrow
+                              ? DesignTokens.fontSizeMd
+                              : DesignTokens.fontSizeLg;
+                          final iconSize = narrow ? 26.0 : 30.0;
+                          final iconPad = narrow ? 11.0 : 14.0;
+                          final phase = _PhaseChip(
+                            phase: ui.phase,
+                            ext: ext,
+                            theme: theme,
+                          );
+                          final body = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Analitik merkezi',
+                                style: AppTypography.cardHeading(context)
+                                    .copyWith(
+                                  color: ext.textPrimary,
+                                  fontSize: titleSize,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Bölge talebi ve yatırım ufkunu aç',
+                                style: AppTypography.meta(context).copyWith(
+                                  color: ext.textTertiary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: narrow ? 2 : 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(
+                                  height: narrow
+                                      ? DesignTokens.space2
+                                      : DesignTokens.space3),
+                              if (narrow) ...[
+                                Text(
+                                  'Rainbow Intelligence',
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    color: ext.accent,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.1,
+                                    fontSize: DesignTokens.fontSizeSm + 1,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: DesignTokens.space2),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: phase,
+                                ),
+                              ] else
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Rainbow Intelligence',
+                                        style: theme.textTheme.titleSmall
+                                            ?.copyWith(
+                                          color: ext.accent,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.12,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    phase,
+                                  ],
+                                ),
+                              const SizedBox(height: DesignTokens.space2),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 220),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                child: _SubtitleBlock(
+                                  key: ValueKey<String>(
+                                    '${ui.phase}_${ui.pulseLine}_${ui.error?.hashCode ?? 0}',
+                                  ),
+                                  ui: ui,
+                                  ext: ext,
+                                  theme: theme,
+                                  onRetry: () => _retry(ref),
+                                ),
+                              ),
+                            ],
+                          );
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Semantics(
+                                label: 'Analitik merkezi simgesi',
+                                excludeSemantics: true,
+                                child: Container(
+                                  padding: EdgeInsets.all(iconPad),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color:
+                                            ext.accent.withValues(alpha: 0.5)),
+                                    color: ext.accent.withValues(alpha: 0.08),
+                                  ),
+                                  child: Icon(Icons.insights_rounded,
+                                      color: ext.accent, size: iconSize),
+                                ),
+                              ),
+                              const SizedBox(width: DesignTokens.space4),
+                              Expanded(child: body),
+                              Semantics(
+                                label: 'Detaya git',
+                                excludeSemantics: true,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: ext.accent.withValues(alpha: 0.85),
+                                    size: narrow ? 22 : 26,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    color: ext.accent.withValues(alpha: 0.85),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -141,7 +247,13 @@ class _PhaseChip extends StatelessWidget {
     late final Color fg;
     switch (phase) {
       case AnalyticsCenterCardPhase.loadingSkeleton:
-        return const SizedBox.shrink();
+        return Semantics(
+          label: 'Veri durumu yükleniyor',
+          child: const SizedBox(
+            width: 36,
+            height: 22,
+          ),
+        );
       case AnalyticsCenterCardPhase.live:
         label = 'Canlı';
         bg = ext.success.withValues(alpha: 0.14);
@@ -155,8 +267,8 @@ class _PhaseChip extends StatelessWidget {
         bg = ext.warning.withValues(alpha: 0.14);
         fg = ext.warning;
       case AnalyticsCenterCardPhase.empty:
-        label = 'Varsayılan';
-        bg = ext.textTertiary.withValues(alpha: 0.35);
+        label = 'Genel profil';
+        bg = ext.textTertiary.withValues(alpha: 0.28);
         fg = ext.textSecondary;
       case AnalyticsCenterCardPhase.error:
         label = 'Hata';
@@ -164,22 +276,27 @@ class _PhaseChip extends StatelessWidget {
         fg = ext.danger;
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(left: DesignTokens.space2),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
-          border: Border.all(color: fg.withValues(alpha: 0.35)),
-        ),
-        child: Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: fg,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
-            fontSize: DesignTokens.fontSizeXs,
+    return Semantics(
+      label: 'Veri durumu: $label',
+      child: Padding(
+        padding: const EdgeInsets.only(left: DesignTokens.space2),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          constraints: const BoxConstraints(minHeight: 28),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
+            border: Border.all(color: fg.withValues(alpha: 0.35)),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+              fontSize: DesignTokens.fontSizeXs,
+            ),
           ),
         ),
       ),
