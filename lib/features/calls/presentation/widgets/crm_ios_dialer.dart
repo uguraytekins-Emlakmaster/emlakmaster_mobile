@@ -4,16 +4,74 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// iPhone Phone tuş takımına yakın açık tonlu yüzey (bu ekran için sabit palet).
-abstract final class DialerIosPalette {
-  static const Color pageBg = Color(0xFFF2F2F7);
-  static const Color keyFill = Color(0xFFE4E4EA);
-  static const Color keyFillPressed = Color(0xFFD1D1D6);
-  static const Color labelPrimary = Color(0xFF000000);
-  static const Color labelSecondary = Color(0xFF8E8E93);
-  static const Color callGreen = Color(0xFF34C759);
-  static const Color capsuleFill = Color(0xFFFFFFFF);
-  static const Color capsuleBorder = Color(0x14000000);
+/// Dialer ekranı — [ThemeData.brightness] ile açık / koyu (iPhone Phone’a yakın).
+@immutable
+class DialerThemeTokens {
+  const DialerThemeTokens({
+    required this.pageBg,
+    required this.keyFill,
+    required this.keyFillPressed,
+    required this.labelPrimary,
+    required this.labelSecondary,
+    required this.callGreen,
+    required this.capsuleFill,
+    required this.capsuleBorder,
+    required this.keyShadow,
+    required this.capsuleShadow,
+    required this.inkSplash,
+    required this.inkHighlight,
+    required this.callButtonShadow,
+  });
+
+  final Color pageBg;
+  final Color keyFill;
+  final Color keyFillPressed;
+  final Color labelPrimary;
+  final Color labelSecondary;
+  final Color callGreen;
+  final Color capsuleFill;
+  final Color capsuleBorder;
+  final Color keyShadow;
+  final Color capsuleShadow;
+  final Color inkSplash;
+  final Color inkHighlight;
+  final Color callButtonShadow;
+
+  factory DialerThemeTokens.of(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (isDark) {
+      return const DialerThemeTokens(
+        pageBg: Color(0xFF000000),
+        keyFill: Color(0xFF3A3A3C),
+        keyFillPressed: Color(0xFF48484A),
+        labelPrimary: Color(0xFFFFFFFF),
+        labelSecondary: Color(0xFF8E8E93),
+        callGreen: Color(0xFF30D158),
+        capsuleFill: Color(0xFF1C1C1E),
+        capsuleBorder: Color(0x38FFFFFF),
+        keyShadow: Color(0xB3000000),
+        capsuleShadow: Color(0x99000000),
+        inkSplash: Color(0x33FFFFFF),
+        inkHighlight: Color(0x18FFFFFF),
+        callButtonShadow: Color(0x6630D158),
+      );
+    }
+    return const DialerThemeTokens(
+      pageBg: Color(0xFFF2F2F7),
+      keyFill: Color(0xFFE4E4EA),
+      keyFillPressed: Color(0xFFD1D1D6),
+      labelPrimary: Color(0xFF000000),
+      labelSecondary: Color(0xFF8E8E93),
+      callGreen: Color(0xFF34C759),
+      capsuleFill: Color(0xFFFFFFFF),
+      capsuleBorder: Color(0x14000000),
+      keyShadow: Color(0x0D000000),
+      capsuleShadow: Color(0x0A000000),
+      inkSplash: Color(0x1F000000),
+      inkHighlight: Color(0x0A000000),
+      callButtonShadow: Color(0x22000000),
+    );
+  }
 }
 
 /// CRM “Yeni arama” — tuş takımı öncelikli, hafif iOS hissi.
@@ -81,6 +139,7 @@ class CrmIosDialerShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = DialerThemeTokens.of(context);
     final officeName = ref.watch(
       currentOfficeProvider.select((o) => o.valueOrNull?.name),
     );
@@ -88,7 +147,7 @@ class CrmIosDialerShell extends ConsumerWidget {
     final maxScale = textScaler.scale(1.0).clamp(1.0, 1.35);
 
     return ColoredBox(
-      color: DialerIosPalette.pageBg,
+      color: t.pageBg,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -100,13 +159,13 @@ class CrmIosDialerShell extends ConsumerWidget {
                   IconButton(
                     tooltip: 'Kapat',
                     onPressed: onDismiss,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: DialerIosPalette.labelSecondary,
+                      color: t.labelSecondary,
                       size: 28,
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Yeni arama',
                       textAlign: TextAlign.center,
@@ -114,7 +173,7 @@ class CrmIosDialerShell extends ConsumerWidget {
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
                         letterSpacing: -0.25,
-                        color: DialerIosPalette.labelPrimary,
+                        color: t.labelPrimary,
                       ),
                     ),
                   ),
@@ -133,7 +192,7 @@ class CrmIosDialerShell extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12 * maxScale,
                     height: 1.25,
-                    color: DialerIosPalette.labelSecondary,
+                    color: t.labelSecondary,
                   ),
                 ),
               )
@@ -146,7 +205,7 @@ class CrmIosDialerShell extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12 * maxScale,
                     height: 1.2,
-                    color: DialerIosPalette.labelSecondary,
+                    color: t.labelSecondary,
                   ),
                 ),
               ),
@@ -155,7 +214,10 @@ class CrmIosDialerShell extends ConsumerWidget {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 360),
-                  child: _OutgoingLineCapsule(officeName: officeName),
+                  child: _OutgoingLineCapsule(
+                    officeName: officeName,
+                    tokens: t,
+                  ),
                 ),
               ),
             ),
@@ -187,6 +249,7 @@ class CrmIosDialerShell extends ConsumerWidget {
                                   display: display,
                                   hasDigits: digits.trim().isNotEmpty,
                                   textScale: maxScale,
+                                  tokens: t,
                                   onBackspace: () => _backspace(dialNotifier),
                                 ),
                               ),
@@ -197,11 +260,13 @@ class CrmIosDialerShell extends ConsumerWidget {
                               gapV: gapV,
                               ituLetters: _ituLetters,
                               keyOrder: _keyOrder,
+                              tokens: t,
                               onDigit: (k) => _append(dialNotifier, k),
                               onLongPressZero: () => _longPressZero(dialNotifier),
                             ),
                             const SizedBox(height: 10),
                             DialerGreenCallButton(
+                              tokens: t,
                               enabled: canStart,
                               onPressed: onStartCall,
                             ),
@@ -222,9 +287,13 @@ class CrmIosDialerShell extends ConsumerWidget {
 }
 
 class _OutgoingLineCapsule extends StatelessWidget {
-  const _OutgoingLineCapsule({required this.officeName});
+  const _OutgoingLineCapsule({
+    required this.officeName,
+    required this.tokens,
+  });
 
   final String? officeName;
+  final DialerThemeTokens tokens;
 
   @override
   Widget build(BuildContext context) {
@@ -232,14 +301,14 @@ class _OutgoingLineCapsule extends StatelessWidget {
     final lineTitle = hasName ? officeName!.trim() : 'Kurumsal çıkış hattı';
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: DialerIosPalette.capsuleFill,
+        color: tokens.capsuleFill,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: DialerIosPalette.capsuleBorder),
-        boxShadow: const [
+        border: Border.all(color: tokens.capsuleBorder),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: tokens.capsuleShadow,
             blurRadius: 6,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -247,10 +316,10 @@ class _OutgoingLineCapsule extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.swap_horiz_rounded,
               size: 18,
-              color: DialerIosPalette.labelSecondary,
+              color: tokens.labelSecondary,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -258,12 +327,12 @@ class _OutgoingLineCapsule extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'Giden hat',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: DialerIosPalette.labelSecondary,
+                      color: tokens.labelSecondary,
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -272,19 +341,19 @@ class _OutgoingLineCapsule extends StatelessWidget {
                     lineTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: DialerIosPalette.labelPrimary,
+                      color: tokens.labelPrimary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: DialerIosPalette.labelSecondary,
+              color: tokens.labelSecondary,
             ),
           ],
         ),
@@ -298,12 +367,14 @@ class _DialNumberDisplay extends StatelessWidget {
     required this.display,
     required this.hasDigits,
     required this.textScale,
+    required this.tokens,
     required this.onBackspace,
   });
 
   final String display;
   final bool hasDigits;
   final double textScale;
+  final DialerThemeTokens tokens;
   final VoidCallback onBackspace;
 
   @override
@@ -321,7 +392,7 @@ class _DialNumberDisplay extends StatelessWidget {
                 fontWeight: FontWeight.w300,
                 height: 1.12,
                 letterSpacing: 0.5,
-                color: DialerIosPalette.labelPrimary,
+                color: tokens.labelPrimary,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
@@ -332,7 +403,7 @@ class _DialNumberDisplay extends StatelessWidget {
             style: TextStyle(
               fontSize: 26 * textScale,
               fontWeight: FontWeight.w400,
-              color: DialerIosPalette.labelSecondary,
+              color: tokens.labelSecondary,
               height: 1.1,
             ),
           );
@@ -344,9 +415,9 @@ class _DialNumberDisplay extends StatelessWidget {
           IconButton(
             tooltip: 'Sil',
             onPressed: onBackspace,
-            icon: const Icon(
+            icon: Icon(
               Icons.backspace_outlined,
-              color: DialerIosPalette.labelSecondary,
+              color: tokens.labelSecondary,
               size: 26,
             ),
           )
@@ -364,6 +435,7 @@ class _IosDialKeypad extends StatelessWidget {
     required this.gapV,
     required this.ituLetters,
     required this.keyOrder,
+    required this.tokens,
     required this.onDigit,
     required this.onLongPressZero,
   });
@@ -373,6 +445,7 @@ class _IosDialKeypad extends StatelessWidget {
   final double gapV;
   final Map<String, String> ituLetters;
   final List<String> keyOrder;
+  final DialerThemeTokens tokens;
   final ValueChanged<String> onDigit;
   final VoidCallback onLongPressZero;
 
@@ -386,6 +459,7 @@ class _IosDialKeypad extends StatelessWidget {
             label: keyOrder[a],
             letters: ituLetters[keyOrder[a]],
             diameter: keyDiameter,
+            tokens: tokens,
             onTap: () => onDigit(keyOrder[a]),
             onLongPress: keyOrder[a] == '0' ? onLongPressZero : null,
           ),
@@ -394,6 +468,7 @@ class _IosDialKeypad extends StatelessWidget {
             label: keyOrder[b],
             letters: ituLetters[keyOrder[b]],
             diameter: keyDiameter,
+            tokens: tokens,
             onTap: () => onDigit(keyOrder[b]),
             onLongPress: keyOrder[b] == '0' ? onLongPressZero : null,
           ),
@@ -402,6 +477,7 @@ class _IosDialKeypad extends StatelessWidget {
             label: keyOrder[c],
             letters: ituLetters[keyOrder[c]],
             diameter: keyDiameter,
+            tokens: tokens,
             onTap: () => onDigit(keyOrder[c]),
             onLongPress: keyOrder[c] == '0' ? onLongPressZero : null,
           ),
@@ -429,6 +505,7 @@ class _IosDialKey extends StatefulWidget {
     required this.label,
     required this.letters,
     required this.diameter,
+    required this.tokens,
     required this.onTap,
     this.onLongPress,
   });
@@ -436,6 +513,7 @@ class _IosDialKey extends StatefulWidget {
   final String label;
   final String? letters;
   final double diameter;
+  final DialerThemeTokens tokens;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
@@ -461,8 +539,8 @@ class _IosDialKeyState extends State<_IosDialKey> {
           customBorder: const CircleBorder(),
           onTap: widget.onTap,
           onLongPress: widget.onLongPress,
-          splashColor: Colors.black12,
-          highlightColor: Colors.black.withValues(alpha: 0.04),
+          splashColor: widget.tokens.inkSplash,
+          highlightColor: widget.tokens.inkHighlight,
           child: AnimatedScale(
             scale: _pressed ? 0.94 : 1.0,
             duration: const Duration(milliseconds: 80),
@@ -473,13 +551,13 @@ class _IosDialKeyState extends State<_IosDialKey> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: _pressed
-                    ? DialerIosPalette.keyFillPressed
-                    : DialerIosPalette.keyFill,
-                boxShadow: const [
+                    ? widget.tokens.keyFillPressed
+                    : widget.tokens.keyFill,
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x0D000000),
+                    color: widget.tokens.keyShadow,
                     blurRadius: 1,
-                    offset: Offset(0, 1),
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),
@@ -494,7 +572,7 @@ class _IosDialKeyState extends State<_IosDialKey> {
                               fontSize: digitSize,
                               fontWeight: FontWeight.w400,
                               height: 1.0,
-                              color: DialerIosPalette.labelPrimary,
+                              color: widget.tokens.labelPrimary,
                               fontFeatures: const [
                                 FontFeature.tabularFigures(),
                               ],
@@ -508,7 +586,7 @@ class _IosDialKeyState extends State<_IosDialKey> {
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.8,
                               height: 1.0,
-                              color: DialerIosPalette.labelSecondary,
+                              color: widget.tokens.labelSecondary,
                             ),
                           ),
                         ],
@@ -519,7 +597,7 @@ class _IosDialKeyState extends State<_IosDialKey> {
                           fontSize: digitSize,
                           fontWeight: FontWeight.w400,
                           height: 1.0,
-                          color: DialerIosPalette.labelPrimary,
+                          color: widget.tokens.labelPrimary,
                           fontFeatures: const [
                             FontFeature.tabularFigures(),
                           ],
@@ -538,10 +616,12 @@ class _IosDialKeyState extends State<_IosDialKey> {
 class DialerGreenCallButton extends StatelessWidget {
   const DialerGreenCallButton({
     super.key,
+    required this.tokens,
     required this.enabled,
     required this.onPressed,
   });
 
+  final DialerThemeTokens tokens;
   final bool enabled;
   final VoidCallback onPressed;
 
@@ -568,14 +648,14 @@ class DialerGreenCallButton extends StatelessWidget {
               child: Ink(
                 width: 76,
                 height: 76,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: DialerIosPalette.callGreen,
+                  color: tokens.callGreen,
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0x22000000),
+                      color: tokens.callButtonShadow,
                       blurRadius: 10,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
