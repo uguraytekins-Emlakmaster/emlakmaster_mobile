@@ -119,9 +119,13 @@ class _PostCallQuickCaptureBodyState
         return;
       }
       HapticFeedback.mediumImpact();
-      final okMessage = result.taskCreated
+      var okMessage = result.taskCreated
           ? 'Çağrı kaydı ve takip görevi kaydedildi.'
           : 'Çağrı kaydı kaydedildi.';
+      final warn = result.enrichmentWarningTr;
+      if (warn != null && warn.trim().isNotEmpty) {
+        okMessage = '$okMessage\n\n$warn';
+      }
       var closed = false;
       final rootNavigator = Navigator.of(context, rootNavigator: true);
       if (rootNavigator.canPop()) {

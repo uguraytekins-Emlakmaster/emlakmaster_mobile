@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/data/call_local_hive_store.dart';
+import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
@@ -33,6 +35,8 @@ class QuickCaptureSaveResult {
     required this.aiLimited,
     this.customerId,
     this.firestoreCallId,
+    /// Çağrı satırı Firestore’da tamam; müşteri notu veya görev aşaması başarısızsa Türkçe kısa uyarı.
+    this.enrichmentWarningTr,
   });
 
   final bool savedSuccessfully;
@@ -43,6 +47,56 @@ class QuickCaptureSaveResult {
   final bool aiLimited;
   final String? customerId;
   final String? firestoreCallId;
+  final String? enrichmentWarningTr;
+}
+
+String? _nonLocalFirestoreCallId(String? id) {
+  const lp = PostCallCaptureDraft.localPrefix;
+  if (id == null || id.isEmpty || id.startsWith(lp)) return null;
+  return id;
+}
+
+/// Hive’daki gerçek `calls/{id}` ile taslak `callSessionId` (hâlâ `local_…`) çakışmasını çözer.
+String? resolveQuickCaptureFirestoreCallId({
+  required PostCallCaptureDraft draft,
+  required LocalCallRecord? hiveRow,
+}) {
+  final draftId = _nonLocalFirestoreCallId(draft.callSessionId);
+  final hiveId = _nonLocalFirestoreCallId(hiveRow?.firestoreDocumentId);
+
+  if (draft.crmSessionTracked && draftId != null) {
+    return draftId;
+  }
+  if (hiveId != null) {
+    return hiveId;
+  }
+  if (draftId != null) {
+    return draftId;
+  }
+  return null;
+}
+
+void _logQuickCaptureFirestoreError(
+  String phase, {
+  required Object error,
+  StackTrace? stackTrace,
+  String? method,
+  String? documentPath,
+}) {
+  final b = StringBuffer('[quick_capture][$phase]');
+  if (method != null) b.write(' method=$method');
+  if (documentPath != null) b.write(' path=$documentPath');
+  b.write(' type=${error.runtimeType}');
+  if (error is FirebaseException) {
+    b.write(' code=${error.code} message=${error.message}');
+  } else {
+    b.write(' message=$error');
+  }
+  final line = b.toString();
+  AppLogger.e(line, error, stackTrace);
+  if (kDebugMode) {
+    AppLogger.d(line);
+  }
 }
 
 /// Hızlı çağrı kaydını Firestore’a uygular ve bekleyen taslağı temizler.
@@ -150,37 +204,84 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
 
   final signals = canUseAi ? _signalsFor(outcomeCode, heatBand) : null;
 
-  String? newFirestoreCallId;
   var taskCreated = false;
-  AppLogger.forensic(
-    'quick_capture: Firestore runWithResilience start hasDoc=${effective.hasFirestoreCallDoc}',
+  final hiveAfterPatch =
+      await CallLocalHiveStore.instance.get(uid, effective.localRecordId);
+  final resolvedCallId = resolveQuickCaptureFirestoreCallId(
+    draft: effective,
+    hiveRow: hiveAfterPatch,
   );
-  try {
-    await runWithResilienceWidget(
-      () async {
-        if (effective.hasFirestoreCallDoc) {
-          await FirestoreService.mergeOutboundCallQuickCapture(
-            callSessionId: effective.callSessionId,
-            quickOutcomeCode: outcomeCode,
-            quickOutcomeLabelTr: label,
-            quickNote: trimmed,
-            followUpReminderAt: followUpReminderAt,
-          );
-        } else {
-          newFirestoreCallId =
-              await FirestoreService.createCallRecordWithQuickCapture(
-            advisorId: uid,
-            customerId: effective.customerId,
-            phoneNumber: effective.phone,
-            startedFromScreen: effective.startedFromScreen,
-            quickOutcomeCode: outcomeCode,
-            quickOutcomeLabelTr: label,
-            quickNote: trimmed,
-            followUpReminderAt: followUpReminderAt,
-          );
-        }
+  final branch = resolvedCallId != null ? 'merge' : 'create';
+  AppLogger.forensic(
+    'quick_capture: Firestore resolve branch=$branch '
+    'draftSession=${effective.callSessionId} '
+    'hiveFid=${hiveAfterPatch?.firestoreDocumentId ?? '-'} '
+    'resolved=${resolvedCallId ?? '-'} crmTracked=${effective.crmSessionTracked}',
+  );
 
-        if (cid != null && cid.isNotEmpty) {
+  final String canonicalCallId;
+  try {
+    canonicalCallId = await runWithResilienceWidget<String>(
+      () async {
+        if (resolvedCallId != null) {
+          await FirestoreService.mergeOutboundCallQuickCapture(
+            callSessionId: resolvedCallId,
+            quickOutcomeCode: outcomeCode,
+            quickOutcomeLabelTr: label,
+            quickNote: trimmed,
+            followUpReminderAt: followUpReminderAt,
+          );
+          return resolvedCallId;
+        }
+        return FirestoreService.createCallRecordWithQuickCapture(
+          advisorId: uid,
+          customerId: effective.customerId,
+          phoneNumber: effective.phone,
+          startedFromScreen: effective.startedFromScreen,
+          quickOutcomeCode: outcomeCode,
+          quickOutcomeLabelTr: label,
+          quickNote: trimmed,
+          followUpReminderAt: followUpReminderAt,
+        );
+      },
+      ref: ref,
+    );
+  } catch (e, st) {
+    final path = resolvedCallId != null
+        ? '${AppConstants.colCalls}/$resolvedCallId'
+        : '${AppConstants.colCalls}<(create)>';
+    _logQuickCaptureFirestoreError(
+      'call_doc',
+      error: e,
+      stackTrace: st,
+      method: resolvedCallId != null
+          ? 'mergeOutboundCallQuickCapture'
+          : 'createCallRecordWithQuickCapture',
+      documentPath: path,
+    );
+    AppLogger.forensic(
+      'quick_capture: Firestore call_doc FINAL error ${e.runtimeType}',
+    );
+    rethrow;
+  }
+
+  final curHive =
+      await CallLocalHiveStore.instance.get(uid, effective.localRecordId);
+  if (curHive != null &&
+      (curHive.firestoreDocumentId == null ||
+          curHive.firestoreDocumentId != canonicalCallId)) {
+    await CallLocalHiveStore.instance.replaceFirestoreDocumentId(
+      agentId: uid,
+      localId: effective.localRecordId,
+      firestoreDocumentId: canonicalCallId,
+    );
+  }
+
+  final warnings = <String>[];
+  if (cid != null && cid.isNotEmpty) {
+    try {
+      await runWithResilienceWidget(
+        () async {
           final noteLine = StringBuffer('📞 Hızlı kayıt: $label');
           if (trimmed != null && trimmed.isNotEmpty) {
             noteLine.write(' — $trimmed');
@@ -192,10 +293,29 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
             noteLine: noteLine.toString(),
             lastCallSummarySignalsPayload: signals,
           );
-        }
+        },
+        ref: ref,
+      );
+    } catch (e, st) {
+      _logQuickCaptureFirestoreError(
+        'customer_enrich',
+        error: e,
+        stackTrace: st,
+        method: 'mergeCustomerAfterQuickCallCapture',
+        documentPath: '${AppConstants.colCustomers}/$cid',
+      );
+      warnings.add(
+        'Çağrı kaydı tamam; müşteri kartına not veya sinyal yazılamadı: '
+        '${FirestoreService.userFacingErrorMessage(e)}',
+      );
+    }
+  }
 
-        if (createFollowUpTask) {
-          AppLogger.forensic('quick_capture: task create start');
+  if (createFollowUpTask) {
+    AppLogger.forensic('quick_capture: task create start');
+    try {
+      await runWithResilienceWidget(
+        () async {
           final due =
               followUpReminderAt ?? DateTime.now().add(const Duration(days: 1));
           await FirestoreService.setTask({
@@ -207,29 +327,30 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
             'phoneNumber': effective.phone,
             'source': 'post_call_quick_capture',
           });
-          taskCreated = true;
-          AppLogger.forensic('quick_capture: task create done');
-        }
-      },
-      ref: ref,
-    );
-  } catch (e, st) {
-    AppLogger.forensic(
-        'quick_capture: Firestore path FINAL error ${e.runtimeType}');
-    AppLogger.e('quick_capture: Firestore path failed', e, st);
-    rethrow;
+        },
+        ref: ref,
+      );
+      taskCreated = true;
+      AppLogger.forensic('quick_capture: task create done');
+    } catch (e, st) {
+      _logQuickCaptureFirestoreError(
+        'task',
+        error: e,
+        stackTrace: st,
+        method: 'setTask',
+        documentPath: AppConstants.colTasks,
+      );
+      warnings.add(
+        'Takip görevi oluşturulamadı: '
+        '${FirestoreService.userFacingErrorMessage(e)}',
+      );
+    }
   }
-  AppLogger.forensic(
-    'quick_capture: Firestore runWithResilience done newId=${newFirestoreCallId ?? '-'} task=$taskCreated',
-  );
 
-  if (newFirestoreCallId != null && newFirestoreCallId!.isNotEmpty) {
-    await CallLocalHiveStore.instance.replaceFirestoreDocumentId(
-      agentId: uid,
-      localId: effective.localRecordId,
-      firestoreDocumentId: newFirestoreCallId!,
-    );
-  }
+  AppLogger.forensic(
+    'quick_capture: Firestore phases done canonicalId=$canonicalCallId '
+    'task=$taskCreated warnings=${warnings.length}',
+  );
 
   await CallLocalHiveStore.instance.markSynced(
     agentId: uid,
@@ -249,7 +370,7 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
   if (kDebugMode) {
     AppLogger.i(
       '[quick_capture] save success local=${effective.localRecordId} '
-      'firestore=${newFirestoreCallId ?? effective.callSessionId} '
+      'firestore=$canonicalCallId '
       'taskCreated=$taskCreated aiLimited=${!canUseAi}',
     );
   }
@@ -264,7 +385,8 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     detachedCallSummarySaved: false,
     aiLimited: !canUseAi,
     customerId: cid,
-    firestoreCallId: newFirestoreCallId ?? effective.callSessionId,
+    firestoreCallId: canonicalCallId,
+    enrichmentWarningTr: warnings.isEmpty ? null : warnings.join('\n'),
   );
 }
 

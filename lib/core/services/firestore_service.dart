@@ -764,6 +764,11 @@ class FirestoreService {
     final doc = FirebaseFirestore.instance
         .collection(AppConstants.colCalls)
         .doc(callSessionId);
+    if (kDebugMode) {
+      AppLogger.d(
+        '[fs] mergeOutboundCallQuickCapture path=${AppConstants.colCalls}/$callSessionId',
+      );
+    }
     await doc.set({
       'quickOutcomeCode': quickOutcomeCode,
       'quickOutcomeLabelTr': quickOutcomeLabelTr,
