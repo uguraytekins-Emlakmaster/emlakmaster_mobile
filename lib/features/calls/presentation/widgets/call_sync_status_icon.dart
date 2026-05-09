@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
 import 'package:flutter/material.dart';
@@ -15,13 +16,15 @@ class CallSyncStatusIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final state = deriveLocalCallSyncUiState(record, nowMs: nowMs);
     final tooltip = _tooltipTr(state);
     final child = switch (state) {
       LocalCallSyncUiState.pending => Tooltip(
           message: tooltip,
-          child: Icon(Icons.circle, size: 10, color: Colors.amber.shade700),
+          child: Icon(Icons.circle, size: 10, color: ext.warning),
         ),
       LocalCallSyncUiState.syncing => Tooltip(
           message: tooltip,
@@ -30,33 +33,37 @@ class CallSyncStatusIcon extends StatelessWidget {
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              color: Theme.of(context).colorScheme.primary,
+              color: scheme.primary.withValues(alpha: 0.85),
             ),
           ),
         ),
       LocalCallSyncUiState.synced => Tooltip(
           message: tooltip,
-          child: Icon(Icons.check_circle_rounded, size: 14, color: Colors.green.shade600),
+          child: Icon(Icons.check_circle_rounded, size: 14, color: ext.success),
         ),
       LocalCallSyncUiState.failedRetry => Tooltip(
           message: tooltip,
-          child: Icon(Icons.warning_amber_rounded, size: 14, color: Colors.red.shade400),
+          child: Icon(Icons.schedule_rounded,
+              size: 13, color: ext.warning.withValues(alpha: 0.9)),
         ),
       LocalCallSyncUiState.failedPermanent => Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Tooltip(
               message: tooltip,
-              child: Icon(Icons.error_outline_rounded, size: 14, color: Colors.red.shade700),
+              child: Icon(Icons.cloud_off_outlined,
+                  size: 13, color: ext.danger.withValues(alpha: 0.82)),
             ),
             if (onManualRetry != null)
               IconButton(
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                iconSize: 16,
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                iconSize: 15,
                 tooltip: 'Tekrar dene',
                 onPressed: onManualRetry,
-                icon: Icon(Icons.refresh_rounded, color: Theme.of(context).colorScheme.primary),
+                icon: Icon(Icons.refresh_rounded,
+                    color: scheme.primary.withValues(alpha: 0.9)),
               ),
           ],
         ),
@@ -69,8 +76,9 @@ class CallSyncStatusIcon extends StatelessWidget {
       LocalCallSyncUiState.pending => 'Senkron bekleniyor',
       LocalCallSyncUiState.syncing => 'Senkronize ediliyor…',
       LocalCallSyncUiState.synced => 'Buluta kaydedildi',
-      LocalCallSyncUiState.failedRetry => 'Tekrar deneme zamanlandı',
-      LocalCallSyncUiState.failedPermanent => 'Senkron başarısız (süre aşımı)',
+      LocalCallSyncUiState.failedRetry => 'Otomatik yeniden denenecek',
+      LocalCallSyncUiState.failedPermanent =>
+        'Buluta iletilemedi · Tekrar deneyin',
     };
   }
 }

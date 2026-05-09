@@ -28,6 +28,7 @@ import 'package:emlakmaster_mobile/features/calls/domain/transcript_ingest_paylo
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment_input.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_wizard_context_strip.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -300,7 +301,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
     _appendTranscriptFromStt(text, r);
     setState(() {
       _voiceReviewHint = (r.shouldReview || r.textFromPartialOnly)
-          ? 'Ses metni aktarıldı; duraksamalı konuşmalarda küçük farklar olabilir. Kaydetmeden önce göz atmanız yeterli.'
+          ? 'Metin aktarıldı; duraksamalı konuşmalarda ufak farklar olabilir — kaydetmeden hızlıca göz atmanız yeterli.'
           : null;
     });
   }
@@ -579,12 +580,13 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
           _isSaving = false;
         });
       }
+      HapticFeedback.selectionClick();
       messenger.showSnackBar(
         SnackBar(
           content: Text(
             result.customerLinked
-                ? 'Çağrı özeti CRM müşterisine kaydedildi.'
-                : 'Çağrı özeti müşteri bağlantısı olmadan çağrı kaydı olarak saklandı.',
+                ? 'Harika — özet müşteri kartına işlendi.'
+                : 'Tamam — özet çağrı kaydına güvenle yazıldı.',
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -652,6 +654,20 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Text(
+            'Konuşmanın özü',
+            style: AppTypography.cardHeading(context).copyWith(
+              color: ext.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Ses veya klavye — metin tamamen size ait.',
+            style: AppTypography.meta(context).copyWith(
+              color: ext.textSecondary,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space3),
           _PostCallVoiceRow(
             voiceStatus: _voiceStatus,
             onSpeechResult: _onPostCallSpeechResult,
@@ -709,10 +725,12 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
               }
             },
           ),
-          const SizedBox(height: DesignTokens.space4),
+          const SizedBox(height: DesignTokens.space3),
           Text(
-            'İpucu: Özeti kısa tutun; bütçe ve bölge gibi ayrıntıları sonraki adımda düzenleyebilirsiniz.',
-            style: AppTypography.meta(context),
+            'İsterseniz kısa tutun; ayrıntıları bir sonraki adımda netleştirirsiniz.',
+            style: AppTypography.meta(context).copyWith(
+              color: ext.textSecondary,
+            ),
           ),
         ],
       ),
@@ -720,11 +738,24 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   }
 
   Widget _buildWizardStepDetails() {
+    final ext = AppThemeExtension.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: DesignTokens.space6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Text(
+            'Sinyaller & kayıt alanları',
+            style: AppTypography.cardHeading(context),
+          ),
+          const SizedBox(height: DesignTokens.space1),
+          Text(
+            'Özetten çıkanlar ve isteğe bağlı transkript. Hepsi kayıt akışına dahil.',
+            style: AppTypography.meta(context).copyWith(
+              color: ext.textSecondary,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space3),
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: _summaryController,
             builder: (context, value, _) {
@@ -732,37 +763,33 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             },
           ),
           Theme(
-            data: Theme.of(context).copyWith(dividerColor: Colors.white24),
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
               tilePadding: EdgeInsets.zero,
+              collapsedIconColor: ext.textSecondary,
+              iconColor: ext.textSecondary,
               title: Row(
                 children: [
                   Icon(
                     Icons.subtitles_outlined,
                     size: 18,
-                    color: AppThemeExtension.of(context).accent,
+                    color: ext.accent,
                   ),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Transkript (opsiyonel)',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
+                      'Transkript (isteğe bağlı)',
+                      style: AppTypography.bodyStrong(context),
                     ),
                   ),
                 ],
               ),
-              subtitle: const Padding(
-                padding: EdgeInsets.only(top: 4),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'STT veya metin yapıştırın. Özet ana kayıt; transkript ayrı saklanır.',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 11,
-                    height: 1.35,
+                  'Ses veya yapıştırma. Özet ana kayıt; transkript ayrı tutulur.',
+                  style: AppTypography.meta(context).copyWith(
+                    color: ext.textTertiary,
                   ),
                 ),
               ),
@@ -770,57 +797,79 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                 TextField(
                   controller: _transcriptController,
                   maxLines: 6,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontSize: 13,
-                    height: 1.35,
-                  ),
+                  style: AppTypography.body(context).copyWith(height: 1.35),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.06),
+                    fillColor: ext.inputBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
+                      borderSide: BorderSide(color: ext.borderSubtle),
                     ),
-                    hintText: 'Ham transkript…',
-                    hintStyle: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.35),
+                    hintText: 'Ham metin…',
+                    hintStyle: AppTypography.meta(context).copyWith(
+                      color: ext.textTertiary,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: DesignTokens.space4),
           Text(
-            'Kritik bilgiler',
-            style: TextStyle(
-              color: AppThemeExtension.of(context).textSecondary,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+            'Öne çıkanlar',
+            style: AppTypography.bodyStrong(context).copyWith(
+              color: ext.textSecondary,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: DesignTokens.space2),
           _ExtractionBentoGrid(extraction: _extraction!),
-          const SizedBox(height: 16),
-          _NextStepCard(suggestion: _extraction!.nextStepSuggestion),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: _summaryController,
-            builder: (context, value, _) {
-              return ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _transcriptController,
-                builder: (context, tvalue, _) {
-                  return _PostCallAiEnrichmentInsightPreview(
-                    summaryText: value.text,
-                    transcriptText: tvalue.text,
-                    sentimentStorage:
-                        sentimentToStorage(_extraction!.sentiment),
-                  );
-                },
-              );
-            },
+          const SizedBox(height: DesignTokens.space3),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              collapsedIconColor: ext.textSecondary,
+              iconColor: ext.textSecondary,
+              title: Row(
+                children: [
+                  Icon(Icons.auto_awesome_outlined, size: 18, color: ext.accent),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Yapay zekâ desteği',
+                      style: AppTypography.bodyStrong(context),
+                    ),
+                  ),
+                ],
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Özet netleştikçe ton ve takip önerileri canlı güncellenir.',
+                  style: AppTypography.meta(context).copyWith(
+                    color: ext.textTertiary,
+                  ),
+                ),
+              ),
+              children: [
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _summaryController,
+                  builder: (context, value, _) {
+                    return ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _transcriptController,
+                      builder: (context, tvalue, _) {
+                        return _PostCallAiEnrichmentInsightPreview(
+                          summaryText: value.text,
+                          transcriptText: tvalue.text,
+                          sentimentStorage:
+                              sentimentToStorage(_extraction!.sentiment),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -837,16 +886,21 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Kayıt öncesi kontrol',
+            'Son kontrol',
             style: AppTypography.cardHeading(context),
           ),
           const SizedBox(height: DesignTokens.space2),
           Text(
             linked
-                ? 'Özet, bağlı müşteri kartına ve çağrı kaydına işlenecek.'
-                : 'Müşteri bağlantısı yok; özet yine de çağrı kaydı olarak saklanır.',
-            style: AppTypography.meta(context),
+                ? 'Her şey hazırsa kaydedin; müşteri kartı ve çağrı güncellenir.'
+                : 'Bağımsız kayıt geçerlidir — özet çağrıyla birlikte saklanır.',
+            style: AppTypography.meta(context).copyWith(
+              color: ext.textSecondary,
+              height: 1.4,
+            ),
           ),
+          const SizedBox(height: DesignTokens.space4),
+          _NextStepCard(suggestion: _extraction!.nextStepSuggestion),
           const SizedBox(height: DesignTokens.space4),
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: _summaryController,
@@ -862,7 +916,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                     border: Border.all(color: ext.borderSubtle),
                   ),
                   child: Text(
-                    'Özet boş görünüyor. 1. adıma dönüp bir-iki cümle yazın veya sesle ekleyin.',
+                    'Özet henüz boş. İlk adımda birkaç cümle veya sesle ekleyin.',
                     style: AppTypography.body(context),
                   ),
                 );
@@ -891,10 +945,10 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ext = AppThemeExtension.of(context);
 
     return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+      backgroundColor: ext.background,
       body: SafeArea(
         child: Stack(
           children: [
@@ -907,7 +961,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close_rounded),
-                        color: Colors.white70,
+                        color: ext.textSecondary,
                         onPressed: () {
                           HapticFeedback.lightImpact();
                           context.pop();
@@ -919,41 +973,27 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Çağrı özeti',
+                              'Görüşme sonrası',
                               style:
                                   AppTypography.cardHeading(context).copyWith(
-                                color: Colors.white,
+                                color: ext.textPrimary,
                               ),
                             ),
                             const SizedBox(height: DesignTokens.space1),
                             Text(
-                              'Özet → detay → kayıt',
+                              'Özet · sinyaller · kayıt',
                               style: AppTypography.meta(context).copyWith(
-                                color: Colors.white70,
+                                color: ext.textSecondary,
                               ),
                             ),
-                            if ((widget.callOutcome ?? '') ==
-                                AppConstants.callOutcomeSystemHandoff) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                widget.phoneNumber != null &&
-                                        widget.phoneNumber!.trim().isNotEmpty
-                                    ? 'Gerçek arama cihazın telefonunda (${widget.phoneNumber!.trim()}) — süre burada ölçülmez.'
-                                    : 'Gerçek arama cihazın telefonunda yapıldı; süre burada ölçülmez.',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: Colors.white70,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
                           ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   const AiUsageIndicator(compact: true),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   if (_isAnalyzing) ...[
                     const _AnalyzingHeader(),
                     const SizedBox(height: 24),
@@ -982,7 +1022,15 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               );
                             },
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: DesignTokens.space3),
+                          PostCallWizardContextStrip(
+                            linkedCustomerId: widget.linkedCustomerId,
+                            phoneNumber: widget.phoneNumber,
+                            callSessionId: widget.callSessionId,
+                            isHandoffCall: (widget.callOutcome ?? '') ==
+                                AppConstants.callOutcomeSystemHandoff,
+                          ),
+                          const SizedBox(height: DesignTokens.space3),
                           Expanded(
                             child: PageView(
                               controller: _wizardPageController,
@@ -1000,6 +1048,8 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                             stepIndex: _wizardStepIndex,
                             isSaving: _isSaving,
                             saveError: _saveError,
+                            customerLinked: widget.linkedCustomerId != null &&
+                                widget.linkedCustomerId!.trim().isNotEmpty,
                             onBack: _wizardStepIndex <= 0
                                 ? null
                                 : () {
@@ -1045,7 +1095,7 @@ class _WizardProgressHeader extends StatelessWidget {
   final int currentStep;
   final ValueChanged<int> onStepTap;
 
-  static const List<String> _labels = ['Özet', 'Detaylar', 'Kayıt'];
+  static const List<String> _labels = ['Özet', 'Sinyaller', 'Tamamla'];
 
   @override
   Widget build(BuildContext context) {
@@ -1114,6 +1164,7 @@ class _PostCallWizardBottomBar extends StatelessWidget {
     required this.isSaving,
     required this.onSave,
     required this.onSaveContact,
+    required this.customerLinked,
     this.onBack,
     this.onNext,
     this.saveError,
@@ -1123,6 +1174,7 @@ class _PostCallWizardBottomBar extends StatelessWidget {
   final bool isSaving;
   final VoidCallback onSave;
   final Future<void> Function() onSaveContact;
+  final bool customerLinked;
   final VoidCallback? onBack;
   final VoidCallback? onNext;
   final String? saveError;
@@ -1172,7 +1224,7 @@ class _PostCallWizardBottomBar extends StatelessWidget {
                     foregroundColor: ext.onBrand,
                   ),
                   child: Text(
-                    'İleri',
+                    'Devam',
                     style: AppTypography.primaryButton(context)
                         .copyWith(color: ext.onBrand),
                   ),
@@ -1180,29 +1232,67 @@ class _PostCallWizardBottomBar extends StatelessWidget {
               ],
             )
           else ...[
+            if (!isSaving)
+              Padding(
+                padding: const EdgeInsets.only(bottom: DesignTokens.space2),
+                child: Text(
+                  customerLinked
+                      ? 'Müşteri kartı ve çağrı günlüğü güncellenir.'
+                      : 'Özet kalıcı çağrı kaydına yazılır.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.meta(context).copyWith(
+                    color: ext.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: ext.accent,
                 foregroundColor: ext.onBrand,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
               onPressed: isSaving ? null : onSave,
               child: isSaving
-                  ? SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: ext.onBrand,
-                      ),
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: ext.onBrand,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Kaydediliyor…',
+                          style: AppTypography.primaryButton(context)
+                              .copyWith(color: ext.onBrand),
+                        ),
+                      ],
                     )
-                  : Text(
-                      'Özeti Kaydet',
-                      style: AppTypography.primaryButton(context)
-                          .copyWith(color: ext.onBrand),
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle_outline_rounded,
+                            color: ext.onBrand, size: 22),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Özeti kaydet',
+                          style: AppTypography.primaryButton(context)
+                              .copyWith(
+                            color: ext.onBrand,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
             ),
             const SizedBox(height: DesignTokens.space2),
@@ -1211,11 +1301,10 @@ class _PostCallWizardBottomBar extends StatelessWidget {
                 await onSaveContact();
               },
               icon: const Icon(Icons.contact_phone_rounded, size: 20),
-              label:
-                  const Text('Rehbere ve uygulamaya kaydet (sesli / manuel)'),
+              label: const Text('Rehbere kaydet'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: ext.accent,
-                side: BorderSide(color: ext.accent),
+                side: BorderSide(color: ext.accent.withValues(alpha: 0.65)),
               ),
             ),
           ],
@@ -1231,28 +1320,32 @@ class _SkippedAnalysisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.timer_off_rounded,
-                size: 56, color: Colors.white54),
+            Icon(Icons.timer_off_rounded,
+                size: 56, color: ext.textSecondary.withValues(alpha: 0.85)),
             const SizedBox(height: 16),
             Text(
-              'AI analizi atlandı',
+              'Derin analiz atlandı',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
+                    color: ext.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Çok kısa arama veya yanlış numara. Derinlemesine analiz yapılmadı; bütçe ve işlemci korundu.',
-              style:
-                  TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+            Text(
+              'Çok kısa görüşme veya yanlış numara. Özet akışı açık; işlemciniz etkilenmez.',
+              style: TextStyle(
+                color: ext.textSecondary,
+                fontSize: 13,
+                height: 1.45,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -1261,8 +1354,8 @@ class _SkippedAnalysisCard extends StatelessWidget {
               icon: const Icon(Icons.home_rounded, size: 20),
               label: const Text('Ana sayfaya dön'),
               style: FilledButton.styleFrom(
-                backgroundColor: AppThemeExtension.of(context).accent,
-                foregroundColor: Colors.black,
+                backgroundColor: ext.accent,
+                foregroundColor: ext.onBrand,
               ),
             ),
           ],
@@ -1277,21 +1370,22 @@ class _AnalyzingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'AI Görüşmeyi Analiz Ediyor...',
+          'Görüşme okunuyor…',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
+                color: ext.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
         ),
         const SizedBox(height: 6),
         Text(
-          'Niyet, bütçe, bölge ve aciliyet çıkarılıyor.',
+          'Niyet, bütçe, bölge ve tempo çıkarılıyor; birkaç saniye.',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.white70,
+                color: ext.textSecondary,
                 height: 1.4,
               ),
         ),
@@ -1371,12 +1465,8 @@ class _PostCallVoiceRow extends StatelessWidget {
         Row(
           children: [
             Text(
-              'Sesle özet ekle',
-              style: TextStyle(
-                color: AppThemeExtension.of(context).textPrimary,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
+              'Sesle ekle',
+              style: AppTypography.bodyStrong(context),
             ),
             const SizedBox(width: 8),
             PushToTalkButton(
@@ -1440,24 +1530,25 @@ class _SummarySignalsPreview extends StatelessWidget {
 
     final s = extractPostCallCrmSignals(t);
 
+    final ext = AppThemeExtension.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.only(top: 4),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Colors.white.withValues(alpha: 0.05),
-          border: Border.all(color: Colors.white24),
+          color: ext.surfaceElevated.withValues(alpha: 0.55),
+          border: Border.all(color: ext.borderSubtle),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Özetten çıkan sinyaller (CRM)',
+              'Özetten çıkan sinyaller',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w600,
+                    color: ext.textSecondary,
+                    fontWeight: FontWeight.w700,
                   ),
             ),
             const SizedBox(height: 8),
@@ -1492,7 +1583,7 @@ class _SummarySignalsPreview extends StatelessWidget {
               Text(
                 s.nextActionHint,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white70,
+                      color: ext.textSecondary,
                       height: 1.35,
                     ),
               ),
@@ -1504,17 +1595,19 @@ class _SummarySignalsPreview extends StatelessWidget {
   }
 
   Widget _signalChip(BuildContext context, String k, String v) {
+    final ext = AppThemeExtension.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: Colors.white.withValues(alpha: 0.08),
+        color: ext.foregroundMuted.withValues(alpha: 0.1),
+        border: Border.all(color: ext.borderSubtle),
       ),
       child: Text(
         '$k: $v',
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Colors.white.withValues(alpha: 0.92),
-              fontWeight: FontWeight.w500,
+              color: ext.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
       ),
     );
@@ -1644,7 +1737,7 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
               _miniLine(context, 'Not', e.aiBrokerNoteTr),
               const SizedBox(height: 6),
               Text(
-                'Kayıttan sonra sunucu (varsa) içgörüyü güncelleyebilir; CRM skorları değişmez.',
+                'Kayıttan sonra içgörü sunucuda güncellenebilir; CRM skorları aynı kalır.',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Colors.white54,
                       height: 1.35,
@@ -1699,6 +1792,7 @@ class _ResultSummaryWithSentiment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final theme = Theme.of(context);
     final emoji = _sentimentEmoji[extraction.sentiment] ?? '😐';
     final label = _sentimentLabel[extraction.sentiment] ?? '';
@@ -1706,71 +1800,107 @@ class _ResultSummaryWithSentiment extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
+        color: ext.surfaceElevated,
+        border: Border.all(color: ext.borderSubtle.withValues(alpha: 0.85)),
+        boxShadow: [
+          BoxShadow(
+            color: ext.shadowColor.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 36)),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w600,
+              Text(emoji, style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Duygu tonu',
+                      style: AppTypography.meta(context).copyWith(
+                        color: ext.textTertiary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      label,
+                      style: AppTypography.bodyStrong(context),
+                    ),
+                    if (sub.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        sub,
+                        style: AppTypography.meta(context).copyWith(
+                          color: ext.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
-              if (sub.isNotEmpty)
-                Text(
-                  sub,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: Colors.white54,
-                    fontSize: 10,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
             ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Özet',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                TextField(
-                  controller: summaryController,
-                  onChanged: (_) => onSummaryEdited(),
-                  minLines: 3,
-                  maxLines: 8,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    border: InputBorder.none,
-                    hintText:
-                        'Özeti düzenleyebilir veya sesle ekleyebilirsiniz',
-                    hintStyle: TextStyle(color: Colors.white38),
-                  ),
-                ),
-              ],
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Divider(height: 1, color: ext.borderSubtle),
+          ),
+          Text(
+            'Özet metni',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: ext.textSecondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Taslak burada; dilediğiniz gibi düzenleyin.',
+            style: AppTypography.meta(context).copyWith(
+              color: ext.textTertiary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: summaryController,
+            onChanged: (_) => onSummaryEdited(),
+            minLines: 4,
+            maxLines: 10,
+            style: AppTypography.body(context).copyWith(
+              height: 1.4,
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: ext.inputBackground,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: ext.borderSubtle),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: ext.borderSubtle),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: ext.accent, width: 1.2),
+              ),
+              hintText: 'Kısa ve net; müşterinin ne istediği belli olsun.',
+              hintStyle: AppTypography.body(context).copyWith(
+                color: ext.textTertiary,
+              ),
             ),
           ),
         ],
@@ -1786,6 +1916,7 @@ class _ExtractionBentoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final theme = Theme.of(context);
     final cards = <_BentoItem>[
       _BentoItem(
@@ -1797,60 +1928,66 @@ class _ExtractionBentoGrid extends StatelessWidget {
       _BentoItem('Aciliyet Durumu', extraction.urgency, Icons.schedule_rounded),
     ];
 
-    return Column(
-      children: cards.map((e) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.white.withValues(alpha: 0.06),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: AppThemeExtension.of(context)
-                        .accent
-                        .withValues(alpha: 0.2),
-                  ),
-                  child: Icon(e.icon,
-                      color: AppThemeExtension.of(context).accent, size: 20),
+    return LayoutBuilder(
+      builder: (context, cons) {
+        final maxW = cons.maxWidth;
+        final useTwo = maxW > 420;
+        final tileW = useTwo ? (maxW - 10) / 2 : maxW;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: cards.map((e) {
+            return SizedBox(
+              width: tileW,
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: ext.surfaceElevated.withValues(alpha: 0.65),
+                  border:
+                      Border.all(color: ext.borderSubtle.withValues(alpha: 0.7)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        e.label,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white54,
-                          letterSpacing: 0.5,
-                        ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: ext.accent.withValues(alpha: 0.16),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        e.value,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: Icon(e.icon, color: ext.accent, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            e.label,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: ext.textTertiary,
+                              letterSpacing: 0.2,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            e.value,
+                            style: AppTypography.body(context).copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 }
@@ -1869,23 +2006,24 @@ class _NextStepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ext = AppThemeExtension.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: AppThemeExtension.of(context).accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
+        color: ext.accent.withValues(alpha: 0.1),
         border: Border.all(
-            color: AppThemeExtension.of(context).accent.withValues(alpha: 0.3)),
+          color: ext.accent.withValues(alpha: 0.28),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Icons.lightbulb_rounded,
-            color: AppThemeExtension.of(context).accent,
-            size: 24,
+            Icons.navigation_rounded,
+            color: ext.accent,
+            size: 22,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1893,18 +2031,16 @@ class _NextStepCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Sonraki Adım Önerisi',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: AppThemeExtension.of(context).accent,
-                    fontWeight: FontWeight.w600,
+                  'Önerilen sonraki adım',
+                  style: AppTypography.bodyStrong(context).copyWith(
+                    color: ext.accent,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   suggestion,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white,
-                    height: 1.4,
+                  style: AppTypography.body(context).copyWith(
+                    height: 1.45,
                   ),
                 ),
               ],

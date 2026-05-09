@@ -9,8 +9,11 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_record_firestore_match.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/firestore_agent_display_names_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,6 +44,9 @@ class ManagerCustomerCrmCallStrip extends ConsumerWidget {
         final locals =
             ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
         final currentUid = ref.watch(currentUserProvider).valueOrNull?.uid;
+        final agentNames =
+            ref.watch(firestoreAgentDisplayNamesProvider).valueOrNull ??
+                const <String, String>{};
         return Padding(
           padding: const EdgeInsets.only(bottom: DesignTokens.space4),
           child: Material(
@@ -58,7 +64,7 @@ class ManagerCustomerCrmCallStrip extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'CRM çağrı kayıtları (yönetici)',
+                          'Son görüşmeler',
                           style: AppTypography.cardHeading(context),
                         ),
                       ),
@@ -66,12 +72,17 @@ class ManagerCustomerCrmCallStrip extends ConsumerWidget {
                   ),
                   const SizedBox(height: DesignTokens.titleSubtitleGap),
                   Text(
-                    'Uygulamada kayıtlı handoff / sonuç / notlar. Operatör doğrulamalı hat süresi burada yoktur.',
+                    'Uygulamadaki sonuç ve notlar. Hat süresi operatör kayıtlarıyla doğrulanmaz.',
                     style: AppTypography.meta(context),
                   ),
                   const SizedBox(height: DesignTokens.space3),
                   for (final d in docs.take(5))
-                    _CallLine(doc: d, locals: locals, currentUid: currentUid),
+                    _CallLine(
+                      doc: d,
+                      locals: locals,
+                      currentUid: currentUid,
+                      agentNames: agentNames,
+                    ),
                 ],
               ),
             ),
@@ -87,11 +98,13 @@ class _CallLine extends StatelessWidget {
     required this.doc,
     required this.locals,
     required this.currentUid,
+    required this.agentNames,
   });
 
   final QueryDocumentSnapshot<Map<String, dynamic>> doc;
   final List<LocalCallRecord> locals;
   final String? currentUid;
+  final Map<String, String> agentNames;
 
   @override
   Widget build(BuildContext context) {
@@ -102,21 +115,36 @@ class _CallLine extends StatelessWidget {
     final timeStr = created != null
         ? '${created.day}.${created.month}.${created.year} ${created.hour}:${created.minute.toString().padLeft(2, '0')}'
         : '—';
-    final outcome = CrmCallRecordHelpers.outcomeDisplayTr(data, const {
-      'handoff_pending': 'Sonuç bekleniyor',
-      'reached': 'Ulaşıldı',
-      'no_answer': 'Cevap yok',
-      'completed': 'Tamamlandı',
-    });
+    final outcome = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
     final cap = CrmCallRecordHelpers.captureStatusTr(data);
-    final quickNote = (data['quickCaptureNote'] as String?)
-                ?.trim()
-                .isNotEmpty ==
-            true
-        ? (data['quickCaptureNote'] as String).trim()
-        : (data['postCallSummaryText'] as String?)?.trim().isNotEmpty == true
-            ? (data['postCallSummaryText'] as String).trim()
-            : null;
+    final rawPhone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
+    final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
+    final formattedPhone =
+        hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
+    final title = CrmCallRecordDisplay.primaryTitle(
+      contactDisplayName: CrmCallRecordDisplay.contactNameFromCallData(data),
+      rawPhone: hasDigits ? rawPhone : null,
+    );
+    final phoneUnder = CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
+      title: title,
+      formattedPhone: formattedPhone,
+    )
+        ? formattedPhone
+        : null;
+    final advisorPart = CrmCallRecordDisplay.advisorContext(
+      advisorAgentId: agent,
+      currentUid: currentUid,
+      agentNames: agentNames,
+    );
+    final contextLine = CrmCallRecordDisplay.contextLine(
+      advisorPart: advisorPart,
+      dateTime: timeStr,
+    );
+    final quickNote =
+        CrmCallRecordDisplay.notePreviewFromFirestoreData(data);
+    final foot = CrmCallRecordDisplay.technicalFootnote(
+      firestoreDocId: doc.id,
+    );
     final localMatch = matchLocalCallRecordForFirestoreDoc(
       locals: locals,
       docId: doc.id,
@@ -142,99 +170,34 @@ class _CallLine extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space3),
-      child: Container(
-        padding: const EdgeInsets.all(DesignTokens.space3),
-        decoration: BoxDecoration(
-          color: ext.surface,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-          border: Border.all(color: ext.border.withValues(alpha: 0.45)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 34,
-              height: 34,
+      child: Material(
+        color: ext.surface,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+          ),
+          child: CrmCallRecordListItem(
+            title: title,
+            phoneSubtitle: phoneUnder,
+            outcomeLabel: outcome,
+            captureLabel: cap,
+            contextLine: contextLine,
+            notePreview: quickNote,
+            technicalFootnote: foot,
+            leading: Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: ext.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
               ),
-              child: Icon(Icons.call_rounded, size: 18, color: ext.accent),
+              child: Icon(Icons.call_rounded, size: 20, color: ext.accent),
             ),
-            const SizedBox(width: DesignTokens.space3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: DesignTokens.space2,
-                    runSpacing: DesignTokens.space2,
-                    children: [
-                      _ManagerCallBadge(label: outcome, color: ext.accent),
-                      _ManagerCallBadge(label: cap, color: ext.textSecondary),
-                    ],
-                  ),
-                  const SizedBox(height: DesignTokens.space2),
-                  Text(
-                    'Danışman: ${agent.isEmpty ? '—' : _shortAgent(agent)}',
-                    style: AppTypography.bodyStrong(context),
-                  ),
-                  const SizedBox(height: DesignTokens.space1),
-                  Text(
-                    timeStr,
-                    style: AppTypography.meta(context),
-                  ),
-                  if (quickNote != null) ...[
-                    const SizedBox(height: DesignTokens.space2),
-                    Text(
-                      quickNote,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(context),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (syncIcon != null) syncIcon,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-String _shortAgent(String value) {
-  final v = value.trim();
-  if (v.length <= 8) return v;
-  return '${v.substring(0, 4)}...${v.substring(v.length - 4)}';
-}
-
-class _ManagerCallBadge extends StatelessWidget {
-  const _ManagerCallBadge({
-    required this.label,
-    required this.color,
-  });
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space2,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.meta(context).copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+            trailing: syncIcon,
+            padding: const EdgeInsets.all(DesignTokens.space3),
+          ),
         ),
       ),
     );

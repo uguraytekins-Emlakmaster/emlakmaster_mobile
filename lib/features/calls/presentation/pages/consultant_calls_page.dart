@@ -21,8 +21,12 @@ import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/firestore_agent_display_names_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
+import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
@@ -50,14 +54,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   List<String>? _whatsappQueue;
   int _whatsappIndex = 0;
   String _whatsappMessage = '';
-  static const Map<String, String> _outcomeLabels = {
-    'connected': 'Bağlandı',
-    'missed': 'Cevapsız',
-    'no_answer': 'Cevap yok',
-    'busy': 'Meşgul',
-    'failed': 'Başarısız',
-  };
-
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs = [];
 
   void _selectAll(bool select) {
@@ -291,8 +287,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       LocalCallSyncUiState.pending => 'Senkron bekleniyor',
       LocalCallSyncUiState.syncing => 'Senkronize ediliyor',
       LocalCallSyncUiState.synced => 'Buluta kayıtlı',
-      LocalCallSyncUiState.failedRetry => 'Tekrar denenecek',
-      LocalCallSyncUiState.failedPermanent => 'Senkron başarısız (süre aşımı)',
+      LocalCallSyncUiState.failedRetry => 'Otomatik yeniden denenecek',
+      LocalCallSyncUiState.failedPermanent => 'Buluta iletilemedi · Tekrar dene',
     };
   }
 
@@ -425,6 +421,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     final customers = ref.watch(customerListForAgentProvider).valueOrNull ??
         const <CustomerEntity>[];
     final customerById = {for (final c in customers) c.id: c};
+    final agentNames =
+        ref.watch(firestoreAgentDisplayNamesProvider).valueOrNull ??
+            const <String, String>{};
     if (kDebugMode && callsAsync.isLoading) {
       AppLogger.d('[consultant_calls] loading...');
     }
@@ -631,15 +630,35 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       final syncHint = _syncSubtitleHint(
                         deriveLocalCallSyncUiState(r, nowMs: nowMs),
                       );
+                      final custName = r.customerId != null &&
+                              r.customerId!.isNotEmpty
+                          ? customerById[r.customerId!]?.fullName
+                          : null;
+                      final formattedPhone =
+                          CrmCallRecordDisplay.formatPhone(r.phoneNumber);
+                      final localTitle = CrmCallRecordDisplay.primaryTitle(
+                        customerFullName: custName,
+                        rawPhone: r.phoneNumber,
+                      );
+                      final phoneUnder = CrmCallRecordDisplay
+                          .shouldShowPhoneUnderTitle(
+                        title: localTitle,
+                        formattedPhone: formattedPhone,
+                      )
+                          ? formattedPhone
+                          : null;
+                      final localFoot = CrmCallRecordDisplay.technicalFootnote(
+                        firestoreDocId: r.firestoreDocumentId,
+                        customerId: r.customerId,
+                      );
                       return _LocalCallRecordCard(
-                        title: r.customerId != null && r.customerId!.isNotEmpty
-                            ? 'CRM müşterisine bağlı kayıt'
-                            : 'Kaydedilmemiş çağrı',
-                        phone: _formatPhone(r.phoneNumber),
+                        title: localTitle,
+                        phoneSubtitle: phoneUnder,
                         dateStr: dateStr,
                         outcome: QuickCallOutcome.labelTr(outcomeStr),
                         syncHint: syncHint,
                         note: r.notes,
+                        technicalFootnote: localFoot,
                         syncIcon: CallSyncStatusIcon(
                           record: r,
                           onManualRetry:
@@ -649,7 +668,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                   : null,
                         ),
                         surface: surface,
-                        fg: fg,
                         textSecondary: textSecondary,
                         ext: AppThemeExtension.of(context),
                       );
@@ -663,15 +681,20 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     final isIncoming = direction == 'incoming';
                     final rawPhone = data['phoneNumber'] as String? ??
                         data['phone'] as String? ??
-                        '—';
-                    final phone = _formatPhone(rawPhone);
+                        '';
+                    final hasPhoneDigits =
+                        rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
+                    final phone = hasPhoneDigits
+                        ? CrmCallRecordDisplay.formatPhone(rawPhone)
+                        : '—';
                     final duration = data['durationSec'] as num?;
                     final durationStr =
                         duration != null ? '${duration.toInt()} sn' : '—';
                     final outcomeRaw = data['outcome'] as String? ??
                         data['callOutcome'] as String?;
                     final outcomeStr = outcomeRaw != null
-                        ? (_outcomeLabels[outcomeRaw] ?? outcomeRaw)
+                        ? (CrmCallRecordHelpers.kOutcomeCodeLabelsTr[outcomeRaw] ??
+                            outcomeRaw)
                         : '—';
                     final createdAt = data['createdAt'];
                     String dateStr = '—';
@@ -682,62 +705,63 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     }
                     final selected = _selectedIds.contains(id);
                     final hasPhone = rawPhone.trim().isNotEmpty;
+                    final contactName =
+                        CrmCallRecordDisplay.contactNameFromCallData(data);
                     final match = byFirestoreId[id];
                     final customerId = (data['customerId'] as String?)?.trim();
                     final customerName =
                         customerId != null && customerId.isNotEmpty
                             ? customerById[customerId]?.fullName
                             : null;
-                    final note = (data['quickCaptureNote'] as String?)
-                                ?.trim()
-                                .isNotEmpty ==
-                            true
-                        ? (data['quickCaptureNote'] as String).trim()
-                        : (data['quickNote'] as String?)?.trim().isNotEmpty ==
-                                true
-                            ? (data['quickNote'] as String).trim()
-                            : (data['postCallSummaryText'] as String?)
-                                        ?.trim()
-                                        .isNotEmpty ==
-                                    true
-                                ? (data['postCallSummaryText'] as String).trim()
-                                : (data['note'] as String?)
-                                            ?.trim()
-                                            .isNotEmpty ==
-                                        true
-                                    ? (data['note'] as String).trim()
-                                    : null;
+                    final note = CrmCallRecordDisplay.notePreviewFromFirestoreData(
+                      data,
+                      maxLen: 160,
+                    );
                     final advisorId = (data['advisorId'] as String?)?.trim() ??
                         (data['agentId'] as String?)?.trim() ??
                         '';
-                    final advisorLabel = advisorId.isEmpty
-                        ? 'Danışman: —'
-                        : advisorId == currentUid
-                            ? 'Danışman: Sen'
-                            : 'Danışman: ${_shortId(advisorId)}';
-                    final completionLabel = data['quickCapturePending'] == true
-                        ? 'Sonuç bekleniyor'
-                        : data['captureCompletedAt'] != null
-                            ? 'Kayıt tamamlandı'
-                            : 'Sunucuda';
+                    final advisorPart = CrmCallRecordDisplay.advisorContext(
+                      advisorAgentId: advisorId,
+                      currentUid: currentUid,
+                      agentNames: agentNames,
+                    );
+                    final contextLine = CrmCallRecordDisplay.contextLine(
+                      advisorPart: advisorPart,
+                      dateTime: dateStr,
+                      duration: durationStr,
+                    );
+                    final completionLabel =
+                        CrmCallRecordHelpers.captureStatusTr(data);
+                    final rowTitle = CrmCallRecordDisplay.primaryTitle(
+                      customerFullName: customerName?.trim().isNotEmpty == true
+                          ? customerName!.trim()
+                          : null,
+                      contactDisplayName: contactName,
+                      rawPhone: rawPhone.isEmpty ? null : rawPhone,
+                    );
+                    final phoneUnder = CrmCallRecordDisplay
+                        .shouldShowPhoneUnderTitle(
+                      title: rowTitle,
+                      formattedPhone: phone,
+                    )
+                        ? phone
+                        : null;
+                    final technicalMeta = CrmCallRecordDisplay.technicalFootnote(
+                      firestoreDocId: id,
+                      customerId: customerId,
+                    );
 
                     return _FirestoreCallRecordCard(
                       selected: selected,
                       enabled: hasPhone,
                       onSelect: hasPhone ? () => _toggleSelection(id) : null,
-                      title: customerName?.trim().isNotEmpty == true
-                          ? customerName!.trim()
-                          : 'Telefon görüşmesi',
-                      phone: phone,
+                      title: rowTitle,
+                      phoneSubtitle: phoneUnder,
                       outcome: outcomeStr,
-                      advisorLabel: advisorLabel,
-                      dateStr: dateStr,
-                      durationStr: durationStr,
+                      contextLine: contextLine,
                       stateLabel: completionLabel,
                       note: note,
-                      technicalMeta: customerId != null && customerId.isNotEmpty
-                          ? 'CRM ID: ${_shortId(customerId)}'
-                          : null,
+                      technicalMeta: technicalMeta,
                       leadingIcon: isIncoming
                           ? Icons.call_received_rounded
                           : Icons.call_made_rounded,
@@ -812,148 +836,61 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   }
 }
 
-String _formatPhone(String phone) {
-  final digits = phone.replaceAll(RegExp(r'\D'), '');
-  if (digits.length == 10) {
-    return '0${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6, 8)} ${digits.substring(8)}';
-  }
-  if (digits.length == 11 && digits.startsWith('0')) {
-    return '${digits.substring(0, 4)} ${digits.substring(4, 7)} ${digits.substring(7, 9)} ${digits.substring(9)}';
-  }
-  if (digits.length == 12 && digits.startsWith('90')) {
-    return '+90 ${digits.substring(2, 5)} ${digits.substring(5, 8)} ${digits.substring(8, 10)} ${digits.substring(10)}';
-  }
-  return phone;
-}
-
-String _shortId(String value) {
-  final v = value.trim();
-  if (v.length <= 8) return v;
-  return '${v.substring(0, 4)}...${v.substring(v.length - 4)}';
-}
-
-class _CallBadge extends StatelessWidget {
-  const _CallBadge({
-    required this.label,
-    required this.color,
-  });
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space2,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
-      ),
-      child: Text(
-        label,
-        style: AppTypography.meta(context).copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
 class _LocalCallRecordCard extends StatelessWidget {
   const _LocalCallRecordCard({
     required this.title,
-    required this.phone,
+    this.phoneSubtitle,
     required this.dateStr,
     required this.outcome,
     required this.syncHint,
     required this.note,
+    this.technicalFootnote,
     required this.syncIcon,
     required this.surface,
-    required this.fg,
     required this.textSecondary,
     required this.ext,
   });
 
   final String title;
-  final String phone;
+  final String? phoneSubtitle;
   final String dateStr;
   final String outcome;
   final String syncHint;
   final String? note;
+  final String? technicalFootnote;
   final Widget syncIcon;
   final Color surface;
-  final Color fg;
   final Color textSecondary;
   final AppThemeExtension ext;
 
   @override
   Widget build(BuildContext context) {
+    final contextLine = CrmCallRecordDisplay.contextLine(
+      advisorPart: 'Bu cihaz',
+      dateTime: dateStr,
+    );
     return Card(
       margin: const EdgeInsets.only(bottom: DesignTokens.space2),
       color: surface,
-      child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.space4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: textSecondary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              ),
-              child: Icon(Icons.cloud_off_outlined, color: textSecondary),
-            ),
-            const SizedBox(width: DesignTokens.space3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: AppTypography.cardHeading(context)),
-                  const SizedBox(height: 2),
-                  Text(
-                    phone,
-                    style:
-                        AppTypography.bodyStrong(context).copyWith(color: fg),
-                  ),
-                  const SizedBox(height: DesignTokens.space2),
-                  Wrap(
-                    spacing: DesignTokens.space2,
-                    runSpacing: DesignTokens.space2,
-                    children: [
-                      _CallBadge(label: outcome, color: ext.warning),
-                      _CallBadge(label: syncHint, color: textSecondary),
-                    ],
-                  ),
-                  const SizedBox(height: DesignTokens.space2),
-                  Text(
-                    dateStr,
-                    style: AppTypography.meta(context).copyWith(
-                      color: textSecondary,
-                    ),
-                  ),
-                  if (note != null && note!.trim().isNotEmpty) ...[
-                    const SizedBox(height: DesignTokens.space2),
-                    Text(
-                      note!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(context),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: DesignTokens.space2),
-            syncIcon,
-          ],
+      child: CrmCallRecordListItem(
+        title: title,
+        phoneSubtitle: phoneSubtitle,
+        outcomeLabel: outcome,
+        captureLabel: syncHint,
+        contextLine: contextLine,
+        notePreview: note,
+        technicalFootnote: technicalFootnote,
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: textSecondary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+          ),
+          child: Icon(Icons.phone_in_talk_rounded,
+              color: textSecondary, size: 20),
         ),
+        trailing: syncIcon,
       ),
     );
   }
@@ -965,14 +902,12 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     required this.enabled,
     required this.onSelect,
     required this.title,
-    required this.phone,
+    this.phoneSubtitle,
     required this.outcome,
-    required this.advisorLabel,
-    required this.dateStr,
-    required this.durationStr,
+    required this.contextLine,
     required this.stateLabel,
     required this.note,
-    required this.technicalMeta,
+    this.technicalMeta,
     required this.leadingIcon,
     required this.leadingColor,
     required this.trailing,
@@ -982,11 +917,9 @@ class _FirestoreCallRecordCard extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onSelect;
   final String title;
-  final String phone;
+  final String? phoneSubtitle;
   final String outcome;
-  final String advisorLabel;
-  final String dateStr;
-  final String? durationStr;
+  final String contextLine;
   final String stateLabel;
   final String? note;
   final String? technicalMeta;
@@ -1004,91 +937,44 @@ class _FirestoreCallRecordCard extends StatelessWidget {
         onTap: enabled ? onSelect : null,
         borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
         child: Padding(
-          padding: const EdgeInsets.all(DesignTokens.space4),
+          padding: EdgeInsets.zero,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Checkbox(
-                value: selected,
-                onChanged: enabled ? (_) => onSelect?.call() : null,
-                activeColor: ext.accent,
+              Padding(
+                padding: const EdgeInsets.only(left: 4, top: 10),
+                child: Checkbox(
+                  value: selected,
+                  onChanged: enabled ? (_) => onSelect?.call() : null,
+                  activeColor: ext.accent,
+                ),
               ),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: leadingColor.withValues(alpha: 0.12),
-                            borderRadius:
-                                BorderRadius.circular(DesignTokens.radiusMd),
-                          ),
-                          child:
-                              Icon(leadingIcon, color: leadingColor, size: 18),
-                        ),
-                        const SizedBox(width: DesignTokens.space3),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: AppTypography.cardHeading(context)
-                                    .copyWith(
-                                        fontSize: DesignTokens.fontSizeMd),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                phone,
-                                style: AppTypography.bodyStrong(context),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: DesignTokens.space2),
-                        trailing,
-                      ],
+                child: CrmCallRecordListItem(
+                  title: title,
+                  phoneSubtitle: phoneSubtitle,
+                  outcomeLabel: outcome,
+                  captureLabel: stateLabel,
+                  contextLine: contextLine,
+                  notePreview: note,
+                  technicalFootnote: technicalMeta,
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: leadingColor.withValues(alpha: 0.12),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusMd),
                     ),
-                    const SizedBox(height: DesignTokens.space2),
-                    Wrap(
-                      spacing: DesignTokens.space2,
-                      runSpacing: DesignTokens.space2,
-                      children: [
-                        _CallBadge(label: outcome, color: ext.accent),
-                        _CallBadge(label: stateLabel, color: ext.textSecondary),
-                      ],
-                    ),
-                    const SizedBox(height: DesignTokens.space2),
-                    Text(
-                      '$advisorLabel · $dateStr${durationStr != null ? ' · $durationStr' : ''}',
-                      style: AppTypography.meta(context),
-                    ),
-                    if (note != null && note!.trim().isNotEmpty) ...[
-                      const SizedBox(height: DesignTokens.space2),
-                      Text(
-                        note!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.body(context),
-                      ),
-                    ],
-                    if (technicalMeta != null) ...[
-                      const SizedBox(height: DesignTokens.space1),
-                      Text(
-                        technicalMeta!,
-                        style: AppTypography.meta(context).copyWith(
-                          color: ext.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ],
+                    child: Icon(leadingIcon, color: leadingColor, size: 20),
+                  ),
+                  trailing: trailing,
+                  padding: const EdgeInsets.fromLTRB(
+                    0,
+                    DesignTokens.space4,
+                    DesignTokens.space4,
+                    DesignTokens.space4,
+                  ),
                 ),
               ),
             ],

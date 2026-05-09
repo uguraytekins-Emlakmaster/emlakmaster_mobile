@@ -4,6 +4,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 abstract final class CrmCallRecordHelpers {
   CrmCallRecordHelpers._();
 
+  /// Liste / şeritlerde ortak sonuç kodu → TR etiket.
+  static const Map<String, String> kOutcomeCodeLabelsTr = {
+    'connected': 'Bağlandı',
+    'missed': 'Cevapsız',
+    'no_answer': 'Cevap yok',
+    'busy': 'Meşgul',
+    'failed': 'Başarısız',
+    'handoff_pending': 'Sonuç bekleniyor',
+    'completed': 'Tamamlandı (uygulama içi)',
+    'reached': 'Ulaşıldı',
+    'callback_scheduled': 'Tekrar aranacak',
+    'appointment_set': 'Randevu oluşturuldu',
+    'offer_sent': 'Teklif verildi',
+  };
+
   static bool isHandoffPending(Map<String, dynamic> data) =>
       (data['outcome'] as String?) == 'handoff_pending';
 
@@ -43,6 +58,10 @@ abstract final class CrmCallRecordHelpers {
     return codeLabels[o] ?? o;
   }
 
+  /// [kOutcomeCodeLabelsTr] ile sonuç etiketi.
+  static String outcomeDisplayTrDefault(Map<String, dynamic> data) =>
+      outcomeDisplayTr(data, kOutcomeCodeLabelsTr);
+
   static String sourceDisplayTr(Map<String, dynamic> data) {
     final s = data['source'] as String? ?? '';
     switch (s) {
@@ -58,6 +77,6 @@ abstract final class CrmCallRecordHelpers {
   static String captureStatusTr(Map<String, dynamic> data) {
     if (hasCaptureCompleted(data)) return 'Kayıt tamamlandı';
     if (isHandoffPending(data)) return 'Sonuç bekleniyor';
-    return 'Kısmi / diğer';
+    return 'Kayıt süreci';
   }
 }

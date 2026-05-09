@@ -15,7 +15,10 @@ import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_record_firestore_match.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/office_wide_customers_stream_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,6 +27,7 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
+import '../../../../shared/models/customer_models.dart';
 
 /// Yönetici çağrı merkezi: tüm çağrılar. Sadece canViewAllCalls rolleri erişebilir.
 class CommandCenterPage extends ConsumerStatefulWidget {
@@ -127,20 +131,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     });
   }
 
-  static const Map<String, String> _outcomeLabels = {
-    'connected': 'Bağlandı',
-    'missed': 'Cevapsız',
-    'no_answer': 'Cevap yok',
-    'busy': 'Meşgul',
-    'failed': 'Başarısız',
-    'handoff_pending': 'Sonuç bekleniyor',
-    'completed': 'Tamamlandı (uygulama içi)',
-    'reached': 'Ulaşıldı',
-    'callback_scheduled': 'Tekrar aranacak',
-    'appointment_set': 'Randevu oluşturuldu',
-    'offer_sent': 'Teklif verildi',
-  };
-
   Stream<QuerySnapshot<Map<String, dynamic>>> _callsStreamForScope() {
     switch (_commandScope) {
       case _CommandScope.pending:
@@ -158,6 +148,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     bool isDark,
     List<LocalCallRecord> locals,
     String? currentUid,
+    Map<String, String> customerFullNameById,
   ) {
     final surface = isDark
         ? AppThemeExtension.of(context).surface
@@ -165,10 +156,15 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     switch (_commandScope) {
       case _CommandScope.consultant:
         return _buildConsultantGroupedList(
-            context, filtered, agentNames, surface, fg, isDark);
+            context, filtered, agentNames, surface);
       case _CommandScope.customer:
         return _buildCustomerGroupedList(
-            context, filtered, agentNames, surface, fg, isDark);
+          context,
+          filtered,
+          agentNames,
+          surface,
+          customerFullNameById,
+        );
       case _CommandScope.all:
       case _CommandScope.pending:
         return ListView.builder(
@@ -180,8 +176,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             filtered[index],
             agentNames,
             surface,
-            fg,
-            isDark,
             locals,
             currentUid,
           ),
@@ -194,20 +188,30 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
     Map<String, String> agentNames,
     Color surface,
-    Color fg,
-    bool isDark,
     List<LocalCallRecord> locals,
     String? currentUid,
   ) {
     final data = doc.data();
     final id = doc.id;
     final agentId = CrmCallRecordHelpers.agentIdOf(data);
-    final displayAgent = agentNames[agentId] ?? agentId;
     final duration = data['durationSec'] as num?;
     final durationStr = duration != null ? '${duration.toInt()} sn' : null;
-    final outcomeStr =
-        CrmCallRecordHelpers.outcomeDisplayTr(data, _outcomeLabels);
-    final phone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
+    final outcomeStr = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
+    final rawPhone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
+    final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
+    final formattedPhone =
+        hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
+    final contactName = CrmCallRecordDisplay.contactNameFromCallData(data);
+    final title = CrmCallRecordDisplay.primaryTitle(
+      contactDisplayName: contactName,
+      rawPhone: hasDigits ? rawPhone : null,
+    );
+    final phoneUnder = CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
+      title: title,
+      formattedPhone: formattedPhone,
+    )
+        ? formattedPhone
+        : null;
     final createdAt = data['createdAt'];
     String timeStr = '—';
     if (createdAt is Timestamp) {
@@ -215,14 +219,26 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       timeStr =
           '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
     }
-    final ts = isDark
-        ? AppThemeExtension.of(context).textSecondary
-        : AppThemeExtension.of(context).textSecondary;
     final cap = CrmCallRecordHelpers.captureStatusTr(data);
-    final note = (data['quickCaptureNote'] as String? ?? '').trim();
-    final shortNote = note.isEmpty
-        ? null
-        : (note.length > 64 ? '${note.substring(0, 64)}…' : note);
+    final shortNote = CrmCallRecordDisplay.notePreviewFromFirestoreData(
+      data,
+      maxLen: 80,
+    );
+    final advisorPart = CrmCallRecordDisplay.advisorContext(
+      advisorAgentId: agentId,
+      currentUid: currentUid,
+      agentNames: agentNames,
+    );
+    final contextLine = CrmCallRecordDisplay.contextLine(
+      advisorPart: advisorPart,
+      dateTime: timeStr,
+      duration: durationStr,
+    );
+    final custId = CrmCallRecordHelpers.customerIdOf(data);
+    final foot = CrmCallRecordDisplay.technicalFootnote(
+      firestoreDocId: id,
+      customerId: custId,
+    );
     final localMatch = matchLocalCallRecordForFirestoreDoc(
       locals: locals,
       docId: id,
@@ -246,30 +262,30 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         ),
       );
     }
+    final accent = AppThemeExtension.of(context).accent;
     return Card(
       margin: const EdgeInsets.only(bottom: DesignTokens.space2),
       color: surface,
-      child: ListTile(
+      child: CrmCallRecordListItem(
+        title: title,
+        phoneSubtitle: phoneUnder,
+        outcomeLabel: outcomeStr,
+        captureLabel: cap,
+        contextLine: contextLine,
+        notePreview: shortNote,
+        technicalFootnote: foot,
         leading: CircleAvatar(
-          backgroundColor: AppThemeExtension.of(context).accent,
-          child: Icon(Icons.call_rounded,
-              color: AppThemeExtension.of(context).onBrand, size: 20),
+          radius: 20,
+          backgroundColor: accent.withValues(alpha: 0.18),
+          child: Icon(Icons.call_rounded, color: accent, size: 20),
         ),
-        title: Text(
-          phone.isNotEmpty ? phone : 'CRM çağrı kaydı',
-          style: TextStyle(color: fg, fontWeight: FontWeight.w700),
-        ),
-        subtitle: Text(
-          '$outcomeStr · $timeStr'
-          '${durationStr != null ? ' · $durationStr' : ''}\n'
-          '$cap · ${displayAgent.isNotEmpty ? displayAgent : 'Danışman yok'}'
-          '${shortNote != null ? ' · Not: $shortNote' : ''}',
-          style: TextStyle(color: ts, fontSize: 12, height: 1.35),
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-        isThreeLine: false,
         trailing: trailing,
+        padding: const EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space4,
+          DesignTokens.space4,
+          DesignTokens.space3,
+        ),
       ),
     );
   }
@@ -279,8 +295,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
     Map<String, String> agentNames,
     Color surface,
-    Color fg,
-    bool isDark,
   ) {
     final grouped =
         <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
@@ -316,9 +330,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         onOutlinedAction: _clearFilters,
       );
     }
-    final ts = isDark
-        ? AppThemeExtension.of(context).textSecondary
-        : AppThemeExtension.of(context).textSecondary;
+    final accent = AppThemeExtension.of(context).accent;
     return ListView.builder(
       padding: const EdgeInsets.all(DesignTokens.space4),
       itemCount: entries.length,
@@ -336,33 +348,53 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             .where((d) => CrmCallRecordHelpers.isSystemHandoff(d.data()))
             .length;
         final last = list.first;
-        final dt = CrmCallRecordHelpers.createdAtOf(last.data());
+        final lastData = last.data();
+        final dt = CrmCallRecordHelpers.createdAtOf(lastData);
         final timeStr = dt != null
             ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
             : '—';
+        final outcomeLast =
+            CrmCallRecordHelpers.outcomeDisplayTrDefault(lastData);
+        final noteLast =
+            CrmCallRecordDisplay.notePreviewFromFirestoreData(lastData);
+        final duration = lastData['durationSec'] as num?;
+        final durationStr =
+            duration != null ? '${duration.toInt()} sn' : null;
+        final contextLine = 'Son görüşme: $timeStr'
+            '${durationStr != null ? ' · $durationStr' : ''} · '
+            '${list.length} kayıt · $pending bekleyen · '
+            '$completed tamam · $handoffs handoff';
+        final captureLabel =
+            pending > 0 ? '$pending takip' : '${list.length} kayıt';
         return Card(
           margin: const EdgeInsets.only(bottom: DesignTokens.space2),
           color: surface,
-          child: ListTile(
+          child: CrmCallRecordListItem(
+            title: name,
+            outcomeLabel: outcomeLast,
+            captureLabel: captureLabel,
+            contextLine: contextLine,
+            notePreview: noteLast,
+            technicalFootnote:
+                'Danışman ${CrmCallRecordDisplay.ellipsedMiddle(e.key)}',
             leading: CircleAvatar(
-              backgroundColor:
-                  AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+              radius: 20,
+              backgroundColor: accent.withValues(alpha: 0.2),
               child: Text(
                 name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
                 style: TextStyle(
-                  color: AppThemeExtension.of(context).accent,
+                  color: accent,
                   fontWeight: FontWeight.w700,
+                  fontSize: 16,
                 ),
               ),
             ),
-            title: Text(name,
-                style: TextStyle(color: fg, fontWeight: FontWeight.w700)),
-            subtitle: Text(
-              'Son kayıt: $timeStr · Toplam: ${list.length} · Handoff: $handoffs · '
-              'Tamamlanan: $completed · Bekleyen: $pending',
-              style: TextStyle(color: ts, fontSize: 12, height: 1.35),
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space4,
+              DesignTokens.space4,
+              DesignTokens.space4,
+              DesignTokens.space3,
             ),
-            isThreeLine: true,
           ),
         );
       },
@@ -374,8 +406,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
     Map<String, String> agentNames,
     Color surface,
-    Color fg,
-    bool isDark,
+    Map<String, String> customerFullNameById,
   ) {
     final grouped =
         <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
@@ -406,14 +437,12 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         icon: Icons.person_off_rounded,
         title: 'Müşteri bağlantılı kayıt yok',
         subtitle:
-            'Filtrelere uyan ve müşteri ID’si içeren CRM çağrı kaydı yok.',
+            'Filtrelere uyan, müşteri kartına bağlı çağrı kaydı bulunamadı.',
         outlinedActionLabel: 'Filtreleri temizle',
         onOutlinedAction: _clearFilters,
       );
     }
-    final ts = isDark
-        ? AppThemeExtension.of(context).textSecondary
-        : AppThemeExtension.of(context).textSecondary;
+    final accent = AppThemeExtension.of(context).accent;
     return ListView.builder(
       padding: const EdgeInsets.all(DesignTokens.space4),
       itemCount: entries.length,
@@ -423,9 +452,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         final last = list.first;
         final data = last.data();
         final agent = CrmCallRecordHelpers.agentIdOf(data);
-        final displayAgent = agentNames[agent] ?? agent;
-        final outcome =
-            CrmCallRecordHelpers.outcomeDisplayTr(data, _outcomeLabels);
+        final outcome = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
+        final cap = CrmCallRecordHelpers.captureStatusTr(data);
         final dt = CrmCallRecordHelpers.createdAtOf(data);
         final timeStr = dt != null
             ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
@@ -433,20 +461,60 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         final pending = list
             .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
             .length;
+        final rawPhone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
+        final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
+        final formattedPhone =
+            hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
+        final contactName = CrmCallRecordDisplay.contactNameFromCallData(data);
+        final title = CrmCallRecordDisplay.primaryTitle(
+          customerFullName: customerFullNameById[e.key],
+          contactDisplayName: contactName,
+          rawPhone: hasDigits ? rawPhone : null,
+        );
+        final phoneUnder = CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
+          title: title,
+          formattedPhone: formattedPhone,
+        )
+            ? formattedPhone
+            : null;
+        final advisorPart = CrmCallRecordDisplay.advisorContext(
+          advisorAgentId: agent,
+          agentNames: agentNames,
+        );
+        final contextLine = '$advisorPart · $timeStr · ${list.length} kayıt';
+        final noteLast = CrmCallRecordDisplay.notePreviewFromFirestoreData(data);
+        final captureLabel = pending > 0 ? '$pending bekleyen' : cap;
+        final initial = title.isNotEmpty ? title.substring(0, 1).toUpperCase() : '?';
         return Card(
           margin: const EdgeInsets.only(bottom: DesignTokens.space2),
           color: surface,
-          child: ListTile(
-            leading: const Icon(Icons.person_rounded, size: 28),
-            title: Text(
-              'Müşteri ${e.key.length > 12 ? '${e.key.substring(0, 12)}…' : e.key}',
-              style: TextStyle(color: fg, fontWeight: FontWeight.w700),
+          child: CrmCallRecordListItem(
+            title: title,
+            phoneSubtitle: phoneUnder,
+            outcomeLabel: outcome,
+            captureLabel: captureLabel,
+            contextLine: contextLine,
+            notePreview: noteLast,
+            technicalFootnote:
+                'Müşteri ${CrmCallRecordDisplay.ellipsedMiddle(e.key, head: 6)}',
+            leading: CircleAvatar(
+              radius: 20,
+              backgroundColor: accent.withValues(alpha: 0.16),
+              child: Text(
+                initial,
+                style: TextStyle(
+                  color: accent,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
             ),
-            subtitle: Text(
-              'Son temas: $timeStr · $displayAgent · $outcome · Kayıt: ${list.length} · Bekleyen: $pending',
-              style: TextStyle(color: ts, fontSize: 12, height: 1.35),
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space4,
+              DesignTokens.space4,
+              DesignTokens.space4,
+              DesignTokens.space3,
             ),
-            isThreeLine: true,
           ),
         );
       },
@@ -479,7 +547,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               focusNode: _searchFocusNode,
               style: TextStyle(color: textPrimary, fontSize: 15),
               decoration: InputDecoration(
-                hintText: 'Telefon, müşteri id, danışman, sonuç, not...',
+                hintText: 'Telefon, sonuç, not, müşteri veya danışman...',
                 hintStyle: TextStyle(
                     color: textSecondary.withValues(alpha: 0.7), fontSize: 14),
                 prefixIcon: Icon(Icons.search_rounded,
@@ -732,6 +800,25 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                           [];
                       final currentUid =
                           ref.watch(currentUserProvider).valueOrNull?.uid;
+                      final uidForOffice = currentUid ?? '';
+                      final officeId = uidForOffice.isEmpty
+                          ? ''
+                          : (ref
+                                  .watch(userDocStreamProvider(uidForOffice))
+                                  .valueOrNull
+                                  ?.officeId ??
+                              '')
+                              .trim();
+                      final customerEntities = ref
+                              .watch(officeWideCustomerListProvider(officeId))
+                              .valueOrNull ??
+                          const <CustomerEntity>[];
+                      final customerFullNameById = <String, String>{
+                        for (final c in customerEntities)
+                          if (c.id.isNotEmpty &&
+                              (c.fullName?.trim().isNotEmpty ?? false))
+                            c.id: c.fullName!.trim(),
+                      };
                       if (snapshot.connectionState == ConnectionState.waiting &&
                           !snapshot.hasData) {
                         return Center(
@@ -818,7 +905,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                               data['callOutcome'] as String? ??
                               '';
                           final outcomeLabel = outcomeRaw.isNotEmpty
-                              ? (_outcomeLabels[outcomeRaw] ?? outcomeRaw)
+                              ? (CrmCallRecordHelpers.kOutcomeCodeLabelsTr[outcomeRaw] ??
+                                      outcomeRaw)
                                   .toLowerCase()
                               : '';
                           final cust = (data['customerId'] as String? ?? '')
@@ -829,13 +917,25 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                           final ql =
                               (data['quickOutcomeLabelTr'] as String? ?? '')
                                   .toLowerCase();
+                          final contactName = (CrmCallRecordDisplay
+                                      .contactNameFromCallData(data) ??
+                                  '')
+                              .toLowerCase();
+                          final cidSearch =
+                              CrmCallRecordHelpers.customerIdOf(data);
+                          final custResolved = cidSearch != null
+                              ? (customerFullNameById[cidSearch] ?? '')
+                                  .toLowerCase()
+                              : '';
                           final matches = id.contains(q) ||
                               agentId.toLowerCase().contains(q) ||
                               phone.contains(q) ||
                               outcomeLabel.contains(q) ||
                               cust.contains(q) ||
                               note.contains(q) ||
-                              ql.contains(q);
+                              ql.contains(q) ||
+                              contactName.contains(q) ||
+                              custResolved.contains(q);
                           if (!matches) return false;
                         }
                         return true;
@@ -878,8 +978,16 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                           ),
                         );
                       }
-                      return _buildScopeContent(context, filtered, agentNames,
-                          fg, isDark, locals, currentUid);
+                      return _buildScopeContent(
+                        context,
+                        filtered,
+                        agentNames,
+                        fg,
+                        isDark,
+                        locals,
+                        currentUid,
+                        customerFullNameById,
+                      );
                     },
                   );
                 },
