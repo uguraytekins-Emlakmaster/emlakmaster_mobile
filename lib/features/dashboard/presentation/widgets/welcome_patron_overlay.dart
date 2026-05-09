@@ -19,18 +19,27 @@ class WelcomePatronOverlay extends ConsumerStatefulWidget {
 
 class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
   bool _alreadyShown = false;
+  ProviderSubscription<bool>? _roleSub;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _tryShowIfSuperAdmin());
-    ref.listen<bool>(
-      displayRoleOrNullProvider.select((r) => r == AppRole.superAdmin),
-      (prev, isSuperAdmin) {
-        if (!isSuperAdmin) return;
-        _tryShowIfSuperAdmin();
-      },
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tryShowIfSuperAdmin();
+      _roleSub = ref.listenManual<bool>(
+        displayRoleOrNullProvider.select((r) => r == AppRole.superAdmin),
+        (prev, isSuperAdmin) {
+          if (!isSuperAdmin) return;
+          _tryShowIfSuperAdmin();
+        },
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _roleSub?.close();
+    super.dispose();
   }
 
   void _tryShowIfSuperAdmin() {
