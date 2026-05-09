@@ -21,17 +21,33 @@ class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
   bool _alreadyShown = false;
 
   @override
-  Widget build(BuildContext context) {
-    final isSuperAdmin = ref.watch(
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _tryShowIfSuperAdmin());
+    ref.listen<bool>(
+      displayRoleOrNullProvider.select((r) => r == AppRole.superAdmin),
+      (prev, isSuperAdmin) {
+        if (!isSuperAdmin) return;
+        _tryShowIfSuperAdmin();
+      },
+    );
+  }
+
+  void _tryShowIfSuperAdmin() {
+    if (!mounted || _alreadyShown) return;
+    final isSuper = ref.read(
       displayRoleOrNullProvider.select((r) => r == AppRole.superAdmin),
     );
-    if (isSuperAdmin && !_alreadyShown) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _alreadyShown) return;
-        _alreadyShown = true;
-        _showWelcome(context);
-      });
-    }
+    if (!isSuper) return;
+    _alreadyShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _showWelcome(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return widget.child;
   }
 

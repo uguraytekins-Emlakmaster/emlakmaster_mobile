@@ -58,6 +58,7 @@ final localCallRecordsStreamProvider =
     unawaited(emit(force: true));
   });
   timer = Timer.periodic(const Duration(seconds: 12), (_) {
+    if (AppLifecyclePowerService.isInBackground.value) return;
     periodicTick++;
     final forceMinutePulse = periodicTick % 5 == 0;
     unawaited(emit(force: forceMinutePulse));

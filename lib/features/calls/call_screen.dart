@@ -50,7 +50,7 @@ class CallScreen extends ConsumerStatefulWidget {
 }
 
 class _CallScreenState extends ConsumerState<CallScreen>
-    with SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   CallUIState _callState = CallUIState.connecting;
   bool _isMuted = false;
   bool _isSpeakerOn = false;
@@ -59,6 +59,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
   /// Sürükleme sırasında anlık değer (animasyonsuz); null = panel fraction kullan
   double? _keypadDragValue;
   int _elapsedSeconds = 0;
+  /// [CallUIState.connected] anında — arka plan / süre sayacı durunca duvar saati ile senkron.
+  DateTime? _connectedWallClock;
   Timer? _ticker;
 
   /// Numara girişi (Magic / görüşme özeti; çevir modunda [ValueNotifier] tercih edilir)
@@ -101,6 +103,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
     if (_usesOutboundHandoff) {
       return;
     }
+    WidgetsBinding.instance.addObserver(this);
     HapticFeedback.lightImpact();
     _isDialMode = widget.phone == null && widget.customerId == null;
     if (_isDialMode) {
@@ -129,7 +132,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
       // connecting → connected (kısa gecikme ile arama “açılıyor” hissi)
       Future<void>.delayed(const Duration(milliseconds: 800), () {
         if (!mounted) return;
-        setState(() => _callState = CallUIState.connected);
+        _enterConnected();
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -196,7 +199,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
     _startElapsedTicker();
     Future<void>.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;
-      setState(() => _callState = CallUIState.connected);
+      _enterConnected();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -212,10 +215,54 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
   @override
   void dispose() {
+    if (!_usesOutboundHandoff) {
+      WidgetsBinding.instance.removeObserver(this);
+    }
     _ticker?.cancel();
     _dialEntryNotifier?.dispose();
     _keypadPanelController?.dispose();
     super.dispose();
+  }
+
+  void _enterConnected({bool anchorWallClock = true}) {
+    if (!mounted) return;
+    setState(() {
+      _callState = CallUIState.connected;
+      if (anchorWallClock) {
+        _connectedWallClock = DateTime.now();
+      }
+    });
+  }
+
+  void _resyncElapsedFromWallClock() {
+    final start = _connectedWallClock;
+    if (!mounted || start == null) return;
+    final secs = DateTime.now().difference(start).inSeconds.clamp(0, 172800);
+    if (_elapsedSeconds != secs) {
+      setState(() => _elapsedSeconds = secs);
+    } else {
+      _elapsedSeconds = secs;
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_callState != CallUIState.connected) return;
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        _ticker?.cancel();
+        _ticker = null;
+        _resyncElapsedFromWallClock();
+        break;
+      case AppLifecycleState.resumed:
+        _resyncElapsedFromWallClock();
+        _startElapsedTicker();
+        break;
+      case AppLifecycleState.inactive:
+        break;
+    }
   }
 
   void _openKeypadPanel() {
@@ -608,7 +655,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
       if (phone != null && phone.isNotEmpty) extra['phone'] = phone;
       context.push(AppRouter.routeCallSummary, extra: extra);
     } catch (e) {
-      if (mounted) setState(() => _callState = CallUIState.connected);
+      if (mounted) _enterConnected(anchorWallClock: false);
     }
   }
 
