@@ -20,6 +20,8 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../utils/auth_error_messages.dart';
 import '../widgets/auth_field_decoration.dart';
 import '../widgets/auth_page_shell.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
+
 enum _BusyKind { none, email, google, facebook }
 
 /// Email/şifre ile giriş. Hata ve loading state.
@@ -99,21 +101,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _openForgotPassword() {
     FocusManager.instance.primaryFocus?.unfocus();
     final email = _emailController.text.trim();
-    final ext = AppThemeExtension.of(context);
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: ext.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
-      ),
-      builder: (sheetCtx) => _ForgotPasswordSheet(
-        initialEmail: email,
-        onDismiss: () {
-          Navigator.of(sheetCtx).pop();
-          // Başarı metni sheet içinde (_sent); ek SnackBar yok — kapanınca mesaj kaybolmaz.
-        },
+      builder: (sheetCtx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetCtx).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const PremiumBottomSheetHandle(),
+            _ForgotPasswordSheet(
+              initialEmail: email,
+              onDismiss: () {
+                Navigator.of(sheetCtx).pop();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -269,224 +274,215 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: DesignTokens.space8),
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      autocorrect: false,
-                      style:
-                          TextStyle(color: ext.textPrimary),
-                      cursorColor: ext.accent,
-                      onTapOutside: (_) => _unfocusKeyboard(),
-                      decoration: AuthFieldDecoration.build(context,
-                        label: 'E-posta',
-                        hint: 'ornek@firma.com',
-                        prefix: const Icon(Icons.email_outlined),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'E-posta gerekli';
-                        }
-                        if (!v.contains('@')) {
-                          return 'Geçerli bir e-posta girin';
-                        }
-                        return null;
-                      },
-                      onFieldSubmitted: (_) => _submit(),
-                    ),
-                    const SizedBox(height: DesignTokens.space4),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style:
-                          TextStyle(color: ext.textPrimary),
-                      cursorColor: ext.accent,
-                      onTapOutside: (_) => _unfocusKeyboard(),
-                      decoration: AuthFieldDecoration.build(context,
-                        label: 'Şifre',
-                        prefix: const Icon(Icons.lock_outline_rounded),
-                        suffix: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_rounded
-                                : Icons.visibility_rounded,
-                          ),
-                          onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Şifre gerekli';
-                        return null;
-                      },
-                      onFieldSubmitted: (_) => _submit(),
-                    ),
-                    const SizedBox(height: DesignTokens.space2),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _anyBusy ? null : _openForgotPassword,
-                        style: TextButton.styleFrom(
-                          foregroundColor: ext.accent,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                        child: const Text('Şifremi unuttum'),
-                      ),
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: DesignTokens.space4),
-                      Container(
-                        padding: const EdgeInsets.all(DesignTokens.space3),
-                        decoration: BoxDecoration(
-                          color: ext.danger.withValues(alpha: 0.12),
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.radiusMd),
-                          border: Border.all(
-                              color: ext.danger.withValues(alpha: 0.35)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(Icons.error_outline_rounded,
-                                    color: ext.danger.withValues(alpha: 0.9),
-                                    size: 20),
-                                const SizedBox(width: DesignTokens.space2),
-                                Expanded(
-                                  child: Text(
-                                    _errorMessage!,
-                                    style: TextStyle(
-                                        color: ext.textPrimary,
-                                        fontSize: DesignTokens.fontSizeSm),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (_errorDetail != null &&
-                                _errorDetail!.isNotEmpty) ...[
-                              const SizedBox(height: DesignTokens.space2),
-                              Text(
-                                'Hata kodu: $_errorDetail',
-                                style: TextStyle(
-                                  color: ext.textSecondary,
-                                  fontSize: DesignTokens.fontSizeSm - 2,
-                                  fontFamily: 'monospace',
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: DesignTokens.space6),
-                    Semantics(
-                      button: true,
-                      label: 'Giriş yap',
-                      child: FilledButton(
-                        onPressed: _anyBusy ? null : _submit,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: ext.accent,
-                          foregroundColor: ext.onBrand,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: DesignTokens.space4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(DesignTokens.radiusMd),
-                          ),
-                        ),
-                        child: _busy == _BusyKind.email
-                            ? SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: ext.onBrand),
-                              )
-                            : const Text('Giriş yap',
-                                style: TextStyle(fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.space4),
-                    OutlinedButton.icon(
-                      onPressed: _anyBusy ? null : _googleIleGiris,
-                      icon: _busy == _BusyKind.google
-                          ? SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: ext.textSecondary,
-                              ),
-                            )
-                          : Icon(Icons.g_mobiledata,
-                              size: 22, color: ext.textSecondary),
-                      label: Text(
-                        _busy == _BusyKind.google
-                            ? 'Google ile bağlanılıyor…'
-                            : 'Google ile Giriş Yap',
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: ext.textPrimary,
-                        side: BorderSide(color: ext.border),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.radiusMd),
-                        ),
-                      ),
-                    ),
-                    if (AppConstants.showFacebookLogin) ...[
-                      const SizedBox(height: DesignTokens.space3),
-                      OutlinedButton.icon(
-                        onPressed: _anyBusy ? null : _facebookIleGiris,
-                        icon: const Icon(Icons.facebook_rounded,
-                            size: 18, color: Color(0xFF1877F2)),
-                        label: const Text('Facebook ile Giriş Yap'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: ext.textPrimary,
-                          side: BorderSide(color: ext.border),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          minimumSize: const Size(double.infinity, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(DesignTokens.radiusMd),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: DesignTokens.space8),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              style: TextStyle(color: ext.textPrimary),
+              cursorColor: ext.accent,
+              onTapOutside: (_) => _unfocusKeyboard(),
+              decoration: AuthFieldDecoration.build(
+                context,
+                label: 'E-posta',
+                hint: 'ornek@firma.com',
+                prefix: const Icon(Icons.email_outlined),
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return 'E-posta gerekli';
+                }
+                if (!v.contains('@')) {
+                  return 'Geçerli bir e-posta girin';
+                }
+                return null;
+              },
+              onFieldSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: DesignTokens.space4),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              style: TextStyle(color: ext.textPrimary),
+              cursorColor: ext.accent,
+              onTapOutside: (_) => _unfocusKeyboard(),
+              decoration: AuthFieldDecoration.build(
+                context,
+                label: 'Şifre',
+                prefix: const Icon(Icons.lock_outline_rounded),
+                suffix: IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
+                ),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Şifre gerekli';
+                return null;
+              },
+              onFieldSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _anyBusy ? null : _openForgotPassword,
+                style: TextButton.styleFrom(
+                  foregroundColor: ext.accent,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                child: const Text('Şifremi unuttum'),
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: DesignTokens.space4),
+              Container(
+                padding: const EdgeInsets.all(DesignTokens.space3),
+                decoration: BoxDecoration(
+                  color: ext.danger.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  border: Border.all(color: ext.danger.withValues(alpha: 0.35)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Hesabınız yok mu?',
-                          style: TextStyle(
-                            color: ext.textSecondary,
-                            fontSize: DesignTokens.fontSizeMd,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: _anyBusy
-                              ? null
-                              : () => context.push(AppRouter.routeRegister),
-                          style: TextButton.styleFrom(
-                            foregroundColor: ext.accent,
-                            padding: const EdgeInsets.only(left: 4, right: 8),
-                            minimumSize: const Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'Kayıt ol',
+                        Icon(Icons.error_outline_rounded,
+                            color: ext.danger.withValues(alpha: 0.9), size: 20),
+                        const SizedBox(width: DesignTokens.space2),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
                             style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.2),
+                                color: ext.textPrimary,
+                                fontSize: DesignTokens.fontSizeSm),
                           ),
                         ),
                       ],
                     ),
+                    if (_errorDetail != null && _errorDetail!.isNotEmpty) ...[
+                      const SizedBox(height: DesignTokens.space2),
+                      Text(
+                        'Hata kodu: $_errorDetail',
+                        style: TextStyle(
+                          color: ext.textSecondary,
+                          fontSize: DesignTokens.fontSizeSm - 2,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: DesignTokens.space6),
+            Semantics(
+              button: true,
+              label: 'Giriş yap',
+              child: FilledButton(
+                onPressed: _anyBusy ? null : _submit,
+                style: FilledButton.styleFrom(
+                  backgroundColor: ext.accent,
+                  foregroundColor: ext.onBrand,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  ),
+                ),
+                child: _busy == _BusyKind.email
+                    ? SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: ext.onBrand),
+                      )
+                    : const Text('Giriş yap',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space4),
+            OutlinedButton.icon(
+              onPressed: _anyBusy ? null : _googleIleGiris,
+              icon: _busy == _BusyKind.google
+                  ? SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: ext.textSecondary,
+                      ),
+                    )
+                  : Icon(Icons.g_mobiledata,
+                      size: 22, color: ext.textSecondary),
+              label: Text(
+                _busy == _BusyKind.google
+                    ? 'Google ile bağlanılıyor…'
+                    : 'Google ile Giriş Yap',
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ext.textPrimary,
+                side: BorderSide(color: ext.border),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
+              ),
+            ),
+            if (AppConstants.showFacebookLogin) ...[
+              const SizedBox(height: DesignTokens.space3),
+              OutlinedButton.icon(
+                onPressed: _anyBusy ? null : _facebookIleGiris,
+                icon: const Icon(Icons.facebook_rounded,
+                    size: 18, color: Color(0xFF1877F2)),
+                label: const Text('Facebook ile Giriş Yap'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ext.textPrimary,
+                  side: BorderSide(color: ext.border),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: DesignTokens.space8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Hesabınız yok mu?',
+                  style: TextStyle(
+                    color: ext.textSecondary,
+                    fontSize: DesignTokens.fontSizeMd,
+                  ),
+                ),
+                TextButton(
+                  onPressed: _anyBusy
+                      ? null
+                      : () => context.push(AppRouter.routeRegister),
+                  style: TextButton.styleFrom(
+                    foregroundColor: ext.accent,
+                    padding: const EdgeInsets.only(left: 4, right: 8),
+                    minimumSize: const Size(0, 0),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Kayıt ol',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w800, letterSpacing: 0.2),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -500,6 +496,7 @@ class _ForgotPasswordSheet extends StatefulWidget {
       {required this.initialEmail, required this.onDismiss});
 
   final String initialEmail;
+
   /// Başarı ekranında «Tamam» sonrası: sheet kapanır + isteğe bağlı SnackBar.
   final VoidCallback onDismiss;
 
@@ -598,8 +595,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       padding: EdgeInsets.only(
         left: DesignTokens.contentPaddingHorizontal,
         right: DesignTokens.contentPaddingHorizontal,
-        top: DesignTokens.space6,
-        bottom: MediaQuery.of(context).viewInsets.bottom + DesignTokens.space6,
+        top: DesignTokens.space3,
+        bottom: DesignTokens.space6,
       ),
       child: GestureDetector(
         behavior: HitTestBehavior.deferToChild,
@@ -636,109 +633,112 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                     style: FilledButton.styleFrom(
                       backgroundColor: ext.accent,
                       foregroundColor: ext.onBrand,
-                      padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: DesignTokens.space4),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusMd),
                       ),
                     ),
-                    child: const Text('Tamam', style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: const Text('Tamam',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ],
               )
             : Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Şifremi unuttum',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: ext.textPrimary,
-                      fontWeight: FontWeight.w700,
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Şifremi unuttum',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: ext.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              Text(
-                'Kayıtlı e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.',
-                style: TextStyle(
-                    color: ext.textSecondary,
-                    fontSize: DesignTokens.fontSizeSm),
-              ),
-              const SizedBox(height: DesignTokens.space6),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                style: TextStyle(color: ext.textPrimary),
-                cursorColor: ext.accent,
-                onTapOutside: (_) =>
-                    FocusManager.instance.primaryFocus?.unfocus(),
-                decoration: InputDecoration(
-                  labelText: 'E-posta',
-                  hintText: 'ornek@firma.com',
-                  labelStyle:
-                      TextStyle(color: ext.textTertiary),
-                  hintStyle:
-                      TextStyle(color: ext.textTertiary),
-                  prefixIcon: Icon(Icons.email_outlined,
-                      color: ext.textTertiary),
-                  filled: true,
-                  fillColor: ext.surface,
-                  enabledBorder: inputBorder,
-                  focusedBorder: focusBorder,
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                    borderSide: BorderSide(color: ext.danger),
-                  ),
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'E-posta gerekli';
-                  if (!v.contains('@')) return 'Geçerli bir e-posta girin';
-                  return null;
-                },
-                onFieldSubmitted: (_) => _sendReset(),
-              ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: DesignTokens.space3),
-                Text(
-                  _errorMessage!,
-                  style: TextStyle(
-                      color: ext.danger.withValues(alpha: 0.95),
-                      fontSize: DesignTokens.fontSizeSm),
-                ),
-              ],
-              const SizedBox(height: DesignTokens.space6),
-              Semantics(
-                button: true,
-                label: 'Şifre sıfırlama bağlantısı gönder',
-                child: FilledButton(
-                  onPressed: _isLoading ? null : _sendReset,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: ext.accent,
-                    foregroundColor: ext.onBrand,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: DesignTokens.space4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusMd),
+                    const SizedBox(height: DesignTokens.space2),
+                    Text(
+                      'Kayıtlı e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.',
+                      style: TextStyle(
+                          color: ext.textSecondary,
+                          fontSize: DesignTokens.fontSizeSm),
                     ),
-                  ),
-                  child: _isLoading
-                      ? SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: ext.onBrand),
-                        )
-                      : const Text('Sıfırlama bağlantısı gönder',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: DesignTokens.space6),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      autocorrect: false,
+                      style: TextStyle(color: ext.textPrimary),
+                      cursorColor: ext.accent,
+                      onTapOutside: (_) =>
+                          FocusManager.instance.primaryFocus?.unfocus(),
+                      decoration: InputDecoration(
+                        labelText: 'E-posta',
+                        hintText: 'ornek@firma.com',
+                        labelStyle: TextStyle(color: ext.textTertiary),
+                        hintStyle: TextStyle(color: ext.textTertiary),
+                        prefixIcon:
+                            Icon(Icons.email_outlined, color: ext.textTertiary),
+                        filled: true,
+                        fillColor: ext.surface,
+                        enabledBorder: inputBorder,
+                        focusedBorder: focusBorder,
+                        errorBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusMd),
+                          borderSide: BorderSide(color: ext.danger),
+                        ),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty)
+                          return 'E-posta gerekli';
+                        if (!v.contains('@'))
+                          return 'Geçerli bir e-posta girin';
+                        return null;
+                      },
+                      onFieldSubmitted: (_) => _sendReset(),
+                    ),
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: DesignTokens.space3),
+                      Text(
+                        _errorMessage!,
+                        style: TextStyle(
+                            color: ext.danger.withValues(alpha: 0.95),
+                            fontSize: DesignTokens.fontSizeSm),
+                      ),
+                    ],
+                    const SizedBox(height: DesignTokens.space6),
+                    Semantics(
+                      button: true,
+                      label: 'Şifre sıfırlama bağlantısı gönder',
+                      child: FilledButton(
+                        onPressed: _isLoading ? null : _sendReset,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: ext.accent,
+                          foregroundColor: ext.onBrand,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: DesignTokens.space4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(DesignTokens.radiusMd),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: ext.onBrand),
+                              )
+                            : const Text('Sıfırlama bağlantısı gönder',
+                                style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       ),
     );
   }

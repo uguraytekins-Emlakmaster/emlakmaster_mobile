@@ -1,11 +1,13 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 /// Müşteri: Arama — kriter girip danışmana talep iletir.
 class ClientSearchPage extends StatefulWidget {
   const ClientSearchPage({super.key});
@@ -28,10 +30,16 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final bg = isDark
+        ? AppThemeExtension.of(context).background
+        : AppThemeExtension.of(context).background;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final border = isDark
+        ? AppThemeExtension.of(context).border
+        : AppThemeExtension.of(context).border;
 
     return ColoredBox(
       color: bg,
@@ -49,10 +57,15 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
             const SizedBox(height: 8),
             Text(
               'Tercihlerinizi yazın; danışmanınız size uygun ilanları seçip geri dönecek.',
-              style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 14),
+              style: TextStyle(
+                  color: onSurface.withValues(alpha: 0.75), fontSize: 14),
             ),
             const SizedBox(height: DesignTokens.space5),
-            Text('Tür', style: TextStyle(color: onSurface.withValues(alpha: 0.8), fontWeight: FontWeight.w600, fontSize: 13)),
+            Text('Tür',
+                style: TextStyle(
+                    color: onSurface.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -62,7 +75,9 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                   label: Text(t),
                   selected: sel,
                   onSelected: (_) => setState(() => _type = t),
-                  selectedColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
+                  selectedColor: AppThemeExtension.of(context)
+                      .accent
+                      .withValues(alpha: 0.25),
                   checkmarkColor: AppThemeExtension.of(context).accent,
                 );
               }).toList(),
@@ -77,7 +92,8 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                 hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.45)),
                 filled: true,
                 fillColor: surface,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                   borderSide: BorderSide(color: border),
@@ -95,52 +111,73 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
                       content: const Text('Lütfen arama kriterlerinizi yazın.'),
                       backgroundColor: AppThemeExtension.of(context).danger,
                       behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   );
                   return;
                 }
-                showModalBottomSheet<void>(
+                showPremiumModalBottomSheet<void>(
                   context: context,
-                  backgroundColor: surface,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  builder: (ctx) => Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Icon(Icons.check_circle_rounded, color: AppThemeExtension.of(context).success, size: 48),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Talebiniz alındı',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: onSurface,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 18,
+                  useSafeArea: true,
+                  builder: (ctx) {
+                    final ext = AppThemeExtension.of(ctx);
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        DesignTokens.space5,
+                        DesignTokens.space2,
+                        DesignTokens.space5,
+                        DesignTokens.space6,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const PremiumBottomSheetHandle(),
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: ext.success,
+                            size: 48,
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          '“$_type · $q” bilgisi danışmanınıza iletilmek üzere kaydedildi. En kısa sürede sizinle iletişime geçilecek.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: onSurface.withValues(alpha: 0.8), height: 1.45),
-                        ),
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppThemeExtension.of(context).accent,
-                            foregroundColor: AppThemeExtension.of(context).onBrand,
+                          const SizedBox(height: DesignTokens.space4),
+                          Text(
+                            'Talebiniz alındı',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: onSurface,
+                              fontWeight: FontWeight.w800,
+                              fontSize: DesignTokens.fontSizeLg,
+                            ),
                           ),
-                          child: const Text('Tamam'),
-                        ),
-                      ],
-                    ),
-                  ),
+                          const SizedBox(height: DesignTokens.space3),
+                          Text(
+                            '“$_type · $q” danışmanınıza iletildi. En kısa sürede dönüş alırsınız.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: onSurface.withValues(alpha: 0.82),
+                              height: 1.45,
+                              fontSize: DesignTokens.fontSizeSm,
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.space5),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: ext.accent,
+                              foregroundColor: ext.onBrand,
+                              minimumSize: const Size(double.infinity, 48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusControl,
+                                ),
+                              ),
+                            ),
+                            child: const Text('Tamam'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 );
               },
               style: FilledButton.styleFrom(
@@ -171,10 +208,16 @@ class ClientFavoritesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final bg = isDark
+        ? AppThemeExtension.of(context).background
+        : AppThemeExtension.of(context).background;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final border = isDark
+        ? AppThemeExtension.of(context).border
+        : AppThemeExtension.of(context).border;
 
     return ColoredBox(
       color: bg,
@@ -184,12 +227,14 @@ class ClientFavoritesPage extends StatelessWidget {
           children: [
             Text(
               'Favorilerim',
-              style: theme.textTheme.titleLarge?.copyWith(color: onSurface, fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: onSurface, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
               'Uygulamada favori kaydı açıldığında ilanlarınız burada listelenecek. Şimdilik örnek portföyümüzden ilham alabilirsiniz.',
-              style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 14),
+              style: TextStyle(
+                  color: onSurface.withValues(alpha: 0.75), fontSize: 14),
             ),
             const SizedBox(height: DesignTokens.space5),
             ..._samples.map((s) => Padding(
@@ -216,27 +261,40 @@ class ClientFavoritesPage extends StatelessWidget {
                           ),
                         );
                       },
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusLg),
                       child: Container(
                         padding: const EdgeInsets.all(DesignTokens.space4),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                          border: Border.all(color: border.withValues(alpha: 0.6)),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusLg),
+                          border:
+                              Border.all(color: border.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.home_work_rounded, color: AppThemeExtension.of(context).accent, size: 36),
+                            Icon(Icons.home_work_rounded,
+                                color: AppThemeExtension.of(context).accent,
+                                size: 36),
                             const SizedBox(width: 14),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(s.$1, style: TextStyle(color: onSurface, fontWeight: FontWeight.w700)),
-                                  Text(s.$2, style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 13)),
+                                  Text(s.$1,
+                                      style: TextStyle(
+                                          color: onSurface,
+                                          fontWeight: FontWeight.w700)),
+                                  Text(s.$2,
+                                      style: TextStyle(
+                                          color:
+                                              onSurface.withValues(alpha: 0.65),
+                                          fontSize: 13)),
                                 ],
                               ),
                             ),
-                            Icon(Icons.chevron_right_rounded, color: onSurface.withValues(alpha: 0.4)),
+                            Icon(Icons.chevron_right_rounded,
+                                color: onSurface.withValues(alpha: 0.4)),
                           ],
                         ),
                       ),
@@ -264,10 +322,16 @@ class ClientMessagesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final bg = isDark
+        ? AppThemeExtension.of(context).background
+        : AppThemeExtension.of(context).background;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final border = isDark
+        ? AppThemeExtension.of(context).border
+        : AppThemeExtension.of(context).border;
 
     return ColoredBox(
       color: bg,
@@ -277,12 +341,14 @@ class ClientMessagesPage extends StatelessWidget {
           children: [
             Text(
               'İletişim',
-              style: theme.textTheme.titleLarge?.copyWith(color: onSurface, fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: onSurface, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
               'Danışmanınızla görüşmek için aşağıdaki seçeneklerden birini kullanın.',
-              style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 14),
+              style: TextStyle(
+                  color: onSurface.withValues(alpha: 0.75), fontSize: 14),
             ),
             const SizedBox(height: DesignTokens.space5),
             _msgTile(
@@ -295,7 +361,8 @@ class ClientMessagesPage extends StatelessWidget {
               subtitle: 'Hızlı mesaj için WhatsApp açılır',
               onTap: () {
                 HapticFeedback.lightImpact();
-                _open(Uri.parse('https://wa.me/?text=${Uri.encodeComponent('Merhaba, EmlakMaster müşterisiyim. Görüşmek istiyorum.')}'));
+                _open(Uri.parse(
+                    'https://wa.me/?text=${Uri.encodeComponent('Merhaba, EmlakMaster müşterisiyim. Görüşmek istiyorum.')}'));
               },
             ),
             const SizedBox(height: 12),
@@ -323,7 +390,10 @@ class ClientMessagesPage extends StatelessWidget {
               subtitle: 'info@rainbowgayrimenkul.com (örnek)',
               onTap: () {
                 HapticFeedback.lightImpact();
-                _open(Uri(scheme: 'mailto', path: 'info@example.com', queryParameters: {'subject': 'EmlakMaster müşteri'}));
+                _open(Uri(
+                    scheme: 'mailto',
+                    path: 'info@example.com',
+                    queryParameters: {'subject': 'EmlakMaster müşteri'}));
               },
             ),
           ],
@@ -357,7 +427,8 @@ class ClientMessagesPage extends StatelessWidget {
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+                backgroundColor:
+                    AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
                 child: Icon(icon, color: AppThemeExtension.of(context).accent),
               ),
               const SizedBox(width: 14),
@@ -365,12 +436,18 @@ class ClientMessagesPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: TextStyle(color: onSurface, fontWeight: FontWeight.w700)),
-                    Text(subtitle, style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12)),
+                    Text(title,
+                        style: TextStyle(
+                            color: onSurface, fontWeight: FontWeight.w700)),
+                    Text(subtitle,
+                        style: TextStyle(
+                            color: onSurface.withValues(alpha: 0.65),
+                            fontSize: 12)),
                   ],
                 ),
               ),
-              Icon(Icons.open_in_new_rounded, size: 20, color: onSurface.withValues(alpha: 0.45)),
+              Icon(Icons.open_in_new_rounded,
+                  size: 20, color: onSurface.withValues(alpha: 0.45)),
             ],
           ),
         ),
@@ -387,14 +464,28 @@ class ClientVirtualTourPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final bg = isDark
+        ? AppThemeExtension.of(context).background
+        : AppThemeExtension.of(context).background;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final border = isDark
+        ? AppThemeExtension.of(context).border
+        : AppThemeExtension.of(context).border;
 
     final tours = [
-      ('Örnek daire turu', 'YouTube üzerinde 360° örnek', 'https://www.youtube.com/results?search_query=360+apartment+tour'),
-      ('Boş dağıtım', 'Mimari gezinti örneği', 'https://www.youtube.com/results?search_query=real+estate+virtual+tour'),
+      (
+        'Örnek daire turu',
+        'YouTube üzerinde 360° örnek',
+        'https://www.youtube.com/results?search_query=360+apartment+tour'
+      ),
+      (
+        'Boş dağıtım',
+        'Mimari gezinti örneği',
+        'https://www.youtube.com/results?search_query=real+estate+virtual+tour'
+      ),
     ];
 
     return ColoredBox(
@@ -405,12 +496,14 @@ class ClientVirtualTourPage extends StatelessWidget {
           children: [
             Text(
               'Sanal tur',
-              style: theme.textTheme.titleLarge?.copyWith(color: onSurface, fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: onSurface, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
               'Aşağıdaki bağlantılar harici sitede örnek sanal tur içerikleri açar.',
-              style: TextStyle(color: onSurface.withValues(alpha: 0.75), fontSize: 14),
+              style: TextStyle(
+                  color: onSurface.withValues(alpha: 0.75), fontSize: 14),
             ),
             const SizedBox(height: DesignTokens.space5),
             ...tours.map((t) => Padding(
@@ -423,42 +516,60 @@ class ClientVirtualTourPage extends StatelessWidget {
                         HapticFeedback.lightImpact();
                         final u = Uri.parse(t.$3);
                         if (await canLaunchUrl(u)) {
-                          await launchUrl(u, mode: LaunchMode.externalApplication);
+                          await launchUrl(u,
+                              mode: LaunchMode.externalApplication);
                         } else if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Bağlantı açılamadı.')),
+                            const SnackBar(
+                                content: Text('Bağlantı açılamadı.')),
                           );
                         }
                       },
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusLg),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(DesignTokens.space5),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                          border: Border.all(color: border.withValues(alpha: 0.6)),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusLg),
+                          border:
+                              Border.all(color: border.withValues(alpha: 0.6)),
                         ),
                         child: Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
+                                color: AppThemeExtension.of(context)
+                                    .accent
+                                    .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Icon(Icons.threesixty_rounded, color: AppThemeExtension.of(context).accent, size: 32),
+                              child: Icon(Icons.threesixty_rounded,
+                                  color: AppThemeExtension.of(context).accent,
+                                  size: 32),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(t.$1, style: TextStyle(color: onSurface, fontWeight: FontWeight.w700)),
-                                  Text(t.$2, style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 13)),
+                                  Text(t.$1,
+                                      style: TextStyle(
+                                          color: onSurface,
+                                          fontWeight: FontWeight.w700)),
+                                  Text(t.$2,
+                                      style: TextStyle(
+                                          color:
+                                              onSurface.withValues(alpha: 0.65),
+                                          fontSize: 13)),
                                 ],
                               ),
                             ),
-                            Icon(Icons.play_circle_fill_rounded, color: AppThemeExtension.of(context).accent, size: 40),
+                            Icon(Icons.play_circle_fill_rounded,
+                                color: AppThemeExtension.of(context).accent,
+                                size: 40),
                           ],
                         ),
                       ),
@@ -485,10 +596,16 @@ class ClientProfilePage extends ConsumerWidget {
     }();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final bg = isDark
+        ? AppThemeExtension.of(context).background
+        : AppThemeExtension.of(context).background;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
     final onSurface = theme.colorScheme.onSurface;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final border = isDark
+        ? AppThemeExtension.of(context).border
+        : AppThemeExtension.of(context).border;
 
     return ColoredBox(
       color: bg,
@@ -498,7 +615,8 @@ class ClientProfilePage extends ConsumerWidget {
           children: [
             Text(
               'Profil',
-              style: theme.textTheme.titleLarge?.copyWith(color: onSurface, fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: onSurface, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: DesignTokens.space5),
             Container(
@@ -512,10 +630,15 @@ class ClientProfilePage extends ConsumerWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
+                    backgroundColor: AppThemeExtension.of(context)
+                        .accent
+                        .withValues(alpha: 0.2),
                     child: Text(
                       avatarLetter,
-                      style: TextStyle(color: AppThemeExtension.of(context).accent, fontWeight: FontWeight.w800, fontSize: 22),
+                      style: TextStyle(
+                          color: AppThemeExtension.of(context).accent,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 22),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -525,11 +648,14 @@ class ClientProfilePage extends ConsumerWidget {
                       children: [
                         Text(
                           user?.email ?? 'Giriş yapılmamış',
-                          style: TextStyle(color: onSurface, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              color: onSurface, fontWeight: FontWeight.w600),
                         ),
                         Text(
                           'Müşteri hesabı',
-                          style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 13),
+                          style: TextStyle(
+                              color: onSurface.withValues(alpha: 0.65),
+                              fontSize: 13),
                         ),
                       ],
                     ),
@@ -544,10 +670,15 @@ class ClientProfilePage extends ConsumerWidget {
                 side: BorderSide(color: border.withValues(alpha: 0.5)),
               ),
               tileColor: surface,
-              leading: Icon(Icons.privacy_tip_outlined, color: AppThemeExtension.of(context).accent),
-              title: Text('KVKK & gizlilik', style: TextStyle(color: onSurface)),
-              subtitle: Text('Verileriniz nasıl kullanılır?', style: TextStyle(color: onSurface.withValues(alpha: 0.65), fontSize: 12)),
-              trailing: Icon(Icons.chevron_right_rounded, color: onSurface.withValues(alpha: 0.4)),
+              leading: Icon(Icons.privacy_tip_outlined,
+                  color: AppThemeExtension.of(context).accent),
+              title:
+                  Text('KVKK & gizlilik', style: TextStyle(color: onSurface)),
+              subtitle: Text('Verileriniz nasıl kullanılır?',
+                  style: TextStyle(
+                      color: onSurface.withValues(alpha: 0.65), fontSize: 12)),
+              trailing: Icon(Icons.chevron_right_rounded,
+                  color: onSurface.withValues(alpha: 0.4)),
               onTap: () {
                 HapticFeedback.lightImpact();
                 showDialog<void>(
@@ -561,7 +692,9 @@ class ClientProfilePage extends ConsumerWidget {
                       ),
                     ),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tamam')),
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Tamam')),
                     ],
                   ),
                 );

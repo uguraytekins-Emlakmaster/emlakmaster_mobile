@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -16,11 +17,8 @@ import 'package:go_router/go_router.dart';
 /// Yazarken sayfa komutları ve müşteri araması yapar.
 class CommandPalette {
   static void show(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      backgroundColor: ext.popoverBackground,
-      isScrollControlled: true,
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.6,
         minChildSize: 0.4,
@@ -99,8 +97,44 @@ class _CommandPaletteContentState
     return SafeArea(
       child: Column(
         children: [
+          const PremiumBottomSheetHandle(),
           Padding(
-            padding: const EdgeInsets.all(DesignTokens.space5),
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space5,
+              DesignTokens.space2,
+              DesignTokens.space5,
+              DesignTokens.space3,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.bolt_outlined,
+                  size: DesignTokens.iconLg,
+                  color: ext.accent.withValues(alpha: 0.5),
+                ),
+                const SizedBox(width: DesignTokens.space3),
+                const Expanded(
+                  child: PremiumSheetHeader(
+                    compact: true,
+                    title: 'Komutlar',
+                    subtitle: 'Sayfa veya müşteri arayın',
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Kapat',
+                  style: IconButton.styleFrom(
+                    foregroundColor: ext.textTertiary,
+                  ),
+                  onPressed: widget.onClose,
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,
@@ -108,8 +142,11 @@ class _CommandPaletteContentState
                 hintText: 'Sayfa veya müşteri ara...',
                 hintStyle: AppTypography.body(context)
                     .copyWith(color: ext.foregroundMuted),
-                prefixIcon:
-                    Icon(Icons.search_rounded, color: ext.foregroundSecondary),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: ext.textSecondary,
+                  size: DesignTokens.iconMd,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                 ),
@@ -188,9 +225,11 @@ class _CommandPaletteContentState
                       if (filtered.isEmpty) {
                         return Padding(
                           padding: const EdgeInsets.all(DesignTokens.space4),
-                          child: Text('Müşteri bulunamadı',
-                              style: AppTypography.body(context)
-                                  .copyWith(color: ext.foregroundMuted)),
+                          child: Text(
+                            'Eşleşen müşteri yok',
+                            style: AppTypography.body(context)
+                                .copyWith(color: ext.textTertiary),
+                          ),
                         );
                       }
                       return Column(
@@ -348,11 +387,20 @@ class _ActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return ListTile(
-      leading: Icon(icon, color: ext.accent),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.space2,
+        vertical: DesignTokens.space1,
+      ),
+      minLeadingWidth: 40,
+      leading: Icon(
+        icon,
+        color: ext.textSecondary,
+        size: DesignTokens.iconMd,
+      ),
       title: Text(
         label,
-        style: AppTypography.bodyStrong(context)
-            .copyWith(color: ext.popoverForeground),
+        style:
+            AppTypography.bodyStrong(context).copyWith(color: ext.textPrimary),
       ),
       onTap: onTap,
     );

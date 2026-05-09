@@ -1,10 +1,13 @@
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:typed_data';
 
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/analytics/domain/models/rainbow_intel_models.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 /// Koyu tema önizleme + PDF aksiyonları.
 Future<void> showIntelReportPreviewSheet({
   required BuildContext context,
@@ -15,6 +18,7 @@ Future<void> showIntelReportPreviewSheet({
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.52),
     builder: (ctx) {
       return DraggableScrollableSheet(
         expand: false,
@@ -25,43 +29,79 @@ Future<void> showIntelReportPreviewSheet({
           return Container(
             decoration: const BoxDecoration(
               color: Color(0xFF0D1117),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(DesignTokens.radiusSheet),
+              ),
             ),
             child: Column(
               children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(999),
+                Padding(
+                  padding: const EdgeInsets.only(
+                    top: DesignTokens.space3,
+                    bottom: DesignTokens.space3,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    DesignTokens.space5,
+                    DesignTokens.space2,
+                    DesignTokens.space5,
+                    DesignTokens.space3,
+                  ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          'Önizleme',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Önizleme',
+                              style: AppTypography.pageHeading(context).copyWith(
+                                color: Colors.white,
+                                fontSize: DesignTokens.fontSizeXl,
+                                height: 1.15,
+                              ),
+                            ),
+                            const SizedBox(height: DesignTokens.titleSubtitleGap),
+                            Text(
+                              report.propertyTitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.body(context).copyWith(
+                                color: Colors.white.withValues(alpha: 0.62),
+                                fontSize: DesignTokens.fontSizeSm,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       IconButton(
+                        tooltip: 'Kapat',
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: DesignTokens.iconMd,
+                          color: Colors.white.withValues(alpha: 0.72),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
                     child: PdfPreview(
                       build: (format) async => pdfBytes,
                       canChangePageFormat: false,
@@ -75,7 +115,12 @@ Future<void> showIntelReportPreviewSheet({
                 SafeArea(
                   top: false,
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(
+                      DesignTokens.space5,
+                      DesignTokens.space3,
+                      DesignTokens.space5,
+                      DesignTokens.space5,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -86,15 +131,28 @@ Future<void> showIntelReportPreviewSheet({
                               filename: 'rainbow_intel_${report.id}.pdf',
                             );
                           },
-                          icon: const Icon(Icons.download_rounded),
-                          label: const Text('PDF indir / paylaş'),
+                          icon: const Icon(
+                            Icons.download_rounded,
+                            size: DesignTokens.iconMd,
+                          ),
+                          label: const Text('PDF indir'),
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppThemeExtension.of(context).accent,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor:
+                                AppThemeExtension.of(context).accent,
+                            foregroundColor:
+                                AppThemeExtension.of(context).onBrand,
+                            minimumSize: const Size(double.infinity, 48),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: DesignTokens.space3,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                DesignTokens.radiusControl,
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: DesignTokens.space3),
                         OutlinedButton.icon(
                           onPressed: () async {
                             final t =
@@ -103,15 +161,28 @@ Future<void> showIntelReportPreviewSheet({
                               'https://wa.me/?text=${Uri.encodeComponent(t)}',
                             );
                             if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
                             }
                           },
-                          icon: Icon(Icons.chat_rounded, color: AppThemeExtension.of(context).accent),
-                          label: const Text('WhatsApp ile gönder'),
+                          icon: Icon(
+                            Icons.chat_rounded,
+                            size: DesignTokens.iconMd,
+                            color: AppThemeExtension.of(context).accent,
+                          ),
+                          label: const Text("WhatsApp'ta paylaş"),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppThemeExtension.of(context).accent,
-                            side: BorderSide(color: AppThemeExtension.of(context).accent),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            foregroundColor:
+                                AppThemeExtension.of(context).accent,
+                            minimumSize: const Size(double.infinity, 48),
+                            side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.22),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                DesignTokens.radiusControl,
+                              ),
+                            ),
                           ),
                         ),
                       ],

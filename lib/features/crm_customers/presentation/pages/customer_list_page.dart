@@ -24,8 +24,7 @@ import '../widgets/customer_card.dart';
 /// Liste altı — dock bar + büyük metin ölçeği için güvenli boşluk (SE / erişilebilirlik).
 double _customerListDockBottomReserve(BuildContext context) {
   final ts = MediaQuery.textScalerOf(context);
-  final ratio =
-      ts.scale(DesignTokens.fontSizeBase) / DesignTokens.fontSizeBase;
+  final ratio = ts.scale(DesignTokens.fontSizeBase) / DesignTokens.fontSizeBase;
   final clamped = ratio.clamp(1.0, 1.38);
   return 120 * clamped;
 }
@@ -265,7 +264,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: DesignTokens.space6),
+                          horizontal: DesignTokens.space5),
                       child: _SearchBar(controller: _searchController),
                     ),
                   ),
@@ -285,11 +284,12 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                           padding: const EdgeInsets.all(24),
                           child: EmptyState(
                             premiumVisual: true,
+                            grouped: true,
                             icon: Icons.cloud_off_rounded,
                             title: AppLocalizations.of(context)
                                 .t('customer_list_load_error'),
                             subtitle:
-                                'Bağlantıyı kontrol edin veya bir süre sonra yeniden deneyin.',
+                                'Bağlantıyı kontrol edin; bir süre sonra yenileyin.',
                           ),
                         ),
                       ),
@@ -342,7 +342,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                         DesignTokens.space6,
                                       ),
                                       child: Center(
-                                        child: _ConsultantCustomersEmptyLaunchpad(
+                                        child:
+                                            _ConsultantCustomersEmptyLaunchpad(
                                           onPrimaryAdd: () {
                                             HapticFeedback.lightImpact();
                                             showSaveContactSheet(
@@ -389,6 +390,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                             ),
                             child: EmptyState(
                               premiumVisual: true,
+                              grouped: true,
                               anchorAboveCenter: true,
                               icon: Icons.people_rounded,
                               title: noSearchHits
@@ -403,9 +405,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                         }
                         return ListView.builder(
                           padding: EdgeInsets.fromLTRB(
-                            DesignTokens.space6,
+                            DesignTokens.space5,
                             0,
-                            DesignTokens.space6,
+                            DesignTokens.space5,
                             showAddDock
                                 ? _customerListDockBottomReserve(context)
                                 : DesignTokens.space4,
@@ -539,8 +541,8 @@ class _CustomerAddDockBar extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       visualDensity: VisualDensity.standard,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                            DesignTokens.radiusControl),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusControl),
                       ),
                     ),
                   ),
@@ -570,8 +572,7 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final radius = BorderRadius.circular(DesignTokens.radiusLg);
-    final outlineSide =
-        BorderSide(color: ext.border.withValues(alpha: 0.72));
+    final outlineSide = BorderSide(color: ext.border.withValues(alpha: 0.72));
     return LayoutBuilder(
       builder: (context, constraints) {
         final narrow = constraints.maxWidth < 340;
@@ -637,8 +638,9 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
                             ),
                           ),
                           SizedBox(
-                              height:
-                                  narrow ? DesignTokens.space4 : DesignTokens.space5),
+                              height: narrow
+                                  ? DesignTokens.space4
+                                  : DesignTokens.space5),
                           Text(
                             'Müşteri portföyünü burada kur',
                             textAlign: TextAlign.center,
@@ -662,8 +664,9 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
                             ),
                           ),
                           SizedBox(
-                              height:
-                                  narrow ? DesignTokens.space5 : DesignTokens.space6),
+                              height: narrow
+                                  ? DesignTokens.space5
+                                  : DesignTokens.space6),
                           Semantics(
                             button: true,
                             label: 'Müşteri ekle',
@@ -687,8 +690,8 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
                                   backgroundColor: ext.accent,
                                   foregroundColor: ext.onBrand,
                                   minimumSize: const Size(double.infinity, 52),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   visualDensity: VisualDensity.standard,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(
@@ -709,7 +712,9 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
                                 icon: Icon(Icons.mic_none_rounded,
                                     size: 22, color: ext.accent),
                                 label: Text(
-                                  narrow ? 'Ses / hızlı kayıt' : 'Sesli veya hızlı kayıt',
+                                  narrow
+                                      ? 'Ses / hızlı kayıt'
+                                      : 'Sesli veya hızlı kayıt',
                                   style: AppTypography.secondaryButton(context),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -718,8 +723,8 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
                                   foregroundColor: ext.textPrimary,
                                   side: outlineSide,
                                   minimumSize: const Size(double.infinity, 48),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                   visualDensity: VisualDensity.standard,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(
@@ -751,8 +756,8 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
                                   foregroundColor: ext.textPrimary,
                                   side: outlineSide,
                                   minimumSize: const Size(double.infinity, 48),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                   visualDensity: VisualDensity.standard,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(

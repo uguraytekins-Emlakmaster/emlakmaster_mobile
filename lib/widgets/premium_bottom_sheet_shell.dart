@@ -10,12 +10,14 @@ Future<T?> showPremiumModalBottomSheet<T>({
   required Widget Function(BuildContext context) builder,
   bool isScrollControlled = true,
   bool useSafeArea = false,
+  bool useRootNavigator = false,
 }) {
   final ext = AppThemeExtension.of(context);
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
     useSafeArea: useSafeArea,
+    useRootNavigator: useRootNavigator,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.52),
     builder: (ctx) {
@@ -78,6 +80,7 @@ class PremiumSheetHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+
     /// Alt sayfa / önizleme gibi dar yüzeylerde daha sakin tipografi.
     this.compact = false,
   });

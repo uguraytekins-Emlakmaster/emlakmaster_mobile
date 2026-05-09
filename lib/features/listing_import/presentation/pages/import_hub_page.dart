@@ -10,6 +10,8 @@ import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/office/domain/membership_status.dart';
@@ -42,6 +44,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
   final _manualDesc = TextEditingController();
   bool _busy = false;
   String? _importMode = 'skip_duplicates';
+
   /// Mağaza dışa aktarımı için kaynak (ilanlar `sourcePlatform` alır).
   String? _storePlatform;
 
@@ -70,7 +73,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     final m = ref.read(primaryMembershipProvider).valueOrNull;
     return m != null &&
         m.status == MembershipStatus.active &&
-        (m.role == OfficeRole.owner || m.role == OfficeRole.admin || m.role == OfficeRole.manager);
+        (m.role == OfficeRole.owner ||
+            m.role == OfficeRole.admin ||
+            m.role == OfficeRole.manager);
   }
 
   Map<String, String> _defaultMapping() => {
@@ -164,7 +169,8 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       final file = File(path);
 
       if (ext == 'csv' || ext == 'txt') {
-        final text = utf8.decode(await file.readAsBytes(), allowMalformed: true);
+        final text =
+            utf8.decode(await file.readAsBytes(), allowMalformed: true);
         final rows = const CsvToListConverter(eol: '\n').convert(text);
         if (rows.isNotEmpty) {
           mapping = _mappingFromHeaderRow(rows.first);
@@ -180,8 +186,12 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
-              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('İçe aktar')),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('İptal')),
+              FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('İçe aktar')),
             ],
           ),
         );
@@ -206,8 +216,12 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
-              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('İçe aktar')),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('İptal')),
+              FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('İçe aktar')),
             ],
           ),
         );
@@ -225,8 +239,12 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               'JSON kökü ilan dizisi veya { "rows": [...] } olmalı. İlan kimliği için id / externalListingId kullanılabilir.',
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
-              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Devam')),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('İptal')),
+              FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Devam')),
             ],
           ),
         );
@@ -266,57 +284,123 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       _snack('Önce giriş yapın.');
       return;
     }
-    await showModalBottomSheet<void>(
+    await showPremiumModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (ctx) {
+        final sheetExt = AppThemeExtension.of(ctx);
         return Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space5,
+              DesignTokens.space2,
+              DesignTokens.space5,
+              DesignTokens.space6,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Manuel ilan', style: Theme.of(ctx).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text(
-                  'Tek tek ekleme — mağaza dışa aktarımı yerine portföy girişi.',
-                  style: TextStyle(color: AppThemeExtension.of(ctx).foregroundSecondary, fontSize: 13),
+                const PremiumBottomSheetHandle(),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.post_add_outlined,
+                      size: DesignTokens.iconLg,
+                      color: sheetExt.accent.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: DesignTokens.space3),
+                    const Expanded(
+                      child: PremiumSheetHeader(
+                        compact: true,
+                        title: 'Manuel ilan',
+                        subtitle:
+                            'Tek kayıt; mağaza aktarımı yerine hızlı giriş',
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Kapat',
+                      style: IconButton.styleFrom(
+                        foregroundColor: sheetExt.textTertiary,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: DesignTokens.space4),
                 TextField(
                   controller: _manualTitle,
-                  decoration: const InputDecoration(labelText: 'Başlık', border: OutlineInputBorder()),
+                  style: TextStyle(color: sheetExt.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Başlık',
+                    labelStyle: TextStyle(color: sheetExt.textSecondary),
+                    filled: true,
+                    fillColor: sheetExt.background,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: DesignTokens.space3),
                 TextField(
                   controller: _manualPrice,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Fiyat (₺)', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _manualLoc,
-                  decoration: const InputDecoration(
-                    labelText: 'Konum (ör. Diyarbakır · Kayapınar)',
-                    border: OutlineInputBorder(),
+                  style: TextStyle(color: sheetExt.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Fiyat (₺)',
+                    labelStyle: TextStyle(color: sheetExt.textSecondary),
+                    filled: true,
+                    fillColor: sheetExt.background,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: DesignTokens.space3),
+                TextField(
+                  controller: _manualLoc,
+                  style: TextStyle(color: sheetExt.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Konum (ör. Diyarbakır · Kayapınar)',
+                    labelStyle: TextStyle(color: sheetExt.textSecondary),
+                    filled: true,
+                    fillColor: sheetExt.background,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space3),
                 TextField(
                   controller: _manualDesc,
                   maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Açıklama', border: OutlineInputBorder()),
+                  style: TextStyle(color: sheetExt.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Açıklama',
+                    labelStyle: TextStyle(color: sheetExt.textSecondary),
+                    filled: true,
+                    fillColor: sheetExt.background,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: DesignTokens.space5),
                 FilledButton(
                   onPressed: _busy
                       ? null
                       : () async {
                           final price = double.tryParse(
-                                _manualPrice.text.replaceAll('.', '').replaceAll(',', '.').trim(),
+                                _manualPrice.text
+                                    .replaceAll('.', '')
+                                    .replaceAll(',', '.')
+                                    .trim(),
                               ) ??
                               0;
                           if (_manualTitle.text.trim().isEmpty) return;
@@ -328,7 +412,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                               officeId: _officeId(ref, uid),
                               title: _manualTitle.text.trim(),
                               price: price,
-                              location: _manualLoc.text.trim().isEmpty ? '—' : _manualLoc.text.trim(),
+                              location: _manualLoc.text.trim().isEmpty
+                                  ? '—'
+                                  : _manualLoc.text.trim(),
                               description: _manualDesc.text.trim(),
                             );
                             _manualTitle.clear();
@@ -340,12 +426,25 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                             context.push(AppRouter.routeMyListings);
                           } catch (e) {
                             if (mounted) {
-                              _snack(userFacingErrorMessage(e, context: 'import_hub_manual'));
+                              _snack(userFacingErrorMessage(
+                                e,
+                                context: 'import_hub_manual',
+                              ));
                             }
                           } finally {
                             if (mounted) setState(() => _busy = false);
                           }
                         },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: sheetExt.accent,
+                    foregroundColor: sheetExt.onBrand,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        DesignTokens.radiusControl,
+                      ),
+                    ),
+                  ),
                   child: const Text('Kaydet'),
                 ),
               ],
@@ -376,7 +475,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         importMode: _importMode ?? 'skip_duplicates',
       );
       if (!mounted) return;
-      _snack(taskId != null ? 'Sunucu kuyruğu (tek URL): $taskId' : 'İstek gönderildi.');
+      _snack(taskId != null
+          ? 'Sunucu kuyruğu (tek URL): $taskId'
+          : 'İstek gönderildi.');
       _urlCtrl.clear();
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
@@ -456,8 +557,12 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
-              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yükle')),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('İptal')),
+              FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Yükle')),
             ],
           ),
         );
@@ -475,8 +580,12 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               'JSON kökü ilan dizisi veya { "rows": [...] } olmalı.',
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
-              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Devam')),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('İptal')),
+              FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Devam')),
             ],
           ),
         );
@@ -501,7 +610,8 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       final sessionId = const Uuid().v4();
       final objectName = StoragePaths.officeImport(oid, sessionId, safeName);
       final refStorage = FirebaseStorage.instance.ref(objectName);
-      await refStorage.putData(bytes, SettableMetadata(contentType: _guessMime(ext)));
+      await refStorage.putData(
+          bytes, SettableMetadata(contentType: _guessMime(ext)));
 
       final platform = _storePlatform ?? 'sahibinden';
 
@@ -514,13 +624,16 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         platform: platform,
       );
       if (!mounted) return;
-      _snack(taskId != null ? 'Toplu dosya kuyrukta: $taskId (platform: $platform)' : 'İstek gönderildi.');
+      _snack(taskId != null
+          ? 'Toplu dosya kuyrukta: $taskId (platform: $platform)'
+          : 'İstek gönderildi.');
     } on FirebaseException catch (e) {
       if (!mounted) return;
       if (FirebaseStorageAvailability.isUnavailableError(e)) {
         _snackStorageSoft(FirebaseStorageAvailability.unavailableMessage);
       } else {
-        _snackStorageSoft(userFacingErrorMessage(e, context: 'import_hub_storage_upload'));
+        _snackStorageSoft(
+            userFacingErrorMessage(e, context: 'import_hub_storage_upload'));
       }
     } catch (e) {
       if (!mounted) return;
@@ -581,17 +694,24 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                       ),
                       Text(
                         'Tüm vitrin ilanlarınızı tek seferde «Benim İlanlarım»a alın',
-                        style: TextStyle(color: ext.foregroundSecondary, fontSize: 12, height: 1.3),
+                        style: TextStyle(
+                            color: ext.foregroundSecondary,
+                            fontSize: 12,
+                            height: 1.3),
                       ),
                     ],
                   ),
                 ),
                 TextButton(
-                  onPressed: _busy ? null : () => context.push(AppRouter.routeMyListings),
+                  onPressed: _busy
+                      ? null
+                      : () => context.push(AppRouter.routeMyListings),
                   child: const Text('İlanlarım'),
                 ),
                 TextButton(
-                  onPressed: _busy ? null : () => context.push(AppRouter.routeImportHistory),
+                  onPressed: _busy
+                      ? null
+                      : () => context.push(AppRouter.routeImportHistory),
                   child: const Text('Geçmiş'),
                 ),
               ],
@@ -609,47 +729,71 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                 'Canlı mağaza OAuth / otomatik tam senkron henüz yok. Bugün için güvenilir yol: '
                 'platformdan dışa aktardığınız CSV, JSON veya Excel dosyasını yükleyin. '
                 'Bu, «tüm ilanları» tek işlemde içeri almanın üretim yoludur.',
-                style: TextStyle(color: ext.foreground.withValues(alpha: 0.9), height: 1.4, fontSize: 13),
+                style: TextStyle(
+                    color: ext.foreground.withValues(alpha: 0.9),
+                    height: 1.4,
+                    fontSize: 13),
               ),
             ),
             const SizedBox(height: 16),
             _OfficialConnectorCard(ext: ext),
             const SizedBox(height: 16),
-            Text('Mağaza kaynağı (etiket)', style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w600)),
+            Text('Mağaza kaynağı (etiket)',
+                style: TextStyle(
+                    color: ext.foreground, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text(
               'İlanların sourcePlatform alanına yazılır; boşsa dosya türü (import_csv vb.) kullanılır.',
-              style: TextStyle(color: ext.foregroundSecondary, fontSize: 11, height: 1.35),
+              style: TextStyle(
+                  color: ext.foregroundSecondary, fontSize: 11, height: 1.35),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String?>(
               initialValue: _storePlatform,
-              decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+              decoration: const InputDecoration(
+                  border: OutlineInputBorder(), isDense: true),
               items: const [
                 DropdownMenuItem(child: Text('Genel / belirtmiyorum')),
-                DropdownMenuItem(value: 'sahibinden', child: Text('Sahibinden vitrin dışa aktarımı')),
-                DropdownMenuItem(value: 'hepsiemlak', child: Text('Hepsiemlak dışa aktarımı')),
-                DropdownMenuItem(value: 'emlakjet', child: Text('Emlakjet dışa aktarımı')),
+                DropdownMenuItem(
+                    value: 'sahibinden',
+                    child: Text('Sahibinden vitrin dışa aktarımı')),
+                DropdownMenuItem(
+                    value: 'hepsiemlak',
+                    child: Text('Hepsiemlak dışa aktarımı')),
+                DropdownMenuItem(
+                    value: 'emlakjet', child: Text('Emlakjet dışa aktarımı')),
               ],
-              onChanged: _busy ? null : (v) => setState(() => _storePlatform = v),
+              onChanged:
+                  _busy ? null : (v) => setState(() => _storePlatform = v),
             ),
             const SizedBox(height: 16),
-            Text('Yinelenen kayıt modu', style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w600)),
+            Text('Yinelenen kayıt modu',
+                style: TextStyle(
+                    color: ext.foreground, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _importMode,
-              decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+              decoration: const InputDecoration(
+                  border: OutlineInputBorder(), isDense: true),
               items: const [
-                DropdownMenuItem(value: 'skip_duplicates', child: Text('Çiftleri atla')),
-                DropdownMenuItem(value: 'update_duplicates', child: Text('Çiftleri güncelle')),
-                DropdownMenuItem(value: 'create_new', child: Text('Yalnızca yeni (çift yok)')),
+                DropdownMenuItem(
+                    value: 'skip_duplicates', child: Text('Çiftleri atla')),
+                DropdownMenuItem(
+                    value: 'update_duplicates',
+                    child: Text('Çiftleri güncelle')),
+                DropdownMenuItem(
+                    value: 'create_new',
+                    child: Text('Yalnızca yeni (çift yok)')),
               ],
               onChanged: _busy ? null : (v) => setState(() => _importMode = v),
             ),
             const SizedBox(height: 22),
             Text(
               '1 · Dosyadan toplu içe aktar (önerilen)',
-              style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w800, fontSize: 15),
+              style: TextStyle(
+                  color: ext.foreground,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15),
             ),
             const SizedBox(height: 8),
             FilledButton.icon(
@@ -672,7 +816,10 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             const SizedBox(height: 20),
             Text(
               '2 · Sunucu kuyruğu (Storage + Cloud Functions)',
-              style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w700, fontSize: 14),
+              style: TextStyle(
+                  color: ext.foreground,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14),
             ),
             const SizedBox(height: 6),
             Text(
@@ -690,7 +837,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                 child: Text(
                   'Depolama durumu kontrol ediliyor…',
                   maxLines: 2,
-                  style: TextStyle(color: ext.foreground.withValues(alpha: 0.5), fontSize: 12),
+                  style: TextStyle(
+                      color: ext.foreground.withValues(alpha: 0.5),
+                      fontSize: 12),
                 ),
               )
             else if (storageKnownInactive)
@@ -699,16 +848,21 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                 child: Text(
                   FirebaseStorageAvailability.unavailableMessage,
                   maxLines: 3,
-                  style: TextStyle(color: ext.foreground.withValues(alpha: 0.65), fontSize: 12),
+                  style: TextStyle(
+                      color: ext.foreground.withValues(alpha: 0.65),
+                      fontSize: 12),
                 ),
               ),
             const SizedBox(height: 20),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: Text('Tek ilan URL’si (deneysel — ikincil)', style: TextStyle(color: ext.foreground)),
+              title: Text('Tek ilan URL’si (deneysel — ikincil)',
+                  style: TextStyle(color: ext.foreground)),
               subtitle: Text(
                 'Mağaza ölçeği için uygun değildir; tek URL başına çalışır.',
-                style: TextStyle(color: ext.foreground.withValues(alpha: 0.65), fontSize: 12),
+                style: TextStyle(
+                    color: ext.foreground.withValues(alpha: 0.65),
+                    fontSize: 12),
               ),
               children: [
                 TextField(
@@ -735,7 +889,8 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             const SizedBox(height: 16),
             Text(
               'Uzantı: tarayıcıda «İlanları içe aktar» — ${AppConstants.appName} Chrome eklentisi (doc: extension/chrome/README.md).',
-              style: TextStyle(fontSize: 12, color: ext.foreground.withValues(alpha: 0.7)),
+              style: TextStyle(
+                  fontSize: 12, color: ext.foreground.withValues(alpha: 0.7)),
             ),
           ],
         ),
@@ -780,7 +935,10 @@ class _OfficialConnectorCard extends StatelessWidget {
                 Text(
                   'Hazırlanıyor — canlı OAuth ile vitrinin tamamını arka planda çekme şu an kapalı. '
                   'Açıldığında bu kart «etkin» olacak; şimdilik dosya ile toplu içe aktarın.',
-                  style: TextStyle(color: ext.foregroundSecondary, fontSize: 12, height: 1.4),
+                  style: TextStyle(
+                      color: ext.foregroundSecondary,
+                      fontSize: 12,
+                      height: 1.4),
                 ),
               ],
             ),
@@ -818,13 +976,21 @@ class _ManualMappingDialogState extends State<_ManualMappingDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TextField(controller: _title, decoration: const InputDecoration(labelText: 'Başlık sütunu')),
-          TextField(controller: _price, decoration: const InputDecoration(labelText: 'Fiyat')),
-          TextField(controller: _city, decoration: const InputDecoration(labelText: 'Şehir')),
+          TextField(
+              controller: _title,
+              decoration: const InputDecoration(labelText: 'Başlık sütunu')),
+          TextField(
+              controller: _price,
+              decoration: const InputDecoration(labelText: 'Fiyat')),
+          TextField(
+              controller: _city,
+              decoration: const InputDecoration(labelText: 'Şehir')),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('İptal')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal')),
         FilledButton(
           onPressed: () {
             Navigator.pop(context, {

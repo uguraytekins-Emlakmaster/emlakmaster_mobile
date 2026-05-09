@@ -1,15 +1,35 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
+
 /// Firebase'de news yoksa kullanılacak sabit liste (Günün Fırsatı, Faiz Oranı vb.)
 final List<Map<String, String>> _defaultNewsItems = [
-  {'title': 'Günün Fırsatı', 'body': 'Bugün faiz oranlarında hafif bir geri çekilme var. Kredi bekleyen alıcı listenizi kontrol edip, uygun müşterilere otomatik bilgilendirme gönderebilirsiniz.'},
-  {'title': 'Faiz Oranı Güncellemesi', 'body': 'Merkez Bankası kararı sonrası konut kredisi oranları güncellendi. Müşterilerinize yeni oranları iletmek için öneri listesini inceleyin.'},
-  {'title': 'Piyasa Özeti', 'body': 'Diyarbakır bölgesinde 3+1 talep artışı devam ediyor. Bağlar ve Kayapınar ilçelerinde stoklarınızı güncel tutun.'},
-  {'title': 'Fırsat İlanı', 'body': 'Portföyünüzde 30 günden uzun süredir ilanı açık kalan 2 emlak var. Fiyat revizyonu veya kampanya önerisi alabilirsiniz.'},
+  {
+    'title': 'Günün Fırsatı',
+    'body':
+        'Bugün faiz oranlarında hafif bir geri çekilme var. Kredi bekleyen alıcı listenizi kontrol edip, uygun müşterilere otomatik bilgilendirme gönderebilirsiniz.'
+  },
+  {
+    'title': 'Faiz Oranı Güncellemesi',
+    'body':
+        'Merkez Bankası kararı sonrası konut kredisi oranları güncellendi. Müşterilerinize yeni oranları iletmek için öneri listesini inceleyin.'
+  },
+  {
+    'title': 'Piyasa Özeti',
+    'body':
+        'Diyarbakır bölgesinde 3+1 talep artışı devam ediyor. Bağlar ve Kayapınar ilçelerinde stoklarınızı güncel tutun.'
+  },
+  {
+    'title': 'Fırsat İlanı',
+    'body':
+        'Portföyünüzde 30 günden uzun süredir ilanı açık kalan 2 emlak var. Fiyat revizyonu veya kampanya önerisi alabilirsiniz.'
+  },
 ];
 
 class BentoAiNews extends StatelessWidget {
@@ -22,13 +42,14 @@ class BentoAiNews extends StatelessWidget {
       builder: (context, snapshot) {
         String title = 'AI News Insight';
         String body;
-        if (snapshot.hasData &&
-            snapshot.data!.docs.isNotEmpty) {
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
           final docs = snapshot.data!.docs;
           final index = DateTime.now().millisecondsSinceEpoch % docs.length;
           final d = docs[index].data();
           title = d['title'] as String? ?? 'Günün Fırsatı';
-          body = d['body'] as String? ?? d['text'] as String? ?? _defaultNewsItems[0]['body']!;
+          body = d['body'] as String? ??
+              d['text'] as String? ??
+              _defaultNewsItems[0]['body']!;
         } else {
           final rnd = math.Random(DateTime.now().millisecond);
           final item = _defaultNewsItems[rnd.nextInt(_defaultNewsItems.length)];
@@ -51,7 +72,8 @@ class BentoAiNews extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: AppThemeExtension.of(context).accent,
                 ),
-                child: const Icon(Icons.bolt_rounded, color: Colors.black, size: 22),
+                child: const Icon(Icons.bolt_rounded,
+                    color: Colors.black, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -83,39 +105,54 @@ class BentoAiNews extends StatelessWidget {
               TextButton(
                 style: TextButton.styleFrom(
                   foregroundColor: AppThemeExtension.of(context).accent,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 onPressed: () {
-                  showModalBottomSheet<void>(
+                  showPremiumModalBottomSheet<void>(
                     context: context,
-                    backgroundColor: AppThemeExtension.of(context).surface,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    builder: (ctx) => SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
+                    useSafeArea: true,
+                    builder: (ctx) {
+                      final ext = AppThemeExtension.of(ctx);
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          DesignTokens.space5,
+                          DesignTokens.space2,
+                          DesignTokens.space5,
+                          DesignTokens.space6,
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            const PremiumBottomSheetHandle(),
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.bolt_rounded, color: AppThemeExtension.of(context).accent, size: 28),
-                                const SizedBox(width: 12),
+                                Icon(
+                                  Icons.bolt_outlined,
+                                  size: DesignTokens.iconLg,
+                                  color: ext.accent.withValues(alpha: 0.55),
+                                ),
+                                const SizedBox(width: DesignTokens.space3),
                                 Expanded(
-                                  child: Text(
-                                    title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 18,
-                                    ),
+                                  child: PremiumSheetHeader(
+                                    compact: true,
+                                    title: title,
+                                    subtitle: 'Piyasa özeti',
                                   ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Kapat',
+                                  style: IconButton.styleFrom(
+                                    foregroundColor: ext.textTertiary,
+                                  ),
+                                  onPressed: () => Navigator.pop(ctx),
+                                  icon: const Icon(Icons.close_rounded),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: DesignTokens.space4),
                             ConstrainedBox(
                               constraints: BoxConstraints(
                                 maxHeight: MediaQuery.sizeOf(ctx).height * 0.45,
@@ -123,30 +160,32 @@ class BentoAiNews extends StatelessWidget {
                               child: SingleChildScrollView(
                                 child: Text(
                                   body,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
+                                  style: AppTypography.body(context).copyWith(
+                                    fontSize: DesignTokens.fontSizeSm,
                                     height: 1.5,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppThemeExtension.of(context).accent,
-                                  foregroundColor: Colors.black,
+                            const SizedBox(height: DesignTokens.space5),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: ext.accent,
+                                foregroundColor: ext.onBrand,
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    DesignTokens.radiusControl,
+                                  ),
                                 ),
-                                child: const Text('Anladım'),
                               ),
+                              child: const Text('Anladım'),
                             ),
                           ],
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   );
                 },
                 child: const Text(

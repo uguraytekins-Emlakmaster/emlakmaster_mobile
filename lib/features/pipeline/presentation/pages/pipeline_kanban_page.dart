@@ -8,6 +8,8 @@ import 'package:emlakmaster_mobile/features/lead_temperature_engine/presentation
 import 'package:emlakmaster_mobile/shared/models/lead_temperature.dart';
 import 'package:emlakmaster_mobile/shared/models/pipeline_models.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +28,8 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final uid = ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    final uid =
+        ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return Scaffold(
       backgroundColor: ext.background,
       body: CustomScrollView(
@@ -68,11 +71,16 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
             SliverToBoxAdapter(
               child: SizedBox(
                 height: MediaQuery.of(context).size.height * 0.5,
-                child: Center(
-                  child: Text(
-                    'Giriş yapılmamış.',
-                    style: TextStyle(color: ext.textSecondary),
-                  ),
+                child: EmptyState(
+                  compact: true,
+                  grouped: true,
+                  anchorAboveCenter: true,
+                  anchorAlignmentY: -0.42,
+                  icon: Icons.lock_outline_rounded,
+                  title: 'Oturum gerekli',
+                  subtitle: 'Pipeline\'ı görmek için giriş yapın.',
+                  actionLabel: 'Giriş',
+                  onAction: () => context.push(AppRouter.routeLogin),
                 ),
               ),
             )
@@ -128,7 +136,8 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
 
                   if (items.isEmpty) {
                     return _PipelineEmptyState(
-                      onAddTap: () => _showAddToPipelineSheet(context, ref, uid),
+                      onAddTap: () =>
+                          _showAddToPipelineSheet(context, ref, uid),
                     );
                   }
 
@@ -173,136 +182,135 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
       BuildContext context, WidgetRef ref, String uid) {
     HapticFeedback.lightImpact();
     final customerIdController = TextEditingController();
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) {
         final sheetExt = AppThemeExtension.of(ctx);
-        return Container(
-        decoration: BoxDecoration(
-          color: sheetExt.surface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(DesignTokens.radius2xl),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: sheetExt.accent.withValues(alpha: 0.15),
-              blurRadius: 24,
-              offset: const Offset(0, -4),
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space5,
+              DesignTokens.space2,
+              DesignTokens.space5,
+              DesignTokens.space6,
             ),
-          ],
-        ),
-        padding: EdgeInsets.only(
-          left: DesignTokens.space6,
-          right: DesignTokens.space6,
-          top: DesignTokens.space6,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + DesignTokens.space6,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: sheetExt.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space5),
-            Text(
-              'Pipeline\'a ekle',
-              style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                    color: sheetExt.textPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: DesignTokens.space4),
-            TextField(
-              controller: customerIdController,
-              decoration: InputDecoration(
-                labelText: 'Müşteri ID',
-                hintText: 'Müşteri detay sayfasından kopyalayın',
-                labelStyle: TextStyle(color: sheetExt.textSecondary),
-                filled: true,
-                fillColor: sheetExt.background,
-                border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(DesignTokens.radiusMd),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide: BorderSide(
-                    color: sheetExt.accent,
-                    width: 1.5,
-                  ),
-                ),
-              ),
-              style: TextStyle(color: sheetExt.textPrimary),
-            ),
-            const SizedBox(height: DesignTokens.space6),
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: Text(
-                      'İptal',
-                      style: TextStyle(color: sheetExt.textSecondary),
+                const PremiumBottomSheetHandle(),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.view_kanban_outlined,
+                      size: DesignTokens.iconLg,
+                      color: sheetExt.accent.withValues(alpha: 0.5),
                     ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    onPressed: () async {
-                      final customerId = customerIdController.text.trim();
-                      if (customerId.isEmpty) return;
-                      Navigator.pop(ctx);
-                      await FirestoreService.setPipelineItem({
-                        'advisorId': uid,
-                        'customerId': customerId,
-                        'stage': PipelineStage.lead.id,
-                      });
-                      if (ctx.mounted) {
-                        final snackExt = AppThemeExtension.of(ctx);
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(
-                            content: const Text('Pipeline\'a eklendi.'),
-                            backgroundColor: snackExt.accent,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: sheetExt.accent,
-                      foregroundColor: sheetExt.onBrand,
-                      minimumSize: const Size.fromHeight(DesignTokens.championButtonHeight),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.radiusMd),
+                    const SizedBox(width: DesignTokens.space3),
+                    const Expanded(
+                      child: PremiumSheetHeader(
+                        compact: true,
+                        title: 'Pipeline\'a ekle',
+                        subtitle:
+                            'Müşteri ID’sini müşteri detayından kopyalayın',
                       ),
                     ),
-                    child: const Text('Ekle'),
+                    IconButton(
+                      tooltip: 'Kapat',
+                      style: IconButton.styleFrom(
+                        foregroundColor: sheetExt.textTertiary,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: DesignTokens.space4),
+                TextField(
+                  controller: customerIdController,
+                  decoration: InputDecoration(
+                    labelText: 'Müşteri ID',
+                    hintText: 'Müşteri detayından yapıştırın',
+                    labelStyle: TextStyle(color: sheetExt.textSecondary),
+                    filled: true,
+                    fillColor: sheetExt.background,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                      borderSide: BorderSide(
+                        color: sheetExt.accent,
+                        width: 1.5,
+                      ),
+                    ),
                   ),
+                  style: TextStyle(color: sheetExt.textPrimary),
+                ),
+                const SizedBox(height: DesignTokens.space5),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(
+                          'İptal',
+                          style: TextStyle(color: sheetExt.textSecondary),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: FilledButton(
+                        onPressed: () async {
+                          final customerId = customerIdController.text.trim();
+                          if (customerId.isEmpty) return;
+                          Navigator.pop(ctx);
+                          await FirestoreService.setPipelineItem({
+                            'advisorId': uid,
+                            'customerId': customerId,
+                            'stage': PipelineStage.lead.id,
+                          });
+                          if (ctx.mounted) {
+                            final snackExt = AppThemeExtension.of(ctx);
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: const Text('Pipeline\'a eklendi.'),
+                                backgroundColor: snackExt.accent,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: sheetExt.accent,
+                          foregroundColor: sheetExt.onBrand,
+                          minimumSize: const Size(0, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              DesignTokens.radiusControl,
+                            ),
+                          ),
+                        ),
+                        child: const Text('Ekle'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      );
+          ),
+        );
       },
     );
   }
 }
 
-/// Veri yokken: bilinçli boş durum (yarım ekran hissi vermez).
+/// Veri yokken: paylaşılan EmptyState ile premium boş yüzey.
 class _PipelineEmptyState extends StatelessWidget {
   const _PipelineEmptyState({required this.onAddTap});
 
@@ -313,63 +321,31 @@ class _PipelineEmptyState extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space6,
+        DesignTokens.space5,
         DesignTokens.space4,
-        DesignTokens.space6,
+        DesignTokens.space5,
         DesignTokens.space8,
       ),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(DesignTokens.space6),
-            decoration: BoxDecoration(
-              color: ext.surfaceElevated,
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              border: Border.all(color: ext.border.withValues(alpha: 0.45)),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.view_kanban_rounded, size: 48, color: ext.accent.withValues(alpha: 0.85)),
-                const SizedBox(height: DesignTokens.space4),
-                Text(
-                  'Henüz pipeline kaydı yok',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: ext.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: DesignTokens.fontSizeMd,
-                  ),
-                ),
-                const SizedBox(height: DesignTokens.space2),
-                Text(
-                  'Müşterileri aşamalara sürükleyerek takip edin. İlk kaydı eklemek için aşağıdaki düğmeyi kullanın veya sağ alttaki + ile hızlıca ekleyin.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: ext.textSecondary,
-                    fontSize: DesignTokens.fontSizeSm,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: DesignTokens.space5),
-                FilledButton.icon(
-                  onPressed: onAddTap,
-                  icon: Icon(Icons.add_rounded, color: ext.onBrand, size: 20),
-                  label: const Text('Pipeline\'a müşteri ekle'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: ext.accent,
-                    foregroundColor: ext.onBrand,
-                    minimumSize: const Size.fromHeight(DesignTokens.championButtonHeight),
-                  ),
-                ),
-              ],
-            ),
+          EmptyState(
+            icon: Icons.view_kanban_outlined,
+            title: 'Henüz pipeline kaydı yok',
+            subtitle:
+                'Müşterileri aşamalara taşıyın. İlk kaydı ekleyin veya sağ alttaki + ile hızlıca ekleyin.',
+            actionLabel: 'Pipeline\'a müşteri ekle',
+            onAction: onAddTap,
+            grouped: true,
+            premiumVisual: true,
           ),
           const SizedBox(height: DesignTokens.space4),
           Text(
-            'Aşamaları görmek için veri eklendikten sonra sütunlar yatay kaydırılır.',
+            'Veri geldikten sonra sütunlar yatay kaydırılır.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: ext.textTertiary, fontSize: DesignTokens.fontSizeXs),
+            style: TextStyle(
+              color: ext.textTertiary,
+              fontSize: DesignTokens.fontSizeXs,
+            ),
           ),
         ],
       ),
@@ -406,7 +382,8 @@ class _KanbanBoard extends StatelessWidget {
   });
 
   final List<_PipelineCardData> items;
-  final void Function(_PipelineCardData item, PipelineStage newStage) onStageTap;
+  final void Function(_PipelineCardData item, PipelineStage newStage)
+      onStageTap;
   final void Function(_PipelineCardData item) onCardTap;
 
   @override
@@ -452,7 +429,8 @@ class _StageColumn extends StatelessWidget {
   final PipelineStage stage;
   final int count;
   final List<_PipelineCardData> items;
-  final void Function(_PipelineCardData item, PipelineStage newStage) onStageTap;
+  final void Function(_PipelineCardData item, PipelineStage newStage)
+      onStageTap;
   final void Function(_PipelineCardData item) onCardTap;
 
   static Color _stageColor(PipelineStage s, AppThemeExtension ext) {
@@ -527,7 +505,8 @@ class _StageColumn extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusFull),
                   ),
                   child: Text(
                     '$count',
@@ -547,7 +526,8 @@ class _StageColumn extends StatelessWidget {
                 child: _PipelineCard(
                   data: item,
                   onTap: () => onCardTap(item),
-                  onMoveStage: () => _showStagePicker(context, item, onStageTap),
+                  onMoveStage: () =>
+                      _showStagePicker(context, item, onStageTap),
                 ),
               )),
         ],
@@ -561,70 +541,93 @@ class _StageColumn extends StatelessWidget {
     void Function(_PipelineCardData, PipelineStage) onStageTap,
   ) {
     HapticFeedback.lightImpact();
-    final ext = AppThemeExtension.of(context);
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      backgroundColor: ext.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(DesignTokens.radius2xl),
-        ),
-      ),
       builder: (ctx) {
         final sheetExt = AppThemeExtension.of(ctx);
         return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(DesignTokens.space6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Aşamayı değiştir',
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                      color: sheetExt.textPrimary,
-                      fontWeight: FontWeight.w700,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space5,
+              DesignTokens.space2,
+              DesignTokens.space5,
+              DesignTokens.space5,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const PremiumBottomSheetHandle(),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.swap_horiz_rounded,
+                      size: DesignTokens.iconLg,
+                      color: sheetExt.accent.withValues(alpha: 0.5),
                     ),
-              ),
-              const SizedBox(height: DesignTokens.space4),
-              ...PipelineStage.values.map((stage) {
-                final isCurrent = stage.id == item.stage.id;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: DesignTokens.space2),
-                  child: ListTile(
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusMd),
-                    ),
-                    tileColor: isCurrent
-                        ? sheetExt.accent.withValues(alpha: 0.15)
-                        : null,
-                    leading: Icon(
-                      isCurrent ? Icons.check_circle_rounded : Icons.circle_outlined,
-                      color: isCurrent
-                          ? sheetExt.accent
-                          : sheetExt.textTertiary,
-                      size: 22,
-                    ),
-                    title: Text(
-                      stage.label,
-                      style: TextStyle(
-                        color: sheetExt.textPrimary,
-                        fontWeight:
-                            isCurrent ? FontWeight.w700 : FontWeight.w500,
+                    const SizedBox(width: DesignTokens.space3),
+                    Expanded(
+                      child: PremiumSheetHeader(
+                        compact: true,
+                        title: 'Aşamayı değiştir',
+                        subtitle: item.customerName ?? item.customerId,
                       ),
                     ),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      onStageTap(item, stage);
-                    },
-                  ),
-                );
-              }),
-            ],
+                    IconButton(
+                      tooltip: 'Kapat',
+                      style: IconButton.styleFrom(
+                        foregroundColor: sheetExt.textTertiary,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: DesignTokens.space3),
+                ...PipelineStage.values.map((stage) {
+                  final isCurrent = stage.id == item.stage.id;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: DesignTokens.space2),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.space2,
+                        vertical: DesignTokens.space1,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusControl),
+                      ),
+                      tileColor: isCurrent
+                          ? sheetExt.accent.withValues(alpha: 0.12)
+                          : null,
+                      leading: Icon(
+                        isCurrent
+                            ? Icons.check_circle_rounded
+                            : Icons.circle_outlined,
+                        color:
+                            isCurrent ? sheetExt.accent : sheetExt.textTertiary,
+                        size: DesignTokens.iconMd,
+                      ),
+                      title: Text(
+                        stage.label,
+                        style: TextStyle(
+                          color: sheetExt.textPrimary,
+                          fontWeight:
+                              isCurrent ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        onStageTap(item, stage);
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
-        ),
-      );
+        );
       },
     );
   }
@@ -674,7 +677,8 @@ class _PipelineCard extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      data.customerName ?? 'Müşteri ${data.customerId.length > 8 ? "${data.customerId.substring(0, 8)}..." : data.customerId}',
+                      data.customerName ??
+                          'Müşteri ${data.customerId.length > 8 ? "${data.customerId.substring(0, 8)}..." : data.customerId}',
                       style: TextStyle(
                         color: ext.textPrimary,
                         fontWeight: FontWeight.w700,

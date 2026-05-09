@@ -26,6 +26,7 @@ import 'package:emlakmaster_mobile/features/settings/presentation/providers/feat
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:emlakmaster_mobile/widgets/session_avatar_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,9 +48,8 @@ class ConsultantDashboardPage extends ConsumerWidget {
         DashboardLayoutTokens.shellScrollBottomPadding(context);
     final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
     final hour = DateTime.now().hour;
-    final salutation = hour < 12
-        ? 'Günaydın'
-        : (hour < 18 ? 'İyi günler' : 'İyi akşamlar');
+    final salutation =
+        hour < 12 ? 'Günaydın' : (hour < 18 ? 'İyi günler' : 'İyi akşamlar');
     final String firstName;
     final dn = user?.displayName?.trim();
     if (dn != null && dn.isNotEmpty) {
@@ -337,8 +337,7 @@ class _ConsultantActionAnchor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final radius =
-        BorderRadius.circular(DashboardLayoutTokens.radiusCardM);
+    final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardM);
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: radius,
@@ -381,16 +380,14 @@ class _ConsultantActionAnchor extends StatelessWidget {
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final narrow =
-                      constraints.maxWidth < _narrowActionBreakpoint;
+                  final narrow = constraints.maxWidth < _narrowActionBreakpoint;
                   final secondaryBorder =
                       BorderSide(color: ext.border.withValues(alpha: 0.72));
                   final secondaryShape = RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
                         DashboardLayoutTokens.radiusCardS),
                   );
-                  ButtonStyle secondaryStyle() =>
-                      OutlinedButton.styleFrom(
+                  ButtonStyle secondaryStyle() => OutlinedButton.styleFrom(
                         foregroundColor: ext.textPrimary,
                         side: secondaryBorder,
                         minimumSize: const Size(0, 48),
@@ -545,8 +542,8 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
           highlightColor: ext.onBrand.withValues(alpha: 0.08),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final useShortSubtitle = constraints.maxWidth < 304 ||
-                  textScaleRatio > 1.18;
+              final useShortSubtitle =
+                  constraints.maxWidth < 304 || textScaleRatio > 1.18;
               return ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 48),
                 child: Padding(
@@ -560,7 +557,8 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.call_rounded, size: 24, color: ext.onBrand),
+                          Icon(Icons.call_rounded,
+                              size: 24, color: ext.onBrand),
                           const SizedBox(width: 10),
                           Flexible(
                             child: Text(
@@ -715,9 +713,8 @@ class _KpiChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardS);
-    final borderColor = emphasized
-        ? ext.accent.withValues(alpha: 0.45)
-        : ext.borderSubtle;
+    final borderColor =
+        emphasized ? ext.accent.withValues(alpha: 0.45) : ext.borderSubtle;
     final child = Container(
       constraints: BoxConstraints(
         minHeight: emphasized
@@ -862,14 +859,8 @@ class _ConsultantAcademyCard extends StatelessWidget {
             child: TextButton.icon(
               onPressed: () {
                 HapticFeedback.lightImpact();
-                showModalBottomSheet<void>(
+                showPremiumModalBottomSheet<void>(
                   context: context,
-                  isScrollControlled: true,
-                  backgroundColor: ext.surface,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(DesignTokens.radiusLg)),
-                  ),
                   builder: (ctx) => DraggableScrollableSheet(
                     initialChildSize: 0.55,
                     minChildSize: 0.35,
@@ -877,61 +868,78 @@ class _ConsultantAcademyCard extends StatelessWidget {
                     expand: false,
                     builder: (_, scroll) => SingleChildScrollView(
                       controller: scroll,
-                      padding: const EdgeInsets.all(DesignTokens.space5),
+                      padding: const EdgeInsets.fromLTRB(
+                        DesignTokens.space5,
+                        DesignTokens.space2,
+                        DesignTokens.space5,
+                        DesignTokens.space6,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const PremiumBottomSheetHandle(),
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.school_rounded,
-                                  color: ext.accent, size: 28),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'İtiraz karşılama – “Fiyat yüksek”',
-                                  style: TextStyle(
-                                    color: ext.textPrimary,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: DesignTokens.fontSizeMd,
-                                  ),
+                              Icon(
+                                Icons.school_outlined,
+                                color: ext.accent.withValues(alpha: 0.55),
+                                size: DesignTokens.iconLg,
+                              ),
+                              const SizedBox(width: DesignTokens.space3),
+                              const Expanded(
+                                child: PremiumSheetHeader(
+                                  compact: true,
+                                  title: 'İtiraz karşılama — “Fiyat yüksek”',
+                                  subtitle: 'Mikro eğitim · bugünün script’i',
                                 ),
+                              ),
+                              IconButton(
+                                tooltip: 'Kapat',
+                                style: IconButton.styleFrom(
+                                  foregroundColor: ext.textTertiary,
+                                ),
+                                onPressed: () => Navigator.pop(ctx),
+                                icon: const Icon(Icons.close_rounded),
                               ),
                             ],
                           ),
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             'Açılış cümlesi',
-                            style: TextStyle(
-                                color: ext.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13),
+                            style: AppTypography.cardHeading(context).copyWith(
+                              fontSize: DesignTokens.fontSizeSm,
+                              color: ext.textPrimary,
+                            ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: DesignTokens.titleSubtitleGap),
                           Text(
                             '“Anlıyorum; bütçenizi zorlamadan size uygun seçenekleri birlikte netleştirelim.”',
-                            style: TextStyle(
-                                color: ext.textSecondary,
-                                fontSize: 13,
-                                height: 1.45),
+                            style: AppTypography.body(context).copyWith(
+                              color: ext.textSecondary,
+                              fontSize: DesignTokens.fontSizeSm,
+                              height: 1.45,
+                            ),
                           ),
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             'Adım adım',
-                            style: TextStyle(
-                                color: ext.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13),
+                            style: AppTypography.cardHeading(context).copyWith(
+                              fontSize: DesignTokens.fontSizeSm,
+                              color: ext.textPrimary,
+                            ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: DesignTokens.space2),
                           Text(
-                            '1) Empati: Müşterinin endişesini tekrar et; savunmaya geçme.\n\n'
-                            '2) Çerçevele: Aynı bölgede son dönem kapanan örnekleri (m² fiyatı) kısaca paylaş.\n\n'
-                            '3) Alternatif sun: Daha küçük metrekare veya komşu mahallede 1–2 seçenek öner.\n\n'
-                            '4) Sonraki adım: “Yarın aynı saatte iki ilanı yerinde gösterebilir miyim?” diye net randevu iste.',
-                            style: TextStyle(
-                                color: ext.textTertiary,
-                                fontSize: 12,
-                                height: 1.5),
+                            '1) Empati: Müşterinin endişesini tekrar edin; savunmaya geçmeyin.\n\n'
+                            '2) Çerçevele: Aynı bölgede son dönem kapanan örnekleri (m² fiyatı) kısaca paylaşın.\n\n'
+                            '3) Alternatif: Daha küçük metrekare veya komşu mahallede 1–2 seçenek önerin.\n\n'
+                            '4) Sonraki adım: “Yarın aynı saatte iki ilanı yerinde gösterebilir miyim?” diye net randevu isteyin.',
+                            style: AppTypography.body(context).copyWith(
+                              color: ext.textTertiary,
+                              fontSize: DesignTokens.fontSizeSm,
+                              height: 1.5,
+                            ),
                           ),
                           const SizedBox(height: DesignTokens.space5),
                           SizedBox(
@@ -947,14 +955,23 @@ class _ConsultantAcademyCard extends StatelessWidget {
                                   },
                                 );
                               },
-                              icon: const Icon(Icons.phone_in_talk_rounded,
-                                  size: 20),
+                              icon: const Icon(
+                                Icons.phone_in_talk_rounded,
+                                size: DesignTokens.iconMd,
+                              ),
                               label: const Text('Magic Call ile uygula'),
                               style: FilledButton.styleFrom(
                                 backgroundColor: ext.accent,
                                 foregroundColor: ext.onBrand,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
+                                minimumSize: const Size(double.infinity, 48),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: DesignTokens.space3,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    DesignTokens.radiusControl,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

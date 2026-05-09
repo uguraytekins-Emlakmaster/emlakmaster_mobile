@@ -95,6 +95,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   return Center(
                     child: EmptyState(
                       premiumVisual: true,
+                      grouped: true,
                       icon: Icons.task_alt_rounded,
                       title: AppLocalizations.of(context).t('empty_tasks'),
                       subtitle:

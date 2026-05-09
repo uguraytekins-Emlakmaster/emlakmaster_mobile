@@ -46,6 +46,18 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
     _focusTaskId = widget.initialImportTaskId;
   }
 
+  void _clearFilters() {
+    setState(() {
+      _platformFilter = null;
+      _minPrice = null;
+      _maxPrice = null;
+      _from = null;
+      _to = null;
+      _favoritesOnly = false;
+      _focusTaskId = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -61,7 +73,12 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space2,
+                  DesignTokens.space2,
+                  DesignTokens.space4,
+                  0,
+                ),
                 child: Row(
                   children: [
                     const AppBackButton(),
@@ -92,8 +109,17 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
             ),
             listingsAsync.when(
               loading: () => const SliverFillRemaining(child: ListingImportShimmer()),
-              error: (e, _) => SliverFillRemaining(
-                child: Center(child: Text('$e', style: TextStyle(color: AppThemeExtension.of(context).danger))),
+              error: (_, __) => SliverFillRemaining(
+                hasScrollBody: false,
+                child: EmptyState(
+                  compact: true,
+                  grouped: true,
+                  icon: Icons.cloud_off_outlined,
+                  title: 'Veri yüklenemedi',
+                  subtitle: 'Bağlantınızı kontrol edip yenileyin.',
+                  actionLabel: 'Tekrar dene',
+                  onAction: () => ref.invalidate(myListingsProvider),
+                ),
               ),
               data: (all) {
                 final filtered = ListingsFilterService.apply(
@@ -145,12 +171,14 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: uid == null
-                            ? Center(
-                                child: Text(
-                                  'Giriş yapın.',
-                                  style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
-                                  textAlign: TextAlign.center,
-                                ),
+                            ? EmptyState(
+                                compact: true,
+                                grouped: true,
+                                icon: Icons.lock_outline_rounded,
+                                title: 'Oturum gerekli',
+                                subtitle: 'İlanlarınızı görmek için giriş yapın.',
+                                actionLabel: 'Giriş',
+                                onAction: () => context.push(AppRouter.routeLogin),
                               )
                             : Builder(
                                 builder: (context) {
@@ -158,6 +186,7 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
                                   if (all.isEmpty) {
                                     return EmptyState(
                                       premiumVisual: true,
+                                      grouped: true,
                                       icon: Icons.home_work_outlined,
                                       title: l10n.t('empty_my_listings_title'),
                                       subtitle: canManage
@@ -174,11 +203,14 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
                                           : null,
                                     );
                                   }
-                                  return const EmptyState(
+                                  return EmptyState(
                                     compact: true,
+                                    grouped: true,
                                     icon: Icons.filter_alt_off_outlined,
                                     title: 'Filtreye uygun ilan yok',
-                                    subtitle: 'Filtreleri sıfırlayıp tekrar deneyin.',
+                                    subtitle: 'Filtreleri sıfırlayıp yeniden deneyin.',
+                                    outlinedActionLabel: 'Filtreleri sıfırla',
+                                    onOutlinedAction: _clearFilters,
                                   );
                                 },
                               ),

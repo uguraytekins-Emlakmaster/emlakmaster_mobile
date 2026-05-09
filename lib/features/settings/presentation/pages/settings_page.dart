@@ -29,6 +29,7 @@ import 'package:emlakmaster_mobile/features/profile/presentation/widgets/profile
 import 'package:image_picker/image_picker.dart';
 import 'package:emlakmaster_mobile/features/profile/data/profile_avatar_service.dart';
 import 'package:emlakmaster_mobile/widgets/test_role_switch_sheet.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -959,36 +960,45 @@ class SettingsPage extends ConsumerWidget {
     final current = ref.read(localeProvider).valueOrNull;
     final sheetH = MediaQuery.sizeOf(context).height * 0.52;
 
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: ext.surfaceElevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(DesignTokens.radiusSheet)),
-      ),
+      useSafeArea: true,
       builder: (ctx) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const PremiumBottomSheetHandle(),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space5,
+                  DesignTokens.space2,
+                  DesignTokens.space4,
+                  DesignTokens.space3,
+                ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.t('section_language'),
-                      style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16),
+                    Icon(
+                      Icons.translate_outlined,
+                      size: DesignTokens.iconLg,
+                      color: ext.accent.withValues(alpha: 0.5),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: DesignTokens.space3),
+                    Expanded(
+                      child: PremiumSheetHeader(
+                        compact: true,
+                        title: l10n.t('section_language'),
+                        subtitle: 'Uygulama dili',
+                      ),
+                    ),
                     IconButton(
-                      icon: Icon(Icons.close_rounded,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.65)),
+                      tooltip: 'Kapat',
+                      style: IconButton.styleFrom(
+                        foregroundColor: ext.textTertiary,
+                      ),
                       onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded),
                     ),
                   ],
                 ),
@@ -998,8 +1008,9 @@ class SettingsPage extends ConsumerWidget {
                 child: ListView.separated(
                   itemCount: AppLocalizations.supportedLocales.length,
                   separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.5)),
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.5),
+                  ),
                   itemBuilder: (context, i) {
                     final loc = AppLocalizations.supportedLocales[i];
                     final labelKey = AppLocalizations
@@ -1008,16 +1019,29 @@ class SettingsPage extends ConsumerWidget {
                     final label = l10n.t(labelKey);
                     final selected = current?.languageCode == loc.languageCode;
                     return ListTile(
-                      leading: Icon(Icons.translate_rounded,
-                          color: ext.accent, size: 22),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.space5,
+                        vertical: DesignTokens.space1,
+                      ),
+                      minLeadingWidth: 40,
+                      leading: Icon(
+                        Icons.language_outlined,
+                        color: ext.textSecondary,
+                        size: DesignTokens.iconMd,
+                      ),
                       title: Text(
                         label,
                         style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.w500),
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       trailing: selected
-                          ? Icon(Icons.check_rounded, color: ext.accent)
+                          ? Icon(
+                              Icons.check_rounded,
+                              color: ext.accent,
+                              size: DesignTokens.iconMd,
+                            )
                           : null,
                       onTap: () async {
                         await ref.read(localeProvider.notifier).setLocale(loc);

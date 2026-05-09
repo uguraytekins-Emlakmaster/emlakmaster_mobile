@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -140,171 +141,164 @@ class CustomerDetailPage extends ConsumerWidget {
       BuildContext context, WidgetRef ref, String customerId) {
     final ext = AppThemeExtension.of(context);
     final controller = TextEditingController();
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: ext.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLg)),
-      ),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: DesignTokens.space4,
-          right: DesignTokens.space4,
-          top: DesignTokens.space4,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + DesignTokens.space4,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Not ekle',
-              style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                    color: ext.textPrimary,
-                    fontWeight: FontWeight.w700,
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            DesignTokens.space5,
+            DesignTokens.space2,
+            DesignTokens.space5,
+            DesignTokens.space6,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const PremiumBottomSheetHandle(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(
+                    child: PremiumSheetHeader(
+                      compact: true,
+                      title: 'Not ekle',
+                      subtitle: 'Şablon seçin veya doğrudan yazın',
+                    ),
                   ),
-            ),
-            const SizedBox(height: DesignTokens.space2),
-            Wrap(
-              spacing: DesignTokens.space2,
-              runSpacing: DesignTokens.space2,
-              children: _noteTemplates.map((t) {
-                return ActionChip(
-                  label: Text(t,
-                      style: TextStyle(fontSize: 12, color: ext.textPrimary)),
-                  backgroundColor: ext.surfaceElevated,
-                  side: BorderSide(color: ext.border),
-                  onPressed: () {
-                    controller.text =
-                        controller.text.isEmpty ? t : '${controller.text}\n$t';
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: DesignTokens.space4),
-            TextField(
-              controller: controller,
-              maxLines: 4,
-              style: TextStyle(color: ext.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Not içeriği...',
-                hintStyle: TextStyle(color: ext.textTertiary),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
-                filled: true,
-                fillColor: ext.background,
+                  IconButton(
+                    tooltip: 'Kapat',
+                    style: IconButton.styleFrom(
+                      foregroundColor: ext.textTertiary,
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: DesignTokens.space4),
-            FilledButton.icon(
-              onPressed: () async {
-                Future<void> attemptSave() async {
-                  final content = controller.text.trim();
-                  if (content.isEmpty) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(
-                          content: const Text('Lütfen not içeriği girin.'),
-                          backgroundColor: ext.danger),
-                    );
-                    return;
-                  }
-                  final uid =
-                      ref.read(currentUserProvider).valueOrNull?.uid ?? '';
-                  if (uid.isEmpty) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(
-                          content: const Text('Giriş yapılmamış.'),
-                          backgroundColor: ext.danger),
-                    );
-                    return;
-                  }
-                  try {
-                    await runWithResilienceWidget(
-                      () => FirestoreService.saveNote(
-                          customerId: customerId,
-                          content: content,
-                          advisorId: uid),
-                      ref: ref,
-                    );
-                    HapticFeedback.mediumImpact();
-                    if (ctx.mounted) {
-                      Navigator.pop(ctx);
+              const SizedBox(height: DesignTokens.space3),
+              Wrap(
+                spacing: DesignTokens.space2,
+                runSpacing: DesignTokens.space2,
+                children: _noteTemplates.map((t) {
+                  return ActionChip(
+                    label: Text(
+                      t,
+                      style: AppTypography.body(context).copyWith(
+                        fontSize: DesignTokens.fontSizeSm,
+                        color: ext.textPrimary,
+                      ),
+                    ),
+                    backgroundColor: ext.surfaceElevated,
+                    side: BorderSide(color: ext.borderSubtle),
+                    onPressed: () {
+                      controller.text = controller.text.isEmpty
+                          ? t
+                          : '${controller.text}\n$t';
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: DesignTokens.space4),
+              TextField(
+                controller: controller,
+                maxLines: 4,
+                style: TextStyle(color: ext.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Not metni…',
+                  hintStyle: TextStyle(color: ext.textTertiary),
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusControl),
+                  ),
+                  filled: true,
+                  fillColor: ext.background,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space4),
+              FilledButton.icon(
+                onPressed: () async {
+                  Future<void> attemptSave() async {
+                    final content = controller.text.trim();
+                    if (content.isEmpty) {
                       ScaffoldMessenger.of(ctx).showSnackBar(
                         SnackBar(
-                          content: const Text('Not kaydedildi.'),
-                          backgroundColor: ext.accent,
-                          behavior: SnackBarBehavior.floating,
+                          content: const Text('Lütfen not içeriği girin.'),
+                          backgroundColor: ext.danger,
                         ),
                       );
+                      return;
                     }
-                  } catch (e) {
-                    if (!ctx.mounted) return;
-                    showModalBottomSheet<void>(
-                      context: ctx,
-                      useRootNavigator: true,
-                      isScrollControlled: true,
-                      backgroundColor: ext.surface,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(DesignTokens.radiusLg)),
-                      ),
-                      builder: (panelCtx) {
-                        return SafeArea(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: DesignTokens.space5,
-                              right: DesignTokens.space5,
-                              top: DesignTokens.space4,
-                              bottom: MediaQuery.viewInsetsOf(panelCtx).bottom +
-                                  DesignTokens.space5,
+                    final uid =
+                        ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+                    if (uid.isEmpty) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(
+                          content: const Text('Giriş yapılmamış.'),
+                          backgroundColor: ext.danger,
+                        ),
+                      );
+                      return;
+                    }
+                    try {
+                      await runWithResilienceWidget(
+                        () => FirestoreService.saveNote(
+                          customerId: customerId,
+                          content: content,
+                          advisorId: uid,
+                        ),
+                        ref: ref,
+                      );
+                      HapticFeedback.mediumImpact();
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(
+                            content: const Text('Not kaydedildi.'),
+                            backgroundColor: ext.accent,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (!ctx.mounted) return;
+                      showPremiumModalBottomSheet<void>(
+                        context: ctx,
+                        useRootNavigator: true,
+                        builder: (panelCtx) => Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.viewInsetsOf(panelCtx).bottom,
+                          ),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(
+                              DesignTokens.space5,
+                              DesignTokens.space2,
+                              DesignTokens.space5,
+                              DesignTokens.space6,
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Text(
-                                  'Not kaydı',
-                                  style: TextStyle(
-                                    color: ext.accent,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.6,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Kayıt şu an tamamlanamadı',
-                                  style: Theme.of(panelCtx)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        color: ext.textPrimary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  FirestoreService.userFacingErrorMessage(e),
-                                  style: TextStyle(
-                                    color: ext.textSecondary,
-                                    fontSize: 12,
-                                    height: 1.35,
-                                  ),
-                                  maxLines: 4,
-                                  overflow: TextOverflow.ellipsis,
+                                const PremiumBottomSheetHandle(),
+                                PremiumSheetHeader(
+                                  compact: true,
+                                  title: 'Kayıt tamamlanamadı',
+                                  subtitle:
+                                      FirestoreService.userFacingErrorMessage(
+                                          e),
                                 ),
                                 const SizedBox(height: DesignTokens.space5),
                                 Text(
-                                  'Bu müşterinin kayıtlı notları',
-                                  style: TextStyle(
+                                  'Kayıtlı notlar',
+                                  style: AppTypography.cardHeading(context)
+                                      .copyWith(
+                                    fontSize: DesignTokens.fontSizeSm,
                                     color: ext.textSecondary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: DesignTokens.space2),
                                 SizedBox(
                                   height: 140,
                                   child: StreamBuilder<
@@ -331,11 +325,12 @@ class CustomerDetailPage extends ConsumerWidget {
                                       if (docs.isEmpty) {
                                         return Center(
                                           child: Text(
-                                            'Henüz not yok — kayıt başarılı olunca burada görünür.',
+                                            'Henüz not yok. Kayıt tamamlanınca burada görünür.',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
+                                            style: AppTypography.body(context)
+                                                .copyWith(
                                               color: ext.textTertiary,
-                                              fontSize: 12,
+                                              fontSize: DesignTokens.fontSizeSm,
                                             ),
                                           ),
                                         );
@@ -344,28 +339,35 @@ class CustomerDetailPage extends ConsumerWidget {
                                         itemCount:
                                             docs.length > 5 ? 5 : docs.length,
                                         separatorBuilder: (_, __) =>
-                                            const SizedBox(height: 8),
+                                            const SizedBox(
+                                                height: DesignTokens.space2),
                                         itemBuilder: (_, i) {
                                           final c = docs[i].data()['content']
                                                   as String? ??
                                               '—';
                                           return Container(
-                                            padding: const EdgeInsets.all(10),
+                                            padding: const EdgeInsets.all(
+                                                DesignTokens.space3),
                                             decoration: BoxDecoration(
                                               color: ext.background,
                                               borderRadius:
-                                                  BorderRadius.circular(8),
+                                                  BorderRadius.circular(
+                                                      DesignTokens
+                                                          .radiusControl),
                                               border: Border.all(
-                                                  color: ext.border
-                                                      .withValues(alpha: 0.5)),
+                                                color: ext.border
+                                                    .withValues(alpha: 0.45),
+                                              ),
                                             ),
                                             child: Text(
                                               c,
                                               maxLines: 3,
                                               overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
+                                              style: AppTypography.body(context)
+                                                  .copyWith(
                                                 color: ext.textSecondary,
-                                                fontSize: 12,
+                                                fontSize:
+                                                    DesignTokens.fontSizeSm,
                                               ),
                                             ),
                                           );
@@ -382,31 +384,45 @@ class CustomerDetailPage extends ConsumerWidget {
                                   },
                                   style: FilledButton.styleFrom(
                                     backgroundColor: ext.accent,
-                                    foregroundColor: Colors.black,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 14),
+                                    foregroundColor: ext.onBrand,
+                                    minimumSize:
+                                        const Size(double.infinity, 48),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        DesignTokens.radiusControl,
+                                      ),
+                                    ),
                                   ),
                                   child: const Text('Tekrar dene'),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      },
-                    );
+                        ),
+                      );
+                    }
                   }
-                }
 
-                await attemptSave();
-              },
-              icon: const Icon(Icons.check_rounded, size: 20),
-              label: const Text('Kaydet'),
-              style: FilledButton.styleFrom(
-                backgroundColor: ext.accent,
-                foregroundColor: Colors.black,
+                  await attemptSave();
+                },
+                icon: const Icon(
+                  Icons.check_rounded,
+                  size: DesignTokens.iconMd,
+                ),
+                label: const Text('Kaydet'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: ext.accent,
+                  foregroundColor: ext.onBrand,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      DesignTokens.radiusControl,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -689,124 +705,144 @@ class _TimelineActions extends ConsumerWidget {
     if (uid.isEmpty) return;
     final amountController = TextEditingController();
     final notesController = TextEditingController();
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) {
         final ext = AppThemeExtension.of(ctx);
-        return Container(
-          decoration: BoxDecoration(
-            color: ext.surface,
-            borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(DesignTokens.radius2xl)),
-            boxShadow: [
-              BoxShadow(
-                  color: ext.accent.withValues(alpha: 0.12),
-                  blurRadius: 24,
-                  offset: const Offset(0, -4))
-            ],
-          ),
-          padding: EdgeInsets.only(
-            left: DesignTokens.space6,
-            right: DesignTokens.space6,
-            top: DesignTokens.space6,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + DesignTokens.space6,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                  child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                          color: ext.border,
-                          borderRadius: BorderRadius.circular(2)))),
-              const SizedBox(height: DesignTokens.space4),
-              Text('Yeni teklif',
-                  style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                      color: ext.textPrimary, fontWeight: FontWeight.w800)),
-              const SizedBox(height: DesignTokens.space4),
-              TextField(
-                controller: amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Tutar (TRY)',
-                  labelStyle: TextStyle(color: ext.textSecondary),
-                  filled: true,
-                  fillColor: ext.background,
-                  border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusMd)),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusMd),
-                      borderSide: BorderSide(color: ext.accent, width: 1.5)),
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space5,
+              DesignTokens.space2,
+              DesignTokens.space5,
+              DesignTokens.space6,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const PremiumBottomSheetHandle(),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.handshake_outlined,
+                      size: DesignTokens.iconLg,
+                      color: ext.accent.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: DesignTokens.space3),
+                    const Expanded(
+                      child: PremiumSheetHeader(
+                        compact: true,
+                        title: 'Yeni teklif',
+                        subtitle: 'Tutar (TRY) ve isteğe bağlı not',
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Kapat',
+                      style: IconButton.styleFrom(
+                        foregroundColor: ext.textTertiary,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
                 ),
-                style: TextStyle(color: ext.textPrimary),
-              ),
-              const SizedBox(height: DesignTokens.space3),
-              TextField(
-                controller: notesController,
-                decoration: InputDecoration(
-                  labelText: 'Not (opsiyonel)',
-                  labelStyle: TextStyle(color: ext.textSecondary),
-                  filled: true,
-                  fillColor: ext.background,
-                  border: OutlineInputBorder(
+                const SizedBox(height: DesignTokens.space4),
+                TextField(
+                  controller: amountController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Tutar (TRY)',
+                    labelStyle: TextStyle(color: ext.textSecondary),
+                    filled: true,
+                    fillColor: ext.background,
+                    border: OutlineInputBorder(
                       borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusMd)),
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                      borderSide: BorderSide(color: ext.accent, width: 1.5),
+                    ),
+                  ),
+                  style: TextStyle(color: ext.textPrimary),
                 ),
-                style: TextStyle(color: ext.textPrimary),
-                maxLines: 2,
-              ),
-              const SizedBox(height: DesignTokens.space6),
-              Row(
-                children: [
-                  Expanded(
+                const SizedBox(height: DesignTokens.space3),
+                TextField(
+                  controller: notesController,
+                  decoration: InputDecoration(
+                    labelText: 'Not (opsiyonel)',
+                    labelStyle: TextStyle(color: ext.textSecondary),
+                    filled: true,
+                    fillColor: ext.background,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                  style: TextStyle(color: ext.textPrimary),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: DesignTokens.space5),
+                Row(
+                  children: [
+                    Expanded(
                       child: TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: Text('İptal',
-                              style: TextStyle(color: ext.textSecondary)))),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      onPressed: () async {
-                        final amountStr =
-                            amountController.text.trim().replaceAll(',', '.');
-                        final amount = double.tryParse(amountStr);
-                        if (amount == null || amount <= 0) return;
-                        Navigator.pop(ctx);
-                        await FirestoreService.saveOffer(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(
+                          'İptal',
+                          style: TextStyle(color: ext.textSecondary),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: FilledButton(
+                        onPressed: () async {
+                          final amountStr =
+                              amountController.text.trim().replaceAll(',', '.');
+                          final amount = double.tryParse(amountStr);
+                          if (amount == null || amount <= 0) return;
+                          Navigator.pop(ctx);
+                          await FirestoreService.saveOffer(
                             customerId: customerId,
                             advisorId: uid,
                             amount: amount,
                             notes: notesController.text.trim().isEmpty
                                 ? null
-                                : notesController.text.trim());
-                        if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                              content: const Text('Teklif eklendi.'),
-                              backgroundColor: ext.accent,
-                              behavior: SnackBarBehavior.floating));
-                        }
-                      },
-                      style: FilledButton.styleFrom(
+                                : notesController.text.trim(),
+                          );
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: const Text('Teklif eklendi.'),
+                                backgroundColor: ext.accent,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                        style: FilledButton.styleFrom(
                           backgroundColor: ext.accent,
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size.fromHeight(52),
+                          foregroundColor: ext.onBrand,
+                          minimumSize: const Size(0, 48),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  DesignTokens.radiusMd))),
-                      child: const Text('Kaydet'),
+                            borderRadius: BorderRadius.circular(
+                              DesignTokens.radiusControl,
+                            ),
+                          ),
+                        ),
+                        child: const Text('Kaydet'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -819,128 +855,158 @@ class _TimelineActions extends ConsumerWidget {
     if (uid.isEmpty) return;
     DateTime? pickedDate = DateTime.now().add(const Duration(days: 1));
     final notesController = TextEditingController();
-    showModalBottomSheet<void>(
+    showPremiumModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) {
-          final ext = AppThemeExtension.of(ctx);
-          return Container(
-            decoration: BoxDecoration(
-              color: ext.surface,
-              borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(DesignTokens.radius2xl)),
-              boxShadow: [
-                BoxShadow(
-                    color: ext.accent.withValues(alpha: 0.12),
-                    blurRadius: 24,
-                    offset: const Offset(0, -4))
-              ],
-            ),
-            padding: EdgeInsets.only(
-              left: DesignTokens.space6,
-              right: DesignTokens.space6,
-              top: DesignTokens.space6,
-              bottom:
-                  MediaQuery.of(ctx).viewInsets.bottom + DesignTokens.space6,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                    child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                            color: ext.border,
-                            borderRadius: BorderRadius.circular(2)))),
-                const SizedBox(height: DesignTokens.space4),
-                Text('Yeni ziyaret',
-                    style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                        color: ext.textPrimary, fontWeight: FontWeight.w800)),
-                const SizedBox(height: DesignTokens.space4),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    final date = await showDatePicker(
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+        child: StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final ext = AppThemeExtension.of(ctx);
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.space5,
+                DesignTokens.space2,
+                DesignTokens.space5,
+                DesignTokens.space6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const PremiumBottomSheetHandle(),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.event_outlined,
+                        size: DesignTokens.iconLg,
+                        color: ext.accent.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(width: DesignTokens.space3),
+                      const Expanded(
+                        child: PremiumSheetHeader(
+                          compact: true,
+                          title: 'Yeni ziyaret',
+                          subtitle: 'Tarih ve isteğe bağlı not',
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Kapat',
+                        style: IconButton.styleFrom(
+                          foregroundColor: ext.textTertiary,
+                        ),
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: DesignTokens.space4),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final date = await showDatePicker(
                         context: ctx,
                         initialDate: pickedDate ?? DateTime.now(),
                         firstDate: DateTime.now(),
-                        lastDate:
-                            DateTime.now().add(const Duration(days: 365)));
-                    if (date != null) setModalState(() => pickedDate = date);
-                  },
-                  icon: Icon(Icons.calendar_today_rounded,
-                      size: 18, color: ext.accent),
-                  label: Text(
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        setModalState(() => pickedDate = date);
+                      }
+                    },
+                    icon: Icon(
+                      Icons.calendar_today_rounded,
+                      size: DesignTokens.iconMd,
+                      color: ext.accent,
+                    ),
+                    label: Text(
                       pickedDate != null
                           ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
                           : 'Tarih seç',
-                      style: TextStyle(color: ext.accent)),
-                  style: OutlinedButton.styleFrom(
+                      style: TextStyle(color: ext.accent),
+                    ),
+                    style: OutlinedButton.styleFrom(
                       foregroundColor: ext.accent,
-                      side: BorderSide(color: ext.accent)),
-                ),
-                const SizedBox(height: DesignTokens.space3),
-                TextField(
-                  controller: notesController,
-                  decoration: InputDecoration(
-                    labelText: 'Not (opsiyonel)',
-                    labelStyle: TextStyle(color: ext.textSecondary),
-                    filled: true,
-                    fillColor: ext.background,
-                    border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.radiusMd)),
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          DesignTokens.radiusControl,
+                        ),
+                      ),
+                      side: BorderSide(color: ext.accent),
+                    ),
                   ),
-                  style: TextStyle(color: ext.textPrimary),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: DesignTokens.space6),
-                Row(
-                  children: [
-                    Expanded(
+                  const SizedBox(height: DesignTokens.space3),
+                  TextField(
+                    controller: notesController,
+                    decoration: InputDecoration(
+                      labelText: 'Not (opsiyonel)',
+                      labelStyle: TextStyle(color: ext.textSecondary),
+                      filled: true,
+                      fillColor: ext.background,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusControl),
+                      ),
+                    ),
+                    style: TextStyle(color: ext.textPrimary),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: DesignTokens.space5),
+                  Row(
+                    children: [
+                      Expanded(
                         child: TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: Text('İptal',
-                                style: TextStyle(color: ext.textSecondary)))),
-                    Expanded(
-                      flex: 2,
-                      child: FilledButton(
-                        onPressed: () async {
-                          if (pickedDate == null) return;
-                          Navigator.pop(ctx);
-                          await FirestoreService.saveVisit(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(
+                            'İptal',
+                            style: TextStyle(color: ext.textSecondary),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton(
+                          onPressed: () async {
+                            if (pickedDate == null) return;
+                            Navigator.pop(ctx);
+                            await FirestoreService.saveVisit(
                               customerId: customerId,
                               advisorId: uid,
                               scheduledAt: pickedDate!,
                               notes: notesController.text.trim().isEmpty
                                   ? null
-                                  : notesController.text.trim());
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                                content: const Text('Ziyaret eklendi.'),
-                                backgroundColor: ext.accent,
-                                behavior: SnackBarBehavior.floating));
-                          }
-                        },
-                        style: FilledButton.styleFrom(
+                                  : notesController.text.trim(),
+                            );
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Ziyaret eklendi.'),
+                                  backgroundColor: ext.accent,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          style: FilledButton.styleFrom(
                             backgroundColor: ext.accent,
-                            foregroundColor: Colors.black,
-                            minimumSize: const Size.fromHeight(52),
+                            foregroundColor: ext.onBrand,
+                            minimumSize: const Size(0, 48),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    DesignTokens.radiusMd))),
-                        child: const Text('Kaydet'),
+                              borderRadius: BorderRadius.circular(
+                                DesignTokens.radiusControl,
+                              ),
+                            ),
+                          ),
+                          child: const Text('Kaydet'),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

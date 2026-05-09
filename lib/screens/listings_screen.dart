@@ -121,7 +121,6 @@ class _OwnedPane extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ext = AppThemeExtension.of(context);
     final l10n = AppLocalizations.of(context);
     final async = ref.watch(ownedListingRowsProvider);
     final canManagePlatformIntegrations = ref.watch(canManagePlatformIntegrationsProvider);
@@ -132,11 +131,14 @@ class _OwnedPane extends ConsumerWidget {
       ),
       error: (_, __) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            l10n.t('listings_load_error'),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: ext.foreground, fontWeight: FontWeight.w600),
+          padding: const EdgeInsets.all(DesignTokens.space6),
+          child: EmptyState(
+            compact: true,
+            grouped: true,
+            icon: Icons.cloud_off_outlined,
+            title: l10n.t('listings_load_error'),
+            actionLabel: 'Tekrar dene',
+            onAction: () => ref.invalidate(ownedListingRowsProvider),
           ),
         ),
       ),
@@ -144,6 +146,7 @@ class _OwnedPane extends ConsumerWidget {
         if (rows.isEmpty) {
           return EmptyState(
             premiumVisual: true,
+            grouped: true,
             icon: Icons.home_work_outlined,
             title: l10n.t('empty_listings'),
             subtitle: canManagePlatformIntegrations
@@ -212,7 +215,6 @@ class _MarketFeedPane extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ext = AppThemeExtension.of(context);
     final l10n = AppLocalizations.of(context);
     final enabled = ref.watch(
       featureFlagsProvider.select(
@@ -225,6 +227,7 @@ class _MarketFeedPane extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
           child: EmptyState(
             premiumVisual: true,
+            grouped: true,
             icon: Icons.lock_outline_rounded,
             title: l10n.t('listings_market_disabled_title'),
             subtitle: l10n.t('listings_market_disabled_sub'),
@@ -239,15 +242,23 @@ class _MarketFeedPane extends ConsumerWidget {
         child: CircularProgressIndicator(color: scheme.primary, strokeWidth: 2),
       ),
       error: (_, __) => Center(
-        child: Text(
-          l10n.t('listings_load_error'),
-          style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w600),
+        child: Padding(
+          padding: const EdgeInsets.all(DesignTokens.space6),
+          child: EmptyState(
+            compact: true,
+            grouped: true,
+            icon: Icons.cloud_off_outlined,
+            title: l10n.t('listings_load_error'),
+            actionLabel: 'Tekrar dene',
+            onAction: () => ref.invalidate(marketFeedRowsProvider),
+          ),
         ),
       ),
       data: (rows) {
         if (rows.isEmpty) {
           return EmptyState(
             premiumVisual: true,
+            grouped: true,
             icon: Icons.rss_feed_rounded,
             title: l10n.t('listings_empty_market'),
             subtitle: l10n.t('listings_empty_market_sub'),

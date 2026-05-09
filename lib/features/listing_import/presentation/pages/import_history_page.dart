@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/listing_import/data/listing_import_service.dart';
 import 'package:emlakmaster_mobile/features/listing_import/domain/import_source_type.dart';
@@ -28,7 +29,12 @@ class ImportHistoryPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.space2,
+                DesignTokens.space2,
+                DesignTokens.space4,
+                DesignTokens.space2,
+              ),
               child: Row(
                 children: [
                   const AppBackButton(),
@@ -65,7 +71,12 @@ class ImportHistoryPage extends ConsumerWidget {
                     );
                   }
                   return ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(
+                      DesignTokens.space5,
+                      DesignTokens.space2,
+                      DesignTokens.space5,
+                      DesignTokens.space2,
+                    ),
                     itemCount: tasks.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
@@ -127,12 +138,12 @@ class _TaskCard extends StatelessWidget {
     final p = (task.progress.clamp(0, 100)) / 100.0;
     return Material(
       color: ext.card,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
         onTap: onOpenListings,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(DesignTokens.space4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
