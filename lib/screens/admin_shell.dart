@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:emlakmaster_mobile/screens/admin_pages.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -57,12 +58,26 @@ class AdminShellPage extends ConsumerWidget {
       navItems.length == pages.length,
       'AdminShell: navItems (${navItems.length}) and pages (${pages.length}) must stay in sync',
     );
+    if (kDebugMode) {
+      debugPrint(
+        '[AdminShell] tabs=${navItems.length} lean=$lean warRoom=$warRoom '
+        'commandCenter=$showCommandCenter economy=$showEconomyTab',
+      );
+    }
+    final shellKey = Object.hashAll(<Object?>[
+      navItems.length,
+      lean,
+      warRoom,
+      showCommandCenter,
+      showEconomyTab,
+    ]);
     return Column(
       children: [
         const SyncStatusBanner(compact: true),
         const PostCallCaptureShellStrip(),
         Expanded(
           child: AdaptiveShellScaffold(
+            key: ValueKey<int>(shellKey),
             navItems: navItems,
             pages: pages,
             title: 'Yönetici Paneli',

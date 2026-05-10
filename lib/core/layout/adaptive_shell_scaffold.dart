@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,8 +61,76 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   final Set<int> _materialized = {0};
   ProviderSubscription<MainShellShortcut?>? _shortcutSub;
 
+  /// Aynı sekmede her frame log basmayı önler (yalnızca kDebugMode).
+  int? _lastLoggedActiveIndex;
+  int? _lastLoggedPageCount;
+
   void _shellLog(String msg) {
     debugPrint('[ShellNav] $msg');
+  }
+
+  Widget _inactiveSlotPlaceholder(BuildContext context, int tabIndex) {
+    final ext = AppThemeExtension.of(context);
+    return ColoredBox(
+      color: ext.background,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignTokens.space5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: ext.accent.withValues(alpha: 0.85),
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space3),
+              Text(
+                'Sekme hazırlanıyor…',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ext.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (kDebugMode) ...[
+                const SizedBox(height: DesignTokens.space2),
+                Text(
+                  'index=$tabIndex',
+                  style: TextStyle(
+                    color: ext.textTertiary.withValues(alpha: 0.9),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _maybeLogActivePage(int safeIndex) {
+    if (!kDebugMode) return;
+    final len = widget.pages.length;
+    if (_lastLoggedActiveIndex == safeIndex && _lastLoggedPageCount == len) {
+      return;
+    }
+    _lastLoggedActiveIndex = safeIndex;
+    _lastLoggedPageCount = len;
+    final label = safeIndex < widget.navItems.length
+        ? widget.navItems[safeIndex].label
+        : '?';
+    final type = safeIndex < widget.pages.length
+        ? widget.pages[safeIndex].runtimeType.toString()
+        : 'out_of_range';
+    _shellLog(
+      'body activeIndex=$safeIndex label="$label" pageType=$type pageLen=$len materialized=$_materialized',
+    );
   }
 
   @override
@@ -90,6 +159,9 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
           if (mounted) _onNavTap(idx);
         });
       },
+    );
+    _shellLog(
+      'shell init pageLen=${widget.pages.length} navLen=${widget.navItems.length} startIndex=$_currentIndex materialized=$_materialized',
     );
   }
 
@@ -122,6 +194,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     if (oldWidget.pages.length != len) {
       _pruneMaterialized(len);
       _materialized.add(_currentIndex.clamp(0, len - 1));
+      _lastLoggedActiveIndex = null;
+      _lastLoggedPageCount = null;
     }
   }
 
@@ -235,6 +309,18 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     }
 
     final safeIndex = _currentIndex.clamp(0, widget.pages.length - 1);
+    if (!_materialized.contains(safeIndex)) {
+      _shellLog(
+        'fallback: active index $safeIndex was not materialized — scheduling fix',
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (!_materialized.contains(safeIndex)) {
+          setState(() => _materialized.add(safeIndex));
+        }
+      });
+    }
+    _maybeLogActivePage(safeIndex);
     final body = Column(
       children: [
         if (widget.title != null && isWide)
@@ -269,10 +355,12 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                     enabled: i == safeIndex,
                     child: _materialized.contains(i)
                         ? widget.pages[i]
-                        : ColoredBox(
-                            color: ext.background,
-                            child: const SizedBox.expand(),
-                          ),
+                        : (i == safeIndex
+                            ? _inactiveSlotPlaceholder(context, i)
+                            : ColoredBox(
+                                color: ext.background,
+                                child: const SizedBox.expand(),
+                              )),
                   ),
                 ),
             ],

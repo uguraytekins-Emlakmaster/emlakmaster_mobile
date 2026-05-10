@@ -22,6 +22,7 @@ final postCallCaptureProvider =
   ref.onDispose(() {
     notifier.disposeFallbackTimer();
     notifier.disposeConnectivitySubscriptions();
+    notifier.disposeUserResyncDebounce();
   });
   return notifier;
 });
@@ -30,7 +31,14 @@ class PostCallCaptureNotifier extends StateNotifier<PostCallCaptureDraft?> {
   PostCallCaptureNotifier(this.ref) : super(null) {
     unawaited(_sync());
     ref.listen(currentUserProvider, (prev, next) {
-      unawaited(_sync());
+      final prevUid = prev?.valueOrNull?.uid;
+      final nextUid = next.valueOrNull?.uid;
+      if (prevUid == nextUid) return;
+      _userResyncDebounce?.cancel();
+      _userResyncDebounce = Timer(const Duration(milliseconds: 450), () {
+        _userResyncDebounce = null;
+        unawaited(_sync());
+      });
     });
     _onlineSub = SyncManager.onlineStreamDebounced.listen((online) {
       if (online) {
@@ -44,6 +52,7 @@ class PostCallCaptureNotifier extends StateNotifier<PostCallCaptureDraft?> {
 
   final Ref ref;
   Timer? _fallbackTimer;
+  Timer? _userResyncDebounce;
   StreamSubscription<bool>? _onlineSub;
   StreamSubscription<void>? _resumeSub;
 
@@ -60,6 +69,11 @@ class PostCallCaptureNotifier extends StateNotifier<PostCallCaptureDraft?> {
     _onlineSub = null;
     _resumeSub?.cancel();
     _resumeSub = null;
+  }
+
+  void disposeUserResyncDebounce() {
+    _userResyncDebounce?.cancel();
+    _userResyncDebounce = null;
   }
 
   /// Hive + Firestore senkronu; UI bloklamaz.

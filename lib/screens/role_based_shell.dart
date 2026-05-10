@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
@@ -10,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'admin_shell.dart';
 import 'client_shell.dart';
 import 'consultant_shell.dart';
+
 /// RBAC: Giriş sonrası rolüne göre Admin, Consultant veya Client paneli.
 /// - ADMIN: Dashboard, War Room, çağrı merkezi, raporlar, ekonomi, ayarlar.
 /// - CONSULTANT: Özetim, müşteriler, ilanlar, Magic Call, takip, ayarlar.
@@ -21,25 +24,46 @@ class RoleBasedShellSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
     if (uid == null || uid.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[RoleShell] showing loading: no uid');
+      }
       return const _ShellLoading();
     }
     // Router ile aynı kaynak: currentRoleProvider (+ isteğe bağlı override) → displayRoleProvider.
     // users/{uid}.role tek başına ofis üyeliği rolüyle çakışmasın diye doc bootstrap / gate’lerde bekle.
     if (ref.watch(userDocBootstrapPendingProvider)) {
+      if (kDebugMode) {
+        debugPrint('[RoleShell] showing loading: userDocBootstrapPending');
+      }
       return const _ShellLoading();
     }
     if (ref.watch(needsRoleSelectionProvider)) {
+      if (kDebugMode) {
+        debugPrint('[RoleShell] showing loading: needsRoleSelection');
+      }
       return const _ShellLoading();
     }
     if (ref.watch(needsOfficeSetupProvider)) {
+      if (kDebugMode) {
+        debugPrint('[RoleShell] showing loading: needsOfficeSetup');
+      }
       return const _ShellLoading();
     }
     if (ref.watch(needsOfficeRecoveryProvider)) {
+      if (kDebugMode) {
+        debugPrint('[RoleShell] showing loading: needsOfficeRecovery');
+      }
       return const _ShellLoading();
     }
     final roleAsync = ref.watch(displayRoleProvider);
     return roleAsync.when(
-      loading: () => const _ShellLoading(),
+      loading: () {
+        if (kDebugMode) {
+          debugPrint(
+              '[RoleShell] showing loading: displayRoleProvider.loading');
+        }
+        return const _ShellLoading();
+      },
       error: (e, st) {
         debugPrint('[RoleShell] displayRoleProvider error: $e');
         debugPrint('$st');
@@ -50,6 +74,9 @@ class RoleBasedShellSelector extends ConsumerWidget {
   }
 
   Widget _buildForRole(BuildContext context, WidgetRef ref, AppRole role) {
+    if (kDebugMode) {
+      debugPrint('[RoleShell] resolved shell for role=$role');
+    }
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
     if (FeaturePermission.seesClientPanel(role)) return const ClientShellPage();
     final forceConsultant = preferConsultant == true;
@@ -143,7 +170,9 @@ class _ShellLoading extends StatelessWidget {
             Text(
               'Panel hazırlanıyor...',
               style: TextStyle(
-                color: AppThemeExtension.of(context).textPrimary.withValues(alpha: 0.9),
+                color: AppThemeExtension.of(context)
+                    .textPrimary
+                    .withValues(alpha: 0.9),
                 fontSize: 14,
               ),
             ),
