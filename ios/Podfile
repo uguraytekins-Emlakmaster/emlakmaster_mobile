@@ -43,5 +43,29 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
     end
+
+    # Xcode 14+: "Run script … will run during every build because it does not specify any outputs"
+    # for gRPC / abseil / BoringSSL / FirebaseCrashlytics "Create Symlinks to Header Folders".
+    # Append a DerivedData stamp + declare outputPaths (idempotent; no pod source edits).
+    target.build_phases.each do |phase|
+      next unless phase.respond_to?(:name) && phase.name == 'Create Symlinks to Header Folders'
+      next unless phase.respond_to?(:shell_script) && phase.respond_to?(:output_paths)
+
+      marker = '# EmlakMaster symlink stamp output'
+      script = phase.shell_script || ''
+      next if script.include?(marker)
+
+      stamp_file = "Pods-#{target.name.gsub(/[^A-Za-z0-9._-]/, '_')}-symlink_headers.stamp"
+      stamp_out = "$(DERIVED_FILE_DIR)/#{stamp_file}"
+      phase.output_paths ||= []
+      phase.output_paths << stamp_out unless phase.output_paths.include?(stamp_out)
+
+      phase.shell_script = <<~SCRIPT
+        #{script.rstrip}
+        #{marker}
+        mkdir -p "${DERIVED_FILE_DIR}"
+        : > "${DERIVED_FILE_DIR}/#{stamp_file}"
+      SCRIPT
+    end
   end
 end

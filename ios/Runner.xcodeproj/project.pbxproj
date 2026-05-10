@@ -328,10 +328,11 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/flutterfire_crashlytics_upload.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\n#!/bin/bash\nset -e\nPATH=\"${PATH}:$FLUTTER_ROOT/bin:${PUB_CACHE}/bin:$HOME/.pub-cache/bin\"\n\n# Debug deploy'da sembol yukleme gerekmiyor; script hatasi build'i kirmasin.\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  echo \"Crashlytics upload skipped for Debug\"\n  exit 0\nfi\n\nif ! command -v flutterfire >/dev/null 2>&1; then\n  echo \"flutterfire CLI not found, skipping Crashlytics symbols upload\"\n  exit 0\nfi\n\nif [ -z \"$PODS_ROOT\" ] || [ ! -d \"$PODS_ROOT/FirebaseCrashlytics\" ]; then\n  DERIVED_DATA_PATH=$(echo \"$BUILD_ROOT\" | sed -E 's|(.*DerivedData/[^/]+).*|\\1|')\n  PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT=\"${DERIVED_DATA_PATH}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\nelse\n  PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT=\"$PODS_ROOT/FirebaseCrashlytics/run\"\nfi\n\nif [ ! -f \"$PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT\" ]; then\n  echo \"Crashlytics run script not found, skipping symbols upload\"\n  exit 0\nfi\n\nflutterfire upload-crashlytics-symbols --upload-symbols-script-path=\"$PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT\" --platform=ios --apple-project-path=\"${SRCROOT}\" --env-platform-name=\"${PLATFORM_NAME}\" --env-configuration=\"${CONFIGURATION}\" --env-project-dir=\"${PROJECT_DIR}\" --env-built-products-dir=\"${BUILT_PRODUCTS_DIR}\" --env-dwarf-dsym-folder-path=\"${DWARF_DSYM_FOLDER_PATH}\" --env-dwarf-dsym-file-name=\"${DWARF_DSYM_FILE_NAME}\" --env-infoplist-path=\"${INFOPLIST_PATH}\" --default-config=default\n";
+			shellScript = "\n#!/bin/bash\nset -e\n# Declared output for Xcode dependency analysis (silences \"no output files\" warning).\nSTAMP=\"${DERIVED_FILE_DIR}/flutterfire_crashlytics_upload.stamp\"\ntouch_stamp() { mkdir -p \"${DERIVED_FILE_DIR}\" && : > \"$STAMP\"; }\ntrap touch_stamp EXIT\nPATH=\"${PATH}:$FLUTTER_ROOT/bin:${PUB_CACHE}/bin:$HOME/.pub-cache/bin\"\n\n# Debug deploy'da sembol yukleme gerekmiyor; script hatasi build'i kirmasin.\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  echo \"Crashlytics upload skipped for Debug\"\n  exit 0\nfi\n\nif ! command -v flutterfire >/dev/null 2>&1; then\n  echo \"flutterfire CLI not found, skipping Crashlytics symbols upload\"\n  exit 0\nfi\n\nif [ -z \"$PODS_ROOT\" ] || [ ! -d \"$PODS_ROOT/FirebaseCrashlytics\" ]; then\n  DERIVED_DATA_PATH=$(echo \"$BUILD_ROOT\" | sed -E 's|(.*DerivedData/[^/]+).*|\\1|')\n  PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT=\"${DERIVED_DATA_PATH}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\nelse\n  PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT=\"$PODS_ROOT/FirebaseCrashlytics/run\"\nfi\n\nif [ ! -f \"$PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT\" ]; then\n  echo \"Crashlytics run script not found, skipping symbols upload\"\n  exit 0\nfi\n\nflutterfire upload-crashlytics-symbols --upload-symbols-script-path=\"$PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT\" --platform=ios --apple-project-path=\"${SRCROOT}\" --env-platform-name=\"${PLATFORM_NAME}\" --env-configuration=\"${CONFIGURATION}\" --env-project-dir=\"${PROJECT_DIR}\" --env-built-products-dir=\"${BUILT_PRODUCTS_DIR}\" --env-dwarf-dsym-folder-path=\"${DWARF_DSYM_FOLDER_PATH}\" --env-dwarf-dsym-file-name=\"${DWARF_DSYM_FILE_NAME}\" --env-infoplist-path=\"${INFOPLIST_PATH}\" --default-config=default\n";
 		};
 		66A0780880D0828E8223860B /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -381,10 +382,11 @@
 			);
 			name = "Fix iOS plugin order (Firebase Core first)";
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/fix_ios_plugin_order.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/../scripts/fix_ios_plugin_order.sh\" \"${SRCROOT}/Runner/GeneratedPluginRegistrant.m\"\n";
+			shellScript = "\"${SRCROOT}/../scripts/fix_ios_plugin_order.sh\" \"${SRCROOT}/Runner/GeneratedPluginRegistrant.m\" && mkdir -p \"${DERIVED_FILE_DIR}\" && : > \"${DERIVED_FILE_DIR}/fix_ios_plugin_order.stamp\"\n";
 			showEnvVarsInLog = 0;
 		};
 		A61E0EEB1285F7FB88217E2D /* [CP] Check Pods Manifest.lock */ = {
