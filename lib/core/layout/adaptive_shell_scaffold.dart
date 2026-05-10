@@ -51,6 +51,10 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   late PageController _pageController;
   int _currentIndex = 0;
 
+  void _shellLog(String msg) {
+    debugPrint('[ShellNav] $msg');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -63,27 +67,114 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant AdaptiveShellScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final len = widget.pages.length;
+    if (len == 0) {
+      _shellLog('didUpdateWidget: pages empty');
+      return;
+    }
+    final lenChanged = oldWidget.pages.length != len;
+    var clamped = false;
+    if (_currentIndex >= len) {
+      final newIdx = len - 1;
+      _shellLog(
+        'clamp tab index $_currentIndex -> $newIdx (navLen=${widget.navItems.length} pageLen=$len lenChanged=$lenChanged)',
+      );
+      clamped = true;
+      setState(() => _currentIndex = newIdx);
+    }
+    if (lenChanged || clamped) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (!_pageController.hasClients) {
+          _shellLog('postFrame: PageController not attached yet');
+          return;
+        }
+        final target = _currentIndex.clamp(0, widget.pages.length - 1);
+        final cur = _pageController.page?.round() ?? 0;
+        if (cur != target || clamped) {
+          _shellLog('jumpToPage sync cur=$cur -> target=$target (len=$len)');
+          _pageController.jumpToPage(target);
+        }
+      });
+    }
+  }
+
   void _onNavTap(int index) {
+    if (widget.pages.isEmpty || widget.navItems.isEmpty) {
+      _shellLog('onNavTap ignored: empty nav/pages');
+      return;
+    }
+    if (index < 0 || index >= widget.pages.length) {
+      _shellLog(
+        'onNavTap reject index=$index pageLen=${widget.pages.length} navLen=${widget.navItems.length}',
+      );
+      return;
+    }
     if (index == _currentIndex) return;
     HapticFeedback.lightImpact();
+    _shellLog('onNavTap $index (was $_currentIndex)');
     setState(() => _currentIndex = index);
     widget.onIndexChanged?.call(index);
-    _pageController.animateToPage(
-      index,
-      duration: DesignTokens.durationNormal,
-      curve: Curves.easeInOut,
-    );
+    if (!_pageController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_pageController.hasClients) return;
+        _animateToSafe(index);
+      });
+      return;
+    }
+    _animateToSafe(index);
+  }
+
+  void _animateToSafe(int index) {
+    if (!_pageController.hasClients) return;
+    try {
+      _pageController.animateToPage(
+        index,
+        duration: DesignTokens.durationNormal,
+        curve: Curves.easeInOut,
+      );
+    } catch (e, st) {
+      _shellLog('animateToPage failed: $e');
+      debugPrint(st.toString());
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(index.clamp(0, widget.pages.length - 1));
+      }
+    }
   }
 
   /// Programatik sekme geçişi (ör. gösterge kartından Müşterilerim’e).
   void jumpToTab(int index) {
-    if (index < 0 || index >= widget.navItems.length) return;
+    if (widget.navItems.isEmpty || widget.pages.isEmpty) {
+      _shellLog('jumpToTab noop: empty nav/pages');
+      return;
+    }
+    if (index < 0 || index >= widget.navItems.length) {
+      _shellLog(
+        'jumpToTab reject index=$index navLen=${widget.navItems.length}',
+      );
+      return;
+    }
+    if (index >= widget.pages.length) {
+      _shellLog(
+        'jumpToTab reject index=$index pageLen=${widget.pages.length} (nav/page mismatch)',
+      );
+      return;
+    }
     if (index == _currentIndex) return;
+    _shellLog('jumpToTab $index (was $_currentIndex)');
     _onNavTap(index);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.pages.length != widget.navItems.length) {
+      _shellLog(
+        'BUILD WARNING pages=${widget.pages.length} nav=${widget.navItems.length} — mismatch can blank content',
+      );
+    }
     ref.listen(mainShellShortcutProvider, (prev, next) {
       if (next == null) return;
       final idx = switch (next) {
@@ -106,6 +197,46 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     final surface = ext.surface;
     final primary = theme.colorScheme.primary;
     final onSurfaceVariant = ext.textSecondary;
+
+    if (widget.pages.isEmpty || widget.navItems.isEmpty) {
+      _shellLog('build: empty pages — showing fallback scaffold');
+      return Scaffold(
+        backgroundColor: ext.background,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(DesignTokens.space6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 48,
+                  color: ext.textSecondary,
+                ),
+                const SizedBox(height: DesignTokens.space4),
+                Text(
+                  'Gezinme yapılandırması eksik.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: ext.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space2),
+                Text(
+                  'Sekme listesi boş döndü. Uygulamayı yeniden başlatın veya destek ile iletişime geçin.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: ext.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final body = Column(
       children: [
@@ -134,6 +265,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
             controller: _pageController,
             physics: const NeverScrollableScrollPhysics(),
             onPageChanged: (i) {
+              _shellLog('onPageChanged -> $i');
               setState(() => _currentIndex = i);
               widget.onIndexChanged?.call(i);
             },

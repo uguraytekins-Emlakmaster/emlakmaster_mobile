@@ -53,6 +53,10 @@ class AdminShellPage extends ConsumerWidget {
       const AdminReportsPage(),
       const SettingsPage(),
     ];
+    assert(
+      navItems.length == pages.length,
+      'AdminShell: navItems (${navItems.length}) and pages (${pages.length}) must stay in sync',
+    );
     return Column(
       children: [
         const SyncStatusBanner(compact: true),

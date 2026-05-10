@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -39,7 +40,11 @@ class RoleBasedShellSelector extends ConsumerWidget {
     final roleAsync = ref.watch(displayRoleProvider);
     return roleAsync.when(
       loading: () => const _ShellLoading(),
-      error: (_, __) => const _ShellLoading(),
+      error: (e, st) {
+        debugPrint('[RoleShell] displayRoleProvider error: $e');
+        debugPrint('$st');
+        return _ShellRoleErrorScreen(error: e);
+      },
       data: (role) => _buildForRole(context, ref, role),
     );
   }
@@ -55,6 +60,69 @@ class RoleBasedShellSelector extends ConsumerWidget {
     }
     if (forceAdmin) return const AdminShellPage();
     return const ConsultantShellPage();
+  }
+}
+
+/// Rol stream’i hata verince boş/siyah gövde yerine görünür kurtarma.
+class _ShellRoleErrorScreen extends ConsumerWidget {
+  const _ShellRoleErrorScreen({required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
+    final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
+    return Scaffold(
+      backgroundColor: ext.background,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(DesignTokens.space6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.cloud_off_outlined,
+                  size: 56,
+                  color: ext.accent.withValues(alpha: 0.9),
+                ),
+                const SizedBox(height: DesignTokens.space4),
+                Text(
+                  'Rol bilgisi yüklenemedi',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: ext.textPrimary,
+                    fontSize: DesignTokens.fontSizeLg,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space3),
+                Text(
+                  'Ağ veya sunucu yanıtı beklenirken sorun oluştu. Tekrar deneyebilir veya oturumu yenileyebilirsiniz.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: ext.textSecondary,
+                    fontSize: DesignTokens.fontSizeSm,
+                    height: 1.45,
+                  ),
+                ),
+                if (uid != null) ...[
+                  const SizedBox(height: DesignTokens.space5),
+                  FilledButton.icon(
+                    onPressed: () {
+                      ref.invalidate(userDocStreamProvider(uid));
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Tekrar dene'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
