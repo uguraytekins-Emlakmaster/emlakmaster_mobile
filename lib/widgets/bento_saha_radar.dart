@@ -20,7 +20,34 @@ final Map<String, Offset> _districtPositions = {
 };
 
 class BentoSahaRadar extends StatelessWidget {
-  const BentoSahaRadar({super.key});
+  /// [outerContentWidth] verildiğinde iç [LayoutBuilder] kullanılmaz (dashboard + scroll
+  /// gövdesinde `!_debugDoingThisLayout` riskini azaltır).
+  const BentoSahaRadar({
+    super.key,
+    this.outerContentWidth,
+    this.splitWithSibling = false,
+    this.siblingRowGap = 0,
+  });
+
+  /// [px] içi içerik genişliği (ekran − yatay padding × 2).
+  final double? outerContentWidth;
+
+  /// [true]: [Row] içinde eş genişlikte ikinci kartla paylaşılan satır (harita + heatmap yan yana).
+  final bool splitWithSibling;
+
+  /// [splitWithSibling] iken iki [Expanded] arası [SizedBox] genişliği.
+  final double siblingRowGap;
+
+  static bool _narrowFromOuter({
+    required double? outer,
+    required bool split,
+    required double gap,
+  }) {
+    if (outer == null) return false;
+    if (!split) return outer < 300;
+    final cell = ((outer - gap).clamp(0, double.infinity)) / 2;
+    return cell < 300;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +69,90 @@ class BentoSahaRadar extends StatelessWidget {
             ? '${withLocation.length} danışman harita üzerinde'
             : 'Yükleniyor...';
 
+        final mapArea = SizedBox(
+          height: 160,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                color: ext.surfaceElevated,
+                border: Border.all(color: ext.accent.withValues(alpha: 0.12)),
+              ),
+              child: snapshot.hasData
+                  ? CustomPaint(
+                      painter: DiyarbakirMapPainter(
+                        agents: withLocation,
+                        accent: ext.accent,
+                        borderStroke: ext.foreground.withValues(alpha: 0.08),
+                        labelMuted: ext.textTertiary.withValues(alpha: 0.25),
+                      ),
+                    )
+                  : Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: ext.accent,
+                      ),
+                    ),
+            ),
+          ),
+        );
+
+        Widget columnForNarrow(bool narrow) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Saha-Radar',
+                  style: TextStyle(
+                    color: ext.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: ext.textTertiary, fontSize: 11),
+                ),
+                const SizedBox(height: 12),
+                if (narrow) ...[
+                  mapArea,
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 72,
+                    width: double.infinity,
+                    child: RepaintBoundary(child: _HeatmapPulseChart()),
+                  ),
+                ] else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: mapArea),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 52,
+                        height: 160,
+                        child: RepaintBoundary(child: _HeatmapPulseChart()),
+                      ),
+                    ],
+                  ),
+              ],
+            );
+
+        final resolvedOuter = outerContentWidth;
+        final inner = resolvedOuter != null
+            ? columnForNarrow(
+                _narrowFromOuter(
+                  outer: resolvedOuter,
+                  split: splitWithSibling,
+                  gap: siblingRowGap,
+                ),
+              )
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  return columnForNarrow(constraints.maxWidth < 300);
+                },
+              );
+
         return Container(
           decoration: ext.surfaceCardDecoration(
             surfaceColor: Color.alphaBlend(
@@ -50,82 +161,7 @@ class BentoSahaRadar extends StatelessWidget {
             ),
           ),
           padding: const EdgeInsets.all(20),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final narrow = constraints.maxWidth < 300;
-              final mapArea = SizedBox(
-                height: 160,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusLg),
-                      color: ext.surfaceElevated,
-                      border:
-                          Border.all(color: ext.accent.withValues(alpha: 0.12)),
-                    ),
-                    child: snapshot.hasData
-                        ? CustomPaint(
-                            painter: DiyarbakirMapPainter(
-                              agents: withLocation,
-                              accent: ext.accent,
-                              borderStroke:
-                                  ext.foreground.withValues(alpha: 0.08),
-                              labelMuted:
-                                  ext.textTertiary.withValues(alpha: 0.25),
-                            ),
-                          )
-                        : Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: ext.accent,
-                            ),
-                          ),
-                  ),
-                ),
-              );
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Saha-Radar',
-                    style: TextStyle(
-                      color: ext.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    subtitle,
-                    style: TextStyle(color: ext.textTertiary, fontSize: 11),
-                  ),
-                  const SizedBox(height: 12),
-                  if (narrow) ...[
-                    mapArea,
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 72,
-                      width: double.infinity,
-                      child: RepaintBoundary(child: _HeatmapPulseChart()),
-                    ),
-                  ] else
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: mapArea),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: 52,
-                          height: 160,
-                          child: RepaintBoundary(child: _HeatmapPulseChart()),
-                        ),
-                      ],
-                    ),
-                ],
-              );
-            },
-          ),
+          child: inner,
         );
       },
     );

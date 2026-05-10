@@ -13,7 +13,11 @@ import 'package:shimmer/shimmer.dart';
 /// Dashboard giriş kartı — fazlar (iskelet / canlı / önbellek / düşük güvenilirlik / hata),
 /// tam kart shimmer yok; içerik her zaman kasıtlı.
 class RainbowAnalyticsCenterCard extends ConsumerWidget {
-  const RainbowAnalyticsCenterCard({super.key});
+  /// [paddedContentWidth]: [px] sonrası yatay içerik genişliği verilirse iç [LayoutBuilder]
+  /// atlanır (scroll + iç içe layout assert riskini azaltır).
+  const RainbowAnalyticsCenterCard({super.key, this.paddedContentWidth});
+
+  final double? paddedContentWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,134 +87,14 @@ class RainbowAnalyticsCenterCard extends ConsumerWidget {
                         DesignTokens.space5,
                         DesignTokens.space5,
                       ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final narrow = constraints.maxWidth < 340;
-                          final titleSize = narrow
-                              ? DesignTokens.fontSizeMd
-                              : DesignTokens.fontSizeLg;
-                          final iconSize = narrow ? 26.0 : 30.0;
-                          final iconPad = narrow ? 11.0 : 14.0;
-                          final phase = _PhaseChip(
-                            phase: ui.phase,
-                            ext: ext,
-                            theme: theme,
-                          );
-                          final body = Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Analitik merkezi',
-                                style: AppTypography.cardHeading(context)
-                                    .copyWith(
-                                  color: ext.textPrimary,
-                                  fontSize: titleSize,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Bölge talebi ve yatırım ufkunu aç',
-                                style: AppTypography.meta(context).copyWith(
-                                  color: ext.textTertiary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: narrow ? 2 : 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(
-                                  height: narrow
-                                      ? DesignTokens.space2
-                                      : DesignTokens.space3),
-                              if (narrow) ...[
-                                Text(
-                                  'Rainbow Intelligence',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: ext.accent,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.1,
-                                    fontSize: DesignTokens.fontSizeSm + 1,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: DesignTokens.space2),
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: phase,
-                                ),
-                              ] else
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        'Rainbow Intelligence',
-                                        style: theme.textTheme.titleSmall
-                                            ?.copyWith(
-                                          color: ext.accent,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 0.12,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    phase,
-                                  ],
-                                ),
-                              const SizedBox(height: DesignTokens.space2),
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 220),
-                                switchInCurve: Curves.easeOutCubic,
-                                switchOutCurve: Curves.easeInCubic,
-                                child: _SubtitleBlock(
-                                  key: ValueKey<String>(
-                                    '${ui.phase}_${ui.pulseLine}_${ui.error?.hashCode ?? 0}',
-                                  ),
-                                  ui: ui,
-                                  ext: ext,
-                                  theme: theme,
-                                  onRetry: () => _retry(ref),
-                                ),
-                              ),
-                            ],
-                          );
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Semantics(
-                                label: 'Analitik merkezi simgesi',
-                                excludeSemantics: true,
-                                child: Container(
-                                  padding: EdgeInsets.all(iconPad),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                        color:
-                                            ext.accent.withValues(alpha: 0.5)),
-                                    color: ext.accent.withValues(alpha: 0.08),
-                                  ),
-                                  child: Icon(Icons.insights_rounded,
-                                      color: ext.accent, size: iconSize),
-                                ),
-                              ),
-                              const SizedBox(width: DesignTokens.space4),
-                              Expanded(child: body),
-                              Semantics(
-                                label: 'Detaya git',
-                                excludeSemantics: true,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Icon(
-                                    Icons.chevron_right_rounded,
-                                    color: ext.accent.withValues(alpha: 0.85),
-                                    size: narrow ? 22 : 26,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                      child: _RainbowCardInnerRow(
+                        ui: ui,
+                        ext: ext,
+                        theme: theme,
+                        ref: ref,
+                        precomputedInnerMaxWidth: paddedContentWidth != null
+                            ? paddedContentWidth! - 2 * DesignTokens.space5
+                            : null,
                       ),
                     ),
                   ],
@@ -226,6 +110,154 @@ class RainbowAnalyticsCenterCard extends ConsumerWidget {
   static void _retry(WidgetRef ref) {
     ref.invalidate(favoriteInvestRegionIdProvider);
     ref.invalidate(intelligenceRunTriggerProvider);
+  }
+}
+
+class _RainbowCardInnerRow extends StatelessWidget {
+  const _RainbowCardInnerRow({
+    required this.ui,
+    required this.ext,
+    required this.theme,
+    required this.ref,
+    this.precomputedInnerMaxWidth,
+  });
+
+  final AnalyticsCenterCardUi ui;
+  final AppThemeExtension ext;
+  final ThemeData theme;
+  final WidgetRef ref;
+  final double? precomputedInnerMaxWidth;
+
+  Widget _row(BuildContext context, bool narrow) {
+    final titleSize =
+        narrow ? DesignTokens.fontSizeMd : DesignTokens.fontSizeLg;
+    final iconSize = narrow ? 26.0 : 30.0;
+    final iconPad = narrow ? 11.0 : 14.0;
+    final phase = _PhaseChip(
+      phase: ui.phase,
+      ext: ext,
+      theme: theme,
+    );
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Analitik merkezi',
+          style: AppTypography.cardHeading(context).copyWith(
+            color: ext.textPrimary,
+            fontSize: titleSize,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Bölge talebi ve yatırım ufkunu aç',
+          style: AppTypography.meta(context).copyWith(
+            color: ext.textTertiary,
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: narrow ? 2 : 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        SizedBox(height: narrow ? DesignTokens.space2 : DesignTokens.space3),
+        if (narrow) ...[
+          Text(
+            'Rainbow Intelligence',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: ext.accent,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.1,
+              fontSize: DesignTokens.fontSizeSm + 1,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: DesignTokens.space2),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: phase,
+          ),
+        ] else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  'Rainbow Intelligence',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: ext.accent,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.12,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              phase,
+            ],
+          ),
+        const SizedBox(height: DesignTokens.space2),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          child: _SubtitleBlock(
+            key: ValueKey<String>(
+              '${ui.phase}_${ui.pulseLine}_${ui.error?.hashCode ?? 0}',
+            ),
+            ui: ui,
+            ext: ext,
+            theme: theme,
+            onRetry: () => RainbowAnalyticsCenterCard._retry(ref),
+          ),
+        ),
+      ],
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          label: 'Analitik merkezi simgesi',
+          excludeSemantics: true,
+          child: Container(
+            padding: EdgeInsets.all(iconPad),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: ext.accent.withValues(alpha: 0.5)),
+              color: ext.accent.withValues(alpha: 0.08),
+            ),
+            child:
+                Icon(Icons.insights_rounded, color: ext.accent, size: iconSize),
+          ),
+        ),
+        const SizedBox(width: DesignTokens.space4),
+        Expanded(child: body),
+        Semantics(
+          label: 'Detaya git',
+          excludeSemantics: true,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Icon(
+              Icons.chevron_right_rounded,
+              color: ext.accent.withValues(alpha: 0.85),
+              size: narrow ? 22 : 26,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pre = precomputedInnerMaxWidth;
+    if (pre != null) {
+      return _row(context, pre < 340);
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return _row(context, constraints.maxWidth < 340);
+      },
+    );
   }
 }
 

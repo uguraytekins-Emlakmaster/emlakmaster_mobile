@@ -38,7 +38,8 @@ class BrokerCommandPage extends ConsumerWidget {
       data: (role) {
         if (!FeaturePermission.canViewWarRoom(role)) {
           return const UnauthorizedScreen(
-            message: 'War Room ekranına sadece yönetici ve operasyon erişebilir.',
+            message:
+                'War Room ekranına sadece yönetici ve operasyon erişebilir.',
           );
         }
         return const _BrokerCommandBody();
@@ -54,6 +55,7 @@ class _BrokerCommandBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     const h = DashboardLayoutTokens.horizontalPadding;
+    final paddedContentW = MediaQuery.sizeOf(context).width - 2 * h;
     const gapOp = DashboardLayoutTokens.gapOperational;
     final gapInsight = DashboardLayoutTokens.gapInsightSection.toDouble();
     final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
@@ -90,7 +92,8 @@ class _BrokerCommandBody extends StatelessWidget {
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: ext.surfaceElevated,
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusCardPrimary),
                   border: Border.all(color: ext.border.withValues(alpha: 0.45)),
                   boxShadow: [
                     BoxShadow(
@@ -116,10 +119,11 @@ class _BrokerCommandBody extends StatelessWidget {
                       const SizedBox(height: DesignTokens.space2),
                       Text(
                         'Rainbow Gayrimenkul',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: ext.textPrimary,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: ext.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
                       ),
                       const SizedBox(height: DesignTokens.space1),
                       Text(
@@ -134,9 +138,12 @@ class _BrokerCommandBody extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: DashboardLayoutTokens.gapHeroToOperational.toDouble()),
+            SizedBox(
+                height: DashboardLayoutTokens.gapHeroToOperational.toDouble()),
             // —— Operational ——
-            px(const RainbowAnalyticsCenterCard()),
+            px(RainbowAnalyticsCenterCard(
+              paddedContentWidth: paddedContentW,
+            )),
             const SizedBox(height: gapOp),
             px(const MarketPulsePanel()),
             const SizedBox(height: gapOp),
@@ -161,7 +168,8 @@ class _BrokerCommandBody extends StatelessWidget {
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: ext.surfaceElevated,
-                  borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+                  borderRadius:
+                      BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
                   border: Border.all(color: ext.borderSubtle),
                 ),
                 child: Padding(
@@ -179,7 +187,10 @@ class _BrokerCommandBody extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         'Çağrı yoğunluğu ve satış metrikleri burada listelenecek.',
-                        style: TextStyle(color: ext.textSecondary, fontSize: 13, height: 1.4),
+                        style: TextStyle(
+                            color: ext.textSecondary,
+                            fontSize: 13,
+                            height: 1.4),
                       ),
                     ],
                   ),

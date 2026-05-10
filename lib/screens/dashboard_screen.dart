@@ -120,6 +120,8 @@ class DashboardPage extends ConsumerWidget {
       // [px] ile aynı genişlik: iç içe [LayoutBuilder] (SovereignArc + burası) layout assert.
       final bentoInsightContentW = MediaQuery.sizeOf(context).width - 2 * h;
       final stackBentoRadarRow = bentoInsightContentW < 520;
+      final bentoSiblingGap =
+          compact ? DesignTokens.space4 : DesignTokens.space6;
 
       Widget px(Widget child) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: h),
@@ -192,7 +194,9 @@ class DashboardPage extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: DesignTokens.space2),
-                          px(const RainbowAnalyticsCenterCard()),
+                          px(RainbowAnalyticsCenterCard(
+                            paddedContentWidth: bentoInsightContentW,
+                          )),
                         ],
                         SizedBox(height: gapOp),
                         px(
@@ -261,7 +265,10 @@ class DashboardPage extends ConsumerWidget {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.stretch,
                                           children: [
-                                            const BentoSahaRadar(),
+                                            BentoSahaRadar(
+                                              outerContentWidth:
+                                                  bentoInsightContentW,
+                                            ),
                                             SizedBox(
                                                 height: compact
                                                     ? DesignTokens.space3
@@ -274,12 +281,15 @@ class DashboardPage extends ConsumerWidget {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            const Expanded(
-                                                child: BentoSahaRadar()),
-                                            SizedBox(
-                                                width: compact
-                                                    ? DesignTokens.space4
-                                                    : DesignTokens.space6),
+                                            Expanded(
+                                              child: BentoSahaRadar(
+                                                outerContentWidth:
+                                                    bentoInsightContentW,
+                                                splitWithSibling: true,
+                                                siblingRowGap: bentoSiblingGap,
+                                              ),
+                                            ),
+                                            SizedBox(width: bentoSiblingGap),
                                             const Expanded(
                                                 child: BentoAiNews()),
                                           ],
