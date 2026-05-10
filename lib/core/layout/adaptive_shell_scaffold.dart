@@ -50,6 +50,7 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
 class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   late PageController _pageController;
   int _currentIndex = 0;
+  ProviderSubscription<MainShellShortcut?>? _shortcutSub;
 
   void _shellLog(String msg) {
     debugPrint('[ShellNav] $msg');
@@ -59,10 +60,35 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    _shortcutSub = ref.listenManual<MainShellShortcut?>(
+      mainShellShortcutProvider,
+      (prev, next) {
+        if (next == null) return;
+        final navLen = widget.navItems.length;
+        final pageLen = widget.pages.length;
+        final idx = switch (next) {
+          MainShellShortcut.openAccountTab =>
+            widget.shortcutMap[next] ?? (navLen > 0 ? navLen - 1 : -1),
+          MainShellShortcut.openHomeTab => widget.shortcutMap[next] ?? 0,
+          _ => widget.shortcutMap[next] ?? -1,
+        };
+        ref.read(mainShellShortcutProvider.notifier).state = null;
+        if (idx < 0 || idx >= navLen || idx >= pageLen) {
+          _shellLog(
+            'shortcut reject idx=$idx navLen=$navLen pageLen=$pageLen shortcut=$next',
+          );
+          return;
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _onNavTap(idx);
+        });
+      },
+    );
   }
 
   @override
   void dispose() {
+    _shortcutSub?.close();
     _pageController.dispose();
     super.dispose();
   }
@@ -113,7 +139,21 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       );
       return;
     }
-    if (index == _currentIndex) return;
+    if (index >= widget.navItems.length) {
+      _shellLog('onNavTap reject index=$index vs navLen=${widget.navItems.length}');
+      return;
+    }
+    // P0: State ile PageView senkronu bozulduysa aynı sekmeye basınca erken çıkıp donmuş hissi vermesin.
+    if (index == _currentIndex) {
+      if (_pageController.hasClients) {
+        final cur = _pageController.page?.round() ?? 0;
+        if (cur != index) {
+          _shellLog('onNavTap resync PageView cur=$cur -> jumpTo $index');
+          _pageController.jumpToPage(index);
+        }
+      }
+      return;
+    }
     HapticFeedback.lightImpact();
     _shellLog('onNavTap $index (was $_currentIndex)');
     setState(() => _currentIndex = index);
@@ -163,7 +203,16 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       );
       return;
     }
-    if (index == _currentIndex) return;
+    if (index == _currentIndex) {
+      if (_pageController.hasClients) {
+        final cur = _pageController.page?.round() ?? 0;
+        if (cur != index) {
+          _shellLog('jumpToTab resync PageView cur=$cur -> jumpTo $index');
+          _pageController.jumpToPage(index);
+        }
+      }
+      return;
+    }
     _shellLog('jumpToTab $index (was $_currentIndex)');
     _onNavTap(index);
   }
@@ -175,21 +224,6 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
         'BUILD WARNING pages=${widget.pages.length} nav=${widget.navItems.length} — mismatch can blank content',
       );
     }
-    ref.listen(mainShellShortcutProvider, (prev, next) {
-      if (next == null) return;
-      final idx = switch (next) {
-        MainShellShortcut.openAccountTab =>
-          widget.shortcutMap[next] ?? (widget.navItems.length - 1),
-        MainShellShortcut.openHomeTab => widget.shortcutMap[next] ?? 0,
-        _ => widget.shortcutMap[next] ?? -1,
-      };
-      ref.read(mainShellShortcutProvider.notifier).state = null;
-      if (idx >= 0 && idx < widget.navItems.length) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _onNavTap(idx);
-        });
-      }
-    });
 
     final isWide = AdaptiveShellScaffold.isWide(context);
     final theme = Theme.of(context);
