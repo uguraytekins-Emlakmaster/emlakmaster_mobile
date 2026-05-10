@@ -15,6 +15,12 @@ class AdaptiveNavItem {
 
 /// Web/Desktop: sidebar (NavigationRail). Mobile: bottom nav.
 /// RBAC-agnostic; used by Admin, Consultant, and Client shells.
+///
+/// Sekme içeriği [IndexedStack] ile gösterilir (PageView değil): PageView + ilk sayfa
+/// bazı cihazlarda gövdeyi boş/siyah bırakabiliyordu; indeks doğrudan içeriği seçer.
+///
+/// Ağır sekmeler (Dashboard, War Room, …) **ilk açılışta tek tek** oluşturulur; aksi halde
+/// tüm sayfalar aynı anda mount olup ana izolatta kilitlenmeye yol açabiliyordu.
 class AdaptiveShellScaffold extends ConsumerStatefulWidget {
   const AdaptiveShellScaffold({
     super.key,
@@ -48,8 +54,10 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
 }
 
 class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
-  late PageController _pageController;
   int _currentIndex = 0;
+
+  /// Yalnızca ziyaret edilen sekmeler gerçek widget ile oluşturulur.
+  final Set<int> _materialized = {0};
   ProviderSubscription<MainShellShortcut?>? _shortcutSub;
 
   void _shellLog(String msg) {
@@ -59,7 +67,6 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
     _shortcutSub = ref.listenManual<MainShellShortcut?>(
       mainShellShortcutProvider,
       (prev, next) {
@@ -89,7 +96,6 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   @override
   void dispose() {
     _shortcutSub?.close();
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -101,31 +107,27 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       _shellLog('didUpdateWidget: pages empty');
       return;
     }
-    final lenChanged = oldWidget.pages.length != len;
-    var clamped = false;
     if (_currentIndex >= len) {
       final newIdx = len - 1;
       _shellLog(
-        'clamp tab index $_currentIndex -> $newIdx (navLen=${widget.navItems.length} pageLen=$len lenChanged=$lenChanged)',
+        'clamp tab index $_currentIndex -> $newIdx (navLen=${widget.navItems.length} pageLen=$len)',
       );
-      clamped = true;
-      setState(() => _currentIndex = newIdx);
-    }
-    if (lenChanged || clamped) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (!_pageController.hasClients) {
-          _shellLog('postFrame: PageController not attached yet');
-          return;
-        }
-        final target = _currentIndex.clamp(0, widget.pages.length - 1);
-        final cur = _pageController.page?.round() ?? 0;
-        if (cur != target || clamped) {
-          _shellLog('jumpToPage sync cur=$cur -> target=$target (len=$len)');
-          _pageController.jumpToPage(target);
-        }
+      setState(() {
+        _currentIndex = newIdx;
+        _pruneMaterialized(len);
+        _materialized.add(newIdx);
       });
+      return;
     }
+    if (oldWidget.pages.length != len) {
+      _pruneMaterialized(len);
+      _materialized.add(_currentIndex.clamp(0, len - 1));
+    }
+  }
+
+  void _pruneMaterialized(int pageLen) {
+    _materialized.removeWhere((i) => i < 0 || i >= pageLen);
+    if (_materialized.isEmpty) _materialized.add(0);
   }
 
   void _onNavTap(int index) {
@@ -140,49 +142,18 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       return;
     }
     if (index >= widget.navItems.length) {
-      _shellLog('onNavTap reject index=$index vs navLen=${widget.navItems.length}');
+      _shellLog(
+          'onNavTap reject index=$index vs navLen=${widget.navItems.length}');
       return;
     }
-    // P0: State ile PageView senkronu bozulduysa aynı sekmeye basınca erken çıkıp donmuş hissi vermesin.
-    if (index == _currentIndex) {
-      if (_pageController.hasClients) {
-        final cur = _pageController.page?.round() ?? 0;
-        if (cur != index) {
-          _shellLog('onNavTap resync PageView cur=$cur -> jumpTo $index');
-          _pageController.jumpToPage(index);
-        }
-      }
-      return;
-    }
+    if (index == _currentIndex) return;
     HapticFeedback.lightImpact();
     _shellLog('onNavTap $index (was $_currentIndex)');
-    setState(() => _currentIndex = index);
+    setState(() {
+      _currentIndex = index;
+      _materialized.add(index);
+    });
     widget.onIndexChanged?.call(index);
-    if (!_pageController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !_pageController.hasClients) return;
-        _animateToSafe(index);
-      });
-      return;
-    }
-    _animateToSafe(index);
-  }
-
-  void _animateToSafe(int index) {
-    if (!_pageController.hasClients) return;
-    try {
-      _pageController.animateToPage(
-        index,
-        duration: DesignTokens.durationNormal,
-        curve: Curves.easeInOut,
-      );
-    } catch (e, st) {
-      _shellLog('animateToPage failed: $e');
-      debugPrint(st.toString());
-      if (_pageController.hasClients) {
-        _pageController.jumpToPage(index.clamp(0, widget.pages.length - 1));
-      }
-    }
   }
 
   /// Programatik sekme geçişi (ör. gösterge kartından Müşterilerim’e).
@@ -203,16 +174,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       );
       return;
     }
-    if (index == _currentIndex) {
-      if (_pageController.hasClients) {
-        final cur = _pageController.page?.round() ?? 0;
-        if (cur != index) {
-          _shellLog('jumpToTab resync PageView cur=$cur -> jumpTo $index');
-          _pageController.jumpToPage(index);
-        }
-      }
-      return;
-    }
+    if (index == _currentIndex) return;
     _shellLog('jumpToTab $index (was $_currentIndex)');
     _onNavTap(index);
   }
@@ -272,6 +234,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       );
     }
 
+    final safeIndex = _currentIndex.clamp(0, widget.pages.length - 1);
     final body = Column(
       children: [
         if (widget.title != null && isWide)
@@ -295,15 +258,24 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
             ),
           ),
         Expanded(
-          child: PageView(
-            controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(),
-            onPageChanged: (i) {
-              _shellLog('onPageChanged -> $i');
-              setState(() => _currentIndex = i);
-              widget.onIndexChanged?.call(i);
-            },
-            children: widget.pages,
+          child: IndexedStack(
+            index: safeIndex,
+            sizing: StackFit.expand,
+            children: [
+              for (var i = 0; i < widget.pages.length; i++)
+                IgnorePointer(
+                  ignoring: i != safeIndex,
+                  child: TickerMode(
+                    enabled: i == safeIndex,
+                    child: _materialized.contains(i)
+                        ? widget.pages[i]
+                        : ColoredBox(
+                            color: ext.background,
+                            child: const SizedBox.expand(),
+                          ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -315,7 +287,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
         body: Row(
           children: [
             NavigationRail(
-              selectedIndex: _currentIndex,
+              selectedIndex: safeIndex,
               onDestinationSelected: _onNavTap,
               backgroundColor: surface,
               selectedIconTheme: IconThemeData(color: primary, size: 24),
@@ -355,7 +327,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(widget.navItems.length, (i) {
                 final item = widget.navItems[i];
-                final isSelected = _currentIndex == i;
+                final isSelected = safeIndex == i;
                 return Expanded(
                   child: Material(
                     color: Colors.transparent,

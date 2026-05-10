@@ -24,6 +24,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart'
@@ -63,92 +64,37 @@ Future<void> main() async {
     };
 
     try {
-      // Ağ/Firebase takılırsa sonsuz beyaz LaunchScreen olmasın — süre sonunda runApp yine çalışır.
-      await () async {
-        // Tek noktadan Firebase init:
-        // 1) önce generated options ile init etmeyi dene
-        // 2) olmazsa (özellikle iOS native init/response sorunu) plist fallback dene.
-        if (Firebase.apps.isEmpty) {
-          // iOS'ta önce plist/default config ile dene (options decode tarafı kırılgan olabiliyor).
-          final isAppleNative = !kIsWeb &&
-              (defaultTargetPlatform == TargetPlatform.iOS ||
-                  defaultTargetPlatform == TargetPlatform.macOS);
-
-          if (isAppleNative) {
-            try {
-              await _initializeFirebaseWithRetry(
-                  () => Firebase.initializeApp());
-            } catch (e, st) {
-              AppLogger.e('Firebase init error (plist first)', e, st);
-            }
-
-            // Hala yoksa options ile dene.
-            if (Firebase.apps.isEmpty) {
-              try {
-                await _initializeFirebaseWithRetry(
-                  () => Firebase.initializeApp(
-                    options: DefaultFirebaseOptions.currentPlatform,
-                  ),
-                );
-              } on FirebaseException catch (e) {
-                if (e.code == 'duplicate-app') {
-                  if (kDebugMode) {
-                    debugPrint(
-                      'Firebase: [DEFAULT] zaten mevcut, devam ediliyor.',
-                    );
-                  }
-                } else {
-                  AppLogger.e('Firebase init error (options after plist)', e,
-                      e.stackTrace);
-                }
-              } catch (e, st) {
-                AppLogger.e('Firebase init error (options after plist)', e, st);
-              }
-            }
-          } else {
-            // Diğer platformlarda önce options ile dene, olmazsa default init'e düş.
-            try {
-              await _initializeFirebaseWithRetry(
-                () => Firebase.initializeApp(
-                  options: DefaultFirebaseOptions.currentPlatform,
-                ),
+      // Firebase + yerel onboarding bayrakları paralel; takılırsa kısa sürede runApp ile devam.
+      await Future.wait<void>([
+        _initFirebaseIfNeeded().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            if (kDebugMode) {
+              debugPrint(
+                'Firebase: başlatma 10s zaman aşımı; uygulama yine de açılacak.',
               );
-            } on FirebaseException catch (e) {
-              if (e.code == 'duplicate-app') {
+            }
+          },
+        ),
+        () async {
+          try {
+            await OnboardingStore.instance.warmUp().timeout(
+              const Duration(seconds: 3),
+              onTimeout: () {
                 if (kDebugMode) {
                   debugPrint(
-                      'Firebase: [DEFAULT] zaten mevcut, devam ediliyor.');
+                    'OnboardingStore: warmUp zaman aşımı; redirect varsayılanları kullanılacak.',
+                  );
                 }
-              } else {
-                AppLogger.e('Firebase init error (options)', e, e.stackTrace);
-              }
-            } catch (e, st) {
-              AppLogger.e('Firebase init error (options)', e, st);
-            }
-
-            if (Firebase.apps.isEmpty) {
-              try {
-                await _initializeFirebaseWithRetry(
-                    () => Firebase.initializeApp());
-              } catch (e, st) {
-                AppLogger.e('Firebase init error (default fallback)', e, st);
-              }
-            }
-          }
-        }
-      }()
-          .timeout(
-        const Duration(seconds: 24),
-        onTimeout: () {
-          if (kDebugMode) {
-            debugPrint(
-              'Firebase: başlatma 24s içinde tamamlanmadı; uygulama yine de açılacak.',
+              },
             );
+          } catch (e, st) {
+            AppLogger.e('OnboardingStore warmUp (bootstrap)', e, st);
           }
-        },
-      );
+        }(),
+      ]);
     } catch (e, st) {
-      AppLogger.e('Firebase init error', e, st);
+      AppLogger.e('Bootstrap paralel init', e, st);
     }
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
@@ -177,7 +123,7 @@ Future<void> main() async {
 Future<void> _initializeFirebaseWithRetry(
   Future<FirebaseApp> Function() initCall,
 ) async {
-  const int maxAttempts = 8;
+  const int maxAttempts = 5;
   for (int i = 0; i < maxAttempts; i++) {
     try {
       await initCall();
@@ -187,7 +133,71 @@ Future<void> _initializeFirebaseWithRetry(
       final isNotInitialized = e.code == 'not-initialized';
       if (isDuplicate) return;
       if (!isNotInitialized || i == maxAttempts - 1) rethrow;
-      await Future<void>.delayed(Duration(milliseconds: 180 * (i + 1)));
+      await Future<void>.delayed(Duration(milliseconds: 100 * (i + 1)));
+    }
+  }
+}
+
+/// [runApp] öncesi: Firebase yoksa kur; ağ takılırsa üst katman [timeout] ile sınırlanır.
+Future<void> _initFirebaseIfNeeded() async {
+  if (Firebase.apps.isNotEmpty) return;
+
+  final isAppleNative = !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+
+  if (isAppleNative) {
+    try {
+      await _initializeFirebaseWithRetry(() => Firebase.initializeApp());
+    } catch (e, st) {
+      AppLogger.e('Firebase init error (plist first)', e, st);
+    }
+
+    if (Firebase.apps.isEmpty) {
+      try {
+        await _initializeFirebaseWithRetry(
+          () => Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          ),
+        );
+      } on FirebaseException catch (e) {
+        if (e.code == 'duplicate-app') {
+          if (kDebugMode) {
+            debugPrint('Firebase: [DEFAULT] zaten mevcut, devam ediliyor.');
+          }
+        } else {
+          AppLogger.e(
+              'Firebase init error (options after plist)', e, e.stackTrace);
+        }
+      } catch (e, st) {
+        AppLogger.e('Firebase init error (options after plist)', e, st);
+      }
+    }
+  } else {
+    try {
+      await _initializeFirebaseWithRetry(
+        () => Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ),
+      );
+    } on FirebaseException catch (e) {
+      if (e.code == 'duplicate-app') {
+        if (kDebugMode) {
+          debugPrint('Firebase: [DEFAULT] zaten mevcut, devam ediliyor.');
+        }
+      } else {
+        AppLogger.e('Firebase init error (options)', e, e.stackTrace);
+      }
+    } catch (e, st) {
+      AppLogger.e('Firebase init error (options)', e, st);
+    }
+
+    if (Firebase.apps.isEmpty) {
+      try {
+        await _initializeFirebaseWithRetry(() => Firebase.initializeApp());
+      } catch (e, st) {
+        AppLogger.e('Firebase init error (default fallback)', e, st);
+      }
     }
   }
 }
@@ -225,8 +235,7 @@ Future<void> _runApp() async {
     );
   };
 
-  // Onboarding bayrağı router redirect'ten ÖNCE yüklensin; aksi halde completedSync=false sanılıp
-  // her açılışta tanıtım ekranına düşülür.
+  // Çoğunlukla main() içinde Firebase ile paralel warmUp tamamlanır; burada yedek (idempotent).
   try {
     await OnboardingStore.instance.warmUp();
   } catch (e, st) {
@@ -253,6 +262,7 @@ class EmlakMasterApp extends ConsumerStatefulWidget {
 
 class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   static bool _deferredInitDone = false;
+  ProviderSubscription<AsyncValue<User?>>? _authUserSub;
 
   @override
   void initState() {
@@ -267,10 +277,32 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
         );
       });
     }
+    // build() içinde ref.listen kullanmak her yeniden çizimde ek yük / çift dinleyici riski taşır.
+    _authUserSub = ref.listenManual(currentUserProvider, (prev, next) {
+      try {
+        final uid = next.valueOrNull?.uid;
+        if (uid != null && uid.isNotEmpty) {
+          Future<void>.microtask(
+              () => RegionDeepLinkBootstrap.consumePendingAfterAuth(ref));
+        }
+        if (uid == null || uid.isEmpty) return;
+        if (Firebase.apps.isEmpty) return;
+        PushNotificationService.instance
+            .requestPermissionIfEnabled()
+            .then((_) => PushNotificationService.instance
+                .refreshTokenAndSaveToFirestore(uid))
+            .catchError((Object e, StackTrace st) {
+          AppLogger.e('Push init after auth', e, st);
+        });
+      } catch (e, st) {
+        AppLogger.e('currentUserProvider listener', e, st);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _authUserSub?.close();
     unawaited(RegionDeepLinkBootstrap.dispose());
     AppLifecyclePowerService.instance.removeObserved();
     super.dispose();
@@ -337,26 +369,6 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(currentUserProvider, (_, next) {
-      try {
-        final uid = next.valueOrNull?.uid;
-        if (uid != null && uid.isNotEmpty) {
-          Future<void>.microtask(
-              () => RegionDeepLinkBootstrap.consumePendingAfterAuth(ref));
-        }
-        if (uid == null || uid.isEmpty) return;
-        if (Firebase.apps.isEmpty) return;
-        PushNotificationService.instance
-            .requestPermissionIfEnabled()
-            .then((_) => PushNotificationService.instance
-                .refreshTokenAndSaveToFirestore(uid))
-            .catchError((Object e, StackTrace st) {
-          AppLogger.e('Push init after auth', e, st);
-        });
-      } catch (e, st) {
-        AppLogger.e('currentUserProvider listener', e, st);
-      }
-    });
     final router = ref.watch(AppRouter.goRouterProvider);
     final locale = ref.watch(localeProvider).valueOrNull ?? const Locale('tr');
     return MaterialApp.router(

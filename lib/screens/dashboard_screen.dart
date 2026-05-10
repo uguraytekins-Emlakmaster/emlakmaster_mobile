@@ -123,9 +123,11 @@ class DashboardPage extends ConsumerWidget {
             child: child,
           );
 
-      final content = Scaffold(
-        backgroundColor: ext.background,
-        body: SafeArea(
+      // Kabuk zaten [Scaffold] + alt nav; iç içe ikinci [Scaffold] bazı cihazlarda
+      // PageView gövdesinde boyama/hit-test sapmalarına yol açabiliyor.
+      final content = Material(
+        color: ext.background,
+        child: SafeArea(
           child: SovereignArcWatermark(
             child: RepaintBoundary(
               child: ColoredBox(
@@ -304,9 +306,9 @@ class DashboardPage extends ConsumerWidget {
       debugPrint('DashboardPage build error: $e');
       debugPrint(st.toString());
       final ext = AppThemeExtension.of(context);
-      return Scaffold(
-        backgroundColor: ext.background,
-        body: Center(
+      return Material(
+        color: ext.background,
+        child: Center(
           child: Text(
             'Bir hata oluştu, lütfen tekrar deneyin.',
             style: TextStyle(color: ext.textPrimary),

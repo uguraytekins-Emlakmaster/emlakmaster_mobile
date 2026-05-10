@@ -1,7 +1,9 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+
 /// "The Sovereign Arc" – çok şeffaf Antique Gold mühür.
 /// Web/desktop: imleç hareketine ters yönde hafif dönüş (hafif, jet hızlı).
 /// Mobil: statik mühür (kuş gibi hafif — Listener yok).
@@ -33,12 +35,11 @@ class SovereignArcWatermark extends StatefulWidget {
 
 class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
   Offset _pointer = Offset.zero;
-  Size _size = Size.zero;
 
-  double get _angle {
-    if (_size.width <= 0 || _size.height <= 0) return 0;
-    final cx = _size.width / 2;
-    final cy = _size.height / 2;
+  double _angleForSize(Size size) {
+    if (size.width <= 0 || size.height <= 0) return 0;
+    final cx = size.width / 2;
+    final cy = size.height / 2;
     final dx = _pointer.dx - cx;
     final dy = _pointer.dy - cy;
     final base = (dx * 0.00008 + dy * 0.00006).clamp(-0.12, 0.12);
@@ -50,15 +51,15 @@ class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
     final useKinetic = SovereignArcWatermark._useKinetic;
     return LayoutBuilder(
       builder: (context, constraints) {
-        _size = Size(constraints.maxWidth, constraints.maxHeight);
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
         final accent = AppThemeExtension.of(context).accent;
         final arcWidget = RepaintBoundary(
           child: IgnorePointer(
             child: Transform.rotate(
-              angle: useKinetic ? _angle : 0,
+              angle: useKinetic ? _angleForSize(size) : 0,
               child: CustomPaint(
                 painter: _SovereignArcPainter(accent),
-                size: _size,
+                size: size,
               ),
             ),
           ),
@@ -70,7 +71,7 @@ class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
             widget.child,
           ],
         );
-    if (!useKinetic) {
+        if (!useKinetic) {
           return stack;
         }
         return Listener(

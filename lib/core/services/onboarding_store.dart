@@ -13,12 +13,17 @@ class OnboardingStore {
 
   bool? _completed;
   bool? _workspaceSetupCompleted;
+  bool _prefsLoaded = false;
 
   /// Uygulama başında bir kez çağrın; böylece [completedSync] doğru döner.
+  /// Tekrar çağrıda SharedPreferences tekrar açılmaz (ilk kare / runApp yolu hızlanır).
   Future<void> warmUp() async {
+    if (_prefsLoaded) return;
     final prefs = await SharedPreferences.getInstance();
     _completed ??= prefs.getBool(_keyOnboardingCompleted) ?? false;
-    _workspaceSetupCompleted ??= prefs.getBool(_keyWorkspaceSetupCompleted) ?? false;
+    _workspaceSetupCompleted ??=
+        prefs.getBool(_keyWorkspaceSetupCompleted) ?? false;
+    _prefsLoaded = true;
   }
 
   /// Senkron değer (warmUp sonrası). Varsayılan false = henüz gösterme tamamlanmadı.

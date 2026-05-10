@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../features/auth/domain/entities/app_role.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
+
 /// İlk kez superAdmin girişinde tek seferlik "Sistemin Temelleri Atıldı" karşılama.
 class WelcomePatronOverlay extends ConsumerStatefulWidget {
   const WelcomePatronOverlay({
@@ -14,7 +15,8 @@ class WelcomePatronOverlay extends ConsumerStatefulWidget {
   final Widget child;
 
   @override
-  ConsumerState<WelcomePatronOverlay> createState() => _WelcomePatronOverlayState();
+  ConsumerState<WelcomePatronOverlay> createState() =>
+      _WelcomePatronOverlayState();
 }
 
 class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
@@ -24,15 +26,15 @@ class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
   @override
   void initState() {
     super.initState();
+    _roleSub = ref.listenManual<bool>(
+      displayRoleOrNullProvider.select((r) => r == AppRole.superAdmin),
+      (prev, isSuperAdmin) {
+        if (!isSuperAdmin) return;
+        _tryShowIfSuperAdmin();
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _tryShowIfSuperAdmin();
-      _roleSub = ref.listenManual<bool>(
-        displayRoleOrNullProvider.select((r) => r == AppRole.superAdmin),
-        (prev, isSuperAdmin) {
-          if (!isSuperAdmin) return;
-          _tryShowIfSuperAdmin();
-        },
-      );
+      if (mounted) _tryShowIfSuperAdmin();
     });
   }
 
@@ -61,46 +63,56 @@ class _WelcomePatronOverlayState extends ConsumerState<WelcomePatronOverlay> {
   }
 
   void _showWelcome(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppThemeExtension.of(context).card,
-        title: const Row(
-          children: [
-            Text('🎉', style: TextStyle(fontSize: 28)),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Hoş geldin Patron',
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
-            ),
-          ],
-        ),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+    if (!context.mounted) return;
+    try {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppThemeExtension.of(context).card,
+          title: const Row(
             children: [
-              Text(
-                'Sistemin temelleri atıldı.',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Dashboard üzerinden ofis metriklerini, çağrı merkezini ve müşteri verilerini yönetebilirsin. Ayarlar\'dan rol değiştirerek farklı kullanıcı deneyimlerini test edebilirsin.',
-                style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+              Text('🎉', style: TextStyle(fontSize: 28)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Hoş geldin Patron',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Tamam', style: TextStyle(color: AppThemeExtension.of(context).accent)),
+          content: const SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sistemin temelleri atıldı.',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Dashboard üzerinden ofis metriklerini, çağrı merkezini ve müşteri verilerini yönetebilirsin. Ayarlar\'dan rol değiştirerek farklı kullanıcı deneyimlerini test edebilirsin.',
+                  style: TextStyle(
+                      color: Colors.white70, fontSize: 14, height: 1.4),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-    );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Tamam',
+                  style:
+                      TextStyle(color: AppThemeExtension.of(context).accent)),
+            ),
+          ],
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('[WelcomePatronOverlay] showDialog failed: $e');
+      debugPrint('$st');
+    }
   }
 }
