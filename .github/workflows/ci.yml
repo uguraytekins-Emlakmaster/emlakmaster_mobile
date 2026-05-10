@@ -12,9 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # pubspec (google_fonts ^8 vb.) Dart >=3.7 ister; 3.24.x (Dart 3.5) ile pub get çözülemez → CI hep fail.
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'
+          flutter-version: '3.29.x'
+          channel: stable
           cache: true
 
       - name: Install dependencies
