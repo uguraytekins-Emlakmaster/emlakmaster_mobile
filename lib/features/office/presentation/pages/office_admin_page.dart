@@ -1,6 +1,8 @@
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/office/domain/membership_status.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_invite_entity.dart';
@@ -37,8 +39,16 @@ class OfficeAdminPage extends ConsumerWidget {
       return Scaffold(
         backgroundColor: ext.background,
         appBar: AppBar(title: const Text('Ofis yönetimi'), backgroundColor: ext.background),
-        body: Center(
-          child: Text('Önce bir ofise bağlanın.', style: TextStyle(color: ext.foregroundSecondary)),
+        body: SafeArea(
+          child: EmptyState(
+            grouped: true,
+            compact: true,
+            icon: Icons.apartment_outlined,
+            title: 'Ofis bağlantısı gerekli',
+            subtitle: 'Bu ekran bağlı bir ofis ile açılır.',
+            actionLabel: 'Ofise git',
+            onAction: () => context.push(AppRouter.routeOfficeGate),
+          ),
         ),
       );
     }
@@ -47,14 +57,13 @@ class OfficeAdminPage extends ConsumerWidget {
       return Scaffold(
         backgroundColor: ext.background,
         appBar: AppBar(title: const Text('Ofis yönetimi'), backgroundColor: ext.background),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'Bu sayfa yalnızca ofis sahibi, yönetici veya ekip lideri içindir.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: ext.foregroundSecondary, fontSize: 15),
-            ),
+        body: const SafeArea(
+          child: EmptyState(
+            grouped: true,
+            compact: true,
+            icon: Icons.lock_outline_rounded,
+            title: 'Yetki gerekli',
+            subtitle: 'Bu alan ofis sahibi, yönetici veya ekip lideri içindir.',
           ),
         ),
       );
@@ -78,35 +87,54 @@ class OfficeAdminPage extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space5,
+          vertical: DesignTokens.space3,
+        ),
         children: [
           Text(
             'Ekip ve davetler',
-            style: TextStyle(
+            style: AppTypography.cardHeading(context).copyWith(
               color: ext.foreground,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
+              fontSize: DesignTokens.fontSizeLg,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: DesignTokens.space2),
           Text(
-            'Üyelerin rollerini ve durumlarını buradan izleyin; davetleri yönetin.',
-            style: TextStyle(color: ext.foregroundSecondary, fontSize: 13, height: 1.4),
+            'Üyeler, davetler ve harici bağlantı özeti.',
+            style: AppTypography.body(context).copyWith(
+              fontSize: DesignTokens.fontSizeSm,
+              height: 1.4,
+            ),
           ),
-          const SizedBox(height: 20),
-          Text('Üyeler', style: _sectionStyle(ext)),
-          const SizedBox(height: 8),
+          const SizedBox(height: DesignTokens.space5),
+          Text('Üyeler', style: _sectionStyle(context, ext)),
+          const SizedBox(height: DesignTokens.space2),
           membersAsync.when(
             loading: () => const Center(child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: EdgeInsets.all(DesignTokens.space6),
               child: CircularProgressIndicator(),
             )),
-            error: (e, _) => Text(officeErrorUserMessage(e), style: TextStyle(color: ext.foregroundSecondary)),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+              child: EmptyState(
+                compact: true,
+                grouped: true,
+                icon: Icons.cloud_off_outlined,
+                title: 'Üyeler yüklenemedi',
+                subtitle: officeErrorUserMessage(e),
+                actionLabel: 'Tekrar dene',
+                onAction: () => ref.invalidate(officeMembersStreamProvider(oid)),
+              ),
+            ),
             data: (list) {
               if (list.isEmpty) {
-                return _EmptyCard(
-                  ext: ext,
-                  message: 'Henüz üye listesi boş veya yüklenemedi.',
+                return const EmptyState(
+                  compact: true,
+                  grouped: true,
+                  icon: Icons.groups_outlined,
+                  title: 'Henüz üye yok',
+                  subtitle: 'Davet göndererek ekibi büyütün.',
                 );
               }
               list.sort((a, b) => a.userId.compareTo(b.userId));
@@ -119,15 +147,32 @@ class OfficeAdminPage extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 24),
-          Text('Davetler', style: _sectionStyle(ext)),
-          const SizedBox(height: 8),
+          const SizedBox(height: DesignTokens.space6),
+          Text('Davetler', style: _sectionStyle(context, ext)),
+          const SizedBox(height: DesignTokens.space2),
           invitesAsync.when(
             loading: () => const SizedBox.shrink(),
-            error: (e, _) => Text(officeErrorUserMessage(e)),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+              child: EmptyState(
+                compact: true,
+                grouped: true,
+                icon: Icons.cloud_off_outlined,
+                title: 'Davetler yüklenemedi',
+                subtitle: officeErrorUserMessage(e),
+                actionLabel: 'Tekrar dene',
+                onAction: () => ref.invalidate(officeInvitesStreamProvider(oid)),
+              ),
+            ),
             data: (invites) {
               if (invites.isEmpty) {
-                return _EmptyCard(ext: ext, message: 'Aktif davet yok. Yeni davet oluşturun.');
+                return const EmptyState(
+                  compact: true,
+                  grouped: true,
+                  icon: Icons.mail_outline_rounded,
+                  title: 'Aktif davet yok',
+                  subtitle: 'Sağ üstten yeni davet oluşturabilirsiniz.',
+                );
               }
               invites.sort((a, b) => b.code.compareTo(a.code));
               return Column(
@@ -135,22 +180,25 @@ class OfficeAdminPage extends ConsumerWidget {
               );
             },
           ),
-          const SizedBox(height: 28),
-          Text('Harici platformlar', style: _sectionStyle(ext)),
-          const SizedBox(height: 6),
+          const SizedBox(height: DesignTokens.space8),
+          Text('Harici platformlar', style: _sectionStyle(context, ext)),
+          const SizedBox(height: DesignTokens.space2),
           Text(
-            'Üye başına bağlantı durumu (şimdilik örnek; ileride ofis üyeleri + external_connections).',
-            style: TextStyle(color: ext.foregroundSecondary, fontSize: 12, height: 1.35),
+            'Üye başına bağlantı durumu özeti.',
+            style: AppTypography.body(context).copyWith(
+              fontSize: DesignTokens.fontSizeXs,
+              height: 1.35,
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: DesignTokens.space3),
           ...adminPlat.map(
             (row) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: DesignTokens.space3),
               child: Material(
                 color: ext.surfaceElevated,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
                 child: Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(DesignTokens.space4),
                   child: Row(
                     children: [
                       Expanded(
@@ -190,8 +238,8 @@ class OfficeAdminPage extends ConsumerWidget {
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () => context.push(AppRouter.routeConnectedAccounts),
-            icon: const Icon(Icons.hub_outlined, size: 18),
-            label: const Text('Bağlı platformlar ekranına git'),
+            icon: const Icon(Icons.hub_outlined, size: DesignTokens.iconMd),
+            label: const Text('Bağlı hesaplar'),
           ),
         ],
       ),
@@ -199,10 +247,11 @@ class OfficeAdminPage extends ConsumerWidget {
   }
 }
 
-TextStyle _sectionStyle(AppThemeExtension ext) => TextStyle(
+TextStyle _sectionStyle(BuildContext context, AppThemeExtension ext) =>
+    AppTypography.metricLabel(context).copyWith(
       color: ext.foreground,
+      fontSize: DesignTokens.fontSizeSm,
       fontWeight: FontWeight.w700,
-      fontSize: 15,
     );
 
 class _MemberTile extends ConsumerWidget {
@@ -221,12 +270,12 @@ class _MemberTile extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     final auth = FirebaseAuth.instance.currentUser;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: DesignTokens.space3),
       child: Material(
         color: ext.surfaceElevated,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(DesignTokens.space4),
           child: Row(
             children: [
               Expanded(
@@ -337,12 +386,12 @@ class _InviteTile extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     final auth = FirebaseAuth.instance.currentUser;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: DesignTokens.space3),
       child: Material(
         color: ext.surfaceElevated,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(DesignTokens.space4),
           child: Row(
             children: [
               Expanded(
@@ -392,30 +441,6 @@ class _InviteTile extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _EmptyCard extends StatelessWidget {
-  const _EmptyCard({required this.ext, required this.message});
-
-  final AppThemeExtension ext;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: ext.surfaceElevated,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: ext.foregroundSecondary.withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        message,
-        style: TextStyle(color: ext.foregroundSecondary, fontSize: 13),
       ),
     );
   }

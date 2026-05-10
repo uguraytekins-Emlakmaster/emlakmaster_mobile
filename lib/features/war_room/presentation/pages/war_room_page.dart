@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -16,19 +17,17 @@ class WarRoomPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final roleAsync = ref.watch(displayRoleProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final loadingBg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final ext = AppThemeExtension.of(context);
     return roleAsync.when(
       loading: () => Scaffold(
-        backgroundColor: loadingBg,
-        body: Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
+        backgroundColor: ext.background,
+        body: Center(child: CircularProgressIndicator(color: ext.accent)),
       ),
       error: (_, __) => const UnauthorizedScreen(message: 'Rol yüklenemedi.'),
       data: (role) {
         if (!FeaturePermission.canViewWarRoom(role)) {
           return const UnauthorizedScreen(
-            message: 'War Room ekranına sadece yönetici ve operasyon erişebilir.',
+            message: 'Bu alan yönetici ve operasyon rolleri içindir.',
           );
         }
         return _WarRoomBody();
@@ -40,9 +39,7 @@ class WarRoomPage extends ConsumerWidget {
 class _WarRoomBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
+    final bg = AppThemeExtension.of(context).background;
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
@@ -60,17 +57,15 @@ class _WarRoomBody extends ConsumerWidget {
 class _ResurrectionStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
-    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
+    final ext = AppThemeExtension.of(context);
+    final surface = ext.surface;
+    final border = ext.border;
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
       decoration: BoxDecoration(
         color: surface,
-        border: Border(top: BorderSide(color: border)),
+        border: Border(top: BorderSide(color: border.withValues(alpha: 0.45))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -80,11 +75,16 @@ class _ResurrectionStrip extends ConsumerWidget {
           const SizedBox(height: 8),
           resurrectionAsync.when(
             data: (items) {
-              final elevated = isDark ? AppThemeExtension.of(context).surfaceElevated : AppThemeExtension.of(context).surfaceElevated;
+              final elevated = ext.surfaceElevated;
               if (items.isEmpty) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text('7+ gün sessiz lead yok.', style: TextStyle(color: textSecondary, fontSize: 12)),
+                  padding: const EdgeInsets.symmetric(vertical: DesignTokens.space2),
+                  child: Text(
+                    'Şu an öncelikli sessiz lead yok.',
+                    style: AppTypography.body(context).copyWith(
+                      fontSize: DesignTokens.fontSizeXs,
+                    ),
+                  ),
                 );
               }
               return SizedBox(
@@ -92,12 +92,22 @@ class _ResurrectionStrip extends ConsumerWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: items.take(10).length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  separatorBuilder: (_, __) => const SizedBox(width: DesignTokens.space2),
                   itemBuilder: (context, i) {
                     final e = items[i];
                     return ActionChip(
-                      avatar: Icon(Icons.person_outline_rounded, size: 18, color: AppThemeExtension.of(context).accent),
-                      label: Text('${e.customerName ?? e.customerId} • ${e.daysSilent ?? 0}g', style: const TextStyle(fontSize: 11)),
+                      avatar: Icon(
+                        Icons.person_outline_rounded,
+                        size: DesignTokens.iconSm,
+                        color: ext.accent,
+                      ),
+                      label: Text(
+                        '${e.customerName ?? e.customerId} · ${e.daysSilent ?? 0}g',
+                        style: TextStyle(
+                          fontSize: DesignTokens.fontSizeXs,
+                          color: ext.textPrimary,
+                        ),
+                      ),
                       onPressed: () {
                         HapticFeedback.lightImpact();
                         showResurrectionLeadTopicSheet(
@@ -113,8 +123,22 @@ class _ResurrectionStrip extends ConsumerWidget {
                 ),
               );
             },
-            loading: () => SizedBox(height: 36, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent))),
-            error: (_, __) => Text('Kuyruk yüklenemedi.', style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 12)),
+            loading: () => SizedBox(
+                  height: 36,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: ext.accent,
+                    ),
+                  ),
+                ),
+            error: (_, __) => Text(
+              'Kuyruk yüklenemedi',
+              style: AppTypography.body(context).copyWith(
+                color: ext.danger,
+                fontSize: DesignTokens.fontSizeXs,
+              ),
+            ),
           ),
         ],
       ),
@@ -129,13 +153,20 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space2),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppThemeExtension.of(context).accent),
+          Icon(icon, size: DesignTokens.iconMd, color: ext.accent.withValues(alpha: 0.85)),
           const SizedBox(width: DesignTokens.space2),
-          Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
+          Text(
+            title,
+            style: AppTypography.metricLabel(context).copyWith(
+              color: ext.textPrimary,
+              fontSize: DesignTokens.fontSizeSm,
+            ),
+          ),
         ],
       ),
     );

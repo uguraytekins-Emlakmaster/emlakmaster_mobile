@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
@@ -128,9 +129,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         importMode: _importMode ?? 'skip_duplicates',
       );
       if (!mounted) return;
-      _snack(
-        'Deneysel URL: içe aktarma tamamlandı (tek ilan). Mağaza ölçeği için dosya yolunu kullanın.',
-      );
+      _snack('Tek ilan içe aktarıldı. Toplu işlem için dosya kullanın.');
       _urlCtrl.clear();
       context.push(AppRouter.routeMyListings);
     } catch (e) {
@@ -176,24 +175,11 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
           mapping = _mappingFromHeaderRow(rows.first);
         }
         if (!mounted) return;
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Sütun eşlemesi'),
-            content: SingleChildScrollView(
-              child: Text(
-                'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
-              ),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('İptal')),
-              FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('İçe aktar')),
-            ],
-          ),
+        final confirmed = await _showImportConfirmDialog(
+          title: 'Sütun eşlemesi',
+          body:
+              'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
+          confirmLabel: 'İçe aktar',
         );
         if (confirmed != true) {
           setState(() => _busy = false);
@@ -206,24 +192,11 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
           mapping = _mappingFromHeaderRow(rows.first);
         }
         if (!mounted) return;
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Excel sütun eşlemesi'),
-            content: SingleChildScrollView(
-              child: Text(
-                'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
-              ),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('İptal')),
-              FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('İçe aktar')),
-            ],
-          ),
+        final confirmed = await _showImportConfirmDialog(
+          title: 'Excel sütun eşlemesi',
+          body:
+              'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
+          confirmLabel: 'İçe aktar',
         );
         if (confirmed != true) {
           setState(() => _busy = false);
@@ -231,22 +204,10 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         }
       } else if (ext == 'json') {
         if (!mounted) return;
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('JSON'),
-            content: const Text(
-              'JSON kökü ilan dizisi veya { "rows": [...] } olmalı. İlan kimliği için id / externalListingId kullanılabilir.',
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('İptal')),
-              FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Devam')),
-            ],
-          ),
+        final confirmed = await _showImportConfirmDialog(
+          title: 'JSON formatı',
+          body:
+              'Kök bir ilan dizisi veya { "rows": [...] } beklenir. Kimlik için id veya externalListingId kullanın.',
         );
         if (confirmed != true) {
           setState(() => _busy = false);
@@ -265,8 +226,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       );
       if (!mounted) return;
       _snack(
-        'Toplu dosya işlendi. Kaynak: ${_storePlatform ?? 'dosya türü (import_*)'}. '
-        'Benim İlanlarım’da doğrulayın.',
+        'Dosya işlendi. Sonuçları İlanlarım’da kontrol edin.',
       );
       context.push(AppRouter.routeMyListings);
     } catch (e) {
@@ -455,6 +415,57 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     );
   }
 
+  Future<bool?> _showImportConfirmDialog({
+    required String title,
+    required String body,
+    String confirmLabel = 'Devam',
+  }) {
+    return showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      builder: (ctx) {
+        final d = AppThemeExtension.of(ctx);
+        return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.space5,
+            vertical: DesignTokens.space8,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          ),
+          backgroundColor: d.surface,
+          title: Text(title, style: AppTypography.cardHeading(ctx)),
+          content: SingleChildScrollView(
+            child: Text(body, style: AppTypography.body(ctx)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'İptal',
+                style: TextStyle(
+                  color: d.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                ),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(confirmLabel),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
@@ -505,7 +516,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     if (!_canUploadOfficeImportServer(ref)) {
       if (mounted) {
         _snackStorageSoft(
-          'Toplu dosya yüklemesi yalnızca ofis yöneticisi, ekip lideri veya süper yönetici içindir.',
+          'Bu yükleme yalnızca ofis yöneticisi, ekip lideri veya süper yönetici içindir.',
         );
       }
       return;
@@ -547,24 +558,11 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         }
 
         if (!mounted) return;
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Sütun eşlemesi'),
-            content: SingleChildScrollView(
-              child: Text(
-                'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
-              ),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('İptal')),
-              FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Yükle')),
-            ],
-          ),
+        final confirmed = await _showImportConfirmDialog(
+          title: 'Sütun eşlemesi',
+          body:
+              'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
+          confirmLabel: 'Yükle',
         );
         if (confirmed != true) {
           setState(() => _busy = false);
@@ -572,22 +570,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         }
       } else if (ext == 'json') {
         if (!mounted) return;
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('JSON'),
-            content: const Text(
-              'JSON kökü ilan dizisi veya { "rows": [...] } olmalı.',
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('İptal')),
-              FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Devam')),
-            ],
-          ),
+        final confirmed = await _showImportConfirmDialog(
+          title: 'JSON formatı',
+          body: 'Kök ilan dizisi veya { "rows": [...] } beklenir.',
         );
         if (confirmed != true) {
           setState(() => _busy = false);
@@ -672,11 +657,38 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       data: (ok) => !ok,
       orElse: () => false,
     );
+    final dropdownDeco = InputDecoration(
+      filled: true,
+      fillColor: ext.surface,
+      isDense: true,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+        borderSide: BorderSide(color: ext.border.withValues(alpha: 0.5)),
+      ),
+    );
+    final primaryFileStyle = FilledButton.styleFrom(
+      minimumSize: const Size(double.infinity, 48),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+      ),
+    );
+    final secondaryOutlineStyle = OutlinedButton.styleFrom(
+      minimumSize: const Size(double.infinity, 46),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+      ),
+      side: BorderSide(color: ext.border.withValues(alpha: 0.65)),
+    );
     return Scaffold(
       backgroundColor: ext.background,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+            DesignTokens.space5,
+            DesignTokens.space3,
+            DesignTokens.space5,
+            DesignTokens.space6,
+          ),
           children: [
             Row(
               children: [
@@ -686,29 +698,33 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Mağaza toplu içe aktarma',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: ext.foreground,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        'Toplu içe aktarma',
+                        style: AppTypography.cardHeading(context).copyWith(
+                          color: ext.foreground,
+                          fontSize: DesignTokens.fontSizeLg,
+                        ),
                       ),
+                      const SizedBox(height: DesignTokens.titleSubtitleGap),
                       Text(
-                        'Tüm vitrin ilanlarınızı tek seferde «Benim İlanlarım»a alın',
-                        style: TextStyle(
-                            color: ext.foregroundSecondary,
-                            fontSize: 12,
-                            height: 1.3),
+                        'Vitrin ilanlarınızı tek akışta İlanlarım’a taşıyın',
+                        style: AppTypography.body(context).copyWith(
+                          color: ext.foregroundSecondary,
+                          fontSize: DesignTokens.fontSizeSm,
+                          height: 1.35,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(foregroundColor: ext.textSecondary),
                   onPressed: _busy
                       ? null
                       : () => context.push(AppRouter.routeMyListings),
                   child: const Text('İlanlarım'),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(foregroundColor: ext.textSecondary),
                   onPressed: _busy
                       ? null
                       : () => context.push(AppRouter.routeImportHistory),
@@ -716,181 +732,241 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: DesignTokens.space4),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(DesignTokens.space5),
               decoration: BoxDecoration(
                 color: ext.surfaceElevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+                border: Border.all(color: ext.border.withValues(alpha: 0.4)),
               ),
               child: Text(
-                'Canlı mağaza OAuth / otomatik tam senkron henüz yok. Bugün için güvenilir yol: '
-                'platformdan dışa aktardığınız CSV, JSON veya Excel dosyasını yükleyin. '
-                'Bu, «tüm ilanları» tek işlemde içeri almanın üretim yoludur.',
-                style: TextStyle(
-                    color: ext.foreground.withValues(alpha: 0.9),
-                    height: 1.4,
-                    fontSize: 13),
+                'Otomatik mağaza senkronu henüz yok. Güvenilir yol: platformdan dışa aktarıp CSV, JSON veya Excel ile tek seferde yüklemek.',
+                style: AppTypography.body(context).copyWith(
+                  color: ext.foreground.withValues(alpha: 0.92),
+                  fontSize: DesignTokens.fontSizeSm,
+                  height: 1.45,
+                ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: DesignTokens.space5),
             _OfficialConnectorCard(ext: ext),
-            const SizedBox(height: 16),
-            Text('Mağaza kaynağı (etiket)',
-                style: TextStyle(
-                    color: ext.foreground, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const SizedBox(height: DesignTokens.space5),
             Text(
-              'İlanların sourcePlatform alanına yazılır; boşsa dosya türü (import_csv vb.) kullanılır.',
-              style: TextStyle(
-                  color: ext.foregroundSecondary, fontSize: 11, height: 1.35),
+              'Mağaza kaynağı',
+              style: AppTypography.metricLabel(context).copyWith(
+                color: ext.foreground,
+                fontSize: DesignTokens.fontSizeSm,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: DesignTokens.space2),
+            Text(
+              'İlanlarda sourcePlatform etiketi; boş bırakılırsa dosya türü kullanılır.',
+              style: AppTypography.body(context).copyWith(
+                fontSize: DesignTokens.fontSizeXs,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space3),
             DropdownButtonFormField<String?>(
               initialValue: _storePlatform,
-              decoration: const InputDecoration(
-                  border: OutlineInputBorder(), isDense: true),
+              decoration: dropdownDeco,
               items: const [
-                DropdownMenuItem(child: Text('Genel / belirtmiyorum')),
+                DropdownMenuItem<String?>(
+                  child: Text('Genel'),
+                ),
                 DropdownMenuItem(
-                    value: 'sahibinden',
-                    child: Text('Sahibinden vitrin dışa aktarımı')),
+                  value: 'sahibinden',
+                  child: Text('Sahibinden dışa aktarımı'),
+                ),
                 DropdownMenuItem(
-                    value: 'hepsiemlak',
-                    child: Text('Hepsiemlak dışa aktarımı')),
+                  value: 'hepsiemlak',
+                  child: Text('Hepsiemlak dışa aktarımı'),
+                ),
                 DropdownMenuItem(
-                    value: 'emlakjet', child: Text('Emlakjet dışa aktarımı')),
+                  value: 'emlakjet',
+                  child: Text('Emlakjet dışa aktarımı'),
+                ),
               ],
               onChanged:
                   _busy ? null : (v) => setState(() => _storePlatform = v),
             ),
-            const SizedBox(height: 16),
-            Text('Yinelenen kayıt modu',
-                style: TextStyle(
-                    color: ext.foreground, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
+            const SizedBox(height: DesignTokens.space5),
+            Text(
+              'Çift kayıt',
+              style: AppTypography.metricLabel(context).copyWith(
+                color: ext.foreground,
+                fontSize: DesignTokens.fontSizeSm,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space3),
             DropdownButtonFormField<String>(
               initialValue: _importMode,
-              decoration: const InputDecoration(
-                  border: OutlineInputBorder(), isDense: true),
+              decoration: dropdownDeco,
               items: const [
                 DropdownMenuItem(
-                    value: 'skip_duplicates', child: Text('Çiftleri atla')),
+                  value: 'skip_duplicates',
+                  child: Text('Çiftleri atla'),
+                ),
                 DropdownMenuItem(
-                    value: 'update_duplicates',
-                    child: Text('Çiftleri güncelle')),
+                  value: 'update_duplicates',
+                  child: Text('Çiftleri güncelle'),
+                ),
                 DropdownMenuItem(
-                    value: 'create_new',
-                    child: Text('Yalnızca yeni (çift yok)')),
+                  value: 'create_new',
+                  child: Text('Yalnızca yeni kayıt'),
+                ),
               ],
               onChanged: _busy ? null : (v) => setState(() => _importMode = v),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: DesignTokens.space6),
             Text(
-              '1 · Dosyadan toplu içe aktar (önerilen)',
-              style: TextStyle(
-                  color: ext.foreground,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15),
+              '1 · Dosyadan içe aktar',
+              style: AppTypography.cardHeading(context).copyWith(
+                color: ext.foreground,
+                fontSize: DesignTokens.fontSizeMd,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: DesignTokens.space2),
+            Text(
+              'Önerilen yol — cihazda işlenir, hızlıdır.',
+              style: AppTypography.body(context).copyWith(
+                fontSize: DesignTokens.fontSizeXs,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space3),
             FilledButton.icon(
+              style: primaryFileStyle,
               onPressed: _busy ? null : _runLocalFile,
               icon: _busy
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: DesignTokens.iconMd,
+                      height: DesignTokens.iconMd,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.upload_file_rounded),
-              label: const Text('CSV / JSON / XLSX seç (cihazda işle)'),
+              label: const Text('Dosya seç (CSV · JSON · Excel)'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: DesignTokens.space3),
             OutlinedButton.icon(
+              style: secondaryOutlineStyle,
               onPressed: _busy ? null : _openManual,
-              icon: const Icon(Icons.edit_note_rounded),
-              label: const Text('Manuel tek tek ilan ekle'),
+              icon: const Icon(Icons.edit_note_rounded, size: DesignTokens.iconMd),
+              label: const Text('Manuel tek ilan'),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: DesignTokens.space6),
             Text(
-              '2 · Sunucu kuyruğu (Storage + Cloud Functions)',
-              style: TextStyle(
-                  color: ext.foreground,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14),
+              '2 · Sunucu kuyruğu',
+              style: AppTypography.cardHeading(context).copyWith(
+                color: ext.foreground,
+                fontSize: DesignTokens.fontSizeMd,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: DesignTokens.space2),
             Text(
-              'Büyük dosyalar için; ilerleme «Geçmiş» ekranında.',
-              style: TextStyle(color: ext.foregroundSecondary, fontSize: 12),
+              'Büyük dosyalar; ilerleme Geçmiş’te.',
+              style: AppTypography.body(context).copyWith(
+                fontSize: DesignTokens.fontSizeXs,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: DesignTokens.space3),
             OutlinedButton(
+              style: secondaryOutlineStyle,
               onPressed: (_busy || !storageOk) ? null : _pickAndUploadServer,
-              child: const Text('Dosyayı Storage’a yükle ve kuyruğa al'),
+              child: const Text('Dosyayı yükle ve kuyruğa al'),
             ),
             if (storageAsync.isLoading)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: DesignTokens.space3),
                 child: Text(
-                  'Depolama durumu kontrol ediliyor…',
+                  'Depolama kontrol ediliyor…',
                   maxLines: 2,
-                  style: TextStyle(
-                      color: ext.foreground.withValues(alpha: 0.5),
-                      fontSize: 12),
+                  style: AppTypography.body(context).copyWith(
+                    fontSize: DesignTokens.fontSizeXs,
+                    color: ext.foreground.withValues(alpha: 0.5),
+                  ),
                 ),
               )
             else if (storageKnownInactive)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: DesignTokens.space3),
                 child: Text(
                   FirebaseStorageAvailability.unavailableMessage,
                   maxLines: 3,
-                  style: TextStyle(
-                      color: ext.foreground.withValues(alpha: 0.65),
-                      fontSize: 12),
+                  style: AppTypography.body(context).copyWith(
+                    fontSize: DesignTokens.fontSizeXs,
+                    color: ext.foreground.withValues(alpha: 0.65),
+                  ),
                 ),
               ),
-            const SizedBox(height: 20),
+            const SizedBox(height: DesignTokens.space5),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: Text('Tek ilan URL’si (deneysel — ikincil)',
-                  style: TextStyle(color: ext.foreground)),
+              collapsedIconColor: ext.textSecondary,
+              iconColor: ext.textSecondary,
+              title: Text(
+                'Tek ilan URL’si (deneysel)',
+                style: AppTypography.bodyStrong(context).copyWith(
+                  fontSize: DesignTokens.fontSizeSm,
+                ),
+              ),
               subtitle: Text(
-                'Mağaza ölçeği için uygun değildir; tek URL başına çalışır.',
-                style: TextStyle(
-                    color: ext.foreground.withValues(alpha: 0.65),
-                    fontSize: 12),
+                'Toplu vitrin için uygun değildir.',
+                style: AppTypography.body(context).copyWith(
+                  fontSize: DesignTokens.fontSizeXs,
+                ),
               ),
               children: [
                 TextField(
                   controller: _urlCtrl,
                   enabled: !_busy,
-                  decoration: const InputDecoration(
-                    hintText: 'https://www.sahibinden.com/ilan/...',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    hintText: 'https://…',
+                    filled: true,
+                    fillColor: ext.surface,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
                   ),
                   keyboardType: TextInputType.url,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: DesignTokens.space3),
                 FilledButton.tonal(
                   onPressed: _busy ? null : _runLocalUrl,
-                  child: const Text('URL’yi yerelde dene'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 44),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                  child: const Text('URL’yi cihazda dene'),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: DesignTokens.space2),
                 FilledButton.tonal(
                   onPressed: _busy ? null : _submitUrlServer,
-                  child: const Text('URL’yi sunucu kuyruğuna gönder'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 44),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                  child: const Text('Kuyruğa gönder'),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: DesignTokens.space5),
             Text(
-              'Uzantı: tarayıcıda «İlanları içe aktar» — ${AppConstants.appName} Chrome eklentisi (doc: extension/chrome/README.md).',
-              style: TextStyle(
-                  fontSize: 12, color: ext.foreground.withValues(alpha: 0.7)),
+              'Chrome eklentisi ile tarayıcıdan hızlı aktarım — ${AppConstants.appName} dokümantasyonu.',
+              style: AppTypography.body(context).copyWith(
+                fontSize: DesignTokens.fontSizeXs,
+                height: 1.35,
+              ),
             ),
           ],
         ),
@@ -908,37 +984,40 @@ class _OfficialConnectorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(DesignTokens.space5),
       decoration: BoxDecoration(
-        color: ext.accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ext.accent.withValues(alpha: 0.25)),
+        color: ext.accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+        border: Border.all(color: ext.accent.withValues(alpha: 0.22)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.cloud_off_outlined, color: ext.accent, size: 28),
-          const SizedBox(width: 12),
+          Icon(
+            Icons.hub_outlined,
+            color: ext.accent.withValues(alpha: 0.85),
+            size: DesignTokens.iconLg,
+          ),
+          const SizedBox(width: DesignTokens.space4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Resmi entegrasyon (otomatik mağaza senkronu)',
-                  style: TextStyle(
+                  'Resmi mağaza bağlantısı',
+                  style: AppTypography.cardHeading(context).copyWith(
                     color: ext.foreground,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: DesignTokens.fontSizeMd,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: DesignTokens.titleSubtitleGap),
                 Text(
-                  'Hazırlanıyor — canlı OAuth ile vitrinin tamamını arka planda çekme şu an kapalı. '
-                  'Açıldığında bu kart «etkin» olacak; şimdilik dosya ile toplu içe aktarın.',
-                  style: TextStyle(
-                      color: ext.foregroundSecondary,
-                      fontSize: 12,
-                      height: 1.4),
+                  'Canlı OAuth vitrin senkronu hazırlanıyor. Bugün için dosya akışı en güvenilir seçenek.',
+                  style: AppTypography.body(context).copyWith(
+                    fontSize: DesignTokens.fontSizeSm,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -971,27 +1050,67 @@ class _ManualMappingDialogState extends State<_ManualMappingDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final d = AppThemeExtension.of(context);
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+    );
     return AlertDialog(
-      title: const Text('Sütun adları (Excel)'),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      ),
+      backgroundColor: d.surface,
+      title: Text(
+        'Excel sütunları',
+        style: AppTypography.cardHeading(context),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
-              controller: _title,
-              decoration: const InputDecoration(labelText: 'Başlık sütunu')),
+            controller: _title,
+            decoration: InputDecoration(
+              labelText: 'Başlık sütunu',
+              filled: true,
+              fillColor: d.background,
+              border: border,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space3),
           TextField(
-              controller: _price,
-              decoration: const InputDecoration(labelText: 'Fiyat')),
+            controller: _price,
+            decoration: InputDecoration(
+              labelText: 'Fiyat',
+              filled: true,
+              fillColor: d.background,
+              border: border,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space3),
           TextField(
-              controller: _city,
-              decoration: const InputDecoration(labelText: 'Şehir')),
+            controller: _city,
+            decoration: InputDecoration(
+              labelText: 'Şehir',
+              filled: true,
+              fillColor: d.background,
+              border: border,
+            ),
+          ),
         ],
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal')),
+          onPressed: () => Navigator.pop(context),
+          child: Text(
+            'İptal',
+            style: TextStyle(color: d.textSecondary, fontWeight: FontWeight.w600),
+          ),
+        ),
         FilledButton(
+          style: FilledButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+            ),
+          ),
           onPressed: () {
             Navigator.pop(context, {
               'title': _title.text.trim(),
@@ -1004,7 +1123,7 @@ class _ManualMappingDialogState extends State<_ManualMappingDialog> {
               'externalListingId': 'id',
             });
           },
-          child: const Text('Tamam'),
+          child: const Text('Uygula'),
         ),
       ],
     );
