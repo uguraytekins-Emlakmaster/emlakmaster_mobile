@@ -8,6 +8,9 @@ import 'package:flutter/foundation.dart'
 /// Web/desktop: imleç hareketine ters yönde hafif dönüş (hafif, jet hızlı).
 /// Mobil: statik mühür (kuş gibi hafif — Listener yok).
 /// Batarya tasarrufu / arka plan: statik.
+///
+/// Mobil/iOS yolunda [LayoutBuilder] kullanılmaz: gövde + [SingleChildScrollView] ile
+/// iç içe [LayoutBuilder] bazı cihazlarda `!_debugDoingThisLayout` assert'ına yol açıyordu.
 class SovereignArcWatermark extends StatefulWidget {
   const SovereignArcWatermark({super.key, required this.child});
 
@@ -46,17 +49,41 @@ class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
     return -base;
   }
 
+  Widget _staticStack(BuildContext context) {
+    final accent = AppThemeExtension.of(context).accent;
+    return Stack(
+      clipBehavior: Clip.none,
+      fit: StackFit.expand,
+      children: [
+        Positioned.fill(
+          child: RepaintBoundary(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _SovereignArcPainter(accent),
+              ),
+            ),
+          ),
+        ),
+        widget.child,
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final useKinetic = SovereignArcWatermark._useKinetic;
+    if (!useKinetic) {
+      return _staticStack(context);
+    }
+
+    final accent = AppThemeExtension.of(context).accent;
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
-        final accent = AppThemeExtension.of(context).accent;
         final arcWidget = RepaintBoundary(
           child: IgnorePointer(
             child: Transform.rotate(
-              angle: useKinetic ? _angleForSize(size) : 0,
+              angle: _angleForSize(size),
               child: CustomPaint(
                 painter: _SovereignArcPainter(accent),
                 size: size,
@@ -71,9 +98,6 @@ class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
             widget.child,
           ],
         );
-        if (!useKinetic) {
-          return stack;
-        }
         return Listener(
           onPointerMove: (e) => setState(() => _pointer = e.localPosition),
           onPointerHover: (e) => setState(() => _pointer = e.localPosition),
