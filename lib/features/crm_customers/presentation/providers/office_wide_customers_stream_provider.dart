@@ -17,21 +17,33 @@ Stream<List<CustomerEntity>> officeWideCustomersStream(String officeId) {
   }
 
   return Stream<List<CustomerEntity>>.multi((controller) {
-    final List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>> chunkSubs = [];
+    final List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>
+        chunkSubs = [];
     StreamSubscription<List<OfficeMembership>>? memSub;
     final Map<int, List<CustomerEntity>> chunkCaches = {};
 
+    /// Birden fazla `whereIn` chunk’ı aynı anda ilk snapshot verince [emitMerged] art arda
+    /// çalışıyor; [officeWideCustomerListProvider] + gelir özeti gibi senkron provider’lar
+    /// her seferinde tüm dashboard’u yeniden hesaplayıp ana izolatta donma yaratıyordu.
+    Timer? mergeDebounce;
+
     void emitMerged() {
-      final map = <String, CustomerEntity>{};
-      for (final list in chunkCaches.values) {
-        for (final c in list) {
-          map[c.id] = c;
+      mergeDebounce?.cancel();
+      mergeDebounce = Timer(const Duration(milliseconds: 80), () {
+        mergeDebounce = null;
+        final map = <String, CustomerEntity>{};
+        for (final list in chunkCaches.values) {
+          for (final c in list) {
+            map[c.id] = c;
+          }
         }
-      }
-      controller.add(map.values.toList());
+        controller.add(map.values.toList());
+      });
     }
 
     void cancelChunks() {
+      mergeDebounce?.cancel();
+      mergeDebounce = null;
       for (final s in chunkSubs) {
         s.cancel();
       }
@@ -86,12 +98,15 @@ Stream<List<CustomerEntity>> officeWideCustomersStream(String officeId) {
       subscribeChunks(chunks);
     }
 
-    memSub = OfficeMembershipRepository.watchMembershipsForOffice(officeId).listen(
+    memSub =
+        OfficeMembershipRepository.watchMembershipsForOffice(officeId).listen(
       onMemberships,
       onError: controller.addError,
     );
 
     controller.onCancel = () {
+      mergeDebounce?.cancel();
+      mergeDebounce = null;
       memSub?.cancel();
       cancelChunks();
     };
@@ -99,8 +114,8 @@ Stream<List<CustomerEntity>> officeWideCustomersStream(String officeId) {
 }
 
 /// Ofis kimliği: `users/{uid}.officeId`.
-final officeWideCustomerListProvider =
-    StreamProvider.autoDispose.family<List<CustomerEntity>, String>((ref, officeId) {
+final officeWideCustomerListProvider = StreamProvider.autoDispose
+    .family<List<CustomerEntity>, String>((ref, officeId) {
   if (officeId.isEmpty) {
     return Stream<List<CustomerEntity>>.value(const []);
   }
