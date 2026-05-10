@@ -64,20 +64,15 @@ class AdminShellPage extends ConsumerWidget {
         'commandCenter=$showCommandCenter economy=$showEconomyTab',
       );
     }
-    final shellKey = Object.hashAll(<Object?>[
-      navItems.length,
-      lean,
-      warRoom,
-      showCommandCenter,
-      showEconomyTab,
-    ]);
+    // ÖNEMLİ: [ValueKey] ile kabuk sıfırlamayın — [featureFlagsProvider] / [displayRoleProvider]
+    // her yeniden build'de hash değişince yeni [AdaptiveShellScaffoldState] oluşur; [_currentIndex]
+    // sürekli 0'a döner ve alt sekme dokunuşları Dashboard'ta kalır (P0 gerçek cihaz).
     return Column(
       children: [
         const SyncStatusBanner(compact: true),
         const PostCallCaptureShellStrip(),
         Expanded(
           child: AdaptiveShellScaffold(
-            key: ValueKey<int>(shellKey),
             navItems: navItems,
             pages: pages,
             title: 'Yönetici Paneli',

@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -155,6 +157,10 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
           );
           return;
         }
+        developer.log(
+          'route shortcut idx=$idx shortcut=$next (was tab=$_currentIndex)',
+          name: 'ShellNav.shortcut',
+        );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _onNavTap(idx);
         });
@@ -205,6 +211,14 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   }
 
   void _onNavTap(int index) {
+    final label = index >= 0 && index < widget.navItems.length
+        ? widget.navItems[index].label
+        : '?';
+    developer.log(
+      'navTap received label="$label" targetIndex=$index selectedBefore=$_currentIndex '
+      'pageLen=${widget.pages.length} navLen=${widget.navItems.length}',
+      name: 'ShellNav.tap',
+    );
     if (widget.pages.isEmpty || widget.navItems.isEmpty) {
       _shellLog('onNavTap ignored: empty nav/pages');
       return;
@@ -220,13 +234,24 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
           'onNavTap reject index=$index vs navLen=${widget.navItems.length}');
       return;
     }
-    if (index == _currentIndex) return;
+    if (index == _currentIndex) {
+      developer.log(
+        'navTap noop (already on index=$index label="$label")',
+        name: 'ShellNav.tap',
+      );
+      return;
+    }
     HapticFeedback.lightImpact();
     _shellLog('onNavTap $index (was $_currentIndex)');
     setState(() {
       _currentIndex = index;
       _materialized.add(index);
     });
+    developer.log(
+      'navTap applied selectedAfter=$_currentIndex resolvedPage='
+      '${index < widget.pages.length ? widget.pages[index].runtimeType : "?"}',
+      name: 'ShellNav.tap',
+    );
     widget.onIndexChanged?.call(index);
   }
 
