@@ -30,6 +30,9 @@ flutter_ios_podfile_setup
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
+  # Üçüncü parti Pod kaynaklarını elle değiştirmeden (pod install sonrası silinir) derleyici
+  # uyarılarını azaltır: Firebase, file_picker, cloud_* vb. deprecation / tip uyarıları.
+  inhibit_all_warnings!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
