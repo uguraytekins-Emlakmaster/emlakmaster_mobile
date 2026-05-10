@@ -28,7 +28,8 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
 
     final extEnabled = ref.watch(
       featureFlagsProvider.select(
-        (a) => a.valueOrNull?[AppConstants.keyFeatureExternalIntegrations] ?? true,
+        (a) =>
+            a.valueOrNull?[AppConstants.keyFeatureExternalIntegrations] ?? true,
       ),
     );
     if (!extEnabled) return const SizedBox.shrink();
@@ -84,6 +85,9 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
     final borderColor = calm
         ? ext.accent.withValues(alpha: 0.32)
         : ext.border.withValues(alpha: 0.55);
+    // LayoutBuilder içinde MediaQuery okumak layout sırasında üst ağacı
+    // yeniden işaretleyip !_debugDoingThisLayout assert’ına yol açabiliyor.
+    final textScaler = MediaQuery.textScalerOf(context);
 
     return RepaintBoundary(
       child: Padding(
@@ -206,9 +210,7 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
                                     child: LayoutBuilder(
                                       builder: (context, c) {
                                         final narrow = c.maxWidth < 300;
-                                        final ts =
-                                            MediaQuery.textScalerOf(context);
-                                        final ratio = ts.scale(
+                                        final ratio = textScaler.scale(
                                                 DesignTokens.fontSizeBase) /
                                             DesignTokens.fontSizeBase;
                                         return Text(
@@ -243,7 +245,8 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
                               Text(
                                 'İçe aktarma ve geçmiş: Ayarlar → İlanlar ve platform bağlantıları',
                                 style: AppTypography.meta(context).copyWith(
-                                  color: ext.textTertiary.withValues(alpha: 0.95),
+                                  color:
+                                      ext.textTertiary.withValues(alpha: 0.95),
                                   height: 1.4,
                                 ),
                               ),

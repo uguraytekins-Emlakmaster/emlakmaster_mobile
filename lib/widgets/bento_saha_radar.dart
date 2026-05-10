@@ -75,7 +75,6 @@ class BentoSahaRadar extends StatelessWidget {
                               labelMuted:
                                   ext.textTertiary.withValues(alpha: 0.25),
                             ),
-                            size: Size.infinite,
                           )
                         : Center(
                             child: CircularProgressIndicator(
@@ -312,7 +311,6 @@ class _HeatmapPulseChartState extends State<_HeatmapPulseChart>
                   phase: _controller.value * 6.28,
                   lineColor: ext.accent.withValues(alpha: 0.85),
                 ),
-                size: Size.infinite,
               );
             },
           ),
