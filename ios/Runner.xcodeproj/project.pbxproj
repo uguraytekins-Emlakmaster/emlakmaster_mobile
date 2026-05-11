@@ -202,6 +202,7 @@
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
 			buildPhases = (
 				66A0780880D0828E8223860B /* [CP] Check Pods Manifest.lock */,
+				8A4C16AC2FBC000300E0F001 /* Restore missing objective_c native asset */,
 				9740EEB61CF901F6004384FC /* Run Script */,
 				A1B2C3D4E5F60718293A4B5C6D /* Fix iOS plugin order (Firebase Core first) */,
 				97C146EA1CF9000F007C117D /* Sources */,
@@ -211,6 +212,7 @@
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				4C0AA7FE2A92F4D39AAD8F7B /* [CP] Embed Pods Frameworks */,
 				D2C5BB369ED908976AC13560 /* [CP] Copy Pods Resources */,
+				8A4C16AB2FBC000200E0F001 /* Re-sign objective_c native asset */,
 				59E14F57EF8D64FFD6766231 /* FlutterFire: "flutterfire upload-crashlytics-symbols" */,
 			);
 			buildRules = (
@@ -315,6 +317,41 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8A4C16AC2FBC000300E0F001 /* Restore missing objective_c native asset */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Restore missing objective_c native asset";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/restore_objective_c_native_asset.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/bin/sh\nset -e\nSTAMP=\"${DERIVED_FILE_DIR}/restore_objective_c_native_asset.stamp\"\ntouch_stamp() { mkdir -p \"${DERIVED_FILE_DIR}\" && : > \"$STAMP\"; }\ntrap touch_stamp EXIT\n\nHOOK_ROOT=\"${SRCROOT}/../.dart_tool/hooks_runner/objective_c\"\nPACKAGE_CONFIG=\"${SRCROOT}/../.dart_tool/package_config.json\"\nDART_BIN=\"${FLUTTER_ROOT}/bin/cache/dart-sdk/bin/dart\"\n\nif [ ! -d \"$HOOK_ROOT\" ] || [ ! -f \"$PACKAGE_CONFIG\" ] || [ ! -x \"$DART_BIN\" ]; then\n  echo \"objective_c hook metadata not ready; skipping restore\"\n  exit 0\nfi\n\nfor hook_dir in \"$HOOK_ROOT\"/*; do\n  [ -d \"$hook_dir\" ] || continue\n  input_json=\"$hook_dir/input.json\"\n  output_json=\"$hook_dir/output.json\"\n  hook_dill=\"$hook_dir/hook.dill\"\n  [ -f \"$input_json\" ] || continue\n  [ -f \"$output_json\" ] || continue\n  [ -f \"$hook_dill\" ] || continue\n\n  dylib_path=$(/usr/bin/python3 - \"$output_json\" <<'PY'\nimport json\nimport sys\nwith open(sys.argv[1], 'r', encoding='utf-8') as f:\n    data = json.load(f)\nassets = data.get('assets') or []\nfor asset in assets:\n    encoding = asset.get('encoding') or {}\n    file_path = encoding.get('file')\n    if file_path:\n        print(file_path)\n        break\nPY\n)\n\n  if [ -n \"$dylib_path\" ] && [ ! -s \"$dylib_path\" ]; then\n    echo \"Restoring missing objective_c native asset: $dylib_path\"\n    (\n      cd \"$hook_dir\"\n      \"$DART_BIN\" --packages=\"$PACKAGE_CONFIG\" \"$hook_dill\" --config=\"$input_json\"\n    )\n  fi\n\ndone\n";
+			showEnvVarsInLog = 0;
+		};
+		8A4C16AB2FBC000200E0F001 /* Re-sign objective_c native asset */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/objective_c.framework/objective_c",
+			);
+			name = "Re-sign objective_c native asset";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/codesign_objective_c_native_asset.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/bin/sh\nset -e\nSTAMP=\"${DERIVED_FILE_DIR}/codesign_objective_c_native_asset.stamp\"\ntouch_stamp() { mkdir -p \"${DERIVED_FILE_DIR}\" && : > \"$STAMP\"; }\ntrap touch_stamp EXIT\n\nFRAMEWORK_DIR=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/objective_c.framework\"\nBINARY_PATH=\"${FRAMEWORK_DIR}/objective_c\"\n\nif [ ! -f \"$BINARY_PATH\" ]; then\n  echo \"objective_c native asset not present; skipping re-sign\"\n  exit 0\nfi\n\nif [ \"$PLATFORM_NAME\" != \"iphoneos\" ]; then\n  echo \"objective_c re-sign skipped for ${PLATFORM_NAME}\"\n  exit 0\nfi\n\nif [ \"$CODE_SIGNING_ALLOWED\" != \"YES\" ] || [ -z \"$EXPANDED_CODE_SIGN_IDENTITY\" ]; then\n  echo \"Code signing not available for objective_c native asset\"\n  exit 0\nfi\n\n/usr/bin/codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --preserve-metadata=identifier,entitlements,flags --generate-entitlement-der \"$FRAMEWORK_DIR\"\necho \"Re-signed objective_c native asset for device build\"\n";
 			showEnvVarsInLog = 0;
 		};
 		59E14F57EF8D64FFD6766231 /* FlutterFire: "flutterfire upload-crashlytics-symbols" */ = {
