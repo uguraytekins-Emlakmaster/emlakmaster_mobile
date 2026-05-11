@@ -148,12 +148,15 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
+  # iOS App Store: alfasız ikon (dart run tool/compose_ios_store_opaque_icon.dart ile üretilir).
+  image_path_ios: assets/branding/emlak_master_app_icon_IOS_STORE_OPAQUE.png
   remove_alpha_ios: true
+  background_color_ios: "#050508"
   web:
     generate: true
     image_path: assets/branding/emlak_master_app_icon_MASTER.png
-    background_color: "#0A0A0C"
-    theme_color: "#0A0A0C"
+    background_color: "#050508"
+    theme_color: "#050508"
   windows:
     generate: true
     image_path: assets/branding/emlak_master_app_icon_MASTER.png
@@ -163,7 +166,8 @@ flutter_launcher_icons:
     image_path: assets/branding/emlak_master_app_icon_MASTER.png
   image_path: assets/branding/emlak_master_app_icon_MASTER.png
   min_sdk_android: 21
-  adaptive_icon_background: "#0A0A0C"
+  # Android adaptive arka katman (ön plan PNG şeffaf bölgelerde görünür).
+  adaptive_icon_background: "#050508"
   adaptive_icon_foreground: assets/branding/emlak_master_app_icon_MASTER.png
   # Düşük inset = ön plan maskede büyük; %8 güvenli köşe payı (telefonda boşluk minimum)
   adaptive_icon_foreground_inset: 8

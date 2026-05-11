@@ -23,6 +23,8 @@ import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
+import 'package:emlakmaster_mobile/features/office/domain/office_access_state.dart';
 import 'package:emlakmaster_mobile/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -51,6 +53,7 @@ Future<void> main() async {
   // ensureInitialized ve runApp aynı zone'da olmalı (zone mismatch hatası önlemi)
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    AppLogger.state('[startup] main entered');
 
     // Flutter dışı async hatalar (native plugin vb.) — zone ile yakalanmayabilir.
     PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
@@ -93,6 +96,7 @@ Future<void> main() async {
           }
         }(),
       ]);
+      AppLogger.state('[startup] bootstrap parallel init done');
     } catch (e, st) {
       AppLogger.e('Bootstrap paralel init', e, st);
     }
@@ -238,10 +242,12 @@ Future<void> _runApp() async {
   // Çoğunlukla main() içinde Firebase ile paralel warmUp tamamlanır; burada yedek (idempotent).
   try {
     await OnboardingStore.instance.warmUp();
+    AppLogger.state('[startup] OnboardingStore warmUp done before runApp');
   } catch (e, st) {
     AppLogger.e('OnboardingStore warmUp error (pre-runApp)', e, st);
   }
 
+  AppLogger.state('[startup] runApp');
   runApp(
     ProviderScope(
       observers: kDebugMode ? [DebugRiverpodObserver()] : null,
@@ -263,11 +269,20 @@ class EmlakMasterApp extends ConsumerStatefulWidget {
 class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   static bool _deferredInitDone = false;
   ProviderSubscription<AsyncValue<User?>>? _authUserSub;
+  ProviderSubscription<dynamic>? _userDocSub;
+  ProviderSubscription<AsyncValue<AppRole>>? _roleSub;
+  ProviderSubscription<AsyncValue<OfficeAccessState>>? _officeAccessSub;
+  ProviderSubscription<bool>? _needsRoleSub;
+  ProviderSubscription<bool>? _needsOfficeSub;
+  ProviderSubscription<bool>? _needsRecoverySub;
+  bool? _lastRouterChildAvailable;
 
   @override
   void initState() {
     super.initState();
+    AppLogger.state('[startup] EmlakMasterApp.initState');
     AppLifecyclePowerService.instance.ensureObserved();
+    _bindStartupLogging();
     WidgetsBinding.instance.addPostFrameCallback((_) => _runDeferredInit());
     if (!_isFlutterTest) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -281,6 +296,10 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     _authUserSub = ref.listenManual(currentUserProvider, (prev, next) {
       try {
         final uid = next.valueOrNull?.uid;
+        AppLogger.state(
+          '[startup] currentUserProvider ${_describeAsync(next)} uid=${uid ?? "-"}',
+        );
+        _bindUserDocLogging(uid);
         if (uid != null && uid.isNotEmpty) {
           Future<void>.microtask(
               () => RegionDeepLinkBootstrap.consumePendingAfterAuth(ref));
@@ -302,17 +321,84 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
 
   @override
   void dispose() {
+    AppLogger.state('[startup] EmlakMasterApp.dispose');
     _authUserSub?.close();
+    _userDocSub?.close();
+    _roleSub?.close();
+    _officeAccessSub?.close();
+    _needsRoleSub?.close();
+    _needsOfficeSub?.close();
+    _needsRecoverySub?.close();
     unawaited(RegionDeepLinkBootstrap.dispose());
     AppLifecyclePowerService.instance.removeObserved();
     super.dispose();
   }
 
+  void _bindStartupLogging() {
+    _roleSub = ref.listenManual(currentRoleProvider, (prev, next) {
+      AppLogger.state(
+        '[startup] currentRoleProvider ${_describeAsync(next)} value=${next.valueOrNull}',
+      );
+    });
+    _officeAccessSub = ref.listenManual(officeAccessStateProvider, (prev, next) {
+      AppLogger.state(
+        '[startup] officeAccessStateProvider ${_describeAsync(next)} value=${next.valueOrNull}',
+      );
+    });
+    _needsRoleSub = ref.listenManual(needsRoleSelectionProvider, (prev, next) {
+      AppLogger.state('[startup] needsRoleSelectionProvider=$next');
+    });
+    _needsOfficeSub = ref.listenManual(needsOfficeSetupProvider, (prev, next) {
+      AppLogger.state('[startup] needsOfficeSetupProvider=$next');
+    });
+    _needsRecoverySub = ref.listenManual(
+      needsOfficeRecoveryProvider,
+      (prev, next) {
+        AppLogger.state('[startup] needsOfficeRecoveryProvider=$next');
+      },
+    );
+
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid;
+    AppLogger.state(
+      '[startup] currentUserProvider initial ${_describeAsync(ref.read(currentUserProvider))} uid=${uid ?? "-"}',
+    );
+    _bindUserDocLogging(uid);
+  }
+
+  void _bindUserDocLogging(String? uid) {
+    _userDocSub?.close();
+    _userDocSub = null;
+    if (uid == null || uid.isEmpty) {
+      AppLogger.state('[startup] userDocStreamProvider idle (no uid)');
+      return;
+    }
+    _userDocSub = ref.listenManual(userDocStreamProvider(uid), (prev, next) {
+      final doc = next.valueOrNull;
+      final officeId = doc?.officeId;
+      final role = doc?.role;
+      final shortUid = uid.length > 8 ? uid.substring(0, 8) : uid;
+      AppLogger.state(
+        '[startup] userDocStreamProvider($shortUid) '
+        '${_describeAsync(next)} officeId=${officeId ?? "-"} role=${role ?? "-"}',
+      );
+    });
+  }
+
+  String _describeAsync<T>(AsyncValue<T> value) {
+    return value.when(
+      data: (_) => 'data',
+      loading: () => 'loading',
+      error: (e, _) => 'error($e)',
+    );
+  }
+
   static Future<void> _runDeferredInit() async {
     if (_deferredInitDone) return;
     _deferredInitDone = true;
+    AppLogger.state('[startup] deferred init start');
     try {
       SyncManager.init();
+      AppLogger.state('[startup] SyncManager.init done');
     } catch (e, st) {
       AppLogger.e('SyncManager init error', e, st);
     }
@@ -320,19 +406,24 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     try {
       Future<void>.delayed(
         const Duration(milliseconds: 300),
-        () => AppCacheService.instance.ensureInit(),
+        () {
+          AppLogger.state('[startup] AppCacheService.ensureInit scheduled');
+          unawaited(AppCacheService.instance.ensureInit());
+        },
       );
     } catch (e, st) {
       AppLogger.e('AppCacheService init error', e, st);
     }
     try {
       configureFirebaseFunctionsForDebug();
+      AppLogger.state('[startup] Firebase functions bootstrap configured');
     } catch (e, st) {
       AppLogger.e('Firebase functions bootstrap error', e, st);
     }
     try {
       if (!kIsWeb && Firebase.apps.isNotEmpty) {
         FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+        AppLogger.state('[startup] Crashlytics collection enabled');
       }
     } catch (e, st) {
       AppLogger.e('Crashlytics enable error', e, st);
@@ -341,7 +432,10 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
       if (!_isFlutterTest) {
         Future<void>.delayed(
           const Duration(seconds: 2),
-          () => PushNotificationService.instance.initialize(),
+          () {
+            AppLogger.state('[startup] PushNotificationService.initialize scheduled');
+            unawaited(PushNotificationService.instance.initialize());
+          },
         );
       }
     } catch (e, st) {
@@ -350,6 +444,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     try {
       if (!_isFlutterTest) {
         CallRecordSyncOrchestrator.instance.start();
+        AppLogger.state('[startup] CallRecordSyncOrchestrator.start done');
       }
     } catch (e, st) {
       AppLogger.e('CallRecordSyncOrchestrator start error', e, st);
@@ -365,6 +460,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
       AppLifecyclePowerService.powerSaverEnabled =
           await SettingsService.instance.getPowerSaverEnabled();
     } catch (_) {}
+    AppLogger.state('[startup] deferred init end');
   }
 
   @override
@@ -395,6 +491,12 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
         final content = child != null && isRtl
             ? Directionality(textDirection: TextDirection.rtl, child: child)
             : child;
+        if (_lastRouterChildAvailable != (content != null)) {
+          _lastRouterChildAvailable = content != null;
+          AppLogger.state(
+            '[startup] router child ${content != null ? "mounted" : "null"}',
+          );
+        }
 
         final shell = Shortcuts(
           shortcuts: const <ShortcutActivator, Intent>{

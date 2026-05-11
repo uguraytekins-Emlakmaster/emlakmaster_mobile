@@ -75,7 +75,7 @@ class _CommandPaletteContentState
     final filteredActions = _filteredActionsFor(role, _query);
 
     void goHomeWithShortcut(MainShellShortcut shortcut) {
-      ref.read(mainShellShortcutProvider.notifier).state = shortcut;
+      ref.read(mainShellShortcutProvider.notifier).enqueue(shortcut);
       context.go(AppRouter.routeHome);
       widget.onClose();
     }

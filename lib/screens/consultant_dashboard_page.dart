@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -38,36 +39,37 @@ class ConsultantDashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ext = AppThemeExtension.of(context);
-    final lean = ref.watch(
-      featureFlagsProvider.select(
-        (a) => a.valueOrNull?[AppConstants.keyV1LeanProduct] ?? true,
-      ),
-    );
-    final summaryBottomPad =
-        DashboardLayoutTokens.shellScrollBottomPadding(context);
-    final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
-    final hour = DateTime.now().hour;
-    final salutation =
-        hour < 12 ? 'Günaydın' : (hour < 18 ? 'İyi günler' : 'İyi akşamlar');
-    final String firstName;
-    final dn = user?.displayName?.trim();
-    if (dn != null && dn.isNotEmpty) {
-      firstName = dn.split(RegExp(r'\s+')).first;
-    } else if (user?.email != null) {
-      firstName = user!.email!.split('@').first;
-    } else {
-      firstName = 'Danışman';
-    }
-    final greeting = '$salutation, $firstName';
+    try {
+      final ext = AppThemeExtension.of(context);
+      final lean = ref.watch(
+        featureFlagsProvider.select(
+          (a) => a.valueOrNull?[AppConstants.keyV1LeanProduct] ?? true,
+        ),
+      );
+      final summaryBottomPad =
+          DashboardLayoutTokens.shellScrollBottomPadding(context);
+      final user = ref.watch(currentUserProvider.select((v) => v.valueOrNull));
+      final hour = DateTime.now().hour;
+      final salutation =
+          hour < 12 ? 'Günaydın' : (hour < 18 ? 'İyi günler' : 'İyi akşamlar');
+      final String firstName;
+      final dn = user?.displayName?.trim();
+      if (dn != null && dn.isNotEmpty) {
+        firstName = dn.split(RegExp(r'\s+')).first;
+      } else if (user?.email != null) {
+        firstName = user!.email!.split('@').first;
+      } else {
+        firstName = 'Danışman';
+      }
+      final greeting = '$salutation, $firstName';
 
-    return Scaffold(
-      backgroundColor: ext.background,
-      body: SafeArea(
-        child: RepaintBoundary(
-          child: CustomScrollView(
-            cacheExtent: 380,
-            slivers: [
+      return Material(
+        color: ext.background,
+        child: SafeArea(
+          child: RepaintBoundary(
+            child: CustomScrollView(
+              cacheExtent: 380,
+              slivers: [
               // —— Layer 1–2: Hero + Operational (above-the-fold) ——
               SliverToBoxAdapter(
                 child: Padding(
@@ -200,11 +202,51 @@ class ConsultantDashboardPage extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: SizedBox(height: summaryBottomPad + DesignTokens.space3),
               ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } catch (e, st) {
+      AppLogger.e('ConsultantDashboardPage build', e, st);
+      final ext = AppThemeExtension.of(context);
+      return Material(
+        color: ext.background,
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline_rounded, color: ext.accent, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Danisman paneli hazirlanamadi',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: ext.textPrimary,
+                      fontSize: DesignTokens.fontSizeLg,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ekran yuklenirken bir sorun olustu. Uygulama kabugu aktif; ana sekmeler kullanilmaya devam edebilir.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: ext.textSecondary,
+                      fontSize: DesignTokens.fontSizeSm,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
   }
 }
 
@@ -613,8 +655,9 @@ class _TodayKpiRow extends ConsumerWidget {
 
     void openTasks() {
       HapticFeedback.lightImpact();
-      ref.read(mainShellShortcutProvider.notifier).state =
-          MainShellShortcut.openTasksTab;
+      ref
+          .read(mainShellShortcutProvider.notifier)
+          .enqueue(MainShellShortcut.openTasksTab);
       context.go(AppRouter.routeHome);
     }
 

@@ -367,12 +367,14 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                               shell.goToTab(1);
                                             } else {
                                               ref
-                                                      .read(
-                                                          mainShellShortcutProvider
-                                                              .notifier)
-                                                      .state =
-                                                  MainShellShortcut
-                                                      .openCallsTab;
+                                                  .read(
+                                                    mainShellShortcutProvider
+                                                        .notifier,
+                                                  )
+                                                  .enqueue(
+                                                    MainShellShortcut
+                                                        .openCallsTab,
+                                                  );
                                               context.go(AppRouter.routeHome);
                                             }
                                           },

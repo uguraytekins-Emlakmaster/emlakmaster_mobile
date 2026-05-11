@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
+import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
+import 'package:emlakmaster_mobile/core/widgets/startup_recovery_scaffold.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -17,66 +21,119 @@ import 'consultant_shell.dart';
 /// - ADMIN: Dashboard, War Room, çağrı merkezi, raporlar, ekonomi, ayarlar.
 /// - CONSULTANT: Özetim, müşteriler, ilanlar, Magic Call, takip, ayarlar.
 /// - CLIENT: Arama, favoriler, mesajlar, sanal tur, profil.
-class RoleBasedShellSelector extends ConsumerWidget {
+class RoleBasedShellSelector extends ConsumerStatefulWidget {
   const RoleBasedShellSelector({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RoleBasedShellSelector> createState() =>
+      _RoleBasedShellSelectorState();
+}
+
+class _RoleBasedShellSelectorState
+    extends ConsumerState<RoleBasedShellSelector> {
+  static const _recoveryDelay = Duration(seconds: 8);
+
+  Timer? _recoveryTimer;
+  String? _loadingReason;
+  bool _showRecovery = false;
+
+  @override
+  void dispose() {
+    _recoveryTimer?.cancel();
+    super.dispose();
+  }
+
+  void _trackLoadingReason(String reason) {
+    if (_loadingReason == reason) return;
+    _recoveryTimer?.cancel();
+    _loadingReason = reason;
+    _showRecovery = false;
+    AppLogger.state('[startup][RoleShell] loading reason=$reason');
+    _recoveryTimer = Timer(_recoveryDelay, () {
+      if (!mounted || _loadingReason != reason) return;
+      AppLogger.w('[startup][RoleShell] recovery fallback armed: $reason');
+      setState(() => _showRecovery = true);
+    });
+  }
+
+  void _clearLoadingReason() {
+    if (_loadingReason == null && !_showRecovery) return;
+    AppLogger.state('[startup][RoleShell] interactive again');
+    _recoveryTimer?.cancel();
+    _recoveryTimer = null;
+    _loadingReason = null;
+    _showRecovery = false;
+  }
+
+  void _retryBootstrap() {
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid;
+    AppLogger.state('[startup][RoleShell] retry requested uid=${uid ?? "-"}');
+    if (uid != null && uid.isNotEmpty) {
+      ref.invalidate(userDocStreamProvider(uid));
+    }
+    ref.invalidate(primaryMembershipProvider);
+    ref.invalidate(officeAccessStateProvider);
+    ref.invalidate(currentRoleProvider);
+    ref.invalidate(displayRoleProvider);
+    setState(() {
+      _showRecovery = false;
+      _loadingReason = null;
+    });
+  }
+
+  Widget _loadingOrRecovery(String reason) {
+    _trackLoadingReason(reason);
+    if (_showRecovery) {
+      return StartupRecoveryScaffold(
+        title: 'Panel acil kurtarma modunda',
+        message:
+            'Rol veya ofis bilgisi zamaninda gelmedi. Uygulama acildi ama shell hazirlanirken takildi. Tekrar deneyebilir veya oturumu yenileyebilirsiniz.',
+        detail: 'Bekleyen asama: $reason',
+        onPrimary: _retryBootstrap,
+        secondaryLabel: 'Cikis yap',
+        onSecondary: () => AuthService.instance.signOut(),
+      );
+    }
+    return _ShellLoading(reason: reason);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
     if (uid == null || uid.isEmpty) {
-      if (kDebugMode) {
-        debugPrint('[RoleShell] showing loading: no uid');
-      }
-      return const _ShellLoading();
+      return _loadingOrRecovery('no uid');
     }
     // Router ile aynı kaynak: currentRoleProvider (+ isteğe bağlı override) → displayRoleProvider.
     // users/{uid}.role tek başına ofis üyeliği rolüyle çakışmasın diye doc bootstrap / gate’lerde bekle.
     if (ref.watch(userDocBootstrapPendingProvider)) {
-      if (kDebugMode) {
-        debugPrint('[RoleShell] showing loading: userDocBootstrapPending');
-      }
-      return const _ShellLoading();
+      return _loadingOrRecovery('userDocBootstrapPending');
     }
     if (ref.watch(needsRoleSelectionProvider)) {
-      if (kDebugMode) {
-        debugPrint('[RoleShell] showing loading: needsRoleSelection');
-      }
-      return const _ShellLoading();
+      return _loadingOrRecovery('needsRoleSelection');
     }
     if (ref.watch(needsOfficeSetupProvider)) {
-      if (kDebugMode) {
-        debugPrint('[RoleShell] showing loading: needsOfficeSetup');
-      }
-      return const _ShellLoading();
+      return _loadingOrRecovery('needsOfficeSetup');
     }
     if (ref.watch(needsOfficeRecoveryProvider)) {
-      if (kDebugMode) {
-        debugPrint('[RoleShell] showing loading: needsOfficeRecovery');
-      }
-      return const _ShellLoading();
+      return _loadingOrRecovery('needsOfficeRecovery');
     }
     final roleAsync = ref.watch(displayRoleProvider);
     return roleAsync.when(
-      loading: () {
-        if (kDebugMode) {
-          debugPrint(
-              '[RoleShell] showing loading: displayRoleProvider.loading');
-        }
-        return const _ShellLoading();
-      },
+      loading: () => _loadingOrRecovery('displayRoleProvider.loading'),
       error: (e, st) {
-        debugPrint('[RoleShell] displayRoleProvider error: $e');
-        debugPrint('$st');
+        _clearLoadingReason();
+        AppLogger.e('[startup][RoleShell] displayRoleProvider error', e, st);
         return _ShellRoleErrorScreen(error: e);
       },
-      data: (role) => _buildForRole(context, ref, role),
+      data: (role) {
+        _clearLoadingReason();
+        return _buildForRole(context, ref, role);
+      },
     );
   }
 
   Widget _buildForRole(BuildContext context, WidgetRef ref, AppRole role) {
-    if (kDebugMode) {
-      debugPrint('[RoleShell] resolved shell for role=$role');
-    }
+    AppLogger.state('[startup][RoleShell] resolved shell for role=$role');
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
     if (FeaturePermission.seesClientPanel(role)) return const ClientShellPage();
     final forceConsultant = preferConsultant == true;
@@ -98,63 +155,29 @@ class _ShellRoleErrorScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ext = AppThemeExtension.of(context);
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
-    return Scaffold(
-      backgroundColor: ext.background,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(DesignTokens.space6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.cloud_off_outlined,
-                  size: 56,
-                  color: ext.accent.withValues(alpha: 0.9),
-                ),
-                const SizedBox(height: DesignTokens.space4),
-                Text(
-                  'Rol bilgisi yüklenemedi',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: ext.textPrimary,
-                    fontSize: DesignTokens.fontSizeLg,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: DesignTokens.space3),
-                Text(
-                  'Ağ veya sunucu yanıtı beklenirken sorun oluştu. Tekrar deneyebilir veya oturumu yenileyebilirsiniz.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: ext.textSecondary,
-                    fontSize: DesignTokens.fontSizeSm,
-                    height: 1.45,
-                  ),
-                ),
-                if (uid != null) ...[
-                  const SizedBox(height: DesignTokens.space5),
-                  FilledButton.icon(
-                    onPressed: () {
-                      ref.invalidate(userDocStreamProvider(uid));
-                    },
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Tekrar dene'),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
+    return StartupRecoveryScaffold(
+      title: 'Rol bilgisi yüklenemedi',
+      message:
+          'Ag veya sunucu yaniti beklenirken sorun olustu. Tekrar deneyebilir veya oturumu yenileyebilirsiniz.',
+      detail: error.toString(),
+      onPrimary: uid == null
+          ? null
+          : () {
+              ref.invalidate(userDocStreamProvider(uid));
+              ref.invalidate(currentRoleProvider);
+              ref.invalidate(displayRoleProvider);
+            },
+      secondaryLabel: 'Cikis yap',
+      onSecondary: () => AuthService.instance.signOut(),
     );
   }
 }
 
 class _ShellLoading extends StatelessWidget {
-  const _ShellLoading();
+  const _ShellLoading({required this.reason});
+
+  final String reason;
 
   @override
   Widget build(BuildContext context) {
@@ -176,6 +199,18 @@ class _ShellLoading extends StatelessWidget {
                 fontSize: 14,
               ),
             ),
+            if (kDebugMode) ...[
+              const SizedBox(height: 8),
+              Text(
+                reason,
+                style: TextStyle(
+                  color: AppThemeExtension.of(context)
+                      .textSecondary
+                      .withValues(alpha: 0.72),
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ],
         ),
       ),

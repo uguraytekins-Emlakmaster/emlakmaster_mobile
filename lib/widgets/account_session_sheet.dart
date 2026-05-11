@@ -39,7 +39,9 @@ class _AccountSessionSheet extends ConsumerWidget {
 
   void _goAccountTab(BuildContext context, WidgetRef ref) {
     Navigator.of(context).pop();
-    ref.read(mainShellShortcutProvider.notifier).state = MainShellShortcut.openAccountTab;
+    ref
+        .read(mainShellShortcutProvider.notifier)
+        .enqueue(MainShellShortcut.openAccountTab);
   }
 
   @override

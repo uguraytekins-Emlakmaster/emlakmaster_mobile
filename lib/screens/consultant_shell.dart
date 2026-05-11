@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/pages/consultant_calls_page.dart';
@@ -39,6 +40,16 @@ class ConsultantShellPage extends StatefulWidget {
     TasksPage(),
     SettingsPage(),
   ];
+
+  static const List<Object> _tabIds = [
+    'summary',
+    'calls',
+    'customers',
+    'listings',
+    'follow_up',
+    'tasks',
+    'settings',
+  ];
 }
 
 class _ConsultantShellPageState extends State<ConsultantShellPage> {
@@ -47,6 +58,9 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.state(
+      '[startup][ConsultantShell] build tabs=${ConsultantShellPage._navItems.length}',
+    );
     return ConsultantShellNav(
       goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
       child: Column(
@@ -58,6 +72,7 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
               key: _shellKey,
               navItems: ConsultantShellPage._navItems,
               pages: ConsultantShellPage._pages,
+              tabIds: ConsultantShellPage._tabIds,
               title: 'Danışman Paneli',
               shortcutMap: const {
                 MainShellShortcut.openHomeTab: 0,

@@ -29,6 +29,7 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
     super.key,
     required this.navItems,
     required this.pages,
+    this.tabIds,
     this.title,
     this.actions,
     this.fab,
@@ -39,6 +40,7 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
 
   final List<AdaptiveNavItem> navItems;
   final List<Widget> pages;
+  final List<Object>? tabIds;
   final String? title;
   final List<Widget>? actions;
   final Widget? fab;
@@ -61,7 +63,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
 
   /// Yalnızca ziyaret edilen sekmeler gerçek widget ile oluşturulur.
   final Set<int> _materialized = {0};
-  ProviderSubscription<MainShellShortcut?>? _shortcutSub;
+  ProviderSubscription<List<MainShellShortcutCommand>>? _shortcutSub;
+  bool _shortcutReplayScheduled = false;
 
   /// Aynı sekmede her frame log basmayı önler (yalnızca kDebugMode).
   int? _lastLoggedActiveIndex;
@@ -69,6 +72,80 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
 
   void _shellLog(String msg) {
     debugPrint('[ShellNav] $msg');
+  }
+
+  int _clampIndex(int index, int maxInclusive) {
+    return index.clamp(0, maxInclusive).toInt();
+  }
+
+  Object _tabIdentityFor(AdaptiveShellScaffold widget, int index) {
+    final ids = widget.tabIds;
+    if (ids != null && index >= 0 && index < ids.length) {
+      return ids[index];
+    }
+    return index;
+  }
+
+  int? _resolveShortcutIndex(MainShellShortcut shortcut) {
+    final navLen = widget.navItems.length;
+    final pageLen = widget.pages.length;
+    final idx = switch (shortcut) {
+      MainShellShortcut.openAccountTab =>
+        widget.shortcutMap[shortcut] ?? (navLen > 0 ? navLen - 1 : -1),
+      MainShellShortcut.openHomeTab => widget.shortcutMap[shortcut] ?? 0,
+      _ => widget.shortcutMap[shortcut] ?? -1,
+    };
+    if (idx < 0 || idx >= navLen || idx >= pageLen) {
+      return null;
+    }
+    return idx;
+  }
+
+  bool _hasReplayableShortcut() {
+    final queued = ref.read(mainShellShortcutProvider);
+    for (final command in queued) {
+      if (_resolveShortcutIndex(command.shortcut) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _scheduleShortcutReplay() {
+    if (_shortcutReplayScheduled) return;
+    _shortcutReplayScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _shortcutReplayScheduled = false;
+      if (!mounted) return;
+      _replayNextQueuedShortcut();
+    });
+  }
+
+  void _replayNextQueuedShortcut() {
+    final command = ref.read(mainShellShortcutProvider.notifier).takeFirstMatching(
+      (shortcut) => _resolveShortcutIndex(shortcut) != null,
+    );
+    if (command == null) return;
+    final idx = _resolveShortcutIndex(command.shortcut);
+    if (idx == null) {
+      _shellLog(
+        'queued shortcut became invalid id=${command.id} shortcut=${command.shortcut}',
+      );
+      return;
+    }
+    developer.log(
+      'queued shortcut replay id=${command.id} shortcut=${command.shortcut} idx=$idx '
+      '(current=$_currentIndex)',
+      name: 'ShellNav.shortcut',
+    );
+    _applyTabSelection(
+      idx,
+      source: 'queuedShortcut(${command.shortcut})',
+      haptic: false,
+    );
+    if (_hasReplayableShortcut()) {
+      _scheduleShortcutReplay();
+    }
   }
 
   Widget _inactiveSlotPlaceholder(BuildContext context, int tabIndex) {
@@ -138,37 +215,19 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   @override
   void initState() {
     super.initState();
-    _shortcutSub = ref.listenManual<MainShellShortcut?>(
+    _shortcutSub = ref.listenManual<List<MainShellShortcutCommand>>(
       mainShellShortcutProvider,
       (prev, next) {
-        if (next == null) return;
-        final navLen = widget.navItems.length;
-        final pageLen = widget.pages.length;
-        final idx = switch (next) {
-          MainShellShortcut.openAccountTab =>
-            widget.shortcutMap[next] ?? (navLen > 0 ? navLen - 1 : -1),
-          MainShellShortcut.openHomeTab => widget.shortcutMap[next] ?? 0,
-          _ => widget.shortcutMap[next] ?? -1,
-        };
-        ref.read(mainShellShortcutProvider.notifier).state = null;
-        if (idx < 0 || idx >= navLen || idx >= pageLen) {
-          _shellLog(
-            'shortcut reject idx=$idx navLen=$navLen pageLen=$pageLen shortcut=$next',
-          );
-          return;
-        }
-        developer.log(
-          'route shortcut idx=$idx shortcut=$next (was tab=$_currentIndex)',
-          name: 'ShellNav.shortcut',
-        );
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _onNavTap(idx);
-        });
+        if (next.isEmpty) return;
+        _scheduleShortcutReplay();
       },
     );
     _shellLog(
-      'shell init pageLen=${widget.pages.length} navLen=${widget.navItems.length} startIndex=$_currentIndex materialized=$_materialized',
+      'shell init pageLen=${widget.pages.length} navLen=${widget.navItems.length} '
+      'startIndex=$_currentIndex startTabId=${_tabIdentityFor(widget, _currentIndex)} '
+      'materialized=$_materialized',
     );
+    _scheduleShortcutReplay();
   }
 
   @override
@@ -197,11 +256,35 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       });
       return;
     }
+    final previousSelectedId =
+        oldWidget.pages.isNotEmpty && oldWidget.navItems.isNotEmpty
+            ? _tabIdentityFor(
+                oldWidget,
+                _clampIndex(_currentIndex, oldWidget.pages.length - 1),
+              )
+            : null;
+    if (widget.tabIds != null &&
+        oldWidget.tabIds != null &&
+        previousSelectedId != null) {
+      final rebasedIndex = widget.tabIds!.indexOf(previousSelectedId);
+      if (rebasedIndex >= 0 && rebasedIndex != _currentIndex) {
+        _shellLog(
+          'rebase selected tab id=$previousSelectedId oldIndex=$_currentIndex -> newIndex=$rebasedIndex',
+        );
+        setState(() {
+          _currentIndex = rebasedIndex;
+          _pruneMaterialized(len);
+          _materialized.add(rebasedIndex);
+        });
+        return;
+      }
+    }
     if (oldWidget.pages.length != len) {
       _pruneMaterialized(len);
-      _materialized.add(_currentIndex.clamp(0, len - 1));
+      _materialized.add(_clampIndex(_currentIndex, len - 1));
       _lastLoggedActiveIndex = null;
       _lastLoggedPageCount = null;
+      _scheduleShortcutReplay();
     }
   }
 
@@ -210,12 +293,16 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     if (_materialized.isEmpty) _materialized.add(0);
   }
 
-  void _onNavTap(int index) {
+  void _applyTabSelection(
+    int index, {
+    required String source,
+    bool haptic = true,
+  }) {
     final label = index >= 0 && index < widget.navItems.length
         ? widget.navItems[index].label
         : '?';
     developer.log(
-      'navTap received label="$label" targetIndex=$index selectedBefore=$_currentIndex '
+      '$source received label="$label" targetIndex=$index selectedBefore=$_currentIndex '
       'pageLen=${widget.pages.length} navLen=${widget.navItems.length}',
       name: 'ShellNav.tap',
     );
@@ -236,23 +323,31 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     }
     if (index == _currentIndex) {
       developer.log(
-        'navTap noop (already on index=$index label="$label")',
+        '$source noop (already on index=$index label="$label")',
         name: 'ShellNav.tap',
       );
       return;
     }
-    HapticFeedback.lightImpact();
-    _shellLog('onNavTap $index (was $_currentIndex)');
+    if (haptic) {
+      HapticFeedback.lightImpact();
+    }
+    _shellLog(
+      '$source index=$index (was $_currentIndex) tabId=${_tabIdentityFor(widget, index)}',
+    );
     setState(() {
       _currentIndex = index;
       _materialized.add(index);
     });
     developer.log(
-      'navTap applied selectedAfter=$_currentIndex resolvedPage='
+      '$source applied selectedAfter=$_currentIndex resolvedPage='
       '${index < widget.pages.length ? widget.pages[index].runtimeType : "?"}',
       name: 'ShellNav.tap',
     );
     widget.onIndexChanged?.call(index);
+  }
+
+  void _onNavTap(int index) {
+    _applyTabSelection(index, source: 'navTap');
   }
 
   /// Programatik sekme geçişi (ör. gösterge kartından Müşterilerim’e).
@@ -275,7 +370,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     }
     if (index == _currentIndex) return;
     _shellLog('jumpToTab $index (was $_currentIndex)');
-    _onNavTap(index);
+    _applyTabSelection(index, source: 'jumpToTab', haptic: false);
   }
 
   @override
@@ -283,6 +378,11 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     if (widget.pages.length != widget.navItems.length) {
       _shellLog(
         'BUILD WARNING pages=${widget.pages.length} nav=${widget.navItems.length} — mismatch can blank content',
+      );
+    }
+    if (widget.tabIds != null && widget.tabIds!.length != widget.pages.length) {
+      _shellLog(
+        'BUILD WARNING tabIds=${widget.tabIds!.length} pages=${widget.pages.length} — mismatch can drift selection',
       );
     }
 
@@ -333,7 +433,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       );
     }
 
-    final safeIndex = _currentIndex.clamp(0, widget.pages.length - 1);
+    final safeIndex = _clampIndex(_currentIndex, widget.pages.length - 1);
     if (!_materialized.contains(safeIndex)) {
       _shellLog(
         'fallback: active index $safeIndex was not materialized — scheduling fix',

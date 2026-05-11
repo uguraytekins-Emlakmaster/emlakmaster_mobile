@@ -103,8 +103,18 @@ final officeAccessStateProvider =
 final currentRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) return const AsyncValue.data(AppRole.guest);
-  final doc = ref.watch(userDocStreamProvider(user.uid)).valueOrNull;
-  if (doc == null) return const AsyncValue.data(AppRole.guest);
+  final docAsync = ref.watch(userDocStreamProvider(user.uid));
+  if (docAsync.isLoading) return const AsyncValue.loading();
+  if (docAsync.hasError) {
+    return AsyncValue.error(
+      docAsync.error!,
+      docAsync.stackTrace ?? StackTrace.current,
+    );
+  }
+  final doc = docAsync.valueOrNull;
+  // users/{uid} henüz gelmediyse guest shell'e düşme: router role-selection / recovery
+  // kararını versin, UI de görünür startup fallback gösterebilsin.
+  if (doc == null) return const AsyncValue.loading();
   final devFb = isDevMode && DevOfficeFallback.isActive;
   final hasOffice = (doc.officeId != null && doc.officeId!.isNotEmpty) || devFb;
   if (!hasOffice) {
@@ -119,9 +129,13 @@ final currentRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
         case OfficeAccessState.noOfficeContext:
           return AsyncValue.data(AppRole.fromFirestoreRole(doc.role));
         case OfficeAccessState.officeReady:
-          final m = ref.watch(primaryMembershipProvider).valueOrNull;
-          if (m == null) return const AsyncValue.loading();
-          return AsyncValue.data(m.role.toAppRole());
+          final membershipAsync = ref.watch(primaryMembershipProvider);
+          return membershipAsync.when(
+            data: (m) =>
+                m == null ? const AsyncValue.loading() : AsyncValue.data(m.role.toAppRole()),
+            loading: () => const AsyncValue.loading(),
+            error: (e, st) => AsyncValue.error(e, st),
+          );
         case OfficeAccessState.membershipMissing:
         case OfficeAccessState.inconsistentPointer:
           return AsyncValue.error(
@@ -259,7 +273,7 @@ final displayRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
 
 /// displayRoleProvider’ın valueOrNull hali (Dashboard/buton için).
 final displayRoleOrNullProvider = Provider<AppRole?>((ref) {
-  return ref.watch(displayRoleProvider).valueOrNull ?? AppRole.guest;
+  return ref.watch(displayRoleProvider).valueOrNull;
 });
 
 /// Firestore rolüne göre; platform bağlantısı / içe aktarma motoru yönetimi (override ile büyütülmez).

@@ -1,5 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'dart:async' show unawaited;
+import 'dart:async' show Timer, unawaited;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +11,7 @@ import '../deep_linking/pending_deep_link_store.dart';
 import '../../features/office/domain/office_exception.dart';
 import '../../features/office/presentation/utils/office_error_ui.dart';
 import '../widgets/app_loading.dart';
+import '../widgets/startup_recovery_scaffold.dart';
 import '../services/analytics_service.dart';
 import '../services/auth_service.dart';
 import '../services/onboarding_store.dart';
@@ -721,23 +722,91 @@ class AppRouter {
 }
 
 /// Giriş yapılmış kullanıcı için: rol yüklenene kadar loading, sonra child.
-class _AuthShell extends ConsumerWidget {
+class _AuthShell extends ConsumerStatefulWidget {
   const _AuthShell({required this.child});
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AuthShell> createState() => _AuthShellState();
+}
+
+class _AuthShellState extends ConsumerState<_AuthShell> {
+  static const _recoveryDelay = Duration(seconds: 8);
+
+  Timer? _recoveryTimer;
+  bool _showRecovery = false;
+
+  @override
+  void dispose() {
+    _recoveryTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armRecovery() {
+    if (_recoveryTimer != null || _showRecovery) return;
+    AppLogger.state('[startup][_AuthShell] loading currentRoleProvider');
+    _recoveryTimer = Timer(_recoveryDelay, () {
+      if (!mounted) return;
+      AppLogger.w('[startup][_AuthShell] recovery fallback armed');
+      setState(() => _showRecovery = true);
+    });
+  }
+
+  void _clearRecovery() {
+    if (_recoveryTimer == null && !_showRecovery) return;
+    AppLogger.state('[startup][_AuthShell] interactive again');
+    _recoveryTimer?.cancel();
+    _recoveryTimer = null;
+    _showRecovery = false;
+  }
+
+  void _retry() {
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid;
+    AppLogger.state('[startup][_AuthShell] retry requested uid=${uid ?? "-"}');
+    if (uid != null && uid.isNotEmpty) {
+      ref.invalidate(userDocStreamProvider(uid));
+    }
+    ref.invalidate(primaryMembershipProvider);
+    ref.invalidate(officeAccessStateProvider);
+    ref.invalidate(currentRoleProvider);
+    setState(() {
+      _showRecovery = false;
+      _recoveryTimer?.cancel();
+      _recoveryTimer = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final roleAsync = ref.watch(currentRoleProvider);
     return roleAsync.when(
-      loading: () => const _RouteLoadingScreen(),
+      loading: () {
+        _armRecovery();
+        if (_showRecovery) {
+          return StartupRecoveryScaffold(
+            title: 'Acilis gecikiyor',
+            message:
+                'Rol ve ofis baglami hazirlanirken uygulama interaktif hale gelemedi. Tekrar deneyebilir veya oturumu yenileyebilirsiniz.',
+            detail: 'Bekleyen provider: currentRoleProvider',
+            onPrimary: _retry,
+            secondaryLabel: 'Cikis yap',
+            onSecondary: () => AuthService.instance.signOut(),
+          );
+        }
+        return const _RouteLoadingScreen();
+      },
       error: (e, _) {
+        _clearRecovery();
         final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
         if (uid == null || uid.isEmpty) {
           return const _RouteLoadingScreen();
         }
         return _HomeShellRoleErrorScreen(uid: uid, error: e);
       },
-      data: (_) => child,
+      data: (_) {
+        _clearRecovery();
+        return widget.child;
+      },
     );
   }
 }

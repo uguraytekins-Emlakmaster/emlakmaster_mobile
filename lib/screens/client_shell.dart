@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:flutter/material.dart';
@@ -31,8 +32,19 @@ class _ClientShellPageState extends State<ClientShellPage> {
     ClientProfilePage(),
   ];
 
+  static const List<Object> _tabIds = [
+    'search',
+    'favorites',
+    'messages',
+    'virtual_tour',
+    'profile',
+  ];
+
   @override
   Widget build(BuildContext context) {
+    AppLogger.state(
+      '[startup][ClientShell] build tabs=${_navItems.length}',
+    );
     return const Column(
       children: [
         SyncStatusBanner(compact: true),
@@ -40,6 +52,7 @@ class _ClientShellPageState extends State<ClientShellPage> {
           child: AdaptiveShellScaffold(
             navItems: _navItems,
             pages: _pages,
+            tabIds: _tabIds,
             title: 'EmlakMaster',
             shortcutMap: {
               MainShellShortcut.openHomeTab: 0,

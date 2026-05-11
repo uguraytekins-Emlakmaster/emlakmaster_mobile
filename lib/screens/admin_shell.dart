@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -16,6 +17,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Yönetici paneli: tam yetki. Nav öğeleri ayarlardaki özellik bayraklarına göre gösterilir.
+enum _AdminShellTab {
+  dashboard,
+  warRoom,
+  commandCenter,
+  economy,
+  reports,
+  settings,
+}
+
+class _AdminShellTabEntry {
+  const _AdminShellTabEntry({
+    required this.id,
+    required this.navItem,
+    required this.page,
+  });
+
+  final _AdminShellTab id;
+  final AdaptiveNavItem navItem;
+  final Widget page;
+}
+
 class AdminShellPage extends ConsumerWidget {
   const AdminShellPage({super.key});
 
@@ -35,33 +57,54 @@ class AdminShellPage extends ConsumerWidget {
           orElse: () => false,
         );
     final showEconomyTab = !lean;
-    final navItems = <AdaptiveNavItem>[
-      const AdaptiveNavItem(Icons.dashboard_rounded, 'Dashboard'),
+    final entries = <_AdminShellTabEntry>[
+      const _AdminShellTabEntry(
+        id: _AdminShellTab.dashboard,
+        navItem: AdaptiveNavItem(Icons.dashboard_rounded, 'Dashboard'),
+        page: DashboardPage(),
+      ),
       if (warRoom)
-        const AdaptiveNavItem(Icons.military_tech_rounded, 'War Room'),
+        const _AdminShellTabEntry(
+          id: _AdminShellTab.warRoom,
+          navItem: AdaptiveNavItem(Icons.military_tech_rounded, 'War Room'),
+          page: WarRoomPage(),
+        ),
       if (showCommandCenter)
-        const AdaptiveNavItem(Icons.call_rounded, 'Çağrı Merkezi'),
+        const _AdminShellTabEntry(
+          id: _AdminShellTab.commandCenter,
+          navItem: AdaptiveNavItem(Icons.call_rounded, 'Çağrı Merkezi'),
+          page: CommandCenterPage(),
+        ),
       if (showEconomyTab)
-        const AdaptiveNavItem(Icons.trending_up_rounded, 'Ekonomi'),
-      const AdaptiveNavItem(Icons.analytics_rounded, 'Raporlar'),
-      const AdaptiveNavItem(Icons.settings_rounded, 'Ayarlar'),
+        const _AdminShellTabEntry(
+          id: _AdminShellTab.economy,
+          navItem: AdaptiveNavItem(Icons.trending_up_rounded, 'Ekonomi'),
+          page: AdminEconomyPage(),
+        ),
+      const _AdminShellTabEntry(
+        id: _AdminShellTab.reports,
+        navItem: AdaptiveNavItem(Icons.analytics_rounded, 'Raporlar'),
+        page: AdminReportsPage(),
+      ),
+      const _AdminShellTabEntry(
+        id: _AdminShellTab.settings,
+        navItem: AdaptiveNavItem(Icons.settings_rounded, 'Ayarlar'),
+        page: SettingsPage(),
+      ),
     ];
-    final pages = <Widget>[
-      const DashboardPage(),
-      if (warRoom) const WarRoomPage(),
-      if (showCommandCenter) const CommandCenterPage(),
-      if (showEconomyTab) const AdminEconomyPage(),
-      const AdminReportsPage(),
-      const SettingsPage(),
-    ];
+    final navItems = entries.map((entry) => entry.navItem).toList(growable: false);
+    final pages = entries.map((entry) => entry.page).toList(growable: false);
+    final tabIds = entries.map((entry) => entry.id).toList(growable: false);
+    final settingsIndex =
+        tabIds.indexOf(_AdminShellTab.settings).clamp(0, tabIds.length - 1);
     assert(
       navItems.length == pages.length,
       'AdminShell: navItems (${navItems.length}) and pages (${pages.length}) must stay in sync',
     );
     if (kDebugMode) {
-      debugPrint(
-        '[AdminShell] tabs=${navItems.length} lean=$lean warRoom=$warRoom '
-        'commandCenter=$showCommandCenter economy=$showEconomyTab',
+      AppLogger.state(
+        '[startup][AdminShell] tabs=${navItems.length} lean=$lean warRoom=$warRoom '
+        'commandCenter=$showCommandCenter economy=$showEconomyTab ids=$tabIds',
       );
     }
     // ÖNEMLİ: [ValueKey] ile kabuk sıfırlamayın — [featureFlagsProvider] / [displayRoleProvider]
@@ -75,10 +118,11 @@ class AdminShellPage extends ConsumerWidget {
           child: AdaptiveShellScaffold(
             navItems: navItems,
             pages: pages,
+            tabIds: tabIds,
             title: 'Yönetici Paneli',
             shortcutMap: {
               MainShellShortcut.openHomeTab: 0,
-              MainShellShortcut.openAccountTab: navItems.length - 1,
+              MainShellShortcut.openAccountTab: settingsIndex,
             },
           ),
         ),
