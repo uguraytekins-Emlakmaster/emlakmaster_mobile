@@ -54,9 +54,9 @@ class ThemeModeIndexNotifier extends StateNotifier<int> {
 }
 
 /// [MaterialApp.themeMode] ile uyum için; şu an her zaman koyu.
-/// Açık tema, ortak renk sistemi tamamlanana kadar devre dışı.
 final themeModeProvider = Provider<ThemeMode>((ref) {
-  return ThemeMode.dark;
+  final index = ref.watch(themeModeIndexProvider);
+  return themeModeFromIndex(index);
 });
 
 /// Bildirimler açık mı. İlk yüklemede Storage'dan okunur.

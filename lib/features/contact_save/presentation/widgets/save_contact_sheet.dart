@@ -108,33 +108,37 @@ class _SaveContactSheetContentState
   void _showContactPermissionSettingsDialog(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppThemeExtension.of(context).background,
-        title: const Text(
-          'Rehber izni kapalı',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Rehbere kaydetmek için izin gerekiyor. Ayarlardan rehber erişimini açabilirsiniz.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('İptal', style: TextStyle(color: Colors.white54)),
+      builder: (ctx) {
+        final ext = AppThemeExtension.of(ctx);
+        return AlertDialog(
+          backgroundColor: ext.surface,
+          title: Text(
+            'Rehber izni kapalı',
+            style: TextStyle(color: ext.textPrimary),
           ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              await ContactPermissionHelper.instance.openSystemSettings();
-            },
-            style: FilledButton.styleFrom(
-                backgroundColor: AppThemeExtension.of(context).accent),
-            child: const Text('Ayarlara git',
-                style: TextStyle(color: Colors.black)),
+          content: Text(
+            'Rehbere kaydetmek için izin gerekiyor. Ayarlardan rehber erişimini açabilirsiniz.',
+            style: TextStyle(color: ext.textSecondary),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('İptal', style: TextStyle(color: ext.textSecondary)),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await ContactPermissionHelper.instance.openSystemSettings();
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: ext.accent,
+                foregroundColor: ext.onBrand,
+              ),
+              child: const Text('Ayarlara git'),
+            ),
+          ],
+        );
+      },
     );
   }
 

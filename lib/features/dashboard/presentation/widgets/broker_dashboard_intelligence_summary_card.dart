@@ -137,7 +137,7 @@ class _CommandCardFrame extends StatelessWidget {
         border: Border.all(color: ext.accent.withValues(alpha: 0.38)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: ext.shadowColor.withValues(alpha: 0.16),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),

@@ -13,13 +13,14 @@ Future<T?> showPremiumModalBottomSheet<T>({
   bool useRootNavigator = false,
 }) {
   final ext = AppThemeExtension.of(context);
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
     useSafeArea: useSafeArea,
     useRootNavigator: useRootNavigator,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.52),
+    barrierColor: ext.shadowColor.withValues(alpha: isDark ? 0.52 : 0.18),
     builder: (ctx) {
       const r = BorderRadius.vertical(
         top: Radius.circular(DesignTokens.radiusSheet),

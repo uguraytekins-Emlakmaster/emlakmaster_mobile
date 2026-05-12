@@ -387,7 +387,7 @@ class _ConsultantActionAnchor extends StatelessWidget {
         border: Border.all(color: ext.border.withValues(alpha: 0.55)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: ext.shadowColor.withValues(alpha: 0.16),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),

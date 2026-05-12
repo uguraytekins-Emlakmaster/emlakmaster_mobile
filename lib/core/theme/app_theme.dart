@@ -6,69 +6,169 @@ import 'theme_palette.dart';
 
 /// Wealth Tech tema: Gold Century — merkezi light/dark; semantic token'lar [AppThemeExtension]'da.
 abstract final class AppTheme {
-  static ThemeData dark() {
+  static final ThemeData _darkTheme = _buildTheme(isDark: true);
+  static final ThemeData _lightTheme = _buildTheme(isDark: false);
+
+  static ThemeData dark() => _darkTheme;
+  static ThemeData light() => _lightTheme;
+
+  static ThemeData _buildTheme({required bool isDark}) {
+    final ext = isDark ? AppThemeExtension.dark() : AppThemeExtension.light();
+    final textTheme = isDark ? _textThemeDark : _textThemeLight;
+    final divider = isDark ? ThemePalette.borderDark : ThemePalette.borderLight;
+    final appBarBackground =
+        isDark ? ThemePalette.scaffoldDark : ThemePalette.backgroundLight;
+    final scheme = isDark
+        ? const ColorScheme.dark(
+            primary: ThemePalette.antiqueGold,
+            secondary: ThemePalette.antiqueGold,
+            surface: ThemePalette.surfaceDark,
+            onSurface: ThemePalette.textPrimaryDark,
+            onPrimary: ThemePalette.inputTextOnGold,
+            onSecondary: ThemePalette.inputTextOnGold,
+            onSurfaceVariant: ThemePalette.textSecondaryDark,
+            error: ThemePalette.danger,
+            onError: Colors.white,
+            outline: ThemePalette.borderDark,
+            surfaceContainerHighest: ThemePalette.surfaceDarkElevated,
+            surfaceTint: Colors.transparent,
+            primaryContainer: Color(0xFF2A2418),
+            onPrimaryContainer: ThemePalette.antiqueGold,
+          )
+        : const ColorScheme.light(
+            primary: ThemePalette.antiqueGold,
+            secondary: ThemePalette.antiqueGold,
+            surface: ThemePalette.surfaceLight,
+            onSurface: ThemePalette.textPrimaryLight,
+            onPrimary: ThemePalette.inputTextOnGold,
+            onSecondary: ThemePalette.inputTextOnGold,
+            onSurfaceVariant: ThemePalette.textSecondaryLight,
+            error: ThemePalette.danger,
+            onError: Colors.white,
+            outline: ThemePalette.borderLight,
+            surfaceContainerHighest: ThemePalette.surfaceLightElevated,
+            surfaceTint: Colors.transparent,
+            primaryContainer: Color(0xFFF5EFE6),
+            onPrimaryContainer: Color(0xFF3D3428),
+          );
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: ThemePalette.scaffoldDark,
-      colorScheme: const ColorScheme.dark(
-        primary: ThemePalette.antiqueGold,
-        secondary: ThemePalette.antiqueGold,
-        surface: ThemePalette.surfaceDark,
-        onSurface: ThemePalette.textPrimaryDark,
-        onPrimary: ThemePalette.inputTextOnGold,
-        onSecondary: ThemePalette.inputTextOnGold,
-        onSurfaceVariant: ThemePalette.textSecondaryDark,
-        error: ThemePalette.danger,
-        onError: Colors.white,
-        outline: ThemePalette.borderDark,
-        surfaceContainerHighest: ThemePalette.surfaceDarkElevated,
-        surfaceTint: Colors.transparent,
-        primaryContainer: Color(0xFF2A2418),
-        onPrimaryContainer: ThemePalette.antiqueGold,
-      ),
-      extensions: <ThemeExtension<dynamic>>[AppThemeExtension.dark()],
-      textTheme: _textThemeDark,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: ThemePalette.scaffoldDark,
-        foregroundColor: ThemePalette.textPrimaryDark,
+      brightness: isDark ? Brightness.dark : Brightness.light,
+      scaffoldBackgroundColor: ext.background,
+      canvasColor: ext.background,
+      cardColor: ext.card,
+      colorScheme: scheme,
+      extensions: <ThemeExtension<dynamic>>[ext],
+      textTheme: textTheme,
+      appBarTheme: AppBarTheme(
+        backgroundColor: appBarBackground,
+        foregroundColor: ext.textPrimary,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: ThemePalette.textPrimaryDark,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: textTheme.titleLarge?.copyWith(
+          color: ext.textPrimary,
           fontSize: DesignTokens.fontSizeXl,
           fontWeight: FontWeight.w800,
           height: 1.1,
           letterSpacing: -0.2,
         ),
-        iconTheme: IconThemeData(
+        iconTheme: const IconThemeData(
+          color: ThemePalette.antiqueGold,
+          size: 22,
+        ),
+        actionsIconTheme: const IconThemeData(
           color: ThemePalette.antiqueGold,
           size: 22,
         ),
       ),
       cardTheme: CardThemeData(
-        color: ThemePalette.surfaceDark,
-        elevation: 0,
+        color: ext.card,
+        elevation: isDark ? 0 : 1,
+        shadowColor: ext.shadowColor.withValues(alpha: isDark ? 0.48 : 0.14),
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+          side: BorderSide(color: divider.withValues(alpha: isDark ? 0.5 : 0.9)),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: ext.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        ),
+        titleTextStyle: textTheme.titleLarge?.copyWith(
+          color: ext.textPrimary,
+          fontWeight: FontWeight.w800,
+        ),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: ext.textSecondary,
+          height: 1.45,
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: ext.surface,
+        modalBackgroundColor: ext.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(DesignTokens.radiusSheet),
+          ),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: ext.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          side: BorderSide(color: ext.border.withValues(alpha: 0.55)),
+        ),
+        textStyle: textTheme.bodyMedium?.copyWith(color: ext.textPrimary),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: isDark ? ext.surfaceElevated : const Color(0xFF242428),
+        contentTextStyle: TextStyle(
+          color: isDark ? ext.textPrimary : ThemePalette.brandWhite,
+          fontSize: DesignTokens.fontSizeSm,
+          fontWeight: FontWeight.w500,
+        ),
+        actionTextColor: ThemePalette.antiqueGold,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: ThemePalette.inputBackgroundGold.withValues(alpha: 0.25),
-        hintStyle: const TextStyle(color: ThemePalette.textTertiaryDark),
-        labelStyle: const TextStyle(color: ThemePalette.textSecondaryDark),
+        fillColor: ext.inputBackground,
+        hintStyle: TextStyle(color: ext.textTertiary),
+        labelStyle: TextStyle(color: ext.textSecondary),
+        prefixIconColor: ext.textSecondary,
+        suffixIconColor: ext.textSecondary,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          borderSide: const BorderSide(color: ThemePalette.borderDark),
+          borderSide: BorderSide(color: ext.inputBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          borderSide:
-              const BorderSide(color: ThemePalette.antiqueGold, width: 1.2),
+          borderSide: const BorderSide(
+            color: ThemePalette.antiqueGold,
+            width: 1.2,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          borderSide: BorderSide(color: ext.danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          borderSide: BorderSide(color: ext.danger, width: 1.2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: DesignTokens.space4,
@@ -77,8 +177,8 @@ abstract final class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: ThemePalette.antiqueGold,
-          foregroundColor: ThemePalette.inputTextOnGold,
+          backgroundColor: ext.accent,
+          foregroundColor: ext.onBrand,
           elevation: 0,
           padding: const EdgeInsets.symmetric(
             horizontal: DesignTokens.space6,
@@ -89,16 +189,84 @@ abstract final class AppTheme {
           ),
         ),
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: ThemePalette.surfaceDark,
-        selectedItemColor: ThemePalette.antiqueGold,
-        unselectedItemColor: ThemePalette.textTertiaryDark,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: ext.accent,
+          foregroundColor: ext.onBrand,
+          minimumSize: const Size(0, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: ext.textPrimary,
+          side: BorderSide(color: ext.border.withValues(alpha: 0.85)),
+          minimumSize: const Size(0, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: ext.accent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+          ),
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: ext.accent,
+        foregroundColor: ext.onBrand,
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: ext.textSecondary,
+        textColor: ext.textPrimary,
+        tileColor: Colors.transparent,
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: ext.surface,
+        indicatorColor: ext.accent.withValues(alpha: isDark ? 0.18 : 0.14),
+        selectedIconTheme: IconThemeData(color: ext.accent),
+        unselectedIconTheme: IconThemeData(color: ext.textTertiary),
+        selectedLabelTextStyle: textTheme.labelMedium?.copyWith(
+          color: ext.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelTextStyle: textTheme.labelMedium?.copyWith(
+          color: ext.textSecondary,
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: ext.surface,
+        indicatorColor: ext.accent.withValues(alpha: isDark ? 0.18 : 0.14),
+        surfaceTintColor: Colors.transparent,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: ext.surface,
+        selectedItemColor: ext.accent,
+        unselectedItemColor: ext.textTertiary,
+        selectedIconTheme: IconThemeData(color: ext.accent),
+        unselectedIconTheme: IconThemeData(color: ext.textTertiary),
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
-      dividerColor: ThemePalette.borderDark,
-      iconTheme: const IconThemeData(
-        color: ThemePalette.textSecondaryDark,
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: ext.surface,
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: ext.surfaceElevated,
+        headerForegroundColor: ext.textPrimary,
+      ),
+      dividerColor: divider,
+      dividerTheme: DividerThemeData(
+        color: divider.withValues(alpha: isDark ? 0.7 : 1),
+        space: 1,
+      ),
+      iconTheme: IconThemeData(
+        color: ext.textSecondary,
         size: DesignTokens.iconMd,
       ),
     );
@@ -187,102 +355,6 @@ abstract final class AppTheme {
           height: 1.35,
         ),
       );
-
-  static ThemeData light() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: ThemePalette.backgroundLight,
-      colorScheme: const ColorScheme.light(
-        primary: ThemePalette.antiqueGold,
-        secondary: ThemePalette.antiqueGold,
-        onSurface: ThemePalette.textPrimaryLight,
-        onPrimary: ThemePalette.inputTextOnGold,
-        onSecondary: ThemePalette.inputTextOnGold,
-        onSurfaceVariant: ThemePalette.textSecondaryLight,
-        error: ThemePalette.danger,
-        outline: ThemePalette.borderLight,
-        surfaceContainerHighest: ThemePalette.surfaceLightElevated,
-        surfaceTint: Colors.transparent,
-        primaryContainer: Color(0xFFF5EFE6),
-        onPrimaryContainer: Color(0xFF3D3428),
-      ),
-      textTheme: _textThemeLight,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: ThemePalette.backgroundLight,
-        foregroundColor: ThemePalette.textPrimaryLight,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: ThemePalette.textPrimaryLight,
-          fontSize: DesignTokens.fontSizeXl,
-          fontWeight: FontWeight.w800,
-          height: 1.1,
-          letterSpacing: -0.2,
-        ),
-        iconTheme: IconThemeData(
-          color: ThemePalette.antiqueGold,
-          size: 22,
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: ThemePalette.surfaceLight,
-        elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: ThemePalette.surfaceLight,
-        hintStyle: const TextStyle(color: ThemePalette.textTertiaryLight),
-        labelStyle: const TextStyle(color: ThemePalette.textSecondaryLight),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          borderSide: const BorderSide(color: ThemePalette.borderLight),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          borderSide:
-              const BorderSide(color: ThemePalette.antiqueGold, width: 1.2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.space4,
-          vertical: DesignTokens.space3,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: ThemePalette.antiqueGold,
-          foregroundColor: ThemePalette.inputTextOnGold,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space6,
-            vertical: DesignTokens.space3,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
-          ),
-        ),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: ThemePalette.surfaceLight,
-        selectedItemColor: ThemePalette.antiqueGold,
-        unselectedItemColor: ThemePalette.textTertiaryLight,
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-      ),
-      dividerColor: ThemePalette.borderLight,
-      iconTheme: const IconThemeData(
-        color: ThemePalette.textSecondaryLight,
-        size: DesignTokens.iconMd,
-      ),
-      extensions: <ThemeExtension<dynamic>>[AppThemeExtension.light()],
-    );
-  }
 
   static TextTheme get _textThemeLight => const TextTheme(
         displayLarge: TextStyle(

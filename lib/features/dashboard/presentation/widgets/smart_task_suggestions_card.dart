@@ -34,7 +34,7 @@ class SmartTaskSuggestionsCard extends ConsumerWidget {
               border: Border.all(color: ext.accent.withValues(alpha: 0.38)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
+                  color: ext.shadowColor.withValues(alpha: 0.16),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -244,7 +244,7 @@ class _SuggestionRowState extends ConsumerState<_SuggestionRow> {
                   onPressed: _busy ? null : _createTask,
                   style: FilledButton.styleFrom(
                     backgroundColor: ext.accent,
-                    foregroundColor: Colors.black,
+                    foregroundColor: ext.onBrand,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   ),
                   child: _busy
@@ -253,7 +253,7 @@ class _SuggestionRowState extends ConsumerState<_SuggestionRow> {
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.black.withValues(alpha: 0.7),
+                            color: ext.onBrand.withValues(alpha: 0.72),
                           ),
                         )
                       : const Text('Görev oluştur'),

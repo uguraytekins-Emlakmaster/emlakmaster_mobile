@@ -74,7 +74,7 @@ class ProBlurOverlayGate extends StatelessWidget {
                       ),
                       style: FilledButton.styleFrom(
                         backgroundColor: ext.accent,
-                        foregroundColor: Colors.black,
+                        foregroundColor: ext.onBrand,
                       ),
                       child: const Text('PRO\'yu Gör'),
                     ),

@@ -16,14 +16,16 @@ class ListingDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+      backgroundColor: ext.background,
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirestoreService.listingDocStream(listingId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return Center(
-              child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent, strokeWidth: 2),
+              child: CircularProgressIndicator(color: ext.accent, strokeWidth: 2),
             );
           }
           if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
@@ -33,18 +35,25 @@ class ListingDetailPage extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline_rounded, size: 48, color: Colors.white54),
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 48,
+                      color: ext.textTertiary,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       snapshot.hasError ? 'İlan yüklenemedi.' : 'İlan bulunamadı.',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: ext.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
                     TextButton.icon(
                       onPressed: () => context.pop(),
-                      icon: Icon(Icons.arrow_back_rounded, color: AppThemeExtension.of(context).accent),
-                      label: Text('Geri', style: TextStyle(color: AppThemeExtension.of(context).accent)),
+                      icon: Icon(Icons.arrow_back_rounded, color: ext.accent),
+                      label: Text('Geri', style: TextStyle(color: ext.accent)),
                     ),
                   ],
                 ),
@@ -67,7 +76,7 @@ class ListingDetailPage extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                backgroundColor: AppThemeExtension.of(context).background,
+                backgroundColor: ext.background,
                 leading: const AppBackButton(),
                 automaticallyImplyLeading: false,
                 expandedHeight: 220,
@@ -96,8 +105,8 @@ class ListingDetailPage extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                              color: ext.textPrimary,
                               fontWeight: FontWeight.w700,
                             ),
                         maxLines: 3,
@@ -106,12 +115,19 @@ class ListingDetailPage extends StatelessWidget {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 18, color: Colors.white70),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 18,
+                            color: ext.textSecondary,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               location,
-                              style: const TextStyle(color: Colors.white70, fontSize: 14),
+                              style: TextStyle(
+                                color: ext.textSecondary,
+                                fontSize: 14,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -122,21 +138,21 @@ class ListingDetailPage extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           'Oda: $roomCount',
-                          style: const TextStyle(color: Colors.white54, fontSize: 13),
+                          style: TextStyle(color: ext.textTertiary, fontSize: 13),
                         ),
                       ],
                       if (m2 != null) ...[
                         const SizedBox(height: 4),
                         Text(
                           'm²: ${m2 is int ? m2 : (m2 as double).toStringAsFixed(0)}',
-                          style: const TextStyle(color: Colors.white54, fontSize: 13),
+                          style: TextStyle(color: ext.textTertiary, fontSize: 13),
                         ),
                       ],
                       const SizedBox(height: 16),
                       Text(
                         priceStr.contains('₺') ? priceStr : '$priceStr ₺',
                         style: TextStyle(
-                          color: AppThemeExtension.of(context).accent,
+                          color: ext.accent,
                           fontWeight: FontWeight.w700,
                           fontSize: 22,
                         ),
@@ -151,16 +167,16 @@ class ListingDetailPage extends StatelessWidget {
                               '${AppRouter.routeRainbowAnalytics}?listingId=$listingId',
                             );
                           },
-                          icon: Icon(Icons.auto_graph_rounded, color: AppThemeExtension.of(context).accent),
+                          icon: Icon(Icons.auto_graph_rounded, color: ext.accent),
                           label: Text(
                             'Intelligence raporu oluştur',
                             style: TextStyle(
-                              color: AppThemeExtension.of(context).accent,
+                              color: ext.accent,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppThemeExtension.of(context).accent),
+                            side: BorderSide(color: ext.accent),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),
@@ -169,16 +185,16 @@ class ListingDetailPage extends StatelessWidget {
                         const SizedBox(height: 20),
                         Text(
                           'Açıklama',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: Colors.white70,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                                color: ext.textSecondary,
                                 fontWeight: FontWeight.w600,
                               ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           description,
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: TextStyle(
+                            color: ext.textSecondary,
                             fontSize: 14,
                             height: 1.5,
                           ),
@@ -196,10 +212,15 @@ class ListingDetailPage extends StatelessWidget {
   }
 
   Widget _placeholder(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Container(
-      color: AppThemeExtension.of(context).card,
+      color: ext.card,
       child: Center(
-        child: Icon(Icons.home_rounded, size: 64, color: Colors.white.withValues(alpha: 0.2)),
+        child: Icon(
+          Icons.home_rounded,
+          size: 64,
+          color: ext.textTertiary.withValues(alpha: 0.24),
+        ),
       ),
     );
   }

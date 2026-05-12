@@ -81,7 +81,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
             },
             style: FilledButton.styleFrom(
               backgroundColor: ext.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: ext.onBrand,
               minimumSize: const Size.fromHeight(48),
             ),
             child: const Text('PRO\'yu Aç'),

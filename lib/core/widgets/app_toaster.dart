@@ -17,18 +17,22 @@ class AppToaster {
   }) {
     HapticFeedback.mediumImpact();
     final (color, icon) = _styleFor(type, context);
+    final foreground =
+        ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+            ? Colors.white
+            : Colors.black;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 20),
+            Icon(icon, color: foreground, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: foreground,
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
@@ -44,7 +48,7 @@ class AppToaster {
         action: actionLabel != null && onAction != null
             ? SnackBarAction(
                 label: actionLabel,
-                textColor: Colors.white,
+                textColor: foreground,
                 onPressed: onAction,
               )
             : null,

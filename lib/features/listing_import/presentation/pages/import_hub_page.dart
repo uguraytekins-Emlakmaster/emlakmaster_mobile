@@ -422,7 +422,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
   }) {
     return showDialog<bool>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
+      barrierColor: AppThemeExtension.of(context).shadowColor.withValues(
+        alpha: Theme.of(context).brightness == Brightness.dark ? 0.5 : 0.18,
+      ),
       builder: (ctx) {
         final d = AppThemeExtension.of(ctx);
         return AlertDialog(

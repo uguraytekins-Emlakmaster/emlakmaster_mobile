@@ -30,7 +30,7 @@ class BrokerDashboardAlertsCard extends ConsumerWidget {
               border: Border.all(color: ext.danger.withValues(alpha: 0.28)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
+                  color: ext.shadowColor.withValues(alpha: 0.18),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),

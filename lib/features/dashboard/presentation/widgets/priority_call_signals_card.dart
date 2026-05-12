@@ -66,7 +66,7 @@ class PriorityCallSignalsCard extends ConsumerWidget {
               border: Border.all(color: ext.border.withValues(alpha: 0.55)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
+                  color: ext.shadowColor.withValues(alpha: 0.22),
                   blurRadius: 14,
                   offset: const Offset(0, 6),
                 ),

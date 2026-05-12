@@ -1036,7 +1036,7 @@ class _ActionChip extends StatelessWidget {
             border: Border.all(color: ext.border),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: ext.shadowColor.withValues(alpha: 0.22),
                   blurRadius: 8,
                   offset: const Offset(0, 2))
             ],

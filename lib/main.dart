@@ -248,12 +248,22 @@ Future<void> _runApp() async {
     AppLogger.e('OnboardingStore warmUp error (pre-runApp)', e, st);
   }
 
+  var initialThemeModeIndex = 2;
+  try {
+    initialThemeModeIndex = await SettingsService.instance.getThemeModeIndex();
+    AppLogger.state(
+      '[startup] restored themeModeIndex=$initialThemeModeIndex before runApp',
+    );
+  } catch (e, st) {
+    AppLogger.e('Theme mode restore (pre-runApp)', e, st);
+  }
+
   AppLogger.state('[startup] runApp');
   runApp(
     ProviderScope(
       observers: kDebugMode ? [DebugRiverpodObserver()] : null,
       overrides: [
-        initialThemeModeIndexProvider.overrideWithValue(2),
+        initialThemeModeIndexProvider.overrideWithValue(initialThemeModeIndex),
       ],
       child: const EmlakMasterApp(),
     ),
@@ -472,13 +482,13 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(AppRouter.goRouterProvider);
     final locale = ref.watch(localeProvider).valueOrNull ?? const Locale('tr');
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: 'Rainbow CRM',
       debugShowCheckedModeBanner: false,
-      // Light theme disabled until a proper shared color system exists; force dark only.
-      theme: AppTheme.dark(),
+      theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.dark,
+      themeMode: themeMode,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [

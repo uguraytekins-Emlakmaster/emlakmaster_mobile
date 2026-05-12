@@ -143,7 +143,7 @@ class _CustomerSmartTaskStripState extends ConsumerState<CustomerSmartTaskStrip>
                       onPressed: _busy ? null : () => _create(s),
                       style: FilledButton.styleFrom(
                         backgroundColor: ext.accent,
-                        foregroundColor: Colors.black,
+                        foregroundColor: ext.onBrand,
                       ),
                       child: _busy
                           ? SizedBox(
@@ -151,7 +151,7 @@ class _CustomerSmartTaskStripState extends ConsumerState<CustomerSmartTaskStrip>
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.black.withValues(alpha: 0.7),
+                                color: ext.onBrand.withValues(alpha: 0.72),
                               ),
                             )
                           : const Text('Görev oluştur'),

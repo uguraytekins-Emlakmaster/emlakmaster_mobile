@@ -14,12 +14,15 @@ Future<void> showIntelReportPreviewSheet({
   required RainbowIntelReport report,
   required Uint8List pdfBytes,
 }) {
+  final ext = AppThemeExtension.of(context);
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.52),
+    barrierColor: ext.shadowColor.withValues(alpha: isDark ? 0.52 : 0.18),
     builder: (ctx) {
+      final sheetExt = AppThemeExtension.of(ctx);
       return DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.92,
@@ -27,10 +30,15 @@ Future<void> showIntelReportPreviewSheet({
         maxChildSize: 0.95,
         builder: (context, scrollController) {
           return Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF0D1117),
-              borderRadius: BorderRadius.vertical(
+            decoration: BoxDecoration(
+              color: sheetExt.surface,
+              borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(DesignTokens.radiusSheet),
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: sheetExt.border.withValues(alpha: 0.5),
+                ),
               ),
             ),
             child: Column(
@@ -45,7 +53,7 @@ Future<void> showIntelReportPreviewSheet({
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.22),
+                        color: sheetExt.textTertiary.withValues(alpha: 0.35),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -68,7 +76,6 @@ Future<void> showIntelReportPreviewSheet({
                             Text(
                               'Önizleme',
                               style: AppTypography.pageHeading(context).copyWith(
-                                color: Colors.white,
                                 fontSize: DesignTokens.fontSizeXl,
                                 height: 1.15,
                               ),
@@ -79,7 +86,7 @@ Future<void> showIntelReportPreviewSheet({
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.body(context).copyWith(
-                                color: Colors.white.withValues(alpha: 0.62),
+                                color: sheetExt.textSecondary,
                                 fontSize: DesignTokens.fontSizeSm,
                                 height: 1.4,
                               ),
@@ -93,7 +100,7 @@ Future<void> showIntelReportPreviewSheet({
                         icon: Icon(
                           Icons.close_rounded,
                           size: DesignTokens.iconMd,
-                          color: Colors.white.withValues(alpha: 0.72),
+                          color: sheetExt.textSecondary,
                         ),
                       ),
                     ],
@@ -173,10 +180,10 @@ Future<void> showIntelReportPreviewSheet({
                           label: const Text("WhatsApp'ta paylaş"),
                           style: OutlinedButton.styleFrom(
                             foregroundColor:
-                                AppThemeExtension.of(context).accent,
+                                sheetExt.accent,
                             minimumSize: const Size(double.infinity, 48),
                             side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.22),
+                              color: sheetExt.border.withValues(alpha: 0.7),
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(

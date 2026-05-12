@@ -250,7 +250,11 @@ class _TasksPageState extends ConsumerState<TasksPage> {
               onPressed: () => Navigator.of(ctx).pop(true),
               style: FilledButton.styleFrom(
                 backgroundColor: ext.danger,
-                foregroundColor: Colors.white,
+                foregroundColor:
+                    ThemeData.estimateBrightnessForColor(ext.danger) ==
+                            Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
               ),
               child: const Text('Sil'),
             ),

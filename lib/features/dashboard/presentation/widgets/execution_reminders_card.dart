@@ -67,7 +67,7 @@ class ExecutionRemindersCard extends ConsumerWidget {
               border: Border.all(color: ext.accent.withValues(alpha: 0.42)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: ext.shadowColor.withValues(alpha: 0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),

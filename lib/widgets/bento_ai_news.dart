@@ -40,6 +40,7 @@ class BentoAiNews extends StatelessWidget {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirestoreService.newsStream(),
       builder: (context, snapshot) {
+        final ext = AppThemeExtension.of(context);
         String title = 'AI News Insight';
         String body;
         if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
@@ -61,7 +62,8 @@ class BentoAiNews extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: Colors.white.withValues(alpha: 0.04),
+            color: ext.surfaceElevated.withValues(alpha: 0.78),
+            border: Border.all(color: ext.border.withValues(alpha: 0.5)),
           ),
           child: Row(
             children: [
@@ -70,10 +72,13 @@ class BentoAiNews extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppThemeExtension.of(context).accent,
+                  color: ext.accent,
                 ),
-                child: const Icon(Icons.bolt_rounded,
-                    color: Colors.black, size: 22),
+                child: Icon(
+                  Icons.bolt_rounded,
+                  color: ext.onBrand,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -82,16 +87,16 @@ class BentoAiNews extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: ext.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       body,
-                      style: const TextStyle(
-                        color: Colors.grey,
+                      style: TextStyle(
+                        color: ext.textSecondary,
                         fontSize: 11,
                         height: 1.4,
                       ),
@@ -104,7 +109,7 @@ class BentoAiNews extends StatelessWidget {
               const SizedBox(width: 12),
               TextButton(
                 style: TextButton.styleFrom(
-                  foregroundColor: AppThemeExtension.of(context).accent,
+                  foregroundColor: ext.accent,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),

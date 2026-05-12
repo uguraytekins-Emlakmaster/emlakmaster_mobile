@@ -1635,6 +1635,7 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final t = summaryText.trim();
     final tr = transcriptText.trim();
     final len = math.max(t.length, tr.length);
@@ -1647,8 +1648,8 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: Colors.white.withValues(alpha: 0.03),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            color: ext.surfaceElevated.withValues(alpha: 0.72),
+            border: Border.all(color: ext.border.withValues(alpha: 0.55)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1656,14 +1657,14 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
               Icon(
                 Icons.auto_awesome_outlined,
                 size: 15,
-                color: Colors.white.withValues(alpha: 0.45),
+                color: ext.textTertiary,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Özet netleştikçe ton ve takip önerileri burada canlı güncellenir.',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: ext.textSecondary,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1692,10 +1693,9 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: Colors.white.withValues(alpha: 0.04),
+            color: ext.surfaceElevated.withValues(alpha: 0.84),
             border: Border.all(
-              color:
-                  AppThemeExtension.of(context).accent.withValues(alpha: 0.35),
+              color: ext.accent.withValues(alpha: 0.35),
             ),
           ),
           child: Column(
@@ -1706,14 +1706,14 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
                   Icon(
                     Icons.auto_awesome_rounded,
                     size: 16,
-                    color: AppThemeExtension.of(context).accent,
+                    color: ext.accent,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Destekleyici içgörü (canlı önizleme)',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: Colors.white70,
+                            color: ext.textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                     ),
@@ -1726,7 +1726,7 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.92),
+                      color: ext.textSecondary,
                       height: 1.35,
                     ),
               ),
@@ -1739,7 +1739,7 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
               Text(
                 'Kayıttan sonra içgörü sunucuda güncellenebilir; CRM skorları aynı kalır.',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.white54,
+                      color: ext.textTertiary,
                       height: 1.35,
                     ),
               ),
@@ -1752,12 +1752,13 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
 
   Widget _miniLine(BuildContext context, String label, String value) {
     if (value.trim().isEmpty) return const SizedBox.shrink();
+    final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 3),
       child: RichText(
         text: TextSpan(
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.white54,
+                color: ext.textTertiary,
                 height: 1.3,
               ),
           children: [
@@ -1768,7 +1769,7 @@ class _PostCallAiEnrichmentInsightPreview extends StatelessWidget {
             TextSpan(
               text: value,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.78),
+                color: ext.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),

@@ -493,7 +493,7 @@ class _CustomerAddDockBar extends StatelessWidget {
       child: Material(
         color: ext.surfaceElevated,
         elevation: 10,
-        shadowColor: Colors.black.withValues(alpha: 0.35),
+        shadowColor: ext.shadowColor.withValues(alpha: 0.28),
         child: DecoratedBox(
           decoration: BoxDecoration(
             border: Border(

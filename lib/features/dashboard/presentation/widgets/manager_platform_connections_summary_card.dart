@@ -119,7 +119,7 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
                   border: Border.all(color: borderColor),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: ext.shadowColor.withValues(alpha: calm ? 0.08 : 0.14),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
