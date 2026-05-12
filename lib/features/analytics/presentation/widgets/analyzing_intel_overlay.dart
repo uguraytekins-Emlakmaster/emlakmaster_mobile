@@ -7,41 +7,61 @@ class AnalyzingIntelOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color: Colors.black.withValues(alpha: 0.92),
+      color: ext.background.withValues(alpha: isDark ? 0.94 : 0.78),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 72,
-              height: 72,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: AppThemeExtension.of(context).accent,
-                backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.space6,
+            vertical: DesignTokens.space6,
+          ),
+          decoration: BoxDecoration(
+            color: ext.surface.withValues(alpha: isDark ? 0.9 : 0.96),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+            boxShadow: [
+              BoxShadow(
+                color: ext.shadowColor.withValues(alpha: isDark ? 0.34 : 0.14),
+                blurRadius: 28,
+                offset: const Offset(0, 10),
               ),
-            ),
-            const SizedBox(height: DesignTokens.space6),
-            const Text(
-              'Piyasa verileri analiz ediliyor…',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: DesignTokens.fontSizeMd,
-                fontWeight: FontWeight.w600,
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 72,
+                height: 72,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: ext.accent,
+                  backgroundColor: ext.accent.withValues(alpha: 0.15),
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: DesignTokens.space2),
-            Text(
-              'Rainbow Investment Intelligence',
-              style: TextStyle(
-                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9),
-                fontSize: DesignTokens.fontSizeSm,
-                letterSpacing: 0.6,
+              const SizedBox(height: DesignTokens.space6),
+              Text(
+                'Piyasa verileri analiz ediliyor…',
+                style: TextStyle(
+                  color: ext.textPrimary,
+                  fontSize: DesignTokens.fontSizeMd,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              const SizedBox(height: DesignTokens.space2),
+              Text(
+                'Rainbow Investment Intelligence',
+                style: TextStyle(
+                  color: ext.accent.withValues(alpha: 0.9),
+                  fontSize: DesignTokens.fontSizeSm,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

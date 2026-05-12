@@ -1073,6 +1073,7 @@ class _CallBottomDeck extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final dangerForeground = Theme.of(context).colorScheme.onError;
     return Material(
       color: ext.surfaceElevated.withValues(alpha: 0.94),
       child: Container(
@@ -1111,19 +1112,19 @@ class _CallBottomDeck extends StatelessWidget {
                     ],
                   ),
                   child: callState == CallUIState.ending
-                      ? const Center(
+                      ? Center(
                           child: SizedBox(
                             width: 32,
                             height: 32,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: dangerForeground,
                               strokeWidth: 2.5,
                             ),
                           ),
                         )
-                      : const Icon(
+                      : Icon(
                           Icons.call_end_rounded,
-                          color: Colors.white,
+                          color: dangerForeground,
                           size: 36,
                         ),
                 ),

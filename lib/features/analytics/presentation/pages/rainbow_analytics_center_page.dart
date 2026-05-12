@@ -170,19 +170,21 @@ class _RainbowAnalyticsCenterPageState
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+      backgroundColor: ext.background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: AppThemeExtension.of(context).background,
-        foregroundColor: Colors.white,
+        backgroundColor: ext.background,
+        foregroundColor: ext.textPrimary,
         title: const Text('Rainbow Analytics Center'),
         actions: [
           TextButton(
             onPressed: () => context.push(AppRouter.routeRainbowIntelHistory),
             child: Text(
               'Geçmiş',
-              style: TextStyle(color: AppThemeExtension.of(context).accent),
+              style: TextStyle(color: ext.accent),
             ),
           ),
         ],
@@ -195,35 +197,80 @@ class _RainbowAnalyticsCenterPageState
                 ? 'İlan için analiz hazırlanıyor veya aşağıdan manuel devam edin.'
                 : 'İlan seçili değil — manuel veri ile off-market senaryosu oluşturabilirsiniz.',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.75),
+              color: ext.textSecondary,
               fontSize: DesignTokens.fontSizeSm,
+              height: 1.45,
             ),
           ),
           const SizedBox(height: DesignTokens.space6),
-          Text(
-            'Manuel giriş (off-market)',
-            style: TextStyle(
-              color: AppThemeExtension.of(context).accent,
-              fontWeight: FontWeight.w700,
-              fontSize: DesignTokens.fontSizeMd,
+          Container(
+            padding: const EdgeInsets.all(DesignTokens.space5),
+            decoration: BoxDecoration(
+              color: ext.surfaceElevated,
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              border: Border.all(color: ext.border.withValues(alpha: 0.58)),
+              boxShadow: [
+                BoxShadow(
+                  color: ext.shadowColor.withValues(alpha: 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: DesignTokens.space3),
-          _field('Başlık', _titleCtrl, 'Örn. Nişantaşı 3+1'),
-          _field('İlçe', _districtCtrl, 'Kayapınar'),
-          _field('Fiyat (₺)', _priceCtrl, '12500000', keyboard: TextInputType.number),
-          _field('m²', _m2Ctrl, '145', keyboard: TextInputType.number),
-          _field('Aylık kira (opsiyonel)', _rentCtrl, '45000',
-              keyboard: TextInputType.number),
-          const SizedBox(height: DesignTokens.space6),
-          FilledButton.icon(
-            onPressed: _busy ? null : _runCustom,
-            icon: const Icon(Icons.insights_rounded),
-            label: const Text('Intelligence raporu oluştur'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppThemeExtension.of(context).accent,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Manuel giriş (off-market)',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: ext.accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space2),
+                Text(
+                  'Portföy bilgilerini girin; sistem aynı premium analiz akışıyla rapor üretsin.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: ext.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space4),
+                _field(context, 'Başlık', _titleCtrl, 'Örn. Nişantaşı 3+1'),
+                _field(context, 'İlçe', _districtCtrl, 'Kayapınar'),
+                _field(
+                  context,
+                  'Fiyat (₺)',
+                  _priceCtrl,
+                  '12500000',
+                  keyboard: TextInputType.number,
+                ),
+                _field(
+                  context,
+                  'm²',
+                  _m2Ctrl,
+                  '145',
+                  keyboard: TextInputType.number,
+                ),
+                _field(
+                  context,
+                  'Aylık kira (opsiyonel)',
+                  _rentCtrl,
+                  '45000',
+                  keyboard: TextInputType.number,
+                ),
+                const SizedBox(height: DesignTokens.space4),
+                FilledButton.icon(
+                  onPressed: _busy ? null : _runCustom,
+                  icon: const Icon(Icons.insights_rounded),
+                  label: const Text('Intelligence raporu oluştur'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ext.accent,
+                    foregroundColor: ext.onBrand,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -232,29 +279,32 @@ class _RainbowAnalyticsCenterPageState
   }
 
   Widget _field(
+    BuildContext context,
     String label,
     TextEditingController c,
     String hint, {
     TextInputType keyboard = TextInputType.text,
   }) {
+    final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: c,
         keyboardType: keyboard,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: ext.textPrimary),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+          labelStyle: TextStyle(color: ext.textSecondary),
+          hintStyle: TextStyle(color: ext.textTertiary),
+          fillColor: ext.inputBackground,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            borderSide: BorderSide(color: ext.border.withValues(alpha: 0.7)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppThemeExtension.of(context).accent),
+            borderSide: BorderSide(color: ext.accent),
           ),
         ),
       ),

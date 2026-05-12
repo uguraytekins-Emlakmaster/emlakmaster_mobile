@@ -28,9 +28,10 @@ class RegionInsightPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
-    final textPrimary = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
+    final ext = AppThemeExtension.of(context);
+    final bg = ext.background;
+    final textPrimary = ext.textPrimary;
+    final textSecondary = ext.textSecondary;
     final pct = (region.demandScore * 100).round().clamp(0, 100);
     final range = region.budgetSegment ?? '—';
     final hint = region.propertyTypeHint;
@@ -43,7 +44,7 @@ class RegionInsightPage extends StatelessWidget {
           region.regionName,
           style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.2),
         ),
-        backgroundColor: isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface,
+        backgroundColor: ext.surface,
         foregroundColor: textPrimary,
       ),
       body: SingleChildScrollView(
@@ -76,7 +77,7 @@ class RegionInsightPage extends StatelessWidget {
                     label: 'Talep skoru',
                     value: '%$pct',
                     subtitle: pct >= 70 ? 'Yüksek' : pct >= 50 ? 'Orta' : 'İzlemede',
-                    accent: pct >= 70 ? const Color(0xFF66BB6A) : AppThemeExtension.of(context).accent,
+                    accent: pct >= 70 ? ext.success : ext.accent,
                   ),
                 ),
                 const SizedBox(width: DesignTokens.space2),
@@ -85,7 +86,7 @@ class RegionInsightPage extends StatelessWidget {
                     label: 'Fiyat bandı',
                     value: range,
                     subtitle: 'Segment',
-                    accent: AppThemeExtension.of(context).accent,
+                    accent: ext.accent,
                   ),
                 ),
               ],
@@ -95,15 +96,15 @@ class RegionInsightPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(DesignTokens.space3),
                 decoration: BoxDecoration(
-                  color: isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surfaceElevated,
+                  color: isDark ? ext.card : ext.surfaceElevated,
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                   border: Border.all(
-                    color: AppThemeExtension.of(context).border.withValues(alpha: isDark ? 0.5 : 0.2),
+                    color: ext.border.withValues(alpha: isDark ? 0.5 : 0.32),
                   ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.category_outlined, color: AppThemeExtension.of(context).accent, size: 22),
+                    Icon(Icons.category_outlined, color: ext.accent, size: 22),
                     const SizedBox(width: DesignTokens.space2),
                     Expanded(
                       child: Column(
@@ -152,6 +153,7 @@ class _MapPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ext = AppThemeExtension.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -165,15 +167,15 @@ class _MapPreviewCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                const Color(0xFF1A237E).withValues(alpha: isDark ? 0.55 : 0.35),
-                AppThemeExtension.of(context).card.withValues(alpha: 0.95),
-                const Color(0xFF0D47A1).withValues(alpha: isDark ? 0.4 : 0.25),
+                ext.brandNavy.withValues(alpha: isDark ? 0.44 : 0.18),
+                ext.card.withValues(alpha: 0.96),
+                ext.brandNavyLight.withValues(alpha: isDark ? 0.34 : 0.14),
               ],
             ),
-            border: Border.all(color: AppThemeExtension.of(context).border.withValues(alpha: 0.45)),
+            border: Border.all(color: ext.border.withValues(alpha: 0.45)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.35),
+                color: ext.shadowColor.withValues(alpha: isDark ? 0.35 : 0.16),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -184,7 +186,7 @@ class _MapPreviewCard extends StatelessWidget {
               Positioned.fill(
                 child: CustomPaint(
                   painter: _GridMapPainter(
-                    lineColor: Colors.white.withValues(alpha: 0.06),
+                    lineColor: ext.border.withValues(alpha: isDark ? 0.16 : 0.28),
                   ),
                 ),
               ),
@@ -195,7 +197,7 @@ class _MapPreviewCard extends StatelessWidget {
                     Icon(
                       Icons.map_rounded,
                       size: 56,
-                      color: AppThemeExtension.of(context).accent.withValues(alpha: 0.95),
+                      color: ext.accent.withValues(alpha: 0.95),
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     Padding(
@@ -204,7 +206,7 @@ class _MapPreviewCard extends StatelessWidget {
                         regionName,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppThemeExtension.of(context).textPrimary,
+                          color: ext.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.3,
@@ -217,8 +219,8 @@ class _MapPreviewCard extends StatelessWidget {
                       icon: const Icon(Icons.open_in_new_rounded, size: 18),
                       label: const Text('Haritada aç'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppThemeExtension.of(context).accent,
-                        foregroundColor: AppThemeExtension.of(context).onBrand,
+                        backgroundColor: ext.accent,
+                        foregroundColor: ext.onBrand,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
                     ),
@@ -272,15 +274,16 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
+    final textPrimary = ext.textPrimary;
+    final textSecondary = ext.textSecondary;
     return Container(
       padding: const EdgeInsets.all(DesignTokens.space3),
       decoration: BoxDecoration(
-        color: isDark ? AppThemeExtension.of(context).card : AppThemeExtension.of(context).surfaceElevated,
+        color: isDark ? ext.card : ext.surfaceElevated,
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: AppThemeExtension.of(context).border.withValues(alpha: isDark ? 0.45 : 0.2)),
+        border: Border.all(color: ext.border.withValues(alpha: isDark ? 0.45 : 0.32)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

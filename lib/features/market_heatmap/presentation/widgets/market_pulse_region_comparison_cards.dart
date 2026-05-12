@@ -100,10 +100,11 @@ class _RegionComparisonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textPrimary = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
-    final textTertiary = isDark ? AppThemeExtension.of(context).textTertiary : AppThemeExtension.of(context).textTertiary;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
+    final ext = AppThemeExtension.of(context);
+    final textPrimary = ext.textPrimary;
+    final textSecondary = ext.textSecondary;
+    final textTertiary = ext.textTertiary;
+    final border = ext.border;
     final pct = (region.demandScore * 100).clamp(0, 100).round();
     final range = region.budgetSegment ?? '—';
     final demand = region.demandScore.clamp(0.0, 1.0);
@@ -117,16 +118,16 @@ class _RegionComparisonCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: isDark ? 0.08 : 0.85),
-            Colors.white.withValues(alpha: isDark ? 0.02 : 0.45),
-            AppThemeExtension.of(context).accent.withValues(alpha: isDark ? 0.07 : 0.12),
+            ext.surfaceElevated.withValues(alpha: isDark ? 0.94 : 0.98),
+            ext.surface.withValues(alpha: isDark ? 0.9 : 0.94),
+            ext.accent.withValues(alpha: isDark ? 0.08 : 0.12),
           ],
           stops: const [0.0, 0.55, 1.0],
         ),
         border: Border.all(color: border.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+            color: ext.shadowColor.withValues(alpha: isDark ? 0.25 : 0.12),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -145,10 +146,10 @@ class _RegionComparisonCard extends StatelessWidget {
                   margin: const EdgeInsets.only(top: 2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: hotMarket ? AppThemeExtension.of(context).success : AppThemeExtension.of(context).warning,
+                    color: hotMarket ? ext.success : ext.warning,
                     boxShadow: [
                       BoxShadow(
-                        color: (hotMarket ? AppThemeExtension.of(context).success : AppThemeExtension.of(context).warning)
+                        color: (hotMarket ? ext.success : ext.warning)
                             .withValues(alpha: 0.45),
                         blurRadius: 4,
                       ),
@@ -188,7 +189,7 @@ class _RegionComparisonCard extends StatelessWidget {
               Text(
                 '%$pct',
                 style: TextStyle(
-                  color: region.demandScore >= 0.7 ? const Color(0xFF66BB6A) : textSecondary,
+                  color: region.demandScore >= 0.7 ? ext.success : textSecondary,
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -202,7 +203,7 @@ class _RegionComparisonCard extends StatelessWidget {
                   painter: _DominanceArcPainter(
                     fill: region.demandScore.clamp(0.0, 1.0),
                     trackColor: textTertiary.withValues(alpha: 0.25),
-                    valueColor: AppThemeExtension.of(context).accent,
+                    valueColor: ext.accent,
                   ),
                 ),
               ),
@@ -221,11 +222,11 @@ class _RegionComparisonCard extends StatelessWidget {
               painter: _SparklinePainter(
                 demandScore: region.demandScore.clamp(0.0, 1.0),
                 lineColor: region.demandScore >= 0.7
-                    ? const Color(0xFF43A047)
-                    : AppThemeExtension.of(context).accent.withValues(alpha: 0.9),
+                    ? ext.success
+                    : ext.accent.withValues(alpha: 0.9),
                 fillColor: (region.demandScore >= 0.7
-                        ? const Color(0xFF43A047)
-                        : AppThemeExtension.of(context).accent)
+                        ? ext.success
+                        : ext.accent)
                     .withValues(alpha: 0.12),
               ),
             ),
@@ -239,8 +240,8 @@ class _RegionComparisonCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        splashColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.12),
-        highlightColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.06),
+        splashColor: ext.accent.withValues(alpha: 0.12),
+        highlightColor: ext.accent.withValues(alpha: 0.06),
         child: Semantics(
           label:
               '${region.regionName}, fiyat bandı $range, talep yüzde $pct, ${hotMarket ? "sıcak" : "durgun"} pazar',

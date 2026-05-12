@@ -15,13 +15,15 @@ class IntelReportHistoryPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(intelReportHistoryListProvider);
+    final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+      backgroundColor: ext.background,
       appBar: emlakAppBar(
         context,
-        backgroundColor: AppThemeExtension.of(context).background,
-        foregroundColor: Colors.white,
+        backgroundColor: ext.background,
+        foregroundColor: ext.textPrimary,
         title: const Text('Rapor geçmişi'),
       ),
       body: async.when(
@@ -29,7 +31,7 @@ class IntelReportHistoryPage extends ConsumerWidget {
           if (items.isEmpty) {
             final l10n = AppLocalizations.of(context);
             return RefreshIndicator(
-              color: AppThemeExtension.of(context).accent,
+              color: ext.accent,
               onRefresh: () async => ref.invalidate(intelReportHistoryListProvider),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -47,7 +49,7 @@ class IntelReportHistoryPage extends ConsumerWidget {
             );
           }
           return RefreshIndicator(
-            color: AppThemeExtension.of(context).accent,
+            color: ext.accent,
             onRefresh: () async => ref.invalidate(intelReportHistoryListProvider),
             child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -57,8 +59,10 @@ class IntelReportHistoryPage extends ConsumerWidget {
             itemBuilder: (context, i) {
               final r = items[i];
               return Material(
-                color: AppThemeExtension.of(context).card,
+                color: ext.card,
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                shadowColor: ext.shadowColor.withValues(alpha: 0.16),
+                elevation: 1,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                   onTap: () async {
@@ -80,14 +84,15 @@ class IntelReportHistoryPage extends ConsumerWidget {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
+                            color: ext.accent.withValues(alpha: 0.08),
                             border: Border.all(
-                              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.5),
+                              color: ext.accent.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Text(
                             r.rainbowScore.toStringAsFixed(0),
                             style: TextStyle(
-                              color: AppThemeExtension.of(context).accent,
+                              color: ext.accent,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -101,8 +106,8 @@ class IntelReportHistoryPage extends ConsumerWidget {
                                 r.propertyTitle,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: ext.textPrimary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -110,7 +115,7 @@ class IntelReportHistoryPage extends ConsumerWidget {
                               Text(
                                 '${r.district} · ${_fmtDateTime(r.generatedAt)}',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.55),
+                                  color: ext.textSecondary,
                                   fontSize: 12,
                                 ),
                               ),
@@ -128,7 +133,7 @@ class IntelReportHistoryPage extends ConsumerWidget {
                           },
                           icon: Icon(
                             Icons.ios_share_rounded,
-                            color: AppThemeExtension.of(context).accent.withValues(alpha: 0.9),
+                            color: ext.accent.withValues(alpha: 0.9),
                           ),
                         ),
                       ],
@@ -141,10 +146,19 @@ class IntelReportHistoryPage extends ConsumerWidget {
           );
         },
         loading: () => Center(
-          child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
+          child: CircularProgressIndicator(color: ext.accent),
         ),
         error: (e, _) => Center(
-          child: Text('Yüklenemedi: $e', style: const TextStyle(color: Colors.white70)),
+          child: Padding(
+            padding: const EdgeInsets.all(DesignTokens.space6),
+            child: Text(
+              'Yüklenemedi: $e',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: ext.textSecondary,
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -68,7 +68,7 @@ class AiSalesAssistantPanel extends ConsumerWidget {
                 'Bu müşteri %$purchaseProbability satın alma ihtimali taşıyor.',
                 style: _bodyStyle(context).copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: AppThemeExtension.of(context).textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -165,22 +165,25 @@ class AiSalesAssistantPanel extends ConsumerWidget {
   }
 
   static TextStyle _titleStyle(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Theme.of(context).textTheme.titleMedium!.copyWith(
-          color: Colors.white,
+          color: ext.textPrimary,
           fontWeight: FontWeight.w600,
         );
   }
 
   static TextStyle _bodyStyle(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Theme.of(context).textTheme.bodySmall!.copyWith(
-          color: Colors.white70,
+          color: ext.textSecondary,
           height: 1.4,
         );
   }
 
   static TextStyle _labelStyle(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Theme.of(context).textTheme.labelSmall!.copyWith(
-          color: Colors.white60,
+          color: ext.textTertiary,
           letterSpacing: 0.5,
         );
   }
@@ -218,6 +221,8 @@ class _GlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -226,7 +231,17 @@ class _GlassPanel extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withValues(alpha: 0.06),
+            color: (isDark ? ext.surfaceElevated : ext.surface).withValues(
+              alpha: isDark ? 0.72 : 0.9,
+            ),
+            border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+            boxShadow: [
+              BoxShadow(
+                color: ext.shadowColor.withValues(alpha: isDark ? 0.28 : 0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: child,
         ),
@@ -243,12 +258,14 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final ext = AppThemeExtension.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withValues(alpha: 0.06),
+        color: ext.surface.withValues(alpha: 0.72),
+        border: Border.all(color: ext.border.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,7 +273,7 @@ class _InfoChip extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: theme.textTheme.labelSmall!.copyWith(
-              color: Colors.white60,
+              color: ext.textTertiary,
               letterSpacing: 1,
             ),
           ),
@@ -264,7 +281,7 @@ class _InfoChip extends StatelessWidget {
           Text(
             value,
             style: theme.textTheme.bodySmall!.copyWith(
-              color: Colors.white,
+              color: ext.textPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),
