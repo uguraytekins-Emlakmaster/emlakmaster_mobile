@@ -5,6 +5,14 @@ import 'package:logger/logger.dart';
 final class AppLogger {
   AppLogger._();
 
+  /// Ayrıntılı state/nav/api teşhisleri debug'ta bile varsayılan olarak kapalı.
+  /// Gerektiğinde `--dart-define=EM_VERBOSE_DEBUG_LOGS=true` ile açılabilir.
+  static const bool _verboseDebugLogs =
+      bool.fromEnvironment('EM_VERBOSE_DEBUG_LOGS');
+
+  static bool get verboseDiagnosticsEnabled =>
+      !kReleaseMode && _verboseDebugLogs;
+
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
       methodCount: 0,
@@ -33,25 +41,25 @@ final class AppLogger {
 
   /// Kayıt akışı teşhisi (release’te de warning seviyesinde görünür; PII yazmayın).
   static void forensic(String message) {
-    if (!kDebugMode) return;
+    if (!verboseDiagnosticsEnabled) return;
     _logger.w('[forensic] $message');
   }
 
   /// Yönlendirme / navigator (yalnızca debug/profile).
   static void nav(String message) {
-    if (kReleaseMode) return;
+    if (!verboseDiagnosticsEnabled) return;
     _logger.d('[nav] $message');
   }
 
   /// Riverpod / durum (yalnızca debug/profile).
   static void state(String message) {
-    if (kReleaseMode) return;
+    if (!verboseDiagnosticsEnabled) return;
     _logger.d('[state] $message');
   }
 
   /// HTTP / harici API (yalnızca debug/profile; URL veya gövde loglamayın).
   static void api(String message) {
-    if (kReleaseMode) return;
+    if (!verboseDiagnosticsEnabled) return;
     _logger.d('[api] $message');
   }
 }

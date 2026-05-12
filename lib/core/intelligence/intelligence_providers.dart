@@ -10,10 +10,10 @@ import 'package:emlakmaster_mobile/core/intelligence/market_pulse_client_rollup.
 import 'package:emlakmaster_mobile/features/listing_display/data/listing_display_settings_repository.dart';
 
 /// İlk okumada background servisi tetikler; sonuçlar Firestore'dan okunur.
-/// Bir tick gecikme: ilk frame çizilsin, sonra ağır Firestore yazıları çalışsın (bellek/GPU baskısı azalır).
+/// Kısa gecikme: ilk etkileşim tamamlanmadan ağır Firestore yazıları başlamasın.
 /// Spark (Blaze yok): [MarketPulseClientRollupService] ile heatmap/discovery güncellenir (throttle’lı).
 final intelligenceRunTriggerProvider = FutureProvider<void>((ref) async {
-  await Future<void>.delayed(Duration.zero);
+  await Future<void>.delayed(const Duration(seconds: 2));
   await BackgroundIntelligenceService.instance.runOnce();
   try {
     final settings = await ListingDisplaySettingsRepository.get();

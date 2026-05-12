@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../logging/app_logger.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
@@ -70,7 +71,10 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   int? _lastLoggedActiveIndex;
   int? _lastLoggedPageCount;
 
+  bool get _traceEnabled => AppLogger.verboseDiagnosticsEnabled;
+
   void _shellLog(String msg) {
+    if (!_traceEnabled) return;
     debugPrint('[ShellNav] $msg');
   }
 
@@ -133,11 +137,13 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       );
       return;
     }
-    developer.log(
-      'queued shortcut replay id=${command.id} shortcut=${command.shortcut} idx=$idx '
-      '(current=$_currentIndex)',
-      name: 'ShellNav.shortcut',
-    );
+    if (_traceEnabled) {
+      developer.log(
+        'queued shortcut replay id=${command.id} shortcut=${command.shortcut} idx=$idx '
+        '(current=$_currentIndex)',
+        name: 'ShellNav.shortcut',
+      );
+    }
     _applyTabSelection(
       idx,
       source: 'queuedShortcut(${command.shortcut})',
@@ -301,11 +307,13 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     final label = index >= 0 && index < widget.navItems.length
         ? widget.navItems[index].label
         : '?';
-    developer.log(
-      '$source received label="$label" targetIndex=$index selectedBefore=$_currentIndex '
-      'pageLen=${widget.pages.length} navLen=${widget.navItems.length}',
-      name: 'ShellNav.tap',
-    );
+    if (_traceEnabled) {
+      developer.log(
+        '$source received label="$label" targetIndex=$index selectedBefore=$_currentIndex '
+        'pageLen=${widget.pages.length} navLen=${widget.navItems.length}',
+        name: 'ShellNav.tap',
+      );
+    }
     if (widget.pages.isEmpty || widget.navItems.isEmpty) {
       _shellLog('onNavTap ignored: empty nav/pages');
       return;
@@ -322,10 +330,12 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       return;
     }
     if (index == _currentIndex) {
-      developer.log(
-        '$source noop (already on index=$index label="$label")',
-        name: 'ShellNav.tap',
-      );
+      if (_traceEnabled) {
+        developer.log(
+          '$source noop (already on index=$index label="$label")',
+          name: 'ShellNav.tap',
+        );
+      }
       return;
     }
     if (haptic) {
@@ -338,11 +348,13 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       _currentIndex = index;
       _materialized.add(index);
     });
-    developer.log(
-      '$source applied selectedAfter=$_currentIndex resolvedPage='
-      '${index < widget.pages.length ? widget.pages[index].runtimeType : "?"}',
-      name: 'ShellNav.tap',
-    );
+    if (_traceEnabled) {
+      developer.log(
+        '$source applied selectedAfter=$_currentIndex resolvedPage='
+        '${index < widget.pages.length ? widget.pages[index].runtimeType : "?"}',
+        name: 'ShellNav.tap',
+      );
+    }
     widget.onIndexChanged?.call(index);
   }
 

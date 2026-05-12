@@ -23,6 +23,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_access_state.dart';
 import 'package:emlakmaster_mobile/firebase_options.dart';
@@ -269,7 +270,7 @@ class EmlakMasterApp extends ConsumerStatefulWidget {
 class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   static bool _deferredInitDone = false;
   ProviderSubscription<AsyncValue<User?>>? _authUserSub;
-  ProviderSubscription<dynamic>? _userDocSub;
+  ProviderSubscription<AsyncValue<UserDoc?>>? _userDocSub;
   ProviderSubscription<AsyncValue<AppRole>>? _roleSub;
   ProviderSubscription<AsyncValue<OfficeAccessState>>? _officeAccessSub;
   ProviderSubscription<bool>? _needsRoleSub;
@@ -296,10 +297,12 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     _authUserSub = ref.listenManual(currentUserProvider, (prev, next) {
       try {
         final uid = next.valueOrNull?.uid;
-        AppLogger.state(
-          '[startup] currentUserProvider ${_describeAsync(next)} uid=${uid ?? "-"}',
-        );
-        _bindUserDocLogging(uid);
+        if (AppLogger.verboseDiagnosticsEnabled) {
+          AppLogger.state(
+            '[startup] currentUserProvider ${_describeAsync(next)} uid=${uid ?? "-"}',
+          );
+          _bindUserDocLogging(uid);
+        }
         if (uid != null && uid.isNotEmpty) {
           Future<void>.microtask(
               () => RegionDeepLinkBootstrap.consumePendingAfterAuth(ref));
@@ -335,6 +338,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   }
 
   void _bindStartupLogging() {
+    if (!AppLogger.verboseDiagnosticsEnabled) return;
     _roleSub = ref.listenManual(currentRoleProvider, (prev, next) {
       AppLogger.state(
         '[startup] currentRoleProvider ${_describeAsync(next)} value=${next.valueOrNull}',
@@ -366,6 +370,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   }
 
   void _bindUserDocLogging(String? uid) {
+    if (!AppLogger.verboseDiagnosticsEnabled) return;
     _userDocSub?.close();
     _userDocSub = null;
     if (uid == null || uid.isEmpty) {
@@ -373,7 +378,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
       return;
     }
     _userDocSub = ref.listenManual(userDocStreamProvider(uid), (prev, next) {
-      final doc = next.valueOrNull;
+      final doc = next.asData?.value;
       final officeId = doc?.officeId;
       final role = doc?.role;
       final shortUid = uid.length > 8 ? uid.substring(0, 8) : uid;

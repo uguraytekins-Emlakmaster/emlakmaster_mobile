@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../logging/app_logger.dart';
@@ -13,7 +12,7 @@ final class DebugRiverpodObserver extends ProviderObserver {
     Object? value,
     ProviderContainer container,
   ) {
-    if (!kDebugMode) return;
+    if (!AppLogger.verboseDiagnosticsEnabled) return;
     AppLogger.state('[+] ${provider.name ?? provider.runtimeType}');
   }
 
@@ -24,7 +23,7 @@ final class DebugRiverpodObserver extends ProviderObserver {
     Object? newValue,
     ProviderContainer container,
   ) {
-    if (!kDebugMode) return;
+    if (!AppLogger.verboseDiagnosticsEnabled) return;
     final name = provider.name;
     if (name != null && name.isNotEmpty) {
       AppLogger.state('[←] $name');
@@ -36,7 +35,7 @@ final class DebugRiverpodObserver extends ProviderObserver {
     ProviderBase<Object?> provider,
     ProviderContainer container,
   ) {
-    if (!kDebugMode) return;
+    if (!AppLogger.verboseDiagnosticsEnabled) return;
     AppLogger.state('[×] ${provider.name ?? provider.runtimeType}');
   }
 

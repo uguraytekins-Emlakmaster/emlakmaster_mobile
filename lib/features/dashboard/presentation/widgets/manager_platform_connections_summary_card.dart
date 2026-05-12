@@ -85,9 +85,9 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
     final borderColor = calm
         ? ext.accent.withValues(alpha: 0.32)
         : ext.border.withValues(alpha: 0.55);
-    // LayoutBuilder içinde MediaQuery okumak layout sırasında üst ağacı
-    // yeniden işaretleyip !_debugDoingThisLayout assert’ına yol açabiliyor.
+    // IntrinsicHeight ile birlikte LayoutBuilder kullanmak hit-test/layout zincirini bozabiliyor.
     final textScaler = MediaQuery.textScalerOf(context);
+    final compactHealthCopy = MediaQuery.sizeOf(context).width < 420;
 
     return RepaintBoundary(
       child: Padding(
@@ -207,28 +207,24 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
-                                    child: LayoutBuilder(
-                                      builder: (context, c) {
-                                        final narrow = c.maxWidth < 300;
-                                        final ratio = textScaler.scale(
-                                                DesignTokens.fontSizeBase) /
-                                            DesignTokens.fontSizeBase;
-                                        return Text(
-                                          healthLine,
-                                          style: AppTypography.body(context)
-                                              .copyWith(
-                                            color: healthColor,
-                                            height: 1.38,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: narrow || ratio > 1.15
-                                                ? DesignTokens.fontSizeSm
-                                                : null,
-                                          ),
-                                          maxLines: 4,
-                                          overflow: TextOverflow.ellipsis,
-                                          softWrap: true,
-                                        );
-                                      },
+                                    child: Text(
+                                      healthLine,
+                                      style: AppTypography.body(context).copyWith(
+                                        color: healthColor,
+                                        height: 1.38,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: compactHealthCopy ||
+                                                textScaler.scale(
+                                                      DesignTokens.fontSizeBase,
+                                                    ) >
+                                                    DesignTokens.fontSizeBase *
+                                                        1.15
+                                            ? DesignTokens.fontSizeSm
+                                            : null,
+                                      ),
+                                      maxLines: 4,
+                                      overflow: TextOverflow.ellipsis,
+                                      softWrap: true,
                                     ),
                                   ),
                                 ],

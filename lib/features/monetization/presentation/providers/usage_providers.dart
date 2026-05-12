@@ -53,9 +53,15 @@ class _UsageTrackerNotifier extends StateNotifier<UsageTracker> {
   final bool _isPro;
   bool _loaded = false;
 
+  bool _setStateIfMounted(UsageTracker next) {
+    if (!mounted) return false;
+    state = next;
+    return true;
+  }
+
   Future<void> _load() async {
     if (_userId.isEmpty) {
-      state = UsageTracker.initial(userId: '', isPro: _isPro);
+      _setStateIfMounted(UsageTracker.initial(userId: '', isPro: _isPro));
       _loaded = true;
       return;
     }
@@ -63,9 +69,11 @@ class _UsageTrackerNotifier extends StateNotifier<UsageTracker> {
     final existing = await store.getUsage(_userId);
     final base = existing?.copyWith(isPro: _isPro) ??
         UsageTracker.initial(userId: _userId, isPro: _isPro);
-    state = await store.resetIfNewPeriod(base);
+    final refreshed = await store.resetIfNewPeriod(base);
+    if (!_setStateIfMounted(refreshed)) return;
     if (state.isPro != _isPro) {
-      state = state.copyWith(isPro: _isPro);
+      final updated = state.copyWith(isPro: _isPro);
+      if (!_setStateIfMounted(updated)) return;
       await store.saveUsage(state);
     }
     _loaded = true;
@@ -78,6 +86,7 @@ class _UsageTrackerNotifier extends StateNotifier<UsageTracker> {
 
   Future<void> incrementAi() async {
     await ensureLoaded();
-    state = await store.incrementAi(state);
+    final next = await store.incrementAi(state);
+    _setStateIfMounted(next);
   }
 }
