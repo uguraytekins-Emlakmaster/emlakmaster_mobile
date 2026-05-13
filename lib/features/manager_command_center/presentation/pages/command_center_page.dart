@@ -527,18 +527,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   Widget _buildSearchBar() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surfaceCard = isDark
-        ? AppThemeExtension.of(context).card
-        : AppThemeExtension.of(context).surface;
-    final textPrimary = isDark
-        ? AppThemeExtension.of(context).textPrimary
-        : AppThemeExtension.of(context).textPrimary;
-    final textSecondary = isDark
-        ? AppThemeExtension.of(context).textSecondary
-        : AppThemeExtension.of(context).textSecondary;
-    final border = isDark
-        ? AppThemeExtension.of(context).border
-        : AppThemeExtension.of(context).border;
+    final ext = AppThemeExtension.of(context);
+    final surfaceCard = isDark ? ext.card : ext.surface;
+    final textPrimary = ext.textPrimary;
+    final textSecondary = ext.textSecondary;
+    final border = ext.border;
     return Padding(
       padding: const EdgeInsets.symmetric(
           horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
@@ -552,11 +545,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               decoration: InputDecoration(
                 hintText: 'Telefon, sonuç, not, müşteri veya danışman...',
                 hintStyle: TextStyle(
-                    color: textSecondary.withValues(alpha: 0.7), fontSize: 14),
+                  color: isDark
+                      ? textSecondary.withValues(alpha: 0.7)
+                      : ext.textPassive,
+                  fontSize: 14,
+                ),
                 prefixIcon: Icon(Icons.search_rounded,
-                    color: AppThemeExtension.of(context)
-                        .accent
-                        .withValues(alpha: 0.9),
+                    color: ext.accent.withValues(alpha: 0.9),
                     size: 22),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -581,8 +576,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide: BorderSide(
-                      color: AppThemeExtension.of(context).accent, width: 1.2),
+                  borderSide:
+                      BorderSide(color: ext.accent, width: 1.2),
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

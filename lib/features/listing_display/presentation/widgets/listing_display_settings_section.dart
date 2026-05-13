@@ -674,7 +674,7 @@ class _CityPickerSheetContentState extends State<_CityPickerSheetContent> {
                   style: TextStyle(color: ext.textPrimary, fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'İl ara…',
-                    hintStyle: TextStyle(color: ext.textTertiary, fontSize: 14),
+                    hintStyle: TextStyle(color: ext.textPassive, fontSize: 14),
                     prefixIcon: Icon(
                       Icons.search_rounded,
                       color: ext.textSecondary,
@@ -886,7 +886,7 @@ class _DistrictPickerSheetContentState
                   style: TextStyle(color: ext.textPrimary, fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'İlçe ara…',
-                    hintStyle: TextStyle(color: ext.textTertiary, fontSize: 14),
+                    hintStyle: TextStyle(color: ext.textPassive, fontSize: 14),
                     prefixIcon: Icon(
                       Icons.search_rounded,
                       color: ext.textSecondary,

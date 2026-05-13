@@ -229,7 +229,7 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
           child: TextField(
             decoration: InputDecoration(
               hintText: l10n.t('search_consultants'),
-              hintStyle: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: DesignTokens.fontSizeSm),
+              hintStyle: TextStyle(color: AppThemeExtension.of(context).textPassive, fontSize: DesignTokens.fontSizeSm),
               prefixIcon: Icon(Icons.search_rounded, color: AppThemeExtension.of(context).textTertiary),
               filled: true,
               fillColor: AppThemeExtension.of(context).surface,

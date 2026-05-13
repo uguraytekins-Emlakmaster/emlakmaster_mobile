@@ -24,7 +24,7 @@ abstract final class AuthFieldDecoration {
       labelText: label,
       hintText: hint,
       labelStyle: TextStyle(color: ext.textTertiary),
-      hintStyle: TextStyle(color: ext.textTertiary),
+      hintStyle: TextStyle(color: ext.textPassive),
       prefixIcon: prefix,
       suffixIcon: suffix,
       prefixIconColor: ext.textTertiary,

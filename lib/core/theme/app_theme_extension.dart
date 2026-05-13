@@ -15,6 +15,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     required this.foreground,
     required this.foregroundSecondary,
     required this.foregroundMuted,
+    required this.foregroundPassive,
     required this.border,
     required this.borderSubdle,
     required this.inputBackground,
@@ -40,6 +41,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   final Color foreground;
   final Color foregroundSecondary;
   final Color foregroundMuted;
+  /// Yer tutucu, pasif alt gezinme (seçili değil), düşük öncelikli krom — seçili altınla rekabet etmez.
+  final Color foregroundPassive;
   final Color border;
   final Color borderSubdle;
   final Color inputBackground;
@@ -61,6 +64,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   Color get textPrimary => foreground;
   Color get textSecondary => foregroundSecondary;
   Color get textTertiary => foregroundMuted;
+  Color get textPassive => foregroundPassive;
   Color get accent => brandPrimary;
   Color get borderSubtle => borderSubdle;
 
@@ -144,6 +148,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       foreground: ThemePalette.textPrimaryLight,
       foregroundSecondary: ThemePalette.textSecondaryLight,
       foregroundMuted: ThemePalette.textTertiaryLight,
+      foregroundPassive: ThemePalette.textPassiveLight,
       border: ThemePalette.borderLight,
       borderSubdle: ThemePalette.borderLight,
       inputBackground: ThemePalette.surfaceLight,
@@ -172,6 +177,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       foreground: ThemePalette.textPrimaryDark,
       foregroundSecondary: ThemePalette.textSecondaryDark,
       foregroundMuted: ThemePalette.textTertiaryDark,
+      foregroundPassive: ThemePalette.textTertiaryDark,
       border: ThemePalette.borderDark,
       borderSubdle: ThemePalette.borderDark.withValues(alpha: 0.6),
       inputBackground: ThemePalette.inputBackgroundGold.withValues(alpha: 0.25),
@@ -208,6 +214,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     Color? foreground,
     Color? foregroundSecondary,
     Color? foregroundMuted,
+    Color? foregroundPassive,
     Color? border,
     Color? borderSubdle,
     Color? inputBackground,
@@ -233,6 +240,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       foreground: foreground ?? this.foreground,
       foregroundSecondary: foregroundSecondary ?? this.foregroundSecondary,
       foregroundMuted: foregroundMuted ?? this.foregroundMuted,
+      foregroundPassive: foregroundPassive ?? this.foregroundPassive,
       border: border ?? this.border,
       borderSubdle: borderSubdle ?? this.borderSubdle,
       inputBackground: inputBackground ?? this.inputBackground,
@@ -263,6 +271,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       foreground: Color.lerp(foreground, other.foreground, t)!,
       foregroundSecondary: Color.lerp(foregroundSecondary, other.foregroundSecondary, t)!,
       foregroundMuted: Color.lerp(foregroundMuted, other.foregroundMuted, t)!,
+      foregroundPassive: Color.lerp(foregroundPassive, other.foregroundPassive, t)!,
       border: Color.lerp(border, other.border, t)!,
       borderSubdle: Color.lerp(borderSubdle, other.borderSubdle, t)!,
       inputBackground: Color.lerp(inputBackground, other.inputBackground, t)!,

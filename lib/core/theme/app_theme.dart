@@ -145,7 +145,7 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: ext.inputBackground,
-        hintStyle: TextStyle(color: ext.textTertiary),
+        hintStyle: TextStyle(color: ext.textPassive),
         labelStyle: TextStyle(color: ext.textSecondary),
         prefixIconColor: ext.textSecondary,
         suffixIconColor: ext.textSecondary,
@@ -232,14 +232,14 @@ abstract final class AppTheme {
         indicatorColor: ext.accent.withValues(alpha: isDark ? 0.18 : 0.14),
         selectedIconTheme: IconThemeData(color: ext.accent),
         unselectedIconTheme: IconThemeData(
-          color: isDark ? ext.textTertiary : ext.textSecondary,
+          color: isDark ? ext.textTertiary : ext.textPassive,
         ),
         selectedLabelTextStyle: textTheme.labelMedium?.copyWith(
           color: ext.textPrimary,
           fontWeight: FontWeight.w700,
         ),
         unselectedLabelTextStyle: textTheme.labelMedium?.copyWith(
-          color: ext.textSecondary,
+          color: isDark ? ext.textSecondary : ext.textPassive,
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -251,10 +251,10 @@ abstract final class AppTheme {
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: ext.surface,
         selectedItemColor: ext.accent,
-        unselectedItemColor: isDark ? ext.textTertiary : ext.textSecondary,
+        unselectedItemColor: isDark ? ext.textTertiary : ext.textPassive,
         selectedIconTheme: IconThemeData(color: ext.accent),
         unselectedIconTheme: IconThemeData(
-          color: isDark ? ext.textTertiary : ext.textSecondary,
+          color: isDark ? ext.textTertiary : ext.textPassive,
         ),
         type: BottomNavigationBarType.fixed,
         elevation: 0,

@@ -297,7 +297,7 @@ class _RainbowAnalyticsCenterPageState
           labelText: label,
           hintText: hint,
           labelStyle: TextStyle(color: ext.textSecondary),
-          hintStyle: TextStyle(color: ext.textTertiary),
+          hintStyle: TextStyle(color: ext.textPassive),
           fillColor: ext.inputBackground,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),

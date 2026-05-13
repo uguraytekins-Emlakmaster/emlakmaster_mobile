@@ -403,7 +403,9 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     final ext = AppThemeExtension.of(context);
     final surface = ext.surface;
     final primary = theme.colorScheme.primary;
-    final onSurfaceVariant = ext.textSecondary;
+    final navUnselectedColor = theme.brightness == Brightness.dark
+        ? ext.textSecondary
+        : ext.textPassive;
 
     if (widget.pages.isEmpty || widget.navItems.isEmpty) {
       _shellLog('build: empty pages — showing fallback scaffold');
@@ -517,7 +519,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
               backgroundColor: surface,
               selectedIconTheme: IconThemeData(color: primary, size: 24),
               unselectedIconTheme:
-                  IconThemeData(color: onSurfaceVariant, size: 22),
+                  IconThemeData(color: navUnselectedColor, size: 22),
               labelType: NavigationRailLabelType.all,
               destinations: widget.navItems
                   .map((e) => NavigationRailDestination(
@@ -568,7 +570,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                             Icon(
                               item.icon,
                               size: 22,
-                              color: isSelected ? primary : onSurfaceVariant,
+                              color: isSelected ? primary : navUnselectedColor,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -578,7 +580,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.w500,
-                                color: isSelected ? primary : onSurfaceVariant,
+                                color:
+                                    isSelected ? primary : navUnselectedColor,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

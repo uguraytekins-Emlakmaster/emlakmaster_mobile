@@ -207,7 +207,7 @@ class CustomerDetailPage extends ConsumerWidget {
                 style: TextStyle(color: ext.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Not metni…',
-                  hintStyle: TextStyle(color: ext.textTertiary),
+                  hintStyle: TextStyle(color: ext.textPassive),
                   border: OutlineInputBorder(
                     borderRadius:
                         BorderRadius.circular(DesignTokens.radiusControl),

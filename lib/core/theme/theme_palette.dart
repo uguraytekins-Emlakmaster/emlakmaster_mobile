@@ -33,10 +33,11 @@ abstract final class ThemePalette {
   static const Color danger = Color(0xFFC62828);
   static const Color info = Color(0xFF8E8E93);
 
-  static const Color backgroundLight = Color(0xFFF8F6F3);
+  /// Açık tema: hafif sıcak zemin, yüksek kontrast metin (premium + okunabilirlik).
+  static const Color backgroundLight = Color(0xFFF7F5F1);
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceLightElevated = Color(0xFFFDFCF9);
-  static const Color borderLight = Color(0xFFE8E4DF);
+  static const Color surfaceLightElevated = Color(0xFFFCFAF7);
+  static const Color borderLight = Color(0xFFE4DED5);
 
   static const Color textPrimaryDark = Color(0xFFF5F5F5);
 
@@ -44,9 +45,11 @@ abstract final class ThemePalette {
   static const Color textSecondaryDark = Color(0xFFC8C8CE);
   static const Color textTertiaryDark = Color(0xFF9A9AA3);
 
-  static const Color textPrimaryLight = Color(0xFF171513);
-  static const Color textSecondaryLight = Color(0xFF524D46);
-  static const Color textTertiaryLight = Color(0xFF6E6860);
+  static const Color textPrimaryLight = Color(0xFF111111);
+  static const Color textSecondaryLight = Color(0xFF3F3A36);
+  static const Color textTertiaryLight = Color(0xFF5F5852);
+  /// Form yer tutucu, pasif alt gezinme — üçüncülden biraz daha yumuşak, yine de gün ışığında okunur.
+  static const Color textPassiveLight = Color(0xFF7A736B);
 
   static const Color primaryGlow = Color(0xFFBFA071);
 

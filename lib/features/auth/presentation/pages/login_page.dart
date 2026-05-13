@@ -678,7 +678,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                         labelText: 'E-posta',
                         hintText: 'ornek@firma.com',
                         labelStyle: TextStyle(color: ext.textTertiary),
-                        hintStyle: TextStyle(color: ext.textTertiary),
+                        hintStyle: TextStyle(color: ext.textPassive),
                         prefixIcon:
                             Icon(Icons.email_outlined, color: ext.textTertiary),
                         filled: true,

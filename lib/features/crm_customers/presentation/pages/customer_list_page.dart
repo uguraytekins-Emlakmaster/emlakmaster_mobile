@@ -814,9 +814,9 @@ class _SearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: AppLocalizations.of(context).t('search_customers'),
           hintStyle: TextStyle(
-              color: ext.textTertiary, fontSize: DesignTokens.fontSizeBase),
+              color: ext.textPassive, fontSize: DesignTokens.fontSizeBase),
           prefixIcon:
-              Icon(Icons.search_rounded, color: ext.textTertiary, size: 22),
+              Icon(Icons.search_rounded, color: ext.textPassive, size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
               horizontal: DesignTokens.space4, vertical: 12),
