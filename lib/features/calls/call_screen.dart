@@ -628,7 +628,7 @@ class _CallStatusChip extends StatelessWidget {
         bg = ext.warning.withValues(alpha: 0.16);
         fg = ext.warning;
       case CallUIState.connected:
-        label = isMagicCallSession ? 'Akıllı görüşme · kayıt' : 'Görüşmede';
+        label = isMagicCallSession ? 'Akıllı görüşme · kayıt' : 'Çağrıda';
         bg = ext.success.withValues(alpha: 0.14);
         fg = ext.success;
       case CallUIState.ending:
@@ -759,7 +759,7 @@ class _CallHeroCard extends ConsumerWidget {
               Text(
                 isMagicCallSession
                     ? 'Uygulama içi kayıt oturumu · akıllı asistan altta'
-                    : 'Görüşme kaydı · akıllı asistan altta',
+                    : 'Çağrı kaydı · akıllı asistan altta',
                 style: theme.textTheme.labelSmall
                     ?.copyWith(color: ext.textTertiary),
                 textAlign: TextAlign.center,
@@ -881,7 +881,7 @@ class _CallTimerSection extends StatelessWidget {
       case CallUIState.connected:
         hint = 'Aktif süre';
       case CallUIState.ending:
-        hint = 'Görüşme kapatılıyor ve özet hazırlanıyor';
+        hint = 'Çağrı kapanıyor ve özet hazırlanıyor';
     }
     return Column(
       children: [

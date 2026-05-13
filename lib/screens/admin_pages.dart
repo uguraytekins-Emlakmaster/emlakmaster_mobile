@@ -99,7 +99,7 @@ class AdminReportsPage extends ConsumerWidget {
               onTap: () => context.push(AppRouter.routeCommandCenter),
               child: const _SectionCard(
                 icon: Icons.phone_callback_rounded,
-                title: ProductLabels.conversationHub,
+                title: ProductLabels.callCenter,
                 subtitle: 'Danışman, müşteri ve kayıt görünümleri tek yerde.',
               ),
             ),
@@ -260,7 +260,7 @@ class _AdminReportsPerfSectionState extends State<_AdminReportsPerfSection> {
                 icon: Icons.analytics_rounded,
                 title: 'Performans görünümü',
                 subtitle:
-                    'Görüşme ve kapanış eğilimleri için ayrıntılı rapor yakında',
+                    'Çağrı ve kapanış eğilimleri için ayrıntılı rapor yakında',
               ),
             );
           },

@@ -531,7 +531,7 @@ String _v2BrokerLine(PostCallCrmSignals? s) {
   if (s.nextActionHint.trim().isNotEmpty) {
     return 'Önerilen aksiyona ek olarak tek cümlede teyit isteyin.';
   }
-  return 'Görüşmeyi somut bir sonraki adım (tarih veya görüntüleme) ile kapatın.';
+  return 'Çağrıyı somut bir sonraki adım (tarih veya görüntüleme) ile kapatın.';
 }
 
 /// Sihirbazdaki [CallSentiment] için kısa etiket (post_call_wizard ile uyumlu). v2 tonu.

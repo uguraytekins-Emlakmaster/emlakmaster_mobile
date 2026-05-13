@@ -59,7 +59,7 @@ class OpportunityRadarWidget extends ConsumerWidget {
                 ),
                 onPressed: () => context.push(AppRouter.routeWarRoom),
                 child: Text(
-                  ProductLabels.operationsRoom,
+                  ProductLabels.warRoom,
                   style: TextStyle(color: ext.accent, fontSize: 12),
                 ),
               ),

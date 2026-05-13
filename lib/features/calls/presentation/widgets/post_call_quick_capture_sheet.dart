@@ -324,7 +324,7 @@ class _PostCallQuickCaptureBodyState
                   ),
                   const SizedBox(height: DesignTokens.space2),
                   Text(
-                    'Görüşme cihazınızın telefonunda yapıldı; süre burada ölçülmez.',
+                    'Çağrı cihazınızın telefonunda yapıldı; süre burada ölçülmez.',
                     style: AppTypography.meta(context),
                   ),
                 ],

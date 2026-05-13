@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -1247,7 +1248,7 @@ class _QuickStatsCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Geri kazanım',
+                        ProductLabels.followUp,
                         style: AppTypography.cardHeading(context).copyWith(
                           fontSize: compact
                               ? DesignTokens.fontSizeMd
@@ -1258,7 +1259,7 @@ class _QuickStatsCard extends ConsumerWidget {
                       ),
                       if (isLoading)
                         Text(
-                          'Geri kazanım akışı yükleniyor...',
+                          'Takip akışı yükleniyor…',
                           style: AppTypography.body(context),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

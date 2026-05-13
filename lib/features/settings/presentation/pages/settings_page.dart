@@ -240,7 +240,7 @@ class SettingsPage extends ConsumerWidget {
                     color: AppThemeExtension.of(context).accent,
                   ),
                   title: Text(
-                    usage.isPro ? 'PRO üyelik açık' : 'Başlangıç planı',
+                    usage.isPro ? 'PRO üyelik açık' : 'Temel Plan',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
@@ -286,7 +286,7 @@ class SettingsPage extends ConsumerWidget {
                                     theme.dividerColor.withValues(alpha: 0.5)),
                           ),
                           child: Text(
-                            'Başlangıç',
+                            'Temel',
                             style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.75),
@@ -310,7 +310,7 @@ class SettingsPage extends ConsumerWidget {
                       color: AppThemeExtension.of(context).accent,
                     ),
                     title: Text(
-                      'PRO ayrıcalıklarını gör',
+                      'Pro\u2019yu keşfet',
                       style: TextStyle(color: theme.colorScheme.onSurface),
                     ),
                     subtitle: Text(
@@ -332,14 +332,14 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(
-                title: 'İletişim Akışı', icon: Icons.forum_rounded),
+                title: ProductLabels.messageCenter, icon: Icons.forum_rounded),
             _sectionCard(
               context,
               children: [
                 ListTile(
                   leading: Icon(Icons.chat_bubble_outline_rounded,
                       color: theme.colorScheme.primary),
-                  title: Text('Mesaj akışı',
+                  title: Text(ProductLabels.messages,
                       style: TextStyle(color: theme.colorScheme.onSurface)),
                   subtitle: Text(
                     'Bağlı kanallardan gelen tüm mesajlar tek akışta',
@@ -356,19 +356,19 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(
-                title: 'Görüşmeler ve Kayıtlar', icon: Icons.call_rounded),
+                title: 'Çağrılar ve kayıtlar', icon: Icons.call_rounded),
             _sectionCard(
               context,
               children: [
                 ListTile(
                   leading: Icon(Icons.call_made_rounded,
                       color: AppThemeExtension.of(context).accent, size: 22),
-                  title: Text('Görüşme akışı',
+                  title: Text(ProductLabels.myCalls,
                       style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500)),
                   subtitle: Text(
-                    'Danışman alanındaki görüşmeler, toplu mesaj araçları ve Android telefon geçmişi eşlemesi.',
+                    'Danışman alanındaki çağrılar, toplu mesaj ve Android telefon geçmişi eşlemesi.',
                     style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -397,7 +397,7 @@ class SettingsPage extends ConsumerWidget {
                       height: 1,
                       color: theme.dividerColor.withValues(alpha: 0.45)),
                   _SettingSwitch(
-                    title: 'Görüşme özeti',
+                    title: 'Çağrı özeti',
                     subtitle: 'Arama sonrası akıllı özet',
                     icon: Icons.summarize_rounded,
                     value: flags[AppConstants.keyFeatureCallSummary] ?? true,
@@ -755,7 +755,7 @@ class SettingsPage extends ConsumerWidget {
                   _SettingSwitch(
                     title: 'Odaklı V1 (önerilen)',
                     subtitle:
-                        'Açıkken: Komuta Odası ve Piyasa sekmeleriyle ikincil içgörü panelleri gizlenir; çekirdek müşteri akışı görünür kalır. Kapattığınızda tam ürün seti açılır.',
+                        'Açıkken Komuta Odası ve Ekonomi sekmeleriyle ikincil içgörü panelleri gizlenir; çekirdek müşteri akışı görünür kalır. Kapattığınızda tam ürün seti açılır.',
                     icon: Icons.bolt_outlined,
                     value: flags[AppConstants.keyV1LeanProduct] ?? true,
                     onChanged: (v) => ref
@@ -776,7 +776,7 @@ class SettingsPage extends ConsumerWidget {
                 children: [
                   _SettingSwitch(
                     title: 'KPI çubuğu',
-                    subtitle: 'Ana Bakış üstündeki hızlı göstergeler',
+                    subtitle: 'Özet ekranın üstündeki hızlı göstergeler',
                     icon: Icons.bar_chart_rounded,
                     value: flags[AppConstants.keyFeatureKpiBar] ?? true,
                     onChanged: (v) => ref
@@ -784,7 +784,7 @@ class SettingsPage extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureKpiBar, v),
                   ),
                   _SettingSwitch(
-                    title: 'Komuta Odası',
+                    title: ProductLabels.warRoom,
                     subtitle: 'Ofis ritmi, hedefler ve öncelikli alanlar',
                     icon: Icons.military_tech_rounded,
                     value: flags[AppConstants.keyFeatureWarRoom] ?? true,
@@ -793,8 +793,8 @@ class SettingsPage extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureWarRoom, v),
                   ),
                   _SettingSwitch(
-                    title: 'Görüşme Üssü',
-                    subtitle: 'Tüm görüşmeler ve operasyon görünümü',
+                    title: ProductLabels.callCenter,
+                    subtitle: 'Tüm çağrılar ve operasyon görünümü',
                     icon: Icons.call_merge_rounded,
                     value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
                     onChanged: (v) => ref
@@ -1139,7 +1139,7 @@ class _FavoriteInvestRegionTileState
             color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
-        'Ana Bakış içindeki yatırım iştahı özeti bu ilçeye göre hesaplanır.',
+        'Komuta Merkezi içindeki yatırım iştahı özeti bu ilçeye göre hesaplanır.',
         style: TextStyle(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
           fontSize: 11,

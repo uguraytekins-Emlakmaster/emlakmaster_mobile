@@ -18,8 +18,8 @@ import 'client_shell.dart';
 import 'consultant_shell.dart';
 
 /// RBAC: Giriş sonrası rolüne göre Admin, Consultant veya Client paneli.
-/// - ADMIN: Dashboard, War Room, çağrı merkezi, raporlar, ekonomi, ayarlar.
-/// - CONSULTANT: Özetim, müşteriler, ilanlar, Magic Call, takip, ayarlar.
+/// - ADMIN: Komuta Merkezi, Komuta Odası, Çağrı Merkezi, raporlar, ekonomi, ayarlar.
+/// - CONSULTANT: Günüm, Müşterilerim, ilanlar, Akıllı Görüşme, takip, ayarlar.
 /// - CLIENT: Arama, favoriler, mesajlar, sanal tur, profil.
 class RoleBasedShellSelector extends ConsumerStatefulWidget {
   const RoleBasedShellSelector({super.key});

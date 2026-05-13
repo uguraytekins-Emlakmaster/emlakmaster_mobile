@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -38,7 +39,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         context,
         backgroundColor: AppThemeExtension.of(context).background,
         foregroundColor: AppThemeExtension.of(context).textPrimary,
-        title: const Text('Görev Akışı'),
+        title: const Text(ProductLabels.myTasks),
       ),
       body: uid.isEmpty
           ? Center(

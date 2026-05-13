@@ -66,7 +66,7 @@ NextBestActionSnapshot computeNextBestAction(
     return const NextBestActionSnapshot(
       code: NextBestActionCode.confirm_appointment,
       labelTr: 'Randevuyu netleştirin',
-      reasonTr: 'Görüşme veya randevu geçti; tarih ve saati teyit edin.',
+      reasonTr: 'Çağrı veya randevu geçti; tarih ve saati teyit edin.',
     );
   }
 
@@ -134,7 +134,7 @@ NextBestActionSnapshot computeNextBestAction(
   if (heat.heatLevel == CustomerHeatLevel.warm) {
     return const NextBestActionSnapshot(
       code: NextBestActionCode.schedule_visit,
-      labelTr: 'Görüşme veya sunum',
+      labelTr: 'Çağrı veya sunum',
       reasonTr: 'Ilık lead; somut ilan veya sunum için randevu önerin.',
     );
   }

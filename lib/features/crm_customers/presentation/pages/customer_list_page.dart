@@ -772,9 +772,9 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             narrow
-                                ? 'Kayıt ekranında rehber ve müşteri akışı bir arada. Akıllı görüşme sonrası kişiler Görüşmeler alanına düşer.'
+                                ? 'Kayıt ekranında rehber ve müşteri akışı bir arada. Akıllı görüşme sonrası kişiler Çağrılarım sekmesine düşer.'
                                 : 'Kayıt ekranında rehbere yazma ve uygulama müşteri akışına ekleme tek yerde buluşur; '
-                                    'akıllı görüşme sonrası kişiler de Görüşmeler alanından izlenir.',
+                                    'akıllı görüşme sonrası kişiler de Çağrılarım sekmesinden izlenir.',
                             textAlign: TextAlign.center,
                             style: AppTypography.meta(context).copyWith(
                               color: ext.textTertiary.withValues(alpha: 0.95),

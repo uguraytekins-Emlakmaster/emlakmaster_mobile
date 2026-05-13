@@ -39,10 +39,10 @@ class PostCallWizardContextStrip extends ConsumerWidget {
         final n = c?.fullName?.trim();
         if (n != null && n.isNotEmpty) return n;
         if (formatted != null) return formatted;
-        return 'Görüşme özeti';
+        return 'Çağrı özeti';
       },
       loading: () => 'Müşteri bilgisi…',
-      error: (_, __) => formatted ?? 'Görüşme özeti',
+      error: (_, __) => formatted ?? 'Çağrı özeti',
     );
 
     final subtitle = linked

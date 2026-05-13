@@ -50,9 +50,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       icon: Icons.insights_rounded,
     ),
     _OnboardingSlideData(
-      title: 'Komuta odası ve ekip akışı',
+      title: 'Komuta merkezi ve ekip akışı',
       subtitle:
-          'Görüşme üssü, müşteri takibi ve ekip koordinasyonu tek yerde. Operasyon ritmini gerçek zamanlı yönetin.',
+          'Çağrı merkezi, müşteri takibi ve ekip koordinasyonu tek yerde. Operasyonu anlık yönetin.',
       icon: Icons.military_tech_rounded,
     ),
   ];

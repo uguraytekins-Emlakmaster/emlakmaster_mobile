@@ -509,7 +509,7 @@ class _OpportunityRadarTeaser extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Talep ılıklığı, geri kazanım ve derin analiz — ${ProductLabels.operationsRoom}',
+                      'Talep ılıklığı, takip ve derin analiz — ${ProductLabels.warRoom}',
                       style: TextStyle(
                         color: ext.textTertiary.withValues(alpha: 0.95),
                         fontSize: 11,

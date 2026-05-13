@@ -239,7 +239,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
         budgetRange: '—',
         preferredRegions: '—',
         urgency: '—',
-        nextStepSuggestion: 'Görüşme notlarınızı kaydedin.',
+        nextStepSuggestion: 'Çağrı notlarınızı kaydedin.',
         sentiment: CallSentiment.uncertain,
         fullSummary: '',
       );
@@ -973,7 +973,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Görüşme sonrası',
+                              'Çağrı sonrası',
                               style:
                                   AppTypography.cardHeading(context).copyWith(
                                 color: ext.textPrimary,
@@ -1375,7 +1375,7 @@ class _AnalyzingHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Görüşme okunuyor…',
+          'Çağrı metni okunuyor…',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: ext.textPrimary,
                 fontWeight: FontWeight.w700,

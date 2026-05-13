@@ -89,7 +89,7 @@ class ManagerRevenueSummaryCard extends ConsumerWidget {
           _Row(
             icon: Icons.cloud_sync_outlined,
             iconColor: ext.textSecondary,
-            title: 'Senkron özeti',
+            title: 'Senkron Durumu',
             subtitle: syncSummary,
           ),
           if (!anySignals) ...[

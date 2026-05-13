@@ -185,7 +185,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                 title: Text(ProductLabels.managerWorkspace,
                     style: TextStyle(color: onSurface)),
                 subtitle: Text(
-                  '${ProductLabels.overview}, ${ProductLabels.operationsRoom}, ${ProductLabels.conversationHub}, Ekonomi, Raporlar ve Kadro',
+                  '${ProductLabels.managerHome}, ${ProductLabels.warRoom}, ${ProductLabels.callCenter}, Ekonomi, ${ProductLabels.reports} ve Kadro',
                   style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: preferConsultant != true
@@ -207,7 +207,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                 title: Text(ProductLabels.consultantWorkspace,
                     style: TextStyle(color: onSurface)),
                 subtitle: Text(
-                  '${ProductLabels.overview}, ${ProductLabels.myCustomers}, ${ProductLabels.listings}, ${ProductLabels.revival}, ${ProductLabels.conversations}',
+                  '${ProductLabels.consultantHome}, ${ProductLabels.myCustomers}, ${ProductLabels.listings}, ${ProductLabels.followUp}, ${ProductLabels.myCalls}',
                   style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: preferConsultant == true

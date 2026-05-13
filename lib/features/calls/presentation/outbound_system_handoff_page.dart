@@ -167,7 +167,7 @@ class _OutboundSystemHandoffPageState
           const SnackBar(
             content: Text(
               'CRM çağrı oturumu açılamadı; arama yine de başlatıldı. '
-              'Görüşmeden sonra hızlı kayıtla CRM\'e ekleyebilirsiniz.',
+              'Çağrıdan sonra hızlı kayıtla CRM\'e ekleyebilirsiniz.',
             ),
             behavior: SnackBarBehavior.floating,
           ),

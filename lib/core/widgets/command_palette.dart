@@ -265,6 +265,14 @@ class _CommandPaletteContentState
 
 enum _PaletteActionKind { route, homeShortcut }
 
+String _paletteHomeShortcutLabel(AppRole role) {
+  if (FeaturePermission.seesClientPanel(role)) return 'Keşfet';
+  if (FeaturePermission.seesAdminPanel(role)) {
+    return ProductLabels.managerHome;
+  }
+  return ProductLabels.consultantHome;
+}
+
 class _PaletteAction {
   const _PaletteAction.route({
     required this.label,
@@ -289,8 +297,8 @@ class _PaletteAction {
 
 List<_PaletteAction> _filteredActionsFor(AppRole role, String query) {
   final all = <_PaletteAction>[
-    const _PaletteAction.shortcut(
-      label: ProductLabels.overview,
+    _PaletteAction.shortcut(
+      label: _paletteHomeShortcutLabel(role),
       icon: Icons.dashboard_rounded,
       shortcut: MainShellShortcut.openHomeTab,
     ),
@@ -313,12 +321,12 @@ List<_PaletteAction> _filteredActionsFor(AppRole role, String query) {
     ] else ...[
       if (!FeaturePermission.seesAdminPanel(role)) ...[
         const _PaletteAction.shortcut(
-          label: ProductLabels.conversations,
+          label: ProductLabels.myCalls,
           icon: Icons.call_rounded,
           shortcut: MainShellShortcut.openCallsTab,
         ),
         const _PaletteAction.shortcut(
-          label: ProductLabels.customers,
+          label: ProductLabels.myCustomers,
           icon: Icons.people_rounded,
           shortcut: MainShellShortcut.openCustomersTab,
         ),
@@ -328,12 +336,12 @@ List<_PaletteAction> _filteredActionsFor(AppRole role, String query) {
           shortcut: MainShellShortcut.openListingsTab,
         ),
         const _PaletteAction.shortcut(
-          label: ProductLabels.revival,
+          label: ProductLabels.followUp,
           icon: Icons.replay_rounded,
           shortcut: MainShellShortcut.openFollowUpTab,
         ),
         const _PaletteAction.shortcut(
-          label: ProductLabels.tasks,
+          label: ProductLabels.myTasks,
           icon: Icons.task_alt_rounded,
           shortcut: MainShellShortcut.openTasksTab,
         ),
@@ -351,12 +359,12 @@ List<_PaletteAction> _filteredActionsFor(AppRole role, String query) {
         ),
         if (FeaturePermission.canViewAllCalls(role))
           const _PaletteAction.route(
-            label: ProductLabels.conversationHub,
+            label: ProductLabels.callCenter,
             icon: Icons.call_rounded,
             route: AppRouter.routeCommandCenter,
           ),
         const _PaletteAction.route(
-          label: ProductLabels.operationsRoom,
+          label: ProductLabels.warRoom,
           icon: Icons.military_tech_rounded,
           route: AppRouter.routeWarRoom,
         ),

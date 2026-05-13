@@ -11,16 +11,16 @@ String _aiRecommendationFor(String label, String value) {
       return 'Günlük hedefe yaklaşmak için sabah erken saatlerde arama yoğunluğunu artırın.';
     case 'Cevaplanan':
       return 'Cevaplanan oranı yüksek; kaçırılan çağrıları takip listesine ekleyin.';
-    case 'Lead':
-      return 'Yeni lead’leri 24 saat içinde ilk temasla sıcak tutun.';
+    case 'Potansiyel':
+      return 'Yeni kayıtları 24 saat içinde ilk temasla sıcak tutun.';
     case 'Sıcak':
       return 'Sıcak fırsatları bugün kapatmaya öncelik verin.';
-    case 'Follow-up':
-      return 'Bekleyen follow-up’ları hafta sonuna bırakmayın.';
+    case 'Takip bekleyen':
+      return 'Bekleyen takipleri hafta sonuna bırakmayın.';
     case 'Aktif danışman':
       return 'Ekip dağılımını dengelemek için boş slotları değerlendirin.';
-    case 'Görüşmede':
-      return 'Aktif görüşmeler bitince hızlı not alıp sonraki adımı planlayın.';
+    case 'Çağrıda':
+      return 'Aktif çağrılar bitince hızlı not alıp sonraki adımı planlayın.';
     default:
       return 'Bu metrik için performansı günlük hedeflerle karşılaştırın.';
   }
@@ -72,18 +72,18 @@ class KpiBar extends StatelessWidget {
           _KpiChip(label: 'Cevaplanan', value: '$answeredCalls'),
           const SizedBox(width: DesignTokens.space2),
           _KpiChip(
-            label: 'Lead',
+            label: 'Potansiyel',
             value: '$leadsCreated',
             icon: Icons.leaderboard_rounded,
           ),
           const SizedBox(width: DesignTokens.space2),
           _KpiChip(label: 'Sıcak', value: '$hotOpportunities', highlight: true),
           const SizedBox(width: DesignTokens.space2),
-          _KpiChip(label: 'Follow-up', value: '$followUpPending'),
+          _KpiChip(label: 'Takip bekleyen', value: '$followUpPending'),
           const SizedBox(width: DesignTokens.space2),
           _KpiChip(label: 'Aktif danışman', value: '$activeAdvisors'),
           const SizedBox(width: DesignTokens.space2),
-          _KpiChip(label: 'Görüşmede', value: '$activeCalls', highlight: true),
+          _KpiChip(label: 'Çağrıda', value: '$activeCalls', highlight: true),
         ],
       ),
     );

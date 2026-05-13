@@ -82,21 +82,21 @@ class AppLocalizations {
       'language_portuguese': 'Português',
       'compact_dashboard': 'Sıkı görünüm',
       'compact_dashboard_sub':
-          'Kartları ve göstergeleri daha derli toplu göster',
+          'Kartları ve göstergeleri daha derli toplu gösterir; Günüm ve alt panellerde yer açar.',
       'power_saver': 'Güç tasarrufu',
       'power_saver_sub': 'Animasyonları azaltır, şarjı minimum kullanır',
       'push_notifications': 'Push bildirimleri',
       'push_notifications_sub': 'FCM ile anlık bildirimler',
 
       // Nav / Shell
-      'nav_dashboard': 'Ana Bakış',
-      'nav_customers': 'Müşteriler',
+      'nav_dashboard': 'Günüm',
+      'nav_customers': 'Müşterilerim',
       'nav_listings': 'İlanlar',
-      'nav_tasks': 'Görevler',
+      'nav_tasks': 'Görevlerim',
       'nav_more': 'Daha fazla',
 
       // Customer list
-      'title_customers': 'Müşteriler',
+      'title_customers': 'Müşterilerim',
       'bulk_action': 'Toplu hamle',
       'bulk_campaign': 'Toplu kampanya',
       'add_to_follow_up': 'Takip listesine ekle',
@@ -180,7 +180,7 @@ class AppLocalizations {
       'integration_filter_all': 'Tümü',
 
       // Tasks
-      'title_tasks': 'Görevler',
+      'title_tasks': 'Görevlerim',
       'task': 'Görev',
       'empty_tasks': 'Görev listesi boş',
       'empty_tasks_sub':
@@ -188,9 +188,9 @@ class AppLocalizations {
       'empty_tasks_cta': 'Yeni görev',
       'empty_calls_title': 'Henüz çağrı kaydı yok',
       'empty_calls_sub':
-          'Telefon ve uygulama içi görüşmeler burada toplanır. İlk kayıt için hemen arayın.',
+          'Telefon ve uygulama içi çağrılar burada toplanır. İlk kayıt için hemen arayın.',
       'empty_calls_cta': 'Ara ve kaydet',
-      'empty_followup_title': 'Takipte bekleyen lead yok',
+      'empty_followup_title': 'Takipte bekleyen müşteri yok',
       'empty_followup_sub':
           'Sessiz müşteriler oluştuğunda burada önceliklendirilirsiniz.',
       'empty_followup_cta': 'Çağrı başlat',
@@ -201,7 +201,7 @@ class AppLocalizations {
       'empty_my_listings_cta_accounts': 'Bağlı hesaplar',
       'empty_reports_title': 'İçgörü akışı hazırlanıyor',
       'empty_reports_sub':
-          'Görüşme özetleri ve işlem kayıtları geldikçe tablo burada güçlenecek.',
+          'Çağrı özetleri ve işlem kayıtları geldikçe tablo burada güçlenecek.',
       'empty_reports_cta': 'Kadroyu aç',
       'empty_import_history_title': 'Aktarım geçmişi boş',
       'empty_import_history_sub':
@@ -218,7 +218,7 @@ class AppLocalizations {
 
       // Dashboard
       'my_summary': 'Günüm',
-      'today_calls': 'Bugünkü görüşme',
+      'today_calls': 'Bugünkü çağrı',
       'open_tasks': 'Açık iş',
       'active_pipeline': 'Canlı fırsat',
       'today_follows': 'Bugün: {0} takip',

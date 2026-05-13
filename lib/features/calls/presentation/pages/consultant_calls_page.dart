@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
@@ -442,7 +443,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       backgroundColor: bg,
       appBar: emlakAppBar(
         context,
-        title: const Text('Görüşme Akışı'),
+        title: const Text(ProductLabels.myCalls),
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         actions: [
@@ -492,7 +493,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     color: textSecondary, size: 48),
                 const SizedBox(height: 16),
                 Text(
-                  'Görüşmeler yüklenemedi.',
+                  'Çağrılar yüklenemedi.',
                   style: AppTypography.cardHeading(context),
                   textAlign: TextAlign.center,
                 ),

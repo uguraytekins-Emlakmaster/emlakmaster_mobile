@@ -27,7 +27,7 @@ class _OpportunityRadarLaboratoryEmptyState
   static const _messages = <String>[
     'Algoritma yeni ilanları tarıyor…',
     'Potansiyel kuyruğu ve sessiz müşteriler eşleniyor…',
-    '${ProductLabels.operationsRoom} için sinyal biriktiriliyor…',
+    '${ProductLabels.warRoom} için sinyal biriktiriliyor…',
   ];
 
   @override

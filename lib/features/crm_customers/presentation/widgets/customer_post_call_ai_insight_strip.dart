@@ -38,7 +38,7 @@ class CustomerPostCallAiInsightStrip extends ConsumerWidget {
                     Icon(Icons.auto_awesome_rounded, size: 18, color: ext.accent),
                     const SizedBox(width: 8),
                     Text(
-                      'Görüşme içgörüsü',
+                      'Çağrı içgörüsü',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: ext.textSecondary,
                             fontWeight: FontWeight.w700,

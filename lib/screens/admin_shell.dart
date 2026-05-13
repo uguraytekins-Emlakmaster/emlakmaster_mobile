@@ -62,7 +62,7 @@ class AdminShellPage extends ConsumerWidget {
       const _AdminShellTabEntry(
         id: _AdminShellTab.dashboard,
         navItem:
-            AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.overview),
+            AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.managerHome),
         page: DashboardPage(),
       ),
       if (warRoom)
@@ -70,7 +70,7 @@ class AdminShellPage extends ConsumerWidget {
           id: _AdminShellTab.warRoom,
           navItem: AdaptiveNavItem(
             Icons.military_tech_rounded,
-            ProductLabels.operationsRoom,
+            ProductLabels.warRoom,
           ),
           page: WarRoomPage(),
         ),
@@ -79,7 +79,7 @@ class AdminShellPage extends ConsumerWidget {
           id: _AdminShellTab.commandCenter,
           navItem: AdaptiveNavItem(
             Icons.call_rounded,
-            ProductLabels.conversationHub,
+            ProductLabels.callCenter,
           ),
           page: CommandCenterPage(),
         ),
@@ -91,12 +91,14 @@ class AdminShellPage extends ConsumerWidget {
         ),
       const _AdminShellTabEntry(
         id: _AdminShellTab.reports,
-        navItem: AdaptiveNavItem(Icons.analytics_rounded, 'Raporlar'),
+        navItem:
+            AdaptiveNavItem(Icons.analytics_rounded, ProductLabels.reports),
         page: AdminReportsPage(),
       ),
       const _AdminShellTabEntry(
         id: _AdminShellTab.settings,
-        navItem: AdaptiveNavItem(Icons.settings_rounded, 'Ayarlar'),
+        navItem:
+            AdaptiveNavItem(Icons.settings_rounded, ProductLabels.settings),
         page: SettingsPage(),
       ),
     ];

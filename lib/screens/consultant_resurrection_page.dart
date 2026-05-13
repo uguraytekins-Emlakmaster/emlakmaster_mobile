@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -10,6 +11,7 @@ import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/wid
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 /// Danışman paneli – Takip: sessiz lead listesi (7/14/30+ gün), yeniden kazanım kuyruğu.
 class ConsultantResurrectionPage extends ConsumerWidget {
   const ConsultantResurrectionPage({super.key});
@@ -18,12 +20,24 @@ class ConsultantResurrectionPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppThemeExtension.of(context).background : AppThemeExtension.of(context).background;
-    final fg = isDark ? AppThemeExtension.of(context).textPrimary : AppThemeExtension.of(context).textPrimary;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
-    final border = isDark ? AppThemeExtension.of(context).border : AppThemeExtension.of(context).border;
-    final textSecondary = isDark ? AppThemeExtension.of(context).textSecondary : AppThemeExtension.of(context).textSecondary;
-    final textTertiary = isDark ? AppThemeExtension.of(context).textTertiary : AppThemeExtension.of(context).textTertiary;
+    final bg = isDark
+        ? AppThemeExtension.of(context).background
+        : AppThemeExtension.of(context).background;
+    final fg = isDark
+        ? AppThemeExtension.of(context).textPrimary
+        : AppThemeExtension.of(context).textPrimary;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
+    final border = isDark
+        ? AppThemeExtension.of(context).border
+        : AppThemeExtension.of(context).border;
+    final textSecondary = isDark
+        ? AppThemeExtension.of(context).textSecondary
+        : AppThemeExtension.of(context).textSecondary;
+    final textTertiary = isDark
+        ? AppThemeExtension.of(context).textTertiary
+        : AppThemeExtension.of(context).textTertiary;
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Scaffold(
       backgroundColor: bg,
@@ -31,7 +45,7 @@ class ConsultantResurrectionPage extends ConsumerWidget {
         context,
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
-        title: const Text('Takip listesi'),
+        title: const Text(ProductLabels.followUp),
       ),
       body: resurrectionAsync.when(
         data: (items) {
@@ -45,11 +59,11 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                 subtitle: l10n.t('empty_followup_sub'),
                 actionLabel: l10n.t('empty_followup_cta'),
                 onAction: () => context.push(
-                AppRouter.routeCall,
-                extra: const {
-                  'startedFromScreen': 'consultant_resurrection',
-                },
-              ),
+                  AppRouter.routeCall,
+                  extra: const {
+                    'startedFromScreen': 'consultant_resurrection',
+                  },
+                ),
               ),
             );
           }
@@ -74,8 +88,11 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+                      color: AppThemeExtension.of(context)
+                          .accent
+                          .withValues(alpha: 0.15),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusSm),
                     ),
                     child: Icon(
                       Icons.person_outline_rounded,
@@ -106,7 +123,7 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                     HapticFeedback.lightImpact();
                     showResurrectionLeadTopicSheet(
                       context,
-                      topicTitle: 'Takip listesi',
+                      topicTitle: ProductLabels.followUp,
                       item: e,
                     );
                   },
@@ -116,7 +133,8 @@ class ConsultantResurrectionPage extends ConsumerWidget {
           );
         },
         loading: () => Center(
-          child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
+          child: CircularProgressIndicator(
+              color: AppThemeExtension.of(context).accent),
         ),
         error: (e, _) => Center(
           child: Padding(
@@ -140,7 +158,8 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                   onPressed: () => ref.invalidate(resurrectionQueueProvider),
                   icon: const Icon(Icons.refresh_rounded, size: 20),
                   label: const Text('Tekrar dene'),
-                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
+                  style: FilledButton.styleFrom(
+                      backgroundColor: AppThemeExtension.of(context).accent),
                 ),
               ],
             ),

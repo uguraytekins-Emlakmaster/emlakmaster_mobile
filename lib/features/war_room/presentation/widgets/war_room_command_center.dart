@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:ui';
 
@@ -114,7 +115,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
                                     color:
                                         AppThemeExtension.of(context).accent),
                                 label: Text(
-                                  'Görüşme Üssü',
+                                  ProductLabels.callCenter,
                                   style: TextStyle(
                                       color:
                                           AppThemeExtension.of(context).accent,

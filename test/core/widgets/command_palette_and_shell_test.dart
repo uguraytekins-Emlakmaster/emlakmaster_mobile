@@ -166,9 +166,9 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Müşteriler'), findsOneWidget);
+    expect(find.text('Müşterilerim'), findsOneWidget);
     expect(find.text('İlanlar'), findsOneWidget);
-    expect(find.text('Görüşmeler'), findsOneWidget);
+    expect(find.text('Çağrılarım'), findsOneWidget);
     expect(find.text('Ofis yönetimi'), findsNothing);
   });
 

@@ -34,7 +34,7 @@ class RevenueLeakTracker extends StatelessWidget {
     if (calm) {
       return Semantics(
         label:
-            'Gelir riski sinyali: kontrol altında. Kritik temasız lead bildirimi yok.',
+            'Gelir riski: kontrol altında. Kritik temasız müşteri bildirimi yok.',
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: ext.surfaceElevated,
@@ -54,7 +54,7 @@ class RevenueLeakTracker extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Gelir riski sinyali sakin — 24 saat üstü kritik lead bildirimi görünmüyor.',
+                    'Gelir riski düşük — 24 saati aşmış kritik temasız kayıt görünmüyor.',
                     style: AppTypography.body(context).copyWith(
                       color: ext.textSecondary,
                       fontSize: DesignTokens.fontSizeSm,
@@ -74,7 +74,7 @@ class RevenueLeakTracker extends StatelessWidget {
 
     return Semantics(
       label:
-          'Dikkat: tahmini gelir riski $formatted $currencySuffix. Temasız leadlerden model tahmini.',
+          'Dikkat: tahmini gelir riski $formatted $currencySuffix. Temasız müşteri kayıtlarından model tahmini.',
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: ext.danger.withValues(alpha: 0.08),

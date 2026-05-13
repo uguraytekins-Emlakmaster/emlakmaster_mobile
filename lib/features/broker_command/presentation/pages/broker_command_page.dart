@@ -188,7 +188,7 @@ class _BrokerCommandBody extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Görüşme yoğunluğu ve satış akışı burada toplanacak.',
+                        'Çağrı yoğunluğu ve satış akışı burada toplanacak.',
                         style: TextStyle(
                             color: ext.textSecondary,
                             fontSize: 13,

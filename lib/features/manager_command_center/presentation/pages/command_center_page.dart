@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
@@ -620,7 +621,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       backgroundColor: bg,
       appBar: emlakAppBar(
         context,
-        title: const Text('Görüşme kayıtları'),
+        title: const Text(ProductLabels.callRecords),
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         actions: [

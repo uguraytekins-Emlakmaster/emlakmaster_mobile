@@ -15,7 +15,7 @@ import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings
 import 'package:flutter/material.dart';
 
 /// Danışman paneli: özetim, müşteriler, ilanlar, takip, görevler, ayarlar.
-/// Web/Desktop: sidebar; Mobile: bottom nav. Magic Call: Özetim üzerindeki birincil aksiyon bloğu.
+/// Web/Desktop: sidebar; Mobile: bottom nav. Akıllı Görüşme: Günüm üzerindeki birincil aksiyon bloğu.
 class ConsultantShellPage extends StatefulWidget {
   const ConsultantShellPage({super.key});
 
@@ -23,12 +23,12 @@ class ConsultantShellPage extends StatefulWidget {
   State<ConsultantShellPage> createState() => _ConsultantShellPageState();
 
   static const List<AdaptiveNavItem> _navItems = [
-    AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.overview),
-    AdaptiveNavItem(Icons.call_rounded, ProductLabels.conversations),
+    AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.consultantHome),
+    AdaptiveNavItem(Icons.call_rounded, ProductLabels.myCalls),
     AdaptiveNavItem(Icons.people_rounded, ProductLabels.myCustomers),
     AdaptiveNavItem(Icons.home_work_rounded, ProductLabels.listings),
-    AdaptiveNavItem(Icons.replay_rounded, ProductLabels.revival),
-    AdaptiveNavItem(Icons.task_alt_rounded, ProductLabels.tasks),
+    AdaptiveNavItem(Icons.replay_rounded, ProductLabels.followUp),
+    AdaptiveNavItem(Icons.task_alt_rounded, ProductLabels.myTasks),
     AdaptiveNavItem(Icons.settings_rounded, ProductLabels.settings),
   ];
 
