@@ -803,7 +803,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   _SettingSwitch(
                     title: 'Günlük özet',
-                    subtitle: 'Daily Brief paneli',
+                    subtitle: 'Günün özeti paneli',
                     icon: Icons.today_rounded,
                     value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
                     onChanged: (v) => ref
