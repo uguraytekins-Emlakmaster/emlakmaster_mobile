@@ -295,34 +295,58 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
 
   Widget _buildIosInfoBanner(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         DesignTokens.space6,
-        DesignTokens.space2,
+        DesignTokens.space3,
         DesignTokens.space6,
         DesignTokens.space3,
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: ext.surfaceElevated,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
-          border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+          color: ext.infoSurface,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          border: Border.all(color: ext.border.withValues(alpha: 0.72)),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(DesignTokens.space3),
+          padding: const EdgeInsets.fromLTRB(
+            DesignTokens.space4,
+            DesignTokens.space4,
+            DesignTokens.space4,
+            DesignTokens.space3,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded,
-                  size: 18, color: ext.accent.withValues(alpha: 0.85)),
+              Icon(
+                Icons.info_outline_rounded,
+                size: 22,
+                color: ext.info,
+              ),
               const SizedBox(width: DesignTokens.space3),
               Expanded(
-                child: Text(
-                  'iOS tarafında yalnızca uygulama içi görüşmeler görünür. Apple kısıtları nedeniyle sistem arama geçmişi eklenmez.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: ext.textSecondary,
-                        height: 1.35,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'iOS’ta yalnızca uygulama içi görüşmeler',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: ext.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
                       ),
+                    ),
+                    const SizedBox(height: DesignTokens.space1 + 2),
+                    Text(
+                      'Apple kısıtları nedeniyle sistem arama geçmişi bu listede yer almaz; CRM’deki kayıtlar uygulama üzerinden yapılan görüşmelerdir.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: ext.textSecondary,
+                        fontWeight: FontWeight.w500,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -443,7 +467,14 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       backgroundColor: bg,
       appBar: emlakAppBar(
         context,
-        title: const Text(ProductLabels.myCalls),
+        title: Text(
+          ProductLabels.myCalls,
+          style: AppTypography.pageHeading(context).copyWith(
+            fontSize: DesignTokens.fontSizeXl,
+            letterSpacing: -0.32,
+            height: 1.06,
+          ),
+        ),
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         actions: [
@@ -578,36 +609,80 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (io.Platform.isIOS) _buildIosInfoBanner(context),
-              Material(
-                color: surface,
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppThemeExtension.of(context).surfaceElevated,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppThemeExtension.of(context)
+                          .border
+                          .withValues(alpha: 0.55),
+                    ),
+                  ),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
                     DesignTokens.space6,
-                    DesignTokens.space3,
+                    DesignTokens.space4,
                     DesignTokens.space6,
-                    DesignTokens.space2,
+                    DesignTokens.space3,
                   ),
                   child: Row(
                     children: [
-                      Text(
-                        '$totalCount görüşme',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: textSecondary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '$totalCount',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: fg,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: DesignTokens.fontSizeMd + 1,
+                                  height: 1.15,
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' görüşme',
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      const Spacer(),
                       TextButton(
                         onPressed: () => _selectAll(true),
                         style: TextButton.styleFrom(
-                            foregroundColor:
-                                AppThemeExtension.of(context).accent),
+                          foregroundColor:
+                              AppThemeExtension.of(context).accent,
+                          textStyle: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: DesignTokens.space3,
+                            vertical: DesignTokens.space1,
+                          ),
+                        ),
                         child: const Text('Hepsini seç'),
                       ),
                       TextButton(
                         onPressed: () => _selectAll(false),
                         style: TextButton.styleFrom(
-                            foregroundColor: textSecondary),
+                          foregroundColor: textSecondary,
+                          textStyle: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: DesignTokens.space3,
+                            vertical: DesignTokens.space1,
+                          ),
+                        ),
                         child: const Text('Seçimi kaldır'),
                       ),
                     ],
@@ -616,7 +691,12 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               ),
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(DesignTokens.space2),
+                  padding: const EdgeInsets.fromLTRB(
+                    DesignTokens.space3,
+                    DesignTokens.space3,
+                    DesignTokens.space3,
+                    DesignTokens.space6,
+                  ),
                   itemCount: totalCount,
                   cacheExtent: 300,
                   itemBuilder: (context, index) {
@@ -667,9 +747,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                   ? () => unawaited(retryLocalCallRecordSync(r))
                                   : null,
                         ),
-                        surface: surface,
-                        textSecondary: textSecondary,
-                        ext: AppThemeExtension.of(context),
                       );
                     }
                     final doc = _docs[index - localStandalone.length];
@@ -849,9 +926,6 @@ class _LocalCallRecordCard extends StatelessWidget {
     required this.note,
     this.technicalFootnote,
     required this.syncIcon,
-    required this.surface,
-    required this.textSecondary,
-    required this.ext,
   });
 
   final String title;
@@ -862,19 +936,33 @@ class _LocalCallRecordCard extends StatelessWidget {
   final String? note;
   final String? technicalFootnote;
   final Widget syncIcon;
-  final Color surface;
-  final Color textSecondary;
-  final AppThemeExtension ext;
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final contextLine = CrmCallRecordDisplay.contextLine(
       advisorPart: 'Bu cihaz',
       dateTime: dateStr,
     );
     return Card(
-      margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-      color: surface,
+      margin: const EdgeInsets.fromLTRB(
+        0,
+        0,
+        0,
+        DesignTokens.space3,
+      ),
+      clipBehavior: Clip.antiAlias,
+      elevation: isDark ? 0 : 0.5,
+      shadowColor: ext.shadowColor.withValues(alpha: isDark ? 0.4 : 0.12),
+      color: ext.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+        side: BorderSide(
+          color: ext.border.withValues(alpha: isDark ? 0.62 : 0.88),
+        ),
+      ),
       child: CrmCallRecordListItem(
         title: title,
         phoneSubtitle: phoneSubtitle,
@@ -884,14 +972,17 @@ class _LocalCallRecordCard extends StatelessWidget {
         notePreview: note,
         technicalFootnote: technicalFootnote,
         leading: Container(
-          width: 40,
-          height: 40,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            color: textSecondary.withValues(alpha: 0.12),
+            color: ext.textSecondary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            border: Border.all(
+              color: ext.border.withValues(alpha: 0.45),
+            ),
           ),
-          child:
-              Icon(Icons.phone_in_talk_rounded, color: textSecondary, size: 20),
+          child: Icon(Icons.phone_in_talk_rounded,
+              color: ext.textSecondary, size: 22),
         ),
         trailing: syncIcon,
       ),
@@ -933,9 +1024,30 @@ class _FirestoreCallRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardFill = selected
+        ? Color.lerp(ext.card, ext.accent, 0.06)!
+        : ext.card;
+    final borderColor = selected
+        ? ext.accent.withValues(alpha: 0.42)
+        : ext.border.withValues(alpha: isDark ? 0.62 : 0.88);
+
     return Card(
-      margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-      color: ext.surface,
+      margin: const EdgeInsets.fromLTRB(
+        0,
+        0,
+        0,
+        DesignTokens.space3,
+      ),
+      clipBehavior: Clip.antiAlias,
+      elevation: isDark ? 0 : 0.5,
+      shadowColor: ext.shadowColor.withValues(alpha: isDark ? 0.4 : 0.12),
+      color: cardFill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+        side: BorderSide(color: borderColor, width: selected ? 1.25 : 1),
+      ),
       child: InkWell(
         onTap: enabled ? onSelect : null,
         borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
@@ -945,7 +1057,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 4, top: 10),
+                padding: const EdgeInsets.only(left: 2, top: 8),
                 child: Checkbox(
                   value: selected,
                   onChanged: enabled ? (_) => onSelect?.call() : null,
@@ -962,14 +1074,17 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                   notePreview: note,
                   technicalFootnote: technicalMeta,
                   leading: Container(
-                    width: 40,
-                    height: 40,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: leadingColor.withValues(alpha: 0.12),
                       borderRadius:
                           BorderRadius.circular(DesignTokens.radiusMd),
+                      border: Border.all(
+                        color: leadingColor.withValues(alpha: 0.28),
+                      ),
                     ),
-                    child: Icon(leadingIcon, color: leadingColor, size: 20),
+                    child: Icon(leadingIcon, color: leadingColor, size: 22),
                   ),
                   trailing: trailing,
                   padding: const EdgeInsets.fromLTRB(
