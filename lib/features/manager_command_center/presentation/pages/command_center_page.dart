@@ -18,6 +18,7 @@ import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_stat
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/office_wide_customers_stream_provider.dart';
 import 'package:flutter/material.dart';
@@ -145,25 +146,19 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     BuildContext context,
     List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
     Map<String, String> agentNames,
-    Color fg,
-    bool isDark,
     List<LocalCallRecord> locals,
     String? currentUid,
     Map<String, String> customerFullNameById,
   ) {
-    final surface = isDark
-        ? AppThemeExtension.of(context).surface
-        : AppThemeExtension.of(context).surface;
     switch (_commandScope) {
       case _CommandScope.consultant:
         return _buildConsultantGroupedList(
-            context, filtered, agentNames, surface);
+            context, filtered, agentNames);
       case _CommandScope.customer:
         return _buildCustomerGroupedList(
           context,
           filtered,
           agentNames,
-          surface,
           customerFullNameById,
         );
       case _CommandScope.all:
@@ -176,7 +171,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             context,
             filtered[index],
             agentNames,
-            surface,
             locals,
             currentUid,
           ),
@@ -188,7 +182,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     BuildContext context,
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
     Map<String, String> agentNames,
-    Color surface,
     List<LocalCallRecord> locals,
     String? currentUid,
   ) {
@@ -264,9 +257,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       );
     }
     final accent = AppThemeExtension.of(context).accent;
-    return Card(
+    return CrmCallOperatingCard(
       margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-      color: surface,
       child: CrmCallRecordListItem(
         title: title,
         phoneSubtitle: phoneUnder,
@@ -275,10 +267,17 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         contextLine: contextLine,
         notePreview: shortNote,
         technicalFootnote: foot,
-        leading: CircleAvatar(
-          radius: 20,
-          backgroundColor: accent.withValues(alpha: 0.18),
-          child: Icon(Icons.call_rounded, color: accent, size: 20),
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.28),
+            ),
+          ),
+          child: Icon(Icons.call_rounded, color: accent, size: 22),
         ),
         trailing: trailing,
         padding: const EdgeInsets.fromLTRB(
@@ -295,7 +294,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     BuildContext context,
     List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
     Map<String, String> agentNames,
-    Color surface,
   ) {
     final grouped =
         <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
@@ -366,9 +364,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             '$completed tamam · $handoffs handoff';
         final captureLabel =
             pending > 0 ? '$pending takip' : '${list.length} kayıt';
-        return Card(
+        return CrmCallOperatingCard(
           margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-          color: surface,
           child: CrmCallRecordListItem(
             title: name,
             outcomeLabel: outcomeLast,
@@ -377,14 +374,22 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             notePreview: noteLast,
             technicalFootnote:
                 'Danışman ${CrmCallRecordDisplay.ellipsedMiddle(e.key)}',
-            leading: CircleAvatar(
-              radius: 20,
-              backgroundColor: accent.withValues(alpha: 0.2),
+            leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.28),
+                ),
+              ),
+              alignment: Alignment.center,
               child: Text(
                 name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
                 style: TextStyle(
                   color: accent,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
               ),
@@ -405,7 +410,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     BuildContext context,
     List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
     Map<String, String> agentNames,
-    Color surface,
     Map<String, String> customerFullNameById,
   ) {
     final grouped =
@@ -488,9 +492,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         final captureLabel = pending > 0 ? '$pending bekleyen' : cap;
         final initial =
             title.isNotEmpty ? title.substring(0, 1).toUpperCase() : '?';
-        return Card(
+        return CrmCallOperatingCard(
           margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-          color: surface,
           child: CrmCallRecordListItem(
             title: title,
             phoneSubtitle: phoneUnder,
@@ -500,14 +503,22 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             notePreview: noteLast,
             technicalFootnote:
                 'Müşteri ${CrmCallRecordDisplay.ellipsedMiddle(e.key, head: 6)}',
-            leading: CircleAvatar(
-              radius: 20,
-              backgroundColor: accent.withValues(alpha: 0.16),
+            leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.28),
+                ),
+              ),
+              alignment: Alignment.center,
               child: Text(
                 initial,
                 style: TextStyle(
                   color: accent,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
               ),
@@ -983,8 +994,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                         context,
                         filtered,
                         agentNames,
-                        fg,
-                        isDark,
                         locals,
                         currentUid,
                         customerFullNameById,

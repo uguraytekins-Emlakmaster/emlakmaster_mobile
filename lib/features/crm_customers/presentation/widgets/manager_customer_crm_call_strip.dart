@@ -13,6 +13,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/providers/firesto
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter/material.dart';
@@ -52,38 +53,51 @@ class ManagerCustomerCrmCallStrip extends ConsumerWidget {
           child: Material(
             borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
             color: ext.surfaceElevated,
-            child: Padding(
-              padding: const EdgeInsets.all(DesignTokens.space4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.phone_callback_rounded,
-                          color: ext.accent, size: 22),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Son görüşmeler',
-                          style: AppTypography.cardHeading(context),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius:
+                    BorderRadius.circular(DesignTokens.radiusCardPrimary),
+                border: Border.all(
+                  color: ext.border.withValues(alpha: 0.68),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(DesignTokens.space4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.phone_callback_rounded,
+                            color: ext.accent, size: 22),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Son görüşmeler',
+                            style: AppTypography.cardHeading(context),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: DesignTokens.titleSubtitleGap),
-                  Text(
-                    'Uygulamadaki sonuç ve notlar. Hat süresi operatör kayıtlarıyla doğrulanmaz.',
-                    style: AppTypography.meta(context),
-                  ),
-                  const SizedBox(height: DesignTokens.space3),
-                  for (final d in docs.take(5))
-                    _CallLine(
-                      doc: d,
-                      locals: locals,
-                      currentUid: currentUid,
-                      agentNames: agentNames,
+                      ],
                     ),
-                ],
+                    const SizedBox(height: DesignTokens.titleSubtitleGap),
+                    Text(
+                      'Uygulamadaki sonuç ve notlar. Hat süresi operatör kayıtlarıyla doğrulanmaz.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: ext.textSecondary,
+                            fontWeight: FontWeight.w500,
+                            height: 1.42,
+                          ),
+                    ),
+                    const SizedBox(height: DesignTokens.space3),
+                    for (final d in docs.take(5))
+                      _CallLine(
+                        doc: d,
+                        locals: locals,
+                        currentUid: currentUid,
+                        agentNames: agentNames,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -170,34 +184,30 @@ class _CallLine extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space3),
-      child: Material(
-        color: ext.surface,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            border: Border.all(color: ext.border.withValues(alpha: 0.45)),
-          ),
-          child: CrmCallRecordListItem(
-            title: title,
-            phoneSubtitle: phoneUnder,
-            outcomeLabel: outcome,
-            captureLabel: cap,
-            contextLine: contextLine,
-            notePreview: quickNote,
-            technicalFootnote: foot,
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: ext.accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+      child: CrmCallOperatingCard(
+        margin: EdgeInsets.zero,
+        child: CrmCallRecordListItem(
+          title: title,
+          phoneSubtitle: phoneUnder,
+          outcomeLabel: outcome,
+          captureLabel: cap,
+          contextLine: contextLine,
+          notePreview: quickNote,
+          technicalFootnote: foot,
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: ext.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              border: Border.all(
+                color: ext.accent.withValues(alpha: 0.28),
               ),
-              child: Icon(Icons.call_rounded, size: 20, color: ext.accent),
             ),
-            trailing: syncIcon,
-            padding: const EdgeInsets.all(DesignTokens.space3),
+            child: Icon(Icons.call_rounded, size: 22, color: ext.accent),
           ),
+          trailing: syncIcon,
+          padding: const EdgeInsets.all(DesignTokens.space3),
         ),
       ),
     );

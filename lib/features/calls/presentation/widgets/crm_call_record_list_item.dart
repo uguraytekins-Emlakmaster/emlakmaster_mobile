@@ -49,10 +49,10 @@ class CrmCallRecordListItem extends StatelessWidget {
                 Text(
                   title,
                   style: AppTypography.cardHeading(context).copyWith(
-                    fontSize: DesignTokens.fontSizeLg,
+                    fontSize: DesignTokens.fontSizeXl,
                     fontWeight: FontWeight.w800,
-                    height: 1.2,
-                    letterSpacing: -0.35,
+                    height: 1.18,
+                    letterSpacing: -0.42,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -64,7 +64,8 @@ class CrmCallRecordListItem extends StatelessWidget {
                     phoneSubtitle!,
                     style: AppTypography.bodyStrong(context).copyWith(
                       fontSize: DesignTokens.fontSizeMd,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.15,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -94,8 +95,8 @@ class CrmCallRecordListItem extends StatelessWidget {
                   contextLine,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: ext.textSecondary,
-                        fontWeight: FontWeight.w500,
-                        height: 1.42,
+                        fontWeight: FontWeight.w600,
+                        height: 1.44,
                       ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -107,8 +108,9 @@ class CrmCallRecordListItem extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.body(context).copyWith(
+                      color: ext.textPrimary,
                       fontWeight: FontWeight.w500,
-                      height: 1.48,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -168,18 +170,18 @@ class _CrmCallRecordChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final fill = emphasized
-        ? color.withValues(alpha: 0.13)
+        ? color.withValues(alpha: 0.15)
         : (surface ?? ext.surfaceElevated).withValues(alpha: 0.98);
     final borderSide = emphasized
-        ? BorderSide(color: color.withValues(alpha: 0.34))
+        ? BorderSide(color: color.withValues(alpha: 0.38))
         : BorderSide(
-            color: (borderColor ?? ext.border).withValues(alpha: 0.72),
+            color: (borderColor ?? ext.border).withValues(alpha: 0.78),
           );
     final textColor = emphasized ? color : ext.textPrimary;
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space3,
-        vertical: 6,
+        horizontal: DesignTokens.space3 + 2,
+        vertical: 7,
       ),
       decoration: BoxDecoration(
         color: fill,
