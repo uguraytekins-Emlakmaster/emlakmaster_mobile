@@ -8,6 +8,7 @@ import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
 /// İlan detay: galeri (tek görsel), başlık, fiyat, konum, açıklama.
 class ListingDetailPage extends StatelessWidget {
   const ListingDetailPage({super.key, required this.listingId});
@@ -23,12 +24,16 @@ class ListingDetailPage extends StatelessWidget {
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirestoreService.listingDocStream(listingId),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
             return Center(
-              child: CircularProgressIndicator(color: ext.accent, strokeWidth: 2),
+              child:
+                  CircularProgressIndicator(color: ext.accent, strokeWidth: 2),
             );
           }
-          if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          if (snapshot.hasError ||
+              !snapshot.hasData ||
+              !snapshot.data!.exists) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -42,7 +47,9 @@ class ListingDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      snapshot.hasError ? 'İlan yüklenemedi.' : 'İlan bulunamadı.',
+                      snapshot.hasError
+                          ? 'İlan yüklenemedi.'
+                          : 'İlan bulunamadı.',
                       style: TextStyle(
                         color: ext.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -68,7 +75,8 @@ class ListingDetailPage extends StatelessWidget {
           final priceStr = priceRaw is String
               ? priceRaw
               : (priceRaw as num?)?.toString() ?? '—';
-          final location = d['location'] as String? ?? d['district'] as String? ?? '—';
+          final location =
+              d['location'] as String? ?? d['district'] as String? ?? '—';
           final description = d['description'] as String? ?? '';
           final roomCount = d['roomCount'] as String? ?? d['rooms'] as String?;
           final m2 = d['m2'] as num? ?? d['area'] as num?;
@@ -106,9 +114,9 @@ class ListingDetailPage extends StatelessWidget {
                       Text(
                         title,
                         style: theme.textTheme.titleLarge?.copyWith(
-                              color: ext.textPrimary,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          color: ext.textPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -138,14 +146,16 @@ class ListingDetailPage extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           'Oda: $roomCount',
-                          style: TextStyle(color: ext.textTertiary, fontSize: 13),
+                          style:
+                              TextStyle(color: ext.textTertiary, fontSize: 13),
                         ),
                       ],
                       if (m2 != null) ...[
                         const SizedBox(height: 4),
                         Text(
                           'm²: ${m2 is int ? m2 : (m2 as double).toStringAsFixed(0)}',
-                          style: TextStyle(color: ext.textTertiary, fontSize: 13),
+                          style:
+                              TextStyle(color: ext.textTertiary, fontSize: 13),
                         ),
                       ],
                       const SizedBox(height: 16),
@@ -167,9 +177,10 @@ class ListingDetailPage extends StatelessWidget {
                               '${AppRouter.routeRainbowAnalytics}?listingId=$listingId',
                             );
                           },
-                          icon: Icon(Icons.auto_graph_rounded, color: ext.accent),
+                          icon:
+                              Icon(Icons.auto_graph_rounded, color: ext.accent),
                           label: Text(
-                            'Intelligence raporu oluştur',
+                            'İçgörü raporu oluştur',
                             style: TextStyle(
                               color: ext.accent,
                               fontWeight: FontWeight.w600,
@@ -186,9 +197,9 @@ class ListingDetailPage extends StatelessWidget {
                         Text(
                           'Açıklama',
                           style: theme.textTheme.titleSmall?.copyWith(
-                                color: ext.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            color: ext.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(

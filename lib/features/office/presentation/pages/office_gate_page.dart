@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
 /// Ofis yokken: oluştur veya katıl seçimi (merkezi yönlendirme).
 class OfficeGatePage extends StatelessWidget {
   const OfficeGatePage({super.key});
@@ -31,8 +32,8 @@ class OfficeGatePage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Rainbow CRM çok kiracılı çalışır. Her kullanıcı bir ofise aittir.\n'
-                'Yeni ofis oluşturun veya davet koduyla ekibe katılın.',
+                'EmlakMaster çok ofisli çalışır. Her kullanıcı bir ofise bağlıdır.\n'
+                'Yeni bir ofis kurun ya da davet koduyla ekibe katılın.',
                 style: TextStyle(
                   color: ext.foregroundSecondary,
                   height: 1.45,
@@ -43,7 +44,7 @@ class OfficeGatePage extends StatelessWidget {
               _Tile(
                 icon: Icons.add_business_rounded,
                 title: 'Ofis oluştur',
-                subtitle: 'Siz ofis sahibi (owner) olursunuz.',
+                subtitle: 'Bu ofisin sahibi siz olursunuz.',
                 onTap: () {
                   HapticFeedback.selectionClick();
                   context.push(AppRouter.routeOfficeCreate);
@@ -68,7 +69,8 @@ class OfficeGatePage extends StatelessWidget {
                 },
                 child: Text(
                   'Çıkış yap',
-                  style: TextStyle(color: ext.foregroundSecondary, fontSize: 13),
+                  style:
+                      TextStyle(color: ext.foregroundSecondary, fontSize: 13),
                 ),
               ),
             ],

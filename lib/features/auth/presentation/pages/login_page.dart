@@ -254,7 +254,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
             const SizedBox(height: DesignTokens.space6),
             Text(
-              'Rainbow CRM',
+              'EmlakMaster',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: ext.brandPrimary,
                     fontWeight: FontWeight.w800,
@@ -265,7 +265,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
             const SizedBox(height: DesignTokens.space2),
             Text(
-              'Profesyonel gayrimenkul operasyonu',
+              'Gayrimenkul operasyonunu tek akışta yönetin',
               style: TextStyle(
                 color: ext.foregroundSecondary,
                 fontSize: DesignTokens.fontSizeMd,

@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
+
 /// Premium tam ekran analiz yükleyici.
 class AnalyzingIntelOverlay extends StatelessWidget {
   const AnalyzingIntelOverlay({super.key});
@@ -53,7 +54,7 @@ class AnalyzingIntelOverlay extends StatelessWidget {
               ),
               const SizedBox(height: DesignTokens.space2),
               Text(
-                'Rainbow Investment Intelligence',
+                'Yatırım içgörüsü hazırlanıyor',
                 style: TextStyle(
                   color: ext.accent.withValues(alpha: 0.9),
                   fontSize: DesignTokens.fontSizeSm,

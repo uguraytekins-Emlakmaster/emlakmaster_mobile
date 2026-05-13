@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'models/rainbow_intel_models.dart';
 
-/// Rainbow Investment Intelligence — skor motoru (saf Dart, Isolate uyumlu).
+/// EmlakMaster Yatırım İçgörüsü — skor motoru (saf Dart, Isolate uyumlu).
 abstract final class RainbowScoreEngine {
   RainbowScoreEngine._();
 
@@ -37,7 +37,9 @@ abstract final class RainbowScoreEngine {
   static RainbowScoreResult compute(IntelIsolatePayload p) {
     final m2 = p.m2 <= 0 ? 1.0 : p.m2;
     final pricePerM2 = p.priceTry / m2;
-    final avg = p.neighborhoodAvgPricePerM2 <= 0 ? pricePerM2 : p.neighborhoodAvgPricePerM2;
+    final avg = p.neighborhoodAvgPricePerM2 <= 0
+        ? pricePerM2
+        : p.neighborhoodAvgPricePerM2;
     final ratio = pricePerM2 / avg;
 
     final years = amortizationYears(

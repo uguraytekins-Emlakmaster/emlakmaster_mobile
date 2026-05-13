@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
@@ -83,7 +84,8 @@ class SettingsPage extends ConsumerWidget {
             DesignTokens.space8,
           ),
           children: [
-            const _SectionHeader(title: 'Hesap', icon: Icons.person_rounded),
+            const _SectionHeader(
+                title: 'Hesap Alanı', icon: Icons.person_rounded),
             _sectionCard(
               context,
               children: [
@@ -128,10 +130,10 @@ class SettingsPage extends ConsumerWidget {
                   ListTile(
                     leading: Icon(Icons.admin_panel_settings_rounded,
                         color: AppThemeExtension.of(context).accent),
-                    title: Text('Yönetici yetkisi al',
+                    title: Text('Yönetim yetkisini aç',
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text(
-                      'Firestore\'da rolünüz broker_owner olarak güncellenir.',
+                      'Rolünüz yönetim alanını açacak şekilde güncellenir.',
                       style: TextStyle(
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.7),
@@ -150,7 +152,7 @@ class SettingsPage extends ConsumerWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: const Text(
-                                  'Yönetici yetkisi verildi. Panel yenileniyor...'),
+                                  'Yönetim yetkisi açıldı. Alan yenileniyor...'),
                               backgroundColor:
                                   AppThemeExtension.of(context).accent,
                               behavior: SnackBarBehavior.floating,
@@ -182,7 +184,7 @@ class SettingsPage extends ConsumerWidget {
                           ? AppThemeExtension.of(context).accent
                           : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
-                    title: Text('Yönetici paneli',
+                    title: Text(ProductLabels.managerWorkspace,
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: preferConsultant != true
                         ? Icon(Icons.check_rounded,
@@ -199,7 +201,7 @@ class SettingsPage extends ConsumerWidget {
                           ? AppThemeExtension.of(context).accent
                           : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
-                    title: Text('Danışman paneli',
+                    title: Text(ProductLabels.consultantWorkspace,
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: preferConsultant == true
                         ? Icon(Icons.check_rounded,
@@ -238,7 +240,7 @@ class SettingsPage extends ConsumerWidget {
                     color: AppThemeExtension.of(context).accent,
                   ),
                   title: Text(
-                    usage.isPro ? 'PRO plan aktif' : 'Ücretsiz plan',
+                    usage.isPro ? 'PRO üyelik açık' : 'Başlangıç planı',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
@@ -246,8 +248,8 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   subtitle: Text(
                     usage.isPro
-                        ? 'Sınırsız AI önerileri ve gelişmiş analizler açık.'
-                        : 'Arama ve CRM sınırsız. AI önerileri ayda 20 hak ile devam eder.',
+                        ? 'Sınırsız akıllı öneri ve gelişmiş içgörüler hazır.'
+                        : 'Arama ve müşteri akışı sınırsız. Akıllı öneriler ayda 20 hakla devam eder.',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 12,
@@ -284,7 +286,7 @@ class SettingsPage extends ConsumerWidget {
                                     theme.dividerColor.withValues(alpha: 0.5)),
                           ),
                           child: Text(
-                            'Free Plan',
+                            'Başlangıç',
                             style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.75),
@@ -308,11 +310,11 @@ class SettingsPage extends ConsumerWidget {
                       color: AppThemeExtension.of(context).accent,
                     ),
                     title: Text(
-                      'PRO avantajlarını gör',
+                      'PRO ayrıcalıklarını gör',
                       style: TextStyle(color: theme.colorScheme.onSurface),
                     ),
                     subtitle: Text(
-                      'Sınırsız AI önerileri, daha derin müşteri içgörüleri ve daha güçlü satış yönlendirmesi.',
+                      'Sınırsız akıllı öneri, daha derin müşteri içgörüsü ve daha güçlü satış yönlendirmesi.',
                       style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -329,17 +331,18 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(title: 'İletişim', icon: Icons.forum_rounded),
+            const _SectionHeader(
+                title: 'İletişim Akışı', icon: Icons.forum_rounded),
             _sectionCard(
               context,
               children: [
                 ListTile(
                   leading: Icon(Icons.chat_bubble_outline_rounded,
                       color: theme.colorScheme.primary),
-                  title: Text('Mesaj merkezi',
+                  title: Text('Mesaj akışı',
                       style: TextStyle(color: theme.colorScheme.onSurface)),
                   subtitle: Text(
-                    'Birleşik gelen kutusu — platform bağlantısı sonrası',
+                    'Bağlı kanallardan gelen tüm mesajlar tek akışta',
                     style: TextStyle(
                       color:
                           theme.colorScheme.onSurface.withValues(alpha: 0.65),
@@ -353,19 +356,19 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(
-                title: 'Çağrı & CRM', icon: Icons.call_rounded),
+                title: 'Görüşmeler ve Kayıtlar', icon: Icons.call_rounded),
             _sectionCard(
               context,
               children: [
                 ListTile(
                   leading: Icon(Icons.call_made_rounded,
                       color: AppThemeExtension.of(context).accent, size: 22),
-                  title: Text('Tüm Çağrılar',
+                  title: Text('Görüşme akışı',
                       style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500)),
                   subtitle: Text(
-                    'Danışman paneli → Çağrılar: kendi çağrılarınız, CSV export, toplu SMS. Android\'de telefon günlüğü senkronu.',
+                    'Danışman alanındaki görüşmeler, toplu mesaj araçları ve Android telefon geçmişi eşlemesi.',
                     style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -382,8 +385,8 @@ class SettingsPage extends ConsumerWidget {
                 context,
                 children: [
                   _SettingSwitch(
-                    title: 'Sesli CRM (Magic Call)',
-                    subtitle: 'Sesli komut ve hands-free',
+                    title: 'Sesli müşteri akışı',
+                    subtitle: 'Eller serbest kullanım ve sesli yönlendirme',
                     icon: Icons.mic_rounded,
                     value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
                     onChanged: (v) => ref
@@ -394,8 +397,8 @@ class SettingsPage extends ConsumerWidget {
                       height: 1,
                       color: theme.dividerColor.withValues(alpha: 0.45)),
                   _SettingSwitch(
-                    title: 'Çağrı özeti (AI)',
-                    subtitle: 'Arama sonrası otomatik özet',
+                    title: 'Görüşme özeti',
+                    subtitle: 'Arama sonrası akıllı özet',
                     icon: Icons.summarize_rounded,
                     value: flags[AppConstants.keyFeatureCallSummary] ?? true,
                     onChanged: (v) => ref
@@ -675,9 +678,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.auto_fix_high_outlined,
                             color: theme.colorScheme.primary),
-                        title: const Text('Platform kurulum sihirbazı'),
+                        title: const Text('Kanal kurulum akışı'),
                         subtitle: Text(
-                          'Resmi entegrasyon hazırlığı, transfer anahtarı, dosya ile toplu içe aktarma',
+                          'Resmi entegrasyon hazırlığı, aktarım anahtarı ve toplu veri akışı',
                           style: TextStyle(
                             color: theme.colorScheme.onSurface
                                 .withValues(alpha: 0.65),
@@ -693,9 +696,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.upload_file_outlined,
                             color: theme.colorScheme.primary),
-                        title: const Text('Mağaza toplu içe aktarma'),
+                        title: const Text('Toplu ilan aktarımı'),
                         subtitle: Text(
-                          'URL, dosya ve içe aktarma geçmişi',
+                          'Bağlantı, dosya ve aktarım geçmişi',
                           style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.65),
@@ -707,9 +710,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.history_rounded,
                             color: theme.colorScheme.primary),
-                        title: const Text('İçe aktarma geçmişi'),
+                        title: const Text('Aktarım geçmişi'),
                         subtitle: Text(
-                          'Görev durumu ve loglar',
+                          'Görev durumu ve işlem kayıtları',
                           style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.65),
@@ -752,7 +755,7 @@ class SettingsPage extends ConsumerWidget {
                   _SettingSwitch(
                     title: 'Odaklı V1 (önerilen)',
                     subtitle:
-                        'Açıkken: War Room ve Ekonomi sekmeleri ile ikincil analitik panelleri gizlenir; çekirdek CRM akışları kalır. Kapatınca tam özellik seti.',
+                        'Açıkken: Komuta Odası ve Piyasa sekmeleriyle ikincil içgörü panelleri gizlenir; çekirdek müşteri akışı görünür kalır. Kapattığınızda tam ürün seti açılır.',
                     icon: Icons.bolt_outlined,
                     value: flags[AppConstants.keyV1LeanProduct] ?? true,
                     onChanged: (v) => ref
@@ -766,14 +769,14 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(
-                title: 'War Room & Raporlar', icon: Icons.analytics_rounded),
+                title: 'Komuta ve İçgörüler', icon: Icons.analytics_rounded),
             flagsAsync.when(
               data: (flags) => _sectionCard(
                 context,
                 children: [
                   _SettingSwitch(
                     title: 'KPI çubuğu',
-                    subtitle: 'Dashboard üst KPI göstergeleri',
+                    subtitle: 'Ana Bakış üstündeki hızlı göstergeler',
                     icon: Icons.bar_chart_rounded,
                     value: flags[AppConstants.keyFeatureKpiBar] ?? true,
                     onChanged: (v) => ref
@@ -781,8 +784,8 @@ class SettingsPage extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureKpiBar, v),
                   ),
                   _SettingSwitch(
-                    title: 'War Room',
-                    subtitle: 'Ofis lider tablosu ve hedefler',
+                    title: 'Komuta Odası',
+                    subtitle: 'Ofis ritmi, hedefler ve öncelikli alanlar',
                     icon: Icons.military_tech_rounded,
                     value: flags[AppConstants.keyFeatureWarRoom] ?? true,
                     onChanged: (v) => ref
@@ -790,8 +793,8 @@ class SettingsPage extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureWarRoom, v),
                   ),
                   _SettingSwitch(
-                    title: 'Çağrı Merkezi',
-                    subtitle: 'Tüm çağrılar ve operasyon',
+                    title: 'Görüşme Üssü',
+                    subtitle: 'Tüm görüşmeler ve operasyon görünümü',
                     icon: Icons.call_merge_rounded,
                     value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
                     onChanged: (v) => ref
@@ -1136,7 +1139,7 @@ class _FavoriteInvestRegionTileState
             color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
-        'Dashboard’daki yatırım iştahı özeti bu ilçeye göre hesaplanır.',
+        'Ana Bakış içindeki yatırım iştahı özeti bu ilçeye göre hesaplanır.',
         style: TextStyle(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
           fontSize: 11,

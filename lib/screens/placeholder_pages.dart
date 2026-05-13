@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
@@ -125,11 +126,11 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                 leading: Icon(Icons.admin_panel_settings_rounded,
                     color: AppThemeExtension.of(context).accent),
                 title: Text(
-                  'Yönetici yetkisi al',
+                  'Yönetim yetkisini aç',
                   style: TextStyle(color: onSurface),
                 ),
                 subtitle: Text(
-                  'Firestore\'da rolünüz broker_owner olarak güncellenir; yönetici ve danışman paneline geçebilirsiniz.',
+                  'Rolünüz yönetim alanını açacak şekilde güncellenir; yönetim ve danışman görünümleri arasında geçebilirsiniz.',
                   style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 onTap: () async {
@@ -146,7 +147,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: const Text(
-                              'Yönetici yetkisi verildi. Panel yenileniyor...'),
+                              'Yönetim yetkisi açıldı. Alan yenileniyor...'),
                           backgroundColor: AppThemeExtension.of(context).accent,
                         ),
                       );
@@ -181,10 +182,10 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                       ? AppThemeExtension.of(context).accent
                       : onSurfaceVariant,
                 ),
-                title:
-                    Text('Yönetici paneli', style: TextStyle(color: onSurface)),
+                title: Text(ProductLabels.managerWorkspace,
+                    style: TextStyle(color: onSurface)),
                 subtitle: Text(
-                  'Dashboard, War Room, Çağrı Merkezi, Ekonomi, Raporlar',
+                  '${ProductLabels.overview}, ${ProductLabels.operationsRoom}, ${ProductLabels.conversationHub}, Ekonomi, Raporlar ve Kadro',
                   style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: preferConsultant != true
@@ -203,10 +204,10 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                       ? AppThemeExtension.of(context).accent
                       : onSurfaceVariant,
                 ),
-                title:
-                    Text('Danışman paneli', style: TextStyle(color: onSurface)),
+                title: Text(ProductLabels.consultantWorkspace,
+                    style: TextStyle(color: onSurface)),
                 subtitle: Text(
-                  'Özetim, Müşterilerim, İlanlar, Takip, Magic Call',
+                  '${ProductLabels.overview}, ${ProductLabels.myCustomers}, ${ProductLabels.listings}, ${ProductLabels.revival}, ${ProductLabels.conversations}',
                   style: TextStyle(color: onSurfaceVariant, fontSize: 11),
                 ),
                 trailing: preferConsultant == true

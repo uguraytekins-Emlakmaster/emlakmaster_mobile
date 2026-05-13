@@ -75,12 +75,14 @@ Future<void> showIntelReportPreviewSheet({
                           children: [
                             Text(
                               'Önizleme',
-                              style: AppTypography.pageHeading(context).copyWith(
+                              style:
+                                  AppTypography.pageHeading(context).copyWith(
                                 fontSize: DesignTokens.fontSizeXl,
                                 height: 1.15,
                               ),
                             ),
-                            const SizedBox(height: DesignTokens.titleSubtitleGap),
+                            const SizedBox(
+                                height: DesignTokens.titleSubtitleGap),
                             Text(
                               report.propertyTitle,
                               maxLines: 2,
@@ -108,7 +110,8 @@ Future<void> showIntelReportPreviewSheet({
                 ),
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusControl),
                     child: PdfPreview(
                       build: (format) async => pdfBytes,
                       canChangePageFormat: false,
@@ -163,7 +166,7 @@ Future<void> showIntelReportPreviewSheet({
                         OutlinedButton.icon(
                           onPressed: () async {
                             final t =
-                                'Rainbow Investment Intelligence — ${report.propertyTitle}. Skor: ${report.rainbowScore.toStringAsFixed(0)}/100. ${report.listingUrl}';
+                                'EmlakMaster Yatırım İçgörüsü — ${report.propertyTitle}. Puan: ${report.rainbowScore.toStringAsFixed(0)}/100. ${report.listingUrl}';
                             final uri = Uri.parse(
                               'https://wa.me/?text=${Uri.encodeComponent(t)}',
                             );
@@ -179,8 +182,7 @@ Future<void> showIntelReportPreviewSheet({
                           ),
                           label: const Text("WhatsApp'ta paylaş"),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor:
-                                sheetExt.accent,
+                            foregroundColor: sheetExt.accent,
                             minimumSize: const Size(double.infinity, 48),
                             side: BorderSide(
                               color: sheetExt.border.withValues(alpha: 0.7),

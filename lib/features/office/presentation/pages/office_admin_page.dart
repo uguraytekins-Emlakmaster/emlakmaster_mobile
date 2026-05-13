@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -26,7 +27,9 @@ class OfficeAdminPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
     final user = ref.watch(currentUserProvider).valueOrNull;
-    final doc = user != null ? ref.watch(userDocStreamProvider(user.uid)).valueOrNull : null;
+    final doc = user != null
+        ? ref.watch(userDocStreamProvider(user.uid)).valueOrNull
+        : null;
     final oid = doc?.officeId;
     final mem = ref.watch(primaryMembershipProvider).valueOrNull;
     final canAdmin = mem != null &&
@@ -38,15 +41,18 @@ class OfficeAdminPage extends ConsumerWidget {
     if (oid == null || oid.isEmpty) {
       return Scaffold(
         backgroundColor: ext.background,
-        appBar: AppBar(title: const Text('Ofis yönetimi'), backgroundColor: ext.background),
+        appBar: AppBar(
+          title: const Text(ProductLabels.officeDesk),
+          backgroundColor: ext.background,
+        ),
         body: SafeArea(
           child: EmptyState(
             grouped: true,
             compact: true,
             icon: Icons.apartment_outlined,
-            title: 'Ofis bağlantısı gerekli',
-            subtitle: 'Bu ekran bağlı bir ofis ile açılır.',
-            actionLabel: 'Ofise git',
+            title: 'Ofis bağlantısı gerekiyor',
+            subtitle: 'Bu alanı açmak için önce bir ofise bağlanın.',
+            actionLabel: 'Ofis alanına git',
             onAction: () => context.push(AppRouter.routeOfficeGate),
           ),
         ),
@@ -56,14 +62,18 @@ class OfficeAdminPage extends ConsumerWidget {
     if (!canAdmin) {
       return Scaffold(
         backgroundColor: ext.background,
-        appBar: AppBar(title: const Text('Ofis yönetimi'), backgroundColor: ext.background),
+        appBar: AppBar(
+          title: const Text(ProductLabels.officeDesk),
+          backgroundColor: ext.background,
+        ),
         body: const SafeArea(
           child: EmptyState(
             grouped: true,
             compact: true,
             icon: Icons.lock_outline_rounded,
-            title: 'Yetki gerekli',
-            subtitle: 'Bu alan ofis sahibi, yönetici veya ekip lideri içindir.',
+            title: 'Bu alan için yetki gerekiyor',
+            subtitle:
+                'Yalnızca ofis sahibi, yönetici ya da ekip lideri erişebilir.',
           ),
         ),
       );
@@ -77,10 +87,10 @@ class OfficeAdminPage extends ConsumerWidget {
       backgroundColor: ext.background,
       appBar: AppBar(
         backgroundColor: ext.background,
-        title: const Text('Ofis yönetimi'),
+        title: const Text(ProductLabels.officeDesk),
         actions: [
           IconButton(
-            tooltip: 'Davet oluştur',
+            tooltip: 'Davet hazırla',
             onPressed: () => context.push(AppRouter.routeOfficeInviteCreate),
             icon: const Icon(Icons.person_add_alt_1_rounded),
           ),
@@ -93,7 +103,7 @@ class OfficeAdminPage extends ConsumerWidget {
         ),
         children: [
           Text(
-            'Ekip ve davetler',
+            'Kadro ve davetler',
             style: AppTypography.cardHeading(context).copyWith(
               color: ext.foreground,
               fontSize: DesignTokens.fontSizeLg,
@@ -101,7 +111,7 @@ class OfficeAdminPage extends ConsumerWidget {
           ),
           const SizedBox(height: DesignTokens.space2),
           Text(
-            'Üyeler, davetler ve harici bağlantı özeti.',
+            'Üyeler, davet akışı ve dış bağlantı görünümü.',
             style: AppTypography.body(context).copyWith(
               fontSize: DesignTokens.fontSizeSm,
               height: 1.4,
@@ -111,12 +121,14 @@ class OfficeAdminPage extends ConsumerWidget {
           Text('Üyeler', style: _sectionStyle(context, ext)),
           const SizedBox(height: DesignTokens.space2),
           membersAsync.when(
-            loading: () => const Center(child: Padding(
+            loading: () => const Center(
+                child: Padding(
               padding: EdgeInsets.all(DesignTokens.space6),
               child: CircularProgressIndicator(),
             )),
             error: (e, _) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+              padding:
+                  const EdgeInsets.symmetric(vertical: DesignTokens.space4),
               child: EmptyState(
                 compact: true,
                 grouped: true,
@@ -124,7 +136,8 @@ class OfficeAdminPage extends ConsumerWidget {
                 title: 'Üyeler yüklenemedi',
                 subtitle: officeErrorUserMessage(e),
                 actionLabel: 'Tekrar dene',
-                onAction: () => ref.invalidate(officeMembersStreamProvider(oid)),
+                onAction: () =>
+                    ref.invalidate(officeMembersStreamProvider(oid)),
               ),
             ),
             data: (list) {
@@ -133,17 +146,19 @@ class OfficeAdminPage extends ConsumerWidget {
                   compact: true,
                   grouped: true,
                   icon: Icons.groups_outlined,
-                  title: 'Henüz üye yok',
-                  subtitle: 'Davet göndererek ekibi büyütün.',
+                  title: 'Henüz ekip arkadaşı yok',
+                  subtitle: 'Davet göndererek ofis kadrosunu büyütün.',
                 );
               }
               list.sort((a, b) => a.userId.compareTo(b.userId));
               return Column(
-                children: list.map((m) => _MemberTile(
-                  m: m,
-                  currentUid: user?.uid,
-                  officeId: oid,
-                )).toList(),
+                children: list
+                    .map((m) => _MemberTile(
+                          m: m,
+                          currentUid: user?.uid,
+                          officeId: oid,
+                        ))
+                    .toList(),
               );
             },
           ),
@@ -153,7 +168,8 @@ class OfficeAdminPage extends ConsumerWidget {
           invitesAsync.when(
             loading: () => const SizedBox.shrink(),
             error: (e, _) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
+              padding:
+                  const EdgeInsets.symmetric(vertical: DesignTokens.space4),
               child: EmptyState(
                 compact: true,
                 grouped: true,
@@ -161,7 +177,8 @@ class OfficeAdminPage extends ConsumerWidget {
                 title: 'Davetler yüklenemedi',
                 subtitle: officeErrorUserMessage(e),
                 actionLabel: 'Tekrar dene',
-                onAction: () => ref.invalidate(officeInvitesStreamProvider(oid)),
+                onAction: () =>
+                    ref.invalidate(officeInvitesStreamProvider(oid)),
               ),
             ),
             data: (invites) {
@@ -170,21 +187,23 @@ class OfficeAdminPage extends ConsumerWidget {
                   compact: true,
                   grouped: true,
                   icon: Icons.mail_outline_rounded,
-                  title: 'Aktif davet yok',
-                  subtitle: 'Sağ üstten yeni davet oluşturabilirsiniz.',
+                  title: 'Açık davet yok',
+                  subtitle: 'Sağ üstten yeni bir davet hazırlayabilirsiniz.',
                 );
               }
               invites.sort((a, b) => b.code.compareTo(a.code));
               return Column(
-                children: invites.map((i) => _InviteTile(invite: i, officeId: oid)).toList(),
+                children: invites
+                    .map((i) => _InviteTile(invite: i, officeId: oid))
+                    .toList(),
               );
             },
           ),
           const SizedBox(height: DesignTokens.space8),
-          Text('Harici platformlar', style: _sectionStyle(context, ext)),
+          Text('Dış bağlantılar', style: _sectionStyle(context, ext)),
           const SizedBox(height: DesignTokens.space2),
           Text(
-            'Üye başına bağlantı durumu özeti.',
+            'Her ekip üyesi için bağlantı görünümü.',
             style: AppTypography.body(context).copyWith(
               fontSize: DesignTokens.fontSizeXs,
               height: 1.35,
@@ -216,13 +235,15 @@ class OfficeAdminPage extends ConsumerWidget {
                             const SizedBox(height: 4),
                             Text(
                               row.platform.displayName,
-                              style: TextStyle(color: ext.foregroundSecondary, fontSize: 12),
+                              style: TextStyle(
+                                  color: ext.foregroundSecondary, fontSize: 12),
                             ),
                             if (row.error != null) ...[
                               const SizedBox(height: 6),
                               Text(
                                 row.error!.shortMessage,
-                                style: TextStyle(color: ext.danger, fontSize: 11),
+                                style:
+                                    TextStyle(color: ext.danger, fontSize: 11),
                               ),
                             ],
                           ],
@@ -239,7 +260,7 @@ class OfficeAdminPage extends ConsumerWidget {
           TextButton.icon(
             onPressed: () => context.push(AppRouter.routeConnectedAccounts),
             icon: const Icon(Icons.hub_outlined, size: DesignTokens.iconMd),
-            label: const Text('Bağlı hesaplar'),
+            label: const Text('Bağlantıları aç'),
           ),
         ],
       ),
@@ -295,13 +316,16 @@ class _MemberTile extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       m.role.name,
-                      style: TextStyle(color: ext.foregroundSecondary, fontSize: 12),
+                      style: TextStyle(
+                          color: ext.foregroundSecondary, fontSize: 12),
                     ),
                   ],
                 ),
               ),
               _StatusChip(status: m.status),
-              if (auth != null && m.userId != auth.uid && m.role != OfficeRole.owner) ...[
+              if (auth != null &&
+                  m.userId != auth.uid &&
+                  m.role != OfficeRole.owner) ...[
                 PopupMenuButton<String>(
                   onSelected: (v) async {
                     try {
@@ -411,7 +435,8 @@ class _InviteTile extends ConsumerWidget {
                     Text(
                       '${invite.roleToAssign.name} · ${invite.usedCount}/${invite.maxUses} · '
                       '${invite.isActive ? "Aktif" : "Kapalı"}',
-                      style: TextStyle(color: ext.foregroundSecondary, fontSize: 12),
+                      style: TextStyle(
+                          color: ext.foregroundSecondary, fontSize: 12),
                     ),
                   ],
                 ),

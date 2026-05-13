@@ -57,13 +57,13 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
         ),
       ),
       error: (_, __) => const UnauthorizedScreen(
-        message: 'Rol bilgisi yüklenemedi. Lütfen tekrar giriş yapın.',
+        message: 'Yetki bilgisi alınamadı. Oturumu yenileyip yeniden deneyin.',
       ),
       data: (role) {
         if (!FeaturePermission.canViewAllCalls(role)) {
           return const UnauthorizedScreen(
             message:
-                'Çağrı Merkezi ekranına sadece yönetici ve operasyon rolleri erişebilir.',
+                'Bu alan yalnızca yönetim ve operasyon ekiplerine açıktır.',
           );
         }
         return _CommandCenterBody(viewIndex: _viewIndex);
@@ -255,7 +255,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         onRetry = () => unawaited(retryLocalCallRecordSync(localMatch));
       }
       trailing = Tooltip(
-        message: 'Senkron durumu',
+        message: 'Aktarım durumu',
         child: CallSyncStatusIcon(
           record: localMatch,
           onManualRetry: onRetry,
@@ -358,8 +358,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         final noteLast =
             CrmCallRecordDisplay.notePreviewFromFirestoreData(lastData);
         final duration = lastData['durationSec'] as num?;
-        final durationStr =
-            duration != null ? '${duration.toInt()} sn' : null;
+        final durationStr = duration != null ? '${duration.toInt()} sn' : null;
         final contextLine = 'Son görüşme: $timeStr'
             '${durationStr != null ? ' · $durationStr' : ''} · '
             '${list.length} kayıt · $pending bekleyen · '
@@ -461,7 +460,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         final pending = list
             .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
             .length;
-        final rawPhone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
+        final rawPhone =
+            (data['phoneNumber'] ?? data['phone'] ?? '').toString();
         final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
         final formattedPhone =
             hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
@@ -482,9 +482,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           agentNames: agentNames,
         );
         final contextLine = '$advisorPart · $timeStr · ${list.length} kayıt';
-        final noteLast = CrmCallRecordDisplay.notePreviewFromFirestoreData(data);
+        final noteLast =
+            CrmCallRecordDisplay.notePreviewFromFirestoreData(data);
         final captureLabel = pending > 0 ? '$pending bekleyen' : cap;
-        final initial = title.isNotEmpty ? title.substring(0, 1).toUpperCase() : '?';
+        final initial =
+            title.isNotEmpty ? title.substring(0, 1).toUpperCase() : '?';
         return Card(
           margin: const EdgeInsets.only(bottom: DesignTokens.space2),
           color: surface,
@@ -618,7 +620,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       backgroundColor: bg,
       appBar: emlakAppBar(
         context,
-        title: const Text('CRM çağrı kayıtları'),
+        title: const Text('Görüşme kayıtları'),
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         actions: [
@@ -804,10 +806,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                       final officeId = uidForOffice.isEmpty
                           ? ''
                           : (ref
-                                  .watch(userDocStreamProvider(uidForOffice))
-                                  .valueOrNull
-                                  ?.officeId ??
-                              '')
+                                      .watch(
+                                          userDocStreamProvider(uidForOffice))
+                                      .valueOrNull
+                                      ?.officeId ??
+                                  '')
                               .trim();
                       final customerEntities = ref
                               .watch(officeWideCustomerListProvider(officeId))
@@ -905,7 +908,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                               data['callOutcome'] as String? ??
                               '';
                           final outcomeLabel = outcomeRaw.isNotEmpty
-                              ? (CrmCallRecordHelpers.kOutcomeCodeLabelsTr[outcomeRaw] ??
+                              ? (CrmCallRecordHelpers
+                                          .kOutcomeCodeLabelsTr[outcomeRaw] ??
                                       outcomeRaw)
                                   .toLowerCase()
                               : '';
@@ -917,10 +921,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                           final ql =
                               (data['quickOutcomeLabelTr'] as String? ?? '')
                                   .toLowerCase();
-                          final contactName = (CrmCallRecordDisplay
-                                      .contactNameFromCallData(data) ??
-                                  '')
-                              .toLowerCase();
+                          final contactName =
+                              (CrmCallRecordDisplay.contactNameFromCallData(
+                                          data) ??
+                                      '')
+                                  .toLowerCase();
                           final cidSearch =
                               CrmCallRecordHelpers.customerIdOf(data);
                           final custResolved = cidSearch != null

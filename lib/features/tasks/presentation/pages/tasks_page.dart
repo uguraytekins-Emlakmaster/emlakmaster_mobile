@@ -38,12 +38,12 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         context,
         backgroundColor: AppThemeExtension.of(context).background,
         foregroundColor: AppThemeExtension.of(context).textPrimary,
-        title: const Text('Görevlerim'),
+        title: const Text('Görev Akışı'),
       ),
       body: uid.isEmpty
           ? Center(
               child: Text(
-                'Giriş yapılmamış.',
+                'Oturum açık değil.',
                 style: AppTypography.body(context),
               ),
             )
@@ -74,7 +74,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                           ),
                           const SizedBox(height: DesignTokens.space4),
                           Text(
-                            'Görevler yüklenemedi.',
+                            'Görev akışı yüklenemedi.',
                             style: AppTypography.cardHeading(context),
                             textAlign: TextAlign.center,
                           ),
@@ -128,7 +128,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                             padding: const EdgeInsets.only(
                                 bottom: DesignTokens.space3),
                             child: Text(
-                              'Bu dönemdeki görevleriniz',
+                              'Yakın ajandanız',
                               style:
                                   AppTypography.cardHeading(context).copyWith(
                                 color:
@@ -207,7 +207,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Görev güncellenemedi: ${e.message ?? e.code}'),
+          content: Text('Görev kaydı güncellenemedi: ${e.message ?? e.code}'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -231,18 +231,18 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         return AlertDialog(
           backgroundColor: ext.surface,
           title: Text(
-            'Görev silinsin mi?',
+            'Görev kaldırılsın mı?',
             style: TextStyle(color: ext.textPrimary),
           ),
           content: Text(
-            '"$title" görevi kalıcı olarak silinecek.',
+            '"$title" kaydı kalıcı olarak kaldırılacak.',
             style: TextStyle(color: ext.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
               child: Text(
-                'Vazgeç',
+                'Şimdilik kalsın',
                 style: TextStyle(color: ext.textSecondary),
               ),
             ),
@@ -275,7 +275,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Görev silindi.'),
+          content: Text('Görev kaydı kaldırıldı.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -284,7 +284,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
       setState(() => _deletingIds.remove(id));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Görev silinemedi: ${e.message ?? e.code}'),
+          content: Text('Görev kaydı kaldırılamadı: ${e.message ?? e.code}'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -302,7 +302,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
       setState(() => _deletingIds.remove(id));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Görev silinemedi: $e'),
+          content: Text('Görev kaydı kaldırılamadı: $e'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -354,9 +354,9 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                         const Expanded(
                           child: PremiumSheetHeader(
                             compact: true,
-                            title: 'Yeni görev',
+                            title: 'Yeni görev kaydı',
                             subtitle:
-                                'Vade ve müşteri bağlantısı isteğe bağlı. Görevler sekmesinde listelenir.',
+                                'Vade ve müşteri bağlantısı isteğe bağlıdır. Kaydettiğiniz iş burada akışa düşer.',
                           ),
                         ),
                         IconButton(

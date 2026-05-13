@@ -1,4 +1,4 @@
-/// Rainbow Investment Intelligence — modül giriş noktası.
+/// EmlakMaster Yatırım İçgörüsü — modül giriş noktası.
 ///
 /// - [RainbowAnalyticsCenterPage] — ana akış
 /// - [IntelReportHistoryPage] — geçmiş raporlar

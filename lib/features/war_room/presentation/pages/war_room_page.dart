@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
+
 /// Role-Based War Room: aktif çağrılar, sıcak fırsatlar, gecikmiş görevler, yüksek değerli lead'ler, danışman durumu.
 class WarRoomPage extends ConsumerWidget {
   const WarRoomPage({super.key});
@@ -23,11 +24,13 @@ class WarRoomPage extends ConsumerWidget {
         backgroundColor: ext.background,
         body: Center(child: CircularProgressIndicator(color: ext.accent)),
       ),
-      error: (_, __) => const UnauthorizedScreen(message: 'Rol yüklenemedi.'),
+      error: (_, __) => const UnauthorizedScreen(
+        message: 'Yetki bilgisi alınamadı.',
+      ),
       data: (role) {
         if (!FeaturePermission.canViewWarRoom(role)) {
           return const UnauthorizedScreen(
-            message: 'Bu alan yönetici ve operasyon rolleri içindir.',
+            message: 'Bu alan yalnızca yönetim ve operasyon ekipleri içindir.',
           );
         }
         return _WarRoomBody();
@@ -62,7 +65,8 @@ class _ResurrectionStrip extends ConsumerWidget {
     final border = ext.border;
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
+      padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
       decoration: BoxDecoration(
         color: surface,
         border: Border(top: BorderSide(color: border.withValues(alpha: 0.45))),
@@ -71,16 +75,20 @@ class _ResurrectionStrip extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(title: 'Yeniden kazanım kuyruğu', icon: Icons.replay_rounded),
+          const _SectionTitle(
+            title: 'Geri kazanım sırası',
+            icon: Icons.replay_rounded,
+          ),
           const SizedBox(height: 8),
           resurrectionAsync.when(
             data: (items) {
               final elevated = ext.surfaceElevated;
               if (items.isEmpty) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: DesignTokens.space2),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: DesignTokens.space2),
                   child: Text(
-                    'Şu an öncelikli sessiz lead yok.',
+                    'Şu an öne çekilecek sessiz müşteri görünmüyor.',
                     style: AppTypography.body(context).copyWith(
                       fontSize: DesignTokens.fontSizeXs,
                     ),
@@ -92,7 +100,8 @@ class _ResurrectionStrip extends ConsumerWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: items.take(10).length,
-                  separatorBuilder: (_, __) => const SizedBox(width: DesignTokens.space2),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: DesignTokens.space2),
                   itemBuilder: (context, i) {
                     final e = items[i];
                     return ActionChip(
@@ -112,7 +121,7 @@ class _ResurrectionStrip extends ConsumerWidget {
                         HapticFeedback.lightImpact();
                         showResurrectionLeadTopicSheet(
                           context,
-                          topicTitle: 'Yeniden kazanım kuyruğu',
+                          topicTitle: 'Geri kazanım sırası',
                           item: e,
                         );
                       },
@@ -124,16 +133,16 @@ class _ResurrectionStrip extends ConsumerWidget {
               );
             },
             loading: () => SizedBox(
-                  height: 36,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: ext.accent,
-                    ),
-                  ),
+              height: 36,
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: ext.accent,
                 ),
+              ),
+            ),
             error: (_, __) => Text(
-              'Kuyruk yüklenemedi',
+              'Sıra yüklenemedi',
               style: AppTypography.body(context).copyWith(
                 color: ext.danger,
                 fontSize: DesignTokens.fontSizeXs,
@@ -158,7 +167,9 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: DesignTokens.space2),
       child: Row(
         children: [
-          Icon(icon, size: DesignTokens.iconMd, color: ext.accent.withValues(alpha: 0.85)),
+          Icon(icon,
+              size: DesignTokens.iconMd,
+              color: ext.accent.withValues(alpha: 0.85)),
           const SizedBox(width: DesignTokens.space2),
           Text(
             title,
@@ -172,4 +183,3 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-

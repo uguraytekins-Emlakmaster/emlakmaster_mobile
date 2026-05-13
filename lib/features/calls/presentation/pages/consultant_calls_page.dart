@@ -99,7 +99,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     final list = _selectedIds.isEmpty ? _docs : _selectedDocs();
     if (list.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Dışa aktarılacak çağrı yok.')),
+        const SnackBar(content: Text('Dışarı alınacak görüşme yok.')),
       );
       return;
     }
@@ -109,7 +109,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'CSV panoya kopyalandı (${list.length} satır). Excel\'e yapıştırabilirsiniz.'),
+              'CSV panoya alındı (${list.length} satır). İsterseniz Excel\'e yapıştırabilirsiniz.'),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -126,8 +126,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content:
-                  Text('SMS göndermek için en az bir geçerli numara seçin.')),
+              content: Text('SMS için en az bir geçerli numara seçin.')),
         );
       }
       return;
@@ -177,14 +176,14 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
             : AppThemeExtension.of(context).textSecondary;
         return AlertDialog(
           backgroundColor: dSurface,
-          title: Text('WhatsApp ile aç', style: TextStyle(color: dFg)),
+          title: Text('WhatsApp akışını aç', style: TextStyle(color: dFg)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '${phones.length} kişi. İsteğe bağlı mesaj yazın; sohbet açıldığında kutuya doldurulur.',
+                  '${phones.length} kişi seçildi. Dilerseniz bir mesaj hazırlayın; sohbet açıldığında kutuya yerleşir.',
                   style: AppTypography.body(ctx).copyWith(color: dSecondary),
                 ),
                 const SizedBox(height: DesignTokens.space3),
@@ -193,7 +192,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   autofocus: true,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    hintText: 'Merhaba, ...',
+                    hintText: 'Merhaba, size uygun bir ilan paylaşabilirim...',
                     border: OutlineInputBorder(
                       borderRadius:
                           BorderRadius.circular(DesignTokens.radiusSm),
@@ -216,7 +215,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               onPressed: () => Navigator.of(ctx).pop(controller.text),
               style: FilledButton.styleFrom(
                   backgroundColor: AppThemeExtension.of(context).accent),
-              child: const Text('İlkini aç'),
+              child: const Text('İlk sohbeti aç'),
             ),
           ],
         );
@@ -234,8 +233,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     if (!opened) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content:
-                Text('WhatsApp açılamadı. Uygulama yüklü mü kontrol edin.')),
+            content: Text(
+                'WhatsApp açılamadı. Uygulamanın yüklü olduğundan emin olun.')),
       );
     }
     setState(() => _whatsappIndex = 1);
@@ -270,7 +269,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         _whatsappIndex = 0;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('WhatsApp listesi tamamlandı.')),
+        const SnackBar(content: Text('WhatsApp akışı tamamlandı.')),
       );
     }
   }
@@ -284,11 +283,12 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
 
   String _syncSubtitleHint(LocalCallSyncUiState s) {
     return switch (s) {
-      LocalCallSyncUiState.pending => 'Senkron bekleniyor',
-      LocalCallSyncUiState.syncing => 'Senkronize ediliyor',
-      LocalCallSyncUiState.synced => 'Buluta kayıtlı',
-      LocalCallSyncUiState.failedRetry => 'Otomatik yeniden denenecek',
-      LocalCallSyncUiState.failedPermanent => 'Buluta iletilemedi · Tekrar dene',
+      LocalCallSyncUiState.pending => 'Aktarım sırası bekleniyor',
+      LocalCallSyncUiState.syncing => 'Buluta aktarılıyor',
+      LocalCallSyncUiState.synced => 'Bulutta hazır',
+      LocalCallSyncUiState.failedRetry => 'Kısa süre sonra yeniden denenecek',
+      LocalCallSyncUiState.failedPermanent =>
+        'Buluta aktarılamadı · Yeniden dene',
     };
   }
 
@@ -317,7 +317,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               const SizedBox(width: DesignTokens.space3),
               Expanded(
                 child: Text(
-                  'iOS: Yalnızca uygulama içi (Magic Call) aramaları görünür. Sistem çağrı günlüğü Apple kısıtlaması nedeniyle eklenmez.',
+                  'iOS tarafında yalnızca uygulama içi görüşmeler görünür. Apple kısıtları nedeniyle sistem arama geçmişi eklenmez.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: ext.textSecondary,
                         height: 1.35,
@@ -336,7 +336,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     if (uid == null || uid.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Giriş yapılı değil.')),
+          const SnackBar(content: Text('Oturum açık değil.')),
         );
       }
       return;
@@ -346,7 +346,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'Telefon çağrı günlüğü sadece Android\'de desteklenir. iOS\'ta uygulama içi aramalar listelenir.'),
+                'Telefon arama geçmişi yalnızca Android\'de desteklenir. iOS\'ta yalnızca uygulama içi görüşmeler listelenir.'),
             duration: Duration(seconds: 3),
           ),
         );
@@ -364,21 +364,21 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     switch (result) {
       case DeviceCallLogSyncResult.success:
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Telefon çağrıları senkronize edildi.')),
+          const SnackBar(content: Text('Telefon görüşmeleri içeri alındı.')),
         );
         break;
       case DeviceCallLogSyncResult.permissionDenied:
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Çağrı günlüğü izni verilmedi.')),
+          const SnackBar(content: Text('Arama geçmişi izni verilmedi.')),
         );
         break;
       case DeviceCallLogSyncResult.permissionPermanentlyDenied:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
-                'Çağrı günlüğü izni kapalı. Ayarlardan açabilirsiniz.'),
+                'Arama geçmişi izni kapalı. İsterseniz ayarlardan açabilirsiniz.'),
             action: SnackBarAction(
-              label: 'Ayarlar',
+              label: 'İzin ayarları',
               onPressed: () => openAppSettings(),
             ),
           ),
@@ -387,13 +387,12 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       case DeviceCallLogSyncResult.notSupported:
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Bu cihazda çağrı günlüğü desteklenmiyor.')),
+              content: Text('Bu cihaz arama geçmişini desteklemiyor.')),
         );
         break;
       case DeviceCallLogSyncResult.error:
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Senkronizasyon sırasında hata oluştu.')),
+          const SnackBar(content: Text('Aktarım sırasında bir sorun oluştu.')),
         );
         break;
     }
@@ -443,7 +442,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       backgroundColor: bg,
       appBar: emlakAppBar(
         context,
-        title: const Text('Tüm Çağrılar'),
+        title: const Text('Görüşme Akışı'),
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         actions: [
@@ -458,22 +457,22 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           color: AppThemeExtension.of(context).accent),
                     )
                   : const Icon(Icons.phone_android_rounded),
-              tooltip: 'Telefon çağrılarını senkronize et',
+              tooltip: 'Telefon görüşmelerini içeri al',
               onPressed: _isSyncingDeviceCalls ? null : _syncDeviceCallLog,
             ),
           IconButton(
             icon: const Icon(Icons.copy_rounded),
-            tooltip: 'CSV\'yi panoya kopyala',
+            tooltip: 'CSV\'yi panoya al',
             onPressed: _copyCsvToClipboard,
           ),
           IconButton(
             icon: const Icon(Icons.sms_rounded),
-            tooltip: 'Toplu SMS',
+            tooltip: 'Toplu SMS gönder',
             onPressed: _openBulkSms,
           ),
           IconButton(
             icon: const Icon(Icons.chat_rounded),
-            tooltip: 'WhatsApp ile aç',
+            tooltip: 'WhatsApp akışını aç',
             onPressed: _openWhatsAppBulk,
           ),
         ],
@@ -493,7 +492,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     color: textSecondary, size: 48),
                 const SizedBox(height: 16),
                 Text(
-                  'Çağrılar yüklenemedi.',
+                  'Görüşmeler yüklenemedi.',
                   style: AppTypography.cardHeading(context),
                   textAlign: TextAlign.center,
                 ),
@@ -590,7 +589,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   child: Row(
                     children: [
                       Text(
-                        '$totalCount kayıt',
+                        '$totalCount görüşme',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                               color: textSecondary,
                               fontWeight: FontWeight.w600,
@@ -602,7 +601,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         style: TextButton.styleFrom(
                             foregroundColor:
                                 AppThemeExtension.of(context).accent),
-                        child: const Text('Tümünü seç'),
+                        child: const Text('Hepsini seç'),
                       ),
                       TextButton(
                         onPressed: () => _selectAll(false),
@@ -630,23 +629,23 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       final syncHint = _syncSubtitleHint(
                         deriveLocalCallSyncUiState(r, nowMs: nowMs),
                       );
-                      final custName = r.customerId != null &&
-                              r.customerId!.isNotEmpty
-                          ? customerById[r.customerId!]?.fullName
-                          : null;
+                      final custName =
+                          r.customerId != null && r.customerId!.isNotEmpty
+                              ? customerById[r.customerId!]?.fullName
+                              : null;
                       final formattedPhone =
                           CrmCallRecordDisplay.formatPhone(r.phoneNumber);
                       final localTitle = CrmCallRecordDisplay.primaryTitle(
                         customerFullName: custName,
                         rawPhone: r.phoneNumber,
                       );
-                      final phoneUnder = CrmCallRecordDisplay
-                          .shouldShowPhoneUnderTitle(
+                      final phoneUnder =
+                          CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
                         title: localTitle,
                         formattedPhone: formattedPhone,
                       )
-                          ? formattedPhone
-                          : null;
+                              ? formattedPhone
+                              : null;
                       final localFoot = CrmCallRecordDisplay.technicalFootnote(
                         firestoreDocId: r.firestoreDocumentId,
                         customerId: r.customerId,
@@ -693,7 +692,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     final outcomeRaw = data['outcome'] as String? ??
                         data['callOutcome'] as String?;
                     final outcomeStr = outcomeRaw != null
-                        ? (CrmCallRecordHelpers.kOutcomeCodeLabelsTr[outcomeRaw] ??
+                        ? (CrmCallRecordHelpers
+                                .kOutcomeCodeLabelsTr[outcomeRaw] ??
                             outcomeRaw)
                         : '—';
                     final createdAt = data['createdAt'];
@@ -713,7 +713,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         customerId != null && customerId.isNotEmpty
                             ? customerById[customerId]?.fullName
                             : null;
-                    final note = CrmCallRecordDisplay.notePreviewFromFirestoreData(
+                    final note =
+                        CrmCallRecordDisplay.notePreviewFromFirestoreData(
                       data,
                       maxLen: 160,
                     );
@@ -739,14 +740,15 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       contactDisplayName: contactName,
                       rawPhone: rawPhone.isEmpty ? null : rawPhone,
                     );
-                    final phoneUnder = CrmCallRecordDisplay
-                        .shouldShowPhoneUnderTitle(
+                    final phoneUnder =
+                        CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
                       title: rowTitle,
                       formattedPhone: phone,
                     )
-                        ? phone
-                        : null;
-                    final technicalMeta = CrmCallRecordDisplay.technicalFootnote(
+                            ? phone
+                            : null;
+                    final technicalMeta =
+                        CrmCallRecordDisplay.technicalFootnote(
                       firestoreDocId: id,
                       customerId: customerId,
                     );
@@ -803,7 +805,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Sıradakini aç (${_whatsappIndex + 1}/${queue.length})',
+                          'Sıradaki sohbeti aç (${_whatsappIndex + 1}/${queue.length})',
                           style: TextStyle(
                             color: fg,
                             fontWeight: FontWeight.w600,
@@ -824,7 +826,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         onPressed: _clearWhatsAppQueue,
                         style: TextButton.styleFrom(
                             foregroundColor: textSecondary),
-                        child: const Text('Bitir'),
+                        child: const Text('Akışı kapat'),
                       ),
                     ],
                   ),
@@ -887,8 +889,8 @@ class _LocalCallRecordCard extends StatelessWidget {
             color: textSecondary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           ),
-          child: Icon(Icons.phone_in_talk_rounded,
-              color: textSecondary, size: 20),
+          child:
+              Icon(Icons.phone_in_talk_rounded, color: textSecondary, size: 20),
         ),
         trailing: syncIcon,
       ),

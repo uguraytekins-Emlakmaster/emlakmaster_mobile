@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
@@ -22,13 +23,13 @@ class ConsultantShellPage extends StatefulWidget {
   State<ConsultantShellPage> createState() => _ConsultantShellPageState();
 
   static const List<AdaptiveNavItem> _navItems = [
-    AdaptiveNavItem(Icons.dashboard_rounded, 'Özetim'),
-    AdaptiveNavItem(Icons.call_rounded, 'Çağrılar'),
-    AdaptiveNavItem(Icons.people_rounded, 'Müşterilerim'),
-    AdaptiveNavItem(Icons.home_work_rounded, 'İlanlar'),
-    AdaptiveNavItem(Icons.replay_rounded, 'Takip'),
-    AdaptiveNavItem(Icons.task_alt_rounded, 'Görevler'),
-    AdaptiveNavItem(Icons.settings_rounded, 'Ayarlar'),
+    AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.overview),
+    AdaptiveNavItem(Icons.call_rounded, ProductLabels.conversations),
+    AdaptiveNavItem(Icons.people_rounded, ProductLabels.myCustomers),
+    AdaptiveNavItem(Icons.home_work_rounded, ProductLabels.listings),
+    AdaptiveNavItem(Icons.replay_rounded, ProductLabels.revival),
+    AdaptiveNavItem(Icons.task_alt_rounded, ProductLabels.tasks),
+    AdaptiveNavItem(Icons.settings_rounded, ProductLabels.settings),
   ];
 
   static const List<Widget> _pages = [
@@ -73,7 +74,7 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
               navItems: ConsultantShellPage._navItems,
               pages: ConsultantShellPage._pages,
               tabIds: ConsultantShellPage._tabIds,
-              title: 'Danışman Paneli',
+              title: ProductLabels.consultantWorkspace,
               shortcutMap: const {
                 MainShellShortcut.openHomeTab: 0,
                 MainShellShortcut.openCallsTab: 1,

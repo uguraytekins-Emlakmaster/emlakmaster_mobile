@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -34,12 +35,13 @@ class BrokerCommandPage extends ConsumerWidget {
           body: Center(child: CircularProgressIndicator(color: ext.accent)),
         );
       },
-      error: (_, __) => const UnauthorizedScreen(message: 'Rol yüklenemedi.'),
+      error: (_, __) => const UnauthorizedScreen(
+        message: 'Yetki bilgisi alınamadı.',
+      ),
       data: (role) {
         if (!FeaturePermission.canViewWarRoom(role)) {
           return const UnauthorizedScreen(
-            message:
-                'War Room ekranına sadece yönetici ve operasyon erişebilir.',
+            message: 'Bu alan yalnızca yönetim ve operasyon için açıktır.',
           );
         }
         return const _BrokerCommandBody();
@@ -70,7 +72,7 @@ class _BrokerCommandBody extends StatelessWidget {
       appBar: emlakAppBar(
         context,
         title: Text(
-          'War Room',
+          ProductLabels.operationsDeck,
           style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w700),
         ),
         backgroundColor: ext.background,
@@ -109,7 +111,7 @@ class _BrokerCommandBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'WAR ROOM',
+                        'KOMUTA',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: ext.accent.withValues(alpha: 0.85),
                               fontWeight: FontWeight.w700,
@@ -127,7 +129,7 @@ class _BrokerCommandBody extends StatelessWidget {
                       ),
                       const SizedBox(height: DesignTokens.space1),
                       Text(
-                        'Canlı operasyonel farkındalık — komuta ve piyasa tek bakışta',
+                        'Operasyon, piyasa ve ekip ritmi tek bakışta önünüzde.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: ext.textSecondary,
                               height: 1.35,
@@ -178,7 +180,7 @@ class _BrokerCommandBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Ekip performansı',
+                        'Kadro ritmi',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: ext.accent,
                               fontWeight: FontWeight.w700,
@@ -186,7 +188,7 @@ class _BrokerCommandBody extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Çağrı yoğunluğu ve satış metrikleri burada listelenecek.',
+                        'Görüşme yoğunluğu ve satış akışı burada toplanacak.',
                         style: TextStyle(
                             color: ext.textSecondary,
                             fontSize: 13,

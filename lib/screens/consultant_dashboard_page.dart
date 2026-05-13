@@ -70,138 +70,139 @@ class ConsultantDashboardPage extends ConsumerWidget {
             child: CustomScrollView(
               cacheExtent: 380,
               slivers: [
-              // —— Layer 1–2: Hero + Operational (above-the-fold) ——
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    DashboardLayoutTokens.horizontalPadding,
-                    DashboardLayoutTokens.pageTopInset,
-                    DashboardLayoutTokens.horizontalPadding,
-                    DashboardLayoutTokens.pageBottomInset,
+                // —— Layer 1–2: Hero + Operational (above-the-fold) ——
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      DashboardLayoutTokens.horizontalPadding,
+                      DashboardLayoutTokens.pageTopInset,
+                      DashboardLayoutTokens.horizontalPadding,
+                      DashboardLayoutTokens.pageBottomInset,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _DashboardHeroHeader(
+                          greeting: greeting,
+                          tagline:
+                              'Bugünkü oyun alanın — çağrı, müşteri ve momentum tek ekranda.',
+                        ),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapHeroToOperational),
+                        const PostCallCaptureDashboardReminder(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperationalTight),
+                        const _ConsultantTeamLine(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperational),
+                        const _ConsultantActionAnchor(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperational),
+                        Text(
+                          'Hızlı durum',
+                          style: AppTypography.sectionLabel(context),
+                        ),
+                        const SizedBox(height: DesignTokens.space2),
+                        const _TodayKpiRow(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperationalTight),
+                        const AiUsageIndicator(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperationalTight),
+                        const ConsultantPerformanceStrip(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperational),
+                        Text(
+                          'Fırsat ve gelir motoru',
+                          style: AppTypography.sectionLabel(context),
+                        ),
+                        const SizedBox(height: DesignTokens.space2),
+                        const RevenueIntelligenceDashboardSection(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperationalTight),
+                        const ExecutionRemindersCard(
+                            surface: ExecutionReminderSurface.consultant),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperational),
+                        const PriorityCallSignalsCard(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperational),
+                        const SyncDelayedCustomersDashboardCard(),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperational),
+                        const _QuickStatsCard(compact: true),
+                        const SizedBox(
+                            height: DashboardLayoutTokens.gapOperational),
+                        const _WeeklyGoalCard(),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _DashboardHeroHeader(
-                        greeting: greeting,
-                        tagline:
-                            'Bugünkü oyun alanın — çağrı, müşteri ve momentum tek ekranda.',
+                ),
+                // —— Layer 3: Insight — V1 odaklı modda kapatılır (piyasa/ticker/akademi ağırlığı)
+                if (!lean) ...[
+                  const SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: DashboardLayoutTokens.gapInsightSection),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: DashboardLayoutTokens.horizontalPadding,
                       ),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapHeroToOperational),
-                      const PostCallCaptureDashboardReminder(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperationalTight),
-                      const _ConsultantTeamLine(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperational),
-                      const _ConsultantActionAnchor(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperational),
-                      Text(
-                        'Hızlı durum',
-                        style: AppTypography.sectionLabel(context),
+                      child: _PipelineChampionCard(),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: DashboardLayoutTokens.gapInsightSection),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: DashboardLayoutTokens.horizontalPadding,
                       ),
-                      const SizedBox(height: DesignTokens.space2),
-                      const _TodayKpiRow(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperationalTight),
-                      const AiUsageIndicator(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperationalTight),
-                      const ConsultantPerformanceStrip(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperational),
-                      Text(
-                        'Fırsat ve gelir motoru',
-                        style: AppTypography.sectionLabel(context),
+                      child: DiscoveryPanel(),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: DashboardLayoutTokens.gapInsightSection),
+                  ),
+                  const SliverToBoxAdapter(child: MasterTicker()),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: DashboardLayoutTokens.gapInsightSection),
+                  ),
+                  const SliverToBoxAdapter(child: FinanceBar()),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: DashboardLayoutTokens.gapInsightSection),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: DashboardLayoutTokens.horizontalPadding,
                       ),
-                      const SizedBox(height: DesignTokens.space2),
-                      const RevenueIntelligenceDashboardSection(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperationalTight),
-                      const ExecutionRemindersCard(
-                          surface: ExecutionReminderSurface.consultant),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperational),
-                      const PriorityCallSignalsCard(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperational),
-                      const SyncDelayedCustomersDashboardCard(),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperational),
-                      const _QuickStatsCard(compact: true),
-                      const SizedBox(
-                          height: DashboardLayoutTokens.gapOperational),
-                      const _WeeklyGoalCard(),
-                    ],
-                  ),
-                ),
-              ),
-              // —— Layer 3: Insight — V1 odaklı modda kapatılır (piyasa/ticker/akademi ağırlığı)
-              if (!lean) ...[
-                const SliverToBoxAdapter(
-                  child:
-                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-                ),
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: DashboardLayoutTokens.horizontalPadding,
+                      child: MarketPulsePanel(),
                     ),
-                    child: _PipelineChampionCard(),
                   ),
-                ),
-                const SliverToBoxAdapter(
-                  child:
-                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-                ),
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: DashboardLayoutTokens.horizontalPadding,
+                  const SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: DashboardLayoutTokens.gapInsightSection),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: DashboardLayoutTokens.horizontalPadding,
+                      ),
+                      child: _ConsultantAcademyCard(),
                     ),
-                    child: DiscoveryPanel(),
                   ),
-                ),
-                const SliverToBoxAdapter(
+                ],
+                SliverToBoxAdapter(
                   child:
-                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
+                      SizedBox(height: summaryBottomPad + DesignTokens.space3),
                 ),
-                const SliverToBoxAdapter(child: MasterTicker()),
-                const SliverToBoxAdapter(
-                  child:
-                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-                ),
-                const SliverToBoxAdapter(child: FinanceBar()),
-                const SliverToBoxAdapter(
-                  child:
-                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-                ),
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: DashboardLayoutTokens.horizontalPadding,
-                    ),
-                    child: MarketPulsePanel(),
-                  ),
-                ),
-                const SliverToBoxAdapter(
-                  child:
-                      SizedBox(height: DashboardLayoutTokens.gapInsightSection),
-                ),
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: DashboardLayoutTokens.horizontalPadding,
-                    ),
-                    child: _ConsultantAcademyCard(),
-                  ),
-                ),
-              ],
-              SliverToBoxAdapter(
-                child: SizedBox(height: summaryBottomPad + DesignTokens.space3),
-              ),
               ],
             ),
           ),
@@ -219,7 +220,8 @@ class ConsultantDashboardPage extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline_rounded, color: ext.accent, size: 48),
+                  Icon(Icons.error_outline_rounded,
+                      color: ext.accent, size: 48),
                   const SizedBox(height: 16),
                   Text(
                     'Danisman paneli hazirlanamadi',
@@ -443,9 +445,9 @@ class _ConsultantActionAnchor extends StatelessWidget {
                   final secondaryChildren = [
                     Semantics(
                       button: true,
-                      label: 'Magic Call — uygulama içi CRM ile ara',
+                      label: 'Akıllı görüşme ile ara',
                       child: Tooltip(
-                        message: 'Uygulama içi CRM oturumu',
+                        message: 'Uygulama içi kayıt oturumu',
                         child: OutlinedButton.icon(
                           onPressed: () {
                             HapticFeedback.selectionClick();
@@ -463,7 +465,7 @@ class _ConsultantActionAnchor extends StatelessWidget {
                           icon: Icon(Icons.phone_in_talk_rounded,
                               size: 22, color: ext.accent),
                           label: Text(
-                            'Magic Call',
+                            'Akıllı Görüşme',
                             style: AppTypography.secondaryButton(context),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -508,8 +510,8 @@ class _ConsultantActionAnchor extends StatelessWidget {
                       const SizedBox(height: DesignTokens.space1),
                       Text(
                         narrow
-                            ? 'Çağrı momentumu başlatır; özet ve görevler arkadan gelir.'
-                            : 'Bir çağrı momentumu başlatır; özet ve görevler arkasından gelir.',
+                            ? 'Bir görüşme günü açar; özet ve görevler ardından akışa düşer.'
+                            : 'Tek bir görüşme günü açar; özet ve görevler hemen ardından akışa düşer.',
                         style: AppTypography.meta(context).copyWith(
                           color: ext.textTertiary,
                           height: 1.35,
@@ -559,9 +561,8 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   static const String _subtitleFull =
-      'Kayıtlı arama — CRM özeti ve görevler seni takip eder';
-  static const String _subtitleShort =
-      'Kayıtlı arama — özet ve görevler CRM’de';
+      'Kayıtlı arama; özet ve görevler akışta seni bekler';
+  static const String _subtitleShort = 'Kayıtlı arama; özet ve görevler hazır';
 
   @override
   Widget build(BuildContext context) {
@@ -572,7 +573,7 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
     return Semantics(
       button: true,
       label:
-          'Telefon ile ara. Kayıtlı aramada CRM özeti ve görevler seni takip eder.',
+          'Telefon ile ara. Kayıtlı aramada özet ve görevler otomatik hazırlanır.',
       child: Material(
         borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
         color: ext.accent,
@@ -1002,7 +1003,7 @@ class _ConsultantAcademyCard extends StatelessWidget {
                                 Icons.phone_in_talk_rounded,
                                 size: DesignTokens.iconMd,
                               ),
-                              label: const Text('Magic Call ile uygula'),
+                              label: const Text('Akıllı görüşme ile uygula'),
                               style: FilledButton.styleFrom(
                                 backgroundColor: ext.accent,
                                 foregroundColor: ext.onBrand,
@@ -1158,7 +1159,7 @@ class _PipelineChampionCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Pipeline',
+                      'Fırsat hattı',
                       style: TextStyle(
                         color: ext.textPrimary,
                         fontWeight: FontWeight.w700,
@@ -1169,7 +1170,7 @@ class _PipelineChampionCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Satış hunisi · Aşamaları yönet',
+                      'Satış akışı · aşamaları tek yerden yönet',
                       style: TextStyle(
                         color: ext.textSecondary,
                         fontSize: DesignTokens.fontSizeSm,
@@ -1246,7 +1247,7 @@ class _QuickStatsCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Takip listesi',
+                        'Geri kazanım',
                         style: AppTypography.cardHeading(context).copyWith(
                           fontSize: compact
                               ? DesignTokens.fontSizeMd
@@ -1257,7 +1258,7 @@ class _QuickStatsCard extends ConsumerWidget {
                       ),
                       if (isLoading)
                         Text(
-                          'Takip listesi yükleniyor...',
+                          'Geri kazanım akışı yükleniyor...',
                           style: AppTypography.body(context),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -1265,8 +1266,8 @@ class _QuickStatsCard extends ConsumerWidget {
                       else
                         Text(
                           count == 0
-                              ? 'Şu an takip edilecek lead yok'
-                              : '$count lead takip bekliyor',
+                              ? 'Şu an öne çekilecek sessiz müşteri yok'
+                              : '$count müşteri yeniden temas bekliyor',
                           style: AppTypography.body(context),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -1294,8 +1295,8 @@ class _QuickStatsCard extends ConsumerWidget {
             if (!compact) ...[
               const SizedBox(height: DesignTokens.space4),
               Text(
-                'Magic Call ile aradığın müşterilerin özeti otomatik kaydedilir; '
-                'takip sekmesinden sessiz kalan lead\'lere ulaşabilirsin.',
+                'Akıllı görüşmelerin özeti otomatik kaydedilir; '
+                'gelişimi duran müşterilere bu alandan yeniden dokunabilirsin.',
                 style: TextStyle(
                   color: ext.textTertiary,
                   fontSize: DesignTokens.fontSizeXs,
@@ -1304,7 +1305,7 @@ class _QuickStatsCard extends ConsumerWidget {
             ] else ...[
               const SizedBox(height: 6),
               Text(
-                'Sessiz kalan lead\'ler için yeniden kazanım.',
+                'Sessiz kalan müşteriler için yeniden temas alanı.',
                 style: TextStyle(
                   color: ext.textTertiary,
                   fontSize: DesignTokens.fontSizeXs,

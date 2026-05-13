@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
@@ -16,7 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// Premium hesap / oturum paneli — ana ekran avatarından.
-Future<void> showAccountSessionSheet(BuildContext context, WidgetRef ref) async {
+Future<void> showAccountSessionSheet(
+    BuildContext context, WidgetRef ref) async {
   await HapticFeedback.lightImpact();
   if (!context.mounted) return;
   await showPremiumModalBottomSheet<void>(
@@ -30,11 +32,14 @@ class _AccountSessionSheet extends ConsumerWidget {
   const _AccountSessionSheet();
 
   static String _activePanelLabel(WidgetRef ref, AppRole role) {
-    if (FeaturePermission.seesClientPanel(role)) return 'Müşteri deneyimi';
-    if (!FeaturePermission.seesAdminPanel(role)) return 'Danışman paneli';
+    if (FeaturePermission.seesClientPanel(role))
+      return ProductLabels.clientWorkspace;
+    if (!FeaturePermission.seesAdminPanel(role)) {
+      return ProductLabels.consultantWorkspace;
+    }
     final prefer = ref.watch(preferredConsultantPanelProvider);
-    if (prefer == true) return 'Danışman paneli';
-    return 'Yönetici paneli';
+    if (prefer == true) return ProductLabels.consultantWorkspace;
+    return ProductLabels.managerWorkspace;
   }
 
   void _goAccountTab(BuildContext context, WidgetRef ref) {
@@ -55,7 +60,8 @@ class _AccountSessionSheet extends ConsumerWidget {
         : (user?.email ?? 'Hesap');
     final avatarUrl = uid.isEmpty
         ? null
-        : ref.watch(userDocStreamProvider(uid).select((a) => a.valueOrNull?.avatarUrl));
+        : ref.watch(
+            userDocStreamProvider(uid).select((a) => a.valueOrNull?.avatarUrl));
     final isAdmin = FeaturePermission.seesAdminPanel(role);
     final isClient = FeaturePermission.seesClientPanel(role);
     final versionLabel = AppConstants.appVersion.split('+').first;
@@ -89,10 +95,11 @@ class _AccountSessionSheet extends ConsumerWidget {
                     children: [
                       Text(
                         name,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: ext.textPrimary,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: ext.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -109,17 +116,20 @@ class _AccountSessionSheet extends ConsumerWidget {
                       ),
                       const SizedBox(height: 10),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
                           color: ext.background.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                          border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusMd),
+                          border: Border.all(
+                              color: ext.border.withValues(alpha: 0.5)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Aktif görünüm',
+                              ProductLabels.activeView,
                               style: TextStyle(
                                 color: ext.textTertiary,
                                 fontSize: 11,
@@ -149,7 +159,7 @@ class _AccountSessionSheet extends ConsumerWidget {
             const SizedBox(height: DesignTokens.space5),
             _SheetAction(
               icon: Icons.person_outline_rounded,
-              label: 'Profili görüntüle',
+              label: 'Profili aç',
               onTap: () => _goAccountTab(context, ref),
             ),
             if (!isClient) ...[
@@ -164,7 +174,7 @@ class _AccountSessionSheet extends ConsumerWidget {
               const SizedBox(height: DesignTokens.space2),
               _SheetAction(
                 icon: Icons.swap_horiz_rounded,
-                label: 'Panel değiştir',
+                label: ProductLabels.switchWorkspace,
                 subtitle: _activePanelLabel(ref, role),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -204,7 +214,8 @@ class _AccountSessionSheet extends ConsumerWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space3),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: DesignTokens.space3),
                   child: Container(
                     width: 3,
                     height: 3,
@@ -258,20 +269,26 @@ void _showPanelPickSheet(BuildContext context, WidgetRef ref) {
             const SizedBox(height: DesignTokens.space4),
             _SheetAction(
               icon: Icons.dashboard_rounded,
-              label: 'Yönetici paneli',
-              trailing: prefer != true ? Icon(Icons.check_rounded, color: ext.accent, size: 20) : null,
+              label: ProductLabels.managerWorkspace,
+              trailing: prefer != true
+                  ? Icon(Icons.check_rounded, color: ext.accent, size: 20)
+                  : null,
               onTap: () {
-                ref.read(preferredConsultantPanelProvider.notifier).state = false;
+                ref.read(preferredConsultantPanelProvider.notifier).state =
+                    false;
                 Navigator.of(ctx).pop();
               },
             ),
             const SizedBox(height: DesignTokens.space2),
             _SheetAction(
               icon: Icons.person_rounded,
-              label: 'Danışman paneli',
-              trailing: prefer == true ? Icon(Icons.check_rounded, color: ext.accent, size: 20) : null,
+              label: ProductLabels.consultantWorkspace,
+              trailing: prefer == true
+                  ? Icon(Icons.check_rounded, color: ext.accent, size: 20)
+                  : null,
               onTap: () {
-                ref.read(preferredConsultantPanelProvider.notifier).state = true;
+                ref.read(preferredConsultantPanelProvider.notifier).state =
+                    true;
                 Navigator.of(ctx).pop();
               },
             ),
@@ -311,7 +328,8 @@ class _SheetAction extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
+          padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
           child: Row(
             children: [
               Icon(icon, color: iconColor, size: 22),
@@ -346,7 +364,8 @@ class _SheetAction extends StatelessWidget {
               ),
               if (trailing != null) trailing!,
               if (trailing == null)
-                Icon(Icons.chevron_right_rounded, color: ext.textTertiary.withValues(alpha: 0.65), size: 22),
+                Icon(Icons.chevron_right_rounded,
+                    color: ext.textTertiary.withValues(alpha: 0.65), size: 22),
             ],
           ),
         ),

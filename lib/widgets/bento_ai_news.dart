@@ -41,7 +41,7 @@ class BentoAiNews extends StatelessWidget {
       stream: FirestoreService.newsStream(),
       builder: (context, snapshot) {
         final ext = AppThemeExtension.of(context);
-        String title = 'AI News Insight';
+        String title = 'Akıllı Gündem Özeti';
         String body;
         if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
           final docs = snapshot.data!.docs;

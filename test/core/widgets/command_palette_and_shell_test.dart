@@ -168,7 +168,7 @@ void main() {
 
     expect(find.text('Müşteriler'), findsOneWidget);
     expect(find.text('İlanlar'), findsOneWidget);
-    expect(find.text('Çağrılar'), findsOneWidget);
+    expect(find.text('Görüşmeler'), findsOneWidget);
     expect(find.text('Ofis yönetimi'), findsNothing);
   });
 

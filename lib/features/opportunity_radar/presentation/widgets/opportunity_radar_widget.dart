@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -13,7 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Opportunity Radar: bugünün en sıcak lead'leri, at-risk deal'ler, gecikmiş follow-up, yeniden aktif lead'ler.
+/// Fırsat radarı: sıcak potansiyeller, riskli süreçler, geciken takipler, yeniden aktifleşenler.
 class OpportunityRadarWidget extends ConsumerWidget {
   const OpportunityRadarWidget({super.key});
 
@@ -48,7 +49,8 @@ class OpportunityRadarWidget extends ConsumerWidget {
               ),
               TextButton(
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
@@ -56,7 +58,10 @@ class OpportunityRadarWidget extends ConsumerWidget {
                   ),
                 ),
                 onPressed: () => context.push(AppRouter.routeWarRoom),
-                child: Text('War Room', style: TextStyle(color: ext.accent, fontSize: 12)),
+                child: Text(
+                  ProductLabels.operationsRoom,
+                  style: TextStyle(color: ext.accent, fontSize: 12),
+                ),
               ),
             ],
           ),
@@ -67,46 +72,62 @@ class OpportunityRadarWidget extends ConsumerWidget {
                 return const OpportunityRadarLaboratoryEmpty();
               }
               return Column(
-                children: items.take(3).map((e) => ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.replay_rounded, size: 18, color: ext.warning),
-                  title: Text(
-                    e.customerName ?? e.customerId,
-                    style: TextStyle(color: ext.textPrimary, fontSize: 13),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    '${e.daysSilent} gün sessiz',
-                    style: TextStyle(color: ext.textTertiary, fontSize: 11),
-                  ),
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    showResurrectionLeadTopicSheet(
-                      context,
-                      topicTitle: 'Fırsat radarı',
-                      item: e,
-                    );
-                  },
-                )).toList(),
+                children: items
+                    .take(3)
+                    .map((e) => ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.replay_rounded,
+                              size: 18, color: ext.warning),
+                          title: Text(
+                            e.customerName ?? e.customerId,
+                            style:
+                                TextStyle(color: ext.textPrimary, fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            '${e.daysSilent} gün sessiz',
+                            style: TextStyle(
+                                color: ext.textTertiary, fontSize: 11),
+                          ),
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            showResurrectionLeadTopicSheet(
+                              context,
+                              topicTitle: 'Fırsat radarı',
+                              item: e,
+                            );
+                          },
+                        ))
+                    .toList(),
               );
             },
             loading: () => Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
-                children: List.generate(3, (_) => const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      SkeletonLoader(width: 18, height: 18, borderRadius: BorderRadius.all(Radius.circular(4))),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: SkeletonLoader(height: 13, width: double.infinity, borderRadius: BorderRadius.all(Radius.circular(4))),
-                      ),
-                    ],
-                  ),
-                )),
+                children: List.generate(
+                    3,
+                    (_) => const Padding(
+                          padding: EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              SkeletonLoader(
+                                  width: 18,
+                                  height: 18,
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(4))),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: SkeletonLoader(
+                                    height: 13,
+                                    width: double.infinity,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(4))),
+                              ),
+                            ],
+                          ),
+                        )),
               ),
             ),
             error: (_, __) => ErrorState(

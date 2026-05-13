@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
@@ -117,8 +118,8 @@ class _CommandPaletteContentState
                 const Expanded(
                   child: PremiumSheetHeader(
                     compact: true,
-                    title: 'Komutlar',
-                    subtitle: 'Sayfa veya müşteri arayın',
+                    title: 'Hızlı Erişim',
+                    subtitle: 'Alan, sayfa ya da müşteri arayın',
                   ),
                 ),
                 IconButton(
@@ -139,7 +140,7 @@ class _CommandPaletteContentState
               controller: _controller,
               focusNode: _focusNode,
               decoration: InputDecoration(
-                hintText: 'Sayfa veya müşteri ara...',
+                hintText: 'Alan, sayfa ya da müşteri ara...',
                 hintStyle: AppTypography.body(context)
                     .copyWith(color: ext.foregroundMuted),
                 prefixIcon: Icon(
@@ -164,7 +165,7 @@ class _CommandPaletteContentState
                   const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
               children: [
                 if (filteredActions.isNotEmpty) ...[
-                  Text('Sayfalar',
+                  Text('Alanlar',
                       style: AppTypography.sectionLabel(context)
                           .copyWith(color: ext.foregroundMuted)),
                   const SizedBox(height: DesignTokens.space2),
@@ -289,7 +290,7 @@ class _PaletteAction {
 List<_PaletteAction> _filteredActionsFor(AppRole role, String query) {
   final all = <_PaletteAction>[
     const _PaletteAction.shortcut(
-      label: 'Dashboard',
+      label: ProductLabels.overview,
       icon: Icons.dashboard_rounded,
       shortcut: MainShellShortcut.openHomeTab,
     ),
@@ -312,62 +313,62 @@ List<_PaletteAction> _filteredActionsFor(AppRole role, String query) {
     ] else ...[
       if (!FeaturePermission.seesAdminPanel(role)) ...[
         const _PaletteAction.shortcut(
-          label: 'Çağrılar',
+          label: ProductLabels.conversations,
           icon: Icons.call_rounded,
           shortcut: MainShellShortcut.openCallsTab,
         ),
         const _PaletteAction.shortcut(
-          label: 'Müşteriler',
+          label: ProductLabels.customers,
           icon: Icons.people_rounded,
           shortcut: MainShellShortcut.openCustomersTab,
         ),
         const _PaletteAction.shortcut(
-          label: 'İlanlar',
+          label: ProductLabels.listings,
           icon: Icons.home_work_rounded,
           shortcut: MainShellShortcut.openListingsTab,
         ),
         const _PaletteAction.shortcut(
-          label: 'Takip',
+          label: ProductLabels.revival,
           icon: Icons.replay_rounded,
           shortcut: MainShellShortcut.openFollowUpTab,
         ),
         const _PaletteAction.shortcut(
-          label: 'Görevler',
+          label: ProductLabels.tasks,
           icon: Icons.task_alt_rounded,
           shortcut: MainShellShortcut.openTasksTab,
         ),
       ],
       if (FeaturePermission.seesAdminPanel(role)) ...[
         const _PaletteAction.route(
-          label: 'Ofis yönetimi',
+          label: ProductLabels.officeDesk,
           icon: Icons.groups_rounded,
           route: AppRouter.routeOfficeAdmin,
         ),
         const _PaletteAction.route(
-          label: 'Ofis daveti oluştur',
+          label: ProductLabels.officeInvite,
           icon: Icons.vpn_key_outlined,
           route: AppRouter.routeOfficeInviteCreate,
         ),
         if (FeaturePermission.canViewAllCalls(role))
           const _PaletteAction.route(
-            label: 'Çağrı Merkezi',
+            label: ProductLabels.conversationHub,
             icon: Icons.call_rounded,
             route: AppRouter.routeCommandCenter,
           ),
         const _PaletteAction.route(
-          label: 'War Room',
+          label: ProductLabels.operationsRoom,
           icon: Icons.military_tech_rounded,
           route: AppRouter.routeWarRoom,
         ),
         const _PaletteAction.route(
-          label: 'Broker Command',
+          label: ProductLabels.operationsDeck,
           icon: Icons.business_center_rounded,
           route: AppRouter.routeBrokerCommand,
         ),
       ],
     ],
     const _PaletteAction.shortcut(
-      label: 'Ayarlar',
+      label: ProductLabels.settings,
       icon: Icons.settings_rounded,
       shortcut: MainShellShortcut.openAccountTab,
     ),

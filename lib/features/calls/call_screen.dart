@@ -60,6 +60,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
   /// Sürükleme sırasında anlık değer (animasyonsuz); null = panel fraction kullan
   double? _keypadDragValue;
   int _elapsedSeconds = 0;
+
   /// [CallUIState.connected] anında — arka plan / süre sayacı durunca duvar saati ile senkron.
   DateTime? _connectedWallClock;
   Timer? _ticker;
@@ -627,7 +628,7 @@ class _CallStatusChip extends StatelessWidget {
         bg = ext.warning.withValues(alpha: 0.16);
         fg = ext.warning;
       case CallUIState.connected:
-        label = isMagicCallSession ? 'Magic Call · CRM' : 'Görüşmede';
+        label = isMagicCallSession ? 'Akıllı görüşme · kayıt' : 'Görüşmede';
         bg = ext.success.withValues(alpha: 0.14);
         fg = ext.success;
       case CallUIState.ending:
@@ -695,7 +696,7 @@ class _CallHeroCard extends ConsumerWidget {
             const SizedBox(height: DesignTokens.space2),
             Text(
               isMagicCallSession
-                  ? 'Magic Call · CRM (gerçek GSM hattı değil)'
+                  ? 'Akıllı görüşme · kayıt (gerçek GSM hattı değil)'
                   : 'Doğrudan arama',
               style:
                   theme.textTheme.bodySmall?.copyWith(color: ext.textSecondary),
@@ -757,8 +758,8 @@ class _CallHeroCard extends ConsumerWidget {
               const SizedBox(height: DesignTokens.space2),
               Text(
                 isMagicCallSession
-                    ? 'Uygulama içi CRM oturumu · AI asistan altta'
-                    : 'CRM kaydı · AI asistan altta',
+                    ? 'Uygulama içi kayıt oturumu · akıllı asistan altta'
+                    : 'Görüşme kaydı · akıllı asistan altta',
                 style: theme.textTheme.labelSmall
                     ?.copyWith(color: ext.textTertiary),
                 textAlign: TextAlign.center,
@@ -876,7 +877,7 @@ class _CallTimerSection extends StatelessWidget {
     late final String hint;
     switch (callState) {
       case CallUIState.connecting:
-        hint = 'Ses oturumu ve CRM senkronu hazırlanıyor';
+        hint = 'Ses oturumu ve kayıt eşlemesi hazırlanıyor';
       case CallUIState.connected:
         hint = 'Aktif süre';
       case CallUIState.ending:
@@ -1399,10 +1400,18 @@ class _KeypadSheet extends StatelessWidget {
     const padV = DesignTokens.space4;
 
     const keys = <String>[
-      '1', '2', '3',
-      '4', '5', '6',
-      '7', '8', '9',
-      '*', '0', '#',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '*',
+      '0',
+      '#',
     ];
 
     return Container(

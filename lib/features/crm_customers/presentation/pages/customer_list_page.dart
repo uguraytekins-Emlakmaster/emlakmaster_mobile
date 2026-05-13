@@ -772,9 +772,9 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
                           const SizedBox(height: DesignTokens.space4),
                           Text(
                             narrow
-                                ? 'Kayıt ekranı rehber + CRM bir arada. Magic Call sonrası kişiler çağrılarda.'
-                                : 'Kayıt ekranında rehberine yazma ve uygulama CRM’ine ekleme bir arada; '
-                                    'Magic Call sonrası kişiler de çağrı sekmesinden takip edilir.',
+                                ? 'Kayıt ekranında rehber ve müşteri akışı bir arada. Akıllı görüşme sonrası kişiler Görüşmeler alanına düşer.'
+                                : 'Kayıt ekranında rehbere yazma ve uygulama müşteri akışına ekleme tek yerde buluşur; '
+                                    'akıllı görüşme sonrası kişiler de Görüşmeler alanından izlenir.',
                             textAlign: TextAlign.center,
                             style: AppTypography.meta(context).copyWith(
                               color: ext.textTertiary.withValues(alpha: 0.95),

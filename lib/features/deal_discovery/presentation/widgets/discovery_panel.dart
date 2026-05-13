@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
@@ -15,7 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-/// Dashboard: "Bugün keşfedilen fırsatlar" — geniş başlık, yarım daire skor göstergesi, madde detayları.
+
+/// Ana bakış: bugün keşfedilen fırsatlar — geniş başlık, yarım daire skor, madde detayları.
 class DiscoveryPanel extends ConsumerWidget {
   const DiscoveryPanel({super.key});
 
@@ -52,7 +54,8 @@ class DiscoveryPanel extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Text(
                         'Bu eşikte fırsat yok. Detay listesinde daha düşük skorluları görebilirsiniz.',
-                        style: TextStyle(color: ext.textSecondary, fontSize: 12),
+                        style:
+                            TextStyle(color: ext.textSecondary, fontSize: 12),
                       ),
                     ),
                     const _OpportunityRadarTeaser(),
@@ -89,13 +92,15 @@ class DiscoveryPanel extends ConsumerWidget {
                               SkeletonLoader(
                                 height: 13,
                                 width: double.infinity,
-                                borderRadius: BorderRadius.all(Radius.circular(4)),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(4)),
                               ),
                               SizedBox(height: 4),
                               SkeletonLoader(
                                 height: 11,
                                 width: 100,
-                                borderRadius: BorderRadius.all(Radius.circular(4)),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(4)),
                               ),
                             ],
                           ),
@@ -136,7 +141,8 @@ class _DiscoveryHeader extends StatelessWidget {
             Icon(Icons.auto_awesome_rounded, color: ext.accent, size: 26),
             Transform.translate(
               offset: const Offset(10, -6),
-              child: Icon(Icons.auto_awesome_rounded, color: ext.accent, size: 18),
+              child:
+                  Icon(Icons.auto_awesome_rounded, color: ext.accent, size: 18),
             ),
           ],
         ),
@@ -307,7 +313,8 @@ class _FluidOpportunitiesList extends StatefulWidget {
   final List<DealDiscoveryItem> items;
 
   @override
-  State<_FluidOpportunitiesList> createState() => _FluidOpportunitiesListState();
+  State<_FluidOpportunitiesList> createState() =>
+      _FluidOpportunitiesListState();
 }
 
 class _FluidOpportunitiesListState extends State<_FluidOpportunitiesList> {
@@ -322,7 +329,8 @@ class _FluidOpportunitiesListState extends State<_FluidOpportunitiesList> {
             tween: Tween(begin: 0, end: 1),
             duration: reduceMotion
                 ? DesignTokens.durationFast
-                : (DesignTokens.durationNormal + Duration(milliseconds: 80 * (i + 1))),
+                : (DesignTokens.durationNormal +
+                    Duration(milliseconds: 80 * (i + 1))),
             curve: Curves.easeOutCubic,
             builder: (context, value, child) {
               final opacity = reduceMotion ? 1.0 : value;
@@ -448,7 +456,7 @@ class _DiscoveryOpportunityCard extends StatelessWidget {
   }
 }
 
-/// Fırsat radarı / War Room ipucu — kartın altında derin analiz yolu.
+/// Fırsat radarı / Komuta Odası ipucu — kartın altında derin analiz yolu.
 class _OpportunityRadarTeaser extends StatelessWidget {
   const _OpportunityRadarTeaser();
 
@@ -501,7 +509,7 @@ class _OpportunityRadarTeaser extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Lead sıcaklığı, yeniden kazanım ve derin analiz — War Room',
+                      'Talep ılıklığı, geri kazanım ve derin analiz — ${ProductLabels.operationsRoom}',
                       style: TextStyle(
                         color: ext.textTertiary.withValues(alpha: 0.95),
                         fontSize: 11,

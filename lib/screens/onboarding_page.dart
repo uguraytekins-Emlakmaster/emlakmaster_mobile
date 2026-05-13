@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+
 /// Onboarding asset paths (PNG/WebP, 1600x1600 or 2048x2048). Omit file to use premium placeholder.
 const List<String> _onboardingImagePaths = [
   'assets/onboarding/crm_dashboard.png',
@@ -32,22 +33,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
   static const List<_OnboardingSlideData> _slides = [
     _OnboardingSlideData(
       title: 'EmlakMaster\'a hoş geldiniz',
-      subtitle: 'Tek ekrandan tüm operasyonlarınızı yönetin: CRM dashboard, War Room, çağrı merkezi ve raporlar. Profesyonel gayrimenkul yönetimi artık elinizin altında.',
+      subtitle:
+          'Tüm operasyonunuzu tek akıştan yönetin: yönetim masası, komuta odası, görüşme üssü ve içgörü alanları hep elinizin altında.',
       icon: Icons.dashboard_rounded,
     ),
     _OnboardingSlideData(
-      title: 'Market Pulse & ilanlar',
-      subtitle: 'Şehir seçin; sahibinden, emlakjet ve hepsi emlak ilanları otomatik çekilir. İlanları anlık güncelleyebilir, piyasa analitiği ile karar verebilirsiniz.',
+      title: 'Piyasa nabzı ve ilanlar',
+      subtitle:
+          'Şehri seçin; ilan akışı tek yerde toplansın. Portföyünüzü anlık güncelleyip piyasa verisiyle daha net karar alın.',
       icon: Icons.show_chart_rounded,
     ),
     _OnboardingSlideData(
-      title: 'Yapay zeka & analitik',
-      subtitle: 'AI destekli öngörüler, portföy eşleştirme ve raporlarla daha akıllı kararlar alın. Verileriniz güçlü görselleştirmelerle sunulur.',
+      title: 'Akıllı içgörüler',
+      subtitle:
+          'Akıllı öneriler, portföy eşleştirme ve güçlü raporlarla daha isabetli karar alın. Veriniz güçlü görsellerle önünüze gelir.',
       icon: Icons.insights_rounded,
     ),
     _OnboardingSlideData(
-      title: 'War Room & ekip merkezi',
-      subtitle: 'Çağrı merkezi, müşteri takibi ve ekip koordinasyonu tek yerden. Gerçek zamanlı komuta merkezi ile her şeyi kontrol edin.',
+      title: 'Komuta odası ve ekip akışı',
+      subtitle:
+          'Görüşme üssü, müşteri takibi ve ekip koordinasyonu tek yerde. Operasyon ritmini gerçek zamanlı yönetin.',
       icon: Icons.military_tech_rounded,
     ),
   ];
@@ -55,7 +60,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkAlreadyCompleted());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _checkAlreadyCompleted());
   }
 
   Future<void> _checkAlreadyCompleted() async {
@@ -142,11 +148,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
               borderRadius: BorderRadius.circular(4),
               color: _currentPage == i
                   ? AppThemeExtension.of(context).accent
-                  : AppThemeExtension.of(context).textTertiary.withValues(alpha: 0.5),
+                  : AppThemeExtension.of(context)
+                      .textTertiary
+                      .withValues(alpha: 0.5),
               boxShadow: _currentPage == i
                   ? [
                       BoxShadow(
-                        color: AppThemeExtension.of(context).accent.withValues(alpha: 0.4),
+                        color: AppThemeExtension.of(context)
+                            .accent
+                            .withValues(alpha: 0.4),
                         blurRadius: 8,
                       ),
                     ]
@@ -178,7 +188,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
           boxShadow: [
             BoxShadow(
-              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
+              color:
+                  AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -310,7 +321,9 @@ class _OnboardingSlide extends StatelessWidget {
             borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
             boxShadow: [
               BoxShadow(
-                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.08),
+                color: AppThemeExtension.of(context)
+                    .accent
+                    .withValues(alpha: 0.08),
                 blurRadius: 32,
                 offset: const Offset(0, 12),
               ),
@@ -331,7 +344,8 @@ class _OnboardingSlide extends StatelessWidget {
               ],
             ),
             border: Border.all(
-              color: AppThemeExtension.of(context).border.withValues(alpha: 0.8),
+              color:
+                  AppThemeExtension.of(context).border.withValues(alpha: 0.8),
             ),
           ),
           child: ClipRRect(
@@ -353,7 +367,8 @@ class _OnboardingSlide extends StatelessWidget {
             fit: BoxFit.contain,
             width: double.infinity,
             height: double.infinity,
-            errorBuilder: (_, __, ___) => _buildPlaceholderVisual(context, height),
+            errorBuilder: (_, __, ___) =>
+                _buildPlaceholderVisual(context, height),
           ),
           Container(
             decoration: BoxDecoration(
@@ -403,12 +418,16 @@ class _OnboardingSlide extends StatelessWidget {
               shape: BoxShape.circle,
               color: AppThemeExtension.of(context).surface,
               border: Border.all(
-                color: AppThemeExtension.of(context).accent.withValues(alpha: 0.25),
+                color: AppThemeExtension.of(context)
+                    .accent
+                    .withValues(alpha: 0.25),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppThemeExtension.of(context).accent.withValues(alpha: 0.15),
+                  color: AppThemeExtension.of(context)
+                      .accent
+                      .withValues(alpha: 0.15),
                   blurRadius: 24,
                 ),
               ],
@@ -416,24 +435,28 @@ class _OnboardingSlide extends StatelessWidget {
             child: Icon(
               data.icon,
               size: 48,
-              color: AppThemeExtension.of(context).accent.withValues(alpha: 0.95),
+              color:
+                  AppThemeExtension.of(context).accent.withValues(alpha: 0.95),
             ),
           ),
         ),
         Positioned(
           left: 24,
           top: height * 0.32,
-          child: const _FloatingCard(icon: Icons.analytics_rounded, label: 'Veri'),
+          child:
+              const _FloatingCard(icon: Icons.analytics_rounded, label: 'Veri'),
         ),
         Positioned(
           right: 20,
           top: height * 0.38,
-          child: const _FloatingCard(icon: Icons.trending_up_rounded, label: 'Trend'),
+          child: const _FloatingCard(
+              icon: Icons.trending_up_rounded, label: 'Trend'),
         ),
         Positioned(
           left: 32,
           bottom: height * 0.22,
-          child: const _FloatingCard(icon: Icons.pie_chart_rounded, label: 'Rapor'),
+          child: const _FloatingCard(
+              icon: Icons.pie_chart_rounded, label: 'Rapor'),
         ),
         Positioned(
           right: 28,

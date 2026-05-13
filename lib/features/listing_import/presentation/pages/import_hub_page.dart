@@ -117,7 +117,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     if (url.isEmpty) return;
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
     if (uid == null) {
-      _snack('Önce giriş yapın.');
+      _snack('Önce oturum açın.');
       return;
     }
     setState(() => _busy = true);
@@ -129,7 +129,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         importMode: _importMode ?? 'skip_duplicates',
       );
       if (!mounted) return;
-      _snack('Tek ilan içe aktarıldı. Toplu işlem için dosya kullanın.');
+      _snack('Tek ilan içeri alındı. Toplu akış için dosya kullanın.');
       _urlCtrl.clear();
       context.push(AppRouter.routeMyListings);
     } catch (e) {
@@ -144,7 +144,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
   Future<void> _runLocalFile() async {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
     if (uid == null) {
-      _snack('Önce giriş yapın.');
+      _snack('Önce oturum açın.');
       return;
     }
 
@@ -157,7 +157,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     final f = result.files.single;
     final path = f.path;
     if (path == null) {
-      _snack('Dosya yolu alınamadı.');
+      _snack('Dosya yolu okunamadı.');
       return;
     }
 
@@ -176,10 +176,10 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         }
         if (!mounted) return;
         final confirmed = await _showImportConfirmDialog(
-          title: 'Sütun eşlemesi',
+          title: 'Sütun uyumu',
           body:
-              'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
-          confirmLabel: 'İçe aktar',
+              'Algılanan alan uyumu:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
+          confirmLabel: 'İçeri al',
         );
         if (confirmed != true) {
           setState(() => _busy = false);
@@ -193,10 +193,10 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
         }
         if (!mounted) return;
         final confirmed = await _showImportConfirmDialog(
-          title: 'Excel sütun eşlemesi',
+          title: 'Excel alan uyumu',
           body:
-              'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
-          confirmLabel: 'İçe aktar',
+              'Algılanan alan uyumu:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
+          confirmLabel: 'İçeri al',
         );
         if (confirmed != true) {
           setState(() => _busy = false);
@@ -205,7 +205,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       } else if (ext == 'json') {
         if (!mounted) return;
         final confirmed = await _showImportConfirmDialog(
-          title: 'JSON formatı',
+          title: 'JSON yapısı',
           body:
               'Kök bir ilan dizisi veya { "rows": [...] } beklenir. Kimlik için id veya externalListingId kullanın.',
         );
@@ -226,7 +226,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       );
       if (!mounted) return;
       _snack(
-        'Dosya işlendi. Sonuçları İlanlarım’da kontrol edin.',
+        'Dosya işlendi. Sonuçları İlanlarım alanında inceleyin.',
       );
       context.push(AppRouter.routeMyListings);
     } catch (e) {
@@ -241,7 +241,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
   Future<void> _openManual() async {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
     if (uid == null) {
-      _snack('Önce giriş yapın.');
+      _snack('Önce oturum açın.');
       return;
     }
     await showPremiumModalBottomSheet<void>(
@@ -274,9 +274,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                     const Expanded(
                       child: PremiumSheetHeader(
                         compact: true,
-                        title: 'Manuel ilan',
+                        title: 'Elle ilan girişi',
                         subtitle:
-                            'Tek kayıt; mağaza aktarımı yerine hızlı giriş',
+                            'Tek kayıt için hızlı giriş; toplu akış yerine pratik çözüm',
                       ),
                     ),
                     IconButton(
@@ -418,13 +418,13 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
   Future<bool?> _showImportConfirmDialog({
     required String title,
     required String body,
-    String confirmLabel = 'Devam',
+    String confirmLabel = 'Sürdür',
   }) {
     return showDialog<bool>(
       context: context,
       barrierColor: AppThemeExtension.of(context).shadowColor.withValues(
-        alpha: Theme.of(context).brightness == Brightness.dark ? 0.5 : 0.18,
-      ),
+            alpha: Theme.of(context).brightness == Brightness.dark ? 0.5 : 0.18,
+          ),
       builder: (ctx) {
         final d = AppThemeExtension.of(ctx);
         return AlertDialog(
@@ -454,9 +454,11 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             FilledButton(
               style: FilledButton.styleFrom(
                 minimumSize: const Size(0, 44),
-                padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
                 ),
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -518,7 +520,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     if (!_canUploadOfficeImportServer(ref)) {
       if (mounted) {
         _snackStorageSoft(
-          'Bu yükleme yalnızca ofis yöneticisi, ekip lideri veya süper yönetici içindir.',
+          'Bu yükleme yalnızca ofis yöneticisi, ekip lideri ya da süper yönetici içindir.',
         );
       }
       return;
@@ -541,7 +543,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     final path = f.path;
     if (path == null) {
       if (!mounted) return;
-      _snack('Dosya yolu alınamadı.');
+      _snack('Dosya yolu okunamadı.');
       return;
     }
 
@@ -561,9 +563,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
 
         if (!mounted) return;
         final confirmed = await _showImportConfirmDialog(
-          title: 'Sütun eşlemesi',
+          title: 'Sütun uyumu',
           body:
-              'Algılanan eşleme:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
+              'Algılanan alan uyumu:\n${mapping.entries.map((e) => '${e.key} → ${e.value}').join('\n')}',
           confirmLabel: 'Yükle',
         );
         if (confirmed != true) {
@@ -573,7 +575,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       } else if (ext == 'json') {
         if (!mounted) return;
         final confirmed = await _showImportConfirmDialog(
-          title: 'JSON formatı',
+          title: 'JSON yapısı',
           body: 'Kök ilan dizisi veya { "rows": [...] } beklenir.',
         );
         if (confirmed != true) {
@@ -612,7 +614,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       );
       if (!mounted) return;
       _snack(taskId != null
-          ? 'Toplu dosya kuyrukta: $taskId (platform: $platform)'
+          ? 'Toplu dosya sıraya alındı: $taskId (kanal: $platform)'
           : 'İstek gönderildi.');
     } on FirebaseException catch (e) {
       if (!mounted) return;
@@ -700,7 +702,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Toplu içe aktarma',
+                        'Toplu ilan akışı',
                         style: AppTypography.cardHeading(context).copyWith(
                           color: ext.foreground,
                           fontSize: DesignTokens.fontSizeLg,
@@ -708,7 +710,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                       ),
                       const SizedBox(height: DesignTokens.titleSubtitleGap),
                       Text(
-                        'Vitrin ilanlarınızı tek akışta İlanlarım’a taşıyın',
+                        'Vitrin ilanlarınızı tek hamlede İlanlarım alanına taşıyın',
                         style: AppTypography.body(context).copyWith(
                           color: ext.foregroundSecondary,
                           fontSize: DesignTokens.fontSizeSm,
@@ -719,18 +721,20 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                   ),
                 ),
                 TextButton(
-                  style: TextButton.styleFrom(foregroundColor: ext.textSecondary),
+                  style:
+                      TextButton.styleFrom(foregroundColor: ext.textSecondary),
                   onPressed: _busy
                       ? null
                       : () => context.push(AppRouter.routeMyListings),
                   child: const Text('İlanlarım'),
                 ),
                 TextButton(
-                  style: TextButton.styleFrom(foregroundColor: ext.textSecondary),
+                  style:
+                      TextButton.styleFrom(foregroundColor: ext.textSecondary),
                   onPressed: _busy
                       ? null
                       : () => context.push(AppRouter.routeImportHistory),
-                  child: const Text('Geçmiş'),
+                  child: const Text('İşlem Geçmişi'),
                 ),
               ],
             ),
@@ -740,11 +744,12 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               padding: const EdgeInsets.all(DesignTokens.space5),
               decoration: BoxDecoration(
                 color: ext.surfaceElevated,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
+                borderRadius:
+                    BorderRadius.circular(DesignTokens.radiusCardSecondary),
                 border: Border.all(color: ext.border.withValues(alpha: 0.4)),
               ),
               child: Text(
-                'Otomatik mağaza senkronu henüz yok. Güvenilir yol: platformdan dışa aktarıp CSV, JSON veya Excel ile tek seferde yüklemek.',
+                'Canlı mağaza eşlemesi henüz açık değil. En güvenilir yol, platformdan dışa aktarım alıp CSV, JSON ya da Excel ile tek seferde yüklemektir.',
                 style: AppTypography.body(context).copyWith(
                   color: ext.foreground.withValues(alpha: 0.92),
                   fontSize: DesignTokens.fontSizeSm,
@@ -756,7 +761,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             _OfficialConnectorCard(ext: ext),
             const SizedBox(height: DesignTokens.space5),
             Text(
-              'Mağaza kaynağı',
+              'Veri kaynağı',
               style: AppTypography.metricLabel(context).copyWith(
                 color: ext.foreground,
                 fontSize: DesignTokens.fontSizeSm,
@@ -796,7 +801,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             ),
             const SizedBox(height: DesignTokens.space5),
             Text(
-              'Çift kayıt',
+              'Yinelenen kayıt',
               style: AppTypography.metricLabel(context).copyWith(
                 color: ext.foreground,
                 fontSize: DesignTokens.fontSizeSm,
@@ -824,7 +829,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             ),
             const SizedBox(height: DesignTokens.space6),
             Text(
-              '1 · Dosyadan içe aktar',
+              '1 · Dosyadan içeri al',
               style: AppTypography.cardHeading(context).copyWith(
                 color: ext.foreground,
                 fontSize: DesignTokens.fontSizeMd,
@@ -833,7 +838,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             ),
             const SizedBox(height: DesignTokens.space2),
             Text(
-              'Önerilen yol — cihazda işlenir, hızlıdır.',
+              'Önerilen yol: cihazda işlenir, hızlı ve nettir.',
               style: AppTypography.body(context).copyWith(
                 fontSize: DesignTokens.fontSizeXs,
               ),
@@ -855,12 +860,13 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             OutlinedButton.icon(
               style: secondaryOutlineStyle,
               onPressed: _busy ? null : _openManual,
-              icon: const Icon(Icons.edit_note_rounded, size: DesignTokens.iconMd),
-              label: const Text('Manuel tek ilan'),
+              icon: const Icon(Icons.edit_note_rounded,
+                  size: DesignTokens.iconMd),
+              label: const Text('Tek ilan girişi'),
             ),
             const SizedBox(height: DesignTokens.space6),
             Text(
-              '2 · Sunucu kuyruğu',
+              '2 · Sunucu sırası',
               style: AppTypography.cardHeading(context).copyWith(
                 color: ext.foreground,
                 fontSize: DesignTokens.fontSizeMd,
@@ -869,7 +875,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             ),
             const SizedBox(height: DesignTokens.space2),
             Text(
-              'Büyük dosyalar; ilerleme Geçmiş’te.',
+              'Büyük dosyalar için; ilerleme İşlem Geçmişi’nde görünür.',
               style: AppTypography.body(context).copyWith(
                 fontSize: DesignTokens.fontSizeXs,
               ),
@@ -878,7 +884,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             OutlinedButton(
               style: secondaryOutlineStyle,
               onPressed: (_busy || !storageOk) ? null : _pickAndUploadServer,
-              child: const Text('Dosyayı yükle ve kuyruğa al'),
+              child: const Text('Dosyayı yükle ve sıraya al'),
             ),
             if (storageAsync.isLoading)
               Padding(
@@ -910,13 +916,13 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
               collapsedIconColor: ext.textSecondary,
               iconColor: ext.textSecondary,
               title: Text(
-                'Tek ilan URL’si (deneysel)',
+                'Tek ilan bağlantısı (deneysel)',
                 style: AppTypography.bodyStrong(context).copyWith(
                   fontSize: DesignTokens.fontSizeSm,
                 ),
               ),
               subtitle: Text(
-                'Toplu vitrin için uygun değildir.',
+                'Toplu vitrin akışı için uygun değildir.',
                 style: AppTypography.body(context).copyWith(
                   fontSize: DesignTokens.fontSizeXs,
                 ),
@@ -946,7 +952,7 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                           BorderRadius.circular(DesignTokens.radiusControl),
                     ),
                   ),
-                  child: const Text('URL’yi cihazda dene'),
+                  child: const Text('Bağlantıyı cihazda dene'),
                 ),
                 const SizedBox(height: DesignTokens.space2),
                 FilledButton.tonal(
@@ -958,13 +964,13 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
                           BorderRadius.circular(DesignTokens.radiusControl),
                     ),
                   ),
-                  child: const Text('Kuyruğa gönder'),
+                  child: const Text('Sıraya gönder'),
                 ),
               ],
             ),
             const SizedBox(height: DesignTokens.space5),
             Text(
-              'Chrome eklentisi ile tarayıcıdan hızlı aktarım — ${AppConstants.appName} dokümantasyonu.',
+              'Chrome eklentisiyle tarayıcıdan hızlı aktarım — ${AppConstants.appName} dokümantasyonu.',
               style: AppTypography.body(context).copyWith(
                 fontSize: DesignTokens.fontSizeXs,
                 height: 1.35,
@@ -1006,7 +1012,7 @@ class _OfficialConnectorCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Resmi mağaza bağlantısı',
+                  'Resmi mağaza bağı',
                   style: AppTypography.cardHeading(context).copyWith(
                     color: ext.foreground,
                     fontSize: DesignTokens.fontSizeMd,
@@ -1015,7 +1021,7 @@ class _OfficialConnectorCard extends StatelessWidget {
                 ),
                 const SizedBox(height: DesignTokens.titleSubtitleGap),
                 Text(
-                  'Canlı OAuth vitrin senkronu hazırlanıyor. Bugün için dosya akışı en güvenilir seçenek.',
+                  'Canlı OAuth vitrin eşlemesi hazırlanıyor. Şimdilik dosya akışı en güvenilir seçenek.',
                   style: AppTypography.body(context).copyWith(
                     fontSize: DesignTokens.fontSizeSm,
                     height: 1.4,
@@ -1104,7 +1110,8 @@ class _ManualMappingDialogState extends State<_ManualMappingDialog> {
           onPressed: () => Navigator.pop(context),
           child: Text(
             'İptal',
-            style: TextStyle(color: d.textSecondary, fontWeight: FontWeight.w600),
+            style:
+                TextStyle(color: d.textSecondary, fontWeight: FontWeight.w600),
           ),
         ),
         FilledButton(

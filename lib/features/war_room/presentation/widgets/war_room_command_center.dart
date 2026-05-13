@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:go_router/go_router.dart';
+
 /// Full-screen Command Center: Lead Pulse, Top Performers, Market Ticker, Daily Target.
 /// Adaptive: GridView for Web/Desktop (width >= 600), single column for mobile.
 class WarRoomCommandCenter extends ConsumerWidget {
@@ -23,12 +24,20 @@ class WarRoomCommandCenter extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= _breakpointWide;
     final gradientColors = isDark
-        ? [AppThemeExtension.of(context).background, AppThemeExtension.of(context).background.withValues(alpha: 0.4)]
-        : [AppThemeExtension.of(context).background, AppThemeExtension.of(context).background];
+        ? [
+            AppThemeExtension.of(context).background,
+            AppThemeExtension.of(context).background.withValues(alpha: 0.4)
+          ]
+        : [
+            AppThemeExtension.of(context).background,
+            AppThemeExtension.of(context).background
+          ];
 
     return Container(
       width: double.infinity,
@@ -60,15 +69,23 @@ class WarRoomCommandCenter extends ConsumerWidget {
                         const AppBackButton(),
                         const SizedBox(width: 4),
                       ],
-                      Icon(Icons.military_tech_rounded, color: AppThemeExtension.of(context).accent, size: 28),
+                      Icon(Icons.military_tech_rounded,
+                          color: AppThemeExtension.of(context).accent,
+                          size: 28),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'WAR ROOM',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: isDark ? AppThemeExtension.of(context).onAccentLight : AppThemeExtension.of(context).textPrimary,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                color: isDark
+                                    ? AppThemeExtension.of(context)
+                                        .onAccentLight
+                                    : AppThemeExtension.of(context).textPrimary,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 2,
                               ),
@@ -83,16 +100,25 @@ class WarRoomCommandCenter extends ConsumerWidget {
                             children: [
                               const _WarRoomTeamFilter(),
                               TextButton.icon(
-                                onPressed: () => context.push(AppRouter.routeCommandCenter),
+                                onPressed: () =>
+                                    context.push(AppRouter.routeCommandCenter),
                                 style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
                                   minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                icon: Icon(Icons.call_rounded, size: 18, color: AppThemeExtension.of(context).accent),
+                                icon: Icon(Icons.call_rounded,
+                                    size: 18,
+                                    color:
+                                        AppThemeExtension.of(context).accent),
                                 label: Text(
-                                  'Çağrı Merkezi',
-                                  style: TextStyle(color: AppThemeExtension.of(context).accent, fontSize: 12),
+                                  'Görüşme Üssü',
+                                  style: TextStyle(
+                                      color:
+                                          AppThemeExtension.of(context).accent,
+                                      fontSize: 12),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -178,7 +204,8 @@ class _LeadPulseCard extends ConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          ...List.generate(count.clamp(0, 12), (i) => _GlowingDot(delay: i * 0.15)),
+                          ...List.generate(count.clamp(0, 12),
+                              (i) => _GlowingDot(delay: i * 0.15)),
                         ],
                       ),
                     ),
@@ -202,7 +229,9 @@ class _LeadPulseCard extends ConsumerWidget {
               liveCalls.when(
                 data: (calls) => Text(
                   'Şu an $calls aktif çağrı',
-                  style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 13),
+                  style: TextStyle(
+                      color: AppThemeExtension.of(context).textSecondary,
+                      fontSize: 13),
                 ),
                 loading: () => const SizedBox.shrink(),
                 error: (_, __) => const SizedBox.shrink(),
@@ -210,8 +239,12 @@ class _LeadPulseCard extends ConsumerWidget {
             ],
           );
         },
-        loading: () => Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
-        error: (e, _) => Text('Lead pulse yüklenemedi.', style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13)),
+        loading: () => Center(
+            child: CircularProgressIndicator(
+                color: AppThemeExtension.of(context).accent)),
+        error: (e, _) => Text('Lead pulse yüklenemedi.',
+            style: TextStyle(
+                color: AppThemeExtension.of(context).danger, fontSize: 13)),
       ),
     );
   }
@@ -225,7 +258,8 @@ class _GlowingDot extends StatefulWidget {
   State<_GlowingDot> createState() => _GlowingDotState();
 }
 
-class _GlowingDotState extends State<_GlowingDot> with SingleTickerProviderStateMixin {
+class _GlowingDotState extends State<_GlowingDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -241,7 +275,8 @@ class _GlowingDotState extends State<_GlowingDot> with SingleTickerProviderState
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200));
     _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
@@ -269,10 +304,14 @@ class _GlowingDotState extends State<_GlowingDot> with SingleTickerProviderState
           height: 10,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppThemeExtension.of(context).accent.withValues(alpha: _animation.value),
+            color: AppThemeExtension.of(context)
+                .accent
+                .withValues(alpha: _animation.value),
             boxShadow: [
               BoxShadow(
-                color: AppThemeExtension.of(context).accent.withValues(alpha: _animation.value * 0.8),
+                color: AppThemeExtension.of(context)
+                    .accent
+                    .withValues(alpha: _animation.value * 0.8),
                 blurRadius: 6,
               ),
             ],
@@ -301,13 +340,27 @@ class _WarRoomTeamFilter extends ConsumerWidget {
             child: DropdownButton<String?>(
               value: selectedId,
               isDense: true,
-              hint: Text(l10n.t('label_team'), style: TextStyle(color: AppThemeExtension.of(context).accent, fontSize: 12)),
+              hint: Text(l10n.t('label_team'),
+                  style: TextStyle(
+                      color: AppThemeExtension.of(context).accent,
+                      fontSize: 12)),
               dropdownColor: AppThemeExtension.of(context).surface,
               items: [
-                DropdownMenuItem<String?>(child: Text(l10n.t('filter_all_teams'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: 12))),
-                ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: 12), overflow: TextOverflow.ellipsis))),
+                DropdownMenuItem<String?>(
+                    child: Text(l10n.t('filter_all_teams'),
+                        style: TextStyle(
+                            color: AppThemeExtension.of(context).textPrimary,
+                            fontSize: 12))),
+                ...teams.map((t) => DropdownMenuItem(
+                    value: t.id,
+                    child: Text(t.name,
+                        style: TextStyle(
+                            color: AppThemeExtension.of(context).textPrimary,
+                            fontSize: 12),
+                        overflow: TextOverflow.ellipsis))),
               ],
-              onChanged: (v) => ref.read(warRoomSelectedTeamIdProvider.notifier).state = v,
+              onChanged: (v) =>
+                  ref.read(warRoomSelectedTeamIdProvider.notifier).state = v,
             ),
           ),
         );
@@ -343,18 +396,25 @@ class _TopPerformersCard extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.insights_outlined, size: 36, color: AppThemeExtension.of(context).accent),
+                  Icon(Icons.insights_outlined,
+                      size: 36, color: AppThemeExtension.of(context).accent),
                   const SizedBox(height: 8),
                   Text(
                     'Sıralama için veri bekleniyor',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w700, fontSize: 14),
+                    style: TextStyle(
+                        color: AppThemeExtension.of(context).textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Çağrı metrikleri oluştuğunda danışmanlar burada listelenir.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12, height: 1.35),
+                    style: TextStyle(
+                        color: AppThemeExtension.of(context).textSecondary,
+                        fontSize: 12,
+                        height: 1.35),
                   ),
                 ],
               ),
@@ -368,36 +428,53 @@ class _TopPerformersCard extends ConsumerWidget {
             itemBuilder: (context, i) {
               final doc = top[i];
               final d = doc.data();
-              final name = d['displayName'] as String? ?? d['fullName'] as String? ?? 'Danışman';
+              final name = d['displayName'] as String? ??
+                  d['fullName'] as String? ??
+                  'Danışman';
               final calls = d['totalCalls'] as int? ?? 0;
-              final trophy = i == 0 ? '🥇' : i == 1 ? '🥈' : i == 2 ? '🥉' : '  ';
+              final trophy = i == 0
+                  ? '🥇'
+                  : i == 1
+                      ? '🥈'
+                      : i == 2
+                          ? '🥉'
+                          : '  ';
               return RepaintBoundary(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
-                  children: [
-                    Text(trophy, style: const TextStyle(fontSize: 16)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis,
+                    children: [
+                      Text(trophy, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: TextStyle(
+                              color: AppThemeExtension.of(context).textPrimary,
+                              fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '$calls çağrı',
-                      style: TextStyle(color: AppThemeExtension.of(context).accent, fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
+                      Text(
+                        '$calls çağrı',
+                        style: TextStyle(
+                            color: AppThemeExtension.of(context).accent,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
           );
         },
-        loading: () => Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
-        error: (e, _) => Text('Yüklenemedi.', style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13)),
+        loading: () => Center(
+            child: CircularProgressIndicator(
+                color: AppThemeExtension.of(context).accent)),
+        error: (e, _) => Text('Yüklenemedi.',
+            style: TextStyle(
+                color: AppThemeExtension.of(context).danger, fontSize: 13)),
       ),
     );
   }
@@ -424,12 +501,17 @@ class _MarketTickerCard extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(
                       children: [
-                        Icon(Icons.circle, size: 6, color: AppThemeExtension.of(context).accent),
+                        Icon(Icons.circle,
+                            size: 6,
+                            color: AppThemeExtension.of(context).accent),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             e,
-                            style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
+                            style: TextStyle(
+                                color:
+                                    AppThemeExtension.of(context).textSecondary,
+                                fontSize: 12),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -459,7 +541,8 @@ class _DailyTargetCard extends ConsumerWidget {
         data: (deals) {
           return targetAsync.when(
             data: (target) {
-              final progress = target > 0 ? (deals / target).clamp(0.0, 1.0) : 0.0;
+              final progress =
+                  target > 0 ? (deals / target).clamp(0.0, 1.0) : 0.0;
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,7 +560,9 @@ class _DailyTargetCard extends ConsumerWidget {
                       ),
                       Text(
                         '${(progress * 100).toInt()}%',
-                        style: TextStyle(color: AppThemeExtension.of(context).accent, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                            color: AppThemeExtension.of(context).accent,
+                            fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -487,31 +572,45 @@ class _DailyTargetCard extends ConsumerWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 8,
-                      backgroundColor: AppThemeExtension.of(context).surfaceElevated,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppThemeExtension.of(context).accent),
+                      backgroundColor:
+                          AppThemeExtension.of(context).surfaceElevated,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          AppThemeExtension.of(context).accent),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Bu ay kapanan satış',
-                    style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 11),
+                    style: TextStyle(
+                        color: AppThemeExtension.of(context).textTertiary,
+                        fontSize: 11),
                   ),
                 ],
               );
             },
-            loading: () => Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
-            error: (_, __) => Text('$deals satış', style: TextStyle(color: AppThemeExtension.of(context).onAccentLight, fontSize: 18)),
+            loading: () => Center(
+                child: CircularProgressIndicator(
+                    color: AppThemeExtension.of(context).accent)),
+            error: (_, __) => Text('$deals satış',
+                style: TextStyle(
+                    color: AppThemeExtension.of(context).onAccentLight,
+                    fontSize: 18)),
           );
         },
-        loading: () => Center(child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent)),
-        error: (e, _) => Text('Hedef yüklenemedi.', style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: 13)),
+        loading: () => Center(
+            child: CircularProgressIndicator(
+                color: AppThemeExtension.of(context).accent)),
+        error: (e, _) => Text('Hedef yüklenemedi.',
+            style: TextStyle(
+                color: AppThemeExtension.of(context).danger, fontSize: 13)),
       ),
     );
   }
 }
 
 class _GlassCard extends StatelessWidget {
-  const _GlassCard({required this.title, required this.icon, required this.child});
+  const _GlassCard(
+      {required this.title, required this.icon, required this.child});
   final String title;
   final IconData icon;
   final Widget child;
@@ -520,8 +619,12 @@ class _GlassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark ? AppThemeExtension.of(context).surface : AppThemeExtension.of(context).surface;
-    final titleColor = isDark ? AppThemeExtension.of(context).onAccentLight : AppThemeExtension.of(context).textPrimary;
+    final surface = isDark
+        ? AppThemeExtension.of(context).surface
+        : AppThemeExtension.of(context).surface;
+    final titleColor = isDark
+        ? AppThemeExtension.of(context).onAccentLight
+        : AppThemeExtension.of(context).textPrimary;
     return ClipRRect(
       borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
       child: BackdropFilter(
@@ -531,11 +634,16 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
             color: surface.withValues(alpha: isDark ? 0.6 : 0.95),
-            border: Border.all(color: AppThemeExtension.of(context).accent.withValues(alpha: 0.25)),
+            border: Border.all(
+                color: AppThemeExtension.of(context)
+                    .accent
+                    .withValues(alpha: 0.25)),
             boxShadow: isDark
                 ? [
                     BoxShadow(
-                      color: AppThemeExtension.of(context).brandNavy.withValues(alpha: 0.3),
+                      color: AppThemeExtension.of(context)
+                          .brandNavy
+                          .withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -548,7 +656,8 @@ class _GlassCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, color: AppThemeExtension.of(context).accent, size: 22),
+                  Icon(icon,
+                      color: AppThemeExtension.of(context).accent, size: 22),
                   const SizedBox(width: 8),
                   Text(
                     title,

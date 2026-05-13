@@ -104,10 +104,18 @@ class CrmIosDialerShell extends ConsumerWidget {
   };
 
   static const List<String> _keyOrder = [
-    '1', '2', '3',
-    '4', '5', '6',
-    '7', '8', '9',
-    '*', '0', '#',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '*',
+    '0',
+    '#',
   ];
 
   void _append(ValueNotifier<String> n, String key) {
@@ -127,7 +135,8 @@ class CrmIosDialerShell extends ConsumerWidget {
     }
     final s = OutboundPhoneDial.sanitizeDialEntry(raw);
     if (!s.startsWith('+')) {
-      n.value = OutboundPhoneDial.sanitizeDialEntry('+${s.replaceFirst(RegExp(r'^\+'), '')}');
+      n.value = OutboundPhoneDial.sanitizeDialEntry(
+          '+${s.replaceFirst(RegExp(r'^\+'), '')}');
     }
   }
 
@@ -185,7 +194,7 @@ class CrmIosDialerShell extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
                 child: Text(
-                  'Magic Call — gerçek GSM için müşteri kartından arayın.',
+                  'Gerçek GSM araması için müşteri kartından arayın.',
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -262,7 +271,8 @@ class CrmIosDialerShell extends ConsumerWidget {
                               keyOrder: _keyOrder,
                               tokens: t,
                               onDigit: (k) => _append(dialNotifier, k),
-                              onLongPressZero: () => _longPressZero(dialNotifier),
+                              onLongPressZero: () =>
+                                  _longPressZero(dialNotifier),
                             ),
                             const SizedBox(height: 10),
                             DialerGreenCallButton(

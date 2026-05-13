@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -60,19 +61,26 @@ class AdminShellPage extends ConsumerWidget {
     final entries = <_AdminShellTabEntry>[
       const _AdminShellTabEntry(
         id: _AdminShellTab.dashboard,
-        navItem: AdaptiveNavItem(Icons.dashboard_rounded, 'Dashboard'),
+        navItem:
+            AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.overview),
         page: DashboardPage(),
       ),
       if (warRoom)
         const _AdminShellTabEntry(
           id: _AdminShellTab.warRoom,
-          navItem: AdaptiveNavItem(Icons.military_tech_rounded, 'War Room'),
+          navItem: AdaptiveNavItem(
+            Icons.military_tech_rounded,
+            ProductLabels.operationsRoom,
+          ),
           page: WarRoomPage(),
         ),
       if (showCommandCenter)
         const _AdminShellTabEntry(
           id: _AdminShellTab.commandCenter,
-          navItem: AdaptiveNavItem(Icons.call_rounded, 'Çağrı Merkezi'),
+          navItem: AdaptiveNavItem(
+            Icons.call_rounded,
+            ProductLabels.conversationHub,
+          ),
           page: CommandCenterPage(),
         ),
       if (showEconomyTab)
@@ -92,7 +100,8 @@ class AdminShellPage extends ConsumerWidget {
         page: SettingsPage(),
       ),
     ];
-    final navItems = entries.map((entry) => entry.navItem).toList(growable: false);
+    final navItems =
+        entries.map((entry) => entry.navItem).toList(growable: false);
     final pages = entries.map((entry) => entry.page).toList(growable: false);
     final tabIds = entries.map((entry) => entry.id).toList(growable: false);
     final settingsIndex =
@@ -119,7 +128,7 @@ class AdminShellPage extends ConsumerWidget {
             navItems: navItems,
             pages: pages,
             tabIds: tabIds,
-            title: 'Yönetici Paneli',
+            title: ProductLabels.managerWorkspace,
             shortcutMap: {
               MainShellShortcut.openHomeTab: 0,
               MainShellShortcut.openAccountTab: settingsIndex,

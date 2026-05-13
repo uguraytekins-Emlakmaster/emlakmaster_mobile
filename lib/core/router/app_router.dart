@@ -784,12 +784,12 @@ class _AuthShellState extends ConsumerState<_AuthShell> {
         _armRecovery();
         if (_showRecovery) {
           return StartupRecoveryScaffold(
-            title: 'Acilis gecikiyor',
+            title: 'Açılış uzadı',
             message:
-                'Rol ve ofis baglami hazirlanirken uygulama interaktif hale gelemedi. Tekrar deneyebilir veya oturumu yenileyebilirsiniz.',
+                'Rol ve ofis alanı hazırlanırken uygulama beklenenden uzun sürdü. Yeniden deneyebilir ya da oturumu tazeleyebilirsiniz.',
             detail: 'Bekleyen provider: currentRoleProvider',
             onPrimary: _retry,
-            secondaryLabel: 'Cikis yap',
+            secondaryLabel: 'Çıkış yap',
             onSecondary: () => AuthService.instance.signOut(),
           );
         }

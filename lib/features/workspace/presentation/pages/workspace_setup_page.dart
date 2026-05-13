@@ -56,13 +56,14 @@ class _WorkspaceSetupPageState extends State<WorkspaceSetupPage> {
                           curve: Curves.easeOutCubic,
                         );
                       },
-                      icon: Icon(Icons.arrow_back_ios_new_rounded, color: ext.foregroundMuted, size: 20),
+                      icon: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: ext.foregroundMuted, size: 20),
                     )
                   else
                     const SizedBox(width: 48),
                   Expanded(
                     child: Text(
-                      'Rainbow CRM',
+                      'EmlakMaster',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: ext.foregroundMuted,
@@ -154,7 +155,8 @@ class _StepOfficeChoice extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'Yeni bir ofis oluşturun veya davet koduyla mevcut bir ekibe katılın. Sonraki adımda harici ilan platformlarını bağlayabilirsiniz.',
-          style: TextStyle(color: ext.foregroundSecondary, height: 1.45, fontSize: 14),
+          style: TextStyle(
+              color: ext.foregroundSecondary, height: 1.45, fontSize: 14),
         ),
         const SizedBox(height: 28),
         _ChoiceTile(
@@ -183,7 +185,8 @@ class _StepOfficeChoice extends StatelessWidget {
               borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
             ),
           ),
-          child: const Text('Devam', style: TextStyle(fontWeight: FontWeight.w700)),
+          child: const Text('Devam',
+              style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ],
     );
@@ -215,10 +218,14 @@ class _ChoiceTile extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         border: Border.all(
-          color: selected ? scheme.primary.withValues(alpha: 0.65) : ext.border.withValues(alpha: 0.7),
+          color: selected
+              ? scheme.primary.withValues(alpha: 0.65)
+              : ext.border.withValues(alpha: 0.7),
           width: selected ? 1.5 : 1,
         ),
-        color: selected ? scheme.primary.withValues(alpha: 0.08) : ext.surfaceElevated,
+        color: selected
+            ? scheme.primary.withValues(alpha: 0.08)
+            : ext.surfaceElevated,
         boxShadow: selected
             ? [
                 BoxShadow(
@@ -262,13 +269,18 @@ class _ChoiceTile extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: TextStyle(color: ext.foregroundSecondary, fontSize: 13, height: 1.35),
+                        style: TextStyle(
+                            color: ext.foregroundSecondary,
+                            fontSize: 13,
+                            height: 1.35),
                       ),
                     ],
                   ),
                 ),
                 Icon(
-                  selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                  selected
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_off_rounded,
                   color: selected ? scheme.primary : ext.foregroundMuted,
                 ),
               ],
@@ -310,7 +322,8 @@ class _StepPlatforms extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'Sahibinden, Hepsiemlak ve Emlakjet bağlantıları ofis yöneticisi tarafından Ayarlar → Platform bağlantıları üzerinden kurulur; senkron ilanlar danışmanlara «İlanlar» ve ilgili ekranlarda görünür.',
-          style: TextStyle(color: ext.foregroundSecondary, height: 1.45, fontSize: 14),
+          style: TextStyle(
+              color: ext.foregroundSecondary, height: 1.45, fontSize: 14),
         ),
         const SizedBox(height: 12),
         Container(
@@ -323,10 +336,15 @@ class _StepPlatforms extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded, size: 20, color: ext.foregroundMuted),
+              Icon(Icons.info_outline_rounded,
+                  size: 20, color: ext.foregroundMuted),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(hint, style: TextStyle(color: ext.foregroundSecondary, fontSize: 13, height: 1.35)),
+                child: Text(hint,
+                    style: TextStyle(
+                        color: ext.foregroundSecondary,
+                        fontSize: 13,
+                        height: 1.35)),
               ),
             ],
           ),
@@ -342,7 +360,8 @@ class _StepPlatforms extends StatelessWidget {
               borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
             ),
           ),
-          child: const Text('Devam', style: TextStyle(fontWeight: FontWeight.w700)),
+          child: const Text('Devam',
+              style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ],
     );

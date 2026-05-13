@@ -10,7 +10,7 @@ import 'package:printing/printing.dart';
 
 import '../../domain/models/rainbow_intel_models.dart';
 
-/// Rainbow Analytics Center — ücretsiz [pdf] motoru (HTML/React Native yok).
+/// EmlakMaster — ücretsiz [pdf] motoru (HTML/React Native yok).
 /// Siyah–altın, kurumsal düzen, canlı rapor verisi, QR, filigran.
 abstract final class RainbowPdfBuilder {
   RainbowPdfBuilder._();
@@ -20,7 +20,7 @@ abstract final class RainbowPdfBuilder {
   static PdfColor get _ink => PdfColors.black;
 
   static const String _legalDisclaimer =
-      'Bu belge Rainbow Analytics Center tarafından otomatik üretilmiştir; '
+      'Bu belge EmlakMaster Yatırım İçgörü Merkezi tarafından otomatik üretilmiştir; '
       'yatırım tavsiyesi değildir. Veriler tahmini ve piyasa koşullarına göre değişebilir. '
       'Hukuki ve mali kararlar için uzman görüşü alınız.';
 
@@ -85,7 +85,7 @@ abstract final class RainbowPdfBuilder {
                   child: pw.Opacity(
                     opacity: 0.06,
                     child: pw.Text(
-                      'Rainbow Analytics Center',
+                      'EmlakMaster — Yatırım İçgörü',
                       style: pw.TextStyle(
                         fontSize: 42,
                         fontWeight: pw.FontWeight.bold,
@@ -113,7 +113,8 @@ abstract final class RainbowPdfBuilder {
                   pw.Text(
                     'Konum: ${report.district}  |  m²: ${report.m2.toStringAsFixed(0)}  |  '
                     'Liste: ${report.listingPriceTry.toStringAsFixed(0)} ₺',
-                    style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey800),
+                    style: const pw.TextStyle(
+                        fontSize: 10, color: PdfColors.grey800),
                   ),
                   pw.SizedBox(height: 20),
                   pw.Row(
@@ -260,7 +261,7 @@ abstract final class RainbowPdfBuilder {
                               ),
                             ),
                             pw.Text(
-                              'Rainbow Gayrimenkul',
+                              'EmlakMaster',
                               style: const pw.TextStyle(fontSize: 9),
                             ),
                           ],
@@ -290,7 +291,8 @@ abstract final class RainbowPdfBuilder {
                         pw.SizedBox(height: 4),
                         pw.Text(
                           '$_legalDisclaimer Oluşturulma: ${_fmtDate(report.generatedAt)}',
-                          style: const pw.TextStyle(fontSize: 8, lineSpacing: 1.2),
+                          style:
+                              const pw.TextStyle(fontSize: 8, lineSpacing: 1.2),
                         ),
                       ],
                     ),
@@ -336,7 +338,7 @@ abstract final class RainbowPdfBuilder {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        'Rainbow Analytics Center',
+                        'EmlakMaster — Yatırım İçgörü',
                         style: pw.TextStyle(
                           fontSize: 11,
                           letterSpacing: 0.6,
@@ -346,7 +348,7 @@ abstract final class RainbowPdfBuilder {
                       ),
                       pw.SizedBox(height: 4),
                       pw.Text(
-                        'Investment Intelligence Report',
+                        'Yatırım İçgörü Raporu',
                         style: pw.TextStyle(
                           fontSize: 8,
                           color: PdfColors.grey600,
@@ -363,7 +365,7 @@ abstract final class RainbowPdfBuilder {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                'Rainbow Gayrimenkul',
+                'EmlakMaster',
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
@@ -481,16 +483,19 @@ abstract final class RainbowPdfBuilder {
     pw.Font regular,
     pw.Font bold,
   ) {
-    final roi =
-        (report.breakdown.roiComponent / 35.0 * 100).clamp(0.0, 100.0).toDouble();
-    final dem =
-        (report.breakdown.demandComponent / 35.0 * 100).clamp(0.0, 100.0).toDouble();
-    final px =
-        (report.breakdown.pricePerM2Component / 30.0 * 100).clamp(0.0, 100.0).toDouble();
+    final roi = (report.breakdown.roiComponent / 35.0 * 100)
+        .clamp(0.0, 100.0)
+        .toDouble();
+    final dem = (report.breakdown.demandComponent / 35.0 * 100)
+        .clamp(0.0, 100.0)
+        .toDouble();
+    final px = (report.breakdown.pricePerM2Component / 30.0 * 100)
+        .clamp(0.0, 100.0)
+        .toDouble();
     return pw.Row(
       children: [
         pw.Expanded(
-          child: _miniRing('ROI', roi, regular, bold),
+          child: _miniRing('Getiri', roi, regular, bold),
         ),
         pw.SizedBox(width: 8),
         pw.Expanded(
@@ -543,7 +548,8 @@ abstract final class RainbowPdfBuilder {
         pw.SizedBox(height: 2),
         pw.Text(
           label,
-          style: pw.TextStyle(fontSize: 7, color: PdfColors.grey700, font: regular),
+          style: pw.TextStyle(
+              fontSize: 7, color: PdfColors.grey700, font: regular),
         ),
       ],
     );
@@ -578,7 +584,7 @@ abstract final class RainbowPdfBuilder {
             mainAxisSize: pw.MainAxisSize.min,
             children: [
               pw.Text(
-                'Investment Score',
+                'Yatırım puanı',
                 style: pw.TextStyle(
                   fontSize: 8,
                   color: PdfColors.grey700,
@@ -616,8 +622,8 @@ abstract final class RainbowPdfBuilder {
     PdfPoint size,
     double score0to100,
     PdfColor gold,
-    PdfColor track,
-    {required double stroke,
+    PdfColor track, {
+    required double stroke,
   }) {
     final cx = size.x / 2;
     final cy = size.y / 2;

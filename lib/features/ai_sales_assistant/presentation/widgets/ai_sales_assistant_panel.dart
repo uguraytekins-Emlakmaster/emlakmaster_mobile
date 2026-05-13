@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/features/lead_temperature_engine/presentation
 import 'package:emlakmaster_mobile/features/smart_matching_engine/presentation/providers/portfolio_match_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 /// Çağrı ekranında gösterilen AI Satış Asistanı paneli.
 /// "Bu müşteri %78 satın alma ihtimali taşıyor" + bütçe, son ilan, uygun portföy, önerilen cümle.
 class AiSalesAssistantPanel extends ConsumerWidget {
@@ -23,7 +24,7 @@ class AiSalesAssistantPanel extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'AI Satış Asistanı',
+              'Akıllı Satış Asistanı',
               style: _titleStyle(context),
             ),
             const SizedBox(height: 8),
@@ -44,8 +45,10 @@ class AiSalesAssistantPanel extends ConsumerWidget {
             child: Text('Müşteri yükleniyor...', style: _bodyStyle(context)),
           );
         }
-        final temperature = ref.watch(leadTemperatureForCustomerProvider(customer));
-        final matchedAsync = ref.watch(topMatchedListingsForCustomerProvider(customerId!));
+        final temperature =
+            ref.watch(leadTemperatureForCustomerProvider(customer));
+        final matchedAsync =
+            ref.watch(topMatchedListingsForCustomerProvider(customerId!));
         final purchaseProbability = temperature.score.round().clamp(0, 100);
         final budgetText = _budgetText(customer);
         final lastViewedText = customer.nextSuggestedAction ?? '—';
@@ -58,7 +61,7 @@ class AiSalesAssistantPanel extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Text('AI Satış Asistanı', style: _titleStyle(context)),
+                  Text('Akıllı Satış Asistanı', style: _titleStyle(context)),
                   const Spacer(),
                   _ProbabilityChip(probability: purchaseProbability),
                 ],
@@ -105,16 +108,24 @@ class AiSalesAssistantPanel extends ConsumerWidget {
               if (suggestedSentence.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: AppThemeExtension.of(context).accent.withValues(alpha: 0.12),
-                    border: Border.all(color: AppThemeExtension.of(context).accent.withValues(alpha: 0.3)),
+                    color: AppThemeExtension.of(context)
+                        .accent
+                        .withValues(alpha: 0.12),
+                    border: Border.all(
+                        color: AppThemeExtension.of(context)
+                            .accent
+                            .withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.lightbulb_rounded, color: AppThemeExtension.of(context).accent, size: 18),
+                      Icon(Icons.lightbulb_rounded,
+                          color: AppThemeExtension.of(context).accent,
+                          size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -136,7 +147,8 @@ class AiSalesAssistantPanel extends ConsumerWidget {
             SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppThemeExtension.of(context).accent),
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: AppThemeExtension.of(context).accent),
             ),
             const SizedBox(width: 12),
             Text('Müşteri verisi yükleniyor...', style: _bodyStyle(context)),
@@ -152,7 +164,8 @@ class AiSalesAssistantPanel extends ConsumerWidget {
   static String _budgetText(dynamic customer) {
     final min = customer.budgetMin;
     final max = customer.budgetMax;
-    if (min != null && max != null) return '${(min / 1e6).toStringAsFixed(1)}M - ${(max / 1e6).toStringAsFixed(1)}M TL';
+    if (min != null && max != null)
+      return '${(min / 1e6).toStringAsFixed(1)}M - ${(max / 1e6).toStringAsFixed(1)}M TL';
     if (min != null) return 'Min ${(min / 1e6).toStringAsFixed(1)}M TL';
     if (max != null) return 'Max ${(max / 1e6).toStringAsFixed(1)}M TL';
     return 'Belirtilmemiş';
@@ -209,7 +222,8 @@ class _ProbabilityChip extends StatelessWidget {
       ),
       child: Text(
         '%$probability',
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+        style:
+            TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
       ),
     );
   }

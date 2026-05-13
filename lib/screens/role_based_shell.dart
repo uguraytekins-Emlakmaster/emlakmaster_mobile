@@ -85,12 +85,12 @@ class _RoleBasedShellSelectorState
     _trackLoadingReason(reason);
     if (_showRecovery) {
       return StartupRecoveryScaffold(
-        title: 'Panel acil kurtarma modunda',
+        title: 'Alan güvenli moda alındı',
         message:
-            'Rol veya ofis bilgisi zamaninda gelmedi. Uygulama acildi ama shell hazirlanirken takildi. Tekrar deneyebilir veya oturumu yenileyebilirsiniz.',
+            'Rol ya da ofis bilgisi beklenenden uzun sürdü. Uygulama açık; alanı yeniden kurmayı deneyebilir ya da oturumu tazeleyebilirsiniz.',
         detail: 'Bekleyen asama: $reason',
         onPrimary: _retryBootstrap,
-        secondaryLabel: 'Cikis yap',
+        secondaryLabel: 'Çıkış yap',
         onSecondary: () => AuthService.instance.signOut(),
       );
     }
@@ -159,7 +159,7 @@ class _ShellRoleErrorScreen extends ConsumerWidget {
     return StartupRecoveryScaffold(
       title: 'Rol bilgisi yüklenemedi',
       message:
-          'Ag veya sunucu yaniti beklenirken sorun olustu. Tekrar deneyebilir veya oturumu yenileyebilirsiniz.',
+          'Bağlantı ya da sunucu yanıtı alınırken bir aksama oldu. Yeniden deneyebilir ya da oturumu tazeleyebilirsiniz.',
       detail: error.toString(),
       onPrimary: uid == null
           ? null
@@ -168,7 +168,7 @@ class _ShellRoleErrorScreen extends ConsumerWidget {
               ref.invalidate(currentRoleProvider);
               ref.invalidate(displayRoleProvider);
             },
-      secondaryLabel: 'Cikis yap',
+      secondaryLabel: 'Çıkış yap',
       onSecondary: () => AuthService.instance.signOut(),
     );
   }

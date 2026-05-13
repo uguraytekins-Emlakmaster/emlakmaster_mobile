@@ -12,6 +12,7 @@ import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/intel
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 /// Komuta merkezi — analiz başlatma ve geçmişe gidiş.
 class RainbowAnalyticsCenterPage extends ConsumerStatefulWidget {
   const RainbowAnalyticsCenterPage({
@@ -178,7 +179,7 @@ class _RainbowAnalyticsCenterPageState
         context,
         backgroundColor: ext.background,
         foregroundColor: ext.textPrimary,
-        title: const Text('Rainbow Analytics Center'),
+        title: const Text('Yatırım İçgörü Merkezi'),
         actions: [
           TextButton(
             onPressed: () => context.push(AppRouter.routeRainbowIntelHistory),
@@ -263,7 +264,7 @@ class _RainbowAnalyticsCenterPageState
                 FilledButton.icon(
                   onPressed: _busy ? null : _runCustom,
                   icon: const Icon(Icons.insights_rounded),
-                  label: const Text('Intelligence raporu oluştur'),
+                  label: const Text('İçgörü raporu oluştur'),
                   style: FilledButton.styleFrom(
                     backgroundColor: ext.accent,
                     foregroundColor: ext.onBrand,
@@ -315,8 +316,10 @@ class _RainbowAnalyticsCenterPageState
 Future<(String, String, String?)> _loadListingMeta(String listingId) async {
   try {
     await FirestoreService.ensureInitialized();
-    final doc =
-        await FirebaseFirestore.instance.collection('listings').doc(listingId).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('listings')
+        .doc(listingId)
+        .get();
     final d = doc.data() ?? {};
     final title = d['title'] as String? ?? 'İlan';
     final district =

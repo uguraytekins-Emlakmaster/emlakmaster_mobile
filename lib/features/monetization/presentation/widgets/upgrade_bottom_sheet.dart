@@ -102,7 +102,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
   static String _title(String feature) {
     switch (feature) {
       case 'ai_analysis':
-        return 'Bu ayki AI öneri hakkın doldu';
+        return 'Bu ayki akıllı öneri hakkın doldu';
       case 'revenue_insights':
         return 'Burada daha derin satış sinyalleri var';
       default:
@@ -113,18 +113,18 @@ class _UpgradeBottomSheet extends StatelessWidget {
   static String _body(String feature) {
     switch (feature) {
       case 'ai_analysis':
-        return 'Temel CRM akışın devam ediyor. Yeni AI önerileri gelecek dönemde yenilenir; PRO ile sınırsız kullanım açılır.';
+        return 'Temel müşteri akışın devam ediyor. Yeni akıllı öneriler gelecek dönemde yenilenir; PRO ile sınırsız kullanım açılır.';
       case 'revenue_insights':
         return 'PRO, sıcak müşterileri daha net görmeni ve hangi adımın geliri büyüteceğini daha hızlı anlamanı sağlar.';
       default:
-        return 'PRO; AI önerilerini, daha derin müşteri içgörülerini ve daha güçlü satış yönlendirmesini tek akışta sunar.';
+        return 'PRO; akıllı önerileri, daha derin müşteri içgörülerini ve daha güçlü satış yönlendirmesini tek akışta sunar.';
     }
   }
 
   static String _featureLine(String feature) {
     switch (feature) {
       case 'ai_analysis':
-        return 'Kısıt yalnızca maliyetli AI katmanında. Arama, CRM ve temel takip akışların aynen çalışmaya devam eder.';
+        return 'Sınır yalnızca maliyetli akıllı öneri katmanında. Arama, müşteri akışı ve temel takip düzenin aynen devam eder.';
       case 'revenue_insights':
         return 'PRO ile derin gelir analitiği, çok danışmanlı sıralama ve ileri satış rehberliği açılır.';
       default:
@@ -136,7 +136,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
     switch (feature) {
       case 'ai_analysis':
         return const [
-          'Sınırsız AI önerileri',
+          'Sınırsız akıllı öneri',
           'Daha derin müşteri içgörüleri',
           'Daha güçlü satış yönlendirmesi',
         ];
@@ -148,7 +148,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
         ];
       default:
         return const [
-          'Sınırsız AI önerileri',
+          'Sınırsız akıllı öneri',
           'Gelişmiş analizler',
           'Premium satış rehberliği',
         ];
@@ -199,8 +199,8 @@ class _PlanComparisonSurface extends StatelessWidget {
             accent: false,
             lines: [
               'Sınırsız arama',
-              'Sınırsız CRM',
-              '20 / ay AI önerisi',
+              'Sınırsız müşteri akışı',
+              'Ayda 20 akıllı öneri',
               'Temel analizler',
             ],
           ),
@@ -212,8 +212,8 @@ class _PlanComparisonSurface extends StatelessWidget {
             accent: true,
             lines: [
               'Sınırsız arama',
-              'Sınırsız CRM',
-              'Sınırsız AI önerisi',
+              'Sınırsız müşteri akışı',
+              'Sınırsız akıllı öneri',
               'İleri analizler açık',
             ],
           ),

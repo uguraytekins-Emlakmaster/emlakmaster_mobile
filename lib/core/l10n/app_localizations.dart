@@ -66,8 +66,8 @@ class AppLocalizations {
 
       // Settings
       'title_settings': 'Ayarlar',
-      'section_account': 'Hesap & Giriş',
-      'section_appearance': 'Görünüm',
+      'section_account': 'Hesap ve Erişim',
+      'section_appearance': 'Görsel Dil',
       'section_notifications': 'Bildirimler',
       'section_language': 'Dil',
       'language_turkish': 'Türkçe',
@@ -80,15 +80,16 @@ class AppLocalizations {
       'language_azerbaijani': 'Azərbaycan',
       'language_dutch': 'Nederlands',
       'language_portuguese': 'Português',
-      'compact_dashboard': 'Kompakt dashboard',
-      'compact_dashboard_sub': 'KPI ve panelleri daha sıkı göster',
-      'power_saver': 'Batarya tasarrufu',
+      'compact_dashboard': 'Sıkı görünüm',
+      'compact_dashboard_sub':
+          'Kartları ve göstergeleri daha derli toplu göster',
+      'power_saver': 'Güç tasarrufu',
       'power_saver_sub': 'Animasyonları azaltır, şarjı minimum kullanır',
       'push_notifications': 'Push bildirimleri',
       'push_notifications_sub': 'FCM ile anlık bildirimler',
 
       // Nav / Shell
-      'nav_dashboard': 'Özet',
+      'nav_dashboard': 'Ana Bakış',
       'nav_customers': 'Müşteriler',
       'nav_listings': 'İlanlar',
       'nav_tasks': 'Görevler',
@@ -96,7 +97,7 @@ class AppLocalizations {
 
       // Customer list
       'title_customers': 'Müşteriler',
-      'bulk_action': 'Toplu işlem',
+      'bulk_action': 'Toplu hamle',
       'bulk_campaign': 'Toplu kampanya',
       'add_to_follow_up': 'Takip listesine ekle',
       'search_customers': 'Müşteri ara (isim, telefon, e-posta)',
@@ -111,18 +112,18 @@ class AppLocalizations {
       'empty_state_empower': 'İlk kaydını ekle ve sistemi başlat',
 
       // Bulk campaign
-      'title_bulk_campaign': 'Toplu Kampanya',
-      'segment_header': 'Müşteri segmenti',
+      'title_bulk_campaign': 'Toplu erişim',
+      'segment_header': 'Hedef küme',
       'segment_count': '{0} kişi hedefte',
       'segment_count_none': 'Henüz hedef kitle yok',
-      'ai_message_header': 'AI metin önerisi',
+      'ai_message_header': 'Akıllı metin önerisi',
       'message_text': 'Mesaj metni',
-      'ai_suggest': 'Metin öner (AI)',
-      'ai_suggesting': 'Öneri hazırlanıyor...',
-      'ai_suggest_ready': 'AI metin önerisi hazır.',
+      'ai_suggest': 'Metin öner',
+      'ai_suggesting': 'Metin önerisi hazırlanıyor...',
+      'ai_suggest_ready': 'Metin önerisi hazır.',
       'ai_suggest_error': 'Metin önerisi alınamadı: {0}',
       'message_hint':
-          'Kampanya mesajınızı buraya yazın veya AI\'dan öneri isteyin.',
+          'Kampanya mesajınızı buraya yazın ya da akıllı öneri alın.',
       'whatsapp': 'WhatsApp',
       'sms': 'SMS',
 
@@ -172,10 +173,10 @@ class AppLocalizations {
       'integration_connections_read_only_notice':
           'Platform bağlantıları ofis yöneticisi tarafından yönetilir.',
       'settings_section_platform_integrations_manager':
-          'İlanlar ve platform bağlantıları',
-      'settings_platform_connections_tile': 'Platform bağlantıları (yönetici)',
+          'İlan akışı ve kanal bağlantıları',
+      'settings_platform_connections_tile': 'Kanal bağlantıları (yönetici)',
       'settings_platform_connections_tile_sub':
-          'Sahibinden, Emlakjet, Hepsiemlak — bağla, senkron, içe aktarma',
+          'Sahibinden, Emlakjet, Hepsiemlak — bağla, eşle, içeri al',
       'integration_filter_all': 'Tümü',
 
       // Tasks
@@ -187,7 +188,7 @@ class AppLocalizations {
       'empty_tasks_cta': 'Yeni görev',
       'empty_calls_title': 'Henüz çağrı kaydı yok',
       'empty_calls_sub':
-          'Telefon ve CRM aramaların burada toplanır. İlk kayıt için hemen ara.',
+          'Telefon ve uygulama içi görüşmeler burada toplanır. İlk kayıt için hemen arayın.',
       'empty_calls_cta': 'Ara ve kaydet',
       'empty_followup_title': 'Takipte bekleyen lead yok',
       'empty_followup_sub':
@@ -198,17 +199,16 @@ class AppLocalizations {
           'Mağaza dışa aktarım dosyası (CSV/JSON/Excel) ile toplu içe aktarın veya yöneticiden içe aktarma ekranını açın.',
       'empty_my_listings_cta_import': 'Mağaza toplu içe aktar',
       'empty_my_listings_cta_accounts': 'Bağlı hesaplar',
-      'empty_reports_title': 'Rapor verisi hazırlanıyor',
+      'empty_reports_title': 'İçgörü akışı hazırlanıyor',
       'empty_reports_sub':
-          'Çağrı özeti ve işlem kayıtları oluştuğunda metrikler burada görünecek.',
-      'empty_reports_cta': 'Danışmanları aç',
-      'empty_import_history_title': 'İçe aktarma geçmişi boş',
+          'Görüşme özetleri ve işlem kayıtları geldikçe tablo burada güçlenecek.',
+      'empty_reports_cta': 'Kadroyu aç',
+      'empty_import_history_title': 'Aktarım geçmişi boş',
       'empty_import_history_sub':
           'Toplu dosya veya görev başlattığınızda kayıtlar burada izlenir.',
-      'empty_import_history_cta': 'Mağaza içe aktarma',
-      'empty_intel_reports_title': 'Rapor arşivi boş',
-      'empty_intel_reports_sub':
-          'Rainbow analizleri üretildiğinde PDF\'ler burada listelenir.',
+      'empty_import_history_cta': 'Toplu aktarım',
+      'empty_intel_reports_title': 'İçgörü arşivi boş',
+      'empty_intel_reports_sub': 'Üretilen içgörü raporları burada birikir.',
 
       // Notifications
       'title_notifications': 'Bildirimler',
@@ -217,12 +217,12 @@ class AppLocalizations {
           'Sıcak lead, görev hatırlatması ve güncellemeler burada görünecek.',
 
       // Dashboard
-      'my_summary': 'Benim Özetim',
-      'today_calls': 'Bugün çağrı',
-      'open_tasks': 'Açık görev',
-      'active_pipeline': 'Aktif fırsat',
+      'my_summary': 'Günüm',
+      'today_calls': 'Bugünkü görüşme',
+      'open_tasks': 'Açık iş',
+      'active_pipeline': 'Canlı fırsat',
       'today_follows': 'Bugün: {0} takip',
-      'today_brief': 'Önerilen aksiyonlar listede',
+      'today_brief': 'Bugünün odağı hazır',
       'notifications': 'Bildirimler',
 
       // Admin – consultants / teams
@@ -231,15 +231,14 @@ class AppLocalizations {
           'Danışman listesi ve ekip atamaları burada görünecek. İlk sürümde mevcut kullanıcılar üzerinden ekip ve rol yönetimi yapılır.',
       'search_consultants': 'Danışman ara (isim, e-posta)',
       'title_admin_teams': 'Ekipler',
-      'action_add_team': 'Yeni ekip',
+      'action_add_team': 'Ekip kur',
       'empty_teams_title': 'Henüz ekip yok',
-      'empty_teams_subtitle':
-          'Yeni ekip oluşturup danışmanları atayabilirsiniz.',
+      'empty_teams_subtitle': 'Ekip kurup rolleri tek akışta dağıtabilirsiniz.',
       'label_team_name': 'Ekip adı',
       'label_team': 'Ekip',
       'label_manager': 'Yönetici',
       'label_members': 'Üyeler',
-      'title_team_detail': 'Ekip detayı',
+      'title_team_detail': 'Ekip görünümü',
       'team_not_found': 'Ekip bulunamadı.',
       'action_add_member': 'Üye ekle',
       'empty_team_members': 'Bu ekipte henüz üye yok.',
@@ -248,11 +247,11 @@ class AppLocalizations {
           'Bu üyeyi ekipten çıkarmak istediğinize emin misiniz?',
       'member_removed': 'Üye ekipten çıkarıldı.',
       'no_consultants_to_add': 'Eklenecek danışman kalmadı.',
-      'access_denied': 'Bu sayfaya erişim yetkiniz yok.',
+      'access_denied': 'Bu alana erişim izniniz yok.',
       'filter_all_teams': 'Tüm ekipler',
       'consultant_invite_info':
           'Bu kişi uygulamaya bu e-posta ile giriş yapıp rol olarak Danışman\'ı seçerek sisteme dahil olacaktır.',
-      'action_add_consultant': 'Yeni danışman',
+      'action_add_consultant': 'Danışman ekle',
       'label_role': 'Rol',
       'empty_consultants': 'Danışman bulunamadı.',
       'filter_role_all': 'Tüm roller',
@@ -263,15 +262,15 @@ class AppLocalizations {
       'full_name': 'Ad Soyad',
       'is_active': 'Aktif',
       'label_email': 'E-posta',
-      'saved_success': 'Kaydedildi.',
+      'saved_success': 'Kaydınız alındı.',
       'consultant_invite_saved':
           'Davet kaydedildi; bu e-posta ile giriş yaptığında rol ve ekip atanacak.',
       'manager_updated': 'Yönetici güncellendi.',
 
       // Common empty / error
-      'data_updating': 'Veriler güncelleniyor…',
-      'retry': 'Tekrar dene',
-      'go_home': 'Ana Sayfaya Dön',
+      'data_updating': 'Akış tazeleniyor…',
+      'retry': 'Yeniden dene',
+      'go_home': 'Ana akışa dön',
     },
     'en': {
       'app_title': 'EmlakMaster',

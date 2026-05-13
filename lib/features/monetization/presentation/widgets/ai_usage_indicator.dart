@@ -18,11 +18,11 @@ class AiUsageIndicator extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     final label = compact
         ? usage.isPro
-            ? 'AI: ${usage.aiUsageThisMonth} kullanım · PRO sınırsız'
-            : 'AI: ${usage.aiUsageThisMonth} / 20 bu ay'
+            ? 'Akıllı öneri: ${usage.aiUsageThisMonth} kullanım · PRO sınırsız'
+            : 'Akıllı öneri: ${usage.aiUsageThisMonth} / 20 bu ay'
         : usage.isPro
-            ? 'Bu ay ${usage.aiUsageThisMonth} AI önerisi kullandın · PRO sınırsız'
-            : 'Bu ay ${usage.aiUsageThisMonth} / 20 AI hakkı kullandın';
+            ? 'Bu ay ${usage.aiUsageThisMonth} akıllı öneri kullandın · PRO sınırsız'
+            : 'Bu ay ${usage.aiUsageThisMonth} / 20 akıllı öneri hakkı kullandın';
     final tone = usage.isFree && usage.isNearAiLimit ? ext.warning : ext.info;
 
     return Container(

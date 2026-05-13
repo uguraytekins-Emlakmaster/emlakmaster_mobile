@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,6 +21,7 @@ import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 /// Yönetici paneli – Ekonomi & Piyasa: kur, altın, piyasa nabzı, ticker.
 class AdminEconomyPage extends StatelessWidget {
   const AdminEconomyPage({super.key});
@@ -36,7 +38,7 @@ class AdminEconomyPage extends StatelessWidget {
         context,
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
-        title: const Text('Ekonomi & Piyasa'),
+        title: const Text('Piyasa Nabzı'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(DesignTokens.space6),
@@ -48,9 +50,10 @@ class AdminEconomyPage extends StatelessWidget {
           const MarketPulsePanel(),
           const SizedBox(height: DesignTokens.space6),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space2),
+            padding:
+                const EdgeInsets.symmetric(horizontal: DesignTokens.space2),
             child: Text(
-              'Kur, altın ve seçili endeksler canlı güncellenir; ayrıntılar Raporlar sekmesinde.',
+              'Kur, altın ve seçili endeksler canlı akar; ayrıntılar İçgörüler alanında derlenir.',
               style: AppTypography.body(context).copyWith(
                 fontSize: DesignTokens.fontSizeSm,
                 height: 1.45,
@@ -85,7 +88,7 @@ class AdminReportsPage extends ConsumerWidget {
         context,
         backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
-        title: const Text('Raporlar & Ekip'),
+        title: const Text('İçgörüler ve Kadro'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(DesignTokens.space6),
@@ -96,8 +99,8 @@ class AdminReportsPage extends ConsumerWidget {
               onTap: () => context.push(AppRouter.routeCommandCenter),
               child: const _SectionCard(
                 icon: Icons.phone_callback_rounded,
-                title: 'Çağrı merkezi',
-                subtitle: 'Danışman ve kayıt görünümleri; uygulama içi veri.',
+                title: ProductLabels.conversationHub,
+                subtitle: 'Danışman, müşteri ve kayıt görünümleri tek yerde.',
               ),
             ),
             const SizedBox(height: DesignTokens.space4),
@@ -111,17 +114,19 @@ class AdminReportsPage extends ConsumerWidget {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: DesignTokens.space4),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusLg),
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const AdminTeamsPage()),
+                          MaterialPageRoute(
+                              builder: (_) => const AdminTeamsPage()),
                         );
                       },
                       child: const _SectionCard(
                         featured: true,
                         icon: Icons.group_add_rounded,
-                        title: 'İlk ekibinizi oluşturun',
-                        subtitle: 'Rolleri ve üyeleri tek yerden tanımlayın.',
+                        title: 'İlk kadroyu kurun',
+                        subtitle: 'Rolleri ve üyeleri tek akıştan yönetin.',
                       ),
                     ),
                   );
@@ -140,8 +145,8 @@ class AdminReportsPage extends ConsumerWidget {
             },
             child: const _SectionCard(
               icon: Icons.groups_rounded,
-              title: 'Kadro ve roller',
-              subtitle: 'Danışmanlar, ekip atamaları ve yetkiler',
+              title: 'Kadro ve yetkiler',
+              subtitle: 'Danışmanlar, ekip dağılımı ve erişim ayarları',
             ),
           ),
           if (canManageTeams) ...[
@@ -156,7 +161,7 @@ class AdminReportsPage extends ConsumerWidget {
               child: const _SectionCard(
                 icon: Icons.group_work_rounded,
                 title: 'Ekipler',
-                subtitle: 'Oluşturma, yönetici ataması ve üyeler',
+                subtitle: 'Kurulum, lider ataması ve ekip yapısı',
               ),
             ),
           ],
@@ -164,8 +169,8 @@ class AdminReportsPage extends ConsumerWidget {
             const SizedBox(height: DesignTokens.space4),
             const _ComingSoonReportCard(
               icon: Icons.history_rounded,
-              title: 'Audit log',
-              subtitle: 'Sistem işlemleri; ayrıntılı görüntüleyici yakında',
+              title: 'İşlem kaydı',
+              subtitle: 'Sistem hareketleri için ayrıntılı görünüm yakında',
             ),
           ],
           if (canViewPipeline) ...[
@@ -175,8 +180,8 @@ class AdminReportsPage extends ConsumerWidget {
               onTap: () => context.push(AppRouter.routePipeline),
               child: const _SectionCard(
                 icon: Icons.view_kanban_rounded,
-                title: 'Satış hunisi',
-                subtitle: 'Canlı Kanban; aşamalar ve fırsatlar',
+                title: 'Fırsat hattı',
+                subtitle: 'Canlı kanban görünümü; aşamalar ve açık fırsatlar',
               ),
             ),
           ],
@@ -191,7 +196,8 @@ class _AdminReportsPerfSection extends StatefulWidget {
   const _AdminReportsPerfSection();
 
   @override
-  State<_AdminReportsPerfSection> createState() => _AdminReportsPerfSectionState();
+  State<_AdminReportsPerfSection> createState() =>
+      _AdminReportsPerfSectionState();
 }
 
 class _AdminReportsPerfSectionState extends State<_AdminReportsPerfSection> {
@@ -252,8 +258,9 @@ class _AdminReportsPerfSectionState extends State<_AdminReportsPerfSection> {
               padding: EdgeInsets.only(bottom: DesignTokens.space4),
               child: _ComingSoonReportCard(
                 icon: Icons.analytics_rounded,
-                title: 'Performans özeti',
-                subtitle: 'Çağrı ve kapanış trendleri — detaylı rapor yakında',
+                title: 'Performans görünümü',
+                subtitle:
+                    'Görüşme ve kapanış eğilimleri için ayrıntılı rapor yakında',
               ),
             );
           },
@@ -326,8 +333,8 @@ class _AdminPerfErrorCard extends StatelessWidget {
           compact: true,
           grouped: true,
           icon: Icons.cloud_off_outlined,
-          title: 'Rapor verilerine ulaşılamadı',
-          subtitle: 'Bağlantınızı kontrol edin.',
+          title: 'İçgörü verisine ulaşılamadı',
+          subtitle: 'Bağlantıyı kontrol edip yeniden deneyin.',
           actionLabel: 'Yeniden dene',
           onAction: onRetry,
         ),
@@ -395,8 +402,10 @@ class _ComingSoonReportCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
-                        border: Border.all(color: border.withValues(alpha: 0.45)),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusPill),
+                        border:
+                            Border.all(color: border.withValues(alpha: 0.45)),
                       ),
                       child: Text(
                         'Yakında',

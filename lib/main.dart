@@ -354,7 +354,8 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
         '[startup] currentRoleProvider ${_describeAsync(next)} value=${next.valueOrNull}',
       );
     });
-    _officeAccessSub = ref.listenManual(officeAccessStateProvider, (prev, next) {
+    _officeAccessSub =
+        ref.listenManual(officeAccessStateProvider, (prev, next) {
       AppLogger.state(
         '[startup] officeAccessStateProvider ${_describeAsync(next)} value=${next.valueOrNull}',
       );
@@ -448,7 +449,8 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
         Future<void>.delayed(
           const Duration(seconds: 2),
           () {
-            AppLogger.state('[startup] PushNotificationService.initialize scheduled');
+            AppLogger.state(
+                '[startup] PushNotificationService.initialize scheduled');
             unawaited(PushNotificationService.instance.initialize());
           },
         );
@@ -484,7 +486,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     final locale = ref.watch(localeProvider).valueOrNull ?? const Locale('tr');
     final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
-      title: 'Rainbow CRM',
+      title: 'EmlakMaster',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
