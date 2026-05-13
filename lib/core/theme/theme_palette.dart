@@ -33,19 +33,20 @@ abstract final class ThemePalette {
   static const Color danger = Color(0xFFC62828);
   static const Color info = Color(0xFF8E8E93);
 
-  static const Color backgroundLight = Color(0xFFF5F5F7);
+  static const Color backgroundLight = Color(0xFFF8F6F3);
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceLightElevated = Color(0xFFFAFAFA);
-  static const Color borderLight = Color(0xFFE5E5E7);
+  static const Color surfaceLightElevated = Color(0xFFFDFCF9);
+  static const Color borderLight = Color(0xFFE8E4DF);
 
   static const Color textPrimaryDark = Color(0xFFF5F5F5);
+
   /// Okunabilir ikincil metin (koyu tema; WCAG için biraz açıldı).
   static const Color textSecondaryDark = Color(0xFFC8C8CE);
   static const Color textTertiaryDark = Color(0xFF9A9AA3);
 
-  static const Color textPrimaryLight = Color(0xFF1C1C1E);
-  static const Color textSecondaryLight = Color(0xFF6B6B70);
-  static const Color textTertiaryLight = Color(0xFF8E8E93);
+  static const Color textPrimaryLight = Color(0xFF171513);
+  static const Color textSecondaryLight = Color(0xFF524D46);
+  static const Color textTertiaryLight = Color(0xFF6E6860);
 
   static const Color primaryGlow = Color(0xFFBFA071);
 

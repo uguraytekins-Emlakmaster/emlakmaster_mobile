@@ -91,7 +91,8 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-          side: BorderSide(color: divider.withValues(alpha: isDark ? 0.5 : 0.9)),
+          side:
+              BorderSide(color: divider.withValues(alpha: isDark ? 0.5 : 0.9)),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -230,7 +231,9 @@ abstract final class AppTheme {
         backgroundColor: ext.surface,
         indicatorColor: ext.accent.withValues(alpha: isDark ? 0.18 : 0.14),
         selectedIconTheme: IconThemeData(color: ext.accent),
-        unselectedIconTheme: IconThemeData(color: ext.textTertiary),
+        unselectedIconTheme: IconThemeData(
+          color: isDark ? ext.textTertiary : ext.textSecondary,
+        ),
         selectedLabelTextStyle: textTheme.labelMedium?.copyWith(
           color: ext.textPrimary,
           fontWeight: FontWeight.w700,
@@ -248,9 +251,11 @@ abstract final class AppTheme {
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: ext.surface,
         selectedItemColor: ext.accent,
-        unselectedItemColor: ext.textTertiary,
+        unselectedItemColor: isDark ? ext.textTertiary : ext.textSecondary,
         selectedIconTheme: IconThemeData(color: ext.accent),
-        unselectedIconTheme: IconThemeData(color: ext.textTertiary),
+        unselectedIconTheme: IconThemeData(
+          color: isDark ? ext.textTertiary : ext.textSecondary,
+        ),
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
