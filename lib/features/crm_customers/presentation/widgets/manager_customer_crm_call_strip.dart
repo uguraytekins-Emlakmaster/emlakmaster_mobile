@@ -15,6 +15,8 @@ import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_re
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
+import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -95,6 +97,7 @@ class ManagerCustomerCrmCallStrip extends ConsumerWidget {
                         locals: locals,
                         currentUid: currentUid,
                         agentNames: agentNames,
+                        crmCustomerId: customerId,
                       ),
                   ],
                 ),
@@ -113,12 +116,14 @@ class _CallLine extends StatelessWidget {
     required this.locals,
     required this.currentUid,
     required this.agentNames,
+    required this.crmCustomerId,
   });
 
   final QueryDocumentSnapshot<Map<String, dynamic>> doc;
   final List<LocalCallRecord> locals;
   final String? currentUid;
   final Map<String, String> agentNames;
+  final String crmCustomerId;
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +140,10 @@ class _CallLine extends StatelessWidget {
     final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
     final formattedPhone =
         hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
+    final custFromDoc = CrmCallRecordHelpers.customerIdOf(data);
+    final linkedCustomerId = (custFromDoc != null && custFromDoc.isNotEmpty)
+        ? custFromDoc
+        : crmCustomerId;
     final title = CrmCallRecordDisplay.primaryTitle(
       contactDisplayName: CrmCallRecordDisplay.contactNameFromCallData(data),
       rawPhone: hasDigits ? rawPhone : null,
@@ -158,6 +167,7 @@ class _CallLine extends StatelessWidget {
         CrmCallRecordDisplay.notePreviewFromFirestoreData(data);
     final foot = CrmCallRecordDisplay.technicalFootnote(
       firestoreDocId: doc.id,
+      customerId: linkedCustomerId,
     );
     final localMatch = matchLocalCallRecordForFirestoreDoc(
       locals: locals,
@@ -182,6 +192,8 @@ class _CallLine extends StatelessWidget {
         ),
       );
     }
+    final callable =
+        hasDigits && OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space3),
       child: CrmCallOperatingCard(
@@ -194,6 +206,20 @@ class _CallLine extends StatelessWidget {
           contextLine: contextLine,
           notePreview: quickNote,
           technicalFootnote: foot,
+          onIdentityTap: callable
+              ? () => showCallIdentityQuickActionsSheet(
+                    context,
+                    rawPhone: rawPhone,
+                    customerId: linkedCustomerId,
+                    displayLabel: title,
+                    firestoreCallDocId: doc.id,
+                  )
+              : null,
+          onIdentityLongPress: callable
+              ? () {
+                  unawaited(OutboundPhoneDial.launchDial(rawPhone));
+                }
+              : null,
           leading: Container(
             width: 44,
             height: 44,

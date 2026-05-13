@@ -20,6 +20,10 @@ import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_re
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
+import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/office_wide_customers_stream_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -107,6 +111,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   final FocusNode _searchFocusNode = FocusNode();
   List<QueryDocumentSnapshot<Map<String, dynamic>>>? _lastFilteredDocs;
   List<String> _teamMemberIds = [];
+  CallSurfaceQuickFilter _managerQuickFilter = CallSurfaceQuickFilter.all;
 
   @override
   void initState() {
@@ -173,6 +178,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             agentNames,
             locals,
             currentUid,
+            customerFullNameById,
           ),
         );
     }
@@ -184,6 +190,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     Map<String, String> agentNames,
     List<LocalCallRecord> locals,
     String? currentUid,
+    Map<String, String> customerFullNameById,
   ) {
     final data = doc.data();
     final id = doc.id;
@@ -196,7 +203,14 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     final formattedPhone =
         hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
     final contactName = CrmCallRecordDisplay.contactNameFromCallData(data);
+    final custId = CrmCallRecordHelpers.customerIdOf(data);
+    final resolvedCustomerName =
+        custId != null ? customerFullNameById[custId]?.trim() : null;
     final title = CrmCallRecordDisplay.primaryTitle(
+      customerFullName:
+          resolvedCustomerName != null && resolvedCustomerName.isNotEmpty
+              ? resolvedCustomerName
+              : null,
       contactDisplayName: contactName,
       rawPhone: hasDigits ? rawPhone : null,
     );
@@ -228,7 +242,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       dateTime: timeStr,
       duration: durationStr,
     );
-    final custId = CrmCallRecordHelpers.customerIdOf(data);
     final foot = CrmCallRecordDisplay.technicalFootnote(
       firestoreDocId: id,
       customerId: custId,
@@ -256,8 +269,16 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         ),
       );
     }
-    final accent = AppThemeExtension.of(context).accent;
-    return CrmCallOperatingCard(
+    final ext = AppThemeExtension.of(context);
+    final identityHint = (custId == null || custId.isEmpty) &&
+            (contactName?.trim().isEmpty ?? true)
+        ? 'Yeni kişi · Müşteri kartına bağlı değil'
+        : null;
+    final callable =
+        hasDigits && OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
+    final hasCustomerSlide = custId != null && custId.isNotEmpty;
+
+    final card = CrmCallOperatingCard(
       margin: const EdgeInsets.only(bottom: DesignTokens.space2),
       child: CrmCallRecordListItem(
         title: title,
@@ -267,17 +288,32 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         contextLine: contextLine,
         notePreview: shortNote,
         technicalFootnote: foot,
+        identityFootnote: identityHint,
+        onIdentityTap: callable
+            ? () => showCallIdentityQuickActionsSheet(
+                  context,
+                  rawPhone: rawPhone,
+                  customerId: custId,
+                  displayLabel: title,
+                  firestoreCallDocId: id,
+                )
+            : null,
+        onIdentityLongPress: callable
+            ? () {
+                unawaited(OutboundPhoneDial.launchDial(rawPhone));
+              }
+            : null,
         leading: Container(
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
+            color: ext.accent.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
             border: Border.all(
-              color: accent.withValues(alpha: 0.28),
+              color: ext.accent.withValues(alpha: 0.28),
             ),
           ),
-          child: Icon(Icons.call_rounded, color: accent, size: 22),
+          child: Icon(Icons.call_rounded, color: ext.accent, size: 22),
         ),
         trailing: trailing,
         padding: const EdgeInsets.fromLTRB(
@@ -287,6 +323,86 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           DesignTokens.space3,
         ),
       ),
+    );
+
+    if (!hasCustomerSlide && !callable) {
+      return card;
+    }
+    if (hasCustomerSlide && !callable) {
+      return Slidable(
+        key: ValueKey('cc_call_$id'),
+        startActionPane: ActionPane(
+          motion: const DrawerMotion(),
+          extentRatio: 0.22,
+          children: [
+            SlidableAction(
+              onPressed: (_) {
+                context.push('/customer/$custId');
+              },
+              backgroundColor: ext.accent,
+              foregroundColor: Colors.white,
+              icon: Icons.person_search_rounded,
+              label: 'Kart',
+            ),
+          ],
+        ),
+        child: card,
+      );
+    }
+    if (!hasCustomerSlide && callable) {
+      return Slidable(
+        key: ValueKey('cc_call_$id'),
+        endActionPane: ActionPane(
+          motion: const DrawerMotion(),
+          extentRatio: 0.2,
+          children: [
+            SlidableAction(
+              onPressed: (_) {
+                unawaited(OutboundPhoneDial.launchDial(rawPhone));
+              },
+              backgroundColor: ext.success,
+              foregroundColor: Colors.white,
+              icon: Icons.call_rounded,
+              label: 'Ara',
+            ),
+          ],
+        ),
+        child: card,
+      );
+    }
+    return Slidable(
+      key: ValueKey('cc_call_$id'),
+      startActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: 0.22,
+        children: [
+          SlidableAction(
+            onPressed: (_) {
+              context.push('/customer/$custId');
+            },
+            backgroundColor: ext.accent,
+            foregroundColor: Colors.white,
+            icon: Icons.person_search_rounded,
+            label: 'Kart',
+          ),
+        ],
+      ),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: 0.2,
+        children: [
+          SlidableAction(
+            onPressed: (_) {
+              unawaited(OutboundPhoneDial.launchDial(rawPhone));
+            },
+            backgroundColor: ext.success,
+            foregroundColor: Colors.white,
+            icon: Icons.call_rounded,
+            label: 'Ara',
+          ),
+        ],
+      ),
+      child: card,
     );
   }
 
@@ -532,6 +648,50 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           ),
         );
       },
+    );
+  }
+
+  Widget _managerQuickFilterStrip() {
+    final ext = AppThemeExtension.of(context);
+    Widget chip(CallSurfaceQuickFilter f, String label) {
+      final sel = _managerQuickFilter == f;
+      return Padding(
+        padding: const EdgeInsets.only(right: DesignTokens.space2),
+        child: FilterChip(
+          selected: sel,
+          label: Text(label),
+          onSelected: (_) => setState(() => _managerQuickFilter = f),
+          selectedColor: ext.accent.withValues(alpha: 0.16),
+          checkmarkColor: ext.accent,
+          labelStyle: TextStyle(
+            fontSize: 13,
+            fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
+            color: sel ? ext.textPrimary : ext.textSecondary,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.space4,
+        0,
+        DesignTokens.space4,
+        DesignTokens.space2,
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            chip(CallSurfaceQuickFilter.all, 'Tümü'),
+            chip(CallSurfaceQuickFilter.today, 'Bugün'),
+            chip(CallSurfaceQuickFilter.unanswered, 'Cevapsız'),
+            chip(CallSurfaceQuickFilter.hot, 'Operasyon'),
+            chip(CallSurfaceQuickFilter.reached, 'Ulaşılan'),
+            chip(CallSurfaceQuickFilter.fresh, 'Yeni'),
+          ],
+        ),
+      ),
     );
   }
 
@@ -791,6 +951,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                   setState(() => _filterOutcome = outcome),
             ),
             _buildSearchBar(),
+            _managerQuickFilterStrip(),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirestoreService.agentsStream(),
@@ -903,6 +1064,12 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                             (data['outcome'] as String? ??
                                     data['callOutcome'] as String?) !=
                                 _filterOutcome) {
+                          return false;
+                        }
+                        if (!CallSurfaceQuickFilterLogic.matchesFirestoreDoc(
+                          d,
+                          _managerQuickFilter,
+                        )) {
                           return false;
                         }
                         if (q.isNotEmpty) {

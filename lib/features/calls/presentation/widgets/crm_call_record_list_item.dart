@@ -14,9 +14,13 @@ class CrmCallRecordListItem extends StatelessWidget {
     required this.contextLine,
     this.notePreview,
     this.technicalFootnote,
+    this.identityFootnote,
     required this.leading,
     this.trailing,
     this.onTap,
+    this.onIdentityTap,
+    this.onIdentityLongPress,
+    this.belowChipsRow,
     this.padding = const EdgeInsets.all(DesignTokens.space4),
   });
 
@@ -27,9 +31,14 @@ class CrmCallRecordListItem extends StatelessWidget {
   final String contextLine;
   final String? notePreview;
   final String? technicalFootnote;
+  /// CRM bağlantısı yokken nötr ipucu (ör. "Yeni kişi · kartta yok").
+  final String? identityFootnote;
   final Widget leading;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final VoidCallback? onIdentityTap;
+  final VoidCallback? onIdentityLongPress;
+  final Widget? belowChipsRow;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -46,31 +55,14 @@ class CrmCallRecordListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AppTypography.cardHeading(context).copyWith(
-                    fontSize: DesignTokens.fontSizeXl,
-                    fontWeight: FontWeight.w800,
-                    height: 1.18,
-                    letterSpacing: -0.42,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                _IdentityBlock(
+                  title: title,
+                  phoneSubtitle: phoneSubtitle,
+                  identityFootnote: identityFootnote,
+                  onIdentityTap: onIdentityTap,
+                  onIdentityLongPress: onIdentityLongPress,
+                  ext: ext,
                 ),
-                if (phoneSubtitle != null &&
-                    phoneSubtitle!.trim().isNotEmpty) ...[
-                  const SizedBox(height: DesignTokens.space1 + 1),
-                  Text(
-                    phoneSubtitle!,
-                    style: AppTypography.bodyStrong(context).copyWith(
-                      fontSize: DesignTokens.fontSizeMd,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.15,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
                 const SizedBox(height: DesignTokens.space3),
                 Wrap(
                   spacing: DesignTokens.space2,
@@ -90,6 +82,10 @@ class CrmCallRecordListItem extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (belowChipsRow != null) ...[
+                  const SizedBox(height: DesignTokens.space3),
+                  belowChipsRow!,
+                ],
                 const SizedBox(height: DesignTokens.space3),
                 Text(
                   contextLine,
@@ -146,6 +142,108 @@ class CrmCallRecordListItem extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
         child: child,
+      ),
+    );
+  }
+}
+
+class _IdentityBlock extends StatelessWidget {
+  const _IdentityBlock({
+    required this.title,
+    required this.phoneSubtitle,
+    required this.identityFootnote,
+    required this.onIdentityTap,
+    required this.onIdentityLongPress,
+    required this.ext,
+  });
+
+  final String title;
+  final String? phoneSubtitle;
+  final String? identityFootnote;
+  final VoidCallback? onIdentityTap;
+  final VoidCallback? onIdentityLongPress;
+  final AppThemeExtension ext;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasGesture =
+        onIdentityTap != null || onIdentityLongPress != null;
+    final column = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: AppTypography.cardHeading(context).copyWith(
+                  fontSize: DesignTokens.fontSizeXl,
+                  fontWeight: FontWeight.w800,
+                  height: 1.18,
+                  letterSpacing: -0.42,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (hasGesture) ...[
+              const SizedBox(width: DesignTokens.space2),
+              Icon(
+                Icons.more_horiz_rounded,
+                size: 20,
+                color: ext.textTertiary,
+              ),
+            ],
+          ],
+        ),
+        if (phoneSubtitle != null &&
+            phoneSubtitle!.trim().isNotEmpty) ...[
+          const SizedBox(height: DesignTokens.space1 + 1),
+          Text(
+            phoneSubtitle!,
+            style: AppTypography.bodyStrong(context).copyWith(
+              fontSize: DesignTokens.fontSizeMd,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.15,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        if (identityFootnote != null &&
+            identityFootnote!.trim().isNotEmpty) ...[
+          const SizedBox(height: DesignTokens.space1),
+          Text(
+            identityFootnote!,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: ext.textTertiary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.15,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ],
+    );
+
+    if (!hasGesture) return column;
+
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onIdentityTap,
+        onLongPress: onIdentityLongPress,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+        child: Padding(
+          padding: const EdgeInsets.only(
+            right: DesignTokens.space2,
+            bottom: DesignTokens.space1,
+          ),
+          child: column,
+        ),
       ),
     );
   }
