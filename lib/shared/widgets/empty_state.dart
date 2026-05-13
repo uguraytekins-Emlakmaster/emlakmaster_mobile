@@ -78,8 +78,6 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final brand = ext.brandPrimary;
-    final textColor = ext.foregroundSecondary;
-
     final iconBox = widget.compact ? 56.0 : 96.0;
     final iconSize = widget.compact ? 28.0 : 48.0;
     final ringSize = widget.premiumVisual && !widget.compact ? 132.0 : iconBox;
@@ -178,8 +176,8 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
             maxLines: 6,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.body(context).copyWith(
-                  color: textColor.withValues(alpha: 0.88),
-                  height: 1.45,
+                  color: ext.textSecondary,
+                  height: 1.48,
                 ),
           ),
         ],

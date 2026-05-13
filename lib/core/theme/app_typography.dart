@@ -21,8 +21,8 @@ abstract final class AppTypography {
     return Theme.of(context).textTheme.headlineSmall!.copyWith(
           color: ext.textPrimary,
           fontWeight: FontWeight.w800,
-          height: 1.1,
-          letterSpacing: -0.4,
+          height: 1.12,
+          letterSpacing: -0.38,
         );
   }
 
@@ -39,8 +39,8 @@ abstract final class AppTypography {
     final ext = AppThemeExtension.of(context);
     return Theme.of(context).textTheme.titleLarge!.copyWith(
           color: ext.textPrimary,
-          fontWeight: FontWeight.w700,
-          height: 1.2,
+          fontWeight: FontWeight.w800,
+          height: 1.22,
         );
   }
 
@@ -67,7 +67,8 @@ abstract final class AppTypography {
     final ext = AppThemeExtension.of(context);
     return Theme.of(context).textTheme.bodyMedium!.copyWith(
           color: ext.textSecondary,
-          height: 1.55,
+          fontWeight: FontWeight.w400,
+          height: 1.58,
         );
   }
 
@@ -76,7 +77,7 @@ abstract final class AppTypography {
     return Theme.of(context).textTheme.bodyLarge!.copyWith(
           color: ext.textPrimary,
           fontWeight: FontWeight.w600,
-          height: 1.5,
+          height: 1.52,
         );
   }
 
@@ -84,7 +85,8 @@ abstract final class AppTypography {
     final ext = AppThemeExtension.of(context);
     return Theme.of(context).textTheme.bodySmall!.copyWith(
           color: ext.textTertiary,
-          height: 1.4,
+          fontWeight: FontWeight.w500,
+          height: 1.45,
         );
   }
 
@@ -93,7 +95,8 @@ abstract final class AppTypography {
     return Theme.of(context).textTheme.labelSmall!.copyWith(
           color: ext.textSecondary,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.9,
+          letterSpacing: 1.0,
+          height: 1.35,
         );
   }
 

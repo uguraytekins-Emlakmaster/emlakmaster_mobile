@@ -287,8 +287,9 @@ class _InfoChip extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: theme.textTheme.labelSmall!.copyWith(
-              color: ext.textTertiary,
+              color: ext.textSecondary,
               letterSpacing: 1,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 3),

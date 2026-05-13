@@ -31,7 +31,14 @@ abstract final class ThemePalette {
   static const Color success = Color(0xFF1B5E20);
   static const Color warning = Color(0xFFF9A825);
   static const Color danger = Color(0xFFC62828);
-  static const Color info = Color(0xFF8E8E93);
+
+  /// Bilgi SnackBar / hafif bilgi şeridi zemini (metin: [textPrimary]).
+  static const Color infoSurfaceLight = Color(0xFFF0EDE7);
+  static const Color infoSurfaceDark = Color(0xFF232326);
+  /// Bilgi ikonları / nötr durum (açık modda soluk gri değil, sıcak nötr).
+  static const Color infoIconLight = Color(0xFF69625C);
+  /// Koyu yüzeyde okunur, sert beyaz değil.
+  static const Color infoIconDark = Color(0xFFB0B0BA);
 
   /// Açık tema: hafif sıcak zemin, yüksek kontrast metin (premium + okunabilirlik).
   static const Color backgroundLight = Color(0xFFF7F5F1);
@@ -41,9 +48,10 @@ abstract final class ThemePalette {
 
   static const Color textPrimaryDark = Color(0xFFF5F5F5);
 
-  /// Okunabilir ikincil metin (koyu tema; WCAG için biraz açıldı).
-  static const Color textSecondaryDark = Color(0xFFC8C8CE);
-  static const Color textTertiaryDark = Color(0xFF9A9AA3);
+  /// Gövde / alt başlık — uzun kullanımda yumuşak, yeterince açık.
+  static const Color textSecondaryDark = Color(0xFFCECED4);
+  /// Meta / yardımcı — çamurlu gri değil, gün ışığında ekran parlaklığında okunur.
+  static const Color textTertiaryDark = Color(0xFFA8A8B2);
 
   static const Color textPrimaryLight = Color(0xFF111111);
   static const Color textSecondaryLight = Color(0xFF3F3A36);

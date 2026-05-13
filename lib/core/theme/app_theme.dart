@@ -107,7 +107,7 @@ abstract final class AppTheme {
         ),
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: ext.textSecondary,
-          height: 1.45,
+          height: 1.52,
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -118,6 +118,21 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(DesignTokens.radiusSheet),
           ),
+        ),
+      ),
+      bannerTheme: MaterialBannerThemeData(
+        backgroundColor: ext.infoSurface,
+        surfaceTintColor: Colors.transparent,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: ext.textPrimary,
+          fontWeight: FontWeight.w500,
+          height: 1.45,
+        ),
+        padding: const EdgeInsetsDirectional.only(
+          start: DesignTokens.space4,
+          end: DesignTokens.space2,
+          top: DesignTokens.space3,
+          bottom: DesignTokens.space3,
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
@@ -274,6 +289,34 @@ abstract final class AppTheme {
         color: ext.textSecondary,
         size: DesignTokens.iconMd,
       ),
+      chipTheme: ChipThemeData(
+        backgroundColor: ext.surfaceElevated,
+        disabledColor: ext.border.withValues(alpha: 0.4),
+        selectedColor: ext.accent.withValues(alpha: isDark ? 0.24 : 0.2),
+        checkmarkColor: ext.onBrand,
+        deleteIconColor: ext.textSecondary,
+        side: BorderSide(color: ext.border.withValues(alpha: isDark ? 0.55 : 0.72)),
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space3,
+          vertical: DesignTokens.space1,
+        ),
+        labelStyle: textTheme.labelMedium?.copyWith(
+          color: ext.textPrimary,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.15,
+        ),
+        secondaryLabelStyle: textTheme.labelMedium?.copyWith(
+          color: ext.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        brightness: isDark ? Brightness.dark : Brightness.light,
+      ),
+      badgeTheme: BadgeThemeData(
+        backgroundColor: ext.accent.withValues(alpha: 0.92),
+        textColor: ext.onBrand,
+        smallSize: 18,
+        largeSize: 22,
+      ),
     );
   }
 
@@ -295,9 +338,9 @@ abstract final class AppTheme {
         headlineMedium: TextStyle(
           color: ThemePalette.antiqueGold,
           fontSize: DesignTokens.fontSize2xl,
-          fontWeight: FontWeight.w700,
-          height: 1.1,
-          letterSpacing: -0.3,
+          fontWeight: FontWeight.w600,
+          height: 1.12,
+          letterSpacing: -0.25,
         ),
         headlineSmall: TextStyle(
           color: ThemePalette.textPrimaryDark,
@@ -315,9 +358,9 @@ abstract final class AppTheme {
         titleMedium: TextStyle(
           color: ThemePalette.textPrimaryDark,
           fontSize: DesignTokens.fontSizeMd,
-          fontWeight: FontWeight.w700,
-          height: 1.2,
-          letterSpacing: 0.2,
+          fontWeight: FontWeight.w800,
+          height: 1.22,
+          letterSpacing: 0.15,
         ),
         titleSmall: TextStyle(
           color: ThemePalette.textSecondaryDark,
@@ -328,18 +371,20 @@ abstract final class AppTheme {
         bodyLarge: TextStyle(
           color: ThemePalette.textSecondaryDark,
           fontSize: DesignTokens.fontSizeMd,
-          height: 1.55,
+          fontWeight: FontWeight.w400,
+          height: 1.58,
         ),
         bodyMedium: TextStyle(
           color: ThemePalette.textSecondaryDark,
           fontSize: DesignTokens.fontSizeBase,
-          height: 1.55,
+          fontWeight: FontWeight.w400,
+          height: 1.58,
         ),
         bodySmall: TextStyle(
           color: ThemePalette.textTertiaryDark,
           fontSize: DesignTokens.fontSizeSm,
-          height: 1.4,
-          fontWeight: FontWeight.w400,
+          height: 1.45,
+          fontWeight: FontWeight.w500,
         ),
         labelLarge: TextStyle(
           color: ThemePalette.textPrimaryDark,
@@ -357,7 +402,8 @@ abstract final class AppTheme {
           color: ThemePalette.textTertiaryDark,
           fontSize: DesignTokens.fontSizeXs,
           fontWeight: FontWeight.w600,
-          height: 1.35,
+          height: 1.4,
+          letterSpacing: 0.35,
         ),
       );
 
@@ -379,9 +425,9 @@ abstract final class AppTheme {
         headlineMedium: TextStyle(
           color: ThemePalette.antiqueGold,
           fontSize: DesignTokens.fontSize2xl,
-          fontWeight: FontWeight.w700,
-          height: 1.1,
-          letterSpacing: -0.3,
+          fontWeight: FontWeight.w600,
+          height: 1.12,
+          letterSpacing: -0.25,
         ),
         headlineSmall: TextStyle(
           color: ThemePalette.textPrimaryLight,
@@ -399,9 +445,9 @@ abstract final class AppTheme {
         titleMedium: TextStyle(
           color: ThemePalette.textPrimaryLight,
           fontSize: DesignTokens.fontSizeMd,
-          fontWeight: FontWeight.w700,
-          height: 1.2,
-          letterSpacing: 0.2,
+          fontWeight: FontWeight.w800,
+          height: 1.22,
+          letterSpacing: 0.15,
         ),
         titleSmall: TextStyle(
           color: ThemePalette.textSecondaryLight,
@@ -412,18 +458,20 @@ abstract final class AppTheme {
         bodyLarge: TextStyle(
           color: ThemePalette.textSecondaryLight,
           fontSize: DesignTokens.fontSizeMd,
-          height: 1.55,
+          fontWeight: FontWeight.w400,
+          height: 1.58,
         ),
         bodyMedium: TextStyle(
           color: ThemePalette.textSecondaryLight,
           fontSize: DesignTokens.fontSizeBase,
-          height: 1.55,
+          fontWeight: FontWeight.w400,
+          height: 1.58,
         ),
         bodySmall: TextStyle(
           color: ThemePalette.textTertiaryLight,
           fontSize: DesignTokens.fontSizeSm,
-          height: 1.4,
-          fontWeight: FontWeight.w400,
+          height: 1.45,
+          fontWeight: FontWeight.w500,
         ),
         labelLarge: TextStyle(
           color: ThemePalette.textPrimaryLight,
@@ -441,7 +489,8 @@ abstract final class AppTheme {
           color: ThemePalette.textTertiaryLight,
           fontSize: DesignTokens.fontSizeXs,
           fontWeight: FontWeight.w600,
-          height: 1.35,
+          height: 1.4,
+          letterSpacing: 0.35,
         ),
       );
 }

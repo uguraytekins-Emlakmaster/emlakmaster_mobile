@@ -575,11 +575,13 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                             const SizedBox(height: 4),
                             Text(
                               item.label,
-                              style: TextStyle(
-                                fontSize: 10,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontSize: 11,
                                 fontWeight: isSelected
-                                    ? FontWeight.w600
+                                    ? FontWeight.w700
                                     : FontWeight.w500,
+                                height: 1.2,
+                                letterSpacing: 0.15,
                                 color:
                                     isSelected ? primary : navUnselectedColor,
                               ),

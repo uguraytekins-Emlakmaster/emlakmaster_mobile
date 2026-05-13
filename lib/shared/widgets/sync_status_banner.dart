@@ -19,6 +19,7 @@ class SyncStatusBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
     final status = ref.watch(syncStatusProvider);
     final isOffline = !status.isOnline;
     // Compact: sadece çevrimdışıyken bant göster. Normal: çevrimdışı veya son senkron bilgisi varsa göster.
@@ -46,7 +47,7 @@ class SyncStatusBanner extends ConsumerWidget {
           decoration: BoxDecoration(
             color: isOffline
                 ? ext.warning.withValues(alpha: 0.15)
-                : ext.surface.withValues(alpha: 0.6),
+                : ext.infoSurface.withValues(alpha: 0.92),
             border: Border(
               bottom: BorderSide(
                 color: isOffline ? ext.warning.withValues(alpha: 0.5) : ext.border,
@@ -59,15 +60,15 @@ class SyncStatusBanner extends ConsumerWidget {
               Icon(
                 isOffline ? Icons.cloud_off_rounded : Icons.cloud_done_rounded,
                 size: compact ? 14 : 16,
-                color: isOffline ? ext.warning : ext.accent,
+                color: isOffline ? ext.warning : ext.info,
               ),
               SizedBox(width: compact ? DesignTokens.space2 : DesignTokens.space2),
               Text(
                 isOffline ? 'İnternet yok. Veriler önbellekten gösteriliyor.' : status.shortLabel,
-                style: TextStyle(
+                style: theme.textTheme.bodySmall?.copyWith(
                   color: isOffline ? ext.warning : ext.textSecondary,
-                  fontSize: compact ? 11 : 12,
                   fontWeight: FontWeight.w500,
+                  height: 1.35,
                 ),
               ),
             ],

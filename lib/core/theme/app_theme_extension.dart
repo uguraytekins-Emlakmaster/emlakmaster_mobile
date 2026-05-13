@@ -31,6 +31,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     required this.success,
     required this.warning,
     required this.danger,
+    required this.info,
+    required this.infoSurface,
     required this.onBrand,
   });
 
@@ -59,6 +61,10 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
   final Color success;
   final Color warning;
   final Color danger;
+  /// Bilgi ikonları, nötr rozetler — metin hiyerarşisiyle rekabet etmez.
+  final Color info;
+  /// Bilgi toast / nötr bilgi kartı zemini — [textPrimary] ile okunur.
+  final Color infoSurface;
   final Color onBrand;
 
   Color get textPrimary => foreground;
@@ -79,9 +85,6 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
 
   /// Filigran / watermark için düşük opaklık marka rengi.
   Color get brandWatermark => brandPrimary.withValues(alpha: 0.031);
-
-  /// Durum / bilgi ikonları (ThemePalette.info ile uyumlu).
-  Color get info => ThemePalette.info;
 
   /// Koyu yüzey üzerinde ikincil panel (navy).
   Color get brandNavy => ThemePalette.brandNavy;
@@ -164,6 +167,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       success: ThemePalette.success,
       warning: ThemePalette.warning,
       danger: ThemePalette.danger,
+      info: ThemePalette.infoIconLight,
+      infoSurface: ThemePalette.infoSurfaceLight,
       onBrand: ThemePalette.inputTextOnGold,
     );
   }
@@ -173,7 +178,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       background: ThemePalette.scaffoldDark,
       surface: ThemePalette.surfaceDark,
       surfaceElevated: ThemePalette.surfaceDarkElevated,
-      card: ThemePalette.surfaceDark,
+      card: ThemePalette.surfaceDarkCard,
       foreground: ThemePalette.textPrimaryDark,
       foregroundSecondary: ThemePalette.textSecondaryDark,
       foregroundMuted: ThemePalette.textTertiaryDark,
@@ -193,6 +198,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       success: ThemePalette.success,
       warning: ThemePalette.warning,
       danger: ThemePalette.danger,
+      info: ThemePalette.infoIconDark,
+      infoSurface: ThemePalette.infoSurfaceDark,
       onBrand: ThemePalette.inputTextOnGold,
     );
   }
@@ -230,6 +237,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     Color? success,
     Color? warning,
     Color? danger,
+    Color? info,
+    Color? infoSurface,
     Color? onBrand,
   }) {
     return AppThemeExtension(
@@ -256,6 +265,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       success: success ?? this.success,
       warning: warning ?? this.warning,
       danger: danger ?? this.danger,
+      info: info ?? this.info,
+      infoSurface: infoSurface ?? this.infoSurface,
       onBrand: onBrand ?? this.onBrand,
     );
   }
@@ -287,6 +298,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       success: Color.lerp(success, other.success, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
+      info: Color.lerp(info, other.info, t)!,
+      infoSurface: Color.lerp(infoSurface, other.infoSurface, t)!,
       onBrand: Color.lerp(onBrand, other.onBrand, t)!,
     );
   }

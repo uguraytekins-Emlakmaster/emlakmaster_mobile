@@ -16,17 +16,21 @@ class AppToaster {
     VoidCallback? onAction,
   }) {
     HapticFeedback.mediumImpact();
-    final (color, icon) = _styleFor(type, context);
-    final foreground =
-        ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+    final ext = AppThemeExtension.of(context);
+    final (color, icon) = _styleFor(type, ext);
+    final isInfo = type == ToastType.info;
+    final foreground = isInfo
+        ? ext.textPrimary
+        : (ThemeData.estimateBrightnessForColor(color) == Brightness.dark
             ? Colors.white
-            : Colors.black;
+            : Colors.black87);
+    final iconColor = isInfo ? ext.info : foreground;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(icon, color: foreground, size: 20),
+            Icon(icon, color: iconColor, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -44,11 +48,16 @@ class AppToaster {
         behavior: SnackBarBehavior.floating,
         duration: duration,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+          side: isInfo
+              ? BorderSide(color: ext.border.withValues(alpha: 0.85))
+              : BorderSide.none,
+        ),
         action: actionLabel != null && onAction != null
             ? SnackBarAction(
                 label: actionLabel,
-                textColor: foreground,
+                textColor: isInfo ? ext.accent : foreground,
                 onPressed: onAction,
               )
             : null,
@@ -56,8 +65,7 @@ class AppToaster {
     );
   }
 
-  static (Color, IconData) _styleFor(ToastType type, BuildContext context) {
-    final ext = AppThemeExtension.of(context);
+  static (Color, IconData) _styleFor(ToastType type, AppThemeExtension ext) {
     switch (type) {
       case ToastType.success:
         return (ext.success, Icons.check_circle_rounded);
@@ -66,7 +74,7 @@ class AppToaster {
       case ToastType.warning:
         return (ext.warning, Icons.warning_rounded);
       case ToastType.info:
-        return (ext.info, Icons.info_rounded);
+        return (ext.infoSurface, Icons.info_rounded);
     }
   }
 

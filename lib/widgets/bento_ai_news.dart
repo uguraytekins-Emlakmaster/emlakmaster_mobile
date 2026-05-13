@@ -62,8 +62,8 @@ class BentoAiNews extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: ext.surfaceElevated.withValues(alpha: 0.78),
-            border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+            color: ext.surfaceElevated.withValues(alpha: 0.92),
+            border: Border.all(color: ext.border.withValues(alpha: 0.62)),
           ),
           child: Row(
             children: [
@@ -87,18 +87,16 @@ class BentoAiNews extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        color: ext.textPrimary,
-                        fontWeight: FontWeight.w600,
+                      style: AppTypography.cardHeading(context).copyWith(
+                        fontSize: DesignTokens.fontSizeMd,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       body,
-                      style: TextStyle(
-                        color: ext.textSecondary,
-                        fontSize: 11,
-                        height: 1.4,
+                      style: AppTypography.body(context).copyWith(
+                        fontSize: DesignTokens.fontSizeSm,
+                        height: 1.45,
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
