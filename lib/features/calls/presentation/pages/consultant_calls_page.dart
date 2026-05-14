@@ -29,6 +29,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
+import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_card_memory_hints.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
@@ -68,6 +69,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   int _whatsappIndex = 0;
   String _whatsappMessage = '';
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs = [];
+
+  void _openCustomerDirectoryForLinking() {
+    ConsultantShellNav.goToCustomersTab(context);
+  }
 
   void _selectAll(
     bool select, [
@@ -1100,6 +1105,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                   firestoreCallDocId: r.firestoreDocumentId,
                                   onCallListMutated: () => ref.invalidate(
                                       consultantCallsStreamProvider),
+                                  onOpenCustomerDirectory:
+                                      _openCustomerDirectoryForLinking,
                                 );
                               },
                               backgroundColor:
@@ -1128,6 +1135,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           firestoreDocId: r.firestoreDocumentId,
                           onCallListMutated: () => ref.invalidate(
                               consultantCallsStreamProvider),
+                          onOpenCustomerDirectory:
+                              _openCustomerDirectoryForLinking,
                           syncIcon: CallSyncStatusIcon(
                             record: r,
                             onManualRetry:
@@ -1287,6 +1296,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                 firestoreCallDocId: id,
                                 onCallListMutated: () => ref.invalidate(
                                     consultantCallsStreamProvider),
+                                onOpenCustomerDirectory:
+                                    _openCustomerDirectoryForLinking,
                               );
                             },
                             backgroundColor:
@@ -1318,6 +1329,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         firestoreDocId: id,
                         onCallListMutated: () => ref.invalidate(
                             consultantCallsStreamProvider),
+                        onOpenCustomerDirectory: _openCustomerDirectoryForLinking,
                         leadingIcon: isIncoming
                             ? Icons.call_received_rounded
                             : Icons.call_made_rounded,
@@ -1413,6 +1425,7 @@ class _LocalCallRecordCard extends StatelessWidget {
     this.customerId,
     this.firestoreDocId,
     this.onCallListMutated,
+    this.onOpenCustomerDirectory,
     required this.syncIcon,
   });
 
@@ -1432,6 +1445,7 @@ class _LocalCallRecordCard extends StatelessWidget {
   final String? customerId;
   final String? firestoreDocId;
   final VoidCallback? onCallListMutated;
+  final VoidCallback? onOpenCustomerDirectory;
   final Widget syncIcon;
 
   @override
@@ -1468,6 +1482,7 @@ class _LocalCallRecordCard extends StatelessWidget {
                   displayLabel: title,
                   firestoreCallDocId: firestoreDocId,
                   onCallListMutated: onCallListMutated,
+                  onOpenCustomerDirectory: onOpenCustomerDirectory,
                 )
             : null,
         onIdentityLongPress: callable
@@ -1515,6 +1530,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     this.customerId,
     this.firestoreDocId,
     this.onCallListMutated,
+    this.onOpenCustomerDirectory,
     required this.leadingIcon,
     required this.leadingColor,
     required this.trailing,
@@ -1539,6 +1555,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
   final String? customerId;
   final String? firestoreDocId;
   final VoidCallback? onCallListMutated;
+  final VoidCallback? onOpenCustomerDirectory;
   final IconData leadingIcon;
   final Color leadingColor;
   final Widget trailing;
@@ -1590,6 +1607,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                     displayLabel: title,
                     firestoreCallDocId: firestoreDocId,
                     onCallListMutated: onCallListMutated,
+                    onOpenCustomerDirectory: onOpenCustomerDirectory,
                   );
                 },
                 icon: Icon(Icons.more_horiz_rounded,
@@ -1667,6 +1685,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                             displayLabel: title,
                             firestoreCallDocId: firestoreDocId,
                             onCallListMutated: onCallListMutated,
+                            onOpenCustomerDirectory: onOpenCustomerDirectory,
                           )
                       : null,
                   onIdentityLongPress: callable

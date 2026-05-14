@@ -5,20 +5,14 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/utils/sms_launcher.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_quick_note_snippets.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
+import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-
-const _kQuickNoteSnippets = <String>[
-  'Geri dönecek',
-  'Ulaşılamadı',
-  'Yeniden ara',
-  'Bilgi verdi',
-  'Takibe al',
-];
 
 /// Kimlik (numara / kişi) dokunuşunda: hızlı, premium aksiyon yüzeyi.
 Future<void> showCallIdentityQuickActionsSheet(
@@ -28,6 +22,7 @@ Future<void> showCallIdentityQuickActionsSheet(
   String? displayLabel,
   String? firestoreCallDocId,
   VoidCallback? onCallListMutated,
+  VoidCallback? onOpenCustomerDirectory,
 }) async {
   final digits = rawPhone.replaceAll(RegExp(r'\D'), '');
   if (digits.isEmpty) return;
@@ -118,13 +113,14 @@ Future<void> showCallIdentityQuickActionsSheet(
                 spacing: DesignTokens.space2,
                 runSpacing: DesignTokens.space2,
                 children: [
-                  for (final snippet in _kQuickNoteSnippets)
+                  for (final snippet in CallQuickNoteSnippets.labels)
                     Material(
                       color: ext.card,
                       borderRadius:
                           BorderRadius.circular(DesignTokens.radiusPill),
                       child: InkWell(
                         onTap: () async {
+                          HapticFeedback.selectionClick();
                           final id = firestoreCallDocId.trim();
                           await FirestoreService.appendQuickCaptureNoteSnippet(
                             callId: id,
@@ -133,7 +129,11 @@ Future<void> showCallIdentityQuickActionsSheet(
                           if (!anchor.mounted) return;
                           HapticFeedback.mediumImpact();
                           onCallListMutated?.call();
-                          showCallsSurfaceAck(anchor, 'Not eklendi');
+                          showCallsSurfaceAck(
+                            anchor,
+                            'Not eklendi',
+                            icon: Icons.check_rounded,
+                          );
                         },
                         borderRadius:
                             BorderRadius.circular(DesignTokens.radiusPill),
@@ -156,6 +156,52 @@ Future<void> showCallIdentityQuickActionsSheet(
                 ],
               ),
             ],
+            if (!hasCustomer) ...[
+              const SizedBox(height: DesignTokens.space3),
+              _SheetTile(
+                icon: Icons.link_rounded,
+                label: 'Müşteriye bağla',
+                color: ext.accent,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  HapticFeedback.lightImpact();
+                  final openDir = onOpenCustomerDirectory;
+                  if (openDir != null) {
+                    openDir();
+                  } else if (ConsultantShellNav.maybeOf(anchor) != null) {
+                    ConsultantShellNav.goToCustomersTab(anchor);
+                    if (anchor.mounted) {
+                      showCallsSurfaceAck(
+                        anchor,
+                        'Müşteri listesinde ara',
+                        icon: Icons.people_alt_rounded,
+                      );
+                    }
+                  } else if (anchor.mounted) {
+                    showCallsSurfaceAck(
+                      anchor,
+                      'Müşteri kartından veya CRM listenizden eşleştirin',
+                      icon: Icons.info_outline_rounded,
+                    );
+                  }
+                },
+              ),
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(ctx);
+                  },
+                  child: Text(
+                    'Bağlamayı şimdilik ertele',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: ext.textTertiary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: DesignTokens.space4),
             _SheetTile(
               icon: Icons.call_rounded,
@@ -169,7 +215,11 @@ Future<void> showCallIdentityQuickActionsSheet(
                     const SnackBar(content: Text('Arama başlatılamadı.')),
                   );
                 } else if (ok && anchor.mounted) {
-                  showCallsSurfaceAck(anchor, 'Arama başlatıldı');
+                  showCallsSurfaceAck(
+                    anchor,
+                    'Arama başlatıldı',
+                    icon: Icons.call_rounded,
+                  );
                 }
               },
             ),
@@ -185,7 +235,11 @@ Future<void> showCallIdentityQuickActionsSheet(
                     const SnackBar(content: Text('Mesaj uygulaması açılamadı.')),
                   );
                 } else if (ok && anchor.mounted) {
-                  showCallsSurfaceAck(anchor, 'SMS akışı hazırlandı');
+                  showCallsSurfaceAck(
+                    anchor,
+                    'SMS akışı hazırlandı',
+                    icon: Icons.sms_rounded,
+                  );
                 }
               },
             ),
@@ -201,7 +255,11 @@ Future<void> showCallIdentityQuickActionsSheet(
                     const SnackBar(content: Text('WhatsApp açılamadı.')),
                   );
                 } else if (ok && anchor.mounted) {
-                  showCallsSurfaceAck(anchor, 'WhatsApp açıldı');
+                  showCallsSurfaceAck(
+                    anchor,
+                    'WhatsApp açıldı',
+                    icon: Icons.chat_rounded,
+                  );
                 }
               },
             ),
@@ -212,6 +270,7 @@ Future<void> showCallIdentityQuickActionsSheet(
                 color: ext.accent,
                 onTap: () {
                   Navigator.pop(ctx);
+                  HapticFeedback.lightImpact();
                   ctx.push('/customer/$cid');
                 },
               ),

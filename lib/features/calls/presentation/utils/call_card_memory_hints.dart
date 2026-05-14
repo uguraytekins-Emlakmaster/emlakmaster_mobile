@@ -15,7 +15,7 @@ abstract final class CallCardMemoryHints {
     String? notePreview,
   }) {
     final n = notePreview?.trim() ?? '';
-    if (n.isNotEmpty) return 'Son not kayıtlı';
+    if (n.isNotEmpty) return 'Son not var';
 
     final oc = _outcome(data) ?? '';
     const reachedLike = {'reached', 'connected', 'completed', 'appointment_set', 'offer_sent'};
@@ -46,7 +46,7 @@ abstract final class CallCardMemoryHints {
     String? outcome,
     int? followUpReminderAtMs,
   }) {
-    if ((notes ?? '').trim().isNotEmpty) return 'Son not kayıtlı';
+    if ((notes ?? '').trim().isNotEmpty) return 'Son not var';
     final fu = followUpReminderAtMs;
     if (fu != null &&
         DateTime.now().millisecondsSinceEpoch < fu) {

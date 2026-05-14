@@ -39,7 +39,7 @@ class PostCallCaptureDashboardReminder extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Cagri otomatik kaydedildi',
+                        'Çağrı otomatik kaydedildi',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               color: ext.textPrimary,
                               fontWeight: FontWeight.w700,
@@ -47,7 +47,7 @@ class PostCallCaptureDashboardReminder extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${draft.phone} · Ozet/not ekleyip gorusmeyi guclendir',
+                        '${draft.phone} · Özet veya not ekleyerek kaydı güçlendirin',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: ext.textSecondary,
                               height: 1.3,

@@ -187,6 +187,8 @@ class PostCallCaptureNotifier extends StateNotifier<PostCallCaptureDraft?> {
     }
   }
 
+  /// Güvenilir post-call tetikleyici: uygulama içi GSM handoff + taslak.
+  /// Saf yerel Phone araması için garanti verilmez (iOS kısıtı).
   Future<void> beginHandoff(PostCallCaptureDraft draft) async {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     if (uid.isEmpty) return;

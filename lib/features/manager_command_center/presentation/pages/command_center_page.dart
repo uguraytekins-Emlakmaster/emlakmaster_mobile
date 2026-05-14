@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
+import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
@@ -175,18 +176,24 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         );
       case _CommandScope.all:
       case _CommandScope.pending:
-        return ListView.builder(
-          padding: const EdgeInsets.all(DesignTokens.space4),
-          itemCount: filtered.length,
-          cacheExtent: 300,
-          itemBuilder: (context, index) => _buildCrmRecordTile(
-            context,
-            filtered[index],
-            agentNames,
-            locals,
-            currentUid,
-            customerFullNameById,
-          ),
+        return Builder(
+          builder: (ctx) {
+            final nowMs = DateTime.now().millisecondsSinceEpoch;
+            return ListView.builder(
+              padding: const EdgeInsets.all(DesignTokens.space4),
+              itemCount: filtered.length,
+              cacheExtent: 300,
+              itemBuilder: (context, index) => _buildCrmRecordTile(
+                context,
+                filtered[index],
+                agentNames,
+                locals,
+                currentUid,
+                customerFullNameById,
+                nowMs,
+              ),
+            );
+          },
         );
     }
   }
@@ -198,6 +205,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     List<LocalCallRecord> locals,
     String? currentUid,
     Map<String, String> customerFullNameById,
+    int nowMs,
   ) {
     final data = doc.data();
     final id = doc.id;
@@ -258,7 +266,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       docId: id,
       data: data,
     );
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
     Widget? trailing;
     if (localMatch != null) {
       final syncState = deriveLocalCallSyncUiState(localMatch, nowMs: nowMs);
@@ -321,6 +328,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                   customerId: custId,
                   displayLabel: title,
                   firestoreCallDocId: id,
+                  onOpenCustomerDirectory: () {
+                    HapticFeedback.lightImpact();
+                    ref
+                        .read(mainShellShortcutProvider.notifier)
+                        .enqueue(MainShellShortcut.openHomeTab);
+                    context.go(AppRouter.routeHome);
+                  },
                 )
             : null,
         onIdentityLongPress: callable
@@ -1220,11 +1234,12 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (docs.isNotEmpty)
-                            ManagerCallsTeamRhythmStrip(
-                              docs: docs,
-                              agentNames: agentNames,
+                          ManagerCallsTeamRhythmStrip(
+                            line: ManagerCallsTeamRhythmLogic.computeLine(
+                              docs,
+                              agentNames,
                             ),
+                          ),
                           if (_managerQuickFilter ==
                                   CallSurfaceQuickFilter.callback &&
                               filtered.isNotEmpty)

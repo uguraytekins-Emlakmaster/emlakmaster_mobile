@@ -8,6 +8,8 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/application/apply_quick_call_capture.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_quick_note_snippets.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,6 +56,18 @@ class _PostCallQuickCaptureBodyState
   void dispose() {
     _noteCtrl.dispose();
     super.dispose();
+  }
+
+  void _appendQuickNoteSnippet(String snippet) {
+    final line = snippet.trim();
+    if (line.isEmpty) return;
+    HapticFeedback.selectionClick();
+    final t = _noteCtrl.text.trim();
+    setState(() {
+      _noteCtrl.text = t.isEmpty ? line : '$t · $line';
+      _noteCtrl.selection =
+          TextSelection.collapsed(offset: _noteCtrl.text.length);
+    });
   }
 
   Future<void> _pickDate() async {
@@ -146,38 +160,23 @@ class _PostCallQuickCaptureBodyState
           'quick_capture_sheet: no navigator pop target, showing completed state',
         );
       }
+      var ackLine = result.taskCreated
+          ? 'Sonuç kaydedildi · takip eklendi'
+          : 'Sonuç kaydedildi';
+      final w = warn?.trim();
+      if (w != null && w.isNotEmpty && w.length <= 72) {
+        ackLine = '$ackLine · $w';
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final ex = AppThemeExtension.of(context);
-        messenger.showSnackBar(
-          SnackBar(
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: ex.surface.withValues(alpha: 0.9),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: ex.border.withValues(alpha: 0.5)),
-            ),
-            content: Row(
-              children: [
-                Icon(
-                  Icons.check_circle_rounded,
-                  color: ex.success,
-                  size: DesignTokens.iconSm,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    okMessage,
-                    style: AppTypography.bodyStrong(context)
-                        .copyWith(color: ex.textPrimary),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        final overlayCtx = messenger.context;
+        if (!overlayCtx.mounted) return;
+        showCallsSurfaceAck(
+          overlayCtx,
+          ackLine,
+          icon: Icons.check_circle_rounded,
+          duration: const Duration(milliseconds: 1700),
         );
-        AppLogger.forensic(
-            'quick_capture_sheet: SnackBar scheduled post-frame');
+        AppLogger.forensic('quick_capture_sheet: inline ack shown');
       });
       if (!closed && mounted) {
         setState(() {
@@ -337,6 +336,47 @@ class _PostCallQuickCaptureBodyState
                 style: AppTypography.body(context),
               ),
             ],
+            const SizedBox(height: DesignTokens.space4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Hızlı not',
+                style: AppTypography.cardHeading(context)
+                    .copyWith(color: ext.textSecondary, fontSize: 14),
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            Wrap(
+              spacing: DesignTokens.space2,
+              runSpacing: DesignTokens.space2,
+              children: [
+                for (final s in CallQuickNoteSnippets.labels)
+                  Material(
+                    color: ext.card,
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusPill),
+                    child: InkWell(
+                      onTap: () => _appendQuickNoteSnippet(s),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusPill),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.space3,
+                          vertical: DesignTokens.space1 + 2,
+                        ),
+                        child: Text(
+                          s,
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: ext.textPrimary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: DesignTokens.fontSizeSm,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: DesignTokens.space5),
             Text(
               'Sonuç',
@@ -497,7 +537,9 @@ class _PostCallQuickCaptureBodyState
                             ),
                           )
                         : Text(
-                            'Kaydet',
+                            _outcomeCode == null
+                                ? 'Kaydet'
+                                : 'Sonucu kaydet',
                             style: AppTypography.primaryButton(context),
                           ),
                   ),

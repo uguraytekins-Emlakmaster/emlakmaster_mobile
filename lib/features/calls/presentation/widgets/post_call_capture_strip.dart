@@ -40,7 +40,7 @@ class PostCallCaptureShellStrip extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Cagri kaydi hazir',
+                        'Çağrı kaydı hazır',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -50,7 +50,7 @@ class PostCallCaptureShellStrip extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Sadece detay ekle: sonuc, kisa not ve takip plani',
+                        'Detay ekleyin: sonuç, kısa not ve takip planı',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(

@@ -6,20 +6,16 @@ import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_ca
 import 'package:flutter/material.dart';
 
 /// Yönetici çağrı listesi: tek satır, mevcut anlık veriden hafif ekip nabzı.
-class ManagerCallsTeamRhythmStrip extends StatelessWidget {
-  const ManagerCallsTeamRhythmStrip({
-    super.key,
-    required this.docs,
-    required this.agentNames,
-  });
+/// Ağır toplama [computeLine] ile liste dışında bir kez yapılır; bu widget yalnızca çizer.
+abstract final class ManagerCallsTeamRhythmLogic {
+  ManagerCallsTeamRhythmLogic._();
 
-  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
-  final Map<String, String> agentNames;
-
-  @override
-  Widget build(BuildContext context) {
-    if (docs.isEmpty) return const SizedBox.shrink();
-    final ext = AppThemeExtension.of(context);
+  /// Boş dönerse şerit gösterilmez.
+  static String computeLine(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    Map<String, String> agentNames,
+  ) {
+    if (docs.isEmpty) return '';
     final start = CallSurfaceQuickFilterLogic.startOfTodayLocal();
     var today = 0;
     var pending = 0;
@@ -57,7 +53,22 @@ class ManagerCallsTeamRhythmStrip extends StatelessWidget {
     if (topLabel != null && topN > 0 && today > 0) {
       pulse.write(' · yoğunluk: $topLabel ($topN)');
     }
+    return pulse.toString();
+  }
+}
 
+class ManagerCallsTeamRhythmStrip extends StatelessWidget {
+  const ManagerCallsTeamRhythmStrip({
+    super.key,
+    required this.line,
+  });
+
+  final String line;
+
+  @override
+  Widget build(BuildContext context) {
+    if (line.isEmpty) return const SizedBox.shrink();
+    final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         DesignTokens.space4,
@@ -86,7 +97,7 @@ class ManagerCallsTeamRhythmStrip extends StatelessWidget {
               const SizedBox(width: DesignTokens.space2 + 2),
               Expanded(
                 child: Text(
-                  pulse.toString(),
+                  line,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: ext.textPrimary,
                         fontWeight: FontWeight.w500,
