@@ -50,8 +50,8 @@ class DefaultFirebaseOptions {
     projectId: 'emlak-master',
     storageBucket: 'emlak-master.firebasestorage.app',
     iosClientId: '572835725773-8s71g3li2ful895gppeb6bvlbck09hkd.apps.googleusercontent.com',
-    iosBundleId: 'com.example.emlakmasterMobile',
+    iosBundleId: 'com.uguraytekin.emlakmastermobile',
   );
 
-  /// iOS: Aynı Firebase projesi. Tam yapılandırma için: flutterfire configure
+  /// iOS: Runner `PRODUCT_BUNDLE_IDENTIFIER` ve `ios/Runner/GoogleService-Info.plist` ile aynı olmalı.
 }
