@@ -213,7 +213,7 @@
 				4C0AA7FE2A92F4D39AAD8F7B /* [CP] Embed Pods Frameworks */,
 				D2C5BB369ED908976AC13560 /* [CP] Copy Pods Resources */,
 				8A4C16AB2FBC000200E0F001 /* Re-sign objective_c native asset */,
-				59E14F57EF8D64FFD6766231 /* FlutterFire: "flutterfire upload-crashlytics-symbols" */,
+				59E14F57EF8D64FFD6766231 /* Firebase Crashlytics */,
 			);
 			buildRules = (
 			);
@@ -354,8 +354,9 @@
 			shellScript = "#!/bin/sh\nset -e\nSTAMP=\"${DERIVED_FILE_DIR}/codesign_objective_c_native_asset.stamp\"\ntouch_stamp() { mkdir -p \"${DERIVED_FILE_DIR}\" && : > \"$STAMP\"; }\ntrap touch_stamp EXIT\n\nFRAMEWORK_DIR=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/objective_c.framework\"\nBINARY_PATH=\"${FRAMEWORK_DIR}/objective_c\"\n\nif [ ! -f \"$BINARY_PATH\" ]; then\n  echo \"objective_c native asset not present; skipping re-sign\"\n  exit 0\nfi\n\nif [ \"$PLATFORM_NAME\" != \"iphoneos\" ]; then\n  echo \"objective_c re-sign skipped for ${PLATFORM_NAME}\"\n  exit 0\nfi\n\nif [ \"$CODE_SIGNING_ALLOWED\" != \"YES\" ] || [ -z \"$EXPANDED_CODE_SIGN_IDENTITY\" ]; then\n  echo \"Code signing not available for objective_c native asset\"\n  exit 0\nfi\n\n/usr/bin/codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --preserve-metadata=identifier,entitlements,flags --generate-entitlement-der \"$FRAMEWORK_DIR\"\necho \"Re-signed objective_c native asset for device build\"\n";
 			showEnvVarsInLog = 0;
 		};
-		59E14F57EF8D64FFD6766231 /* FlutterFire: "flutterfire upload-crashlytics-symbols" */ = {
+		59E14F57EF8D64FFD6766231 /* Firebase Crashlytics */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -363,15 +364,16 @@
 			);
 			inputPaths = (
 			);
-			name = "FlutterFire: \"flutterfire upload-crashlytics-symbols\"";
+			name = "Firebase Crashlytics";
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/flutterfire_crashlytics_upload.stamp",
+				"$(DERIVED_FILE_DIR)/firebase_crashlytics_upload.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\n#!/bin/bash\nset -e\n# Declared output for Xcode dependency analysis (silences \"no output files\" warning).\nSTAMP=\"${DERIVED_FILE_DIR}/flutterfire_crashlytics_upload.stamp\"\ntouch_stamp() { mkdir -p \"${DERIVED_FILE_DIR}\" && : > \"$STAMP\"; }\ntrap touch_stamp EXIT\nPATH=\"${PATH}:$FLUTTER_ROOT/bin:${PUB_CACHE}/bin:$HOME/.pub-cache/bin\"\n\n# Debug deploy'da sembol yukleme gerekmiyor; script hatasi build'i kirmasin.\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  echo \"Crashlytics upload skipped for Debug\"\n  exit 0\nfi\n\nif ! command -v flutterfire >/dev/null 2>&1; then\n  echo \"flutterfire CLI not found, skipping Crashlytics symbols upload\"\n  exit 0\nfi\n\nif [ -z \"$PODS_ROOT\" ] || [ ! -d \"$PODS_ROOT/FirebaseCrashlytics\" ]; then\n  DERIVED_DATA_PATH=$(echo \"$BUILD_ROOT\" | sed -E 's|(.*DerivedData/[^/]+).*|\\1|')\n  PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT=\"${DERIVED_DATA_PATH}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\nelse\n  PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT=\"$PODS_ROOT/FirebaseCrashlytics/run\"\nfi\n\nif [ ! -f \"$PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT\" ]; then\n  echo \"Crashlytics run script not found, skipping symbols upload\"\n  exit 0\nfi\n\nflutterfire upload-crashlytics-symbols --upload-symbols-script-path=\"$PATH_TO_CRASHLYTICS_UPLOAD_SCRIPT\" --platform=ios --apple-project-path=\"${SRCROOT}\" --env-platform-name=\"${PLATFORM_NAME}\" --env-configuration=\"${CONFIGURATION}\" --env-project-dir=\"${PROJECT_DIR}\" --env-built-products-dir=\"${BUILT_PRODUCTS_DIR}\" --env-dwarf-dsym-folder-path=\"${DWARF_DSYM_FOLDER_PATH}\" --env-dwarf-dsym-file-name=\"${DWARF_DSYM_FILE_NAME}\" --env-infoplist-path=\"${INFOPLIST_PATH}\" --default-config=default || true\n";
+			shellScript = "#!/bin/sh\nset -e\n# Official CocoaPods Crashlytics runner: https://firebase.google.com/docs/crashlytics/get-started?platform=ios\nSTAMP=\"${DERIVED_FILE_DIR}/firebase_crashlytics_upload.stamp\"\ntouch_stamp() { mkdir -p \"${DERIVED_FILE_DIR}\" && : > \"$STAMP\"; }\n\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  echo \"[Firebase Crashlytics] Skipping symbol upload (Debug).\"\n  touch_stamp\n  exit 0\nfi\n\nRUN_SCRIPT=\"${PODS_ROOT}/FirebaseCrashlytics/run\"\nif [ -z \"${PODS_ROOT}\" ] || [ ! -f \"$RUN_SCRIPT\" ]; then\n  echo \"error: Firebase Crashlytics run script missing: $RUN_SCRIPT\" >&2\n  echo \"error: Run 'cd ios && pod install' and open Runner.xcworkspace.\" >&2\n  exit 1\nfi\n\necho \"[Firebase Crashlytics] $RUN_SCRIPT\"\n\"$RUN_SCRIPT\"\ntouch_stamp\n";
+			showEnvVarsInLog = 0;
 		};
 		66A0780880D0828E8223860B /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
