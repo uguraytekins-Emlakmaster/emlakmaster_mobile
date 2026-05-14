@@ -785,6 +785,34 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  /// Var olan `calls/{id}` belgesine kısa not ekler (hızlı kısayol; mevcut nota ekler).
+  static Future<void> appendQuickCaptureNoteSnippet({
+    required String callId,
+    required String snippet,
+  }) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    final line = snippet.trim();
+    if (line.isEmpty) return;
+    final ref =
+        FirebaseFirestore.instance.collection(AppConstants.colCalls).doc(callId);
+    final snap = await ref.get();
+    if (!snap.exists) {
+      AppLogger.w('appendQuickCaptureNoteSnippet: doc missing $callId');
+      return;
+    }
+    final data = snap.data() ?? {};
+    final existing = (data['quickCaptureNote'] as String? ?? '').trim();
+    final merged = existing.isEmpty ? line : '$existing · $line';
+    await ref.set(
+      {
+        'quickCaptureNote': merged,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
   static const int _callDedupeWindowMs = 2 * 60 * 1000;
 
   /// Aynı danışman + telefon + [createdAtMs] ±2 dk içinde oluşturulmuş çağrı (çift kayıt önleme).

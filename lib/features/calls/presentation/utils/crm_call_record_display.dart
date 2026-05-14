@@ -128,10 +128,10 @@ abstract final class CrmCallRecordDisplay {
   }) {
     final parts = <String>[];
     if (firestoreDocId != null && firestoreDocId.trim().isNotEmpty) {
-      parts.add('Kayıt ${ellipsedMiddle(firestoreDocId.trim())}');
+      parts.add('CRM kaydı: ${ellipsedMiddle(firestoreDocId.trim())}');
     }
     if (customerId != null && customerId.trim().isNotEmpty) {
-      parts.add('Müşteri ${ellipsedMiddle(customerId.trim())}');
+      parts.add('Müşteri: ${ellipsedMiddle(customerId.trim())}');
     }
     if (parts.isEmpty) return null;
     return parts.join(' · ');

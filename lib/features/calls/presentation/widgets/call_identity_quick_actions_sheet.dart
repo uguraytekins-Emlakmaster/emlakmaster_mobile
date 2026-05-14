@@ -1,12 +1,24 @@
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/utils/sms_launcher.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
+import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
+const _kQuickNoteSnippets = <String>[
+  'Geri dönecek',
+  'Ulaşılamadı',
+  'Yeniden ara',
+  'Bilgi verdi',
+  'Takibe al',
+];
 
 /// Kimlik (numara / kişi) dokunuşunda: hızlı, premium aksiyon yüzeyi.
 Future<void> showCallIdentityQuickActionsSheet(
@@ -15,9 +27,12 @@ Future<void> showCallIdentityQuickActionsSheet(
   String? customerId,
   String? displayLabel,
   String? firestoreCallDocId,
+  VoidCallback? onCallListMutated,
 }) async {
   final digits = rawPhone.replaceAll(RegExp(r'\D'), '');
   if (digits.isEmpty) return;
+
+  final anchor = context;
 
   HapticFeedback.lightImpact();
   final sheetExt = AppThemeExtension.of(context);
@@ -36,6 +51,16 @@ Future<void> showCallIdentityQuickActionsSheet(
     builder: (ctx) {
       final ext = AppThemeExtension.of(ctx);
       final bottom = MediaQuery.paddingOf(ctx).bottom;
+      final cid = customerId?.trim();
+      final hasCustomer = cid != null && cid.isNotEmpty;
+      final label = displayLabel?.trim();
+      final initialName = (label != null &&
+              label.isNotEmpty &&
+              label != CrmCallRecordDisplay.formatPhone(rawPhone))
+          ? label
+          : null;
+      final initialPhone = CrmCallRecordDisplay.formatPhone(rawPhone);
+
       return Padding(
         padding: EdgeInsets.fromLTRB(
           DesignTokens.space4,
@@ -48,12 +73,10 @@ Future<void> showCallIdentityQuickActionsSheet(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              displayLabel?.trim().isNotEmpty == true
-                  ? displayLabel!.trim()
-                  : 'Hızlı işlemler',
+              label?.isNotEmpty == true ? label! : 'Hızlı işlemler',
               style: theme.textTheme.titleMedium?.copyWith(
                 color: ext.textPrimary,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 letterSpacing: -0.2,
               ),
             ),
@@ -62,9 +85,77 @@ Future<void> showCallIdentityQuickActionsSheet(
               rawPhone,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: ext.textSecondary,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
+            if (hasCustomer) ...[
+              const SizedBox(height: DesignTokens.space2),
+              Text(
+                'Müşteri kartına bağlı — özet ve geçmiş için kartı açın.',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: ext.textTertiary,
+                  fontWeight: FontWeight.w500,
+                  height: 1.35,
+                ),
+              ),
+            ],
+            if (firestoreCallDocId != null &&
+                firestoreCallDocId.trim().isNotEmpty) ...[
+              const SizedBox(height: DesignTokens.space3),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Hızlı not',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: ext.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.04,
+                  ),
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space2),
+              Wrap(
+                spacing: DesignTokens.space2,
+                runSpacing: DesignTokens.space2,
+                children: [
+                  for (final snippet in _kQuickNoteSnippets)
+                    Material(
+                      color: ext.card,
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusPill),
+                      child: InkWell(
+                        onTap: () async {
+                          final id = firestoreCallDocId.trim();
+                          await FirestoreService.appendQuickCaptureNoteSnippet(
+                            callId: id,
+                            snippet: snippet,
+                          );
+                          if (!anchor.mounted) return;
+                          HapticFeedback.mediumImpact();
+                          onCallListMutated?.call();
+                          showCallsSurfaceAck(anchor, 'Not eklendi');
+                        },
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusPill),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: DesignTokens.space3,
+                            vertical: DesignTokens.space1 + 2,
+                          ),
+                          child: Text(
+                            snippet,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: ext.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: DesignTokens.fontSizeSm,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: DesignTokens.space4),
             _SheetTile(
               icon: Icons.call_rounded,
@@ -73,24 +164,28 @@ Future<void> showCallIdentityQuickActionsSheet(
               onTap: () async {
                 Navigator.pop(ctx);
                 final ok = await OutboundPhoneDial.launchDial(rawPhone);
-                if (!ok && ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
+                if (!ok && anchor.mounted) {
+                  ScaffoldMessenger.of(anchor).showSnackBar(
                     const SnackBar(content: Text('Arama başlatılamadı.')),
                   );
+                } else if (ok && anchor.mounted) {
+                  showCallsSurfaceAck(anchor, 'Arama başlatıldı');
                 }
               },
             ),
             _SheetTile(
-              icon: Icons.sms_outlined,
+              icon: Icons.sms_rounded,
               label: 'Mesaj yaz',
               color: ext.info,
               onTap: () async {
                 Navigator.pop(ctx);
                 final ok = await SmsLauncher.openBulkSms([rawPhone]);
-                if (!ok && ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
+                if (!ok && anchor.mounted) {
+                  ScaffoldMessenger.of(anchor).showSnackBar(
                     const SnackBar(content: Text('Mesaj uygulaması açılamadı.')),
                   );
+                } else if (ok && anchor.mounted) {
+                  showCallsSurfaceAck(anchor, 'SMS akışı hazırlandı');
                 }
               },
             ),
@@ -101,21 +196,38 @@ Future<void> showCallIdentityQuickActionsSheet(
               onTap: () async {
                 Navigator.pop(ctx);
                 final ok = await WhatsAppLauncher.openChat(rawPhone);
-                if (!ok && ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
+                if (!ok && anchor.mounted) {
+                  ScaffoldMessenger.of(anchor).showSnackBar(
                     const SnackBar(content: Text('WhatsApp açılamadı.')),
                   );
+                } else if (ok && anchor.mounted) {
+                  showCallsSurfaceAck(anchor, 'WhatsApp açıldı');
                 }
               },
             ),
-            if (customerId != null && customerId.trim().isNotEmpty)
+            if (hasCustomer)
               _SheetTile(
-                icon: Icons.person_rounded,
-                label: 'Müşteri kartını aç',
+                icon: Icons.open_in_new_rounded,
+                label: 'Kartı aç',
                 color: ext.accent,
                 onTap: () {
                   Navigator.pop(ctx);
-                  ctx.push('/customer/${customerId.trim()}');
+                  ctx.push('/customer/$cid');
+                },
+              ),
+            if (!hasCustomer)
+              _SheetTile(
+                icon: Icons.person_add_alt_1_rounded,
+                label: 'Portföye kaydet',
+                color: ext.accent,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showSaveContactSheet(
+                    anchor,
+                    initialName: initialName,
+                    initialPhone: initialPhone,
+                    source: 'calls_quick_identity',
+                  );
                 },
               ),
             _SheetTile(
@@ -124,11 +236,12 @@ Future<void> showCallIdentityQuickActionsSheet(
               color: ext.textPrimary,
               onTap: () {
                 Navigator.pop(ctx);
-                final cid = customerId?.trim();
+                final trimmed = customerId?.trim();
                 ctx.push(
                   AppRouter.routeCallSummary,
                   extra: <String, dynamic>{
-                    if (cid != null && cid.isNotEmpty) 'customerId': cid,
+                    if (trimmed != null && trimmed.isNotEmpty)
+                      'customerId': trimmed,
                     'phone': rawPhone,
                     if (firestoreCallDocId != null &&
                         firestoreCallDocId.trim().isNotEmpty)
@@ -143,12 +256,13 @@ Future<void> showCallIdentityQuickActionsSheet(
               color: ext.textSecondary,
               onTap: () {
                 Navigator.pop(ctx);
-                final cid = customerId?.trim();
+                final trimmed = customerId?.trim();
                 ctx.push(
                   AppRouter.routeCall,
                   extra: <String, dynamic>{
                     'phone': rawPhone,
-                    if (cid != null && cid.isNotEmpty) 'customerId': cid,
+                    if (trimmed != null && trimmed.isNotEmpty)
+                      'customerId': trimmed,
                     'startedFromScreen': 'call_identity_sheet',
                   },
                 );
@@ -193,13 +307,13 @@ class _SheetTile extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                   ),
-                  child: Icon(icon, color: color, size: 22),
+                  child: Icon(icon, color: color, size: 20),
                 ),
                 const SizedBox(width: DesignTokens.space3),
                 Expanded(
@@ -207,11 +321,12 @@ class _SheetTile extends StatelessWidget {
                     label,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: ext.textPrimary,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded, color: ext.textTertiary),
+                Icon(Icons.chevron_right_rounded,
+                    size: 22, color: ext.textTertiary),
               ],
             ),
           ),

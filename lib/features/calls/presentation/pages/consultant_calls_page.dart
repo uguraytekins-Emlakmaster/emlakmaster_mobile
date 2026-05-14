@@ -29,7 +29,13 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_card_memory_hints.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_contextual_insight.dart';
+import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -84,6 +90,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       if (_selectedIds.contains(id)) {
         _selectedIds.remove(id);
       } else {
+        HapticFeedback.selectionClick();
         _selectedIds.add(id);
       }
     });
@@ -117,12 +124,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     final csv = callsToCsvWithPhones(list);
     Clipboard.setData(ClipboardData(text: csv));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'CSV panoya alındı (${list.length} satır). İsterseniz Excel\'e yapıştırabilirsiniz.'),
-          duration: const Duration(seconds: 2),
-        ),
+      showCallsSurfaceAck(
+        context,
+        'CSV panoya hazır · ${list.length} satır',
       );
       AnalyticsService.instance.logEvent(AnalyticsEvents.callsExportCsv, {
         AnalyticsEvents.paramCount: list.length,
@@ -148,6 +152,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         const SnackBar(content: Text('SMS uygulaması açılamadı.')),
       );
     } else if (mounted && ok) {
+      showCallsSurfaceAck(context, 'SMS akışı başlatıldı');
       AnalyticsService.instance.logEvent(AnalyticsEvents.callsBulkSms, {
         AnalyticsEvents.paramCount: phones.length,
       });
@@ -247,6 +252,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
             content: Text(
                 'WhatsApp açılamadı. Uygulamanın yüklü olduğundan emin olun.')),
       );
+    } else if (mounted) {
+      showCallsSurfaceAck(context, 'Mesaj akışı başlatıldı');
     }
     setState(() => _whatsappIndex = 1);
     if (_whatsappIndex >= _whatsappQueue!.length) {
@@ -308,16 +315,16 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space6,
-        DesignTokens.space3,
-        DesignTokens.space6,
-        DesignTokens.space3,
+        DesignTokens.space4,
+        DesignTokens.space2 + 2,
+        DesignTokens.space4,
+        DesignTokens.space2 + 2,
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: ext.infoSurface,
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          border: Border.all(color: ext.border.withValues(alpha: 0.72)),
+          border: Border.all(color: ext.border.withValues(alpha: 0.52)),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -331,16 +338,16 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  width: 4,
+                  width: 3,
                   margin: const EdgeInsets.only(right: DesignTokens.space3),
                   decoration: BoxDecoration(
-                    color: ext.accent.withValues(alpha: 0.55),
+                    color: ext.accent.withValues(alpha: 0.38),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 Icon(
                   Icons.info_outline_rounded,
-                  size: 22,
+                  size: 20,
                   color: ext.info,
                 ),
                 const SizedBox(width: DesignTokens.space3),
@@ -351,9 +358,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     Text(
                       'Ürün notu',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: ext.accent,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.85,
+                        color: ext.accent.withValues(alpha: 0.88),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
                         height: 1.2,
                       ),
                     ),
@@ -362,7 +369,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       'iOS’ta yalnızca uygulama içi görüşmeler',
                       style: theme.textTheme.titleSmall?.copyWith(
                         color: ext.textPrimary,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         height: 1.22,
                       ),
                     ),
@@ -395,30 +402,30 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space6,
+        DesignTokens.space4,
         0,
-        DesignTokens.space6,
+        DesignTokens.space4,
         DesignTokens.space2,
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: ext.infoSurface.withValues(alpha: 0.5),
+          color: ext.infoSurface.withValues(alpha: 0.42),
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-          border: Border.all(color: ext.border.withValues(alpha: 0.55)),
+          border: Border.all(color: ext.border.withValues(alpha: 0.42)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space4,
-            vertical: DesignTokens.space3,
+            horizontal: DesignTokens.space3 + 2,
+            vertical: DesignTokens.space2 + 2,
           ),
           child: Text(
             'Bugün ${stats.today} kayıt · '
             'Tamamlanması gereken ${stats.pendingCapture} · '
             'Cevapsız ${stats.unanswered}',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: textSecondary,
-                  fontWeight: FontWeight.w600,
-                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
                 ),
           ),
         ),
@@ -433,14 +440,23 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         padding: const EdgeInsets.only(right: DesignTokens.space2),
         child: FilterChip(
           selected: sel,
+          showCheckmark: true,
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          side: BorderSide(
+            color: sel
+                ? ext.accent.withValues(alpha: 0.26)
+                : ext.border.withValues(alpha: 0.38),
+          ),
           label: Text(label),
           onSelected: (_) => setState(() => _quickFilter = f),
-          selectedColor: ext.accent.withValues(alpha: 0.18),
+          selectedColor: ext.accent.withValues(alpha: 0.11),
           checkmarkColor: ext.accent,
           labelStyle: TextStyle(
             color: sel ? ext.textPrimary : ext.textSecondary,
-            fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
-            fontSize: 13,
+            fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 12.5,
           ),
         ),
       );
@@ -481,12 +497,12 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            top: BorderSide(color: ext.border.withValues(alpha: 0.55)),
+            top: BorderSide(color: ext.border.withValues(alpha: 0.38)),
           ),
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: DesignTokens.space4,
-          vertical: DesignTokens.space2,
+          vertical: DesignTokens.space1 + 2,
         ),
         child: SafeArea(
           top: false,
@@ -496,13 +512,14 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                 '$n seçili',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: fg,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
               ),
               const Spacer(),
               IconButton.filledTonal(
                 style: IconButton.styleFrom(
-                  minimumSize: const Size(48, 48),
+                  minimumSize: const Size(44, 44),
+                  visualDensity: VisualDensity.compact,
                 ),
                 onPressed: _openBulkSms,
                 icon: const Icon(Icons.sms_rounded),
@@ -511,7 +528,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               const SizedBox(width: DesignTokens.space2),
               IconButton.filledTonal(
                 style: IconButton.styleFrom(
-                  minimumSize: const Size(48, 48),
+                  minimumSize: const Size(44, 44),
+                  visualDensity: VisualDensity.compact,
                 ),
                 onPressed: _openWhatsAppBulk,
                 icon: const Icon(Icons.chat_rounded),
@@ -520,7 +538,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               const SizedBox(width: DesignTokens.space2),
               IconButton.filledTonal(
                 style: IconButton.styleFrom(
-                  minimumSize: const Size(48, 48),
+                  minimumSize: const Size(44, 44),
+                  visualDensity: VisualDensity.compact,
                 ),
                 onPressed: _copyCsvToClipboard,
                 icon: const Icon(Icons.copy_rounded),
@@ -792,6 +811,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           AppLocalizations.of(context).t('empty_calls_title'),
                       subtitle:
                           AppLocalizations.of(context).t('empty_calls_sub'),
+                      outlinedActionLabel: 'Portföye kaydet',
+                      onOutlinedAction: () => showSaveContactSheet(
+                        context,
+                        source: 'consultant_calls_empty',
+                      ),
                       actionLabel:
                           AppLocalizations.of(context).t('empty_calls_cta'),
                       onAction: () => context.push(
@@ -853,10 +877,21 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             style: AppTypography.cardHeading(context),
                           ),
                           const SizedBox(height: DesignTokens.space2),
-                          TextButton(
+                          FilledButton.tonal(
                             onPressed: () => setState(() =>
                                 _quickFilter = CallSurfaceQuickFilter.all),
                             child: const Text('Filtreyi sıfırla'),
+                          ),
+                          const SizedBox(height: DesignTokens.space2),
+                          OutlinedButton.icon(
+                            onPressed: () => context.push(
+                              AppRouter.routeCall,
+                              extra: const {
+                                'startedFromScreen': 'consultant_calls_filter_empty',
+                              },
+                            ),
+                            icon: const Icon(Icons.call_made_rounded, size: 18),
+                            label: const Text('Yeni arama başlat'),
                           ),
                         ],
                       ),
@@ -872,22 +907,19 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               if (io.Platform.isIOS) _buildIosInfoBanner(context),
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: ext.card,
+                  color: surface,
                   border: Border(
-                    top: BorderSide(
-                      color: ext.border.withValues(alpha: isDark ? 0.42 : 0.48),
-                    ),
                     bottom: BorderSide(
-                      color: ext.border.withValues(alpha: 0.58),
+                      color: ext.border.withValues(alpha: isDark ? 0.38 : 0.44),
                     ),
                   ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
-                    DesignTokens.space6,
                     DesignTokens.space4,
-                    DesignTokens.space6,
                     DesignTokens.space3,
+                    DesignTokens.space4,
+                    DesignTokens.space2 + 2,
                   ),
                   child: Row(
                     children: [
@@ -901,18 +933,18 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                     : '$visibleTotal',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   color: fg,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: DesignTokens.fontSizeMd + 1,
-                                  height: 1.15,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: DesignTokens.fontSizeMd,
+                                  height: 1.12,
                                 ),
                               ),
                               TextSpan(
                                 text: _quickFilter == CallSurfaceQuickFilter.all
                                     ? ' görüşme'
                                     : ' görüşme · filtreli',
-                                style: theme.textTheme.labelLarge?.copyWith(
+                                style: theme.textTheme.bodySmall?.copyWith(
                                   color: textSecondary,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w500,
                                   height: 1.2,
                                 ),
                               ),
@@ -927,12 +959,13 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         style: TextButton.styleFrom(
                           foregroundColor: ext.accent,
                           textStyle: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                           ),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: DesignTokens.space3,
+                            horizontal: DesignTokens.space2 + 2,
                             vertical: DesignTokens.space1,
                           ),
+                          visualDensity: VisualDensity.compact,
                         ),
                         child: const Text('Hepsini seç'),
                       ),
@@ -941,12 +974,13 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         style: TextButton.styleFrom(
                           foregroundColor: textSecondary,
                           textStyle: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                           ),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: DesignTokens.space3,
+                            horizontal: DesignTokens.space2 + 2,
                             vertical: DesignTokens.space1,
                           ),
+                          visualDensity: VisualDensity.compact,
                         ),
                         child: const Text('Seçimi kaldır'),
                       ),
@@ -957,16 +991,19 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               _consultantIntelligenceRow(
                   context, stats, ext, fg, textSecondary),
               _consultantQuickFilterStrip(ext),
+              if (_quickFilter == CallSurfaceQuickFilter.callback &&
+                  visibleTotal > 0)
+                CallCallbackWorkModeCue(count: visibleTotal),
               if (_selectedIds.isNotEmpty)
                 _consultantSelectionCommandBar(
                     context, ext, fg),
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(
-                    DesignTokens.space3,
-                    DesignTokens.space3,
-                    DesignTokens.space3,
-                    DesignTokens.space6,
+                    DesignTokens.space4,
+                    DesignTokens.space2 + 2,
+                    DesignTokens.space4,
+                    DesignTokens.space5,
                   ),
                   itemCount: visibleTotal,
                   cacheExtent: 300,
@@ -1007,6 +1044,23 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                   custName == null
                               ? 'Yeni kişi · Müşteri kartına bağlı değil'
                               : null;
+                      final localInsight =
+                          CallSurfaceContextualInsight.forLocalDraft(
+                        outcome: r.outcome,
+                        hasCallablePhone: OutboundPhoneDial.isLikelyCallablePhone(
+                            r.phoneNumber),
+                        hasNote: (r.notes?.trim().isNotEmpty ?? false),
+                      );
+                      final localRhythm =
+                          CallSurfaceCardRhythmLogic.forLocalDraft(r);
+                      final localRail =
+                          CallSurfacePriorityMarkers.railForLocal(r);
+                      final localMemory = CallCardMemoryHints.forLocal(
+                        createdAtMs: r.createdAt,
+                        notes: r.notes,
+                        outcome: r.outcome,
+                        followUpReminderAtMs: r.followUpReminderAtMs,
+                      );
                       return Slidable(
                         key: ValueKey('sl_local_${r.id}'),
                         startActionPane: ActionPane(
@@ -1017,8 +1071,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                               onPressed: (_) async {
                                 if (OutboundPhoneDial.isLikelyCallablePhone(
                                     r.phoneNumber)) {
-                                  await OutboundPhoneDial.launchDial(
+                                  final ok = await OutboundPhoneDial.launchDial(
                                       r.phoneNumber);
+                                  if (context.mounted && ok) {
+                                    HapticFeedback.mediumImpact();
+                                  }
                                 }
                               },
                               backgroundColor:
@@ -1041,6 +1098,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                   customerId: r.customerId,
                                   displayLabel: localTitle,
                                   firestoreCallDocId: r.firestoreDocumentId,
+                                  onCallListMutated: () => ref.invalidate(
+                                      consultantCallsStreamProvider),
                                 );
                               },
                               backgroundColor:
@@ -1060,9 +1119,15 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           note: r.notes,
                           technicalFootnote: localFoot,
                           identityFootnote: localIdentityHint,
+                          contextualInsight: localInsight,
+                          cardRhythm: localRhythm,
+                          showPriorityRail: localRail,
+                          memoryHint: localMemory,
                           rawPhone: r.phoneNumber,
                           customerId: r.customerId,
                           firestoreDocId: r.firestoreDocumentId,
+                          onCallListMutated: () => ref.invalidate(
+                              consultantCallsStreamProvider),
                           syncIcon: CallSyncStatusIcon(
                             record: r,
                             onManualRetry:
@@ -1167,6 +1232,21 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             ? 'Yeni kişi · Müşteri kartına bağlı değil'
                             : null;
 
+                    final fsInsight = CallSurfaceContextualInsight.forFirestoreData(
+                      data,
+                      notePreview: note,
+                      hasCallablePhone: hasPhone &&
+                          OutboundPhoneDial.isLikelyCallablePhone(rawPhone),
+                    );
+                    final cardRhythm =
+                        CallSurfaceCardRhythmLogic.forFirestore(data);
+                    final showPriorityRail =
+                        CallSurfacePriorityMarkers.railForFirestore(data);
+                    final memoryHint = CallCardMemoryHints.forFirestore(
+                      data,
+                      notePreview: note,
+                    );
+
                     return Slidable(
                       key: ValueKey('sl_fs_$id'),
                       startActionPane: ActionPane(
@@ -1177,7 +1257,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             onPressed: (_) async {
                               if (OutboundPhoneDial.isLikelyCallablePhone(
                                   rawPhone)) {
-                                await OutboundPhoneDial.launchDial(rawPhone);
+                                final ok =
+                                    await OutboundPhoneDial.launchDial(rawPhone);
+                                if (context.mounted && ok) {
+                                  HapticFeedback.mediumImpact();
+                                }
                               }
                             },
                             backgroundColor:
@@ -1201,6 +1285,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                 customerId: customerId,
                                 displayLabel: rowTitle,
                                 firestoreCallDocId: id,
+                                onCallListMutated: () => ref.invalidate(
+                                    consultantCallsStreamProvider),
                               );
                             },
                             backgroundColor:
@@ -1223,9 +1309,15 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         note: note,
                         technicalMeta: technicalMeta,
                         identityFootnote: identityHint,
+                        contextualInsight: fsInsight,
+                        cardRhythm: cardRhythm,
+                        showPriorityRail: showPriorityRail,
+                        memoryHint: memoryHint,
                         rawPhone: rawPhone,
                         customerId: customerId,
                         firestoreDocId: id,
+                        onCallListMutated: () => ref.invalidate(
+                            consultantCallsStreamProvider),
                         leadingIcon: isIncoming
                             ? Icons.call_received_rounded
                             : Icons.call_made_rounded,
@@ -1313,9 +1405,14 @@ class _LocalCallRecordCard extends StatelessWidget {
     required this.note,
     this.technicalFootnote,
     this.identityFootnote,
+    this.contextualInsight,
+    required this.cardRhythm,
+    required this.showPriorityRail,
+    this.memoryHint,
     required this.rawPhone,
     this.customerId,
     this.firestoreDocId,
+    this.onCallListMutated,
     required this.syncIcon,
   });
 
@@ -1327,9 +1424,14 @@ class _LocalCallRecordCard extends StatelessWidget {
   final String? note;
   final String? technicalFootnote;
   final String? identityFootnote;
+  final String? contextualInsight;
+  final CallSurfaceCardRhythm cardRhythm;
+  final bool showPriorityRail;
+  final String? memoryHint;
   final String rawPhone;
   final String? customerId;
   final String? firestoreDocId;
+  final VoidCallback? onCallListMutated;
   final Widget syncIcon;
 
   @override
@@ -1340,7 +1442,10 @@ class _LocalCallRecordCard extends StatelessWidget {
       dateTime: dateStr,
     );
     final callable = OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
+    final cid = customerId?.trim();
     return CrmCallOperatingCard(
+      rhythm: cardRhythm,
+      showPriorityRail: showPriorityRail,
       child: CrmCallRecordListItem(
         title: title,
         phoneSubtitle: phoneSubtitle,
@@ -1350,6 +1455,11 @@ class _LocalCallRecordCard extends StatelessWidget {
         notePreview: note,
         technicalFootnote: technicalFootnote,
         identityFootnote: identityFootnote,
+        contextualInsight: contextualInsight,
+        memoryHint: memoryHint,
+        onOpenCustomerCard: cid != null && cid.isNotEmpty
+            ? () => context.push('/customer/$cid')
+            : null,
         onIdentityTap: callable
             ? () => showCallIdentityQuickActionsSheet(
                   context,
@@ -1357,6 +1467,7 @@ class _LocalCallRecordCard extends StatelessWidget {
                   customerId: customerId,
                   displayLabel: title,
                   firestoreCallDocId: firestoreDocId,
+                  onCallListMutated: onCallListMutated,
                 )
             : null,
         onIdentityLongPress: callable
@@ -1365,17 +1476,17 @@ class _LocalCallRecordCard extends StatelessWidget {
               }
             : null,
         leading: Container(
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            color: ext.textSecondary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            color: ext.textSecondary.withValues(alpha: 0.075),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
             border: Border.all(
-              color: ext.border.withValues(alpha: 0.45),
+              color: ext.border.withValues(alpha: 0.38),
             ),
           ),
           child: Icon(Icons.phone_in_talk_rounded,
-              color: ext.textSecondary, size: 22),
+              color: ext.textSecondary, size: 20),
         ),
         trailing: syncIcon,
       ),
@@ -1396,9 +1507,14 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     required this.note,
     this.technicalMeta,
     this.identityFootnote,
+    this.contextualInsight,
+    required this.cardRhythm,
+    required this.showPriorityRail,
+    this.memoryHint,
     required this.rawPhone,
     this.customerId,
     this.firestoreDocId,
+    this.onCallListMutated,
     required this.leadingIcon,
     required this.leadingColor,
     required this.trailing,
@@ -1415,9 +1531,14 @@ class _FirestoreCallRecordCard extends StatelessWidget {
   final String? note;
   final String? technicalMeta;
   final String? identityFootnote;
+  final String? contextualInsight;
+  final CallSurfaceCardRhythm cardRhythm;
+  final bool showPriorityRail;
+  final String? memoryHint;
   final String rawPhone;
   final String? customerId;
   final String? firestoreDocId;
+  final VoidCallback? onCallListMutated;
   final IconData leadingIcon;
   final Color leadingColor;
   final Widget trailing;
@@ -1430,51 +1551,70 @@ class _FirestoreCallRecordCard extends StatelessWidget {
 
     Widget? belowChips;
     if (selected && callable) {
-      belowChips = Align(
-        alignment: Alignment.centerLeft,
-        child: Wrap(
-          spacing: DesignTokens.space2,
-          runSpacing: DesignTokens.space2,
-          children: [
-            TextButton.icon(
-              onPressed: () {
-                unawaited(OutboundPhoneDial.launchDial(rawPhone));
-              },
-              icon: Icon(Icons.call_rounded, size: 18, color: ext.accent),
-              label: Text(
-                'Ara',
-                style: TextStyle(
-                  color: ext.accent,
-                  fontWeight: FontWeight.w800,
+      final actionStyle = TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+      );
+      belowChips = Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Wrap(
+            spacing: DesignTokens.space2,
+            runSpacing: 6,
+            children: [
+              TextButton.icon(
+                style: actionStyle,
+                onPressed: () {
+                  unawaited(OutboundPhoneDial.launchDial(rawPhone));
+                },
+                icon: Icon(Icons.call_rounded, size: 17, color: ext.accent),
+                label: Text(
+                  'Ara',
+                  style: TextStyle(
+                    color: ext.accent,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
               ),
-            ),
-            TextButton.icon(
-              onPressed: () {
-                showCallIdentityQuickActionsSheet(
-                  context,
-                  rawPhone: rawPhone,
-                  customerId: customerId,
-                  displayLabel: title,
-                  firestoreCallDocId: firestoreDocId,
-                );
-              },
-              icon: Icon(Icons.more_horiz_rounded, size: 18, color: ext.textSecondary),
-              label: Text(
-                'İşlemler',
-                style: TextStyle(
-                  color: ext.textSecondary,
-                  fontWeight: FontWeight.w700,
+              TextButton.icon(
+                style: actionStyle,
+                onPressed: () {
+                  showCallIdentityQuickActionsSheet(
+                    context,
+                    rawPhone: rawPhone,
+                    customerId: customerId,
+                    displayLabel: title,
+                    firestoreCallDocId: firestoreDocId,
+                    onCallListMutated: onCallListMutated,
+                  );
+                },
+                icon: Icon(Icons.more_horiz_rounded,
+                    size: 17, color: ext.textSecondary),
+                label: Text(
+                  'İşlemler',
+                  style: TextStyle(
+                    color: ext.textSecondary,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
+    final cid = customerId?.trim();
+
     return CrmCallOperatingCard(
       selected: selected,
+      rhythm: cardRhythm,
+      showPriorityRail: showPriorityRail,
       child: InkWell(
         onTap: enabled ? onSelect : null,
         borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
@@ -1484,11 +1624,24 @@ class _FirestoreCallRecordCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 2, top: 8),
-                child: Checkbox(
-                  value: selected,
-                  onChanged: enabled ? (_) => onSelect?.call() : null,
-                  activeColor: ext.accent,
+                padding: const EdgeInsets.only(left: 4, top: 6),
+                child: CheckboxTheme(
+                  data: CheckboxThemeData(
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    side: BorderSide(
+                      color: ext.border.withValues(alpha: 0.55),
+                      width: 1.1,
+                    ),
+                  ),
+                  child: Checkbox(
+                    value: selected,
+                    onChanged: enabled ? (_) => onSelect?.call() : null,
+                    activeColor: ext.accent,
+                  ),
                 ),
               ),
               Expanded(
@@ -1501,6 +1654,11 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                   notePreview: note,
                   technicalFootnote: technicalMeta,
                   identityFootnote: identityFootnote,
+                  contextualInsight: contextualInsight,
+                  memoryHint: memoryHint,
+                  onOpenCustomerCard: cid != null && cid.isNotEmpty
+                      ? () => context.push('/customer/$cid')
+                      : null,
                   onIdentityTap: callable
                       ? () => showCallIdentityQuickActionsSheet(
                             context,
@@ -1508,6 +1666,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                             customerId: customerId,
                             displayLabel: title,
                             firestoreCallDocId: firestoreDocId,
+                            onCallListMutated: onCallListMutated,
                           )
                       : null,
                   onIdentityLongPress: callable
@@ -1517,24 +1676,24 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                       : null,
                   belowChipsRow: belowChips,
                   leading: Container(
-                    width: 44,
-                    height: 44,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: leadingColor.withValues(alpha: 0.12),
+                      color: leadingColor.withValues(alpha: 0.085),
                       borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusMd),
+                          BorderRadius.circular(DesignTokens.radiusSm + 2),
                       border: Border.all(
-                        color: leadingColor.withValues(alpha: 0.28),
+                        color: leadingColor.withValues(alpha: 0.22),
                       ),
                     ),
-                    child: Icon(leadingIcon, color: leadingColor, size: 22),
+                    child: Icon(leadingIcon, color: leadingColor, size: 20),
                   ),
                   trailing: trailing,
                   padding: const EdgeInsets.fromLTRB(
                     0,
+                    DesignTokens.space3 + 2,
                     DesignTokens.space4,
-                    DesignTokens.space4,
-                    DesignTokens.space4,
+                    DesignTokens.space3 + 2,
                   ),
                 ),
               ),

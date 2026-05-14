@@ -12,6 +12,9 @@ import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_stat
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/firestore_agent_display_names_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_contextual_insight.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_card_memory_hints.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
@@ -20,6 +23,7 @@ import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Yönetici: müşteri kartında son CRM çağrı kayıtları (telekom kesinliği yok).
 class ManagerCustomerCrmCallStrip extends ConsumerWidget {
@@ -194,10 +198,23 @@ class _CallLine extends StatelessWidget {
     }
     final callable =
         hasDigits && OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
+    final rowInsight = CallSurfaceContextualInsight.forFirestoreData(
+      data,
+      notePreview: quickNote,
+      hasCallablePhone: callable,
+    );
+    final rhythm = CallSurfaceCardRhythmLogic.forFirestore(data);
+    final showRail = CallSurfacePriorityMarkers.railForFirestore(data);
+    final memoryHint =
+        CallCardMemoryHints.forFirestore(data, notePreview: quickNote);
+    final cid = linkedCustomerId.trim();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space3),
       child: CrmCallOperatingCard(
         margin: EdgeInsets.zero,
+        rhythm: rhythm,
+        showPriorityRail: showRail,
         child: CrmCallRecordListItem(
           title: title,
           phoneSubtitle: phoneUnder,
@@ -206,6 +223,11 @@ class _CallLine extends StatelessWidget {
           contextLine: contextLine,
           notePreview: quickNote,
           technicalFootnote: foot,
+          contextualInsight: rowInsight,
+          memoryHint: memoryHint,
+          onOpenCustomerCard: cid.isNotEmpty
+              ? () => context.push('/customer/$cid')
+              : null,
           onIdentityTap: callable
               ? () => showCallIdentityQuickActionsSheet(
                     context,

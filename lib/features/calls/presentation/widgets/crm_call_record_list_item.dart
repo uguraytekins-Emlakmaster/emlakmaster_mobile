@@ -21,7 +21,15 @@ class CrmCallRecordListItem extends StatelessWidget {
     this.onIdentityTap,
     this.onIdentityLongPress,
     this.belowChipsRow,
-    this.padding = const EdgeInsets.all(DesignTokens.space4),
+    this.contextualInsight,
+    this.memoryHint,
+    this.onOpenCustomerCard,
+    this.padding = const EdgeInsets.fromLTRB(
+      DesignTokens.space4,
+      DesignTokens.space3 + 2,
+      DesignTokens.space4,
+      DesignTokens.space3 + 2,
+    ),
   });
 
   final String title;
@@ -39,6 +47,12 @@ class CrmCallRecordListItem extends StatelessWidget {
   final VoidCallback? onIdentityTap;
   final VoidCallback? onIdentityLongPress;
   final Widget? belowChipsRow;
+  /// Bağlam ipucu (tek satır, düşük öncelik).
+  final String? contextualInsight;
+  /// Gerçek veriye dayalı kısa hafıza satırı.
+  final String? memoryHint;
+  /// Bağlı müşteri kartına git.
+  final VoidCallback? onOpenCustomerCard;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -63,10 +77,35 @@ class CrmCallRecordListItem extends StatelessWidget {
                   onIdentityLongPress: onIdentityLongPress,
                   ext: ext,
                 ),
-                const SizedBox(height: DesignTokens.space3),
+                if (onOpenCustomerCard != null) ...[
+                  const SizedBox(height: DesignTokens.space1 + 1),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: onOpenCustomerCard,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.space1,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                        foregroundColor: ext.accent,
+                      ),
+                      child: Text(
+                        'Müşteri kartı',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: ext.accent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: DesignTokens.space2 + 3),
                 Wrap(
                   spacing: DesignTokens.space2,
-                  runSpacing: DesignTokens.space2,
+                  runSpacing: 6,
                   children: [
                     _CrmCallRecordChip(
                       label: outcomeLabel,
@@ -83,20 +122,51 @@ class CrmCallRecordListItem extends StatelessWidget {
                   ],
                 ),
                 if (belowChipsRow != null) ...[
-                  const SizedBox(height: DesignTokens.space3),
+                  const SizedBox(height: DesignTokens.space2 + 2),
                   belowChipsRow!,
                 ],
-                const SizedBox(height: DesignTokens.space3),
+                const SizedBox(height: DesignTokens.space2 + 2),
                 Text(
                   contextLine,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: ext.textSecondary,
-                        fontWeight: FontWeight.w600,
-                        height: 1.44,
+                        color: ext.textSecondary.withValues(alpha: 0.92),
+                        fontWeight: FontWeight.w500,
+                        height: 1.42,
+                        letterSpacing: 0.02,
                       ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (contextualInsight != null &&
+                    contextualInsight!.trim().isNotEmpty) ...[
+                  const SizedBox(height: DesignTokens.space1 + 2),
+                  Text(
+                    contextualInsight!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: ext.textTertiary.withValues(alpha: 0.90),
+                          fontWeight: FontWeight.w500,
+                          height: 1.32,
+                          letterSpacing: 0.04,
+                        ),
+                  ),
+                ],
+                if (memoryHint != null && memoryHint!.trim().isNotEmpty) ...[
+                  const SizedBox(height: DesignTokens.space1 + 1),
+                  Text(
+                    memoryHint!,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: ext.textTertiary.withValues(alpha: 0.82),
+                          fontSize: DesignTokens.fontSizeXs + 1,
+                          fontWeight: FontWeight.w500,
+                          height: 1.32,
+                          letterSpacing: 0.06,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 if (notePreview != null && notePreview!.trim().isNotEmpty) ...[
                   const SizedBox(height: DesignTokens.space2 + 2),
                   Text(
@@ -104,22 +174,22 @@ class CrmCallRecordListItem extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.body(context).copyWith(
-                      color: ext.textPrimary,
+                      color: ext.textPrimary.withValues(alpha: 0.94),
                       fontWeight: FontWeight.w500,
-                      height: 1.5,
+                      height: 1.48,
                     ),
                   ),
                 ],
                 if (technicalFootnote != null &&
                     technicalFootnote!.trim().isNotEmpty) ...[
-                  const SizedBox(height: DesignTokens.space2),
+                  const SizedBox(height: DesignTokens.space1 + 2),
                   Text(
                     technicalFootnote!,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: ext.textTertiary,
+                          color: ext.textTertiary.withValues(alpha: 0.95),
                           fontSize: DesignTokens.fontSizeSm,
-                          fontWeight: FontWeight.w500,
-                          height: 1.38,
+                          fontWeight: FontWeight.w400,
+                          height: 1.36,
                         ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -129,7 +199,7 @@ class CrmCallRecordListItem extends StatelessWidget {
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: DesignTokens.space2),
+            const SizedBox(width: DesignTokens.space3),
             trailing!,
           ],
         ],
@@ -180,9 +250,9 @@ class _IdentityBlock extends StatelessWidget {
                 title,
                 style: AppTypography.cardHeading(context).copyWith(
                   fontSize: DesignTokens.fontSizeXl,
-                  fontWeight: FontWeight.w800,
-                  height: 1.18,
-                  letterSpacing: -0.42,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  letterSpacing: -0.32,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -205,8 +275,8 @@ class _IdentityBlock extends StatelessWidget {
             phoneSubtitle!,
             style: AppTypography.bodyStrong(context).copyWith(
               fontSize: DesignTokens.fontSizeMd,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.15,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.08,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -219,8 +289,8 @@ class _IdentityBlock extends StatelessWidget {
             identityFootnote!,
             style: theme.textTheme.labelSmall?.copyWith(
               color: ext.textTertiary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.15,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.08,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -268,18 +338,18 @@ class _CrmCallRecordChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final fill = emphasized
-        ? color.withValues(alpha: 0.15)
+        ? color.withValues(alpha: 0.11)
         : (surface ?? ext.surfaceElevated).withValues(alpha: 0.98);
     final borderSide = emphasized
-        ? BorderSide(color: color.withValues(alpha: 0.38))
+        ? BorderSide(color: color.withValues(alpha: 0.30))
         : BorderSide(
-            color: (borderColor ?? ext.border).withValues(alpha: 0.78),
+            color: (borderColor ?? ext.border).withValues(alpha: 0.65),
           );
     final textColor = emphasized ? color : ext.textPrimary;
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space3 + 2,
-        vertical: 7,
+        horizontal: DesignTokens.space2 + 4,
+        vertical: 5,
       ),
       decoration: BoxDecoration(
         color: fill,
@@ -290,10 +360,10 @@ class _CrmCallRecordChip extends StatelessWidget {
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: textColor,
-              fontWeight: emphasized ? FontWeight.w700 : FontWeight.w600,
+              fontWeight: emphasized ? FontWeight.w600 : FontWeight.w500,
               fontSize: DesignTokens.fontSizeSm,
-              letterSpacing: emphasized ? 0.12 : 0.08,
-              height: 1.2,
+              letterSpacing: emphasized ? 0.06 : 0.04,
+              height: 1.18,
             ),
       ),
     );

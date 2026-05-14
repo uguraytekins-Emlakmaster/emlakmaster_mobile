@@ -22,6 +22,13 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_card_memory_hints.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_contextual_insight.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/manager_calls_team_rhythm_strip.dart';
+import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/office_wide_customers_stream_provider.dart';
@@ -277,9 +284,22 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     final callable =
         hasDigits && OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
     final hasCustomerSlide = custId != null && custId.isNotEmpty;
+    final rowInsight = CallSurfaceContextualInsight.forFirestoreData(
+      data,
+      notePreview: shortNote,
+      hasCallablePhone: callable,
+    );
+    final cardRhythm = CallSurfaceCardRhythmLogic.forFirestore(data);
+    final showPriorityRail =
+        CallSurfacePriorityMarkers.railForFirestore(data);
+    final memoryHint =
+        CallCardMemoryHints.forFirestore(data, notePreview: shortNote);
+    final cidTrim = custId?.trim();
 
     final card = CrmCallOperatingCard(
       margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+      rhythm: cardRhythm,
+      showPriorityRail: showPriorityRail,
       child: CrmCallRecordListItem(
         title: title,
         phoneSubtitle: phoneUnder,
@@ -289,6 +309,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         notePreview: shortNote,
         technicalFootnote: foot,
         identityFootnote: identityHint,
+        contextualInsight: rowInsight,
+        memoryHint: memoryHint,
+        onOpenCustomerCard: cidTrim != null && cidTrim.isNotEmpty
+            ? () => context.push('/customer/$cidTrim')
+            : null,
         onIdentityTap: callable
             ? () => showCallIdentityQuickActionsSheet(
                   context,
@@ -304,24 +329,18 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               }
             : null,
         leading: Container(
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            color: ext.accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+            color: ext.accent.withValues(alpha: 0.078),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
             border: Border.all(
-              color: ext.accent.withValues(alpha: 0.28),
+              color: ext.accent.withValues(alpha: 0.20),
             ),
           ),
-          child: Icon(Icons.call_rounded, color: ext.accent, size: 22),
+          child: Icon(Icons.call_rounded, color: ext.accent, size: 20),
         ),
         trailing: trailing,
-        padding: const EdgeInsets.fromLTRB(
-          DesignTokens.space4,
-          DesignTokens.space4,
-          DesignTokens.space4,
-          DesignTokens.space3,
-        ),
       ),
     );
 
@@ -337,6 +356,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           children: [
             SlidableAction(
               onPressed: (_) {
+                HapticFeedback.mediumImpact();
                 context.push('/customer/$custId');
               },
               backgroundColor: ext.accent,
@@ -357,8 +377,12 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           extentRatio: 0.2,
           children: [
             SlidableAction(
-              onPressed: (_) {
-                unawaited(OutboundPhoneDial.launchDial(rawPhone));
+              onPressed: (_) async {
+                final ok =
+                    await OutboundPhoneDial.launchDial(rawPhone);
+                if (context.mounted && ok) {
+                  HapticFeedback.mediumImpact();
+                }
               },
               backgroundColor: ext.success,
               foregroundColor: Colors.white,
@@ -378,6 +402,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         children: [
           SlidableAction(
             onPressed: (_) {
+              HapticFeedback.mediumImpact();
               context.push('/customer/$custId');
             },
             backgroundColor: ext.accent,
@@ -392,8 +417,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         extentRatio: 0.2,
         children: [
           SlidableAction(
-            onPressed: (_) {
-              unawaited(OutboundPhoneDial.launchDial(rawPhone));
+            onPressed: (_) async {
+              final ok = await OutboundPhoneDial.launchDial(rawPhone);
+              if (context.mounted && ok) {
+                HapticFeedback.mediumImpact();
+              }
             },
             backgroundColor: ext.success,
             foregroundColor: Colors.white,
@@ -443,6 +471,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             'Filtrelere uyan veya müşteri/danışman bağlantılı kayıt bulunamadı.',
         outlinedActionLabel: 'Filtreleri temizle',
         onOutlinedAction: _clearFilters,
+        actionLabel: 'Yeni arama başlat',
+        onAction: () => context.push(
+          AppRouter.routeCall,
+          extra: const {
+            'startedFromScreen': 'command_center_scope_consultant_empty',
+          },
+        ),
       );
     }
     final accent = AppThemeExtension.of(context).accent;
@@ -491,13 +526,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             technicalFootnote:
                 'Danışman ${CrmCallRecordDisplay.ellipsedMiddle(e.key)}',
             leading: Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                color: accent.withValues(alpha: 0.078),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
                 border: Border.all(
-                  color: accent.withValues(alpha: 0.28),
+                  color: accent.withValues(alpha: 0.20),
                 ),
               ),
               alignment: Alignment.center,
@@ -505,16 +540,10 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
                 style: TextStyle(
                   color: accent,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
               ),
-            ),
-            padding: const EdgeInsets.fromLTRB(
-              DesignTokens.space4,
-              DesignTokens.space4,
-              DesignTokens.space4,
-              DesignTokens.space3,
             ),
           ),
         );
@@ -560,6 +589,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             'Filtrelere uyan, müşteri kartına bağlı çağrı kaydı bulunamadı.',
         outlinedActionLabel: 'Filtreleri temizle',
         onOutlinedAction: _clearFilters,
+        actionLabel: 'Yeni arama başlat',
+        onAction: () => context.push(
+          AppRouter.routeCall,
+          extra: const {
+            'startedFromScreen': 'command_center_scope_customer_empty',
+          },
+        ),
       );
     }
     final accent = AppThemeExtension.of(context).accent;
@@ -620,13 +656,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             technicalFootnote:
                 'Müşteri ${CrmCallRecordDisplay.ellipsedMiddle(e.key, head: 6)}',
             leading: Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                color: accent.withValues(alpha: 0.078),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
                 border: Border.all(
-                  color: accent.withValues(alpha: 0.28),
+                  color: accent.withValues(alpha: 0.20),
                 ),
               ),
               alignment: Alignment.center,
@@ -634,16 +670,10 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 initial,
                 style: TextStyle(
                   color: accent,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
               ),
-            ),
-            padding: const EdgeInsets.fromLTRB(
-              DesignTokens.space4,
-              DesignTokens.space4,
-              DesignTokens.space4,
-              DesignTokens.space3,
             ),
           ),
         );
@@ -659,13 +689,22 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         padding: const EdgeInsets.only(right: DesignTokens.space2),
         child: FilterChip(
           selected: sel,
+          showCheckmark: true,
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          side: BorderSide(
+            color: sel
+                ? ext.accent.withValues(alpha: 0.26)
+                : ext.border.withValues(alpha: 0.38),
+          ),
           label: Text(label),
           onSelected: (_) => setState(() => _managerQuickFilter = f),
-          selectedColor: ext.accent.withValues(alpha: 0.16),
+          selectedColor: ext.accent.withValues(alpha: 0.11),
           checkmarkColor: ext.accent,
           labelStyle: TextStyle(
-            fontSize: 13,
-            fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
+            fontSize: 12.5,
+            fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
             color: sel ? ext.textPrimary : ext.textSecondary,
           ),
         ),
@@ -783,6 +822,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     final surface = isDark
         ? AppThemeExtension.of(context).surface
         : AppThemeExtension.of(context).surface;
+    final borderColor = AppThemeExtension.of(context).border;
     return Scaffold(
       backgroundColor: bg,
       appBar: emlakAppBar(
@@ -803,12 +843,9 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               }
               final csv = callsToCsv(docs);
               Clipboard.setData(ClipboardData(text: csv));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text(
-                      'CSV panoya kopyalandı. Excel\'e yapıştırabilirsiniz.'),
-                  backgroundColor: AppThemeExtension.of(context).accent,
-                ),
+              showCallsSurfaceAck(
+                context,
+                'CSV panoya hazır · ${docs.length} satır',
               );
             },
             tooltip: 'CSV dışa aktar',
@@ -823,7 +860,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   DesignTokens.space4,
-                  DesignTokens.space3,
+                  DesignTokens.space2 + 2,
                   DesignTokens.space4,
                   DesignTokens.space2,
                 ),
@@ -832,18 +869,19 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                   children: [
                     Icon(
                       Icons.info_outline_rounded,
-                      size: 20,
-                      color: AppThemeExtension.of(context).accent,
+                      size: 18,
+                      color: AppThemeExtension.of(context).accent.withValues(alpha: 0.85),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: DesignTokens.space2 + 2),
                     Expanded(
                       child: Text(
                         'Bu ekranda çağrıların CRM özeti görünür: sonuç, saat ve kısa not.',
-                        style: theme.textTheme.labelSmall?.copyWith(
+                        style: theme.textTheme.bodySmall?.copyWith(
                           color: isDark
                               ? AppThemeExtension.of(context).textSecondary
                               : AppThemeExtension.of(context).textSecondary,
-                          height: 1.4,
+                          height: 1.42,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
@@ -854,28 +892,28 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(DesignTokens.space4, 0,
-                  DesignTokens.space4, DesignTokens.space2),
+                  DesignTokens.space4, DesignTokens.space1 + 2),
               child: SegmentedButton<_CommandScope>(
                 segments: const [
                   ButtonSegment(
                     value: _CommandScope.all,
                     label: Text('Tüm kayıtlar'),
-                    icon: Icon(Icons.list_alt_rounded, size: 16),
+                    icon: Icon(Icons.list_alt_rounded, size: 15),
                   ),
                   ButtonSegment(
                     value: _CommandScope.consultant,
                     label: Text('Danışman'),
-                    icon: Icon(Icons.person_search_rounded, size: 16),
+                    icon: Icon(Icons.person_search_rounded, size: 15),
                   ),
                   ButtonSegment(
                     value: _CommandScope.customer,
                     label: Text('Müşteri'),
-                    icon: Icon(Icons.people_alt_rounded, size: 16),
+                    icon: Icon(Icons.people_alt_rounded, size: 15),
                   ),
                   ButtonSegment(
                     value: _CommandScope.pending,
                     label: Text('Eksik kayıt'),
-                    icon: Icon(Icons.pending_actions_rounded, size: 16),
+                    icon: Icon(Icons.pending_actions_rounded, size: 15),
                   ),
                 ],
                 selected: {_commandScope},
@@ -884,7 +922,12 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 style: ButtonStyle(
                   visualDensity: VisualDensity.compact,
                   padding: WidgetStateProperty.all(
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  ),
+                  side: WidgetStateProperty.resolveWith(
+                    (states) => BorderSide(
+                      color: borderColor.withValues(alpha: 0.38),
+                    ),
                   ),
                 ),
               ),
@@ -894,9 +937,9 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   DesignTokens.space4,
-                  DesignTokens.space2,
+                  DesignTokens.space1 + 2,
                   DesignTokens.space4,
-                  DesignTokens.space2,
+                  DesignTokens.space1 + 2,
                 ),
                 child: Row(
                   children: [
@@ -914,13 +957,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                       segments: const [
                         ButtonSegment(
                             value: 0,
-                            icon: Icon(Icons.table_rows_rounded, size: 18)),
+                            icon: Icon(Icons.table_rows_rounded, size: 17)),
                         ButtonSegment(
                             value: 1,
-                            icon: Icon(Icons.grid_view_rounded, size: 18)),
+                            icon: Icon(Icons.grid_view_rounded, size: 17)),
                         ButtonSegment(
                             value: 2,
-                            icon: Icon(Icons.timeline_rounded, size: 18)),
+                            icon: Icon(Icons.timeline_rounded, size: 17)),
                       ],
                       selected: {_viewIndex},
                       onSelectionChanged: (s) =>
@@ -929,7 +972,12 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                         visualDensity: VisualDensity.compact,
                         padding: WidgetStateProperty.all(
                             const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6)),
+                                horizontal: 8, vertical: 5)),
+                        side: WidgetStateProperty.resolveWith(
+                          (states) => BorderSide(
+                            color: borderColor.withValues(alpha: 0.38),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1138,6 +1186,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                                 'Arama veya filtrelere uygun kayıt bulunamadı.',
                             outlinedActionLabel: 'Filtreleri temizle',
                             onOutlinedAction: _clearFilters,
+                            actionLabel: 'Yeni arama başlat',
+                            onAction: () => context.push(
+                              AppRouter.routeCall,
+                              extra: const {
+                                'startedFromScreen': 'command_center_filter_empty',
+                              },
+                            ),
                           );
                         }
                         return EmptyState(
@@ -1148,6 +1203,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                           icon: Icons.call_rounded,
                           title: l10n.t('empty_calls_title'),
                           subtitle: l10n.t('empty_calls_sub'),
+                          outlinedActionLabel: 'Portföye kaydet',
+                          onOutlinedAction: () => showSaveContactSheet(
+                            context,
+                            source: 'command_center_calls_empty',
+                          ),
                           actionLabel: l10n.t('empty_calls_cta'),
                           onAction: () => context.push(
                             AppRouter.routeCall,
@@ -1157,13 +1217,29 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                           ),
                         );
                       }
-                      return _buildScopeContent(
-                        context,
-                        filtered,
-                        agentNames,
-                        locals,
-                        currentUid,
-                        customerFullNameById,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (docs.isNotEmpty)
+                            ManagerCallsTeamRhythmStrip(
+                              docs: docs,
+                              agentNames: agentNames,
+                            ),
+                          if (_managerQuickFilter ==
+                                  CallSurfaceQuickFilter.callback &&
+                              filtered.isNotEmpty)
+                            CallCallbackWorkModeCue(count: filtered.length),
+                          Expanded(
+                            child: _buildScopeContent(
+                              context,
+                              filtered,
+                              agentNames,
+                              locals,
+                              currentUid,
+                              customerFullNameById,
+                            ),
+                          ),
+                        ],
                       );
                     },
                   );
@@ -1233,10 +1309,12 @@ class _CommandCenterFilters extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(
                   horizontal: DesignTokens.space4,
-                  vertical: DesignTokens.space2),
+                  vertical: DesignTokens.space1 + 2),
               decoration: BoxDecoration(
                 color: surface,
-                border: Border(bottom: BorderSide(color: border)),
+                border: Border(
+                    bottom: BorderSide(
+                        color: border.withValues(alpha: 0.32))),
               ),
               child: Row(
                 children: [
