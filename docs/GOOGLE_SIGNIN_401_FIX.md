@@ -14,7 +14,7 @@ Bu hata, Google Cloud Console'da **iOS** ve **Android** için OAuth 2.0 istemcis
 1. **+ CREATE CREDENTIALS** → **OAuth client ID**.
 2. **Application type:** **iOS** seçin.
 3. **Name:** örn. `EmlakMaster iOS`.
-4. **Bundle ID:** tam olarak `com.example.emlakmasterMobile` yazın (GoogleService-Info.plist ve firebase_options ile aynı).
+4. **Bundle ID:** tam olarak `com.uguraytekin.emlakmastermobile` yazın (`ios/Runner/GoogleService-Info.plist`, `lib/firebase_options.dart` iOS ve macOS ile aynı).
 5. **Create** deyin. Çıkan **Client ID** ve **iOS URL scheme** (reversed client ID) not alın.
 6. **Info.plist** içindeki `CFBundleURLSchemes` değerinin bu **iOS URL scheme** ile aynı olması gerekir. Yeni oluşturduğunuz iOS client farklı bir ID verirse, `ios/Runner/Info.plist` içinde ilgili dizi değerini bu yeni scheme ile güncelleyin.
 

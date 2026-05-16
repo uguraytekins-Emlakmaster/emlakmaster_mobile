@@ -20,7 +20,7 @@ Hata: *Unable to log in with account … login details were rejected.*
 2. Sol altta **+** → **Apple ID** ile `aytekinugi@gmail.com` ekle **veya** mevcut hesabı seç → **Sign in again** / şifreyi güncelle
 3. İki adımlı doğrulama açıksa Apple’ın istediği kodu gir
 
-Hata: *No Account for Team "Q885JNUR54"* veya *No profiles for 'com.example.emlakmasterMobile' were found*
+Hata: *No Account for Team "Q885JNUR54"* veya *No profiles for 'com.uguraytekin.emlakmastermobile' were found*
 
 - **Xcode** → **Settings** → **Accounts** → sol altta **+** → **Apple ID** ile giriş (genelde `aytekinugi@gmail.com`)
 - Hesabı seç → sağda **Teams** altında **Apple Development** takımının göründüğünü doğrula
@@ -49,4 +49,4 @@ veya:
 ./scripts/iphone_kablo_yukle.sh
 ```
 
-**Not:** `com.example.emlakmasterMobile` Firebase ile kayıtlı; bundle ID’yi değiştirirsen `GoogleService-Info.plist` / Firebase’i de güncellemen gerekir.
+**Not:** Üretim bundle ID: `com.uguraytekin.emlakmastermobile` (`ios/Runner/GoogleService-Info.plist` ve Xcode Signing ile aynı olmalı).

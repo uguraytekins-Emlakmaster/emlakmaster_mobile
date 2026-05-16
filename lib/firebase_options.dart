@@ -28,10 +28,10 @@ class DefaultFirebaseOptions {
     projectId: 'emlak-master',
     storageBucket: 'emlak-master.firebasestorage.app',
     iosClientId: '572835725773-8s71g3li2ful895gppeb6bvlbck09hkd.apps.googleusercontent.com',
-    iosBundleId: 'com.example.emlakmasterMobile',
+    iosBundleId: 'com.uguraytekin.emlakmastermobile',
   );
 
-  /// macOS: Aynı proje; GoogleService-Info.plist ile uyumlu.
+  /// macOS: Runner `PRODUCT_BUNDLE_IDENTIFIER` ve `macos/Runner/GoogleService-Info.plist` ile aynı olmalı.
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAsQl8NkdQ22MiX2Xx5IxgNzYixrj2EqbQ',

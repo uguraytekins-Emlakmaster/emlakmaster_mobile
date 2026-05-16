@@ -37,11 +37,11 @@ Google Cloud Console’da **Android** OAuth 2.0 istemcisi: paket adı `com.examp
 |-------|------|--------|
 | `ios/Runner/GoogleService-Info.plist` | `CLIENT_ID` | `iosClientId` ile **aynı** |
 | | `REVERSED_CLIENT_ID` | URL scheme (com.googleusercontent.apps....) |
-| | `BUNDLE_ID` | `com.example.emlakmasterMobile` |
+| | `BUNDLE_ID` | `com.uguraytekin.emlakmastermobile` |
 | `ios/Runner/Info.plist` | `GIDClientID` | `iosClientId` ile **aynı** |
 | | `CFBundleURLTypes` (Google) | `REVERSED_CLIENT_ID` ile **aynı** |
 
-Google Cloud Console’da **iOS** OAuth 2.0 istemcisi: Bundle ID `com.example.emlakmasterMobile` olmalı.
+Google Cloud Console’da **iOS** OAuth 2.0 istemcisi: Bundle ID `com.uguraytekin.emlakmastermobile` olmalı.
 
 ---
 
@@ -49,7 +49,9 @@ Google Cloud Console’da **iOS** OAuth 2.0 istemcisi: Bundle ID `com.example.em
 
 | Dosya | Ayar | Değer |
 |-------|------|--------|
+| `macos/Runner/Configs/AppInfo.xcconfig` | `PRODUCT_BUNDLE_IDENTIFIER` | `com.uguraytekin.emlakmastermobile` |
 | `macos/Runner/GoogleService-Info.plist` | `CLIENT_ID` | `iosClientId` ile **aynı** |
+| | `BUNDLE_ID` | `com.uguraytekin.emlakmastermobile` |
 | | `REVERSED_CLIENT_ID` | URL scheme |
 | `macos/Runner/Info.plist` | `GIDClientID` | `iosClientId` ile **aynı** |
 | | `CFBundleURLTypes` (Google) | `REVERSED_CLIENT_ID` ile **aynı** |
