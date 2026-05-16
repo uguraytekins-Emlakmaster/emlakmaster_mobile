@@ -246,3 +246,7 @@ exports.runIntegrationListingSync = listingImportApi.runIntegrationListingSync;
 const aiCallables = require("./aiCallables");
 exports.enrichPostCallSummary = aiCallables.enrichPostCallSummary;
 exports.generateBulkCampaignMessage = aiCallables.generateBulkCampaignMessage;
+
+// Ekip sohbeti — yeni mesajda FCM
+const teamChatPush = require("./teamChatPush");
+exports.onTeamChatMessageCreated = teamChatPush.onTeamChatMessageCreated;
