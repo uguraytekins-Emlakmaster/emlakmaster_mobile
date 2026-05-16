@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/providers/investment_opportunity_providers.dart';
 import 'package:emlakmaster_mobile/features/market_settings/domain/entities/market_settings_entity.dart';
@@ -902,7 +903,7 @@ class SettingsPage extends ConsumerWidget {
                 EmlakMasterProductIdentityCard(),
               ],
             ),
-            if (canSwitchRole) ...[
+            if (canSwitchRole || kDebugMode) ...[
               const SizedBox(height: DesignTokens.space6),
               Padding(
                 padding: const EdgeInsets.only(bottom: DesignTokens.space2),
@@ -929,24 +930,47 @@ class SettingsPage extends ConsumerWidget {
                 context,
                 muted: true,
                 children: [
-                  ListTile(
-                    leading: Icon(Icons.swap_horiz_rounded,
-                        color: AppThemeExtension.of(context).accent),
-                    title: Text(
-                      override != null
-                          ? 'Rol: ${override.label} (geri al)'
-                          : 'Rol değiştir (test)',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
+                  if (canSwitchRole)
+                    ListTile(
+                      leading: Icon(Icons.swap_horiz_rounded,
+                          color: AppThemeExtension.of(context).accent),
+                      title: Text(
+                        override != null
+                            ? 'Rol: ${override.label} (geri al)'
+                            : 'Rol değiştir (test)',
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
+                      subtitle: Text(
+                        'Yalnızca görünüm modu; üretim hesabını değiştirmez.',
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.55),
+                            fontSize: 11),
+                      ),
+                      onTap: () => _showRoleSwitcher(context, ref, override),
                     ),
-                    subtitle: Text(
-                      'Yalnızca görünüm modu; üretim hesabını değiştirmez.',
-                      style: TextStyle(
+                  if (kDebugMode)
+                    ListTile(
+                      leading: Icon(Icons.slideshow_outlined,
+                          color: AppThemeExtension.of(context).accent),
+                      title: Text(
+                        'Tanıtımı yeniden göster',
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
+                      subtitle: Text(
+                        'İlk açılış slaytlarını tekrar açar (yalnızca debug).',
+                        style: TextStyle(
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.55),
-                          fontSize: 11),
+                          fontSize: 11,
+                        ),
+                      ),
+                      onTap: () async {
+                        await OnboardingStore.instance.resetForTesting();
+                        if (!context.mounted) return;
+                        context.go(AppRouter.routeOnboarding);
+                      },
                     ),
-                    onTap: () => _showRoleSwitcher(context, ref, override),
-                  ),
                 ],
               ),
             ],

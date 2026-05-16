@@ -63,4 +63,14 @@ abstract final class AnalyticsEvents {
 
   /// Parti içi ortalama gecikme (kalıcı başarısızlık anına kadar).
   static const String paramAvgSyncDelayMs = 'avg_sync_delay_ms';
+
+  // —— İlk açılış tanıtımı ——
+  static const String onboardingSlideView = 'onboarding_slide_view';
+  static const String onboardingComplete = 'onboarding_complete';
+  static const String onboardingSkip = 'onboarding_skip';
+
+  static const String paramSlideIndex = 'slide_index';
+  static const String paramSlideId = 'slide_id';
+  static const String paramPersona = 'persona';
+  static const String paramSkippedAtIndex = 'skipped_at_index';
 }

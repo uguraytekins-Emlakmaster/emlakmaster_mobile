@@ -44,4 +44,12 @@ class OnboardingStore {
     await prefs.setBool(_keyWorkspaceSetupCompleted, true);
     _workspaceSetupCompleted = true;
   }
+
+  /// Yalnızca geliştirme: tanıtımı tekrar göstermek için bayrağı sıfırlar.
+  Future<void> resetForTesting() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyOnboardingCompleted, false);
+    _completed = false;
+    _prefsLoaded = true;
+  }
 }

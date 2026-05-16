@@ -13,6 +13,7 @@ enum OnboardingVisualKind {
 /// İlk açılış tanıtım slaytı verisi.
 class OnboardingSlideModel {
   const OnboardingSlideModel({
+    required this.analyticsId,
     required this.title,
     required this.subtitle,
     required this.highlights,
@@ -21,6 +22,8 @@ class OnboardingSlideModel {
     this.assetPath,
   });
 
+  /// Analytics `slide_id` parametresi.
+  final String analyticsId;
   final String title;
   final String subtitle;
 
@@ -38,13 +41,15 @@ class OnboardingSlideModel {
 /// Ürün özelliklerine göre tanıtım akışı (sıra önemli).
 const List<OnboardingSlideModel> kOnboardingSlides = [
   OnboardingSlideModel(
+    analyticsId: 'welcome',
     title: 'EmlakMaster\'a hoş geldiniz',
     subtitle:
-        'Gayrimenkul operasyonunuz tek platformda: yönetici komuta masası ve danışman saha paneli aynı ekosistemde.',
+        'Gayrimenkul operasyonunuz tek platformda: yönetici komuta masası ve danışman saha paneli aynı ekosistemde. iPhone, iPad ve Mac\'te aynı hesap.',
     highlights: ['Yönetici Paneli', 'Danışman Paneli', 'Tek hesap'],
     visual: OnboardingVisualKind.welcome,
   ),
   OnboardingSlideModel(
+    analyticsId: 'manager_workspace',
     title: 'Yönetici: komuta ve görünürlük',
     subtitle:
         'Komuta Merkezi özetleri, Komuta Odası canlı durum, Çağrı Merkezi ve Raporlar ile ekibi ve performansı izleyin.',
@@ -58,6 +63,7 @@ const List<OnboardingSlideModel> kOnboardingSlides = [
     assetPath: 'assets/onboarding/manager_command.png',
   ),
   OnboardingSlideModel(
+    analyticsId: 'consultant_workspace',
     title: 'Danışman: Günüm ve saha akışı',
     subtitle:
         'Günüm ekranından güne başlayın; müşteriler, ilanlar, takip ve görevler tek çalışma alanında.',
@@ -72,6 +78,7 @@ const List<OnboardingSlideModel> kOnboardingSlides = [
     assetPath: 'assets/onboarding/consultant_gunum.png',
   ),
   OnboardingSlideModel(
+    analyticsId: 'calls_meetings',
     title: 'Akıllı görüşme ve çağrılar',
     subtitle:
         'Çağrılarım, görüşme sonrası kayıt ve yönetici çağrı merkezi ile her temas izlenebilir; Akıllı Görüşme ile hızlı arama.',
@@ -85,6 +92,7 @@ const List<OnboardingSlideModel> kOnboardingSlides = [
     assetPath: 'assets/onboarding/smart_calls.png',
   ),
   OnboardingSlideModel(
+    analyticsId: 'market_listings',
     title: 'Piyasa, ilan ve içgörü',
     subtitle:
         'İlan portföyünüzü yönetin; bölge içgörüsü ve analitik raporlarla piyasa nabzını takip edin.',
@@ -98,9 +106,10 @@ const List<OnboardingSlideModel> kOnboardingSlides = [
     assetPath: 'assets/onboarding/market_listings.png',
   ),
   OnboardingSlideModel(
+    analyticsId: 'office_ready',
     title: 'Ofis, mesajlar ve hazırsınız',
     subtitle:
-        'Ofis oluşturun veya katılın; Mesaj Merkezi ve senkron ile ekip uyumlu çalışsın. Girişte rolünüzü seçerek başlayın.',
+        'Ofis oluşturun veya katılın; Mesaj Merkezi ve senkron ile ekip uyumlu çalışsın. Aşağıdan giriş türünüzü seçip devam edin.',
     highlights: [
       'Ofis masası',
       'Mesaj Merkezi',

@@ -1,8 +1,13 @@
 import 'package:animate_do/animate_do.dart';
+import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
+import 'package:emlakmaster_mobile/core/services/login_entry_store.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/widgets/auth_entry_persona_selector.dart';
 import 'package:emlakmaster_mobile/features/onboarding/domain/onboarding_slide_model.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/widgets/onboarding_ui_mockups.dart';
 import 'package:flutter/material.dart';
@@ -20,14 +25,26 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  LoginEntryPersona? _persona;
+  String? _personaHint;
 
   static const _slides = kOnboardingSlides;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _checkAlreadyCompleted());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAlreadyCompleted();
+      _loadPersona();
+      _logSlideView(0);
+    });
+  }
+
+  Future<void> _loadPersona() async {
+    final saved = await LoginEntryStore.instance.loadPersona();
+    if (mounted && saved != null) {
+      setState(() => _persona = saved);
+    }
   }
 
   Future<void> _checkAlreadyCompleted() async {
@@ -37,11 +54,65 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
   }
 
-  Future<void> _complete() async {
+  void _logSlideView(int index) {
+    if (index < 0 || index >= _slides.length) return;
+    final slide = _slides[index];
+    AnalyticsService.instance.logEvent(
+      AnalyticsEvents.onboardingSlideView,
+      {
+        AnalyticsEvents.paramSlideIndex: index,
+        AnalyticsEvents.paramSlideId: slide.analyticsId,
+      },
+    );
+  }
+
+  Future<void> _complete({required bool skipped}) async {
+    if (!skipped && _persona == null) {
+      setState(() {
+        _personaHint = 'Devam etmek için Yönetici veya Danışman seçin.';
+      });
+      return;
+    }
+
+    if (_persona != null) {
+      await LoginEntryStore.instance.setPersona(_persona!);
+    }
+
     HapticFeedback.mediumImpact();
     await OnboardingStore.instance.setCompleted();
+
+    if (skipped) {
+      AnalyticsService.instance.logEvent(
+        AnalyticsEvents.onboardingSkip,
+        {
+          AnalyticsEvents.paramSkippedAtIndex: _currentPage,
+          AnalyticsEvents.paramSlideId: _slides[_currentPage].analyticsId,
+          if (_persona != null)
+            AnalyticsEvents.paramPersona: _persona!.id,
+        },
+      );
+    } else {
+      AnalyticsService.instance.logEvent(
+        AnalyticsEvents.onboardingComplete,
+        {
+          AnalyticsEvents.paramSlideIndex: _currentPage,
+          AnalyticsEvents.paramSlideId: _slides[_currentPage].analyticsId,
+          if (_persona != null)
+            AnalyticsEvents.paramPersona: _persona!.id,
+        },
+      );
+    }
+
     if (!mounted) return;
     context.go(AppRouter.routeLogin);
+  }
+
+  Future<void> _onPersonaSelected(LoginEntryPersona persona) async {
+    setState(() {
+      _persona = persona;
+      _personaHint = null;
+    });
+    await LoginEntryStore.instance.setPersona(persona);
   }
 
   @override
@@ -51,18 +122,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _onNext() {
-    if (_currentPage >= _slides.length - 1) {
-      _complete();
-    } else {
-      _pageController.nextPage(
-        duration: DesignTokens.durationNormal,
-        curve: Curves.easeOutCubic,
-      );
+    final isLast = _currentPage >= _slides.length - 1;
+    if (isLast) {
+      _complete(skipped: false);
+      return;
     }
+    _pageController.nextPage(
+      duration: DesignTokens.durationNormal,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Color _accentForSlide(OnboardingSlideModel slide, AppThemeExtension ext) {
-    return slide.accent ?? ext.brandPrimary;
+    if (slide.accent != null) return slide.accent!;
+    if (_persona == LoginEntryPersona.consultant &&
+        slide.visual == OnboardingVisualKind.messagesOfficeReady) {
+      return Color.lerp(ext.brandPrimary, ext.info, 0.45)!;
+    }
+    return ext.brandPrimary;
   }
 
   @override
@@ -70,6 +147,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final ext = AppThemeExtension.of(context);
     final slide = _slides[_currentPage];
     final accent = _accentForSlide(slide, ext);
+    final isLast = _currentPage >= _slides.length - 1;
 
     return Scaffold(
       backgroundColor: ext.background,
@@ -92,7 +170,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
-                  onPageChanged: (i) => setState(() => _currentPage = i),
+                  onPageChanged: (i) {
+                    setState(() => _currentPage = i);
+                    _logSlideView(i);
+                  },
                   itemCount: _slides.length,
                   itemBuilder: (context, index) {
                     final s = _slides[index];
@@ -106,8 +187,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               ),
               _buildHighlights(slide, accent, ext),
+              if (isLast) _buildPersonaPicker(ext, accent),
               _buildIndicators(ext, accent),
-              _buildButton(ext, accent),
+              _buildButton(ext, accent, isLast),
             ],
           ),
         ),
@@ -147,7 +229,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
           ),
           TextButton(
-            onPressed: _complete,
+            onPressed: () => _complete(skipped: true),
             style: TextButton.styleFrom(
               foregroundColor: ext.textSecondary,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -157,6 +239,33 @@ class _OnboardingPageState extends State<OnboardingPage> {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonaPicker(AppThemeExtension ext, Color accent) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AuthEntryPersonaSelector(
+            selected: _persona,
+            onSelected: _onPersonaSelected,
+            compact: true,
+          ),
+          if (_personaHint != null) ...[
+            const SizedBox(height: DesignTokens.space2),
+            Text(
+              _personaHint!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: ext.danger.withValues(alpha: 0.95),
+                fontSize: DesignTokens.fontSizeSm,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -231,8 +340,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildButton(AppThemeExtension ext, Color accent) {
-    final isLast = _currentPage >= _slides.length - 1;
+  Widget _buildButton(AppThemeExtension ext, Color accent, bool isLast) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       child: Container(
