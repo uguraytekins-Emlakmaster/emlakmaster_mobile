@@ -18,10 +18,12 @@ abstract final class CallCardMemoryHints {
     if (n.isNotEmpty) return 'Son not var';
 
     final oc = _outcome(data) ?? '';
-    const reachedLike = {'reached', 'connected', 'completed', 'appointment_set', 'offer_sent'};
+    if (oc == 'appointment_set') return 'Randevu bekleniyor';
+    const reachedLike = {'reached', 'connected', 'completed', 'offer_sent'};
     if (reachedLike.contains(oc)) {
-      return 'Daha önce ulaşıldı';
+      return 'Daha önce görüşüldü';
     }
+    if (oc == 'callback_scheduled') return 'Geri arama bekliyor';
 
     final fu = data['followUpReminderAt'];
     if (fu is Timestamp) {
@@ -53,8 +55,10 @@ abstract final class CallCardMemoryHints {
       return 'Takipte';
     }
     final oc = (outcome ?? '').trim();
-    const reachedLike = {'reached', 'connected', 'completed', 'appointment_set', 'offer_sent'};
-    if (reachedLike.contains(oc)) return 'Daha önce ulaşıldı';
+    if (oc == 'appointment_set') return 'Randevu bekleniyor';
+    if (oc == 'callback_scheduled') return 'Geri arama bekliyor';
+    const reachedLike = {'reached', 'connected', 'completed', 'offer_sent'};
+    if (reachedLike.contains(oc)) return 'Daha önce görüşüldü';
     final created = DateTime.fromMillisecondsSinceEpoch(createdAtMs);
     final d = DateTime.now().difference(created);
     if (d.inHours >= 24 && d.inHours < 48) return 'Son işlem dün';

@@ -15,6 +15,9 @@ class PostCallCaptureDraft {
     this.dismissedFromStrip = false,
     /// `false` ise [callSessionId] yalnızca yerel takip anahtarıdır (`local_…`); Firestore `calls` dokümanı handoff sırasında oluşturulmamıştır.
     this.crmSessionTracked = true,
+    this.returnPromptShown = false,
+    this.captureAbandoned = false,
+    this.recoveryDismissed = false,
   });
 
   /// Hive / offline-first ana kayıt kimliği — [callSessionId] değişse bile sabit kalır (`local_…`).
@@ -28,6 +31,9 @@ class PostCallCaptureDraft {
   final bool dismissedFromStrip;
   /// CRM handoff oturumu Firestore'a yazıldıysa `true`; ağ/kural hatasında `false` (arama yine de yapılabilir).
   final bool crmSessionTracked;
+  final bool returnPromptShown;
+  final bool captureAbandoned;
+  final bool recoveryDismissed;
 
   /// `calls/{id}` zaten var (handoff veya otomatik minimum kayıt); hızlı kayıtta merge kullanılır.
   bool get hasFirestoreCallDoc => !callSessionId.startsWith(localPrefix);
@@ -41,6 +47,9 @@ class PostCallCaptureDraft {
     int? createdAtMs,
     bool? dismissedFromStrip,
     bool? crmSessionTracked,
+    bool? returnPromptShown,
+    bool? captureAbandoned,
+    bool? recoveryDismissed,
   }) {
     return PostCallCaptureDraft(
       callSessionId: callSessionId ?? this.callSessionId,
@@ -51,6 +60,9 @@ class PostCallCaptureDraft {
       createdAtMs: createdAtMs ?? this.createdAtMs,
       dismissedFromStrip: dismissedFromStrip ?? this.dismissedFromStrip,
       crmSessionTracked: crmSessionTracked ?? this.crmSessionTracked,
+      returnPromptShown: returnPromptShown ?? this.returnPromptShown,
+      captureAbandoned: captureAbandoned ?? this.captureAbandoned,
+      recoveryDismissed: recoveryDismissed ?? this.recoveryDismissed,
     );
   }
 
@@ -63,6 +75,9 @@ class PostCallCaptureDraft {
         'createdAtMs': createdAtMs,
         'dismissedFromStrip': dismissedFromStrip,
         'crmSessionTracked': crmSessionTracked,
+        'returnPromptShown': returnPromptShown,
+        'captureAbandoned': captureAbandoned,
+        'recoveryDismissed': recoveryDismissed,
       };
 
   static PostCallCaptureDraft? tryFromJson(String? raw) {
@@ -89,6 +104,9 @@ class PostCallCaptureDraft {
         createdAtMs: createdMs,
         dismissedFromStrip: m['dismissedFromStrip'] as bool? ?? false,
         crmSessionTracked: m['crmSessionTracked'] as bool? ?? true,
+        returnPromptShown: m['returnPromptShown'] as bool? ?? false,
+        captureAbandoned: m['captureAbandoned'] as bool? ?? false,
+        recoveryDismissed: m['recoveryDismissed'] as bool? ?? false,
       );
     } catch (_) {
       return null;

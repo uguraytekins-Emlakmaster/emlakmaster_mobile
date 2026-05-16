@@ -1,4 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_confidence_badge.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +25,7 @@ class CrmCallRecordListItem extends StatelessWidget {
     this.belowChipsRow,
     this.contextualInsight,
     this.memoryHint,
+    this.confidenceKind,
     this.onOpenCustomerCard,
     this.padding = const EdgeInsets.fromLTRB(
       DesignTokens.space4,
@@ -51,6 +54,7 @@ class CrmCallRecordListItem extends StatelessWidget {
   final String? contextualInsight;
   /// Gerçek veriye dayalı kısa hafıza satırı.
   final String? memoryHint;
+  final CallConfidenceKind? confidenceKind;
   /// Bağlı müşteri kartına git.
   final VoidCallback? onOpenCustomerCard;
   final EdgeInsetsGeometry padding;
@@ -119,6 +123,11 @@ class CrmCallRecordListItem extends StatelessWidget {
                       surface: ext.surfaceElevated,
                       borderColor: ext.border,
                     ),
+                    if (confidenceKind != null)
+                      CallConfidenceBadge(
+                        kind: confidenceKind!,
+                        compact: true,
+                      ),
                   ],
                 ),
                 if (belowChipsRow != null) ...[

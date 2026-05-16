@@ -146,6 +146,7 @@ class _OutboundSystemHandoffPageState
 
       final localHandoffId = sessionId ?? localRecordId;
 
+      // Handoff boru hattının tek tel: adımı — CRM taslağı zaten oluşturuldu.
       final ok = await OutboundPhoneDial.launchDial(phone);
       if (!mounted) return;
 

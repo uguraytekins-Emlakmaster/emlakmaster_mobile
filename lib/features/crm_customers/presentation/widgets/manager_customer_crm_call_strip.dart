@@ -19,7 +19,10 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
+import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -207,6 +210,12 @@ class _CallLine extends StatelessWidget {
     final showRail = CallSurfacePriorityMarkers.railForFirestore(data);
     final memoryHint =
         CallCardMemoryHints.forFirestore(data, notePreview: quickNote);
+    final confidenceKind = CallConfidenceLabels.resolveForRecord(
+      startedFromScreen: data['startedFromScreen'] as String?,
+      outcome: (data['outcome'] as String?) ?? (data['callOutcome'] as String?),
+      quickOutcomeCode: data['quickOutcomeCode'] as String?,
+      memoryHint: memoryHint,
+    );
     final cid = linkedCustomerId.trim();
 
     return Padding(
@@ -225,6 +234,7 @@ class _CallLine extends StatelessWidget {
           technicalFootnote: foot,
           contextualInsight: rowInsight,
           memoryHint: memoryHint,
+          confidenceKind: confidenceKind,
           onOpenCustomerCard: cid.isNotEmpty
               ? () => context.push('/customer/$cid')
               : null,
@@ -239,7 +249,13 @@ class _CallLine extends StatelessWidget {
               : null,
           onIdentityLongPress: callable
               ? () {
-                  unawaited(OutboundPhoneDial.launchDial(rawPhone));
+                  AppFeedback.mediumImpact();
+                  startCrmOutboundCall(
+                    context,
+                    phone: rawPhone,
+                    customerId: linkedCustomerId,
+                    startedFromScreen: 'manager_crm_strip',
+                  );
                 }
               : null,
           leading: Container(

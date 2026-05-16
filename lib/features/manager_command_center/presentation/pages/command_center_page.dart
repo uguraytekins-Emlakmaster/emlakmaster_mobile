@@ -32,6 +32,8 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_call
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/manager_calls_team_rhythm_strip.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
+import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/office_wide_customers_stream_provider.dart';
 import 'package:flutter/material.dart';
@@ -302,6 +304,12 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         CallSurfacePriorityMarkers.railForFirestore(data);
     final memoryHint =
         CallCardMemoryHints.forFirestore(data, notePreview: shortNote);
+    final confidenceKind = CallConfidenceLabels.resolveForRecord(
+      startedFromScreen: data['startedFromScreen'] as String?,
+      outcome: (data['outcome'] as String?) ?? (data['callOutcome'] as String?),
+      quickOutcomeCode: data['quickOutcomeCode'] as String?,
+      memoryHint: memoryHint,
+    );
     final cidTrim = custId?.trim();
 
     final card = CrmCallOperatingCard(
@@ -319,6 +327,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         identityFootnote: identityHint,
         contextualInsight: rowInsight,
         memoryHint: memoryHint,
+        confidenceKind: confidenceKind,
         onOpenCustomerCard: cidTrim != null && cidTrim.isNotEmpty
             ? () => context.push('/customer/$cidTrim')
             : null,
@@ -340,7 +349,13 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             : null,
         onIdentityLongPress: callable
             ? () {
-                unawaited(OutboundPhoneDial.launchDial(rawPhone));
+                AppFeedback.mediumImpact();
+                startCrmOutboundCall(
+                  context,
+                  phone: rawPhone,
+                  customerId: custId,
+                  startedFromScreen: 'command_center',
+                );
               }
             : null,
         leading: Container(
@@ -392,12 +407,14 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           extentRatio: 0.2,
           children: [
             SlidableAction(
-              onPressed: (_) async {
-                final ok =
-                    await OutboundPhoneDial.launchDial(rawPhone);
-                if (context.mounted && ok) {
-                  AppFeedback.mediumImpact();
-                }
+              onPressed: (_) {
+                AppFeedback.mediumImpact();
+                startCrmOutboundCall(
+                  context,
+                  phone: rawPhone,
+                  customerId: custId,
+                  startedFromScreen: 'command_center',
+                );
               },
               backgroundColor: ext.success,
               foregroundColor: Colors.white,
@@ -432,11 +449,14 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         extentRatio: 0.2,
         children: [
           SlidableAction(
-            onPressed: (_) async {
-              final ok = await OutboundPhoneDial.launchDial(rawPhone);
-              if (context.mounted && ok) {
-                AppFeedback.mediumImpact();
-              }
+            onPressed: (_) {
+              AppFeedback.mediumImpact();
+              startCrmOutboundCall(
+                context,
+                phone: rawPhone,
+                customerId: custId,
+                startedFromScreen: 'command_center',
+              );
             },
             backgroundColor: ext.success,
             foregroundColor: Colors.white,

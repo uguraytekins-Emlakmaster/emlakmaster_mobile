@@ -364,7 +364,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                                 ConsultantShellNav.maybeOf(
                                                     context);
                                             if (shell != null) {
-                                              shell.goToTab(1);
+                                              ConsultantShellNav.goToCallsTab(
+                                                  context);
                                             } else {
                                               ref
                                                   .read(

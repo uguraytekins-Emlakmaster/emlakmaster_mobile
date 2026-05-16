@@ -8,6 +8,9 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/application/apply_quick_call_capture.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_call_capture_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_outcome_chip_row.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/callback_enqueue_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_quick_note_snippets.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -49,8 +52,18 @@ class _PostCallQuickCaptureBodyState
   DateTime? _followUpAt;
   String? _heatBand;
   bool _saving = false;
+  bool _saved = false;
+  bool _showAdvanced = false;
   String? _lastSaveButtonLogKey;
   String? _completedMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(postCallCaptureProvider.notifier).markCaptureInProgress();
+    });
+  }
 
   @override
   void dispose() {
@@ -133,6 +146,7 @@ class _PostCallQuickCaptureBodyState
         );
         return;
       }
+      _saved = true;
       AppFeedback.mediumImpact();
       var okMessage = result.taskCreated
           ? 'Çağrı kaydı ve takip görevi kaydedildi.'
@@ -205,6 +219,18 @@ class _PostCallQuickCaptureBodyState
     }
   }
 
+  Future<void> _onFastOutcome(String code) async {
+    if (_saving) return;
+    setState(() {
+      _outcomeCode = code;
+      if (code == QuickCallOutcome.callbackScheduled) {
+        _followUpAt = DateTime.now().add(const Duration(minutes: 15));
+        _createTask = true;
+      }
+    });
+    await _save();
+  }
+
   Future<void> _onSavePressed() async {
     AppLogger.forensic(
       'quick_capture_sheet: onPressed first line '
@@ -257,7 +283,13 @@ class _PostCallQuickCaptureBodyState
       );
     }
 
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop && !_saved && !_saving) {
+          ref.read(postCallCaptureProvider.notifier).markCaptureAbandoned();
+        }
+      },
+      child: Padding(
       padding: EdgeInsets.fromLTRB(
         DesignTokens.space5,
         DesignTokens.space2,
@@ -377,41 +409,52 @@ class _PostCallQuickCaptureBodyState
                   ),
               ],
             ),
-            const SizedBox(height: DesignTokens.space5),
+            const SizedBox(height: DesignTokens.space4),
             Text(
-              'Sonuç',
+              'Sonuç — dokunun, kaydedilsin',
               style: AppTypography.cardHeading(context)
-                  .copyWith(color: ext.textSecondary),
+                  .copyWith(color: ext.textSecondary, fontSize: 14),
             ),
-            const SizedBox(height: DesignTokens.sectionTitleGap),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final width = (constraints.maxWidth - DesignTokens.space2) / 2;
-                return Wrap(
+            const SizedBox(height: DesignTokens.space2),
+            CallOutcomeChipRow(
+              selectedCode: _outcomeCode,
+              saving: _saving,
+              onSelected: (c) => setState(() => _outcomeCode = c),
+              onFastSave: _onFastOutcome,
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => setState(() => _showAdvanced = !_showAdvanced),
+                child: Text(
+                  _showAdvanced ? 'Gelişmiş alanları gizle' : 'Not / takip / sıcaklık',
+                  style: TextStyle(color: ext.textSecondary, fontSize: 13),
+                ),
+              ),
+            ),
+            if (_outcomeCode == QuickCallOutcome.callbackScheduled) ...[
+              const SizedBox(height: DesignTokens.space2),
+              Consumer(
+                builder: (context, ref, _) => Wrap(
                   spacing: DesignTokens.space2,
-                  runSpacing: DesignTokens.space2,
                   children: [
-                    for (final o in QuickCallOutcome.choices)
-                      SizedBox(
-                        width: width,
-                        child: _OutcomeOptionCard(
-                          item: o,
-                          selected: _outcomeCode == o.code,
-                          onTap: () => setState(() => _outcomeCode = o.code),
-                        ),
+                    ActionChip(
+                      label: const Text('Kuyruğa ekle'),
+                      onPressed: () => showCallbackEnqueueSheet(
+                        context,
+                        ref,
+                        phone: widget.draft.phone,
+                        customerId: widget.draft.customerId,
+                        source: 'post_call_capture',
                       ),
+                    ),
                   ],
-                );
-              },
-            ),
-            if (_outcomeCode != null) ...[
-              const SizedBox(height: DesignTokens.space3),
-              Text(
-                _outcomeHint(_outcomeCode!),
-                style: AppTypography.body(context),
+                ),
               ),
             ],
-            const SizedBox(height: DesignTokens.space4),
+            if (_showAdvanced) ...[
+            const SizedBox(height: DesignTokens.space3),
             TextField(
               controller: _noteCtrl,
               maxLines: 2,
@@ -491,6 +534,7 @@ class _PostCallQuickCaptureBodyState
                   : null,
               onTap: _pickDate,
             ),
+            ],
             const SizedBox(height: DesignTokens.space3),
             Row(
               children: [
@@ -567,100 +611,7 @@ class _PostCallQuickCaptureBodyState
           ],
         ),
       ),
-    );
-  }
-}
-
-String _outcomeHint(String code) {
-  switch (code) {
-    case QuickCallOutcome.reached:
-      return 'Müşteriyle temas kuruldu. Kısa not ve sıcaklık seçimiyle kaydı tamamlayabilirsin.';
-    case QuickCallOutcome.noAnswer:
-      return 'Müşteriye ulaşılamadı. İstersen hemen bir takip görevi planlayabilirsin.';
-    case QuickCallOutcome.busy:
-      return 'Müşteri meşguldü. Uygun bir takip tarihi seçmek iyi olur.';
-    case QuickCallOutcome.callbackScheduled:
-      return 'Geri dönüş planlandı. Takip tarihi ekleyerek akışı netleştirebilirsin.';
-    case QuickCallOutcome.appointmentSet:
-      return 'Randevu oluşturuldu. Bu kayıt müşteri akışını güçlendirecek.';
-    case QuickCallOutcome.offerSent:
-      return 'Teklif paylaşıldı. Not düşerek satış bağlamını koruyabilirsin.';
-    default:
-      return 'Çağrı sonucunu kaydettiğinde CRM akışı hemen güncellenir.';
-  }
-}
-
-IconData _outcomeIcon(String code) {
-  switch (code) {
-    case QuickCallOutcome.reached:
-      return Icons.check_circle_rounded;
-    case QuickCallOutcome.noAnswer:
-      return Icons.phone_missed_rounded;
-    case QuickCallOutcome.busy:
-      return Icons.do_not_disturb_on_total_silence_rounded;
-    case QuickCallOutcome.callbackScheduled:
-      return Icons.schedule_rounded;
-    case QuickCallOutcome.appointmentSet:
-      return Icons.event_available_rounded;
-    case QuickCallOutcome.offerSent:
-      return Icons.description_rounded;
-    default:
-      return Icons.call_rounded;
-  }
-}
-
-class _OutcomeOptionCard extends StatelessWidget {
-  const _OutcomeOptionCard({
-    required this.item,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final QuickCallOutcomeItem item;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Material(
-      color:
-          selected ? ext.accent.withValues(alpha: 0.14) : ext.surfaceElevated,
-      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        child: Container(
-          padding: const EdgeInsets.all(DesignTokens.space3),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            border: Border.all(
-              color: selected
-                  ? ext.accent.withValues(alpha: 0.45)
-                  : ext.border.withValues(alpha: 0.45),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _outcomeIcon(item.code),
-                size: DesignTokens.iconMd,
-                color: selected ? ext.accent : ext.textSecondary,
-              ),
-              const SizedBox(width: DesignTokens.space2),
-              Expanded(
-                child: Text(
-                  item.labelTr,
-                  style: AppTypography.bodyStrong(context).copyWith(
-                    color: selected ? ext.textPrimary : ext.textSecondary,
-                    fontSize: DesignTokens.fontSizeBase,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    ),
     );
   }
 }

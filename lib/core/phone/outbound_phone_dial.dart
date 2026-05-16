@@ -167,6 +167,9 @@ class OutboundPhoneDial {
   static String normalizeTelDigits(String raw) => digitsOnly(raw);
 
   /// Sistem telefon uygulamasını açar. [raw] önce [isLikelyCallablePhone] ile doğrulanmalıdır.
+  ///
+  /// CRM aramaları için [startCrmOutboundCall] kullanın (handoff + taslak).
+  /// Bu metot yalnızca handoff içi `tel:` devri veya kasıtlı rehber araması içindir.
   static Future<bool> launchDial(String raw) async {
     if (!isLikelyCallablePhone(raw)) return false;
     final uri = Uri.parse('tel:${normalizeTelDigits(raw)}');

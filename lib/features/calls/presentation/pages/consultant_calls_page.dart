@@ -40,7 +40,10 @@ import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surfac
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/callback_queue_strip.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
+import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
@@ -997,6 +1000,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               ),
               _consultantIntelligenceRow(
                   context, stats, ext, fg, textSecondary),
+              const CallbackQueueStrip(),
               _consultantQuickFilterStrip(ext),
               if (_quickFilter == CallSurfaceQuickFilter.callback &&
                   visibleTotal > 0)
@@ -1068,6 +1072,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         outcome: r.outcome,
                         followUpReminderAtMs: r.followUpReminderAtMs,
                       );
+                      final localConfidence = CallConfidenceLabels.resolveForRecord(
+                        startedFromScreen: r.startedFromScreen,
+                        outcome: r.outcome,
+                        memoryHint: localMemory,
+                      );
                       return Slidable(
                         key: ValueKey('sl_local_${r.id}'),
                         startActionPane: ActionPane(
@@ -1075,14 +1084,16 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           extentRatio: 0.22,
                           children: [
                             SlidableAction(
-                              onPressed: (_) async {
+                              onPressed: (_) {
                                 if (OutboundPhoneDial.isLikelyCallablePhone(
                                     r.phoneNumber)) {
-                                  final ok = await OutboundPhoneDial.launchDial(
-                                      r.phoneNumber);
-                                  if (context.mounted && ok) {
-                                    AppFeedback.mediumImpact();
-                                  }
+                                  AppFeedback.mediumImpact();
+                                  startCrmOutboundCall(
+                                    context,
+                                    phone: r.phoneNumber,
+                                    customerId: r.customerId,
+                                    startedFromScreen: 'consultant_calls',
+                                  );
                                 }
                               },
                               backgroundColor:
@@ -1132,6 +1143,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           cardRhythm: localRhythm,
                           showPriorityRail: localRail,
                           memoryHint: localMemory,
+                          confidenceKind: localConfidence,
                           rawPhone: r.phoneNumber,
                           customerId: r.customerId,
                           firestoreDocId: r.firestoreDocumentId,
@@ -1257,6 +1269,13 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       data,
                       notePreview: note,
                     );
+                    final confidenceKind = CallConfidenceLabels.resolveForRecord(
+                      startedFromScreen: data['startedFromScreen'] as String?,
+                      outcome: (data['outcome'] as String?) ??
+                          (data['callOutcome'] as String?),
+                      quickOutcomeCode: data['quickOutcomeCode'] as String?,
+                      memoryHint: memoryHint,
+                    );
 
                     return Slidable(
                       key: ValueKey('sl_fs_$id'),
@@ -1265,14 +1284,16 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         extentRatio: 0.22,
                         children: [
                           SlidableAction(
-                            onPressed: (_) async {
+                            onPressed: (_) {
                               if (OutboundPhoneDial.isLikelyCallablePhone(
                                   rawPhone)) {
-                                final ok =
-                                    await OutboundPhoneDial.launchDial(rawPhone);
-                                if (context.mounted && ok) {
-                                  AppFeedback.mediumImpact();
-                                }
+                                AppFeedback.mediumImpact();
+                                startCrmOutboundCall(
+                                  context,
+                                  phone: rawPhone,
+                                  customerId: customerId,
+                                  startedFromScreen: 'consultant_calls',
+                                );
                               }
                             },
                             backgroundColor:
@@ -1326,6 +1347,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         cardRhythm: cardRhythm,
                         showPriorityRail: showPriorityRail,
                         memoryHint: memoryHint,
+                        confidenceKind: confidenceKind,
                         rawPhone: rawPhone,
                         customerId: customerId,
                         firestoreDocId: id,
@@ -1423,6 +1445,7 @@ class _LocalCallRecordCard extends StatelessWidget {
     required this.cardRhythm,
     required this.showPriorityRail,
     this.memoryHint,
+    this.confidenceKind,
     required this.rawPhone,
     this.customerId,
     this.firestoreDocId,
@@ -1443,6 +1466,7 @@ class _LocalCallRecordCard extends StatelessWidget {
   final CallSurfaceCardRhythm cardRhythm;
   final bool showPriorityRail;
   final String? memoryHint;
+  final CallConfidenceKind? confidenceKind;
   final String rawPhone;
   final String? customerId;
   final String? firestoreDocId;
@@ -1473,6 +1497,7 @@ class _LocalCallRecordCard extends StatelessWidget {
         identityFootnote: identityFootnote,
         contextualInsight: contextualInsight,
         memoryHint: memoryHint,
+        confidenceKind: confidenceKind,
         onOpenCustomerCard: cid != null && cid.isNotEmpty
             ? () => context.push('/customer/$cid')
             : null,
@@ -1489,7 +1514,13 @@ class _LocalCallRecordCard extends StatelessWidget {
             : null,
         onIdentityLongPress: callable
             ? () {
-                unawaited(OutboundPhoneDial.launchDial(rawPhone));
+                AppFeedback.mediumImpact();
+                startCrmOutboundCall(
+                  context,
+                  phone: rawPhone,
+                  customerId: customerId,
+                  startedFromScreen: 'consultant_calls',
+                );
               }
             : null,
         leading: Container(
@@ -1528,6 +1559,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     required this.cardRhythm,
     required this.showPriorityRail,
     this.memoryHint,
+    this.confidenceKind,
     required this.rawPhone,
     this.customerId,
     this.firestoreDocId,
@@ -1553,6 +1585,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
   final CallSurfaceCardRhythm cardRhythm;
   final bool showPriorityRail;
   final String? memoryHint;
+  final CallConfidenceKind? confidenceKind;
   final String rawPhone;
   final String? customerId;
   final String? firestoreDocId;
@@ -1587,7 +1620,13 @@ class _FirestoreCallRecordCard extends StatelessWidget {
               TextButton.icon(
                 style: actionStyle,
                 onPressed: () {
-                  unawaited(OutboundPhoneDial.launchDial(rawPhone));
+                  AppFeedback.mediumImpact();
+                  startCrmOutboundCall(
+                    context,
+                    phone: rawPhone,
+                    customerId: customerId,
+                    startedFromScreen: 'consultant_calls',
+                  );
                 },
                 icon: Icon(Icons.call_rounded, size: 17, color: ext.accent),
                 label: Text(
@@ -1676,6 +1715,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                   identityFootnote: identityFootnote,
                   contextualInsight: contextualInsight,
                   memoryHint: memoryHint,
+                  confidenceKind: confidenceKind,
                   onOpenCustomerCard: cid != null && cid.isNotEmpty
                       ? () => context.push('/customer/$cid')
                       : null,
@@ -1692,7 +1732,13 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                       : null,
                   onIdentityLongPress: callable
                       ? () {
-                          unawaited(OutboundPhoneDial.launchDial(rawPhone));
+                          AppFeedback.mediumImpact();
+                          startCrmOutboundCall(
+                            context,
+                            phone: rawPhone,
+                            customerId: customerId,
+                            startedFromScreen: 'consultant_calls',
+                          );
                         }
                       : null,
                   belowChipsRow: belowChips,

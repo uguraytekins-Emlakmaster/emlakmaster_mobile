@@ -8,9 +8,12 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/pages/command_center_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/features/war_room/presentation/pages/war_room_page.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_return_prompt_host.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_draft_recovery_card.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:emlakmaster_mobile/screens/admin_pages.dart';
 import 'package:flutter/foundation.dart';
@@ -20,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Yönetici paneli: tam yetki. Nav öğeleri ayarlardaki özellik bayraklarına göre gösterilir.
 enum _AdminShellTab {
   dashboard,
+  messages,
   warRoom,
   commandCenter,
   economy,
@@ -65,6 +69,14 @@ class AdminShellPage extends ConsumerWidget {
             AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.managerHome),
         page: DashboardPage(),
       ),
+      const _AdminShellTabEntry(
+        id: _AdminShellTab.messages,
+        navItem: AdaptiveNavItem(
+          Icons.forum_rounded,
+          ProductLabels.messageCenter,
+        ),
+        page: MessageCenterPage(),
+      ),
       if (warRoom)
         const _AdminShellTabEntry(
           id: _AdminShellTab.warRoom,
@@ -108,6 +120,8 @@ class AdminShellPage extends ConsumerWidget {
     final tabIds = entries.map((entry) => entry.id).toList(growable: false);
     final settingsIndex =
         tabIds.indexOf(_AdminShellTab.settings).clamp(0, tabIds.length - 1);
+    final messagesIndex =
+        tabIds.indexOf(_AdminShellTab.messages).clamp(0, tabIds.length - 1);
     assert(
       navItems.length == pages.length,
       'AdminShell: navItems (${navItems.length}) and pages (${pages.length}) must stay in sync',
@@ -124,6 +138,8 @@ class AdminShellPage extends ConsumerWidget {
     return Column(
       children: [
         const SyncStatusBanner(compact: true),
+        const CallReturnPromptHost(),
+        const PostCallDraftRecoveryCard(),
         const PostCallCaptureShellStrip(),
         Expanded(
           child: AdaptiveShellScaffold(
@@ -133,6 +149,7 @@ class AdminShellPage extends ConsumerWidget {
             title: ProductLabels.managerWorkspace,
             shortcutMap: {
               MainShellShortcut.openHomeTab: 0,
+              MainShellShortcut.openMessageCenterTab: messagesIndex,
               MainShellShortcut.openAccountTab: settingsIndex,
             },
           ),

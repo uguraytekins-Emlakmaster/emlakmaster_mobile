@@ -1,4 +1,9 @@
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
+import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/callback_enqueue_sheet.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_confidence_badge.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -87,6 +92,21 @@ Future<void> showCallIdentityQuickActionsSheet(
               const SizedBox(height: DesignTokens.space2),
               Text(
                 'Müşteri kartına bağlı — özet ve geçmiş için kartı açın.',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: ext.textTertiary,
+                  fontWeight: FontWeight.w500,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space2),
+              CallConfidenceBadge(
+                kind: CallConfidenceKind.emlakMasterOriginated,
+                compact: true,
+              ),
+            ] else ...[
+              const SizedBox(height: DesignTokens.space2),
+              Text(
+                'Bilinmeyen numara — CRM\'de arayın veya müşteriye bağlayın.',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: ext.textTertiary,
                   fontWeight: FontWeight.w500,
@@ -205,8 +225,23 @@ Future<void> showCallIdentityQuickActionsSheet(
             const SizedBox(height: DesignTokens.space4),
             _SheetTile(
               icon: Icons.call_rounded,
-              label: 'Ara',
+              label: 'CRM\'de Ara',
               color: ext.success,
+              onTap: () {
+                Navigator.pop(ctx);
+                startCrmOutboundCall(
+                  anchor,
+                  phone: rawPhone,
+                  customerId: cid,
+                  startedFromScreen: 'call_action_sheet',
+                );
+              },
+            ),
+            // Rehberde Ara: kasıtlı ham tel: — CRM handoff taslağı oluşturmaz.
+            _SheetTile(
+              icon: Icons.phone_in_talk_outlined,
+              label: 'Rehberde Ara',
+              color: ext.textSecondary,
               onTap: () async {
                 Navigator.pop(ctx);
                 final ok = await OutboundPhoneDial.launchDial(rawPhone);
@@ -217,11 +252,30 @@ Future<void> showCallIdentityQuickActionsSheet(
                 } else if (ok && anchor.mounted) {
                   showCallsSurfaceAck(
                     anchor,
-                    'Arama başlatıldı',
-                    icon: Icons.call_rounded,
+                    'Rehber araması — CRM kaydı otomatik açılmaz',
+                    icon: Icons.phone_in_talk_outlined,
                   );
                 }
               },
+            ),
+            Consumer(
+              builder: (context, ref, _) => _SheetTile(
+                icon: Icons.schedule_rounded,
+                label: 'Geri arama kuyruğu',
+                color: ext.warning,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  if (!anchor.mounted) return;
+                  showCallbackEnqueueSheet(
+                    anchor,
+                    ref,
+                    phone: rawPhone,
+                    customerId: cid,
+                    displayName: label ?? '',
+                    source: 'call_action_sheet',
+                  );
+                },
+              ),
             ),
             _SheetTile(
               icon: Icons.sms_rounded,
@@ -274,10 +328,19 @@ Future<void> showCallIdentityQuickActionsSheet(
                   ctx.push('/customer/$cid');
                 },
               ),
-            if (!hasCustomer)
+            if (!hasCustomer) ...[
+              _SheetTile(
+                icon: Icons.link_rounded,
+                label: 'Müşteriye bağla',
+                color: ext.accent,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onOpenCustomerDirectory?.call();
+                },
+              ),
               _SheetTile(
                 icon: Icons.person_add_alt_1_rounded,
-                label: 'Portföye kaydet',
+                label: 'Yeni müşteri oluştur',
                 color: ext.accent,
                 onTap: () {
                   Navigator.pop(ctx);
@@ -289,6 +352,7 @@ Future<void> showCallIdentityQuickActionsSheet(
                   );
                 },
               ),
+            ],
             _SheetTile(
               icon: Icons.edit_note_rounded,
               label: 'Görüşme özeti / not',

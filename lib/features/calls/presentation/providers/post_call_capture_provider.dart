@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/features/calls/data/pending_handoff_outbound_
 import 'package:emlakmaster_mobile/features/calls/data/pending_handoff_outbound_queue.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_store.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/call_session_reliability.dart';
 import 'package:emlakmaster_mobile/features/calls/services/call_record_sync_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -132,9 +133,70 @@ class PostCallCaptureNotifier extends StateNotifier<PostCallCaptureDraft?> {
       state = null;
       return;
     }
-    state = await PostCallCaptureStore.load(uid);
+    var loaded = await PostCallCaptureStore.load(uid);
+    if (loaded != null && CallSessionReliability.isDraftStale(loaded.createdAtMs)) {
+      await PostCallCaptureStore.clear(uid);
+      loaded = null;
+    }
+    state = loaded;
     unawaited(flushPendingOutboundQueue());
     _scheduleFallbackIfNeeded(state);
+  }
+
+  bool get shouldOfferReturnPrompt {
+    final d = state;
+    if (d == null) return false;
+    return CallSessionReliability.shouldOfferReturnPrompt(
+      createdAtMs: d.createdAtMs,
+      startedFromScreen: d.startedFromScreen,
+      returnPromptShown: d.returnPromptShown,
+      captureCompleted: false,
+    );
+  }
+
+  bool get shouldShowRecoveryCard {
+    final d = state;
+    if (d == null) return false;
+    if (d.recoveryDismissed || !d.captureAbandoned) return false;
+    if (CallSessionReliability.isDraftStale(d.createdAtMs)) return false;
+    return true;
+  }
+
+  Future<void> markReturnPromptShown() async {
+    final d = state;
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+    if (d == null || uid.isEmpty) return;
+    final next = d.copyWith(returnPromptShown: true);
+    await PostCallCaptureStore.save(uid, next);
+    state = next;
+  }
+
+  Future<void> markCaptureInProgress() async {
+    final d = state;
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+    if (d == null || uid.isEmpty) return;
+    if (!d.captureAbandoned) return;
+    final next = d.copyWith(captureAbandoned: false);
+    await PostCallCaptureStore.save(uid, next);
+    state = next;
+  }
+
+  Future<void> markCaptureAbandoned() async {
+    final d = state;
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+    if (d == null || uid.isEmpty) return;
+    final next = d.copyWith(captureAbandoned: true);
+    await PostCallCaptureStore.save(uid, next);
+    state = next;
+  }
+
+  Future<void> dismissRecovery() async {
+    final d = state;
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+    if (d == null || uid.isEmpty) return;
+    final next = d.copyWith(recoveryDismissed: true);
+    await PostCallCaptureStore.save(uid, next);
+    state = next;
   }
 
   void _scheduleFallbackIfNeeded(PostCallCaptureDraft? d) {

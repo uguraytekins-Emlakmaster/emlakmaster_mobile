@@ -2,7 +2,9 @@ import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_return_prompt_host.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_draft_recovery_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/pages/consultant_calls_page.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/pages/customer_list_page.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
@@ -11,10 +13,11 @@ import 'package:emlakmaster_mobile/screens/consultant_resurrection_page.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/pages/tasks_page.dart';
 import 'package:emlakmaster_mobile/screens/listings_screen.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 
-/// Danışman paneli: özetim, müşteriler, ilanlar, takip, görevler, ayarlar.
+/// Danışman paneli: özetim, mesajlar, çağrılar, müşteriler, ilanlar, takip, görevler, ayarlar.
 /// Web/Desktop: sidebar; Mobile: bottom nav. Akıllı Görüşme: Günüm üzerindeki birincil aksiyon bloğu.
 class ConsultantShellPage extends StatefulWidget {
   const ConsultantShellPage({super.key});
@@ -24,6 +27,7 @@ class ConsultantShellPage extends StatefulWidget {
 
   static const List<AdaptiveNavItem> _navItems = [
     AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.consultantHome),
+    AdaptiveNavItem(Icons.forum_rounded, ProductLabels.messageCenter),
     AdaptiveNavItem(Icons.call_rounded, ProductLabels.myCalls),
     AdaptiveNavItem(Icons.people_rounded, ProductLabels.myCustomers),
     AdaptiveNavItem(Icons.home_work_rounded, ProductLabels.listings),
@@ -34,6 +38,7 @@ class ConsultantShellPage extends StatefulWidget {
 
   static const List<Widget> _pages = [
     ConsultantDashboardPage(),
+    MessageCenterPage(),
     ConsultantCallsPage(),
     CustomerListPage(),
     ListingsPage(),
@@ -44,6 +49,7 @@ class ConsultantShellPage extends StatefulWidget {
 
   static const List<Object> _tabIds = [
     'summary',
+    'messages',
     'calls',
     'customers',
     'listings',
@@ -67,6 +73,8 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
       child: Column(
         children: [
           const SyncStatusBanner(compact: true),
+          const CallReturnPromptHost(),
+          const PostCallDraftRecoveryCard(),
           const PostCallCaptureShellStrip(),
           Expanded(
             child: AdaptiveShellScaffold(
@@ -77,12 +85,13 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
               title: ProductLabels.consultantWorkspace,
               shortcutMap: const {
                 MainShellShortcut.openHomeTab: 0,
-                MainShellShortcut.openCallsTab: 1,
-                MainShellShortcut.openCustomersTab: 2,
-                MainShellShortcut.openListingsTab: 3,
-                MainShellShortcut.openFollowUpTab: 4,
-                MainShellShortcut.openTasksTab: 5,
-                MainShellShortcut.openAccountTab: 6,
+                MainShellShortcut.openMessageCenterTab: 1,
+                MainShellShortcut.openCallsTab: 2,
+                MainShellShortcut.openCustomersTab: 3,
+                MainShellShortcut.openListingsTab: 4,
+                MainShellShortcut.openFollowUpTab: 5,
+                MainShellShortcut.openTasksTab: 6,
+                MainShellShortcut.openAccountTab: 7,
               },
             ),
           ),

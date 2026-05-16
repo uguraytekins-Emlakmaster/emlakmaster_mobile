@@ -22,6 +22,8 @@ import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/providers/revenue_engine_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/callback_queue_item.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/callback_queue_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_call_capture_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -357,6 +359,22 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     localId: effective.localRecordId,
     clearPendingCapture: true,
   );
+  if (outcomeCode == QuickCallOutcome.callbackScheduled) {
+    final due =
+        followUpReminderAt ?? DateTime.now().add(const Duration(minutes: 15));
+    final now = DateTime.now();
+    await ref.read(callbackQueueProvider.notifier).enqueue(
+          CallbackQueueItem(
+            id: '${now.millisecondsSinceEpoch}_${effective.phone.hashCode}',
+            phone: effective.phone,
+            customerId: cid,
+            note: trimmed ?? '',
+            dueAtMs: due.millisecondsSinceEpoch,
+            createdAtMs: now.millisecondsSinceEpoch,
+          ),
+        );
+  }
+
   await ref.read(postCallCaptureProvider.notifier).clear();
   AppLogger.forensic('quick_capture: provider invalidate start');
   ref.invalidate(localCallRecordsStreamProvider);

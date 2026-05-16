@@ -8,15 +8,28 @@ abstract final class QuickCallOutcome {
   static const String callbackScheduled = 'callback_scheduled';
   static const String appointmentSet = 'appointment_set';
   static const String offerSent = 'offer_sent';
+  static const String priceDiscussed = 'price_discussed';
+  static const String sellerIntent = 'seller_intent';
+  static const String buyerIntent = 'buyer_intent';
+  static const String undecided = 'undecided';
   /// Otomatik minimum kayıt (CRM oturumu yok, kullanıcı henüz hızlı kayıt yapmadı).
   static const String noCaptureYet = 'no_capture';
 
-  static const List<QuickCallOutcomeItem> choices = [
+  /// Hızlı kayıt çipi sırası — tek dokunuş odaklı.
+  static const List<QuickCallOutcomeItem> fastChips = [
     QuickCallOutcomeItem(reached, 'Ulaşıldı'),
-    QuickCallOutcomeItem(noAnswer, 'Cevap yok'),
+    QuickCallOutcomeItem(noAnswer, 'Ulaşılamadı'),
+    QuickCallOutcomeItem(callbackScheduled, 'Tekrar Ara'),
+    QuickCallOutcomeItem(appointmentSet, 'Randevu'),
+    QuickCallOutcomeItem(priceDiscussed, 'Fiyat Konuşuldu'),
+    QuickCallOutcomeItem(sellerIntent, 'Satıcı'),
+    QuickCallOutcomeItem(buyerIntent, 'Alıcı'),
+    QuickCallOutcomeItem(undecided, 'Kararsız'),
+  ];
+
+  static const List<QuickCallOutcomeItem> choices = [
+    ...fastChips,
     QuickCallOutcomeItem(busy, 'Meşgul'),
-    QuickCallOutcomeItem(callbackScheduled, 'Tekrar aranacak'),
-    QuickCallOutcomeItem(appointmentSet, 'Randevu oluşturuldu'),
     QuickCallOutcomeItem(offerSent, 'Teklif verildi'),
   ];
 
