@@ -40,6 +40,8 @@ class OnboardingSlideVisual extends StatelessWidget {
   Widget _buildMock(BuildContext context) {
     return switch (kind) {
       OnboardingVisualKind.welcome => _WelcomePreview(accent: accent),
+      OnboardingVisualKind.multiPlatform =>
+        _PlatformsPreview(accent: accent),
       OnboardingVisualKind.managerWorkspace =>
         _ShellNavPreview.manager(accent: accent),
       OnboardingVisualKind.consultantWorkspace =>
@@ -116,43 +118,61 @@ class _OnboardingAssetLayerState extends State<_OnboardingAssetLayer> {
     }
 
     final ext = AppThemeExtension.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          flex: 7,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  path,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        ext.background.withValues(alpha: 0.55),
-                      ],
-                    ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenshot = ClipRRect(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                path,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      ext.background.withValues(alpha: 0.55),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          flex: 4,
-          child: Opacity(opacity: 0.92, child: widget.mock),
-        ),
-      ],
+        );
+
+        // Dar alanda yalnızca ekran görüntüsü; geniş alanda mock şeridi.
+        if (constraints.maxHeight < 300) {
+          return screenshot;
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(flex: 7, child: screenshot),
+            const SizedBox(height: 8),
+            Expanded(
+              flex: 4,
+              child: ClipRect(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: 280,
+                    height: 220,
+                    child: Opacity(opacity: 0.92, child: widget.mock),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -203,7 +223,19 @@ class _OnboardingDeviceFrame extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radius2xl - 2),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: child,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: constraints.maxWidth > 0 ? constraints.maxWidth : 280,
+                  height: 280,
+                  child: child,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -219,21 +251,22 @@ class _WelcomePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         _MockStatusBar(accent: accent),
-        const SizedBox(height: DesignTokens.space4),
-        const BrandEmblem(variant: BrandEmblemVariant.mini, size: 56),
         const SizedBox(height: DesignTokens.space3),
+        const BrandEmblem(variant: BrandEmblemVariant.mini, size: 48),
+        const SizedBox(height: DesignTokens.space2),
         Text(
           'EmlakMaster',
           style: TextStyle(
             color: ext.textPrimary,
             fontWeight: FontWeight.w800,
-            fontSize: 18,
+            fontSize: 16,
             letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: DesignTokens.space4),
+        const SizedBox(height: DesignTokens.space3),
         IgnorePointer(
           child: AuthEntryPersonaSelector(
             selected: LoginEntryPersona.manager,
@@ -241,9 +274,141 @@ class _WelcomePreview extends StatelessWidget {
             compact: true,
           ),
         ),
-        const Spacer(),
+        const SizedBox(height: DesignTokens.space3),
         _MockPrimaryButton(label: 'Giriş yap', accent: accent),
-        const SizedBox(height: DesignTokens.space2),
+      ],
+    );
+  }
+}
+
+class _PlatformsPreview extends StatelessWidget {
+  const _PlatformsPreview({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Column(
+      children: [
+        _MockStatusBar(accent: accent),
+        const SizedBox(height: DesignTokens.space5),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxH = constraints.maxHeight.isFinite
+                  ? constraints.maxHeight
+                  : 120.0;
+              final phoneH = (maxH * 0.72).clamp(44.0, 72.0);
+              final tabletH = (maxH * 0.85).clamp(52.0, 84.0);
+              final macH = (maxH * 0.62).clamp(40.0, 64.0);
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _PlatformDeviceTile(
+                    icon: Icons.phone_iphone_rounded,
+                    label: 'iOS',
+                    height: phoneH,
+                    accent: accent,
+                    ext: ext,
+                  ),
+                  const SizedBox(width: 10),
+                  _PlatformDeviceTile(
+                    icon: Icons.tablet_mac_rounded,
+                    label: 'iPad',
+                    height: tabletH,
+                    accent: accent,
+                    ext: ext,
+                  ),
+                  const SizedBox(width: 10),
+                  _PlatformDeviceTile(
+                    icon: Icons.laptop_mac_rounded,
+                    label: 'macOS',
+                    height: macH,
+                    accent: accent,
+                    ext: ext,
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
+            border: Border.all(color: accent.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.sync_rounded, size: 14, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                'Senkron',
+                style: TextStyle(
+                  color: ext.textPrimary,
+                  fontSize: DesignTokens.fontSizeXs,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: DesignTokens.space3),
+      ],
+    );
+  }
+}
+
+class _PlatformDeviceTile extends StatelessWidget {
+  const _PlatformDeviceTile({
+    required this.icon,
+    required this.label,
+    required this.height,
+    required this.accent,
+    required this.ext,
+  });
+
+  final IconData icon;
+  final String label;
+  final double height;
+  final Color accent;
+  final AppThemeExtension ext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 52,
+          height: height,
+          decoration: BoxDecoration(
+            color: ext.surfaceElevated,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: accent.withValues(alpha: 0.35)),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.12),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: accent, size: 26),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: TextStyle(
+            color: ext.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }

@@ -4,10 +4,12 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/services/login_entry_store.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/widgets/auth_entry_persona_selector.dart';
+import 'package:emlakmaster_mobile/features/onboarding/domain/onboarding_copy.dart';
 import 'package:emlakmaster_mobile/features/onboarding/domain/onboarding_slide_model.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/widgets/onboarding_ui_mockups.dart';
 import 'package:flutter/material.dart';
@@ -16,27 +18,33 @@ import 'package:go_router/go_router.dart';
 
 /// İlk açılış tanıtımı — ürün panelleri ve özelliklerini vurgular.
 class OnboardingPage extends StatefulWidget {
-  const OnboardingPage({super.key});
+  const OnboardingPage({super.key, this.initialPage = 0});
+
+  /// Test veya derin link ile belirli slayttan başlatma.
+  final int initialPage;
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
 }
 
 class _OnboardingPageState extends State<OnboardingPage> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
+  late final PageController _pageController;
+  late int _currentPage;
   LoginEntryPersona? _persona;
   String? _personaHint;
 
-  static const _slides = kOnboardingSlides;
+  List<OnboardingSlideModel> _slides(BuildContext context) =>
+      buildOnboardingSlides(AppLocalizations.of(context));
 
   @override
   void initState() {
     super.initState();
+    _currentPage = widget.initialPage;
+    _pageController = PageController(initialPage: widget.initialPage);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAlreadyCompleted();
       _loadPersona();
-      _logSlideView(0);
+      _logSlideView(_currentPage);
     });
   }
 
@@ -55,8 +63,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _logSlideView(int index) {
-    if (index < 0 || index >= _slides.length) return;
-    final slide = _slides[index];
+    if (!mounted) return;
+    final slides = _slides(context);
+    if (index < 0 || index >= slides.length) return;
+    final slide = slides[index];
     AnalyticsService.instance.logEvent(
       AnalyticsEvents.onboardingSlideView,
       {
@@ -68,11 +78,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   Future<void> _complete({required bool skipped}) async {
     if (!skipped && _persona == null) {
+      final l10n = AppLocalizations.of(context);
       setState(() {
-        _personaHint = 'Devam etmek için Yönetici veya Danışman seçin.';
+        _personaHint = l10n.t('onboarding_persona_required');
       });
       return;
     }
+
+    final slides = _slides(context);
 
     if (_persona != null) {
       await LoginEntryStore.instance.setPersona(_persona!);
@@ -86,7 +99,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         AnalyticsEvents.onboardingSkip,
         {
           AnalyticsEvents.paramSkippedAtIndex: _currentPage,
-          AnalyticsEvents.paramSlideId: _slides[_currentPage].analyticsId,
+          AnalyticsEvents.paramSlideId: slides[_currentPage].analyticsId,
           if (_persona != null)
             AnalyticsEvents.paramPersona: _persona!.id,
         },
@@ -96,7 +109,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         AnalyticsEvents.onboardingComplete,
         {
           AnalyticsEvents.paramSlideIndex: _currentPage,
-          AnalyticsEvents.paramSlideId: _slides[_currentPage].analyticsId,
+          AnalyticsEvents.paramSlideId: slides[_currentPage].analyticsId,
           if (_persona != null)
             AnalyticsEvents.paramPersona: _persona!.id,
         },
@@ -122,7 +135,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _onNext() {
-    final isLast = _currentPage >= _slides.length - 1;
+    final slides = _slides(context);
+    final isLast = _currentPage >= slides.length - 1;
     if (isLast) {
       _complete(skipped: false);
       return;
@@ -145,9 +159,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final slide = _slides[_currentPage];
+    final l10n = AppLocalizations.of(context);
+    final slides = _slides(context);
+    final slide = slides[_currentPage];
     final accent = _accentForSlide(slide, ext);
-    final isLast = _currentPage >= _slides.length - 1;
+    final isLast = _currentPage >= slides.length - 1;
 
     return Scaffold(
       backgroundColor: ext.background,
@@ -166,7 +182,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildTopBar(context, ext),
+              _buildTopBar(context, ext, l10n, slides.length),
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -174,9 +190,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     setState(() => _currentPage = i);
                     _logSlideView(i);
                   },
-                  itemCount: _slides.length,
+                  itemCount: slides.length,
                   itemBuilder: (context, index) {
-                    final s = _slides[index];
+                    final s = slides[index];
                     final slideAccent = _accentForSlide(s, ext);
                     return _OnboardingSlideView(
                       key: ValueKey(s.visual),
@@ -188,8 +204,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
               _buildHighlights(slide, accent, ext),
               if (isLast) _buildPersonaPicker(ext, accent),
-              _buildIndicators(ext, accent),
-              _buildButton(ext, accent, isLast),
+              _buildIndicators(ext, accent, slides.length),
+              _buildButton(ext, accent, isLast, l10n),
             ],
           ),
         ),
@@ -197,7 +213,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildTopBar(BuildContext context, AppThemeExtension ext) {
+  Widget _buildTopBar(
+    BuildContext context,
+    AppThemeExtension ext,
+    AppLocalizations l10n,
+    int slideCount,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 4, 16, 0),
       child: Row(
@@ -218,7 +239,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
             const SizedBox(width: 48),
           Expanded(
             child: Text(
-              '${_currentPage + 1} / ${_slides.length}',
+              l10n.tArgs('onboarding_page_of', [
+                '${_currentPage + 1}',
+                '$slideCount',
+              ]),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: ext.textTertiary,
@@ -234,9 +258,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
               foregroundColor: ext.textSecondary,
               padding: const EdgeInsets.symmetric(horizontal: 12),
             ),
-            child: const Text(
-              'Atla',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            child: Text(
+              l10n.t('onboarding_skip'),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -307,13 +331,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildIndicators(AppThemeExtension ext, Color accent) {
+  Widget _buildIndicators(AppThemeExtension ext, Color accent, int slideCount) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
-          _slides.length,
+          slideCount,
           (i) => AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
@@ -340,7 +364,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _buildButton(AppThemeExtension ext, Color accent, bool isLast) {
+  Widget _buildButton(
+    AppThemeExtension ext,
+    Color accent,
+    bool isLast,
+    AppLocalizations l10n,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       child: Container(
@@ -356,7 +385,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         ),
         child: Semantics(
           button: true,
-          label: isLast ? 'Tanıtımı bitir ve girişe geç' : 'Sonraki slayt',
+          label: isLast ? l10n.t('onboarding_finish') : l10n.t('onboarding_next'),
           child: FilledButton(
             onPressed: _onNext,
             style: FilledButton.styleFrom(
@@ -369,7 +398,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
             child: Text(
-              isLast ? 'Girişe geç' : 'İleri',
+              isLast ? l10n.t('onboarding_finish') : l10n.t('onboarding_next'),
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 17,

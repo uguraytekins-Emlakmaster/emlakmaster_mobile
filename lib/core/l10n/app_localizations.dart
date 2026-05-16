@@ -267,6 +267,47 @@ class AppLocalizations {
           'Davet kaydedildi; bu e-posta ile giriş yaptığında rol ve ekip atanacak.',
       'manager_updated': 'Yönetici güncellendi.',
 
+      // Onboarding
+      'onboarding_skip': 'Atla',
+      'onboarding_next': 'İleri',
+      'onboarding_finish': 'Girişe geç',
+      'onboarding_persona_required':
+          'Devam etmek için Yönetici veya Danışman seçin.',
+      'onboarding_page_of': '{0} / {1}',
+      'onboarding_welcome_title': 'EmlakMaster\'a hoş geldiniz',
+      'onboarding_welcome_subtitle':
+          'Gayrimenkul operasyonunuz tek platformda: yönetici komuta masası ve danışman saha paneli aynı ekosistemde.',
+      'onboarding_welcome_highlights':
+          'Yönetici Paneli|Danışman Paneli|Tek hesap',
+      'onboarding_platform_title': 'Her cihazda aynı hesap',
+      'onboarding_platform_subtitle':
+          'iPhone, iPad ve Mac\'te aynı oturum; ofiste masaüstü, sahada mobil akış.',
+      'onboarding_platform_highlights': 'iOS|macOS|Senkron',
+      'onboarding_manager_title': 'Yönetici: komuta ve görünürlük',
+      'onboarding_manager_subtitle':
+          'Komuta Merkezi, Komuta Odası, Çağrı Merkezi ve Raporlar ile ekibi izleyin.',
+      'onboarding_manager_highlights':
+          'Komuta Merkezi|Komuta Odası|Çağrı Merkezi|Raporlar',
+      'onboarding_consultant_title': 'Danışman: Günüm ve saha akışı',
+      'onboarding_consultant_subtitle':
+          'Günüm ile güne başlayın; müşteri, ilan, takip ve görevler tek alanda.',
+      'onboarding_consultant_highlights':
+          'Günüm|Müşterilerim|İlanlar|Takip|Görevlerim',
+      'onboarding_calls_title': 'Akıllı görüşme ve çağrılar',
+      'onboarding_calls_subtitle':
+          'Çağrılarım ve görüşme özeti; yönetici için Çağrı Merkezi.',
+      'onboarding_calls_highlights':
+          'Akıllı Görüşme|Çağrılarım|Görüşme özeti|Çağrı Merkezi',
+      'onboarding_market_title': 'Piyasa, ilan ve içgörü',
+      'onboarding_market_subtitle':
+          'İlan portföyü, bölge içgörüsü ve analitik raporlar.',
+      'onboarding_market_highlights': 'İlanlar|Bölge içgörüsü|Analitik|İçe aktarma',
+      'onboarding_office_title': 'Ofis, mesajlar ve hazırsınız',
+      'onboarding_office_subtitle':
+          'Ofis oluşturun veya katılın; Mesaj Merkezi ile ekip uyumu. Giriş türünüzü seçin.',
+      'onboarding_office_highlights':
+          'Ofis masası|Mesaj Merkezi|Senkron|Giriş türü',
+
       // Common empty / error
       'data_updating': 'Akış tazeleniyor…',
       'retry': 'Yeniden dene',
@@ -475,6 +516,47 @@ class AppLocalizations {
       'consultant_invite_saved':
           'Invite saved; role and team will be assigned when they sign in with this email.',
       'manager_updated': 'Manager updated.',
+
+      'onboarding_skip': 'Skip',
+      'onboarding_next': 'Next',
+      'onboarding_finish': 'Continue to sign in',
+      'onboarding_persona_required':
+          'Select Manager or Consultant to continue.',
+      'onboarding_page_of': '{0} / {1}',
+      'onboarding_welcome_title': 'Welcome to EmlakMaster',
+      'onboarding_welcome_subtitle':
+          'Your real estate operations in one platform: manager command center and consultant field panel in the same ecosystem.',
+      'onboarding_welcome_highlights':
+          'Manager panel|Consultant panel|One account',
+      'onboarding_platform_title': 'Same account on every device',
+      'onboarding_platform_subtitle':
+          'One session on iPhone, iPad, and Mac — desktop at the office, mobile in the field.',
+      'onboarding_platform_highlights': 'iOS|macOS|Sync',
+      'onboarding_manager_title': 'Manager: command and visibility',
+      'onboarding_manager_subtitle':
+          'Track your team with Command Center, War Room, Call Center, and Reports.',
+      'onboarding_manager_highlights':
+          'Command Center|War Room|Call Center|Reports',
+      'onboarding_consultant_title': 'Consultant: My Day and field flow',
+      'onboarding_consultant_subtitle':
+          'Start the day with My Day; customers, listings, follow-ups, and tasks in one place.',
+      'onboarding_consultant_highlights':
+          'My Day|My customers|Listings|Follow-up|My tasks',
+      'onboarding_calls_title': 'Smart calls and meetings',
+      'onboarding_calls_subtitle':
+          'My Calls and meeting summaries; Call Center for managers.',
+      'onboarding_calls_highlights':
+          'Smart meeting|My Calls|Meeting summary|Call Center',
+      'onboarding_market_title': 'Market, listings, and insight',
+      'onboarding_market_subtitle':
+          'Listing portfolio, regional insight, and analytics reports.',
+      'onboarding_market_highlights':
+          'Listings|Regional insight|Analytics|Import',
+      'onboarding_office_title': 'Office, messages, and you are set',
+      'onboarding_office_subtitle':
+          'Create or join an office; team alignment via Message Center. Choose how you sign in.',
+      'onboarding_office_highlights':
+          'Office desk|Message Center|Sync|Sign-in type',
 
       'data_updating': 'Updating data…',
       'retry': 'Retry',
