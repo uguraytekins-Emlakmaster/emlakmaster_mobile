@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/features/onboarding/domain/onboarding_slide_model.dart';
+import 'package:flutter/material.dart';
 
 /// Tanıtım slaytları — metinler [AppLocalizations] üzerinden (TR/EN + diğer dillerde EN yedeği).
 List<OnboardingSlideModel> buildOnboardingSlides(AppLocalizations l10n) {
@@ -24,7 +25,7 @@ List<OnboardingSlideModel> buildOnboardingSlides(AppLocalizations l10n) {
       subtitle: l10n.t('onboarding_manager_subtitle'),
       highlights: _split(l10n.t('onboarding_manager_highlights')),
       visual: OnboardingVisualKind.managerWorkspace,
-      assetPath: 'assets/onboarding/manager_command.png',
+      accent: const Color(0xFFD4AF37),
     ),
     OnboardingSlideModel(
       analyticsId: 'consultant_workspace',
@@ -32,7 +33,7 @@ List<OnboardingSlideModel> buildOnboardingSlides(AppLocalizations l10n) {
       subtitle: l10n.t('onboarding_consultant_subtitle'),
       highlights: _split(l10n.t('onboarding_consultant_highlights')),
       visual: OnboardingVisualKind.consultantWorkspace,
-      assetPath: 'assets/onboarding/consultant_gunum.png',
+      accent: const Color(0xFF5B9BD5),
     ),
     OnboardingSlideModel(
       analyticsId: 'calls_meetings',
@@ -40,7 +41,7 @@ List<OnboardingSlideModel> buildOnboardingSlides(AppLocalizations l10n) {
       subtitle: l10n.t('onboarding_calls_subtitle'),
       highlights: _split(l10n.t('onboarding_calls_highlights')),
       visual: OnboardingVisualKind.callsAndMeetings,
-      assetPath: 'assets/onboarding/smart_calls.png',
+      accent: const Color(0xFF6BCB77),
     ),
     OnboardingSlideModel(
       analyticsId: 'market_listings',
@@ -48,7 +49,7 @@ List<OnboardingSlideModel> buildOnboardingSlides(AppLocalizations l10n) {
       subtitle: l10n.t('onboarding_market_subtitle'),
       highlights: _split(l10n.t('onboarding_market_highlights')),
       visual: OnboardingVisualKind.marketAndListings,
-      assetPath: 'assets/onboarding/market_listings.png',
+      accent: const Color(0xFFB388FF),
     ),
     OnboardingSlideModel(
       analyticsId: 'office_ready',
@@ -56,7 +57,7 @@ List<OnboardingSlideModel> buildOnboardingSlides(AppLocalizations l10n) {
       subtitle: l10n.t('onboarding_office_subtitle'),
       highlights: _split(l10n.t('onboarding_office_highlights')),
       visual: OnboardingVisualKind.messagesOfficeReady,
-      assetPath: 'assets/onboarding/office_messages.png',
+      accent: const Color(0xFFE8A87C),
     ),
   ];
 }

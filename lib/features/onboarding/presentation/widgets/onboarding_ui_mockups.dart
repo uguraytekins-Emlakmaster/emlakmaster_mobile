@@ -6,9 +6,8 @@ import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart
 import 'package:emlakmaster_mobile/features/auth/presentation/widgets/auth_entry_persona_selector.dart';
 import 'package:emlakmaster_mobile/features/onboarding/domain/onboarding_slide_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-/// Slayt görsel alanı — telefon çerçevesi içinde ürün arayüzü önizlemesi.
+/// Slayt görseli — canlı, kodla çizilmiş ürün önizlemesi (PNG kullanılmaz).
 class OnboardingSlideVisual extends StatelessWidget {
   const OnboardingSlideVisual({
     super.key,
@@ -25,163 +24,30 @@ class OnboardingSlideVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mock = _buildMock(context);
     return _OnboardingDeviceFrame(
       accent: accent,
-      child: _OnboardingAssetLayer(
-        primaryPath: assetPath,
-        legacyPaths: legacyAssetPaths,
-        accent: accent,
-        mock: mock,
-      ),
+      child: _buildScene(context),
     );
   }
 
-  Widget _buildMock(BuildContext context) {
+  Widget _buildScene(BuildContext context) {
     return switch (kind) {
-      OnboardingVisualKind.welcome => _WelcomePreview(accent: accent),
-      OnboardingVisualKind.multiPlatform =>
-        _PlatformsPreview(accent: accent),
+      OnboardingVisualKind.welcome => _WelcomeScene(accent: accent),
+      OnboardingVisualKind.multiPlatform => _MultiPlatformScene(accent: accent),
       OnboardingVisualKind.managerWorkspace =>
-        _ShellNavPreview.manager(accent: accent),
+        _ManagerCommandScene(accent: accent),
       OnboardingVisualKind.consultantWorkspace =>
-        _ShellNavPreview.consultant(accent: accent),
-      OnboardingVisualKind.callsAndMeetings => _CallsPreview(accent: accent),
-      OnboardingVisualKind.marketAndListings => _MarketPreview(accent: accent),
+        _ConsultantGunumScene(accent: accent),
+      OnboardingVisualKind.callsAndMeetings => _CallsScene(accent: accent),
+      OnboardingVisualKind.marketAndListings => _MarketScene(accent: accent),
       OnboardingVisualKind.messagesOfficeReady =>
-        _OfficeMessagesPreview(accent: accent),
+        _OfficeMessagesScene(accent: accent),
     };
   }
 }
 
-/// PNG varsa üstte ekran görüntüsü; yoksa tam mock. İkisi varsa görüntü + altta mock şeridi.
-class _OnboardingAssetLayer extends StatefulWidget {
-  const _OnboardingAssetLayer({
-    required this.primaryPath,
-    required this.legacyPaths,
-    required this.accent,
-    required this.mock,
-  });
-
-  final String? primaryPath;
-  final List<String> legacyPaths;
-  final Color accent;
-  final Widget mock;
-
-  @override
-  State<_OnboardingAssetLayer> createState() => _OnboardingAssetLayerState();
-}
-
-class _OnboardingAssetLayerState extends State<_OnboardingAssetLayer> {
-  /// null = henüz taranmadı; '' = PNG yok; dolu = kullanılacak asset yolu.
-  String? _resolvedPath;
-
-  @override
-  void initState() {
-    super.initState();
-    _resolveAsset();
-  }
-
-  @override
-  void didUpdateWidget(covariant _OnboardingAssetLayer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.primaryPath != widget.primaryPath ||
-        oldWidget.legacyPaths != widget.legacyPaths) {
-      _resolvedPath = null;
-      _resolveAsset();
-    }
-  }
-
-  Future<void> _resolveAsset() async {
-    final candidates = <String>[
-      if (widget.primaryPath != null) widget.primaryPath!,
-      ...widget.legacyPaths,
-    ];
-    for (final path in candidates) {
-      try {
-        await rootBundle.load(path);
-        if (!mounted) return;
-        setState(() => _resolvedPath = path);
-        return;
-      } catch (_) {
-        continue;
-      }
-    }
-    if (mounted) setState(() => _resolvedPath = '');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final path = _resolvedPath;
-    if (path == null || path.isEmpty) {
-      return widget.mock;
-    }
-
-    final ext = AppThemeExtension.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenshot = ClipRRect(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                path,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      ext.background.withValues(alpha: 0.55),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-
-        // Dar alanda yalnızca ekran görüntüsü; geniş alanda mock şeridi.
-        if (constraints.maxHeight < 300) {
-          return screenshot;
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(flex: 7, child: screenshot),
-            const SizedBox(height: 8),
-            Expanded(
-              flex: 4,
-              child: ClipRect(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.topCenter,
-                  child: SizedBox(
-                    width: 280,
-                    height: 220,
-                    child: Opacity(opacity: 0.92, child: widget.mock),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
 class _OnboardingDeviceFrame extends StatelessWidget {
-  const _OnboardingDeviceFrame({
-    required this.child,
-    required this.accent,
-  });
+  const _OnboardingDeviceFrame({required this.child, required this.accent});
 
   final Widget child;
   final Color accent;
@@ -193,27 +59,25 @@ class _OnboardingDeviceFrame extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.35),
-          width: 1.2,
-        ),
+        border: Border.all(color: accent.withValues(alpha: 0.45), width: 1.4),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: 0.12),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
+            color: accent.withValues(alpha: 0.22),
+            blurRadius: 32,
+            spreadRadius: -4,
+            offset: const Offset(0, 12),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            ext.surfaceElevated,
+            Color.lerp(ext.surfaceElevated, accent, 0.08)!,
             ext.surface,
             ext.background,
           ],
@@ -221,52 +85,78 @@ class _OnboardingDeviceFrame extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(DesignTokens.radius2xl - 2),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  width: constraints.maxWidth > 0 ? constraints.maxWidth : 280,
-                  height: 280,
-                  child: child,
-                ),
-              );
-            },
-          ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -40,
+              right: -30,
+              child: _GlowOrb(color: accent, size: 120, opacity: 0.18),
+            ),
+            Positioned(
+              bottom: -20,
+              left: -40,
+              child: _GlowOrb(color: accent, size: 90, opacity: 0.1),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.topCenter,
+                    child: SizedBox(
+                      width: constraints.maxWidth > 0
+                          ? constraints.maxWidth
+                          : 280,
+                      height: 300,
+                      child: child,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _WelcomePreview extends StatelessWidget {
-  const _WelcomePreview({required this.accent});
+// ——— Scenes ———
 
+class _WelcomeScene extends StatelessWidget {
+  const _WelcomeScene({required this.accent});
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MockStatusBar(accent: accent),
-        const SizedBox(height: DesignTokens.space3),
-        const BrandEmblem(variant: BrandEmblemVariant.mini, size: 48),
-        const SizedBox(height: DesignTokens.space2),
+        const _MockStatusBar(),
+        const SizedBox(height: 6),
+        _SparkBanner(
+          icon: Icons.auto_awesome_rounded,
+          text: 'Tek hesap · iki operasyon yolu',
+          accent: accent,
+        ),
+        const SizedBox(height: 10),
+        const Center(
+          child: BrandEmblem(variant: BrandEmblemVariant.mini, size: 44),
+        ),
+        const SizedBox(height: 6),
         Text(
           'EmlakMaster',
+          textAlign: TextAlign.center,
           style: TextStyle(
             color: ext.textPrimary,
             fontWeight: FontWeight.w800,
-            fontSize: 16,
-            letterSpacing: -0.3,
+            fontSize: 17,
+            letterSpacing: -0.4,
           ),
         ),
-        const SizedBox(height: DesignTokens.space3),
+        const SizedBox(height: 6),
         IgnorePointer(
           child: AuthEntryPersonaSelector(
             selected: LoginEntryPersona.manager,
@@ -274,201 +164,68 @@ class _WelcomePreview extends StatelessWidget {
             compact: true,
           ),
         ),
-        const SizedBox(height: DesignTokens.space3),
-        _MockPrimaryButton(label: 'Giriş yap', accent: accent),
+        const Spacer(),
+        _MockPrimaryButton(label: 'Hemen keşfet', accent: accent),
+        const SizedBox(height: 2),
       ],
     );
   }
 }
 
-class _PlatformsPreview extends StatelessWidget {
-  const _PlatformsPreview({required this.accent});
-
+class _MultiPlatformScene extends StatelessWidget {
+  const _MultiPlatformScene({required this.accent});
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
     return Column(
       children: [
-        _MockStatusBar(accent: accent),
-        const SizedBox(height: DesignTokens.space5),
+        const _MockStatusBar(),
+        const SizedBox(height: 12),
         Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final maxH = constraints.maxHeight.isFinite
-                  ? constraints.maxHeight
-                  : 120.0;
-              final phoneH = (maxH * 0.72).clamp(44.0, 72.0);
-              final tabletH = (maxH * 0.85).clamp(52.0, 84.0);
-              final macH = (maxH * 0.62).clamp(40.0, 64.0);
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  _PlatformDeviceTile(
-                    icon: Icons.phone_iphone_rounded,
-                    label: 'iOS',
-                    height: phoneH,
-                    accent: accent,
-                    ext: ext,
-                  ),
-                  const SizedBox(width: 10),
-                  _PlatformDeviceTile(
-                    icon: Icons.tablet_mac_rounded,
-                    label: 'iPad',
-                    height: tabletH,
-                    accent: accent,
-                    ext: ext,
-                  ),
-                  const SizedBox(width: 10),
-                  _PlatformDeviceTile(
-                    icon: Icons.laptop_mac_rounded,
-                    label: 'macOS',
-                    height: macH,
-                    accent: accent,
-                    ext: ext,
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
-            border: Border.all(color: accent.withValues(alpha: 0.35)),
-          ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Icon(Icons.sync_rounded, size: 14, color: accent),
-              const SizedBox(width: 6),
-              Text(
-                'Senkron',
-                style: TextStyle(
-                  color: ext.textPrimary,
-                  fontSize: DesignTokens.fontSizeXs,
-                  fontWeight: FontWeight.w700,
-                ),
+              _DeviceWithMiniUi(
+                icon: Icons.phone_iphone_rounded,
+                label: 'iPhone',
+                height: 78,
+                accent: accent,
+                child: _MiniUiStrip(accent: accent, lines: 4),
+              ),
+              const SizedBox(width: 8),
+              _DeviceWithMiniUi(
+                icon: Icons.tablet_mac_rounded,
+                label: 'iPad',
+                height: 92,
+                accent: accent,
+                child: _MiniUiStrip(accent: accent, lines: 5, wide: true),
+              ),
+              const SizedBox(width: 8),
+              _DeviceWithMiniUi(
+                icon: Icons.laptop_mac_rounded,
+                label: 'Mac',
+                height: 68,
+                accent: accent,
+                child: _MiniUiStrip(accent: accent, lines: 3, wide: true),
               ),
             ],
           ),
         ),
-        const SizedBox(height: DesignTokens.space3),
-      ],
-    );
-  }
-}
-
-class _PlatformDeviceTile extends StatelessWidget {
-  const _PlatformDeviceTile({
-    required this.icon,
-    required this.label,
-    required this.height,
-    required this.accent,
-    required this.ext,
-  });
-
-  final IconData icon;
-  final String label;
-  final double height;
-  final Color accent;
-  final AppThemeExtension ext;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 52,
-          height: height,
-          decoration: BoxDecoration(
-            color: ext.surfaceElevated,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: accent.withValues(alpha: 0.35)),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withValues(alpha: 0.12),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Icon(icon, color: accent, size: 26),
+        _SparkBanner(
+          icon: Icons.sync_rounded,
+          text: 'Anlık senkron · aynı veri',
+          accent: accent,
         ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            color: ext.textSecondary,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
       ],
     );
   }
 }
 
-class _ShellNavPreview extends StatelessWidget {
-  const _ShellNavPreview._({
-    required this.accent,
-    required this.title,
-    required this.navItems,
-    required this.activeIndex,
-    required this.bodyLines,
-  });
-
-  factory _ShellNavPreview.manager({required Color accent}) {
-    return _ShellNavPreview._(
-      accent: accent,
-      title: ProductLabels.managerWorkspace,
-      activeIndex: 0,
-      navItems: const [
-        _NavMock(Icons.dashboard_rounded, ProductLabels.managerHome),
-        _NavMock(Icons.military_tech_rounded, ProductLabels.warRoom),
-        _NavMock(Icons.call_rounded, ProductLabels.callCenter),
-        _NavMock(Icons.analytics_rounded, ProductLabels.reports),
-        _NavMock(Icons.settings_rounded, ProductLabels.settings),
-      ],
-      bodyLines: const [
-        'Bugünkü çağrılar',
-        'Açık görevler',
-        'Ekip performansı',
-      ],
-    );
-  }
-
-  factory _ShellNavPreview.consultant({required Color accent}) {
-    return _ShellNavPreview._(
-      accent: accent,
-      title: ProductLabels.consultantWorkspace,
-      activeIndex: 0,
-      navItems: const [
-        _NavMock(Icons.dashboard_rounded, ProductLabels.consultantHome),
-        _NavMock(Icons.call_rounded, ProductLabels.myCalls),
-        _NavMock(Icons.people_rounded, ProductLabels.myCustomers),
-        _NavMock(Icons.home_work_rounded, ProductLabels.listings),
-        _NavMock(Icons.replay_rounded, ProductLabels.followUp),
-        _NavMock(Icons.task_alt_rounded, ProductLabels.myTasks),
-      ],
-      bodyLines: const [
-        'Akıllı Görüşme',
-        'Günün randevuları',
-        'Takip bekleyen',
-      ],
-    );
-  }
-
+class _ManagerCommandScene extends StatelessWidget {
+  const _ManagerCommandScene({required this.accent});
   final Color accent;
-  final String title;
-  final List<_NavMock> navItems;
-  final int activeIndex;
-  final List<String> bodyLines;
 
   @override
   Widget build(BuildContext context) {
@@ -476,218 +233,211 @@ class _ShellNavPreview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MockStatusBar(accent: accent),
-        Padding(
-          padding: const EdgeInsets.only(top: 6, bottom: 8),
-          child: Text(
-            title,
-            style: TextStyle(
-              color: ext.textSecondary,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
-            ),
-          ),
+        const _MockStatusBar(),
+        _SceneHeader(
+          title: ProductLabels.managerHome,
+          subtitle: 'Ofis · risk · performans',
+          accent: accent,
         ),
+        _StatusPill(
+          icon: Icons.verified_rounded,
+          text: 'Gelir riski düşük · ekip akışı dengede',
+          color: ext.success,
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            _KpiChip(value: '18', label: 'Çağrı', accent: accent),
+            const SizedBox(width: 6),
+            _KpiChip(value: '12', label: 'Cevap', accent: accent),
+            const SizedBox(width: 6),
+            _KpiChip(value: '₺4,2M', label: 'Pipeline', accent: accent),
+          ],
+        ),
+        const SizedBox(height: 6),
         Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                width: 52,
-                decoration: BoxDecoration(
-                  color: ext.card.withValues(alpha: 0.85),
-                  borderRadius:
-                      BorderRadius.circular(DesignTokens.radiusMd),
-                  border: Border.all(color: ext.border.withValues(alpha: 0.7)),
-                ),
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  itemCount: navItems.length,
-                  itemBuilder: (context, i) {
-                    final item = navItems[i];
-                    final selected = i == activeIndex;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? accent.withValues(alpha: 0.18)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              item.icon,
-                              size: 18,
-                              color: selected ? accent : ext.textTertiary,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _shortNav(item.label),
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              style: TextStyle(
-                                fontSize: 7,
-                                height: 1.1,
-                                fontWeight: selected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: selected
-                                    ? ext.textPrimary
-                                    : ext.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: ext.card.withValues(alpha: 0.6),
-                    borderRadius:
-                        BorderRadius.circular(DesignTokens.radiusMd),
-                    border:
-                        Border.all(color: ext.border.withValues(alpha: 0.6)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final line in bodyLines) ...[
-                        _MockMetricRow(label: line, accent: accent),
-                        const SizedBox(height: 6),
-                      ],
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              accent.withValues(alpha: 0.22),
-                              accent.withValues(alpha: 0.06),
-                            ],
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.radiusSm),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.bolt_rounded, color: accent, size: 16),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                navItems[activeIndex].label,
-                                style: TextStyle(
-                                  color: ext.textPrimary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  static String _shortNav(String label) {
-    if (label.length <= 8) return label;
-    if (label.contains(' ')) {
-      return label.split(' ').first;
-    }
-    return label.length > 9 ? '${label.substring(0, 8)}…' : label;
-  }
-}
-
-class _CallsPreview extends StatelessWidget {
-  const _CallsPreview({required this.accent});
-
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _MockStatusBar(accent: accent),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            border: Border.all(color: accent.withValues(alpha: 0.35)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.auto_awesome_rounded, color: accent, size: 22),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: _cardDecoration(ext, accent),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
+                    Icon(Icons.insights_rounded, color: accent, size: 18),
+                    const SizedBox(width: 6),
                     Text(
-                      'Akıllı Görüşme',
+                      'Analitik merkezi',
                       style: TextStyle(
                         color: ext.textPrimary,
                         fontWeight: FontWeight.w800,
-                        fontSize: 13,
+                        fontSize: 12,
                       ),
                     ),
-                    Text(
-                      'Tek dokunuşla arama başlat',
-                      style: TextStyle(
-                        color: ext.textSecondary,
-                        fontSize: 10,
-                      ),
-                    ),
+                    const Spacer(),
+                    _LiveBadge(accent: ext.success),
                   ],
                 ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: ext.textTertiary),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  'Kayapınar 3+1 · yatırım iştahı: Yüksek',
+                  style: TextStyle(color: ext.textSecondary, fontSize: 10),
+                ),
+                const Spacer(),
+                _Sparkline(accent: accent, values: const [
+                  0.35, 0.55, 0.48, 0.72, 0.68, 0.85, 0.9,
+                ]),
+              ],
+            ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _ConsultantGunumScene extends StatelessWidget {
+  const _ConsultantGunumScene({required this.accent});
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _MockStatusBar(),
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: accent.withValues(alpha: 0.2),
+              child: Text(
+                'U',
+                style: TextStyle(
+                  color: accent,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Günaydın!',
+                    style: TextStyle(
+                      color: ext.textSecondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                  Text(
+                    ProductLabels.consultantHome,
+                    style: TextStyle(
+                      color: ext.textPrimary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _ScoreRing(score: 87, accent: accent),
+          ],
+        ),
         const SizedBox(height: 8),
+        _MockPrimaryButton(
+          label: 'Telefon ile ara',
+          accent: accent,
+          icon: Icons.phone_rounded,
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: _OutlineAction(
+                icon: Icons.auto_awesome_rounded,
+                label: 'Akıllı Görüşme',
+                accent: accent,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _OutlineAction(
+                icon: Icons.history_rounded,
+                label: 'Çağrılar',
+                accent: accent,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _KpiChip(value: '6', label: 'Bugün', accent: accent, compact: true),
+            const SizedBox(width: 6),
+            _KpiChip(value: '3', label: 'Açık', accent: accent, compact: true),
+            const SizedBox(width: 6),
+            _KpiChip(
+              value: '2',
+              label: 'Sıcak',
+              accent: accent,
+              compact: true,
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Expanded(child: _HotLeadCard(accent: accent)),
+      ],
+    );
+  }
+}
+
+class _CallsScene extends StatelessWidget {
+  const _CallsScene({required this.accent});
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _MockStatusBar(),
+        _SceneHeader(
+          title: 'Akıllı Görüşme',
+          subtitle: 'Özet · görev · CRM tek akış',
+          accent: accent,
+          icon: Icons.auto_awesome_rounded,
+        ),
         Expanded(
           child: ListView(
+            padding: EdgeInsets.zero,
             children: [
-              _CallLogTile(
-                name: 'Müşteri — görüşme özeti',
-                meta: 'Kayıt tamamlandı',
+              _CallCard(
                 accent: accent,
-                icon: Icons.check_circle_outline_rounded,
+                phone: '0536 826 07 13',
+                name: 'Ayşe Y. · 3+1 Kayapınar',
+                status: 'Ulaşıldı',
+                statusColor: accent,
+                note: 'AI özet: 5–8M bütçe, 15 gün içinde…',
+                ai: true,
               ),
-              _CallLogTile(
-                name: ProductLabels.myCalls,
-                meta: '3 bekleyen geri arama',
+              _CallCard(
                 accent: accent,
-                icon: Icons.phone_in_talk_rounded,
+                phone: '0532 441 22 90',
+                name: 'Tekrar aranacak',
+                status: 'Bekliyor',
+                statusColor: const Color(0xFFE8A87C),
+                note: 'Görüşme özeti hazır',
               ),
-              _CallLogTile(
-                name: ProductLabels.callCenter,
-                meta: 'Canlı kuyruk: 2',
+              _CallCard(
                 accent: accent,
+                phone: ProductLabels.callCenter,
+                name: 'Canlı kuyruk',
+                status: '2 aktif',
+                statusColor: const Color(0xFF6BCB77),
                 icon: Icons.headset_mic_rounded,
               ),
             ],
@@ -698,9 +448,8 @@ class _CallsPreview extends StatelessWidget {
   }
 }
 
-class _MarketPreview extends StatelessWidget {
-  const _MarketPreview({required this.accent});
-
+class _MarketScene extends StatelessWidget {
+  const _MarketScene({required this.accent});
   final Color accent;
 
   @override
@@ -709,61 +458,58 @@ class _MarketPreview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MockStatusBar(accent: accent),
-        const SizedBox(height: 8),
+        const _MockStatusBar(),
+        _SceneHeader(
+          title: 'Piyasa & portföy',
+          subtitle: 'İlan · içgörü · içe aktarma',
+          accent: accent,
+          icon: Icons.trending_up_rounded,
+        ),
         Row(
           children: [
             Expanded(
-              child: _MiniChartCard(
-                title: 'Piyasa',
+              child: _InsightTile(
+                title: 'Talep',
+                value: '+12%',
                 accent: accent,
-                bars: const [0.4, 0.7, 0.55, 0.9, 0.65],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
-              child: _MiniChartCard(
-                title: 'Bölge',
+              child: _InsightTile(
+                title: 'Kayapınar',
+                value: 'Orta→Yüksek',
                 accent: accent,
-                bars: const [0.6, 0.5, 0.8, 0.45, 0.75],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: ext.card.withValues(alpha: 0.65),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              border: Border.all(color: ext.border.withValues(alpha: 0.7)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.home_work_rounded, color: accent, size: 18),
-                    const SizedBox(width: 6),
-                    Text(
-                      ProductLabels.listings,
-                      style: TextStyle(
-                        color: ext.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const Spacer(),
-                    _Chip(label: 'İçe aktar', accent: accent),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _ListingRow(accent: accent, title: '3+1 · Kadıköy', price: '₺12,4M'),
-                _ListingRow(accent: accent, title: 'Villa · Bodrum', price: '₺28M'),
-                _ListingRow(accent: accent, title: 'Ofis · Levent', price: '₺45K/ay'),
-              ],
-            ),
+          child: Column(
+            children: [
+              _ListingCard(
+                accent: accent,
+                title: '3+1 · Kayapınar',
+                price: '₺6,8M',
+                tag: 'Sıcak',
+                gradient: [accent, ext.info],
+              ),
+              _ListingCard(
+                accent: accent,
+                title: 'Villa · Bodrum',
+                price: '₺24M',
+                tag: 'Yeni',
+                gradient: [const Color(0xFF5B9BD5), accent],
+              ),
+              _ListingCard(
+                accent: accent,
+                title: 'Ofis · Levent',
+                price: '₺85K/ay',
+                tag: 'Kiralık',
+                gradient: [ext.success, accent],
+              ),
+            ],
           ),
         ),
       ],
@@ -771,9 +517,8 @@ class _MarketPreview extends StatelessWidget {
   }
 }
 
-class _OfficeMessagesPreview extends StatelessWidget {
-  const _OfficeMessagesPreview({required this.accent});
-
+class _OfficeMessagesScene extends StatelessWidget {
+  const _OfficeMessagesScene({required this.accent});
   final Color accent;
 
   @override
@@ -782,8 +527,7 @@ class _OfficeMessagesPreview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MockStatusBar(accent: accent),
-        const SizedBox(height: 8),
+        const _MockStatusBar(),
         Row(
           children: [
             Expanded(
@@ -803,53 +547,96 @@ class _OfficeMessagesPreview extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: ext.success.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-            border: Border.all(color: ext.success.withValues(alpha: 0.35)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.cloud_done_rounded, color: ext.success, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'Senkron aktif',
-                style: TextStyle(
-                  color: ext.textPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+        const SizedBox(height: 6),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: _cardDecoration(ext, accent),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ProductLabels.messageCenter,
+                  style: TextStyle(
+                    color: ext.textPrimary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 6),
+                _MessageBubble(
+                  isMe: false,
+                  text: 'İlanınız güncel mi?',
+                  name: 'Ayşe',
+                  accent: accent,
+                ),
+                _MessageBubble(
+                  isMe: true,
+                  text: 'Yarın gösterebilirim.',
+                  accent: accent,
+                ),
+                const Spacer(),
+                Text(
+                  'Ekip senkron · 3 okunmamış',
+                  style: TextStyle(
+                    color: ext.textSecondary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        const Spacer(),
-        _MockPrimaryButton(label: 'Başla — rolünü seç', accent: accent),
         const SizedBox(height: 4),
-        Text(
-          'Yönetici veya Danışman olarak giriş',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: ext.textTertiary, fontSize: 10),
+        _MockPrimaryButton(
+          label: 'Rolünü seç ve başla',
+          accent: accent,
+          icon: Icons.rocket_launch_rounded,
         ),
       ],
     );
   }
 }
 
-// ——— Shared mock primitives ———
+// ——— Primitives ———
 
-class _NavMock {
-  const _NavMock(this.icon, this.label);
-  final IconData icon;
-  final String label;
+BoxDecoration _cardDecoration(AppThemeExtension ext, Color accent) {
+  return BoxDecoration(
+    color: ext.card.withValues(alpha: 0.72),
+    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+    border: Border.all(color: accent.withValues(alpha: 0.28)),
+  );
+}
+
+class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({
+    required this.color,
+    required this.size,
+    this.opacity = 0.15,
+  });
+
+  final Color color;
+  final double size;
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color.withValues(alpha: opacity), Colors.transparent],
+        ),
+      ),
+    );
+  }
 }
 
 class _MockStatusBar extends StatelessWidget {
-  const _MockStatusBar({required this.accent});
-  final Color accent;
+  const _MockStatusBar();
 
   @override
   Widget build(BuildContext context) {
@@ -865,131 +652,196 @@ class _MockStatusBar extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        Icon(Icons.signal_cellular_alt_rounded, size: 12, color: ext.textTertiary),
+        Icon(Icons.signal_cellular_alt_rounded,
+            size: 12, color: ext.textTertiary),
         const SizedBox(width: 4),
         Icon(Icons.wifi_rounded, size: 12, color: ext.textTertiary),
         const SizedBox(width: 4),
-        Icon(Icons.battery_full_rounded, size: 14, color: accent),
+        Icon(Icons.battery_full_rounded, size: 14, color: ext.brandPrimary),
       ],
     );
   }
 }
 
-class _MockPrimaryButton extends StatelessWidget {
-  const _MockPrimaryButton({required this.label, required this.accent});
-  final String label;
-  final Color accent;
+class _SparkBanner extends StatelessWidget {
+  const _SparkBanner({
+    required this.icon,
+    required this.text,
+    required this.accent,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: accent,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      ),
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: AppThemeExtension.of(context).onBrand,
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-}
-
-class _MockMetricRow extends StatelessWidget {
-  const _MockMetricRow({required this.label, required this.accent});
-  final String label;
+  final IconData icon;
+  final String text;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 22,
-          decoration: BoxDecoration(
-            color: accent,
-            borderRadius: BorderRadius.circular(2),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accent.withValues(alpha: 0.2),
+            accent.withValues(alpha: 0.06),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: accent),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: ext.textPrimary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeviceWithMiniUi extends StatelessWidget {
+  const _DeviceWithMiniUi({
+    required this.icon,
+    required this.label,
+    required this.height,
+    required this.accent,
+    required this.child,
+  });
+
+  final IconData icon;
+  final String label;
+  final double height;
+  final Color accent;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: height,
+            decoration: BoxDecoration(
+              color: ext.surfaceElevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: accent.withValues(alpha: 0.4)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: child,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Icon(icon, size: 12, color: accent),
+          Text(
             label,
             style: TextStyle(
-              color: ext.textPrimary,
-              fontSize: 11,
+              color: ext.textSecondary,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniUiStrip extends StatelessWidget {
+  const _MiniUiStrip({
+    required this.accent,
+    required this.lines,
+    this.wide = false,
+  });
+
+  final Color accent;
+  final int lines;
+  final bool wide;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Container(
-          width: 36,
           height: 6,
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.25),
+            color: accent.withValues(alpha: 0.35),
             borderRadius: BorderRadius.circular(3),
           ),
         ),
+        const SizedBox(height: 4),
+        for (var i = 0; i < lines; i++) ...[
+          Container(
+            height: 4,
+            width: wide ? double.infinity : 24,
+            decoration: BoxDecoration(
+              color: ext.textTertiary.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          if (i < lines - 1) const SizedBox(height: 3),
+        ],
       ],
     );
   }
 }
 
-class _CallLogTile extends StatelessWidget {
-  const _CallLogTile({
-    required this.name,
-    required this.meta,
+class _SceneHeader extends StatelessWidget {
+  const _SceneHeader({
+    required this.title,
+    required this.subtitle,
     required this.accent,
-    required this.icon,
+    this.icon,
   });
 
-  final String name;
-  final String meta;
+  final String title;
+  final String subtitle;
   final Color accent;
-  final IconData icon;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: ext.card.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-        border: Border.all(color: ext.border.withValues(alpha: 0.65)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 6),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: accent.withValues(alpha: 0.15),
-            child: Icon(icon, size: 16, color: accent),
-          ),
-          const SizedBox(width: 10),
+          if (icon != null) ...[
+            Icon(icon, color: accent, size: 18),
+            const SizedBox(width: 6),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  title,
                   style: TextStyle(
                     color: ext.textPrimary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
                   ),
                 ),
                 Text(
-                  meta,
+                  subtitle,
                   style: TextStyle(color: ext.textSecondary, fontSize: 9),
                 ),
               ],
@@ -1001,108 +853,209 @@ class _CallLogTile extends StatelessWidget {
   }
 }
 
-class _MiniChartCard extends StatelessWidget {
-  const _MiniChartCard({
-    required this.title,
-    required this.accent,
-    required this.bars,
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({
+    required this.icon,
+    required this.text,
+    required this.color,
   });
 
-  final String title;
-  final Color accent;
-  final List<double> bars;
+  final IconData icon;
+  final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
     return Container(
-      height: 72,
-      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: ext.card.withValues(alpha: 0.65),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-        border: Border.all(color: ext.border.withValues(alpha: 0.65)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: ext.textSecondary,
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (final h in bars)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 1),
-                    child: Container(
-                      height: 28 * h,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.35 + h * 0.35),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ListingRow extends StatelessWidget {
-  const _ListingRow({
-    required this.accent,
-    required this.title,
-    required this.price,
-  });
-
-  final Color accent;
-  final String title;
-  final String price;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(Icons.home_rounded, size: 16, color: accent),
-          ),
-          const SizedBox(width: 8),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
-              title,
+              text,
               style: TextStyle(
-                color: ext.textPrimary,
-                fontSize: 10,
+                color: AppThemeExtension.of(context).textPrimary,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KpiChip extends StatelessWidget {
+  const _KpiChip({
+    required this.value,
+    required this.label,
+    required this.accent,
+    this.compact = false,
+  });
+
+  final String value;
+  final String label;
+  final Color accent;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: compact ? 5 : 7,
+          horizontal: 6,
+        ),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+          border: Border.all(color: accent.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                color: ext.textPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: compact ? 11 : 12,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(color: ext.textSecondary, fontSize: 8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LiveBadge extends StatelessWidget {
+  const _LiveBadge({required this.accent});
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
+      ),
+      child: Text(
+        'Canlı',
+        style: TextStyle(
+          color: accent,
+          fontSize: 8,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _Sparkline extends StatelessWidget {
+  const _Sparkline({required this.accent, required this.values});
+
+  final Color accent;
+  final List<double> values;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _SparklinePainter(values: values, color: accent),
+      ),
+    );
+  }
+}
+
+class _SparklinePainter extends CustomPainter {
+  _SparklinePainter({required this.values, required this.color});
+
+  final List<double> values;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final fill = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0.02)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    final path = Path();
+    final fillPath = Path();
+    for (var i = 0; i < values.length; i++) {
+      final x = size.width * (i / (values.length - 1));
+      final y = size.height * (1 - values[i]);
+      if (i == 0) {
+        path.moveTo(x, y);
+        fillPath.moveTo(x, size.height);
+        fillPath.lineTo(x, y);
+      } else {
+        path.lineTo(x, y);
+        fillPath.lineTo(x, y);
+      }
+    }
+    fillPath.lineTo(size.width, size.height);
+    fillPath.close();
+    canvas.drawPath(fillPath, fill);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparklinePainter oldDelegate) => false;
+}
+
+class _ScoreRing extends StatelessWidget {
+  const _ScoreRing({required this.score, required this.accent});
+
+  final int score;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: score / 100,
+            strokeWidth: 4,
+            backgroundColor: ext.border.withValues(alpha: 0.5),
+            color: accent,
+          ),
           Text(
-            price,
+            '$score',
             style: TextStyle(
-              color: accent,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
+              color: ext.textPrimary,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
             ),
           ),
         ],
@@ -1111,25 +1064,425 @@ class _ListingRow extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.accent});
+class _MockPrimaryButton extends StatelessWidget {
+  const _MockPrimaryButton({
+    required this.label,
+    required this.accent,
+    this.icon,
+  });
+
+  final String label;
+  final Color accent;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [accent, Color.lerp(accent, Colors.black, 0.25)!],
+        ),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: AppThemeExtension.of(context).onBrand),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              color: AppThemeExtension.of(context).onBrand,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OutlineAction extends StatelessWidget {
+  const _OutlineAction({
+    required this.icon,
+    required this.label,
+    required this.accent,
+  });
+
+  final IconData icon;
   final String label;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 7),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+        border: Border.all(color: accent.withValues(alpha: 0.4)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: accent,
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: accent),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: ext.textPrimary,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HotLeadCard extends StatelessWidget {
+  const _HotLeadCard({required this.accent});
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: _cardDecoration(ext, accent),
+      child: Row(
+        children: [
+          Icon(Icons.local_fire_department_rounded, color: accent, size: 22),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Sıcak müşteri',
+                  style: TextStyle(
+                    color: ext.textPrimary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                ),
+                Text(
+                  '3+1 Kayapınar · teklif bekliyor',
+                  style: TextStyle(color: ext.textSecondary, fontSize: 9),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: ext.textTertiary, size: 18),
+        ],
+      ),
+    );
+  }
+}
+
+class _CallCard extends StatelessWidget {
+  const _CallCard({
+    required this.accent,
+    required this.phone,
+    required this.name,
+    required this.status,
+    required this.statusColor,
+    this.note,
+    this.ai = false,
+    this.icon,
+  });
+
+  final Color accent;
+  final String phone;
+  final String name;
+  final String status;
+  final Color statusColor;
+  final String? note;
+  final bool ai;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(9),
+      decoration: _cardDecoration(ext, accent),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: accent.withValues(alpha: 0.15),
+                child: Icon(
+                  icon ?? Icons.phone_rounded,
+                  size: 14,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      phone,
+                      style: TextStyle(
+                        color: ext.textPrimary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      name,
+                      style: TextStyle(color: ext.textSecondary, fontSize: 9),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (note != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                if (ai)
+                  Icon(Icons.auto_awesome_rounded,
+                      size: 12, color: accent),
+                if (ai) const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    note!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: ext.textSecondary,
+                      fontSize: 9,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightTile extends StatelessWidget {
+  const _InsightTile({
+    required this.title,
+    required this.value,
+    required this.accent,
+  });
+
+  final String title;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: _cardDecoration(ext, accent),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(color: ext.textSecondary, fontSize: 9)),
+          Text(
+            value,
+            style: TextStyle(
+              color: accent,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ListingCard extends StatelessWidget {
+  const _ListingCard({
+    required this.accent,
+    required this.title,
+    required this.price,
+    required this.tag,
+    required this.gradient,
+  });
+
+  final Color accent;
+  final String title;
+  final String price;
+  final String tag;
+  final List<Color> gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 5),
+        decoration: _cardDecoration(ext, accent),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(DesignTokens.radiusMd - 1),
+                ),
+                gradient: LinearGradient(colors: gradient),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: ext.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 10,
+                            ),
+                          ),
+                          Text(
+                            price,
+                            style: TextStyle(
+                              color: accent,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.15),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusPill),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MessageBubble extends StatelessWidget {
+  const _MessageBubble({
+    required this.isMe,
+    required this.text,
+    required this.accent,
+    this.name,
+  });
+
+  final bool isMe;
+  final String text;
+  final Color accent;
+  final String? name;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        constraints: const BoxConstraints(maxWidth: 200),
+        decoration: BoxDecoration(
+          color: isMe
+              ? accent.withValues(alpha: 0.25)
+              : ext.card.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(10),
+            topRight: const Radius.circular(10),
+            bottomLeft: Radius.circular(isMe ? 10 : 2),
+            bottomRight: Radius.circular(isMe ? 2 : 10),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (name != null)
+              Text(
+                name!,
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            Text(
+              text,
+              style: TextStyle(color: ext.textPrimary, fontSize: 10),
+            ),
+          ],
         ),
       ),
     );
@@ -1151,25 +1504,96 @@ class _FeatureTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: ext.card.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: ext.border.withValues(alpha: 0.7)),
-      ),
+      padding: const EdgeInsets.all(10),
+      decoration: _cardDecoration(ext, accent),
       child: Column(
         children: [
-          Icon(icon, color: accent, size: 26),
-          const SizedBox(height: 6),
+          Icon(icon, color: accent, size: 24),
+          const SizedBox(height: 4),
           Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: ext.textPrimary,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MockBottomNav extends StatelessWidget {
+  const _MockBottomNav._({
+    required this.accent,
+    required this.items,
+    required this.active,
+  });
+
+  factory _MockBottomNav.manager({required Color accent}) {
+    return _MockBottomNav._(
+      accent: accent,
+      active: 0,
+      items: const [
+        (Icons.dashboard_rounded, 'Komuta'),
+        (Icons.call_rounded, 'Çağrı'),
+        (Icons.bar_chart_rounded, 'Rapor'),
+        (Icons.settings_rounded, 'Ayar'),
+      ],
+    );
+  }
+
+  factory _MockBottomNav.consultant({required Color accent}) {
+    return _MockBottomNav._(
+      accent: accent,
+      active: 0,
+      items: const [
+        (Icons.grid_view_rounded, 'Günüm'),
+        (Icons.call_rounded, 'Ara'),
+        (Icons.people_rounded, 'Müşteri'),
+        (Icons.home_work_rounded, 'İlan'),
+      ],
+    );
+  }
+
+  final Color accent;
+  final List<(IconData, String)> items;
+  final int active;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: ext.card.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          for (var i = 0; i < items.length; i++)
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  items[i].$1,
+                  size: 16,
+                  color: i == active ? accent : ext.textTertiary,
+                ),
+                Text(
+                  items[i].$2,
+                  style: TextStyle(
+                    fontSize: 7,
+                    fontWeight:
+                        i == active ? FontWeight.w800 : FontWeight.w500,
+                    color: i == active ? accent : ext.textTertiary,
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

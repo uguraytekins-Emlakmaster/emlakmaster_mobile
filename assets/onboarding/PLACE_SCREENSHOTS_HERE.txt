@@ -1,14 +1,10 @@
 Drop PNG/WebP screenshots here (recommended 1200×2400 or 1600×1600).
 When a file exists, onboarding shows it above the UI mock preview.
 
-Primary filenames (installed 2026-05-16 from device screenshots):
-  manager_command.png      — Yönetici: Komuta Merkezi
-  consultant_gunum.png     — Danışman: Günüm
-  smart_calls.png          — Çağrı Kayıtları (Çağrı Merkezi)
-  market_listings.png      — İlan Portföyü
-  office_messages.png      — Mesaj merkezi
+Tanıtım slaytları kod mock’ları ile çizilir (onboarding_ui_mockups.dart).
+İsteğe bağlı PNG bu klasöre konabilir; varsayılan olarak kullanılmaz.
 
-Extra sources kept in kaynak_ekranlar/ (not used in slides by default).
+Eski PNG dosyaları arşiv / referans içindir.
 
 Legacy names (still supported):
   crm_dashboard.png, war_room.png, ai_insights.png, market_analytics.png

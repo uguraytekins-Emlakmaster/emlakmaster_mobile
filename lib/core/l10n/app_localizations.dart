@@ -276,7 +276,7 @@ class AppLocalizations {
       'onboarding_page_of': '{0} / {1}',
       'onboarding_welcome_title': 'EmlakMaster\'a hoş geldiniz',
       'onboarding_welcome_subtitle':
-          'Gayrimenkul operasyonunuz tek platformda: yönetici komuta masası ve danışman saha paneli aynı ekosistemde.',
+          'Komuta masası ve saha paneli aynı ekosistemde — veriler dolu, ekip senkron, tek hesap.',
       'onboarding_welcome_highlights':
           'Yönetici Paneli|Danışman Paneli|Tek hesap',
       'onboarding_platform_title': 'Her cihazda aynı hesap',
@@ -285,12 +285,12 @@ class AppLocalizations {
       'onboarding_platform_highlights': 'iOS|macOS|Senkron',
       'onboarding_manager_title': 'Yönetici: komuta ve görünürlük',
       'onboarding_manager_subtitle':
-          'Komuta Merkezi, Komuta Odası, Çağrı Merkezi ve Raporlar ile ekibi izleyin.',
+          'Canlı KPI, analitik ve çağrı kuyruğu — ofisi tek bakışta yönetin.',
       'onboarding_manager_highlights':
           'Komuta Merkezi|Komuta Odası|Çağrı Merkezi|Raporlar',
       'onboarding_consultant_title': 'Danışman: Günüm ve saha akışı',
       'onboarding_consultant_subtitle':
-          'Günüm ile güne başlayın; müşteri, ilan, takip ve görevler tek alanda.',
+          'Günüm, Akıllı Görüşme ve momentum puanı — sahada hız kazanın.',
       'onboarding_consultant_highlights':
           'Günüm|Müşterilerim|İlanlar|Takip|Görevlerim',
       'onboarding_calls_title': 'Akıllı görüşme ve çağrılar',

@@ -39,22 +39,5 @@ class OnboardingSlideModel {
   final String? assetPath;
 }
 
-/// Eski dosya adları (geriye uyum); yeni PNG yoksa bunlar da denenir.
-const Map<OnboardingVisualKind, List<String>> kOnboardingLegacyAssetPaths = {
-  OnboardingVisualKind.managerWorkspace: [
-    'assets/onboarding/crm_dashboard.png',
-    'assets/onboarding/war_room.png',
-  ],
-  OnboardingVisualKind.consultantWorkspace: [
-    'assets/onboarding/crm_dashboard.png',
-  ],
-  OnboardingVisualKind.callsAndMeetings: [
-    'assets/onboarding/ai_insights.png',
-  ],
-  OnboardingVisualKind.marketAndListings: [
-    'assets/onboarding/market_analytics.png',
-  ],
-  OnboardingVisualKind.messagesOfficeReady: [
-    'assets/onboarding/war_room.png',
-  ],
-};
+/// Tanıtım artık kod mock’ları kullanır; PNG yolu verilmez.
+const Map<OnboardingVisualKind, List<String>> kOnboardingLegacyAssetPaths = {};
