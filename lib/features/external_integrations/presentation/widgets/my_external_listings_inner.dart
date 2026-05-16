@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Harici senkron ilan listesi gövdesi (sayfa ve İlanlar sekmesi ortak).
 class MyExternalListingsInner extends ConsumerStatefulWidget {
@@ -50,7 +51,7 @@ class _MyExternalListingsInnerState extends ConsumerState<MyExternalListingsInne
             trailing: widget.showTrailingConnect && canManage
                 ? TextButton(
                     onPressed: () {
-                      HapticFeedback.selectionClick();
+                      AppFeedback.selectionClick();
                       context.push(AppRouter.routeConnectedAccounts);
                     },
                     child: Text(l10n.t('my_external_listings_connect_cta')),
@@ -79,7 +80,7 @@ class _MyExternalListingsInnerState extends ConsumerState<MyExternalListingsInne
                   label: l10n.t('integration_filter_all'),
                   selected: _platformFilter == null,
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    AppFeedback.selectionClick();
                     setState(() => _platformFilter = null);
                   },
                 ),
@@ -91,7 +92,7 @@ class _MyExternalListingsInnerState extends ConsumerState<MyExternalListingsInne
                       label: p.displayName,
                       selected: _platformFilter == p,
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        AppFeedback.selectionClick();
                         setState(() => _platformFilter = p);
                       },
                     ),

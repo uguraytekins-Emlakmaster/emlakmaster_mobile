@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../core/branding/brand_emblem.dart';
 import '../../core/theme/app_theme_extension.dart';
@@ -187,7 +188,7 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                HapticFeedback.lightImpact();
+                AppFeedback.lightImpact();
                 widget.onOutlinedAction!();
               },
               icon: Icon(Icons.add_rounded, size: DesignTokens.iconMd, color: brand),
@@ -216,7 +217,7 @@ class _EmptyStateState extends State<EmptyState> with SingleTickerProviderStateM
             child: PressableScaleButton(
               child: FilledButton.icon(
                 onPressed: () {
-                  HapticFeedback.mediumImpact();
+                  AppFeedback.mediumImpact();
                   widget.onAction!();
                 },
                 icon: const Icon(Icons.add_rounded, size: DesignTokens.iconMd),

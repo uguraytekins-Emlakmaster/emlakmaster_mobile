@@ -8,6 +8,7 @@ import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// İlan detay: galeri (tek görsel), başlık, fiyat, konum, açıklama.
 class ListingDetailPage extends StatelessWidget {
@@ -172,7 +173,7 @@ class ListingDetailPage extends StatelessWidget {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            HapticFeedback.mediumImpact();
+                            AppFeedback.mediumImpact();
                             context.push(
                               '${AppRouter.routeRainbowAnalytics}?listingId=$listingId',
                             );

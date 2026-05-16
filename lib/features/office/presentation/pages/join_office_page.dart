@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/features/office/services/office_setup_service
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 class JoinOfficePage extends StatefulWidget {
   const JoinOfficePage({super.key});
 
@@ -34,7 +35,7 @@ class _JoinOfficePageState extends State<JoinOfficePage> {
     if (!_formKey.currentState!.validate()) return;
     final user = AuthService.instance.currentUser;
     if (user == null) return;
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() => _busy = true);
     try {
       await OfficeSetupService.joinOfficeWithInviteCode(

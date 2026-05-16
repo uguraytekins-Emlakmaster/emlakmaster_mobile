@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../../../core/router/app_router.dart';
 
@@ -131,7 +132,7 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
       await LoginEntryStore.instance.setPersona(LoginEntryPersona.fromRole(role));
       _applyPanelPreferenceForRole(role);
       ref.invalidate(userDocStreamProvider(user.uid));
-      HapticFeedback.mediumImpact();
+      AppFeedback.mediumImpact();
       if (mounted) context.go(AppRouter.routeHome);
     } catch (e) {
       if (mounted) {

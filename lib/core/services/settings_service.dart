@@ -124,6 +124,17 @@ class SettingsService {
   Future<bool> getSoundEffectsEnabled() =>
       getFeatureFlag(AppConstants.keySoundEffects, defaultValue: false);
 
+  Future<String> getNotificationSoundStyleId() async {
+    final prefs = await _storage;
+    return prefs.getString(AppConstants.keyNotificationSoundStyle) ??
+        AppConstants.defaultNotificationSoundStyle;
+  }
+
+  Future<void> setNotificationSoundStyleId(String id) async {
+    final prefs = await _storage;
+    await prefs.setString(AppConstants.keyNotificationSoundStyle, id);
+  }
+
   /// Batarya tasarrufu: animasyonları azaltır. Varsayılan false.
   Future<bool> getPowerSaverEnabled() async {
     final prefs = await _storage;

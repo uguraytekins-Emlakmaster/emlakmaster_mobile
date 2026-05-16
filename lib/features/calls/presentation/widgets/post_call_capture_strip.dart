@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Handoff sonrası üst şerit: çağrı otomatik kaydedilir, kullanıcıdan yalnızca detay ister.
 /// [SafeArea] ile çentik/status bar üstünde kalır; metin taşması önlenir.
@@ -25,7 +26,7 @@ class PostCallCaptureShellStrip extends ConsumerWidget {
         color: ext.accent.withValues(alpha: 0.14),
         child: InkWell(
           onTap: () {
-            HapticFeedback.lightImpact();
+            AppFeedback.lightImpact();
             showPostCallQuickCaptureSheet(context: context, draft: draft);
           },
           child: Padding(
@@ -70,7 +71,7 @@ class PostCallCaptureShellStrip extends ConsumerWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   onPressed: () {
-                    HapticFeedback.selectionClick();
+                    AppFeedback.selectionClick();
                     ref.read(postCallCaptureProvider.notifier).dismissStrip();
                   },
                   child: Text(
@@ -91,7 +92,7 @@ class PostCallCaptureShellStrip extends ConsumerWidget {
                     foregroundColor: ext.accent,
                   ),
                   onPressed: () {
-                    HapticFeedback.lightImpact();
+                    AppFeedback.lightImpact();
                     showPostCallQuickCaptureSheet(
                         context: context, draft: draft);
                   },

@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Birleşik gelen kutusu — platform OAuth tamamlanınca doldurulacak; şimdilik premium iskelet + örnek.
 class MessageCenterPage extends StatelessWidget {
@@ -109,7 +110,7 @@ class MessageCenterPage extends StatelessWidget {
                   preview: 'Merhaba, ilanınız hâlâ güncel mi?',
                   timeLabel: '12:40',
                   onTap: () {
-                    HapticFeedback.lightImpact();
+                    AppFeedback.lightImpact();
                     context.push(
                       AppRouter.routeMessageThread,
                       extra: <String, dynamic>{

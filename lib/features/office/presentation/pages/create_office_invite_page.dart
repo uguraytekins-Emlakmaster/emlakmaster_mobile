@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/features/office/services/office_setup_service
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 /// Owner / admin / manager: yeni davet kodu üretir (UI).
 class CreateOfficeInvitePage extends ConsumerStatefulWidget {
   const CreateOfficeInvitePage({super.key});
@@ -50,7 +51,7 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
       setState(() => _error = 'Kullanım sayısı en az 1 olmalı.');
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() => _busy = true);
     try {
       final result = await OfficeSetupService.createInviteForOffice(

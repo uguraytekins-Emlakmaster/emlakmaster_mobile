@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_functions_bootstrap.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/services/push_notification_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/core/services/login_entry_store.dart';
@@ -454,12 +455,20 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     }
     try {
       if (!_isFlutterTest) {
+        unawaited(AppFeedback.initialize());
         Future<void>.delayed(
           const Duration(seconds: 2),
           () {
             AppLogger.state(
                 '[startup] PushNotificationService.initialize scheduled');
-            unawaited(PushNotificationService.instance.initialize());
+            unawaited(
+              PushNotificationService.instance.initialize().then((_) {
+                PushNotificationService.instance
+                    .setForegroundMessageHandler((_) {
+                  unawaited(AppFeedback.playNotification());
+                });
+              }),
+            );
           },
         );
       }

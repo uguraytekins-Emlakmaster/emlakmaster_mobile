@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Phase 1.4 — Bağlı platformlar: premium hub (mock veri; API sonra).
 class ConnectedPlatformsPage extends ConsumerWidget {
@@ -78,7 +79,7 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                       const SizedBox(height: 10),
                       FilledButton.icon(
                         onPressed: () {
-                          HapticFeedback.selectionClick();
+                          AppFeedback.selectionClick();
                           context.push(
                             AppRouter.routePlatformSetupWizard,
                             extra: const PlatformSetupWizardArgs(),
@@ -102,7 +103,7 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                   children: [
                     TextButton.icon(
                       onPressed: () {
-                        HapticFeedback.selectionClick();
+                        AppFeedback.selectionClick();
                         context.push(AppRouter.routeImportHub);
                       },
                       icon: const Icon(Icons.upload_file_rounded, size: 18),
@@ -114,7 +115,7 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                     ),
                     TextButton.icon(
                       onPressed: () {
-                        HapticFeedback.selectionClick();
+                        AppFeedback.selectionClick();
                         context.push(AppRouter.routeMyListings);
                       },
                       icon: const Icon(Icons.library_add_check_rounded, size: 18),
@@ -126,7 +127,7 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                     ),
                     TextButton.icon(
                       onPressed: () {
-                        HapticFeedback.selectionClick();
+                        AppFeedback.selectionClick();
                         context.push(AppRouter.routeMyExternalListings);
                       },
                       icon: const Icon(Icons.home_work_outlined, size: 18),
@@ -151,14 +152,14 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                       child: ConnectedPlatformCard(
                         platform: p,
                         onConnect: () {
-                          HapticFeedback.selectionClick();
+                          AppFeedback.selectionClick();
                           context.push(
                             AppRouter.routePlatformSetupWizard,
                             extra: PlatformSetupWizardArgs(initialPlatform: p.id),
                           );
                         },
                         onReconnect: () {
-                          HapticFeedback.selectionClick();
+                          AppFeedback.selectionClick();
                           context.push(
                             AppRouter.routePlatformSetupWizard,
                             extra: PlatformSetupWizardArgs(initialPlatform: p.id, editMode: true),

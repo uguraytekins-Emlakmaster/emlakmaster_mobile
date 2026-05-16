@@ -15,6 +15,7 @@ import 'package:emlakmaster_mobile/features/onboarding/presentation/widgets/onbo
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// İlk açılış tanıtımı — ürün panelleri ve özelliklerini vurgular.
 class OnboardingPage extends StatefulWidget {
@@ -91,7 +92,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       await LoginEntryStore.instance.setPersona(_persona!);
     }
 
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     await OnboardingStore.instance.setCompleted();
 
     if (skipped) {
@@ -226,7 +227,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           if (_currentPage > 0)
             IconButton(
               onPressed: () {
-                HapticFeedback.selectionClick();
+                AppFeedback.selectionClick();
                 _pageController.previousPage(
                   duration: DesignTokens.durationNormal,
                   curve: Curves.easeOutCubic,

@@ -1,6 +1,8 @@
+import 'dart:async';
+
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../theme/design_tokens.dart';
 /// Profesyonel toast / SnackBar mesajları. Hata, başarı, bilgi için tutarlı stil.
@@ -15,7 +17,7 @@ class AppToaster {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
-    HapticFeedback.mediumImpact();
+    unawaited(AppFeedback.mediumImpact());
     final ext = AppThemeExtension.of(context);
     final (color, icon) = _styleFor(type, ext);
     final isInfo = type == ToastType.info;
@@ -25,6 +27,19 @@ class AppToaster {
             ? Colors.white
             : Colors.black87);
     final iconColor = isInfo ? ext.info : foreground;
+    switch (type) {
+      case ToastType.success:
+        unawaited(AppFeedback.playSuccess());
+        break;
+      case ToastType.error:
+        unawaited(AppFeedback.playError());
+        break;
+      case ToastType.warning:
+        unawaited(AppFeedback.playWarning());
+        break;
+      case ToastType.info:
+        break;
+    }
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

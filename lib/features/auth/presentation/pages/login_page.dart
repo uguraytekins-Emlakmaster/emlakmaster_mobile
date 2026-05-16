@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
@@ -93,7 +94,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       setState(() => _errorMessage = blocked);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() => _busy = _BusyKind.email);
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -179,7 +180,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       setState(() => _errorMessage = blocked);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() {
       _errorMessage = null;
       _errorDetail = null;
@@ -209,7 +210,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       setState(() => _errorMessage = blocked);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() {
       _errorMessage = null;
       _errorDetail = null;
@@ -554,7 +555,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
     if (_isLoading) return;
     setState(() => _errorMessage = null);
     if (!_formKey.currentState!.validate()) return;
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() => _isLoading = true);
     try {
       await AuthService.instance

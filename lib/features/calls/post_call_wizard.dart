@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'dart:math' as math;
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import 'package:emlakmaster_mobile/core/ai/ai_gate.dart';
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
@@ -225,7 +226,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   @override
   void initState() {
     super.initState();
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     _wizardPageController = PageController();
 
     _progressController = AnimationController(
@@ -329,7 +330,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
       return;
     }
     final summaryText = _summaryController.text.trim();
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() {
       _isSaving = true;
       _saveError = null;
@@ -580,7 +581,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
           _isSaving = false;
         });
       }
-      HapticFeedback.selectionClick();
+      AppFeedback.selectionClick();
       messenger.showSnackBar(
         SnackBar(
           content: Text(
@@ -963,7 +964,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                         icon: const Icon(Icons.close_rounded),
                         color: ext.textSecondary,
                         onPressed: () {
-                          HapticFeedback.lightImpact();
+                          AppFeedback.lightImpact();
                           context.pop();
                         },
                       ),

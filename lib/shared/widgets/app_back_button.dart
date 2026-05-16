@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Şık, hızlı geri: hafif haptic, altın vurgu, yuvarlatılmış dokunma alanı.
 class AppBackButton extends StatelessWidget {
@@ -30,7 +31,7 @@ class AppBackButton extends StatelessWidget {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       onPressed: () {
-        HapticFeedback.lightImpact();
+        AppFeedback.lightImpact();
         if (onPressed != null) {
           onPressed!();
           return;

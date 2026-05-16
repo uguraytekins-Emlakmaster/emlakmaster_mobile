@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/features/external_integrations/presentation/w
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/platform_status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 class ConnectedPlatformCard extends StatelessWidget {
   const ConnectedPlatformCard({
     super.key,
@@ -333,7 +334,7 @@ class _MiniAction extends StatelessWidget {
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
       child: InkWell(
         onTap: () {
-          HapticFeedback.selectionClick();
+          AppFeedback.selectionClick();
           onTap();
         },
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),

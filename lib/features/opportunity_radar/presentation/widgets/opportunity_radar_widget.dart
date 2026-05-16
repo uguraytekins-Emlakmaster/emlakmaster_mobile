@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Fırsat radarı: sıcak potansiyeller, riskli süreçler, geciken takipler, yeniden aktifleşenler.
 class OpportunityRadarWidget extends ConsumerWidget {
@@ -92,7 +93,7 @@ class OpportunityRadarWidget extends ConsumerWidget {
                                 color: ext.textTertiary, fontSize: 11),
                           ),
                           onTap: () {
-                            HapticFeedback.lightImpact();
+                            AppFeedback.lightImpact();
                             showResurrectionLeadTopicSheet(
                               context,
                               topicTitle: 'Fırsat radarı',

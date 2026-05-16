@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/features/external_listings/presentation/provi
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_investment_listing_tile.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_listings_meta.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_region_comparison_cards.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:firebase_core/firebase_core.dart'
     show Firebase, FirebaseException;
 import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
@@ -138,7 +139,7 @@ class MarketPulsePanel extends ConsumerWidget {
               child: MarketPulseRegionComparisonStrip(
                 regions: regions,
                 onRegionTap: (region) {
-                  HapticFeedback.selectionClick();
+                  AppFeedback.selectionClick();
                   context.push(
                     AppRouter.regionInsightPath(region.regionId),
                     extra: region,
@@ -283,7 +284,7 @@ class _MarketPulseListingActionsState
       );
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() => _loading = true);
     _inFlight = ClientExternalListingsSyncService.syncNow().whenComplete(() {
       _inFlight = null;

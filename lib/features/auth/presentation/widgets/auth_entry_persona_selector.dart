@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Yönetici / danışman giriş yolu seçici — login ve rol seçiminde ortak.
 class AuthEntryPersonaSelector extends StatelessWidget {
@@ -71,7 +72,7 @@ class AuthEntryPersonaSelector extends StatelessWidget {
   }
 
   void _select(BuildContext context, LoginEntryPersona persona) {
-    HapticFeedback.selectionClick();
+    AppFeedback.selectionClick();
     onSelected(persona);
   }
 }

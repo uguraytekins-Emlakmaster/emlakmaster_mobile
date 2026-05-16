@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/platform/file_stub.dart'
     if (dart.library.io) 'dart:io' as io;
 import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_provider.dart';
@@ -53,7 +54,7 @@ class _ListingDisplaySettingsSectionState
   Future<void> _pickAndUploadLogo() async {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
     if (uid == null) return;
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     final docOfficeId =
         ref.read(userDocStreamProvider(uid)).valueOrNull?.officeId;
     final hasOfficeContext = docOfficeId != null && docOfficeId.isNotEmpty;
@@ -525,7 +526,7 @@ class _ListingDisplaySettingsSectionState
 
   void _showCityPicker(BuildContext context, WidgetRef ref,
       ListingDisplaySettingsEntity settings) {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     showPremiumModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
@@ -548,7 +549,7 @@ class _ListingDisplaySettingsSectionState
 
   void _showDistrictPicker(BuildContext context, WidgetRef ref,
       ListingDisplaySettingsEntity settings) {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final districts = TurkishCities.districtsFor(settings.cityCode);
     showPremiumModalBottomSheet<void>(
       context: context,

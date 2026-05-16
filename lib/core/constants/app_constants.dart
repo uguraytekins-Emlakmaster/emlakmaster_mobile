@@ -120,6 +120,8 @@ abstract final class AppConstants {
   static const String keyCompactDashboard = 'compact_dashboard';
   static const String keyHapticFeedback = 'haptic_feedback';
   static const String keySoundEffects = 'sound_effects';
+  static const String keyNotificationSoundStyle = 'notification_sound_style';
+  static const String defaultNotificationSoundStyle = 'chime';
 
   /// Batarya tasarrufu: animasyonları azaltır, arka planda iş yükünü düşürür.
   static const String keyPowerSaver = 'power_saver';

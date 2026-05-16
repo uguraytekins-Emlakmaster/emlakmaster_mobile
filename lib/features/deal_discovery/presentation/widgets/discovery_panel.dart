@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
@@ -467,7 +468,7 @@ class _OpportunityRadarTeaser extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          HapticFeedback.lightImpact();
+          AppFeedback.lightImpact();
           context.push(AppRouter.routeWarRoom);
         },
         borderRadius: BorderRadius.circular(DesignTokens.uiSurfaceRadius),

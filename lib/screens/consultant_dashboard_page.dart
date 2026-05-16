@@ -33,6 +33,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Danışman paneli — [DashboardPage] ile aynı tasarım sistemi: **Hero** → **Operational** → **Insight** ([DashboardLayoutTokens]).
 class ConsultantDashboardPage extends ConsumerWidget {
@@ -451,7 +452,7 @@ class _ConsultantActionAnchor extends StatelessWidget {
                         message: 'Uygulama içi kayıt oturumu',
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            HapticFeedback.selectionClick();
+                            AppFeedback.selectionClick();
                             AnalyticsService.instance
                                 .logEvent(AnalyticsEvents.magicCallTap);
                             context.push(
@@ -483,7 +484,7 @@ class _ConsultantActionAnchor extends StatelessWidget {
                         message: 'Kayıtlı çağrı geçmişi',
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            HapticFeedback.selectionClick();
+                            AppFeedback.selectionClick();
                             AnalyticsService.instance
                                 .logEvent(AnalyticsEvents.consultantCallsTap);
                             context.push(AppRouter.routeConsultantCalls);
@@ -521,7 +522,7 @@ class _ConsultantActionAnchor extends StatelessWidget {
                       const SizedBox(height: DesignTokens.space4),
                       _PhoneCallPrimaryButton(
                         onPressed: () {
-                          HapticFeedback.mediumImpact();
+                          AppFeedback.mediumImpact();
                           context.push(
                             AppRouter.routeCall,
                             extra: const {
@@ -651,12 +652,12 @@ class _TodayKpiRow extends ConsumerWidget {
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     void openCalls() {
-      HapticFeedback.lightImpact();
+      AppFeedback.lightImpact();
       context.push(AppRouter.routeConsultantCalls);
     }
 
     void openTasks() {
-      HapticFeedback.lightImpact();
+      AppFeedback.lightImpact();
       ref
           .read(mainShellShortcutProvider.notifier)
           .enqueue(MainShellShortcut.openTasksTab);
@@ -664,7 +665,7 @@ class _TodayKpiRow extends ConsumerWidget {
     }
 
     void openPipeline() {
-      HapticFeedback.lightImpact();
+      AppFeedback.lightImpact();
       context.push(AppRouter.routePipeline);
     }
 
@@ -903,7 +904,7 @@ class _ConsultantAcademyCard extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton.icon(
               onPressed: () {
-                HapticFeedback.lightImpact();
+                AppFeedback.lightImpact();
                 showPremiumModalBottomSheet<void>(
                   context: context,
                   builder: (ctx) => DraggableScrollableSheet(
@@ -1123,7 +1124,7 @@ class _PipelineChampionCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          HapticFeedback.mediumImpact();
+          AppFeedback.mediumImpact();
           context.push(AppRouter.routePipeline);
         },
         borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
@@ -1286,7 +1287,7 @@ class _QuickStatsCard extends ConsumerWidget {
                       foregroundColor: ext.accent,
                     ),
                     onPressed: () {
-                      HapticFeedback.mediumImpact();
+                      AppFeedback.mediumImpact();
                       context.push(AppRouter.routeResurrection);
                     },
                     child: const Text('Görüntüle'),

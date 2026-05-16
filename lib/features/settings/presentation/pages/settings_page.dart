@@ -41,7 +41,7 @@ import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../screens/placeholder_pages.dart'
     show NotificationsSection, ThemeSection;
 
-/// Ayarlar: bilgi mimarisi — Hesap → İletişim → Çağrı & CRM → … → Gelişmiş/Test (ayrık).
+/// Ayarlar: Hesap → Plan → Bildirim → Görünüm → Dil → İlanlar → Entegrasyonlar → Gelişmiş (katlanır).
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -333,31 +333,7 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(
-                title: ProductLabels.messageCenter, icon: Icons.forum_rounded),
-            _sectionCard(
-              context,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.chat_bubble_outline_rounded,
-                      color: theme.colorScheme.primary),
-                  title: Text(ProductLabels.messages,
-                      style: TextStyle(color: theme.colorScheme.onSurface)),
-                  subtitle: Text(
-                    'Bağlı kanallardan gelen tüm mesajlar tek akışta',
-                    style: TextStyle(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                      fontSize: 12,
-                    ),
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => context.push(AppRouter.routeMessageCenter),
-                ),
-              ],
-            ),
-            const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Çağrılar ve kayıtlar', icon: Icons.call_rounded),
+                title: 'Çağrılar', icon: Icons.call_rounded),
             _sectionCard(
               context,
               children: [
@@ -380,96 +356,15 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(
-                context,
-                children: [
-                  _SettingSwitch(
-                    title: 'Sesli müşteri akışı',
-                    subtitle: 'Eller serbest kullanım ve sesli yönlendirme',
-                    icon: Icons.mic_rounded,
-                    value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureVoiceCrm, v),
-                  ),
-                  Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.45)),
-                  _SettingSwitch(
-                    title: 'Çağrı özeti',
-                    subtitle: 'Arama sonrası akıllı özet',
-                    icon: Icons.summarize_rounded,
-                    value: flags[AppConstants.keyFeatureCallSummary] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureCallSummary, v),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Arama sonrası kayıt',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: AppThemeExtension.of(context).textTertiary,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.35,
-                        ),
-                      ),
-                    ),
-                  ),
-                  _SettingSwitch(
-                    title: 'Rehbere / uygulamaya kaydet',
-                    subtitle: 'Arama sonrası rehber ve müşteri kaydı',
-                    icon: Icons.contact_phone_rounded,
-                    value: flags[AppConstants.keyFeatureContactSave] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureContactSave, v),
-                  ),
-                ],
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
             const SizedBox(height: DesignTokens.space6),
             _SectionHeader(
                 title: l10n.t('section_notifications'),
                 icon: Icons.notifications_rounded),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(
-                context,
-                children: [
-                  const NotificationsSection(embedInParentCard: true),
-                  Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.45)),
-                  _SettingSwitch(
-                    title: l10n.t('push_notifications'),
-                    subtitle: l10n.t('push_notifications_sub'),
-                    icon: Icons.notifications_active_rounded,
-                    value:
-                        flags[AppConstants.keyFeaturePushNotifications] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeaturePushNotifications, v),
-                  ),
-                ],
-              ),
-              loading: () => _sectionCard(
-                context,
-                children: const [
-                  NotificationsSection(embedInParentCard: true),
-                ],
-              ),
-              error: (_, __) => _sectionCard(
-                context,
-                children: const [
-                  NotificationsSection(embedInParentCard: true),
-                ],
-              ),
+            _sectionCard(
+              context,
+              children: const [
+                NotificationsSection(embedInParentCard: true),
+              ],
             ),
             const SizedBox(height: DesignTokens.space6),
             _SectionHeader(
@@ -492,6 +387,18 @@ class SettingsPage extends ConsumerWidget {
                         .read(featureFlagsProvider.notifier)
                         .setFlag(AppConstants.keyCompactDashboard, v),
                   ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.45)),
+                  _SettingSwitch(
+                    title: l10n.t('power_saver'),
+                    subtitle: l10n.t('power_saver_sub'),
+                    icon: Icons.battery_saver_rounded,
+                    value: flags[AppConstants.keyPowerSaver] ?? false,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyPowerSaver, v),
+                  ),
                 ],
               ),
               loading: () => _sectionCard(
@@ -506,45 +413,6 @@ class SettingsPage extends ConsumerWidget {
                   ThemeSection(embedInParentCard: true),
                 ],
               ),
-            ),
-            const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Performans', icon: Icons.speed_rounded),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(
-                context,
-                children: [
-                  _SettingSwitch(
-                    title: l10n.t('power_saver'),
-                    subtitle: l10n.t('power_saver_sub'),
-                    icon: Icons.battery_saver_rounded,
-                    value: flags[AppConstants.keyPowerSaver] ?? false,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyPowerSaver, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Titreşim (haptic)',
-                    subtitle: 'Butonlarda dokunsal geri bildirim',
-                    icon: Icons.vibration_rounded,
-                    value: flags[AppConstants.keyHapticFeedback] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyHapticFeedback, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Ses efektleri',
-                    subtitle: 'Bildirim ve onay sesleri',
-                    icon: Icons.volume_up_rounded,
-                    value: flags[AppConstants.keySoundEffects] ?? false,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keySoundEffects, v),
-                  ),
-                ],
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: DesignTokens.space6),
             _SectionHeader(
@@ -595,36 +463,6 @@ class SettingsPage extends ConsumerWidget {
               data: (flags) => _sectionCard(
                 context,
                 children: [
-                  _SettingSwitch(
-                    title: 'Market Pulse',
-                    subtitle: 'Son ilanlar ve harici kaynaklar',
-                    icon: Icons.trending_up_rounded,
-                    value: flags[AppConstants.keyFeatureMarketPulse] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureMarketPulse, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Portföy eşleştirme',
-                    subtitle: 'Müşteri–ilan eşleşme önerisi',
-                    icon: Icons.auto_awesome_rounded,
-                    value: flags[AppConstants.keyFeaturePortfolioMatch] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeaturePortfolioMatch, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Harici platform entegrasyonları',
-                    subtitle:
-                        'Sahibinden / Hepsiemlak / Emlakjet bağlı hesaplar',
-                    icon: Icons.hub_rounded,
-                    value: flags[AppConstants.keyFeatureExternalIntegrations] ??
-                        true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(
-                            AppConstants.keyFeatureExternalIntegrations, v),
-                  ),
                   if (flags[AppConstants.keyFeatureExternalIntegrations] ??
                       true) ...[
                     if (!canManagePlatformIntegrations) ...[
@@ -740,116 +578,19 @@ class SettingsPage extends ConsumerWidget {
                             context.push(AppRouter.routeMyExternalListings),
                       ),
                     ],
-                  ],
-                ],
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 24),
-            const _SectionHeader(
-                title: 'Ürün & odak', icon: Icons.center_focus_strong_outlined),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(
-                context,
-                children: [
-                  _SettingSwitch(
-                    title: 'Odaklı V1 (önerilen)',
-                    subtitle:
-                        'Açıkken Komuta Odası ve Ekonomi sekmeleriyle ikincil içgörü panelleri gizlenir; çekirdek müşteri akışı görünür kalır. Kapattığınızda tam ürün seti açılır.',
-                    icon: Icons.bolt_outlined,
-                    value: flags[AppConstants.keyV1LeanProduct] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyV1LeanProduct, v),
-                  ),
-                ],
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Komuta ve İçgörüler', icon: Icons.analytics_rounded),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(
-                context,
-                children: [
-                  _SettingSwitch(
-                    title: 'KPI çubuğu',
-                    subtitle: 'Özet ekranın üstündeki hızlı göstergeler',
-                    icon: Icons.bar_chart_rounded,
-                    value: flags[AppConstants.keyFeatureKpiBar] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureKpiBar, v),
-                  ),
-                  _SettingSwitch(
-                    title: ProductLabels.warRoom,
-                    subtitle: 'Ofis ritmi, hedefler ve öncelikli alanlar',
-                    icon: Icons.military_tech_rounded,
-                    value: flags[AppConstants.keyFeatureWarRoom] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureWarRoom, v),
-                  ),
-                  _SettingSwitch(
-                    title: ProductLabels.callCenter,
-                    subtitle: 'Tüm çağrılar ve operasyon görünümü',
-                    icon: Icons.call_merge_rounded,
-                    value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureCommandCenter, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Günlük özet',
-                    subtitle: 'Günün özeti paneli',
-                    icon: Icons.today_rounded,
-                    value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureDailyBrief, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Pipeline',
-                    subtitle: 'Kanban ve aşama takibi',
-                    icon: Icons.account_tree_rounded,
-                    value: flags[AppConstants.keyFeaturePipeline] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeaturePipeline, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Yatırımcı istihbaratı',
-                    subtitle: 'Fırsat radarı ve yatırım panelleri',
-                    icon: Icons.savings_rounded,
-                    value: flags[AppConstants.keyFeatureInvestorIntelligence] ??
-                        true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(
-                            AppConstants.keyFeatureInvestorIntelligence, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Görevler',
-                    subtitle: 'Takip ve hatırlatmalar',
-                    icon: Icons.task_alt_rounded,
-                    value: flags[AppConstants.keyFeatureTasks] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureTasks, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Bildirim merkezi',
-                    subtitle: 'Tüm bildirimler tek ekranda',
-                    icon: Icons.notifications_rounded,
-                    value: flags[AppConstants.keyFeatureNotificationsCenter] ??
-                        true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureNotificationsCenter, v),
-                  ),
+                  ] else
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      child: Text(
+                        'Harici platformlar kapalı. Açmak için Gelişmiş özellikler bölümünü kullanın.',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
                 ],
               ),
               loading: () => const SizedBox.shrink(),
@@ -864,35 +605,10 @@ class SettingsPage extends ConsumerWidget {
                 _FavoriteInvestRegionTile(),
               ],
             ),
-            const SizedBox(height: 24),
-            const _SectionHeader(
-                title: 'Gizlilik & Veri', icon: Icons.privacy_tip_rounded),
-            flagsAsync.when(
-              data: (flags) => _sectionCard(
-                context,
-                children: [
-                  _SettingSwitch(
-                    title: 'Analytics',
-                    subtitle: 'Kullanım istatistikleri (anonim)',
-                    icon: Icons.insights_rounded,
-                    value: flags[AppConstants.keyFeatureAnalytics] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureAnalytics, v),
-                  ),
-                  _SettingSwitch(
-                    title: 'Hata raporlama',
-                    subtitle: 'Çökme raporları geliştiriciye gider',
-                    icon: Icons.bug_report_rounded,
-                    value: flags[AppConstants.keyFeatureCrashlytics] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureCrashlytics, v),
-                  ),
-                ],
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+            const SizedBox(height: DesignTokens.space6),
+            _SettingsAdvancedSection(
+              sectionCard: (children) => _sectionCard(context, children: children),
+              l10n: l10n,
             ),
             const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(
@@ -1113,6 +829,243 @@ class SettingsPage extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
       ),
+    );
+  }
+}
+
+typedef _SettingsSectionCardBuilder = Widget Function(List<Widget> children);
+
+/// Ürün bayrakları ve çağrı akışı — varsayılan kapalı, isteyen açar.
+class _SettingsAdvancedSection extends ConsumerWidget {
+  const _SettingsAdvancedSection({
+    required this.sectionCard,
+    required this.l10n,
+  });
+
+  final _SettingsSectionCardBuilder sectionCard;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final ext = AppThemeExtension.of(context);
+    final flagsAsync = ref.watch(featureFlagsProvider);
+
+    return flagsAsync.when(
+      data: (flags) => sectionCard([
+        Theme(
+          data: theme.copyWith(
+              dividerColor: theme.dividerColor.withValues(alpha: 0.35)),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+            childrenPadding: EdgeInsets.zero,
+            leading: Icon(Icons.tune_rounded, color: ext.accent, size: 22),
+            iconColor: ext.accent,
+            collapsedIconColor: ext.textTertiary,
+            title: Text(
+              l10n.t('settings_advanced_title'),
+              style: AppTypography.bodyStrong(context),
+            ),
+                subtitle: Text(
+                  l10n.t('settings_advanced_sub'),
+                  style: AppTypography.meta(context),
+                ),
+                children: [
+                  _AdvancedFlagGroup(
+                    label: 'Ürün görünümü',
+                    children: [
+                      _SettingSwitch(
+                        title: 'Odaklı V1 (önerilen)',
+                        subtitle:
+                            'Komuta Odası ve Ekonomi sekmeleri gizlenir; çekirdek akış kalır.',
+                        icon: Icons.bolt_outlined,
+                        value: flags[AppConstants.keyV1LeanProduct] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyV1LeanProduct, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'KPI çubuğu',
+                        subtitle: 'Özet ekranın üstündeki hızlı göstergeler',
+                        icon: Icons.bar_chart_rounded,
+                        value: flags[AppConstants.keyFeatureKpiBar] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureKpiBar, v),
+                      ),
+                      _SettingSwitch(
+                        title: ProductLabels.warRoom,
+                        subtitle: 'Ofis ritmi, hedefler ve öncelikli alanlar',
+                        icon: Icons.military_tech_rounded,
+                        value: flags[AppConstants.keyFeatureWarRoom] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureWarRoom, v),
+                      ),
+                      _SettingSwitch(
+                        title: ProductLabels.callCenter,
+                        subtitle: 'Tüm çağrılar ve operasyon görünümü',
+                        icon: Icons.call_merge_rounded,
+                        value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureCommandCenter, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Günlük özet',
+                        subtitle: 'Günün özeti paneli',
+                        icon: Icons.today_rounded,
+                        value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureDailyBrief, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Pipeline',
+                        subtitle: 'Kanban ve aşama takibi',
+                        icon: Icons.account_tree_rounded,
+                        value: flags[AppConstants.keyFeaturePipeline] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeaturePipeline, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Yatırımcı istihbaratı',
+                        subtitle: 'Fırsat radarı ve yatırım panelleri',
+                        icon: Icons.savings_rounded,
+                        value: flags[AppConstants.keyFeatureInvestorIntelligence] ??
+                            true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(
+                                AppConstants.keyFeatureInvestorIntelligence, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Görevler',
+                        subtitle: 'Takip ve hatırlatmalar',
+                        icon: Icons.task_alt_rounded,
+                        value: flags[AppConstants.keyFeatureTasks] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureTasks, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Bildirim merkezi',
+                        subtitle: 'Tüm bildirimler tek ekranda',
+                        icon: Icons.notifications_rounded,
+                        value:
+                            flags[AppConstants.keyFeatureNotificationsCenter] ??
+                                true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(
+                                AppConstants.keyFeatureNotificationsCenter, v),
+                      ),
+                    ],
+                  ),
+                  _AdvancedFlagGroup(
+                    label: 'Çağrı & kayıt',
+                    children: [
+                      _SettingSwitch(
+                        title: 'Sesli müşteri akışı',
+                        subtitle: 'Eller serbest kullanım ve sesli yönlendirme',
+                        icon: Icons.mic_rounded,
+                        value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureVoiceCrm, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Çağrı özeti',
+                        subtitle: 'Arama sonrası akıllı özet',
+                        icon: Icons.summarize_rounded,
+                        value: flags[AppConstants.keyFeatureCallSummary] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureCallSummary, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Rehbere / uygulamaya kaydet',
+                        subtitle: 'Arama sonrası rehber ve müşteri kaydı',
+                        icon: Icons.contact_phone_rounded,
+                        value: flags[AppConstants.keyFeatureContactSave] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureContactSave, v),
+                      ),
+                    ],
+                  ),
+                  _AdvancedFlagGroup(
+                    label: 'Entegrasyon & piyasa',
+                    children: [
+                      _SettingSwitch(
+                        title: 'Market Pulse',
+                        subtitle: 'Son ilanlar ve harici kaynaklar',
+                        icon: Icons.trending_up_rounded,
+                        value: flags[AppConstants.keyFeatureMarketPulse] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeatureMarketPulse, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Portföy eşleştirme',
+                        subtitle: 'Müşteri–ilan eşleşme önerisi',
+                        icon: Icons.auto_awesome_rounded,
+                        value:
+                            flags[AppConstants.keyFeaturePortfolioMatch] ?? true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(AppConstants.keyFeaturePortfolioMatch, v),
+                      ),
+                      _SettingSwitch(
+                        title: 'Harici platform entegrasyonları',
+                        subtitle:
+                            'Sahibinden / Hepsiemlak / Emlakjet bağlı hesaplar',
+                        icon: Icons.hub_rounded,
+                        value: flags[AppConstants.keyFeatureExternalIntegrations] ??
+                            true,
+                        onChanged: (v) => ref
+                            .read(featureFlagsProvider.notifier)
+                            .setFlag(
+                                AppConstants.keyFeatureExternalIntegrations, v),
+                      ),
+                    ],
+                  ),
+            ],
+          ),
+        ),
+      ]),
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _AdvancedFlagGroup extends StatelessWidget {
+  const _AdvancedFlagGroup({required this.label, required this.children});
+
+  final String label;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: ext.textTertiary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.35,
+                ),
+          ),
+        ),
+        ...children,
+      ],
     );
   }
 }

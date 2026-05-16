@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Yönetici dashboard (lean): ofis platform bağlantıları özeti — Ayarlar’daki hub’a kısayol.
 /// Danışmanlarda [SizedBox.shrink] (RBAC).
@@ -102,7 +103,7 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
                 BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
             child: InkWell(
               onTap: () {
-                HapticFeedback.lightImpact();
+                AppFeedback.lightImpact();
                 context.push(AppRouter.routeConnectedAccounts);
               },
               borderRadius:
@@ -176,7 +177,7 @@ class ManagerPlatformConnectionsSummaryCard extends ConsumerWidget {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      HapticFeedback.selectionClick();
+                                      AppFeedback.selectionClick();
                                       context.push(
                                           AppRouter.routeConnectedAccounts);
                                     },

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
 import 'package:emlakmaster_mobile/core/debug/debug_diagnostics_store.dart';
@@ -253,7 +254,7 @@ class _CopyRow extends StatelessWidget {
           onPressed: () async {
             await Clipboard.setData(ClipboardData(text: text));
             if (!context.mounted) return;
-            HapticFeedback.lightImpact();
+            AppFeedback.lightImpact();
             final messenger = ScaffoldMessenger.maybeOf(context);
             messenger?.showSnackBar(
               const SnackBar(

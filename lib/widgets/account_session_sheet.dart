@@ -15,11 +15,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Premium hesap / oturum paneli — ana ekran avatarından.
 Future<void> showAccountSessionSheet(
     BuildContext context, WidgetRef ref) async {
-  await HapticFeedback.lightImpact();
+  await AppFeedback.lightImpact();
   if (!context.mounted) return;
   await showPremiumModalBottomSheet<void>(
     context: context,

@@ -13,6 +13,7 @@ import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Kimlik (numara / kişi) dokunuşunda: hızlı, premium aksiyon yüzeyi.
 Future<void> showCallIdentityQuickActionsSheet(
@@ -29,7 +30,7 @@ Future<void> showCallIdentityQuickActionsSheet(
 
   final anchor = context;
 
-  HapticFeedback.lightImpact();
+  AppFeedback.lightImpact();
   final sheetExt = AppThemeExtension.of(context);
   final theme = Theme.of(context);
 
@@ -120,14 +121,14 @@ Future<void> showCallIdentityQuickActionsSheet(
                           BorderRadius.circular(DesignTokens.radiusPill),
                       child: InkWell(
                         onTap: () async {
-                          HapticFeedback.selectionClick();
+                          AppFeedback.selectionClick();
                           final id = firestoreCallDocId.trim();
                           await FirestoreService.appendQuickCaptureNoteSnippet(
                             callId: id,
                             snippet: snippet,
                           );
                           if (!anchor.mounted) return;
-                          HapticFeedback.mediumImpact();
+                          AppFeedback.mediumImpact();
                           onCallListMutated?.call();
                           showCallsSurfaceAck(
                             anchor,
@@ -164,7 +165,7 @@ Future<void> showCallIdentityQuickActionsSheet(
                 color: ext.accent,
                 onTap: () {
                   Navigator.pop(ctx);
-                  HapticFeedback.lightImpact();
+                  AppFeedback.lightImpact();
                   final openDir = onOpenCustomerDirectory;
                   if (openDir != null) {
                     openDir();
@@ -189,7 +190,7 @@ Future<void> showCallIdentityQuickActionsSheet(
               Center(
                 child: TextButton(
                   onPressed: () {
-                    HapticFeedback.selectionClick();
+                    AppFeedback.selectionClick();
                     Navigator.pop(ctx);
                   },
                   child: Text(
@@ -270,7 +271,7 @@ Future<void> showCallIdentityQuickActionsSheet(
                 color: ext.accent,
                 onTap: () {
                   Navigator.pop(ctx);
-                  HapticFeedback.lightImpact();
+                  AppFeedback.lightImpact();
                   ctx.push('/customer/$cid');
                 },
               ),

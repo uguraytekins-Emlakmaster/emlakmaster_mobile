@@ -1,5 +1,5 @@
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../theme/design_tokens.dart';
 
@@ -52,7 +52,8 @@ class _PressableScaleButtonState extends State<PressableScaleButton>
       onTap: widget.onPressed == null
           ? null
           : () {
-              HapticFeedback.lightImpact();
+              AppFeedback.lightImpact();
+              AppFeedback.playTap();
               widget.onPressed!();
             },
       child: AnimatedBuilder(

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Yönetici müşteri detayında: tek birincil görev önerisi (onaylı yazım).
 class CustomerSmartTaskStrip extends ConsumerStatefulWidget {
@@ -27,7 +28,7 @@ class _CustomerSmartTaskStripState extends ConsumerState<CustomerSmartTaskStrip>
   Future<void> _create(SmartTaskSuggestion s) async {
     if (_busy) return;
     setState(() => _busy = true);
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     try {
       await FirestoreService.setTask({

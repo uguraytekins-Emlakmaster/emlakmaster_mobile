@@ -86,6 +86,7 @@ dependencies:
   uuid: ^4.5.3
   intl: ^0.20.2
   crop_your_image: ^2.0.0
+  audioplayers: ^6.1.0
   # Facebook girişi kapalıyken flutter_facebook_auth kullanılmamalı: iOS'ta FBSDK açılışta
   # Info.plist'teki sahte token ile SIGABRT üretebilir. Tekrar açmak için paketi ekleyin ve
   # doc/FACEBOOK_SIGNIN_SETUP.md + scripts/configure_facebook_app.sh kullanın.
@@ -118,6 +119,7 @@ flutter:
   assets:
     - assets/onboarding/
     - assets/branding/
+    - assets/sounds/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

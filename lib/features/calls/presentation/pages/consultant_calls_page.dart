@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
     if (dart.library.io) 'dart:io' as io;
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -48,7 +51,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:async';
 
 /// Danışmanın tüm çağrıları (gelen/giden), numaralar, toplu veri export ve toplu SMS.
 class ConsultantCallsPage extends ConsumerStatefulWidget {
@@ -95,7 +97,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       if (_selectedIds.contains(id)) {
         _selectedIds.remove(id);
       } else {
-        HapticFeedback.selectionClick();
+        AppFeedback.selectionClick();
         _selectedIds.add(id);
       }
     });
@@ -1079,7 +1081,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                   final ok = await OutboundPhoneDial.launchDial(
                                       r.phoneNumber);
                                   if (context.mounted && ok) {
-                                    HapticFeedback.mediumImpact();
+                                    AppFeedback.mediumImpact();
                                   }
                                 }
                               },
@@ -1269,7 +1271,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                 final ok =
                                     await OutboundPhoneDial.launchDial(rawPhone);
                                 if (context.mounted && ok) {
-                                  HapticFeedback.mediumImpact();
+                                  AppFeedback.mediumImpact();
                                 }
                               }
                             },

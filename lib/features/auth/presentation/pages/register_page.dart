@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../../../core/branding/brand_emblem.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -87,7 +88,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         _errorMessage = null;
         _step = 1;
       });
-      HapticFeedback.lightImpact();
+      AppFeedback.lightImpact();
       return;
     }
     _submit();
@@ -102,7 +103,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       setState(() => _errorMessage = blocked);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() => _isLoading = true);
     try {
       await AuthService.instance.registerWithEmailAndPassword(
@@ -167,7 +168,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       setState(() => _errorMessage = blocked);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() {
       _errorMessage = null;
       _isLoading = true;
@@ -191,7 +192,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       setState(() => _errorMessage = blocked);
       return;
     }
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() {
       _errorMessage = null;
       _isLoading = true;
