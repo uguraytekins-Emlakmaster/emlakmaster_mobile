@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/pages/consultant_
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/pages/customer_list_page.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/consultant_dashboard_page.dart';
+import 'package:emlakmaster_mobile/screens/consultant_more_sheet.dart';
 import 'package:emlakmaster_mobile/screens/consultant_resurrection_page.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/pages/tasks_page.dart';
@@ -17,23 +18,30 @@ import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 
-/// Danışman paneli: özetim, mesajlar, çağrılar, müşteriler, ilanlar, takip, görevler, ayarlar.
-/// Web/Desktop: sidebar; Mobile: bottom nav. Akıllı Görüşme: Günüm üzerindeki birincil aksiyon bloğu.
+/// Danışman paneli: 5 birincil sekme + Daha Fazla menüsü.
+/// Tüm sayfalar [IndexedStack] içinde kalır; tabIds ile kimlik sabittir.
 class ConsultantShellPage extends StatefulWidget {
   const ConsultantShellPage({super.key});
 
   @override
   State<ConsultantShellPage> createState() => _ConsultantShellPageState();
 
+  /// Alt menüde görünen 5 öğe.
   static const List<AdaptiveNavItem> _navItems = [
-    AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.consultantHome),
-    AdaptiveNavItem(Icons.forum_rounded, ProductLabels.messageCenter),
+    AdaptiveNavItem(Icons.space_dashboard_rounded, ProductLabels.consultantHome),
     AdaptiveNavItem(Icons.call_rounded, ProductLabels.myCalls),
     AdaptiveNavItem(Icons.people_rounded, ProductLabels.myCustomers),
-    AdaptiveNavItem(Icons.home_work_rounded, ProductLabels.listings),
-    AdaptiveNavItem(Icons.replay_rounded, ProductLabels.followUp),
     AdaptiveNavItem(Icons.task_alt_rounded, ProductLabels.myTasks),
-    AdaptiveNavItem(Icons.settings_rounded, ProductLabels.settings),
+    AdaptiveNavItem(Icons.apps_rounded, ProductLabels.consultantMore),
+  ];
+
+  /// Alt menü → [pages] indeksi. Son öğe [kShellNavMoreMenu].
+  static const List<int> _navPageIndices = [
+    0,
+    2,
+    3,
+    6,
+    kShellNavMoreMenu,
   ];
 
   static const List<Widget> _pages = [
@@ -63,10 +71,19 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
   final GlobalKey<AdaptiveShellScaffoldState> _shellKey =
       GlobalKey<AdaptiveShellScaffoldState>();
 
+  void _openMoreSheet() {
+    showConsultantMoreSheet(
+      context,
+      onSelectPage: (pageIndex) =>
+          _shellKey.currentState?.jumpToTab(pageIndex),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     AppLogger.state(
-      '[startup][ConsultantShell] build tabs=${ConsultantShellPage._navItems.length}',
+      '[startup][ConsultantShell] build tabs=${ConsultantShellPage._navItems.length} '
+      'pages=${ConsultantShellPage._pages.length}',
     );
     return ConsultantShellNav(
       goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
@@ -81,6 +98,8 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
               key: _shellKey,
               navItems: ConsultantShellPage._navItems,
               pages: ConsultantShellPage._pages,
+              navPageIndices: ConsultantShellPage._navPageIndices,
+              onMoreNavTap: _openMoreSheet,
               tabIds: ConsultantShellPage._tabIds,
               title: ProductLabels.consultantWorkspace,
               shortcutMap: const {

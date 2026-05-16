@@ -7,6 +7,7 @@ abstract final class ProductLabels {
   static const String listings = 'İlanlar';
   static const String followUp = 'Takip';
   static const String myTasks = 'Görevlerim';
+  static const String consultantMore = 'Daha Fazla';
 
   // ——— Yönetici ana akış ———
   static const String managerHome = 'Komuta Merkezi';

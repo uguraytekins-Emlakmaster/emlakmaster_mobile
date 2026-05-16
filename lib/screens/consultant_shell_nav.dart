@@ -14,18 +14,29 @@ class ConsultantShellNav extends InheritedWidget {
     return context.dependOnInheritedWidgetOfExactType<ConsultantShellNav>();
   }
 
-  /// Mesaj merkezi (indeks 1).
+  /// [pages] indeks 0 — Günüm.
+  static void goToHomeTab(BuildContext context) {
+    maybeOf(context)?.goToTab(0);
+  }
+
+  /// [pages] indeks 1 — Mesaj Merkezi (Daha Fazla).
   static void goToMessageCenterTab(BuildContext context) {
     maybeOf(context)?.goToTab(1);
   }
 
+  /// [pages] indeks 3 — Müşterilerim.
   static void goToCustomersTab(BuildContext context) {
     maybeOf(context)?.goToTab(3);
   }
 
-  /// Çağrılar sekmesi (indeks 2).
+  /// [pages] indeks 2 — Çağrılarım.
   static void goToCallsTab(BuildContext context) {
     maybeOf(context)?.goToTab(2);
+  }
+
+  /// [pages] indeks 6 — Görevlerim.
+  static void goToTasksTab(BuildContext context) {
+    maybeOf(context)?.goToTab(6);
   }
 
   @override

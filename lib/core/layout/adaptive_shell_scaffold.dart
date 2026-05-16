@@ -17,6 +17,9 @@ class AdaptiveNavItem {
   final String label;
 }
 
+/// [navPageIndices] içinde menü açan “Daha Fazla” gibi öğeler için.
+const int kShellNavMoreMenu = -1;
+
 /// Web/Desktop: sidebar (NavigationRail). Mobile: bottom nav.
 /// RBAC-agnostic; used by Admin, Consultant, and Client shells.
 ///
@@ -37,10 +40,16 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
     this.fabLocation,
     this.onIndexChanged,
     this.shortcutMap = const {},
+    this.navPageIndices,
+    this.onMoreNavTap,
   });
 
   final List<AdaptiveNavItem> navItems;
   final List<Widget> pages;
+  /// Alt menü / rail öğesi → [pages] indeksi. [kShellNavMoreMenu] menü açar.
+  /// Verilmezse her nav öğesi kendi indeksine gider (nav.length == pages.length).
+  final List<int>? navPageIndices;
+  final VoidCallback? onMoreNavTap;
   final List<Object>? tabIds;
   final String? title;
   final List<Widget>? actions;
@@ -90,19 +99,41 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     return index;
   }
 
+  bool _isValidPageIndex(int idx) =>
+      idx >= 0 && idx < widget.pages.length;
+
   int? _resolveShortcutIndex(MainShellShortcut shortcut) {
     final navLen = widget.navItems.length;
-    final pageLen = widget.pages.length;
     final idx = switch (shortcut) {
-      MainShellShortcut.openAccountTab =>
-        widget.shortcutMap[shortcut] ?? (navLen > 0 ? navLen - 1 : -1),
+      MainShellShortcut.openAccountTab => widget.navPageIndices != null
+          ? widget.shortcutMap[shortcut]
+          : widget.shortcutMap[shortcut] ?? (navLen > 0 ? navLen - 1 : -1),
       MainShellShortcut.openHomeTab => widget.shortcutMap[shortcut] ?? 0,
       _ => widget.shortcutMap[shortcut] ?? -1,
     };
-    if (idx < 0 || idx >= navLen || idx >= pageLen) {
-      return null;
-    }
+    if (idx == null || idx < 0) return null;
+    if (!_isValidPageIndex(idx)) return null;
+    if (widget.navPageIndices == null && idx >= navLen) return null;
     return idx;
+  }
+
+  int _bottomNavSelectedIndex(int pageIndex) {
+    final map = widget.navPageIndices;
+    if (map == null) return pageIndex;
+    final direct = map.indexOf(pageIndex);
+    if (direct >= 0) return direct;
+    final more = map.indexOf(kShellNavMoreMenu);
+    if (more >= 0) return more;
+    return pageIndex.clamp(0, widget.navItems.length - 1);
+  }
+
+  int? _pageIndexForNavTap(int navIndex) {
+    final map = widget.navPageIndices;
+    if (map == null) return navIndex;
+    if (navIndex < 0 || navIndex >= map.length) return null;
+    final page = map[navIndex];
+    if (page == kShellNavMoreMenu) return null;
+    return page;
   }
 
   bool _hasReplayableShortcut() {
@@ -300,16 +331,17 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   }
 
   void _applyTabSelection(
-    int index, {
+    int pageIndex, {
     required String source,
     bool haptic = true,
   }) {
-    final label = index >= 0 && index < widget.navItems.length
-        ? widget.navItems[index].label
+    final navHighlight = _bottomNavSelectedIndex(pageIndex);
+    final label = navHighlight >= 0 && navHighlight < widget.navItems.length
+        ? widget.navItems[navHighlight].label
         : '?';
     if (_traceEnabled) {
       developer.log(
-        '$source received label="$label" targetIndex=$index selectedBefore=$_currentIndex '
+        '$source received label="$label" targetPage=$pageIndex selectedBefore=$_currentIndex '
         'pageLen=${widget.pages.length} navLen=${widget.navItems.length}',
         name: 'ShellNav.tap',
       );
@@ -318,21 +350,16 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       _shellLog('onNavTap ignored: empty nav/pages');
       return;
     }
-    if (index < 0 || index >= widget.pages.length) {
+    if (!_isValidPageIndex(pageIndex)) {
       _shellLog(
-        'onNavTap reject index=$index pageLen=${widget.pages.length} navLen=${widget.navItems.length}',
+        'onNavTap reject pageIndex=$pageIndex pageLen=${widget.pages.length}',
       );
       return;
     }
-    if (index >= widget.navItems.length) {
-      _shellLog(
-          'onNavTap reject index=$index vs navLen=${widget.navItems.length}');
-      return;
-    }
-    if (index == _currentIndex) {
+    if (pageIndex == _currentIndex) {
       if (_traceEnabled) {
         developer.log(
-          '$source noop (already on index=$index label="$label")',
+          '$source noop (already on page=$pageIndex label="$label")',
           name: 'ShellNav.tap',
         );
       }
@@ -342,54 +369,61 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       AppFeedback.lightImpact();
     }
     _shellLog(
-      '$source index=$index (was $_currentIndex) tabId=${_tabIdentityFor(widget, index)}',
+      '$source pageIndex=$pageIndex (was $_currentIndex) tabId=${_tabIdentityFor(widget, pageIndex)}',
     );
     setState(() {
-      _currentIndex = index;
-      _materialized.add(index);
+      _currentIndex = pageIndex;
+      _materialized.add(pageIndex);
     });
     if (_traceEnabled) {
       developer.log(
         '$source applied selectedAfter=$_currentIndex resolvedPage='
-        '${index < widget.pages.length ? widget.pages[index].runtimeType : "?"}',
+        '${pageIndex < widget.pages.length ? widget.pages[pageIndex].runtimeType : "?"}',
         name: 'ShellNav.tap',
       );
     }
-    widget.onIndexChanged?.call(index);
+    widget.onIndexChanged?.call(pageIndex);
   }
 
-  void _onNavTap(int index) {
-    _applyTabSelection(index, source: 'navTap');
-  }
-
-  /// Programatik sekme geçişi (ör. gösterge kartından Müşterilerim’e).
-  void jumpToTab(int index) {
-    if (widget.navItems.isEmpty || widget.pages.isEmpty) {
-      _shellLog('jumpToTab noop: empty nav/pages');
+  void _onNavTap(int navIndex) {
+    final page = _pageIndexForNavTap(navIndex);
+    if (page == null) {
+      AppFeedback.lightImpact();
+      widget.onMoreNavTap?.call();
       return;
     }
-    if (index < 0 || index >= widget.navItems.length) {
+    _applyTabSelection(page, source: 'navTap');
+  }
+
+  /// Programatik sekme geçişi — [pages] indeksine gider (gizli sekmeler dahil).
+  void jumpToTab(int pageIndex) {
+    if (widget.pages.isEmpty) {
+      _shellLog('jumpToTab noop: empty pages');
+      return;
+    }
+    if (!_isValidPageIndex(pageIndex)) {
       _shellLog(
-        'jumpToTab reject index=$index navLen=${widget.navItems.length}',
+        'jumpToTab reject pageIndex=$pageIndex pageLen=${widget.pages.length}',
       );
       return;
     }
-    if (index >= widget.pages.length) {
-      _shellLog(
-        'jumpToTab reject index=$index pageLen=${widget.pages.length} (nav/page mismatch)',
-      );
-      return;
-    }
-    if (index == _currentIndex) return;
-    _shellLog('jumpToTab $index (was $_currentIndex)');
-    _applyTabSelection(index, source: 'jumpToTab', haptic: false);
+    if (pageIndex == _currentIndex) return;
+    _shellLog('jumpToTab page=$pageIndex (was $_currentIndex)');
+    _applyTabSelection(pageIndex, source: 'jumpToTab', haptic: false);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.pages.length != widget.navItems.length) {
+    if (widget.pages.length != widget.navItems.length &&
+        widget.navPageIndices == null) {
       _shellLog(
         'BUILD WARNING pages=${widget.pages.length} nav=${widget.navItems.length} — mismatch can blank content',
+      );
+    }
+    if (widget.navPageIndices != null &&
+        widget.navPageIndices!.length != widget.navItems.length) {
+      _shellLog(
+        'BUILD WARNING navPageIndices=${widget.navPageIndices!.length} nav=${widget.navItems.length}',
       );
     }
     if (widget.tabIds != null && widget.tabIds!.length != widget.pages.length) {
@@ -448,6 +482,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     }
 
     final safeIndex = _clampIndex(_currentIndex, widget.pages.length - 1);
+    final selectedNavIndex =
+        _bottomNavSelectedIndex(safeIndex).clamp(0, widget.navItems.length - 1);
     if (!_materialized.contains(safeIndex)) {
       _shellLog(
         'fallback: active index $safeIndex was not materialized — scheduling fix',
@@ -514,7 +550,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
         body: Row(
           children: [
             NavigationRail(
-              selectedIndex: safeIndex,
+              selectedIndex: selectedNavIndex,
               onDestinationSelected: _onNavTap,
               backgroundColor: surface,
               selectedIconTheme: IconThemeData(color: primary, size: 24),
@@ -554,7 +590,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(widget.navItems.length, (i) {
                 final item = widget.navItems[i];
-                final isSelected = safeIndex == i;
+                final isSelected = selectedNavIndex == i;
                 return Expanded(
                   child: Material(
                     color: Colors.transparent,
