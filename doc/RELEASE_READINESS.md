@@ -40,6 +40,11 @@ Gerçek auth sonrası `currentRoleProvider` Firestore `users/{uid}.role` ile bes
 
 ---
 
+## Mühendislik / dağıtım (güncel)
+
+- Sürüm öncesi tek sayfa: **`doc/PER_RELEASE_ENGINEERING_CHECKLIST.md`** (Firebase kimlik script’i, iOS/macOS Crashlytics, duman testi, App Store Privacy hatırlatması, Dependabot).
+- macOS’ta bundle değişikliğinden sonra ilk imza: aynı dokümanda **macOS** bölümü.
+
 ## Release Öncesi Kontrol Listesi
 
 - [x] Yetkisiz roller Command Center’a giremiyor

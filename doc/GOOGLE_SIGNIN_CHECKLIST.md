@@ -83,3 +83,5 @@ Kod: `GoogleAuthService` iOS ve **macOS** için aynı `iosClientId` kullanır (i
 - `flutter build apk --debug` / `flutter run` → derlenmeli.
 
 Bu listeyi doldurduktan ve Firebase’de Google’ı açtıktan sonra cihaz/emülatörde “Google ile Giriş Yap” / “Google ile devam et” deneyebilirsin.
+
+Sürüm öncesi mühendislik (Crashlytics, archive, App Privacy): **`doc/PER_RELEASE_ENGINEERING_CHECKLIST.md`**.

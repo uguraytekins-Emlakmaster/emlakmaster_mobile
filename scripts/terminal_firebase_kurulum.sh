@@ -3,6 +3,11 @@
 # Yeni makine: brew install openjdk@17 firebase-cli; dart pub global activate flutterfire_cli
 # PATH: export PATH="/opt/homebrew/bin:$PATH:$HOME/.pub-cache/bin"
 #
+# Ne zaman flutterfire configure?
+# - Firebase'de yeni iOS/macOS/Android uygulaması veya yeni GOOGLE_APP_ID
+# - google-services.json / GoogleService-Info.plist / firebase_options.dart tek elle tutuluyorsa sapma riski
+# Önce: firebase login && dart pub global activate flutterfire_cli
+#
 # FlutterFire:
 #   flutterfire configure -p emlak-master -y --platforms android,ios,macos,web \
 #     --android-package-name com.example.emlakmaster_mobile \
