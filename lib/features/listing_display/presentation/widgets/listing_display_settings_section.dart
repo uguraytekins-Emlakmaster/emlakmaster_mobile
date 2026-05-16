@@ -10,7 +10,6 @@ import 'package:emlakmaster_mobile/core/constants/turkish_cities.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
-import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/core/services/logo_storage_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/office/data/office_logo_storage_service.dart';
@@ -199,8 +198,9 @@ class _ListingDisplaySettingsSectionState
       if (mounted) AppToaster.success(context, 'Ofis logosu kaldırıldı.');
       return;
     }
-    if (!canGlobalLogo || settings.logoUrl == null || settings.logoUrl!.isEmpty)
+    if (!canGlobalLogo || settings.logoUrl == null || settings.logoUrl!.isEmpty) {
       return;
+    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

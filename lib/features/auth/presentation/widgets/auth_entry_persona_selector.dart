@@ -2,7 +2,6 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Yönetici / danışman giriş yolu seçici — login ve rol seçiminde ortak.

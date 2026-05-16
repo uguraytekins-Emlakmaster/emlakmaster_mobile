@@ -7,7 +7,6 @@ import 'package:emlakmaster_mobile/features/crm_customers/domain/crm_intelligenc
 import 'package:emlakmaster_mobile/features/crm_customers/domain/smart_task_suggestion.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_smart_task_suggestions_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';

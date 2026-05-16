@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../core/resilience/sync_status.dart';

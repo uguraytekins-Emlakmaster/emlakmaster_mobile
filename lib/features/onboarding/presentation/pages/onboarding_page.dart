@@ -13,7 +13,6 @@ import 'package:emlakmaster_mobile/features/onboarding/domain/onboarding_copy.da
 import 'package:emlakmaster_mobile/features/onboarding/domain/onboarding_slide_model.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/widgets/onboarding_ui_mockups.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 

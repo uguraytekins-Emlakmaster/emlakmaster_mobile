@@ -620,7 +620,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       borderSide: BorderSide(color: ext.accent.withValues(alpha: 0.7)),
     );
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: DesignTokens.contentPaddingHorizontal,
         right: DesignTokens.contentPaddingHorizontal,
         top: DesignTokens.space3,
@@ -720,10 +720,12 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty)
+                        if (v == null || v.trim().isEmpty) {
                           return 'E-posta gerekli';
-                        if (!v.contains('@'))
+                        }
+                        if (!v.contains('@')) {
                           return 'Geçerli bir e-posta girin';
+                        }
                         return null;
                       },
                       onFieldSubmitted: (_) => _sendReset(),

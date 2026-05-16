@@ -38,13 +38,11 @@ abstract final class AppTheme {
         : const ColorScheme.light(
             primary: ThemePalette.antiqueGold,
             secondary: ThemePalette.antiqueGold,
-            surface: ThemePalette.surfaceLight,
             onSurface: ThemePalette.textPrimaryLight,
             onPrimary: ThemePalette.inputTextOnGold,
             onSecondary: ThemePalette.inputTextOnGold,
             onSurfaceVariant: ThemePalette.textSecondaryLight,
             error: ThemePalette.danger,
-            onError: Colors.white,
             outline: ThemePalette.borderLight,
             surfaceContainerHighest: ThemePalette.surfaceLightElevated,
             surfaceTint: Colors.transparent,

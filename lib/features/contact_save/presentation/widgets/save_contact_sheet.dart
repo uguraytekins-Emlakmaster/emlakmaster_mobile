@@ -12,7 +12,6 @@ import 'package:emlakmaster_mobile/features/contact_save/domain/extract_contact_
     show logVoiceContactParseDebug, parseVoiceContact;
 import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Rehbere ve uygulamaya kaydet: sesli komut (AI yardımı) + manuel giriş.

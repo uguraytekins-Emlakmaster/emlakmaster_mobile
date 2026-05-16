@@ -6,7 +6,6 @@ import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 

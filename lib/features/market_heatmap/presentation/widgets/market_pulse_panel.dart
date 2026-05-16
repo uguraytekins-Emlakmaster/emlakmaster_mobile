@@ -17,7 +17,6 @@ import 'package:firebase_core/firebase_core.dart'
 import 'package:emlakmaster_mobile/shared/widgets/error_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/fade_in_on_mount.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 

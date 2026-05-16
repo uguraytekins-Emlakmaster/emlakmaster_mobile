@@ -9,7 +9,6 @@ import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/widgets/auth_entry_persona_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
@@ -497,7 +496,6 @@ class _RoleCard extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return Material(
       color: ext.card,
-      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         side: BorderSide(color: ext.border.withValues(alpha: 0.85)),

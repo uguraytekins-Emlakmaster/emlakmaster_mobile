@@ -59,8 +59,9 @@ class OfficeMembershipRepository {
       if (!s.exists) return null;
       return OfficeMembership.fromFirestore(s.id, s.data());
     } catch (e, st) {
-      if (kDebugMode)
+      if (kDebugMode) {
         AppLogger.e('OfficeMembershipRepository.getMembershipDoc', e, st);
+      }
       rethrow;
     }
   }

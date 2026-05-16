@@ -12,7 +12,6 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
@@ -33,8 +32,9 @@ class _AccountSessionSheet extends ConsumerWidget {
   const _AccountSessionSheet();
 
   static String _activePanelLabel(WidgetRef ref, AppRole role) {
-    if (FeaturePermission.seesClientPanel(role))
+    if (FeaturePermission.seesClientPanel(role)) {
       return ProductLabels.clientWorkspace;
+    }
     if (!FeaturePermission.seesAdminPanel(role)) {
       return ProductLabels.consultantWorkspace;
     }

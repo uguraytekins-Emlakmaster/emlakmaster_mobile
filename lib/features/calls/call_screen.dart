@@ -18,7 +18,6 @@ import 'package:emlakmaster_mobile/features/calls/presentation/outbound_system_h
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_ios_dialer.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 

@@ -36,7 +36,6 @@ ListingRowView listingRowFromInternalDoc(DocumentSnapshot<Map<String, dynamic>> 
     surface: ListingSurface.owned,
     rowKind: isInternalOnly ? ListingRowKind.officePortfolio : ListingRowKind.connectedPlatform,
     detailListingId: doc.id,
-    openInBrowserUrl: null,
   );
 }
 
@@ -86,7 +85,6 @@ ListingRowView listingRowFromMarketFeed(ExternalListingEntity e) {
     isOwnedByOffice: false,
     syncStatus: e.ingestedAt != null ? ListingSyncStatus.synced : ListingSyncStatus.unknown,
     lastSyncedAt: e.ingestedAt ?? e.postedAt,
-    contentHash: null,
     title: e.title,
     priceLabel: priceStr,
     locationLabel: locParts.join(' · '),
@@ -94,7 +92,6 @@ ListingRowView listingRowFromMarketFeed(ExternalListingEntity e) {
     surface: ListingSurface.marketFeed,
     rowKind: ListingRowKind.market,
     openInBrowserUrl: e.link,
-    detailListingId: null,
   );
 }
 

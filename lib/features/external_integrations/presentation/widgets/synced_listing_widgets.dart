@@ -6,7 +6,6 @@ import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/integration_synced_listing_entity.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 

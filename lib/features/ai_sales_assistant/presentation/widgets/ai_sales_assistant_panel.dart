@@ -164,8 +164,9 @@ class AiSalesAssistantPanel extends ConsumerWidget {
   static String _budgetText(dynamic customer) {
     final min = customer.budgetMin;
     final max = customer.budgetMax;
-    if (min != null && max != null)
+    if (min != null && max != null) {
       return '${(min / 1e6).toStringAsFixed(1)}M - ${(max / 1e6).toStringAsFixed(1)}M TL';
+    }
     if (min != null) return 'Min ${(min / 1e6).toStringAsFixed(1)}M TL';
     if (max != null) return 'Max ${(max / 1e6).toStringAsFixed(1)}M TL';
     return 'Belirtilmemiş';

@@ -169,10 +169,12 @@ class AppRouter {
           final needsOfficeRecovery = ref.read(needsOfficeRecoveryProvider);
           if (user != null && needsRole) {
             final wsDone = OnboardingStore.instance.workspaceSetupCompletedSync;
-            if (!wsDone && path != routeWorkspaceSetup)
+            if (!wsDone && path != routeWorkspaceSetup) {
               return routeWorkspaceSetup;
-            if (wsDone && path == routeWorkspaceSetup)
+            }
+            if (wsDone && path == routeWorkspaceSetup) {
               return routeRoleSelection;
+            }
             if (wsDone) {
               const allowWhileNeedsRole = <String>{
                 routeRoleSelection,
@@ -244,8 +246,9 @@ class AppRouter {
                   path == routeOnboarding ||
                   path == routeRegister)) {
             if (needsRole) {
-              if (!OnboardingStore.instance.workspaceSetupCompletedSync)
+              if (!OnboardingStore.instance.workspaceSetupCompletedSync) {
                 return routeWorkspaceSetup;
+              }
               return routeRoleSelection;
             }
             if (needsOffice) return routeOfficeGate;
@@ -260,7 +263,9 @@ class AppRouter {
           if (user == null && path == routeOnboarding) return null;
           if (user == null &&
               path == routeLogin &&
-              !OnboardingStore.instance.completedSync) return routeOnboarding;
+              !OnboardingStore.instance.completedSync) {
+            return routeOnboarding;
+          }
           if (user == null &&
               path != routeLogin &&
               path != routeOnboarding &&
@@ -274,7 +279,9 @@ class AppRouter {
           if (user != null &&
               role != null &&
               role.isClientTier &&
-              _isStaffOnlyPath(path)) return routeHome;
+              _isStaffOnlyPath(path)) {
+            return routeHome;
+          }
           return null;
         } catch (e, st) {
           AppLogger.e('GoRouter redirect', e, st);
