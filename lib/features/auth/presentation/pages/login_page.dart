@@ -14,10 +14,13 @@ import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../domain/auth_result.dart';
 import '../utils/auth_result_ui.dart';
-import '../../../../core/branding/brand_emblem.dart';
 import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../utils/auth_error_messages.dart';
+import '../../../../core/services/login_entry_store.dart';
+import '../../domain/login_entry_persona.dart';
+import '../widgets/auth_entry_hero.dart';
+import '../widgets/auth_entry_persona_selector.dart';
 import '../widgets/auth_field_decoration.dart';
 import '../widgets/auth_page_shell.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
@@ -39,11 +42,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _obscurePassword = true;
   _BusyKind _busy = _BusyKind.none;
   String? _errorMessage;
+  LoginEntryPersona? _persona;
+  bool _personaReady = false;
 
   bool get _anyBusy => _busy != _BusyKind.none;
 
   /// Gerçek hata kodu (Firebase vb.); kullanıcı "bilgiler doğru" dediğinde teşhis için gösterilir.
   String? _errorDetail;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPersona();
+  }
+
+  Future<void> _loadPersona() async {
+    final saved = await LoginEntryStore.instance.loadPersona();
+    if (!mounted) return;
+    setState(() {
+      _persona = saved;
+      _personaReady = true;
+    });
+  }
+
+  Future<void> _onPersonaSelected(LoginEntryPersona persona) async {
+    setState(() => _persona = persona);
+    await LoginEntryStore.instance.setPersona(persona);
+  }
 
   @override
   void dispose() {
@@ -58,6 +83,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _errorMessage = null;
       _errorDetail = null;
     });
+    if (_persona == null) {
+      setState(() => _errorMessage = 'Lütfen Yönetici veya Danışman girişini seçin.');
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     final blocked = LoginAttemptGuard.assertCanAttempt();
     if (blocked != null) {
@@ -141,6 +170,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _googleIleGiris() async {
     if (_busy != _BusyKind.none) return;
+    if (_persona == null) {
+      setState(() => _errorMessage = 'Lütfen Yönetici veya Danışman girişini seçin.');
+      return;
+    }
     final blocked = LoginAttemptGuard.assertCanAttempt();
     if (blocked != null) {
       setState(() => _errorMessage = blocked);
@@ -167,6 +200,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Future<void> _facebookIleGiris() async {
     if (_busy != _BusyKind.none) return;
+    if (_persona == null) {
+      setState(() => _errorMessage = 'Lütfen Yönetici veya Danışman girişini seçin.');
+      return;
+    }
     final blocked = LoginAttemptGuard.assertCanAttempt();
     if (blocked != null) {
       setState(() => _errorMessage = blocked);
@@ -238,40 +275,30 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    if (!_personaReady) {
+      return AuthPageShell(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(DesignTokens.space8),
+            child: CircularProgressIndicator(color: ext.accent),
+          ),
+        ),
+      );
+    }
     return AuthPageShell(
+      persona: _persona,
       child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: DesignTokens.space4),
-            const Center(
-              child: BrandEmblem(
-                variant: BrandEmblemVariant.full,
-                size: 92,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space6),
-            Text(
-              'EmlakMaster',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: ext.brandPrimary,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.6,
-                    fontSize: 28,
-                  ),
-              textAlign: TextAlign.center,
-            ),
             const SizedBox(height: DesignTokens.space2),
-            Text(
-              'Gayrimenkul operasyonunu tek akışta yönetin',
-              style: TextStyle(
-                color: ext.foregroundSecondary,
-                fontSize: DesignTokens.fontSizeMd,
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
+            AuthEntryHero(persona: _persona),
+            const SizedBox(height: DesignTokens.space6),
+            AuthEntryPersonaSelector(
+              selected: _persona,
+              onSelected: _onPersonaSelected,
             ),
             const SizedBox(height: DesignTokens.space8),
             TextFormField(

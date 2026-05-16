@@ -13,6 +13,7 @@ import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dar
 import 'package:emlakmaster_mobile/core/services/firebase_functions_bootstrap.dart';
 import 'package:emlakmaster_mobile/core/services/push_notification_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
+import 'package:emlakmaster_mobile/core/services/login_entry_store.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/cache/app_cache_service.dart';
 import 'package:emlakmaster_mobile/core/services/call_record_sync_orchestrator.dart';
@@ -82,14 +83,18 @@ Future<void> main() async {
         ),
         () async {
           try {
-            await OnboardingStore.instance.warmUp().timeout(
+            await Future.wait([
+              OnboardingStore.instance.warmUp(),
+              LoginEntryStore.instance.warmUp(),
+            ]).timeout(
               const Duration(seconds: 3),
               onTimeout: () {
                 if (kDebugMode) {
                   debugPrint(
-                    'OnboardingStore: warmUp zaman aşımı; redirect varsayılanları kullanılacak.',
+                    'OnboardingStore/LoginEntryStore: warmUp zaman aşımı; redirect varsayılanları kullanılacak.',
                   );
                 }
+                return <void>[];
               },
             );
           } catch (e, st) {
@@ -242,10 +247,13 @@ Future<void> _runApp() async {
 
   // Çoğunlukla main() içinde Firebase ile paralel warmUp tamamlanır; burada yedek (idempotent).
   try {
-    await OnboardingStore.instance.warmUp();
-    AppLogger.state('[startup] OnboardingStore warmUp done before runApp');
+    await Future.wait([
+      OnboardingStore.instance.warmUp(),
+      LoginEntryStore.instance.warmUp(),
+    ]);
+    AppLogger.state('[startup] OnboardingStore + LoginEntryStore warmUp done before runApp');
   } catch (e, st) {
-    AppLogger.e('OnboardingStore warmUp error (pre-runApp)', e, st);
+    AppLogger.e('OnboardingStore/LoginEntryStore warmUp error (pre-runApp)', e, st);
   }
 
   var initialThemeModeIndex = 2;

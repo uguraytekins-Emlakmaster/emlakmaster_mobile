@@ -15,6 +15,9 @@ import '../../../../core/services/login_attempt_guard.dart';
 import '../../domain/auth_result.dart';
 import '../utils/auth_result_ui.dart';
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../core/services/login_entry_store.dart';
+import '../../domain/login_entry_persona.dart';
+import '../widgets/auth_entry_persona_selector.dart';
 import '../widgets/auth_field_decoration.dart';
 /// E-posta ile yeni hesap. Başarıda router → rol seçimi veya ana sayfa (mevcut akış).
 class RegisterPage extends ConsumerStatefulWidget {
@@ -34,8 +37,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
   String? _errorMessage;
+  LoginEntryPersona? _persona;
   /// 0: profil, 1: güvenlik (şifre)
   int _step = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    LoginEntryStore.instance.loadPersona().then((p) {
+      if (mounted && p != null) setState(() => _persona = p);
+    });
+  }
+
+  Future<void> _onPersonaSelected(LoginEntryPersona persona) async {
+    setState(() => _persona = persona);
+    await LoginEntryStore.instance.setPersona(persona);
+  }
 
   @override
   void dispose() {
@@ -50,6 +67,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   void _goNextStep() {
     if (_step == 0) {
+      if (_persona == null) {
+        setState(() => _errorMessage = 'Lütfen Yönetici veya Danışman olarak kayıt olun.');
+        return;
+      }
       final nameOk = _nameController.text.trim().isEmpty ||
           _nameController.text.trim().length >= 2;
       final email = _emailController.text.trim();
@@ -325,6 +346,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    if (_step == 0) ...[
+                      const SizedBox(height: DesignTokens.space4),
+                      AuthEntryPersonaSelector(
+                        selected: _persona,
+                        onSelected: _onPersonaSelected,
+                        compact: true,
+                      ),
+                    ],
                     const SizedBox(height: DesignTokens.space6),
                     Visibility(
                       visible: _step == 0,
