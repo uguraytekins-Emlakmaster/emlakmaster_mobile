@@ -1,4 +1,5 @@
 import 'dart:async' show Timer, unawaited;
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -437,7 +438,7 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
     _inst.markTapDown();
     _silentRetryConsumed = false;
     _outcomeDelivered = false;
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     _finalSegments.clear();
     _hadAnyFinal = false;
     _previewWords = '';
@@ -474,7 +475,7 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
       _inst.markTapUp();
       _setPhase(_PttPhase.waitingFinal, reason: 'retry_tap_grace');
       _suppressStatusRecordingReset = true;
-      HapticFeedback.lightImpact();
+      AppFeedback.lightImpact();
       _emitPhase('Sonuç bekleniyor…');
       if (kDebugMode) _setDebugLabel('waiting-final');
       setState(() => _isRecording = false);
@@ -490,7 +491,7 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
     _inst.markTapUp();
     _setPhase(_PttPhase.waitingFinal, reason: 'tap_up_grace');
     _suppressStatusRecordingReset = true;
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     _emitPhase('Sonuç bekleniyor…');
     if (kDebugMode) _setDebugLabel('waiting-final');
     setState(() => _isRecording = false);

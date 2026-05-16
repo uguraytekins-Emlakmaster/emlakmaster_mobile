@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Dialer ekranı — [ThemeData.brightness] ile açık / koyu (iPhone Phone’a yakın).
 @immutable
@@ -119,12 +120,12 @@ class CrmIosDialerShell extends ConsumerWidget {
   ];
 
   void _append(ValueNotifier<String> n, String key) {
-    HapticFeedback.selectionClick();
+    AppFeedback.selectionClick();
     n.value = OutboundPhoneDial.sanitizeDialEntry(n.value + key);
   }
 
   void _longPressZero(ValueNotifier<String> n) {
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     final raw = n.value;
     if (raw.endsWith('0')) {
       final base = raw.substring(0, raw.length - 1);
@@ -141,7 +142,7 @@ class CrmIosDialerShell extends ConsumerWidget {
   }
 
   void _backspace(ValueNotifier<String> n) {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final v = n.value;
     n.value = v.isEmpty ? '' : v.substring(0, v.length - 1);
   }
@@ -648,7 +649,7 @@ class DialerGreenCallButton extends StatelessWidget {
             customBorder: const CircleBorder(),
             onTap: enabled
                 ? () {
-                    HapticFeedback.mediumImpact();
+                    AppFeedback.mediumImpact();
                     onPressed();
                   }
                 : null,

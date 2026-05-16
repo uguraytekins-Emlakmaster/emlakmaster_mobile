@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 Future<void> showPostCallQuickCaptureSheet({
   required BuildContext context,
@@ -61,7 +62,7 @@ class _PostCallQuickCaptureBodyState
   void _appendQuickNoteSnippet(String snippet) {
     final line = snippet.trim();
     if (line.isEmpty) return;
-    HapticFeedback.selectionClick();
+    AppFeedback.selectionClick();
     final t = _noteCtrl.text.trim();
     setState(() {
       _noteCtrl.text = t.isEmpty ? line : '$t · $line';
@@ -133,7 +134,7 @@ class _PostCallQuickCaptureBodyState
         );
         return;
       }
-      HapticFeedback.mediumImpact();
+      AppFeedback.mediumImpact();
       var okMessage = result.taskCreated
           ? 'Çağrı kaydı ve takip görevi kaydedildi.'
           : 'Çağrı kaydı kaydedildi.';

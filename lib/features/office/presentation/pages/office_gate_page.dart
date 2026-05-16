@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Ofis yokken: oluştur veya katıl seçimi (merkezi yönlendirme).
 class OfficeGatePage extends StatelessWidget {
@@ -46,7 +47,7 @@ class OfficeGatePage extends StatelessWidget {
                 title: 'Ofis oluştur',
                 subtitle: 'Bu ofisin sahibi siz olursunuz.',
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  AppFeedback.selectionClick();
                   context.push(AppRouter.routeOfficeCreate);
                 },
               ),
@@ -56,14 +57,14 @@ class OfficeGatePage extends StatelessWidget {
                 title: 'Davet koduyla katıl',
                 subtitle: 'Yöneticinizden aldığınız kodu girin.',
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  AppFeedback.selectionClick();
                   context.push(AppRouter.routeOfficeJoin);
                 },
               ),
               const Spacer(),
               TextButton(
                 onPressed: () async {
-                  HapticFeedback.lightImpact();
+                  AppFeedback.lightImpact();
                   await AuthService.instance.signOut();
                   if (context.mounted) context.go(AppRouter.routeLogin);
                 },

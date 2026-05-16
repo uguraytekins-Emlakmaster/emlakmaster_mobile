@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Müşteri: Arama — kriter girip danışmana talep iletir.
 class ClientSearchPage extends StatefulWidget {
@@ -103,7 +104,7 @@ class _ClientSearchPageState extends State<ClientSearchPage> {
             const SizedBox(height: DesignTokens.space5),
             FilledButton.icon(
               onPressed: () {
-                HapticFeedback.mediumImpact();
+                AppFeedback.mediumImpact();
                 final q = _query.text.trim();
                 if (q.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -244,7 +245,7 @@ class ClientFavoritesPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
                     child: InkWell(
                       onTap: () {
-                        HapticFeedback.lightImpact();
+                        AppFeedback.lightImpact();
                         showDialog<void>(
                           context: context,
                           builder: (ctx) => AlertDialog(
@@ -360,7 +361,7 @@ class ClientMessagesPage extends StatelessWidget {
               title: 'WhatsApp ile yazın',
               subtitle: 'Hızlı mesaj için WhatsApp açılır',
               onTap: () {
-                HapticFeedback.lightImpact();
+                AppFeedback.lightImpact();
                 _open(Uri.parse(
                     'https://wa.me/?text=${Uri.encodeComponent('Merhaba, EmlakMaster müşterisiyim. Görüşmek istiyorum.')}'));
               },
@@ -375,7 +376,7 @@ class ClientMessagesPage extends StatelessWidget {
               title: 'Telefon',
               subtitle: 'Ofis hattını arayın',
               onTap: () {
-                HapticFeedback.lightImpact();
+                AppFeedback.lightImpact();
                 _open(Uri(scheme: 'tel', path: '+908503021234'));
               },
             ),
@@ -389,7 +390,7 @@ class ClientMessagesPage extends StatelessWidget {
               title: 'E-posta',
               subtitle: 'info@rainbowgayrimenkul.com (örnek)',
               onTap: () {
-                HapticFeedback.lightImpact();
+                AppFeedback.lightImpact();
                 _open(Uri(
                     scheme: 'mailto',
                     path: 'info@example.com',
@@ -513,7 +514,7 @@ class ClientVirtualTourPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
                     child: InkWell(
                       onTap: () async {
-                        HapticFeedback.lightImpact();
+                        AppFeedback.lightImpact();
                         final u = Uri.parse(t.$3);
                         if (await canLaunchUrl(u)) {
                           await launchUrl(u,
@@ -680,7 +681,7 @@ class ClientProfilePage extends ConsumerWidget {
               trailing: Icon(Icons.chevron_right_rounded,
                   color: onSurface.withValues(alpha: 0.4)),
               onTap: () {
-                HapticFeedback.lightImpact();
+                AppFeedback.lightImpact();
                 showDialog<void>(
                   context: context,
                   builder: (ctx) => AlertDialog(
@@ -704,7 +705,7 @@ class ClientProfilePage extends ConsumerWidget {
             if (user != null)
               OutlinedButton.icon(
                 onPressed: () async {
-                  HapticFeedback.mediumImpact();
+                  AppFeedback.mediumImpact();
                   await AuthService.instance.signOut();
                 },
                 icon: const Icon(Icons.logout_rounded),

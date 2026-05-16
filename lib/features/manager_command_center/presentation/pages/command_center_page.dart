@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -329,7 +330,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                   displayLabel: title,
                   firestoreCallDocId: id,
                   onOpenCustomerDirectory: () {
-                    HapticFeedback.lightImpact();
+                    AppFeedback.lightImpact();
                     ref
                         .read(mainShellShortcutProvider.notifier)
                         .enqueue(MainShellShortcut.openHomeTab);
@@ -370,7 +371,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           children: [
             SlidableAction(
               onPressed: (_) {
-                HapticFeedback.mediumImpact();
+                AppFeedback.mediumImpact();
                 context.push('/customer/$custId');
               },
               backgroundColor: ext.accent,
@@ -395,7 +396,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 final ok =
                     await OutboundPhoneDial.launchDial(rawPhone);
                 if (context.mounted && ok) {
-                  HapticFeedback.mediumImpact();
+                  AppFeedback.mediumImpact();
                 }
               },
               backgroundColor: ext.success,
@@ -416,7 +417,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         children: [
           SlidableAction(
             onPressed: (_) {
-              HapticFeedback.mediumImpact();
+              AppFeedback.mediumImpact();
               context.push('/customer/$custId');
             },
             backgroundColor: ext.accent,
@@ -434,7 +435,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             onPressed: (_) async {
               final ok = await OutboundPhoneDial.launchDial(rawPhone);
               if (context.mounted && ok) {
-                HapticFeedback.mediumImpact();
+                AppFeedback.mediumImpact();
               }
             },
             backgroundColor: ext.success,

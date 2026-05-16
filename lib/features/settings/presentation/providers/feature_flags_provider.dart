@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,6 +54,7 @@ class FeatureFlagsNotifier
       state = AsyncValue.data(map);
       AppLifecyclePowerService.powerSaverEnabled =
           map[AppConstants.keyPowerSaver] ?? false;
+      await AppFeedback.syncFromSettings();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -66,6 +68,11 @@ class FeatureFlagsNotifier
       AppLifecyclePowerService.powerSaverEnabled = value;
     } else {
       await SettingsService.instance.setFeatureFlag(key, value);
+    }
+    if (key == AppConstants.keyHapticFeedback) {
+      AppFeedback.applyRuntimeFlags(haptic: value);
+    } else if (key == AppConstants.keySoundEffects) {
+      AppFeedback.applyRuntimeFlags(sound: value);
     }
     state = AsyncValue.data({...current, key: value});
   }

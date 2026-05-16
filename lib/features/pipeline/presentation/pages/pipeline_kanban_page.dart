@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Pipeline Kanban: aşama sütunları, premium kartlar, dokun ile aşama değiştir.
 class PipelineKanbanPage extends ConsumerStatefulWidget {
@@ -164,7 +165,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
   }
 
   Future<void> _moveToStage(String itemId, PipelineStage stage) async {
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     await FirestoreService.updatePipelineItemStage(itemId, stage.id);
     if (mounted) {
       final ext = AppThemeExtension.of(context);
@@ -180,7 +181,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
 
   void _showAddToPipelineSheet(
       BuildContext context, WidgetRef ref, String uid) {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final customerIdController = TextEditingController();
     showPremiumModalBottomSheet<void>(
       context: context,
@@ -540,7 +541,7 @@ class _StageColumn extends StatelessWidget {
     _PipelineCardData item,
     void Function(_PipelineCardData, PipelineStage) onStageTap,
   ) {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     showPremiumModalBottomSheet<void>(
       context: context,
       builder: (ctx) {

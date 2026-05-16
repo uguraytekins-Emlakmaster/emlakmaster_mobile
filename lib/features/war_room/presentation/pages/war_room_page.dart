@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Role-Based War Room: aktif çağrılar, sıcak fırsatlar, gecikmiş görevler, yüksek değerli lead'ler, danışman durumu.
 class WarRoomPage extends ConsumerWidget {
@@ -118,7 +119,7 @@ class _ResurrectionStrip extends ConsumerWidget {
                         ),
                       ),
                       onPressed: () {
-                        HapticFeedback.lightImpact();
+                        AppFeedback.lightImpact();
                         showResurrectionLeadTopicSheet(
                           context,
                           topicTitle: 'Geri kazanım sırası',

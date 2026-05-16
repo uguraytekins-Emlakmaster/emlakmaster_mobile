@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -41,7 +42,7 @@ class ErrorState extends StatelessWidget {
               const SizedBox(height: DesignTokens.space5),
               FilledButton.icon(
                 onPressed: () {
-                  HapticFeedback.mediumImpact();
+                  AppFeedback.mediumImpact();
                   onRetry!();
                 },
                 icon: const Icon(Icons.refresh_rounded, size: 20),

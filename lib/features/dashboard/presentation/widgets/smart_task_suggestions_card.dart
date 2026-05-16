@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Akıllı görev önerileri — yalnızca onayla Firestore’a yazılır (v1 güvenli mod).
 class SmartTaskSuggestionsCard extends ConsumerWidget {
@@ -101,7 +102,7 @@ class _SuggestionRowState extends ConsumerState<_SuggestionRow> {
   Future<void> _createTask() async {
     if (_busy) return;
     setState(() => _busy = true);
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     final s = widget.suggestion;
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     try {
@@ -142,7 +143,7 @@ class _SuggestionRowState extends ConsumerState<_SuggestionRow> {
   Future<void> _dismiss() async {
     if (_busy) return;
     setState(() => _busy = true);
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final s = widget.suggestion;
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     await ref.read(taskSuggestionDedupeStoreProvider).suppress(uid, s.dedupeKey);

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Yönetici taşımaları — broker uyarılarından ayrı, daha seçici.
 class ManagerEscalationsCard extends ConsumerWidget {
@@ -109,7 +110,7 @@ class _EscalationRowState extends ConsumerState<_EscalationRow> {
   Future<void> _dismiss() async {
     if (_busy) return;
     setState(() => _busy = true);
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     await ref.read(escalationDedupeStoreProvider).suppress(uid, widget.item.dedupeKey);
     ref.invalidate(managerEscalationsProvider);

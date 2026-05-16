@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Konu başlığına göre yeniden kazanım / sessiz lead paneli (tam sayfa yönlendirme yerine).
 /// [topicTitle]: ekranın konusu — örn. "Takip listesi", "Fırsat radarı", "Yeniden kazanım kuyruğu".
@@ -135,7 +136,7 @@ void showResurrectionLeadTopicSheet(
             FilledButton.icon(
               onPressed: () {
                 Navigator.pop(ctx);
-                HapticFeedback.mediumImpact();
+                AppFeedback.mediumImpact();
                 context.push(
                   AppRouter.routeCall,
                   extra: {

@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 class ListingsPage extends ConsumerStatefulWidget {
   const ListingsPage({super.key});
@@ -285,7 +286,7 @@ class _ListingRowCard extends StatelessWidget {
   final ListingRowView row;
 
   Future<void> _onTap(BuildContext context) async {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final detail = row.detailListingId;
     if (detail != null && detail.isNotEmpty) {
       if (!context.mounted) return;

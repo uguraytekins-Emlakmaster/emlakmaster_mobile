@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -63,7 +64,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final ext = AppThemeExtension.of(context);
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     if (uid.isEmpty) return;
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     final due = DateTime.now().add(const Duration(days: 3));
     var count = 0;
     for (final id in _selectedIds) {
@@ -345,21 +346,21 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                         child:
                                             _ConsultantCustomersEmptyLaunchpad(
                                           onPrimaryAdd: () {
-                                            HapticFeedback.lightImpact();
+                                            AppFeedback.lightImpact();
                                             showSaveContactSheet(
                                               context,
                                               source: 'crm_empty_launchpad',
                                             );
                                           },
                                           onVoiceQuickAdd: () {
-                                            HapticFeedback.lightImpact();
+                                            AppFeedback.lightImpact();
                                             showSaveContactSheet(
                                               context,
                                               source: 'crm_empty_voice',
                                             );
                                           },
                                           onOpenCalls: () {
-                                            HapticFeedback.lightImpact();
+                                            AppFeedback.lightImpact();
                                             final shell =
                                                 ConsultantShellNav.maybeOf(
                                                     context);
@@ -468,7 +469,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             if (showAddDock)
               _CustomerAddDockBar(
                 onPressed: () {
-                  HapticFeedback.lightImpact();
+                  AppFeedback.lightImpact();
                   showSaveContactSheet(context, source: 'crm_list');
                 },
               ),
@@ -524,7 +525,7 @@ class _CustomerAddDockBar extends StatelessWidget {
                   message: 'Rehber ve CRM’e kayıt',
                   child: FilledButton.icon(
                     onPressed: () {
-                      HapticFeedback.mediumImpact();
+                      AppFeedback.mediumImpact();
                       onPressed();
                     },
                     icon: Icon(Icons.person_add_rounded,

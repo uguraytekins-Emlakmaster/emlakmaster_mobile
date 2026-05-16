@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -339,7 +340,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       return;
     }
     if (haptic) {
-      HapticFeedback.lightImpact();
+      AppFeedback.lightImpact();
     }
     _shellLog(
       '$source index=$index (was $_currentIndex) tabId=${_tabIdentityFor(widget, index)}',

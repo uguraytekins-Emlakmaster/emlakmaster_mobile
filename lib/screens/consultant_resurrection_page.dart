@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/wid
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Danışman paneli – Takip: sessiz lead listesi (7/14/30+ gün), yeniden kazanım kuyruğu.
 class ConsultantResurrectionPage extends ConsumerWidget {
@@ -120,7 +121,7 @@ class ConsultantResurrectionPage extends ConsumerWidget {
                     color: textTertiary,
                   ),
                   onTap: () {
-                    HapticFeedback.lightImpact();
+                    AppFeedback.lightImpact();
                     showResurrectionLeadTopicSheet(
                       context,
                       topicTitle: ProductLabels.followUp,

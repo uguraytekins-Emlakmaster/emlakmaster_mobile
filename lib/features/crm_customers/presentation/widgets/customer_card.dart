@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../features/contact_save/presentation/widgets/save_contact_sheet.dart';
@@ -184,7 +185,7 @@ class CustomerCard extends ConsumerWidget {
                         ),
                         color: AppThemeExtension.of(context).textSecondary,
                         onPressed: () {
-                          HapticFeedback.lightImpact();
+                          AppFeedback.lightImpact();
                           showSaveContactSheet(
                             context,
                             initialName: customer.fullName,

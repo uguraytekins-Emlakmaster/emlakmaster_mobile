@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 const int _kLeanFocusMaxRows = 4;
 
@@ -256,7 +257,7 @@ class LeanAdminOfficePulseCard extends ConsumerWidget {
           trailing: top != null
               ? TextButton(
                   onPressed: () {
-                    HapticFeedback.lightImpact();
+                    AppFeedback.lightImpact();
                     context.push('/customer/${top.customerId}');
                   },
                   style: TextButton.styleFrom(
@@ -319,7 +320,7 @@ class _FocusRowTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
       child: InkWell(
         onTap: () {
-          HapticFeedback.lightImpact();
+          AppFeedback.lightImpact();
           context.push('/customer/${row.customerId}');
         },
         borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardS),

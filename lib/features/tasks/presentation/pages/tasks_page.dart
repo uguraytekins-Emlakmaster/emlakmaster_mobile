@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Danışman görevleri: vade tarihine göre liste, yapıldı işaretleme, görev ekleme.
 class TasksPage extends ConsumerStatefulWidget {
@@ -186,7 +187,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     Map<String, dynamic> current,
     bool done,
   ) async {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final wasDone = current['done'] == true;
     final customerId = (current['customerId'] as String?)?.trim();
     try {
@@ -224,7 +225,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
   }
 
   Future<void> _confirmDeleteTask(String id, String title) async {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -269,7 +270,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
 
   Future<void> _deleteTask(String id) async {
     if (_deletingIds.contains(id)) return;
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     setState(() => _deletingIds.add(id));
     try {
       await FirestoreService.deleteTask(id);
@@ -311,7 +312,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
   }
 
   void _showAddTaskDialog(BuildContext context, WidgetRef ref, String uid) {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final titleController = TextEditingController();
     final customerIdController = TextEditingController();
     DateTime? pickedDate;
@@ -583,7 +584,7 @@ class _TasksDockedAddBar extends StatelessWidget {
           ),
           child: FilledButton.icon(
             onPressed: () {
-              HapticFeedback.mediumImpact();
+              AppFeedback.mediumImpact();
               onPressed();
             },
             icon: Icon(Icons.add_rounded, color: ext.onBrand, size: 22),

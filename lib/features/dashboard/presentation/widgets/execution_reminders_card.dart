@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// İcra hatırlatıcıları — danışman veya broker kapsamı.
 enum ExecutionReminderSurface {
@@ -137,7 +138,7 @@ class _ReminderRowState extends ConsumerState<_ReminderRow> {
 
   Future<void> _suppress() async {
     if (_busy) return;
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     await ref.read(executionReminderDedupeStoreProvider).suppress(uid, widget.reminder.dedupeKey);
     widget.surface.invalidateReminders(ref);
@@ -146,7 +147,7 @@ class _ReminderRowState extends ConsumerState<_ReminderRow> {
   Future<void> _createTask() async {
     if (_busy) return;
     setState(() => _busy = true);
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
     final r = widget.reminder;
     final advisorId = (r.assigneeAdvisorId != null && r.assigneeAdvisorId!.isNotEmpty)
@@ -273,7 +274,7 @@ class _ReminderRowState extends ConsumerState<_ReminderRow> {
                     onTap: _busy
                         ? null
                         : () {
-                            HapticFeedback.lightImpact();
+                            AppFeedback.lightImpact();
                             context.push('/customer/${r.relatedCustomerId}');
                           },
                   )
@@ -292,7 +293,7 @@ class _ReminderRowState extends ConsumerState<_ReminderRow> {
                       onTap: _busy
                           ? null
                           : () {
-                              HapticFeedback.lightImpact();
+                              AppFeedback.lightImpact();
                               context.push(
                               AppRouter.routeCall,
                               extra: {
@@ -307,7 +308,7 @@ class _ReminderRowState extends ConsumerState<_ReminderRow> {
                     onTap: _busy
                         ? null
                         : () {
-                            HapticFeedback.lightImpact();
+                            AppFeedback.lightImpact();
                             context.push('/customer/${r.relatedCustomerId}');
                           },
                   ),

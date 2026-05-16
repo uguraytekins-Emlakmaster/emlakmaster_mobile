@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -106,7 +107,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
       return;
     }
     WidgetsBinding.instance.addObserver(this);
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     _isDialMode = widget.phone == null && widget.customerId == null;
     if (_isDialMode) {
       _dialEntryNotifier = ValueNotifier<String>('');
@@ -166,7 +167,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
         .replaceAll(RegExp(r'\s'), '')
         .trim();
     if (number.isEmpty) return;
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
 
     // Varsayılan: gerçek GSM — sistem telefonuna devret (Magic Call modunda değilsek).
     if (!widget.inAppCrmSession) {
@@ -427,7 +428,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
         inAppCrmSession: widget.inAppCrmSession,
         bottomInset: bottomInset,
         onDismiss: () {
-          HapticFeedback.lightImpact();
+          AppFeedback.lightImpact();
           context.pop();
         },
         onStartCall: _startCallWithDialNumber,
@@ -437,7 +438,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
   Future<void> _endCall() async {
     if (_callState == CallUIState.ending) return;
-    HapticFeedback.heavyImpact();
+    AppFeedback.heavyImpact();
     setState(() => _callState = CallUIState.ending);
     final uid = _signedInUid;
     final phone = widget.phone ??
@@ -519,20 +520,20 @@ class _CallScreenState extends ConsumerState<CallScreen>
               displayPhone:
                   widget.phone ?? (_dialDigits.isNotEmpty ? _dialDigits : null),
               onPop: () {
-                HapticFeedback.lightImpact();
+                AppFeedback.lightImpact();
                 context.pop();
               },
               onEndCall: _endCall,
               onToggleMute: () {
-                HapticFeedback.selectionClick();
+                AppFeedback.selectionClick();
                 setState(() => _isMuted = !_isMuted);
               },
               onToggleSpeaker: () {
-                HapticFeedback.selectionClick();
+                AppFeedback.selectionClick();
                 setState(() => _isSpeakerOn = !_isSpeakerOn);
               },
               onToggleKeypad: () {
-                HapticFeedback.selectionClick();
+                AppFeedback.selectionClick();
                 if (_isKeypadOpen) {
                   _closeKeypadPanel();
                 } else {
@@ -557,7 +558,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () {
-                          HapticFeedback.lightImpact();
+                          AppFeedback.lightImpact();
                           _closeKeypadPanel();
                         },
                         child: Container(
@@ -1306,7 +1307,7 @@ class _RoundIconButton extends StatelessWidget {
               splashColor: ext.accent.withValues(alpha: 0.14),
               highlightColor: ext.accent.withValues(alpha: 0.06),
               onTap: () {
-                HapticFeedback.selectionClick();
+                AppFeedback.selectionClick();
                 onTap();
               },
               child: Ink(
@@ -1384,7 +1385,7 @@ class _KeypadSheet extends StatelessWidget {
   static const int _rows = 4;
 
   void _tapKey(String keyLabel) {
-    HapticFeedback.selectionClick();
+    AppFeedback.selectionClick();
     onKeyPressed?.call(keyLabel);
   }
 

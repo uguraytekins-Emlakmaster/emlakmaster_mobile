@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Yönetici: resmi entegrasyon hazırlığı + dosya/manuel geri dönüş yolları (OAuth sahtesi yok).
 class PlatformSetupWizardPage extends ConsumerStatefulWidget {
@@ -280,7 +281,7 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
     final lifecycle = deriveLifecycleState(record);
     final eval = evaluatePlatformSetup(record);
 
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     if (mounted) {
       final snack = _snackMessageForLifecycle(lifecycle);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(snack)));
@@ -468,7 +469,7 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
               borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
               child: InkWell(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  AppFeedback.selectionClick();
                   setState(() => _platform = id);
                 },
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -565,7 +566,7 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
         child: InkWell(
           onTap: () {
-            HapticFeedback.selectionClick();
+            AppFeedback.selectionClick();
             setState(() => _mode = mode);
           },
           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),

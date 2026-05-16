@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers
 import 'package:emlakmaster_mobile/features/contact_save/data/contact_permission_helper.dart';
 import 'package:emlakmaster_mobile/features/contact_save/data/save_contact_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/domain/contact_save_request.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/features/contact_save/domain/extract_contact_from_voice.dart'
     show logVoiceContactParseDebug, parseVoiceContact;
 import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
@@ -195,7 +196,7 @@ class _SaveContactSheetContentState
       _highlightName = parsed.nameMissing;
       _highlightPhone = parsed.phoneMissing;
     });
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     if (!mounted) return;
     final ext = AppThemeExtension.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -259,7 +260,7 @@ class _SaveContactSheetContentState
       ref.invalidate(customerListForAgentProvider);
     }
     Navigator.of(context).pop();
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Müşteri detay: üstte bilgi kartı, altta timeline, Not ekle FAB.
 class CustomerDetailPage extends ConsumerWidget {
@@ -250,7 +251,7 @@ class CustomerDetailPage extends ConsumerWidget {
                         ),
                         ref: ref,
                       );
-                      HapticFeedback.mediumImpact();
+                      AppFeedback.mediumImpact();
                       if (ctx.mounted) {
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(ctx).showSnackBar(

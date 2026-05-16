@@ -8,6 +8,7 @@ import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/widgets/notifications_settings_section.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -433,64 +434,14 @@ class ThemeSection extends ConsumerWidget {
   }
 }
 
-class NotificationsSection extends ConsumerWidget {
+/// Geriye dönük: ayarlar hub'ı [NotificationsSettingsSection] kullanır.
+class NotificationsSection extends StatelessWidget {
   const NotificationsSection({super.key, this.embedInParentCard = false});
 
   final bool embedInParentCard;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark
-        ? AppThemeExtension.of(context).card
-        : AppThemeExtension.of(context).surface;
-    final border = isDark
-        ? AppThemeExtension.of(context).border.withValues(alpha: 0.5)
-        : AppThemeExtension.of(context).border;
-    final onSurface = theme.colorScheme.onSurface;
-    final onSurfaceVariant = onSurface.withValues(alpha: 0.7);
-    final asyncEnabled = ref.watch(notificationsEnabledProvider);
-    final inner = asyncEnabled.when(
-      loading: () => ListTile(
-        title: Text('Bildirimler', style: TextStyle(color: onSurface)),
-        trailing: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: AppThemeExtension.of(context).accent)),
-      ),
-      error: (_, __) => ListTile(
-        title: Text('Bildirimler', style: TextStyle(color: onSurface)),
-        subtitle: const Text('Yüklenemedi',
-            style: TextStyle(color: Colors.red, fontSize: 12)),
-      ),
-      data: (enabled) => SwitchListTile(
-        secondary: Icon(
-          enabled
-              ? Icons.notifications_active_rounded
-              : Icons.notifications_off_rounded,
-          color: AppThemeExtension.of(context).accent,
-        ),
-        title: Text('Bildirimler', style: TextStyle(color: onSurface)),
-        subtitle: Text(
-          'Push ve uygulama içi bildirimler',
-          style: TextStyle(color: onSurfaceVariant, fontSize: 12),
-        ),
-        value: enabled,
-        activeThumbColor: AppThemeExtension.of(context).accent,
-        onChanged: (v) =>
-            ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
-      ),
-    );
-    if (embedInParentCard) return inner;
-    return Container(
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: inner,
-    );
+  Widget build(BuildContext context) {
+    return NotificationsSettingsSection(embedInParentCard: embedInParentCard);
   }
 }

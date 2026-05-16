@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 /// AR/VR Ready: 360° görüntüleyici (URL açma) ve Lidar meta.
 class ListingMedia360Placeholder extends StatelessWidget {
   const ListingMedia360Placeholder({
@@ -77,14 +78,14 @@ class _Chip extends StatelessWidget {
       if (await canLaunchUrl(parsed)) {
         await launchUrl(parsed);
       } else if (context.mounted) {
-        HapticFeedback.mediumImpact();
+        AppFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Link açılamadı.'), behavior: SnackBarBehavior.floating),
         );
       }
     } catch (_) {
       if (context.mounted) {
-        HapticFeedback.mediumImpact();
+        AppFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Link açılamadı.'), behavior: SnackBarBehavior.floating),
         );

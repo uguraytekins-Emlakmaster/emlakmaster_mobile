@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// İlk giriş: ofis oluştur / ofise katıl → isteğe bağlı platform bağlantısı.
 class WorkspaceSetupPage extends StatefulWidget {
@@ -26,7 +27,7 @@ class _WorkspaceSetupPageState extends State<WorkspaceSetupPage> {
   }
 
   Future<void> _finish() async {
-    HapticFeedback.mediumImpact();
+    AppFeedback.mediumImpact();
     await OnboardingStore.instance.setWorkspaceSetupCompleted();
     if (!mounted) return;
     context.go(AppRouter.routeRoleSelection);
@@ -50,7 +51,7 @@ class _WorkspaceSetupPageState extends State<WorkspaceSetupPage> {
                   if (_page > 0)
                     IconButton(
                       onPressed: () {
-                        HapticFeedback.selectionClick();
+                        AppFeedback.selectionClick();
                         _controller.previousPage(
                           duration: DesignTokens.durationNormal,
                           curve: Curves.easeOutCubic,
@@ -98,13 +99,13 @@ class _WorkspaceSetupPageState extends State<WorkspaceSetupPage> {
                   _StepOfficeChoice(
                     selected: _intent,
                     onSelect: (v) {
-                      HapticFeedback.selectionClick();
+                      AppFeedback.selectionClick();
                       setState(() => _intent = v);
                     },
                     onNext: _intent == null
                         ? null
                         : () {
-                            HapticFeedback.lightImpact();
+                            AppFeedback.lightImpact();
                             _controller.nextPage(
                               duration: DesignTokens.durationNormal,
                               curve: Curves.easeOutCubic,

@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Şerit kapatıldıktan sonra ana ekranda görünen "detay ekle" hatırlatıcısı.
 class PostCallCaptureDashboardReminder extends ConsumerWidget {
@@ -25,7 +26,7 @@ class PostCallCaptureDashboardReminder extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
           onTap: () {
-            HapticFeedback.lightImpact();
+            AppFeedback.lightImpact();
             showPostCallQuickCaptureSheet(context: context, draft: draft);
           },
           child: Padding(

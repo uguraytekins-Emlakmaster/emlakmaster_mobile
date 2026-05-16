@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 class FilterChipIntegration extends StatelessWidget {
   const FilterChipIntegration({
@@ -60,7 +61,7 @@ class SyncedListingCard extends StatelessWidget {
   final IntegrationSyncedListingEntity entity;
 
   Future<void> _open(BuildContext context) async {
-    HapticFeedback.lightImpact();
+    AppFeedback.lightImpact();
     final uri = Uri.tryParse(entity.sourceUrl);
     if (uri == null || !uri.hasScheme) {
       if (!context.mounted) return;
