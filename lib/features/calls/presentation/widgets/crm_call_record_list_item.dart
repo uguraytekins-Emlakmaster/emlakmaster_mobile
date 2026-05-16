@@ -126,7 +126,6 @@ class CrmCallRecordListItem extends StatelessWidget {
                     if (confidenceKind != null)
                       CallConfidenceBadge(
                         kind: confidenceKind!,
-                        compact: true,
                       ),
                   ],
                 ),

@@ -47,7 +47,6 @@ class _CallReturnPromptHostState extends ConsumerState<CallReturnPromptHost> {
     final ext = AppThemeExtension.of(context);
     final save = await showDialog<bool>(
       context: context,
-      barrierDismissible: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: ext.surfaceElevated,
         shape: RoundedRectangleBorder(

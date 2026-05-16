@@ -99,9 +99,8 @@ Future<void> showCallIdentityQuickActionsSheet(
                 ),
               ),
               const SizedBox(height: DesignTokens.space2),
-              CallConfidenceBadge(
+              const CallConfidenceBadge(
                 kind: CallConfidenceKind.emlakMasterOriginated,
-                compact: true,
               ),
             ] else ...[
               const SizedBox(height: DesignTokens.space2),
@@ -272,7 +271,6 @@ Future<void> showCallIdentityQuickActionsSheet(
                     phone: rawPhone,
                     customerId: cid,
                     displayName: label ?? '',
-                    source: 'call_action_sheet',
                   );
                 },
               ),
