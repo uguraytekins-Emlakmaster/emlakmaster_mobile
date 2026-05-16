@@ -27,6 +27,9 @@ import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
+import 'package:emlakmaster_mobile/features/messages/data/team_chat_inbox_listener.dart';
+import 'package:emlakmaster_mobile/features/messages/data/team_chat_local_notifications.dart';
+import 'package:emlakmaster_mobile/features/messages/data/team_chat_push_navigation.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_access_state.dart';
 import 'package:emlakmaster_mobile/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -310,6 +313,20 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
           const Duration(milliseconds: 450),
           () => RegionDeepLinkBootstrap.attach(ref),
         );
+        Future<void>.delayed(
+          const Duration(seconds: 2),
+          () {
+            if (!mounted) return;
+            unawaited(
+              TeamChatLocalNotifications.instance.ensureInitialized().then((_) {
+                return TeamChatLocalNotifications.instance
+                    .requestPermissionIfNeeded();
+              }),
+            );
+            TeamChatInboxListener.attach(ref);
+            unawaited(TeamChatPushNavigation.attach(ref));
+          },
+        );
       });
     }
     // build() içinde ref.listen kullanmak her yeniden çizimde ek yük / çift dinleyici riski taşır.
@@ -461,14 +478,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
           () {
             AppLogger.state(
                 '[startup] PushNotificationService.initialize scheduled');
-            unawaited(
-              PushNotificationService.instance.initialize().then((_) {
-                PushNotificationService.instance
-                    .setForegroundMessageHandler((_) {
-                  unawaited(AppFeedback.playNotification());
-                });
-              }),
-            );
+            unawaited(PushNotificationService.instance.initialize());
           },
         );
       }

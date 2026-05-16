@@ -19,6 +19,7 @@ import firebase_crashlytics
 import firebase_messaging
 import firebase_storage
 import flutter_contacts
+import flutter_local_notifications
 import google_sign_in_ios
 import printing
 import shared_preferences_foundation
@@ -41,6 +42,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FLTFirebaseMessagingPlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseMessagingPlugin"))
   FLTFirebaseStoragePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseStoragePlugin"))
   FlutterContactsPlugin.register(with: registry.registrar(forPlugin: "FlutterContactsPlugin"))
+  FlutterLocalNotificationsPlugin.register(with: registry.registrar(forPlugin: "FlutterLocalNotificationsPlugin"))
   FLTGoogleSignInPlugin.register(with: registry.registrar(forPlugin: "FLTGoogleSignInPlugin"))
   PrintingPlugin.register(with: registry.registrar(forPlugin: "PrintingPlugin"))
   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))

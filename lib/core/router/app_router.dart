@@ -43,7 +43,7 @@ import '../../features/listing_import/presentation/pages/import_history_page.dar
 import '../../features/listing_import/presentation/pages/import_hub_page.dart';
 import '../../features/listing_import/presentation/pages/my_listings_page.dart';
 import '../../features/messages/presentation/pages/message_center_page.dart';
-import '../../features/messages/presentation/pages/message_thread_page.dart';
+import '../../features/messages/presentation/pages/team_thread_page.dart';
 import '../../features/workspace/presentation/pages/workspace_setup_page.dart';
 import '../../features/office/presentation/pages/create_office_invite_page.dart';
 import '../../features/office/presentation/pages/create_office_page.dart';
@@ -405,13 +405,16 @@ class AppRouter {
           path: routeMessageThread,
           pageBuilder: (context, state) {
             final extra = state.extra as Map<String, dynamic>? ?? {};
+            final officeId = extra['officeId'] as String? ?? '';
+            final channelId = extra['channelId'] as String? ?? '';
             return CustomTransitionPage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
-              child: MessageThreadPage(
-                customerName: extra['customerName'] as String? ?? 'Müşteri',
-                listingRef: extra['listingRef'] as String? ?? '—',
-                platformLabel: extra['platformLabel'] as String? ?? '',
+              child: TeamThreadPage(
+                officeId: officeId,
+                channelId: channelId,
+                title: extra['title'] as String? ?? 'Sohbet',
+                subtitle: extra['subtitle'] as String? ?? '',
               ),
               transitionsBuilder:
                   (context, animation, secondaryAnimation, child) =>

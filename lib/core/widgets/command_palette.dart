@@ -375,6 +375,12 @@ List<_PaletteAction> _filteredActionsFor(AppRole role, String query) {
         ),
       ],
     ],
+    if (!FeaturePermission.seesClientPanel(role))
+      const _PaletteAction.shortcut(
+        label: ProductLabels.messageCenter,
+        icon: Icons.forum_rounded,
+        shortcut: MainShellShortcut.openMessageCenterTab,
+      ),
     const _PaletteAction.shortcut(
       label: ProductLabels.settings,
       icon: Icons.settings_rounded,

@@ -1200,6 +1200,9 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
+  - audioplayers_darwin (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - BoringSSL-GRPC (0.0.37):
     - BoringSSL-GRPC/Implementation (= 0.0.37)
     - BoringSSL-GRPC/Interface (= 0.0.37)
@@ -1411,6 +1414,8 @@ PODS:
   - Flutter (1.0.0)
   - flutter_contacts (0.0.1):
     - Flutter
+  - flutter_local_notifications (0.0.1):
+    - Flutter
   - google_sign_in_ios (0.0.1):
     - AppAuth (>= 1.7.4)
     - Flutter
@@ -1613,6 +1618,7 @@ PODS:
 
 DEPENDENCIES:
   - app_links (from `.symlinks/plugins/app_links/ios`)
+  - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/darwin`)
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
   - cloud_functions (from `.symlinks/plugins/cloud_functions/ios`)
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
@@ -1625,6 +1631,7 @@ DEPENDENCIES:
   - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
   - flutter_contacts (from `.symlinks/plugins/flutter_contacts/ios`)
+  - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
@@ -1683,6 +1690,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   app_links:
     :path: ".symlinks/plugins/app_links/ios"
+  audioplayers_darwin:
+    :path: ".symlinks/plugins/audioplayers_darwin/darwin"
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
   cloud_functions:
@@ -1707,6 +1716,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_contacts:
     :path: ".symlinks/plugins/flutter_contacts/ios"
+  flutter_local_notifications:
+    :path: ".symlinks/plugins/flutter_local_notifications/ios"
   google_sign_in_ios:
     :path: ".symlinks/plugins/google_sign_in_ios/darwin"
   image_picker_ios:
@@ -1729,6 +1740,7 @@ SPEC CHECKSUMS:
   app_links: 3dbc685f76b1693c66a6d9dd1e9ab6f73d97dc0a
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
+  audioplayers_darwin: 835ced6edd4c9fc8ebb0a7cc9e294a91d99917d5
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
   cloud_firestore: fdcc87898326e396d6ef6df543acf9b5c2034b95
   cloud_functions: 8565a870fbdc2b5046cba8183e972484128b6d8d
@@ -1765,6 +1777,7 @@ SPEC CHECKSUMS:
   FirebaseStorage: 50fc9ee147392943e492467db6b52759b0447037
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_contacts: 2ec1d6b62ca2869c3bbb3871bd74d4e3ef157135
+  flutter_local_notifications: 395056b3175ba4f08480a7c5de30cd36d69827e4
   google_sign_in_ios: b48bb9af78576358a168361173155596c845f0b9
   GoogleAdsOnDeviceConversion: 2be6297a4f048459e0ae17fad9bfd2844e10cf64
   GoogleAppMeasurement: 700dce7541804bec33db590a5c496b663fbe2539
