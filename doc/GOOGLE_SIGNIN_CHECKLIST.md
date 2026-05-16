@@ -77,6 +77,7 @@ Kod: `GoogleAuthService` iOS ve **macOS** için aynı `iosClientId` kullanır (i
 
 ## 7. Test ve build
 
+- `bash scripts/verify_firebase_identity.sh` → plist / `firebase_options` / `google-services.json` iOS OAuth aynası ve Xcode bundle satırlarını doğrular (CI’de de çalışır).
 - `flutter test test/core/config/google_oauth_constants_test.dart` → geçmeli.
 - `flutter analyze` → hatasız.
 - `flutter build apk --debug` / `flutter run` → derlenmeli.

@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Verify Firebase / bundle identity (repo)
+        run: bash scripts/verify_firebase_identity.sh
+
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
