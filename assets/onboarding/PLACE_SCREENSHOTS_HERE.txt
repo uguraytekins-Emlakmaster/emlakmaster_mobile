@@ -1,12 +1,14 @@
 Drop PNG/WebP screenshots here (recommended 1200×2400 or 1600×1600).
 When a file exists, onboarding shows it above the UI mock preview.
 
-Primary filenames:
-  manager_command.png      — Yönetici: Komuta Merkezi / sidebar
-  consultant_gunum.png       — Danışman: Günüm paneli
-  smart_calls.png          — Akıllı Görüşme / çağrılar
-  market_listings.png      — Piyasa + ilanlar
-  office_messages.png      — Ofis + Mesaj Merkezi
+Primary filenames (installed 2026-05-16 from device screenshots):
+  manager_command.png      — Yönetici: Komuta Merkezi
+  consultant_gunum.png     — Danışman: Günüm
+  smart_calls.png          — Çağrı Kayıtları (Çağrı Merkezi)
+  market_listings.png      — İlan Portföyü
+  office_messages.png      — Mesaj merkezi
+
+Extra sources kept in kaynak_ekranlar/ (not used in slides by default).
 
 Legacy names (still supported):
   crm_dashboard.png, war_room.png, ai_insights.png, market_analytics.png
