@@ -8,7 +8,7 @@ import 'package:emlakmaster_mobile/features/listing_import/domain/import_source_
 import 'package:emlakmaster_mobile/features/listing_import/domain/import_task_status.dart';
 import 'package:emlakmaster_mobile/features/listing_import/domain/listing_import_task_entity.dart';
 import 'package:emlakmaster_mobile/features/listing_import/presentation/providers/listing_import_providers.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,31 +28,14 @@ class ImportHistoryPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                DesignTokens.space2,
-                DesignTokens.space2,
-                DesignTokens.space4,
-                DesignTokens.space2,
-              ),
-              child: Row(
-                children: [
-                  const AppBackButton(),
-                  Expanded(
-                    child: Text(
-                      'İçe aktarma geçmişi',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: ext.foreground,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => context.push(AppRouter.routeMyListings),
-                    child: const Text('İlanlarım'),
-                  ),
-                ],
-              ),
+            PremiumPageHeader(
+              title: 'İçe aktarma geçmişi',
+              trailing: [
+                TextButton(
+                  onPressed: () => context.push(AppRouter.routeMyListings),
+                  child: const Text('İlanlarım'),
+                ),
+              ],
             ),
             Expanded(
               child: async.when(

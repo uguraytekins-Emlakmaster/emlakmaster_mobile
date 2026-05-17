@@ -70,6 +70,7 @@ class ConsultantShellPage extends StatefulWidget {
 class _ConsultantShellPageState extends State<ConsultantShellPage> {
   final GlobalKey<AdaptiveShellScaffoldState> _shellKey =
       GlobalKey<AdaptiveShellScaffoldState>();
+  int _shellPageIndex = 0;
 
   void _openMoreSheet() {
     showConsultantMoreSheet(
@@ -92,13 +93,18 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
           const SyncStatusBanner(compact: true),
           const CallReturnPromptHost(),
           const PostCallDraftRecoveryCard(),
-          const PostCallCaptureShellStrip(),
+          if (_shellPageIndex != 2) const PostCallCaptureShellStrip(),
           Expanded(
             child: AdaptiveShellScaffold(
               key: _shellKey,
               navItems: ConsultantShellPage._navItems,
               pages: ConsultantShellPage._pages,
               navPageIndices: ConsultantShellPage._navPageIndices,
+              onIndexChanged: (i) {
+                if (_shellPageIndex != i) {
+                  setState(() => _shellPageIndex = i);
+                }
+              },
               onMoreNavTap: _openMoreSheet,
               tabIds: ConsultantShellPage._tabIds,
               title: ProductLabels.consultantWorkspace,

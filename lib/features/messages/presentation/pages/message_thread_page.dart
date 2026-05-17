@@ -1,6 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
 
 /// Konuşma detayı — platformdan gelen mesajlar salt okunur; sahte gönderim alanı yok.
@@ -31,7 +31,7 @@ class MessageThreadPage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
               child: Row(
                 children: [
-                  const AppBackButton(),
+                  const PremiumNavLeading(),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
 
@@ -62,46 +63,47 @@ class PremiumCallCenterPageHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.actions = const [],
-    this.showBack = false,
+    this.compact = false,
   });
 
   final String title;
   final String subtitle;
   final List<Widget> actions;
-  final bool showBack;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         DesignTokens.screenEdgePadding,
-        DesignTokens.space3,
+        compact ? DesignTokens.space2 : DesignTokens.space3,
         DesignTokens.screenEdgePadding,
-        DesignTokens.space3,
+        compact ? DesignTokens.space2 : DesignTokens.space3,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (showBack)
-            Padding(
-              padding: const EdgeInsets.only(right: DesignTokens.space2),
-              child: IconButton(
-                onPressed: () => Navigator.maybePop(context),
-                icon: Icon(Icons.arrow_back_ios_new_rounded,
-                    color: ext.textSecondary, size: 20),
-              ),
-            ),
-          const BrandEmblem(variant: BrandEmblemVariant.mini, size: 40),
-          const SizedBox(width: DesignTokens.space3),
+          const Padding(
+            padding: EdgeInsets.only(right: DesignTokens.space2),
+            child: PremiumNavLeading(),
+          ),
+          BrandEmblem(
+            variant: BrandEmblemVariant.mini,
+            size: compact ? 34 : 40,
+          ),
+          const SizedBox(width: DesignTokens.space2 + 2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   title,
                   style: AppTypography.pageHeading(context).copyWith(
-                    fontSize: DesignTokens.fontSize2xl,
+                    fontSize: compact
+                        ? DesignTokens.fontSizeXl
+                        : DesignTokens.fontSize2xl,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -110,7 +112,12 @@ class PremiumCallCenterPageHeader extends StatelessWidget {
                   subtitle,
                   style: AppTypography.meta(context).copyWith(
                     color: ext.textSecondary,
+                    fontSize: compact
+                        ? DesignTokens.fontSizeSm
+                        : DesignTokens.fontSizeMd,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -127,33 +134,40 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
     super.key,
     required this.stats,
     this.periodLabel = 'Bu ay',
-    this.onDetailTap,
+    this.expanded = true,
+    this.onToggleExpanded,
   });
 
   final CallRecordKpiStats stats;
   final String periodLabel;
-  final VoidCallback? onDetailTap;
+  final bool expanded;
+  final VoidCallback? onToggleExpanded;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.screenEdgePadding,
-        vertical: DesignTokens.space2,
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.screenEdgePadding,
+        DesignTokens.space1,
+        DesignTokens.screenEdgePadding,
+        DesignTokens.space1,
       ),
       child: PremiumSurfaceCard(
         goldBorder: true,
-        padding: const EdgeInsets.all(DesignTokens.space5),
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space3 + 2,
+          vertical: DesignTokens.space3,
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: ext.surface,
@@ -164,13 +178,13 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.calendar_today_outlined,
-                          size: 14, color: ext.textSecondary),
-                      const SizedBox(width: 6),
+                          size: 13, color: ext.textSecondary),
+                      const SizedBox(width: 5),
                       Text(
                         periodLabel,
                         style: TextStyle(
                           color: ext.textSecondary,
-                          fontSize: DesignTokens.fontSizeSm,
+                          fontSize: DesignTokens.fontSizeXs + 1,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -178,72 +192,72 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                if (onDetailTap != null)
-                  TextButton(
-                    onPressed: onDetailTap,
-                    child: Text(
-                      'Detaylı özet >',
+                if (onToggleExpanded != null)
+                  TextButton.icon(
+                    onPressed: onToggleExpanded,
+                    icon: Icon(
+                      expanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: ext.textSecondary,
+                    ),
+                    label: Text(
+                      expanded ? 'İstatistikleri gizle' : 'İstatistikleri göster',
                       style: TextStyle(
-                        color: ext.accent,
+                        color: ext.textSecondary,
+                        fontSize: DesignTokens.fontSizeSm,
                         fontWeight: FontWeight.w600,
                       ),
+                    ),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: DesignTokens.space4),
-            Text(
-              '${stats.total}',
-              style: AppTypography.metricValue(context).copyWith(
-                fontSize: 44,
-                fontWeight: FontWeight.w800,
-                color: ext.accent,
+            if (expanded) ...[
+              const SizedBox(height: DesignTokens.space3),
+              Row(
+                children: [
+                  Expanded(
+                    child: _KpiMini(
+                      icon: Icons.call_received_rounded,
+                      label: 'Gelen',
+                      value: '${stats.incoming}',
+                      color: ext.accent,
+                    ),
+                  ),
+                  Expanded(
+                    child: _KpiMini(
+                      icon: Icons.call_made_rounded,
+                      label: 'Giden',
+                      value: '${stats.outgoing}',
+                      color: ext.success,
+                    ),
+                  ),
+                  Expanded(
+                    child: _KpiMini(
+                      icon: Icons.check_circle_outline_rounded,
+                      label: 'Cevaplanan',
+                      value: '${stats.answered}',
+                      color: ext.accent,
+                    ),
+                  ),
+                  Expanded(
+                    child: _KpiMini(
+                      icon: Icons.phone_missed_rounded,
+                      label: 'Cevapsız',
+                      value: '${stats.missed}',
+                      color: ext.danger,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Text(
-              'Toplam çağrı',
-              style: TextStyle(
-                color: ext.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space4),
-            Row(
-              children: [
-                Expanded(
-                  child: _KpiMini(
-                    icon: Icons.call_received_rounded,
-                    label: 'Gelen',
-                    value: '${stats.incoming}',
-                    color: ext.accent,
-                  ),
-                ),
-                Expanded(
-                  child: _KpiMini(
-                    icon: Icons.call_made_rounded,
-                    label: 'Giden',
-                    value: '${stats.outgoing}',
-                    color: ext.success,
-                  ),
-                ),
-                Expanded(
-                  child: _KpiMini(
-                    icon: Icons.check_circle_outline_rounded,
-                    label: 'Cevaplanan',
-                    value: '${stats.answered}',
-                    color: ext.accent,
-                  ),
-                ),
-                Expanded(
-                  child: _KpiMini(
-                    icon: Icons.phone_missed_rounded,
-                    label: 'Cevapsız',
-                    value: '${stats.missed}',
-                    color: ext.danger,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ],
         ),
       ),
@@ -268,15 +282,16 @@ class _KpiMini extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(height: 4),
+        Icon(icon, size: 16, color: color),
+        const SizedBox(height: 2),
         Text(
           value,
           style: TextStyle(
             color: ext.textPrimary,
             fontWeight: FontWeight.w800,
-            fontSize: DesignTokens.fontSizeLg,
+            fontSize: DesignTokens.fontSizeMd,
           ),
         ),
         Text(
@@ -307,7 +322,7 @@ class PremiumCallQuickFilterStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44,
+      height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(

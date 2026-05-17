@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/office/domain/membership_status.dart';
@@ -41,7 +42,8 @@ class OfficeAdminPage extends ConsumerWidget {
     if (oid == null || oid.isEmpty) {
       return Scaffold(
         backgroundColor: ext.background,
-        appBar: AppBar(
+        appBar: emlakAppBar(
+          context,
           title: const Text(ProductLabels.officeDesk),
           backgroundColor: ext.background,
         ),
@@ -62,7 +64,8 @@ class OfficeAdminPage extends ConsumerWidget {
     if (!canAdmin) {
       return Scaffold(
         backgroundColor: ext.background,
-        appBar: AppBar(
+        appBar: emlakAppBar(
+          context,
           title: const Text(ProductLabels.officeDesk),
           backgroundColor: ext.background,
         ),
@@ -85,7 +88,8 @@ class OfficeAdminPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: ext.background,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         backgroundColor: ext.background,
         title: const Text(ProductLabels.officeDesk),
         actions: [

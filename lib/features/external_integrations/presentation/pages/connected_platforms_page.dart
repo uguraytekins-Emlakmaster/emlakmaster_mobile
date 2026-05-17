@@ -5,7 +5,7 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/platform_setup_wizard_args.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/connected_platform_card.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +41,7 @@ class ConnectedPlatformsPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
                 child: Row(
                   children: [
-                    if (context.canPop()) const AppBackButton(),
+                    const PremiumNavLeading(),
                     Expanded(
                       child: Text(
                         'Bağlı platformlar',

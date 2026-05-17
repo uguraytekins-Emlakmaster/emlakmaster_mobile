@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/features/auth/presentation/widgets/auth_field
 import 'package:emlakmaster_mobile/features/office/domain/office_exception.dart';
 import 'package:emlakmaster_mobile/features/office/presentation/utils/office_error_ui.dart';
 import 'package:emlakmaster_mobile/features/office/services/office_setup_service.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
@@ -63,11 +64,11 @@ class _JoinOfficePageState extends State<JoinOfficePage> {
     final ext = AppThemeExtension.of(context);
     return Scaffold(
       backgroundColor: ext.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Davet kodu'),
+      appBar: emlakAppBar(
+        context,
+        backgroundColor: ext.background,
         foregroundColor: ext.foreground,
+        title: const Text('Davet kodu'),
       ),
       body: SafeArea(
         child: Padding(

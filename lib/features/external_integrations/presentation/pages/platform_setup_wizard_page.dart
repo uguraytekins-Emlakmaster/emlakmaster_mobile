@@ -11,7 +11,7 @@ import 'package:emlakmaster_mobile/features/external_integrations/domain/integra
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_setup_lifecycle.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/domain/platform_setup_record.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -339,7 +339,7 @@ class _PlatformSetupWizardPageState extends ConsumerState<PlatformSetupWizardPag
               padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
               child: Row(
                 children: [
-                  const AppBackButton(),
+                  const PremiumNavLeading(),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

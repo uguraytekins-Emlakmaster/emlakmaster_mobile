@@ -30,6 +30,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surfac
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/manager_calls_team_rhythm_strip.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_banner.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
@@ -124,6 +125,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   List<QueryDocumentSnapshot<Map<String, dynamic>>>? _lastFilteredDocs;
   List<String> _teamMemberIds = [];
   CallSurfaceQuickFilter _managerQuickFilter = CallSurfaceQuickFilter.all;
+  bool _kpiExpanded = true;
 
   @override
   void initState() {
@@ -156,49 +158,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         return FirestoreService.callsHandoffPendingStream();
       default:
         return FirestoreService.callsStream();
-    }
-  }
-
-  Widget _buildScopeContent(
-    BuildContext context,
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
-    Map<String, String> agentNames,
-    List<LocalCallRecord> locals,
-    String? currentUid,
-    Map<String, String> customerFullNameById,
-  ) {
-    switch (_commandScope) {
-      case _CommandScope.consultant:
-        return _buildConsultantGroupedList(
-            context, filtered, agentNames);
-      case _CommandScope.customer:
-        return _buildCustomerGroupedList(
-          context,
-          filtered,
-          agentNames,
-          customerFullNameById,
-        );
-      case _CommandScope.all:
-      case _CommandScope.pending:
-        return Builder(
-          builder: (ctx) {
-            final nowMs = DateTime.now().millisecondsSinceEpoch;
-            return ListView.builder(
-              padding: const EdgeInsets.all(DesignTokens.space4),
-              itemCount: filtered.length,
-              cacheExtent: 300,
-              itemBuilder: (context, index) => _buildCrmRecordTile(
-                context,
-                filtered[index],
-                agentNames,
-                locals,
-                currentUid,
-                customerFullNameById,
-                nowMs,
-              ),
-            );
-          },
-        );
     }
   }
 
@@ -314,10 +273,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     final cidTrim = custId?.trim();
 
     final card = CrmCallOperatingCard(
-      margin: const EdgeInsets.only(bottom: DesignTokens.space2),
+      dense: true,
       rhythm: cardRhythm,
       showPriorityRail: showPriorityRail,
       child: CrmCallRecordListItem(
+        dense: true,
         title: title,
         phoneSubtitle: phoneUnder,
         outcomeLabel: outcomeStr,
@@ -360,8 +320,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               }
             : null,
         leading: Container(
-          width: 40,
-          height: 40,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: ext.accent.withValues(alpha: 0.078),
             borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
@@ -369,7 +329,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               color: ext.accent.withValues(alpha: 0.20),
             ),
           ),
-          child: Icon(Icons.call_rounded, color: ext.accent, size: 20),
+          child: Icon(Icons.call_rounded, color: ext.accent, size: 18),
         ),
         trailing: trailing,
       ),
@@ -470,253 +430,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     );
   }
 
-  Widget _buildConsultantGroupedList(
-    BuildContext context,
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
-    Map<String, String> agentNames,
-  ) {
-    final grouped =
-        <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
-    for (final d in filtered) {
-      final aid = CrmCallRecordHelpers.agentIdOf(d.data());
-      if (aid.isEmpty) continue;
-      grouped.putIfAbsent(aid, () => []).add(d);
-    }
-    for (final list in grouped.values) {
-      list.sort((a, b) {
-        final ta = CrmCallRecordHelpers.createdAtOf(a.data());
-        final tb = CrmCallRecordHelpers.createdAtOf(b.data());
-        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
-      });
-    }
-    final entries = grouped.entries.toList()
-      ..sort((a, b) {
-        final ta = CrmCallRecordHelpers.createdAtOf(a.value.first.data());
-        final tb = CrmCallRecordHelpers.createdAtOf(b.value.first.data());
-        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
-      });
-    if (entries.isEmpty) {
-      return EmptyState(
-        compact: true,
-        anchorAboveCenter: true,
-        anchorAlignmentY: -0.52,
-        grouped: true,
-        icon: Icons.groups_rounded,
-        title: 'Danışman özeti yok',
-        subtitle:
-            'Filtrelere uyan veya müşteri/danışman bağlantılı kayıt bulunamadı.',
-        outlinedActionLabel: 'Filtreleri temizle',
-        onOutlinedAction: _clearFilters,
-        actionLabel: 'Yeni arama başlat',
-        onAction: () => context.push(
-          AppRouter.routeCall,
-          extra: const {
-            'startedFromScreen': 'command_center_scope_consultant_empty',
-          },
-        ),
-      );
-    }
-    final accent = AppThemeExtension.of(context).accent;
-    return ListView.builder(
-      padding: const EdgeInsets.all(DesignTokens.space4),
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final e = entries[index];
-        final list = e.value;
-        final name = agentNames[e.key] ?? e.key;
-        final pending = list
-            .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
-            .length;
-        final completed = list
-            .where((d) => CrmCallRecordHelpers.hasCaptureCompleted(d.data()))
-            .length;
-        final handoffs = list
-            .where((d) => CrmCallRecordHelpers.isSystemHandoff(d.data()))
-            .length;
-        final last = list.first;
-        final lastData = last.data();
-        final dt = CrmCallRecordHelpers.createdAtOf(lastData);
-        final timeStr = dt != null
-            ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
-            : '—';
-        final outcomeLast =
-            CrmCallRecordHelpers.outcomeDisplayTrDefault(lastData);
-        final noteLast =
-            CrmCallRecordDisplay.notePreviewFromFirestoreData(lastData);
-        final duration = lastData['durationSec'] as num?;
-        final durationStr = duration != null ? '${duration.toInt()} sn' : null;
-        final contextLine = 'Son görüşme: $timeStr'
-            '${durationStr != null ? ' · $durationStr' : ''} · '
-            '${list.length} kayıt · $pending bekleyen · '
-            '$completed tamam · $handoffs handoff';
-        final captureLabel =
-            pending > 0 ? '$pending takip' : '${list.length} kayıt';
-        return CrmCallOperatingCard(
-          margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-          child: CrmCallRecordListItem(
-            title: name,
-            outcomeLabel: outcomeLast,
-            captureLabel: captureLabel,
-            contextLine: contextLine,
-            notePreview: noteLast,
-            technicalFootnote:
-                'Danışman ${CrmCallRecordDisplay.ellipsedMiddle(e.key)}',
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.078),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
-                border: Border.all(
-                  color: accent.withValues(alpha: 0.20),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
-                style: TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCustomerGroupedList(
-    BuildContext context,
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
-    Map<String, String> agentNames,
-    Map<String, String> customerFullNameById,
-  ) {
-    final grouped =
-        <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
-    for (final d in filtered) {
-      final cid = CrmCallRecordHelpers.customerIdOf(d.data());
-      if (cid == null) continue;
-      grouped.putIfAbsent(cid, () => []).add(d);
-    }
-    for (final list in grouped.values) {
-      list.sort((a, b) {
-        final ta = CrmCallRecordHelpers.createdAtOf(a.data());
-        final tb = CrmCallRecordHelpers.createdAtOf(b.data());
-        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
-      });
-    }
-    final entries = grouped.entries.toList()
-      ..sort((a, b) {
-        final ta = CrmCallRecordHelpers.createdAtOf(a.value.first.data());
-        final tb = CrmCallRecordHelpers.createdAtOf(b.value.first.data());
-        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
-      });
-    if (entries.isEmpty) {
-      return EmptyState(
-        compact: true,
-        anchorAboveCenter: true,
-        anchorAlignmentY: -0.52,
-        grouped: true,
-        icon: Icons.person_off_rounded,
-        title: 'Müşteri bağlantılı kayıt yok',
-        subtitle:
-            'Filtrelere uyan, müşteri kartına bağlı çağrı kaydı bulunamadı.',
-        outlinedActionLabel: 'Filtreleri temizle',
-        onOutlinedAction: _clearFilters,
-        actionLabel: 'Yeni arama başlat',
-        onAction: () => context.push(
-          AppRouter.routeCall,
-          extra: const {
-            'startedFromScreen': 'command_center_scope_customer_empty',
-          },
-        ),
-      );
-    }
-    final accent = AppThemeExtension.of(context).accent;
-    return ListView.builder(
-      padding: const EdgeInsets.all(DesignTokens.space4),
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final e = entries[index];
-        final list = e.value;
-        final last = list.first;
-        final data = last.data();
-        final agent = CrmCallRecordHelpers.agentIdOf(data);
-        final outcome = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
-        final cap = CrmCallRecordHelpers.captureStatusTr(data);
-        final dt = CrmCallRecordHelpers.createdAtOf(data);
-        final timeStr = dt != null
-            ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
-            : '—';
-        final pending = list
-            .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
-            .length;
-        final rawPhone =
-            (data['phoneNumber'] ?? data['phone'] ?? '').toString();
-        final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
-        final formattedPhone =
-            hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
-        final contactName = CrmCallRecordDisplay.contactNameFromCallData(data);
-        final title = CrmCallRecordDisplay.primaryTitle(
-          customerFullName: customerFullNameById[e.key],
-          contactDisplayName: contactName,
-          rawPhone: hasDigits ? rawPhone : null,
-        );
-        final phoneUnder = CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
-          title: title,
-          formattedPhone: formattedPhone,
-        )
-            ? formattedPhone
-            : null;
-        final advisorPart = CrmCallRecordDisplay.advisorContext(
-          advisorAgentId: agent,
-          agentNames: agentNames,
-        );
-        final contextLine = '$advisorPart · $timeStr · ${list.length} kayıt';
-        final noteLast =
-            CrmCallRecordDisplay.notePreviewFromFirestoreData(data);
-        final captureLabel = pending > 0 ? '$pending bekleyen' : cap;
-        final initial =
-            title.isNotEmpty ? title.substring(0, 1).toUpperCase() : '?';
-        return CrmCallOperatingCard(
-          margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-          child: CrmCallRecordListItem(
-            title: title,
-            phoneSubtitle: phoneUnder,
-            outcomeLabel: outcome,
-            captureLabel: captureLabel,
-            contextLine: contextLine,
-            notePreview: noteLast,
-            technicalFootnote:
-                'Müşteri ${CrmCallRecordDisplay.ellipsedMiddle(e.key, head: 6)}',
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.078),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
-                border: Border.all(
-                  color: accent.withValues(alpha: 0.20),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                initial,
-                style: TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   static const List<CallSurfaceQuickFilter> _quickFilterOrder = [
     CallSurfaceQuickFilter.all,
     CallSurfaceQuickFilter.today,
@@ -753,6 +466,439 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     }
   }
 
+  List<Widget> _managerChromeSlivers(
+    BuildContext context, {
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
+    required Map<String, String> agentNames,
+  }) {
+    return [
+      const SliverToBoxAdapter(child: PostCallCaptureBanner()),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.screenEdgePadding,
+          ),
+          child: PremiumInfoBanner(
+            message:
+                'Bu ekranda çağrıların CRM özeti görünür: sonuç, saat ve kısa not.',
+          ),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            DesignTokens.screenEdgePadding,
+            DesignTokens.space1,
+            DesignTokens.screenEdgePadding,
+            DesignTokens.space1,
+          ),
+          child: PremiumSegmentedControl<_CommandScope>(
+            segments: const [
+              _CommandScope.all,
+              _CommandScope.consultant,
+              _CommandScope.customer,
+              _CommandScope.pending,
+            ],
+            selected: _commandScope,
+            onSelected: (s) => setState(() => _commandScope = s),
+            labelBuilder: (s) => _scopeLabel(s),
+          ),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: _CommandCenterFilters(
+          filterTeamId: _filterTeamId,
+          filterAgentId: _filterAgentId,
+          filterOutcome: _filterOutcome,
+          teamMemberIds: _teamMemberIds,
+          onTeamChanged: (id, memberIds) => setState(() {
+            _filterTeamId = id;
+            _teamMemberIds = memberIds;
+            if (id != null) _filterAgentId = null;
+          }),
+          onAgentChanged: (id) => setState(() => _filterAgentId = id),
+          onOutcomeChanged: (outcome) =>
+              setState(() => _filterOutcome = outcome),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: PremiumCallSearchRow(
+          controller: _searchController,
+          focusNode: _searchFocusNode,
+          onSearchTap: () {
+            if (_searchQuery.isEmpty) {
+              _searchFocusNode.requestFocus();
+            }
+          },
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: PremiumCallQuickFilterStrip(
+          labels: _quickFilterLabels,
+          selectedIndex: _quickFilterIndex(),
+          onSelected: (i) => setState(
+            () => _managerQuickFilter = _quickFilterOrder[i],
+          ),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: PremiumCallRecordsKpiCard(
+          stats: CallRecordKpiStats.fromFirestoreDocs(docs),
+          expanded: _kpiExpanded,
+          onToggleExpanded: () => setState(() => _kpiExpanded = !_kpiExpanded),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: ManagerCallsTeamRhythmStrip(
+          line: ManagerCallsTeamRhythmLogic.computeLine(docs, agentNames),
+        ),
+      ),
+      if (_managerQuickFilter == CallSurfaceQuickFilter.callback &&
+          filtered.isNotEmpty)
+        SliverToBoxAdapter(
+          child: CallCallbackWorkModeCue(count: filtered.length),
+        ),
+    ];
+  }
+
+  List<Widget> _buildScopeSlivers(
+    BuildContext context, {
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
+    required Map<String, String> agentNames,
+    required List<LocalCallRecord> locals,
+    required String? currentUid,
+    required Map<String, String> customerFullNameById,
+    required double listBottomInset,
+  }) {
+    switch (_commandScope) {
+      case _CommandScope.consultant:
+        return _consultantGroupedSlivers(context, filtered, agentNames, listBottomInset);
+      case _CommandScope.customer:
+        return _customerGroupedSlivers(
+          context,
+          filtered,
+          agentNames,
+          customerFullNameById,
+          listBottomInset,
+        );
+      case _CommandScope.all:
+      case _CommandScope.pending:
+        final nowMs = DateTime.now().millisecondsSinceEpoch;
+        return [
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              DesignTokens.space4,
+              DesignTokens.space1,
+              DesignTokens.space4,
+              listBottomInset,
+            ),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildCrmRecordTile(
+                  context,
+                  filtered[index],
+                  agentNames,
+                  locals,
+                  currentUid,
+                  customerFullNameById,
+                  nowMs,
+                ),
+                childCount: filtered.length,
+              ),
+            ),
+          ),
+        ];
+    }
+  }
+
+  List<Widget> _consultantGroupedSlivers(
+    BuildContext context,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
+    Map<String, String> agentNames,
+    double listBottomInset,
+  ) {
+    final grouped =
+        <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    for (final d in filtered) {
+      final aid = CrmCallRecordHelpers.agentIdOf(d.data());
+      if (aid.isEmpty) continue;
+      grouped.putIfAbsent(aid, () => []).add(d);
+    }
+    for (final list in grouped.values) {
+      list.sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    }
+    final entries = grouped.entries.toList()
+      ..sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.value.first.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.value.first.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    if (entries.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: EmptyState(
+            compact: true,
+            anchorAboveCenter: true,
+            anchorAlignmentY: -0.52,
+            grouped: true,
+            icon: Icons.groups_rounded,
+            title: 'Danışman özeti yok',
+            subtitle:
+                'Filtrelere uyan veya müşteri/danışman bağlantılı kayıt bulunamadı.',
+            outlinedActionLabel: 'Filtreleri temizle',
+            onOutlinedAction: _clearFilters,
+            actionLabel: 'Yeni arama başlat',
+            onAction: () => context.push(
+              AppRouter.routeCall,
+              extra: const {
+                'startedFromScreen': 'command_center_scope_consultant_empty',
+              },
+            ),
+          ),
+        ),
+      ];
+    }
+    final accent = AppThemeExtension.of(context).accent;
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space1,
+          DesignTokens.space4,
+          listBottomInset,
+        ),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final e = entries[index];
+              final list = e.value;
+              final name = agentNames[e.key] ?? e.key;
+              final pending = list
+                  .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
+                  .length;
+              final completed = list
+                  .where((d) => CrmCallRecordHelpers.hasCaptureCompleted(d.data()))
+                  .length;
+              final handoffs = list
+                  .where((d) => CrmCallRecordHelpers.isSystemHandoff(d.data()))
+                  .length;
+              final last = list.first;
+              final lastData = last.data();
+              final dt = CrmCallRecordHelpers.createdAtOf(lastData);
+              final timeStr = dt != null
+                  ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
+                  : '—';
+              final outcomeLast =
+                  CrmCallRecordHelpers.outcomeDisplayTrDefault(lastData);
+              final noteLast =
+                  CrmCallRecordDisplay.notePreviewFromFirestoreData(lastData);
+              final duration = lastData['durationSec'] as num?;
+              final durationStr =
+                  duration != null ? '${duration.toInt()} sn' : null;
+              final contextLine = 'Son görüşme: $timeStr'
+                  '${durationStr != null ? ' · $durationStr' : ''} · '
+                  '${list.length} kayıt · $pending bekleyen · '
+                  '$completed tamam · $handoffs handoff';
+              final captureLabel =
+                  pending > 0 ? '$pending takip' : '${list.length} kayıt';
+              return CrmCallOperatingCard(
+                dense: true,
+                child: CrmCallRecordListItem(
+                  dense: true,
+                  title: name,
+                  outcomeLabel: outcomeLast,
+                  captureLabel: captureLabel,
+                  contextLine: contextLine,
+                  notePreview: noteLast,
+                  technicalFootnote:
+                      'Danışman ${CrmCallRecordDisplay.ellipsedMiddle(e.key)}',
+                  leading: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.078),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusSm + 2),
+                      border: Border.all(
+                        color: accent.withValues(alpha: 0.20),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+            childCount: entries.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _customerGroupedSlivers(
+    BuildContext context,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
+    Map<String, String> agentNames,
+    Map<String, String> customerFullNameById,
+    double listBottomInset,
+  ) {
+    final grouped =
+        <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    for (final d in filtered) {
+      final cid = CrmCallRecordHelpers.customerIdOf(d.data());
+      if (cid == null) continue;
+      grouped.putIfAbsent(cid, () => []).add(d);
+    }
+    for (final list in grouped.values) {
+      list.sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    }
+    final entries = grouped.entries.toList()
+      ..sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.value.first.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.value.first.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    if (entries.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: EmptyState(
+            compact: true,
+            anchorAboveCenter: true,
+            anchorAlignmentY: -0.52,
+            grouped: true,
+            icon: Icons.person_off_rounded,
+            title: 'Müşteri bağlantılı kayıt yok',
+            subtitle:
+                'Filtrelere uyan, müşteri kartına bağlı çağrı kaydı bulunamadı.',
+            outlinedActionLabel: 'Filtreleri temizle',
+            onOutlinedAction: _clearFilters,
+            actionLabel: 'Yeni arama başlat',
+            onAction: () => context.push(
+              AppRouter.routeCall,
+              extra: const {
+                'startedFromScreen': 'command_center_scope_customer_empty',
+              },
+            ),
+          ),
+        ),
+      ];
+    }
+    final accent = AppThemeExtension.of(context).accent;
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space1,
+          DesignTokens.space4,
+          listBottomInset,
+        ),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final e = entries[index];
+              final list = e.value;
+              final last = list.first;
+              final data = last.data();
+              final agent = CrmCallRecordHelpers.agentIdOf(data);
+              final outcome = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
+              final cap = CrmCallRecordHelpers.captureStatusTr(data);
+              final dt = CrmCallRecordHelpers.createdAtOf(data);
+              final timeStr = dt != null
+                  ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
+                  : '—';
+              final pending = list
+                  .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
+                  .length;
+              final rawPhone =
+                  (data['phoneNumber'] ?? data['phone'] ?? '').toString();
+              final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
+              final formattedPhone =
+                  hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
+              final contactName =
+                  CrmCallRecordDisplay.contactNameFromCallData(data);
+              final title = CrmCallRecordDisplay.primaryTitle(
+                customerFullName: customerFullNameById[e.key],
+                contactDisplayName: contactName,
+                rawPhone: hasDigits ? rawPhone : null,
+              );
+              final phoneUnder = CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
+                title: title,
+                formattedPhone: formattedPhone,
+              )
+                  ? formattedPhone
+                  : null;
+              final advisorPart = CrmCallRecordDisplay.advisorContext(
+                advisorAgentId: agent,
+                currentUid: null,
+                agentNames: agentNames,
+              );
+              final contextLine = CrmCallRecordDisplay.contextLine(
+                advisorPart: advisorPart,
+                dateTime: timeStr,
+              );
+              final captureLabel =
+                  pending > 0 ? '$pending takip' : '${list.length} kayıt';
+              return CrmCallOperatingCard(
+                dense: true,
+                child: CrmCallRecordListItem(
+                  dense: true,
+                  title: title,
+                  phoneSubtitle: phoneUnder,
+                  outcomeLabel: outcome,
+                  captureLabel: captureLabel,
+                  contextLine: contextLine,
+                  technicalFootnote:
+                      'Müşteri ${CrmCallRecordDisplay.ellipsedMiddle(e.key, head: 6)}',
+                  leading: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.078),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusSm + 2),
+                      border: Border.all(
+                        color: accent.withValues(alpha: 0.20),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      title.isNotEmpty ? title.substring(0, 1).toUpperCase() : '?',
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+            childCount: entries.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -771,9 +917,11 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             PremiumCallCenterPageHeader(
+              compact: true,
               title: ProductLabels.callRecords,
               subtitle: 'CRM çağrı merkezi',
               actions: [
@@ -802,65 +950,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: DesignTokens.screenEdgePadding,
-              ),
-              child: PremiumInfoBanner(
-                message:
-                    'Bu ekranda çağrıların CRM özeti görünür: sonuç, saat ve kısa not.',
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                DesignTokens.screenEdgePadding,
-                DesignTokens.space2,
-                DesignTokens.screenEdgePadding,
-                DesignTokens.space2,
-              ),
-              child: PremiumSegmentedControl<_CommandScope>(
-                segments: const [
-                  _CommandScope.all,
-                  _CommandScope.consultant,
-                  _CommandScope.customer,
-                  _CommandScope.pending,
-                ],
-                selected: _commandScope,
-                onSelected: (s) => setState(() => _commandScope = s),
-                labelBuilder: (s) => _scopeLabel(s),
-              ),
-            ),
-            _CommandCenterFilters(
-              filterTeamId: _filterTeamId,
-              filterAgentId: _filterAgentId,
-              filterOutcome: _filterOutcome,
-              teamMemberIds: _teamMemberIds,
-              onTeamChanged: (id, memberIds) => setState(() {
-                _filterTeamId = id;
-                _teamMemberIds = memberIds;
-                if (id != null) _filterAgentId = null;
-              }),
-              onAgentChanged: (id) => setState(() => _filterAgentId = id),
-              onOutcomeChanged: (outcome) =>
-                  setState(() => _filterOutcome = outcome),
-            ),
-            PremiumCallSearchRow(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              onSearchTap: () {
-                if (_searchQuery.isEmpty) {
-                  _searchFocusNode.requestFocus();
-                }
-              },
-            ),
-            PremiumCallQuickFilterStrip(
-              labels: _quickFilterLabels,
-              selectedIndex: _quickFilterIndex(),
-              onSelected: (i) => setState(
-                () => _managerQuickFilter = _quickFilterOrder[i],
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space2),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirestoreService.agentsStream(),
@@ -1032,77 +1121,82 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                       // Keep the latest filtered snapshot for export actions
                       // without triggering an extra rebuild every frame.
                       _lastFilteredDocs = filtered;
+                      final listBottomInset =
+                          DashboardLayoutTokens.contentScrollBottomInset(
+                              context);
+                      final chrome = _managerChromeSlivers(
+                        context,
+                        docs: docs,
+                        filtered: filtered,
+                        agentNames: agentNames,
+                      );
                       if (filtered.isEmpty) {
                         final hasAnyDocs = docs.isNotEmpty;
                         final l10n = AppLocalizations.of(context);
-                        if (hasAnyDocs) {
-                          return EmptyState(
-                            compact: true,
-                            anchorAboveCenter: true,
-                            anchorAlignmentY: -0.52,
-                            grouped: true,
-                            icon: Icons.call_rounded,
-                            title: 'Uygun çağrı yok',
-                            subtitle:
-                                'Arama veya filtrelere uygun kayıt bulunamadı.',
-                            outlinedActionLabel: 'Filtreleri temizle',
-                            onOutlinedAction: _clearFilters,
-                            actionLabel: 'Yeni arama başlat',
-                            onAction: () => context.push(
-                              AppRouter.routeCall,
-                              extra: const {
-                                'startedFromScreen': 'command_center_filter_empty',
-                              },
+                        return CustomScrollView(
+                          slivers: [
+                            ...chrome,
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: hasAnyDocs
+                                  ? EmptyState(
+                                      compact: true,
+                                      anchorAboveCenter: true,
+                                      anchorAlignmentY: -0.52,
+                                      grouped: true,
+                                      icon: Icons.call_rounded,
+                                      title: 'Uygun çağrı yok',
+                                      subtitle:
+                                          'Arama veya filtrelere uygun kayıt bulunamadı.',
+                                      outlinedActionLabel: 'Filtreleri temizle',
+                                      onOutlinedAction: _clearFilters,
+                                      actionLabel: 'Yeni arama başlat',
+                                      onAction: () => context.push(
+                                        AppRouter.routeCall,
+                                        extra: const {
+                                          'startedFromScreen':
+                                              'command_center_filter_empty',
+                                        },
+                                      ),
+                                    )
+                                  : EmptyState(
+                                      premiumVisual: true,
+                                      grouped: true,
+                                      anchorAboveCenter: true,
+                                      anchorAlignmentY: -0.52,
+                                      icon: Icons.call_rounded,
+                                      title: l10n.t('empty_calls_title'),
+                                      subtitle: l10n.t('empty_calls_sub'),
+                                      outlinedActionLabel: 'Portföye kaydet',
+                                      onOutlinedAction: () =>
+                                          showSaveContactSheet(
+                                        context,
+                                        source: 'command_center_calls_empty',
+                                      ),
+                                      actionLabel: l10n.t('empty_calls_cta'),
+                                      onAction: () => context.push(
+                                        AppRouter.routeCall,
+                                        extra: const {
+                                          'startedFromScreen': 'command_center',
+                                        },
+                                      ),
+                                    ),
                             ),
-                          );
-                        }
-                        return EmptyState(
-                          premiumVisual: true,
-                          grouped: true,
-                          anchorAboveCenter: true,
-                          anchorAlignmentY: -0.52,
-                          icon: Icons.call_rounded,
-                          title: l10n.t('empty_calls_title'),
-                          subtitle: l10n.t('empty_calls_sub'),
-                          outlinedActionLabel: 'Portföye kaydet',
-                          onOutlinedAction: () => showSaveContactSheet(
-                            context,
-                            source: 'command_center_calls_empty',
-                          ),
-                          actionLabel: l10n.t('empty_calls_cta'),
-                          onAction: () => context.push(
-                            AppRouter.routeCall,
-                            extra: const {
-                              'startedFromScreen': 'command_center',
-                            },
-                          ),
+                          ],
                         );
                       }
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          PremiumCallRecordsKpiCard(
-                            stats: CallRecordKpiStats.fromFirestoreDocs(docs),
-                          ),
-                          ManagerCallsTeamRhythmStrip(
-                            line: ManagerCallsTeamRhythmLogic.computeLine(
-                              docs,
-                              agentNames,
-                            ),
-                          ),
-                          if (_managerQuickFilter ==
-                                  CallSurfaceQuickFilter.callback &&
-                              filtered.isNotEmpty)
-                            CallCallbackWorkModeCue(count: filtered.length),
-                          Expanded(
-                            child: _buildScopeContent(
-                              context,
-                              filtered,
-                              agentNames,
-                              locals,
-                              currentUid,
-                              customerFullNameById,
-                            ),
+                      return CustomScrollView(
+                        cacheExtent: 480,
+                        slivers: [
+                          ...chrome,
+                          ..._buildScopeSlivers(
+                            context,
+                            filtered: filtered,
+                            agentNames: agentNames,
+                            locals: locals,
+                            currentUid: currentUid,
+                            customerFullNameById: customerFullNameById,
+                            listBottomInset: listBottomInset,
                           ),
                         ],
                       );

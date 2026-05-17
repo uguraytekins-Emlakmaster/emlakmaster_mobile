@@ -13,72 +13,55 @@ void showTestRoleSwitchSheet(
   AppRole? currentOverride,
 ) {
   final theme = Theme.of(context);
-  showPremiumModalBottomSheet<void>(
+  showPremiumDraggableBottomSheet<void>(
     context: context,
-    builder: (ctx) {
-      final viewPadding = MediaQuery.paddingOf(ctx);
-      final sheetH = MediaQuery.sizeOf(ctx).height * 0.88;
+    initialChildSize: 0.72,
+    maxChildSize: 0.88,
+    builder: (ctx, scrollController) {
       final ext = AppThemeExtension.of(ctx);
-      return SafeArea(
-        top: false,
-        child: SizedBox(
-          height: sheetH,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: viewPadding.bottom),
-            child: DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: 0.72,
-              minChildSize: 0.38,
-              maxChildSize: 0.94,
-              builder: (context, scrollController) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const PremiumBottomSheetHandle(),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        DesignTokens.space4,
-                        0,
-                        DesignTokens.space4,
-                        DesignTokens.space2,
-                      ),
-                      child: Text(
-                        'Test için rol seç (sadece görünüm)',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView(
-                        controller: scrollController,
-                        padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-                        children: [
-                          for (final r in AppRole.values)
-                            ListTile(
-                              title: Text(
-                                r.label,
-                                style: TextStyle(color: theme.colorScheme.onSurface),
-                              ),
-                              trailing: currentOverride == r
-                                  ? Icon(Icons.check_rounded, color: ext.accent)
-                                  : null,
-                              onTap: () {
-                                ref.read(overrideRoleProvider.notifier).state =
-                                    currentOverride == r ? null : r;
-                                Navigator.of(ctx).pop();
-                              },
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const PremiumBottomSheetHandle(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space4,
+              0,
+              DesignTokens.space4,
+              DesignTokens.space2,
+            ),
+            child: Text(
+              'Test için rol seç (sadece görünüm)',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
+          Expanded(
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.only(bottom: DesignTokens.space4),
+              children: [
+                for (final r in AppRole.values)
+                  ListTile(
+                    title: Text(
+                      r.label,
+                      style: TextStyle(color: theme.colorScheme.onSurface),
+                    ),
+                    trailing: currentOverride == r
+                        ? Icon(Icons.check_rounded, color: ext.accent)
+                        : null,
+                    onTap: () {
+                      ref.read(overrideRoleProvider.notifier).state =
+                          currentOverride == r ? null : r;
+                      Navigator.of(ctx).pop();
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ],
       );
     },
   );

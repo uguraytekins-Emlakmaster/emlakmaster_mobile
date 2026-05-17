@@ -43,11 +43,18 @@ class _AdminShellTabEntry {
   final Widget page;
 }
 
-class AdminShellPage extends ConsumerWidget {
+class AdminShellPage extends ConsumerStatefulWidget {
   const AdminShellPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminShellPage> createState() => _AdminShellPageState();
+}
+
+class _AdminShellPageState extends ConsumerState<AdminShellPage> {
+  int _shellPageIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final flags = ref.watch(featureFlagsProvider).valueOrNull;
     final lean = flags?[AppConstants.keyV1LeanProduct] ?? true;
     final warRoom = (flags?[AppConstants.keyFeatureWarRoom] ?? true) && !lean;
@@ -122,6 +129,7 @@ class AdminShellPage extends ConsumerWidget {
         tabIds.indexOf(_AdminShellTab.settings).clamp(0, tabIds.length - 1);
     final messagesIndex =
         tabIds.indexOf(_AdminShellTab.messages).clamp(0, tabIds.length - 1);
+    final commandCenterPageIndex = tabIds.indexOf(_AdminShellTab.commandCenter);
     assert(
       navItems.length == pages.length,
       'AdminShell: navItems (${navItems.length}) and pages (${pages.length}) must stay in sync',
@@ -140,13 +148,20 @@ class AdminShellPage extends ConsumerWidget {
         const SyncStatusBanner(compact: true),
         const CallReturnPromptHost(),
         const PostCallDraftRecoveryCard(),
-        const PostCallCaptureShellStrip(),
+        if (commandCenterPageIndex < 0 ||
+            _shellPageIndex != commandCenterPageIndex)
+          const PostCallCaptureShellStrip(),
         Expanded(
           child: AdaptiveShellScaffold(
             navItems: navItems,
             pages: pages,
             tabIds: tabIds,
             title: ProductLabels.managerWorkspace,
+            onIndexChanged: (i) {
+              if (_shellPageIndex != i) {
+                setState(() => _shellPageIndex = i);
+              }
+            },
             shortcutMap: {
               MainShellShortcut.openHomeTab: 0,
               MainShellShortcut.openMessageCenterTab: messagesIndex,

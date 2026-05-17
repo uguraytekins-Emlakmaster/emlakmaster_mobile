@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
@@ -21,24 +22,10 @@ class OfficeGatePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 12),
-              Text(
-                'Ofisinize bağlanın',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: ext.foreground,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'EmlakMaster çok ofisli çalışır. Her kullanıcı bir ofise bağlıdır.\n'
-                'Yeni bir ofis kurun ya da davet koduyla ekibe katılın.',
-                style: TextStyle(
-                  color: ext.foregroundSecondary,
-                  height: 1.45,
-                  fontSize: 14,
-                ),
+              const PremiumPageHeader(
+                title: 'Ofisinize bağlanın',
+                subtitle:
+                    'EmlakMaster çok ofisli çalışır. Yeni ofis kurun veya davet koduyla katılın.',
               ),
               const SizedBox(height: 32),
               _Tile(

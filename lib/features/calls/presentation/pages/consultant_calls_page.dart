@@ -42,6 +42,7 @@ import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/sa
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/callback_queue_strip.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_banner.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
@@ -69,6 +70,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   final Set<String> _selectedIds = {};
   bool _isSyncingDeviceCalls = false;
   CallSurfaceQuickFilter _quickFilter = CallSurfaceQuickFilter.all;
+  bool _kpiExpanded = true;
 
   static const List<CallSurfaceQuickFilter> _quickFilterOrder = [
     CallSurfaceQuickFilter.all,
@@ -588,6 +590,110 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     );
   }
 
+  List<Widget> _callsChromeSlivers({
+    required BuildContext context,
+    required AppThemeExtension ext,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> filteredDocs,
+    required int visibleTotal,
+    required int totalCount,
+  }) {
+    final theme = Theme.of(context);
+    final fg = ext.textPrimary;
+    final textSecondary = ext.textSecondary;
+    return [
+      if (io.Platform.isIOS)
+        SliverToBoxAdapter(child: _buildIosInfoBanner(context)),
+      const SliverToBoxAdapter(child: PostCallCaptureBanner()),
+      SliverToBoxAdapter(
+        child: PremiumCallRecordsKpiCard(
+          stats: CallRecordKpiStats.fromFirestoreDocs(_docs),
+          expanded: _kpiExpanded,
+          onToggleExpanded: () => setState(() => _kpiExpanded = !_kpiExpanded),
+        ),
+      ),
+      const SliverToBoxAdapter(child: CallbackQueueStrip()),
+      SliverToBoxAdapter(
+        child: PremiumCallQuickFilterStrip(
+          labels: _quickFilterLabels,
+          selectedIndex: _quickFilterIndex(),
+          onSelected: (i) => setState(() => _quickFilter = _quickFilterOrder[i]),
+        ),
+      ),
+      if (_quickFilter == CallSurfaceQuickFilter.callback && visibleTotal > 0)
+        SliverToBoxAdapter(
+          child: CallCallbackWorkModeCue(count: visibleTotal),
+        ),
+      if (_selectedIds.isNotEmpty)
+        SliverToBoxAdapter(
+          child: _consultantSelectionCommandBar(context, ext, fg),
+        ),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            DesignTokens.space4,
+            DesignTokens.space1,
+            DesignTokens.space4,
+            0,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: _quickFilter == CallSurfaceQuickFilter.all
+                            ? '$totalCount'
+                            : '$visibleTotal',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: fg,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      TextSpan(
+                        text: _quickFilter == CallSurfaceQuickFilter.all
+                            ? ' görüşme'
+                            : ' görüşme · filtreli',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              TextButton(
+                onPressed: () => _selectAll(true, filteredDocs),
+                style: TextButton.styleFrom(
+                  foregroundColor: ext.accent,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Hepsini seç'),
+              ),
+              TextButton(
+                onPressed: () => _selectAll(false),
+                style: TextButton.styleFrom(
+                  foregroundColor: textSecondary,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Seçimi kaldır'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ];
+  }
+
   Future<void> _syncDeviceCallLog() async {
     final uid = ref.read(currentUserProvider).valueOrNull?.uid;
     if (uid == null || uid.isEmpty) {
@@ -699,9 +805,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             PremiumCallCenterPageHeader(
+              compact: true,
               title: ProductLabels.myCalls,
               subtitle: 'CRM çağrı merkezi',
               actions: [
@@ -864,21 +972,17 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
             locals: localStandalone,
           );
           if (visibleTotal == 0 && totalCount > 0) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (io.Platform.isIOS) _buildIosInfoBanner(context),
-                PremiumCallRecordsKpiCard(
-                  stats: CallRecordKpiStats.fromFirestoreDocs(_docs),
+            return CustomScrollView(
+              slivers: [
+                ..._callsChromeSlivers(
+                  context: context,
+                  ext: ext,
+                  filteredDocs: filteredDocs,
+                  visibleTotal: visibleTotal,
+                  totalCount: totalCount,
                 ),
-                PremiumCallQuickFilterStrip(
-                  labels: _quickFilterLabels,
-                  selectedIndex: _quickFilterIndex(),
-                  onSelected: (i) => setState(
-                    () => _quickFilter = _quickFilterOrder[i],
-                  ),
-                ),
-                Expanded(
+                SliverFillRemaining(
+                  hasScrollBody: false,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(DesignTokens.space6),
@@ -904,7 +1008,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             onPressed: () => context.push(
                               AppRouter.routeCall,
                               extra: const {
-                                'startedFromScreen': 'consultant_calls_filter_empty',
+                                'startedFromScreen':
+                                    'consultant_calls_filter_empty',
                               },
                             ),
                             icon: const Icon(Icons.call_made_rounded, size: 18),
@@ -918,121 +1023,28 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               ],
             );
           }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (io.Platform.isIOS) _buildIosInfoBanner(context),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: surface,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: ext.border.withValues(alpha: isDark ? 0.38 : 0.44),
-                    ),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    DesignTokens.space4,
-                    DesignTokens.space3,
-                    DesignTokens.space4,
-                    DesignTokens.space2 + 2,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: _quickFilter == CallSurfaceQuickFilter.all
-                                    ? '$totalCount'
-                                    : '$visibleTotal',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: fg,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: DesignTokens.fontSizeMd,
-                                  height: 1.12,
-                                ),
-                              ),
-                              TextSpan(
-                                text: _quickFilter == CallSurfaceQuickFilter.all
-                                    ? ' görüşme'
-                                    : ' görüşme · filtreli',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => _selectAll(true, filteredDocs),
-                        style: TextButton.styleFrom(
-                          foregroundColor: ext.accent,
-                          textStyle: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DesignTokens.space2 + 2,
-                            vertical: DesignTokens.space1,
-                          ),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        child: const Text('Hepsini seç'),
-                      ),
-                      TextButton(
-                        onPressed: () => _selectAll(false),
-                        style: TextButton.styleFrom(
-                          foregroundColor: textSecondary,
-                          textStyle: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: DesignTokens.space2 + 2,
-                            vertical: DesignTokens.space1,
-                          ),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        child: const Text('Seçimi kaldır'),
-                      ),
-                    ],
-                  ),
-                ),
+          final listBottomInset =
+              DashboardLayoutTokens.contentScrollBottomInset(context);
+          return CustomScrollView(
+            cacheExtent: 480,
+            slivers: [
+              ..._callsChromeSlivers(
+                context: context,
+                ext: ext,
+                filteredDocs: filteredDocs,
+                visibleTotal: visibleTotal,
+                totalCount: totalCount,
               ),
-              PremiumCallRecordsKpiCard(
-                stats: CallRecordKpiStats.fromFirestoreDocs(_docs),
-              ),
-              const CallbackQueueStrip(),
-              PremiumCallQuickFilterStrip(
-                labels: _quickFilterLabels,
-                selectedIndex: _quickFilterIndex(),
-                onSelected: (i) => setState(
-                  () => _quickFilter = _quickFilterOrder[i],
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  DesignTokens.space4,
+                  DesignTokens.space1,
+                  DesignTokens.space4,
+                  listBottomInset,
                 ),
-              ),
-              if (_quickFilter == CallSurfaceQuickFilter.callback &&
-                  visibleTotal > 0)
-                CallCallbackWorkModeCue(count: visibleTotal),
-              if (_selectedIds.isNotEmpty)
-                _consultantSelectionCommandBar(
-                    context, ext, fg),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(
-                    DesignTokens.space4,
-                    DesignTokens.space2 + 2,
-                    DesignTokens.space4,
-                    DesignTokens.space5,
-                  ),
-                  itemCount: visibleTotal,
-                  cacheExtent: 300,
-                  itemBuilder: (context, index) {
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
                     if (index < filteredLocals.length) {
                       final r = filteredLocals[index];
                       final dt =
@@ -1389,7 +1401,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             : const ServerOnlyCallSourceIcon(),
                       ),
                     );
-                  },
+                    },
+                    childCount: visibleTotal,
+                  ),
                 ),
               ),
             ],
@@ -1504,7 +1518,9 @@ class _LocalCallRecordCard extends StatelessWidget {
     return CrmCallOperatingCard(
       rhythm: cardRhythm,
       showPriorityRail: showPriorityRail,
+      dense: true,
       child: CrmCallRecordListItem(
+        dense: true,
         title: title,
         phoneSubtitle: phoneSubtitle,
         outcomeLabel: outcome,
@@ -1542,8 +1558,8 @@ class _LocalCallRecordCard extends StatelessWidget {
               }
             : null,
         leading: Container(
-          width: 40,
-          height: 40,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: ext.textSecondary.withValues(alpha: 0.075),
             borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
@@ -1552,7 +1568,7 @@ class _LocalCallRecordCard extends StatelessWidget {
             ),
           ),
           child: Icon(Icons.phone_in_talk_rounded,
-              color: ext.textSecondary, size: 20),
+              color: ext.textSecondary, size: 18),
         ),
         trailing: syncIcon,
       ),
@@ -1692,6 +1708,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
       selected: selected,
       rhythm: cardRhythm,
       showPriorityRail: showPriorityRail,
+      dense: true,
       child: InkWell(
         onTap: enabled ? onSelect : null,
         borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
@@ -1701,7 +1718,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 4, top: 6),
+                padding: const EdgeInsets.only(left: 4, top: 4),
                 child: CheckboxTheme(
                   data: CheckboxThemeData(
                     visualDensity: VisualDensity.compact,
@@ -1723,6 +1740,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
               ),
               Expanded(
                 child: CrmCallRecordListItem(
+                  dense: true,
                   title: title,
                   phoneSubtitle: phoneSubtitle,
                   outcomeLabel: outcome,
@@ -1761,8 +1779,8 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                       : null,
                   belowChipsRow: belowChips,
                   leading: Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: leadingColor.withValues(alpha: 0.085),
                       borderRadius:
@@ -1771,14 +1789,14 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                         color: leadingColor.withValues(alpha: 0.22),
                       ),
                     ),
-                    child: Icon(leadingIcon, color: leadingColor, size: 20),
+                    child: Icon(leadingIcon, color: leadingColor, size: 18),
                   ),
                   trailing: trailing,
                   padding: const EdgeInsets.fromLTRB(
                     0,
-                    DesignTokens.space3 + 2,
-                    DesignTokens.space4,
-                    DesignTokens.space3 + 2,
+                    DesignTokens.space2,
+                    DesignTokens.space3,
+                    DesignTokens.space2,
                   ),
                 ),
               ),

@@ -8,7 +8,7 @@ import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dar
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/features/war_room/data/war_room_providers.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -66,10 +66,8 @@ class WarRoomCommandCenter extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
                   child: Row(
                     children: [
-                      if (context.canPop()) ...[
-                        const AppBackButton(),
-                        const SizedBox(width: 4),
-                      ],
+                      const PremiumNavLeading(),
+                      const SizedBox(width: 4),
                       Icon(Icons.military_tech_rounded,
                           color: AppThemeExtension.of(context).accent,
                           size: 28),

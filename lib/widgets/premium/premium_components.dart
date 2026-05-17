@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_sparkline.dart';
 import 'package:flutter/material.dart';
 
@@ -58,14 +59,20 @@ class PremiumPageHeader extends StatelessWidget {
     this.trailing = const [],
     this.showBack = false,
     this.onBack,
+    this.showNavigation = true,
+    this.showHomeWhenCanPop = true,
   });
 
   final Widget? leading;
   final String title;
   final String? subtitle;
   final List<Widget> trailing;
+  /// Manuel geri — [showNavigation] false ise kullanılır.
   final bool showBack;
   final VoidCallback? onBack;
+  /// Otomatik geri + ana sayfa kromu.
+  final bool showNavigation;
+  final bool showHomeWhenCanPop;
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +87,11 @@ class PremiumPageHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (showNavigation && !showBack)
+            Padding(
+              padding: const EdgeInsets.only(right: DesignTokens.space2),
+              child: PremiumNavLeading(showHomeWhenCanPop: showHomeWhenCanPop),
+            ),
           if (showBack)
             Padding(
               padding: const EdgeInsets.only(right: DesignTokens.space3),

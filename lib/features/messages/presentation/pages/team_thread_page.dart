@@ -7,7 +7,7 @@ import 'package:emlakmaster_mobile/features/messages/data/team_chat_repository.d
 import 'package:emlakmaster_mobile/features/messages/domain/team_message_entity.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_providers.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_thread_messages_notifier.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -110,7 +110,7 @@ class _TeamThreadPageState extends ConsumerState<TeamThreadPage> {
               padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
               child: Row(
                 children: [
-                  const AppBackButton(),
+                  const PremiumNavLeading(),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

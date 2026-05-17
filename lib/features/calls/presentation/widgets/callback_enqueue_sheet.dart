@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/callback_queue_item.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/callback_queue_provider.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,7 +19,6 @@ Future<void> showCallbackEnqueueSheet(
   String source = 'call_action_sheet',
 }) async {
   final anchor = context;
-  final ext = AppThemeExtension.of(context);
 
   Future<void> enqueue(Duration offset) async {
     final now = DateTime.now();
@@ -45,13 +45,12 @@ Future<void> showCallbackEnqueueSheet(
     }
   }
 
-  await showModalBottomSheet<void>(
+  await showPremiumScrollableBottomSheet<void>(
     context: context,
-    showDragHandle: true,
-    backgroundColor: ext.surfaceElevated,
+    maxHeightFactor: 0.55,
     builder: (ctx) {
       final sheetExt = AppThemeExtension.of(ctx);
-      final bottom = MediaQuery.paddingOf(ctx).bottom;
+
       Widget chip(String label, Duration Function() offset) {
         return ActionChip(
           label: Text(label),
@@ -65,68 +64,42 @@ Future<void> showCallbackEnqueueSheet(
         );
       }
 
-      return Padding(
-        padding: EdgeInsets.fromLTRB(
-          DesignTokens.space4,
-          DesignTokens.space2,
-          DesignTokens.space4,
-          DesignTokens.space4 + bottom,
+      return PremiumScrollableBottomSheetShell(
+        title: 'Geri arama kuyruğu',
+        subtitle: displayName.isNotEmpty ? '$displayName · $phone' : phone,
+        bottomActions: OutlinedButton.icon(
+          onPressed: () {
+            Navigator.pop(ctx);
+            if (!anchor.mounted) return;
+            startCrmOutboundCall(
+              anchor,
+              phone: phone,
+              customerId: customerId,
+              startedFromScreen: source,
+            );
+          },
+          icon: const Icon(Icons.call_rounded, size: 20),
+          label: const Text('Hemen ara (CRM)'),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Wrap(
+          spacing: DesignTokens.space2,
+          runSpacing: DesignTokens.space2,
           children: [
-            Text(
-              'Geri arama kuyruğu',
-              style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                    color: sheetExt.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: DesignTokens.space1),
-            Text(
-              displayName.isNotEmpty ? '$displayName · $phone' : phone,
-              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                    color: sheetExt.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: DesignTokens.space4),
-            Wrap(
-              spacing: DesignTokens.space2,
-              runSpacing: DesignTokens.space2,
-              children: [
-                chip('Şimdi ara', () => Duration.zero),
-                chip('15 dk', () => const Duration(minutes: 15)),
-                chip('1 saat', () => const Duration(hours: 1)),
-                chip('Bugün', () {
-                  final now = DateTime.now();
-                  final end = DateTime(now.year, now.month, now.day, 18);
-                  return end.isAfter(now)
-                      ? end.difference(now)
-                      : const Duration(hours: 2);
-                }),
-                chip('Yarın', () {
-                  final t = DateTime.now().add(const Duration(days: 1));
-                  final target = DateTime(t.year, t.month, t.day, 10);
-                  return target.difference(DateTime.now());
-                }),
-              ],
-            ),
-            const SizedBox(height: DesignTokens.space3),
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                if (!anchor.mounted) return;
-                startCrmOutboundCall(
-                  anchor,
-                  phone: phone,
-                  customerId: customerId,
-                  startedFromScreen: source,
-                );
-              },
-              icon: const Icon(Icons.call_rounded, size: 20),
-              label: const Text('Hemen ara (CRM)'),
-            ),
+            chip('Şimdi ara', () => Duration.zero),
+            chip('15 dk', () => const Duration(minutes: 15)),
+            chip('1 saat', () => const Duration(hours: 1)),
+            chip('Bugün', () {
+              final now = DateTime.now();
+              final end = DateTime(now.year, now.month, now.day, 18);
+              return end.isAfter(now)
+                  ? end.difference(now)
+                  : const Duration(hours: 2);
+            }),
+            chip('Yarın', () {
+              final t = DateTime.now().add(const Duration(days: 1));
+              final target = DateTime(t.year, t.month, t.day, 10);
+              return target.difference(DateTime.now());
+            }),
           ],
         ),
       );

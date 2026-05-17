@@ -181,7 +181,6 @@ class _RainbowAnalyticsCenterPageState
           children: [
             PremiumPageHeader(
               title: 'Yatırım İçgörü Merkezi',
-              showBack: true,
               trailing: [
                 TextButton.icon(
                   onPressed: () =>

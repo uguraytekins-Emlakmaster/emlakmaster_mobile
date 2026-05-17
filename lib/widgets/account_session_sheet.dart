@@ -21,9 +21,8 @@ Future<void> showAccountSessionSheet(
     BuildContext context, WidgetRef ref) async {
   await AppFeedback.lightImpact();
   if (!context.mounted) return;
-  await showPremiumModalBottomSheet<void>(
+  await showPremiumScrollableBottomSheet<void>(
     context: context,
-    useSafeArea: true,
     builder: (ctx) => const _AccountSessionSheet(),
   );
 }
@@ -67,21 +66,9 @@ class _AccountSessionSheet extends ConsumerWidget {
     final isClient = FeaturePermission.seesClientPanel(role);
     final versionLabel = AppConstants.appVersion.split('+').first;
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          DesignTokens.space5,
-          0,
-          DesignTokens.space5,
-          DesignTokens.space5,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const PremiumBottomSheetHandle(),
-            const SizedBox(height: DesignTokens.space2),
-            Row(
+    return PremiumScrollableBottomSheetShell(
+      showCloseButton: false,
+      header: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ProfileAvatar(
@@ -157,7 +144,10 @@ class _AccountSessionSheet extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: DesignTokens.space5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+            const SizedBox(height: DesignTokens.space3),
             _SheetAction(
               icon: Icons.person_outline_rounded,
               label: 'Profili aç',
@@ -233,8 +223,7 @@ class _AccountSessionSheet extends ConsumerWidget {
                 ),
               ],
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -243,31 +232,14 @@ class _AccountSessionSheet extends ConsumerWidget {
 void _showPanelPickSheet(BuildContext context, WidgetRef ref) {
   final ext = AppThemeExtension.of(context);
   final prefer = ref.read(preferredConsultantPanelProvider);
-  showPremiumModalBottomSheet<void>(
+  showPremiumScrollableBottomSheet<void>(
     context: context,
-    useSafeArea: true,
-    builder: (ctx) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          DesignTokens.space5,
-          0,
-          DesignTokens.space5,
-          DesignTokens.space5,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const PremiumBottomSheetHandle(),
-            const SizedBox(height: DesignTokens.space3),
-            Text(
-              'Panel seçin',
-              style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                    color: ext.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: DesignTokens.space4),
+    maxHeightFactor: 0.45,
+    builder: (ctx) => PremiumScrollableBottomSheetShell(
+      title: 'Panel seçin',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
             _SheetAction(
               icon: Icons.dashboard_rounded,
               label: ProductLabels.managerWorkspace,
@@ -296,7 +268,6 @@ void _showPanelPickSheet(BuildContext context, WidgetRef ref) {
           ],
         ),
       ),
-    ),
   );
 }
 

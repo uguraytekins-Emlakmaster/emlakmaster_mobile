@@ -937,14 +937,11 @@ class _ConsultantAcademyCard extends StatelessWidget {
             child: TextButton.icon(
               onPressed: () {
                 AppFeedback.lightImpact();
-                showPremiumModalBottomSheet<void>(
+                showPremiumDraggableBottomSheet<void>(
                   context: context,
-                  builder: (ctx) => DraggableScrollableSheet(
-                    initialChildSize: 0.55,
-                    minChildSize: 0.35,
-                    maxChildSize: 0.92,
-                    expand: false,
-                    builder: (_, scroll) => SingleChildScrollView(
+                  initialChildSize: 0.55,
+                  maxChildSize: 0.92,
+                  builder: (ctx, scroll) => SingleChildScrollView(
                       controller: scroll,
                       padding: const EdgeInsets.fromLTRB(
                         DesignTokens.space5,
@@ -1056,7 +1053,6 @@ class _ConsultantAcademyCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ),
                 );
               },
               style: TextButton.styleFrom(

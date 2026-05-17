@@ -2,7 +2,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
@@ -85,7 +85,8 @@ class ListingDetailPage extends StatelessWidget {
             slivers: [
               SliverAppBar(
                 backgroundColor: ext.background,
-                leading: const AppBackButton(),
+                leading: const PremiumNavLeading(),
+                leadingWidth: PremiumNavLeading.leadingWidth(context),
                 automaticallyImplyLeading: false,
                 expandedHeight: 220,
                 pinned: true,

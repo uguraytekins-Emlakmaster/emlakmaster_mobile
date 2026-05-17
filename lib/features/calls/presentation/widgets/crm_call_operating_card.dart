@@ -13,6 +13,7 @@ class CrmCallOperatingCard extends StatelessWidget {
     this.clipBehavior = Clip.antiAlias,
     this.rhythm = CallSurfaceCardRhythm.standard,
     this.showPriorityRail = false,
+    this.dense = false,
   });
 
   final Widget child;
@@ -21,6 +22,7 @@ class CrmCallOperatingCard extends StatelessWidget {
   final Clip clipBehavior;
   final CallSurfaceCardRhythm rhythm;
   final bool showPriorityRail;
+  final bool dense;
 
   Color _rhythmBase(AppThemeExtension ext, CallSurfaceCardRhythm r) {
     switch (r) {
@@ -79,7 +81,12 @@ class CrmCallOperatingCard extends StatelessWidget {
 
     return Card(
       margin: margin ??
-          const EdgeInsets.fromLTRB(0, 0, 0, DesignTokens.space2 + 2),
+          EdgeInsets.fromLTRB(
+            0,
+            0,
+            0,
+            dense ? DesignTokens.space1 + 2 : DesignTokens.space2 + 2,
+          ),
       clipBehavior: clipBehavior,
       elevation: isDark ? 0 : (selected ? 0 : 1),
       shadowColor: ext.shadowColor.withValues(alpha: isDark ? 0.36 : 0.10),

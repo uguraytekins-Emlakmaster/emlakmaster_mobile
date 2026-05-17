@@ -24,19 +24,14 @@ void showSaveContactSheet(
   String? initialNote,
   String source = 'uygulama',
 }) {
-  showPremiumModalBottomSheet<void>(
+  showPremiumScrollableBottomSheet<void>(
     context: context,
-    builder: (ctx) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(ctx).bottom,
-      ),
-      child: _SaveContactSheetContent(
-        initialName: initialName,
-        initialPhone: initialPhone,
-        initialEmail: initialEmail,
-        initialNote: initialNote,
-        source: source,
-      ),
+    builder: (ctx) => _SaveContactSheetContent(
+      initialName: initialName,
+      initialPhone: initialPhone,
+      initialEmail: initialEmail,
+      initialNote: initialNote,
+      source: source,
     ),
   );
 }
@@ -278,30 +273,46 @@ class _SaveContactSheetContentState
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return DraggableScrollableSheet(
-      initialChildSize: 0.72,
-      minChildSize: 0.42,
-      maxChildSize: 0.96,
-      expand: false,
-      builder: (_, scrollController) => Padding(
-        padding: const EdgeInsets.fromLTRB(
-          DesignTokens.space6,
-          0,
-          DesignTokens.space6,
-          DesignTokens.space6,
-        ),
-        child: ListView(
-          controller: scrollController,
-          children: [
-            const PremiumBottomSheetHandle(),
-            const SizedBox(height: DesignTokens.space4),
-            const PremiumSheetHeader(
-              compact: true,
-              title: 'Rehbere ve uygulamaya kaydet',
-              subtitle:
-                  'Ses veya yazı ile girin. CRM eşlemesi korunur; rehber izni ayrı sorulur.',
+    return PremiumScrollableBottomSheetShell(
+      title: 'Rehbere ve uygulamaya kaydet',
+      subtitle:
+          'Ses veya yazı ile girin. CRM eşlemesi korunur; rehber izni ayrı sorulur.',
+      bottomActions: SizedBox(
+        width: double.infinity,
+        child: FilledButton(
+          onPressed: _saving ? null : _onSave,
+          style: FilledButton.styleFrom(
+            backgroundColor: ext.accent,
+            foregroundColor: ext.onBrand,
+            minimumSize: const Size(double.infinity, 48),
+            padding:
+                const EdgeInsets.symmetric(vertical: DesignTokens.space3),
+            shape: RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.circular(DesignTokens.radiusControl),
             ),
-            const SizedBox(height: DesignTokens.space5),
+          ),
+          child: _saving
+              ? SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: ext.onBrand,
+                  ),
+                )
+              : Text(
+                  'Kaydet',
+                  style: AppTypography.bodyStrong(context).copyWith(
+                    color: ext.onBrand,
+                    fontSize: DesignTokens.fontSizeMd,
+                  ),
+                ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
             DecoratedBox(
               decoration: BoxDecoration(
                 color: ext.surfaceElevated,
@@ -517,43 +528,8 @@ class _SaveContactSheetContentState
                 ),
               ),
             ],
-            const SizedBox(height: DesignTokens.space5),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _saving ? null : _onSave,
-                style: FilledButton.styleFrom(
-                  backgroundColor: ext.accent,
-                  foregroundColor: ext.onBrand,
-                  minimumSize: const Size(double.infinity, 48),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: DesignTokens.space3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(DesignTokens.radiusControl),
-                  ),
-                ),
-                child: _saving
-                    ? SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: ext.onBrand,
-                        ),
-                      )
-                    : Text(
-                        'Kaydet',
-                        style: AppTypography.bodyStrong(context).copyWith(
-                          color: ext.onBrand,
-                          fontSize: DesignTokens.fontSizeMd,
-                        ),
-                      ),
-              ),
-            ),
           ],
         ),
-      ),
     );
   }
 }

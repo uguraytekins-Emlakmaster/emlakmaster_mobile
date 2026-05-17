@@ -8,6 +8,7 @@ import 'package:emlakmaster_mobile/features/auth/presentation/widgets/auth_field
 import 'package:emlakmaster_mobile/features/office/domain/office_exception.dart';
 import 'package:emlakmaster_mobile/features/office/presentation/utils/office_error_ui.dart';
 import 'package:emlakmaster_mobile/features/office/services/office_setup_service.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -81,11 +82,11 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
     final ext = AppThemeExtension.of(context);
     return Scaffold(
       backgroundColor: ext.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      appBar: emlakAppBar(
+        context,
+        backgroundColor: ext.background,
+        foregroundColor: ext.foreground,
         title: const Text('Ofis oluştur'),
-          foregroundColor: ext.foreground,
       ),
       body: SafeArea(
         child: Column(

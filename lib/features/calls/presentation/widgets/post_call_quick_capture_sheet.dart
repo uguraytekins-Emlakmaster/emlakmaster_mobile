@@ -24,13 +24,10 @@ Future<void> showPostCallQuickCaptureSheet({
   required BuildContext context,
   required PostCallCaptureDraft draft,
 }) async {
-  await showPremiumModalBottomSheet<void>(
+  await showPremiumScrollableBottomSheet<void>(
     context: context,
-    useSafeArea: true,
-    builder: (ctx) => Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-      child: _PostCallQuickCaptureBody(draft: draft),
-    ),
+    maxHeightFactor: 0.92,
+    builder: (ctx) => _PostCallQuickCaptureBody(draft: draft),
   );
 }
 
@@ -267,7 +264,6 @@ class _PostCallQuickCaptureBodyState
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final bottom = MediaQuery.paddingOf(context).bottom;
     final saveOnPressed = _saving ? null : _onSavePressed;
     final buttonLogKey = [
       saveOnPressed == null ? 'disabled' : 'enabled',
@@ -289,40 +285,106 @@ class _PostCallQuickCaptureBodyState
           ref.read(postCallCaptureProvider.notifier).markCaptureAbandoned();
         }
       },
-      child: Padding(
-      padding: EdgeInsets.fromLTRB(
-        DesignTokens.space5,
-        DesignTokens.space2,
-        DesignTokens.space5,
-        DesignTokens.space5 + bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
+      child: PremiumScrollableBottomSheetShell(
+        header: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.call_received_rounded,
+              size: DesignTokens.iconLg,
+              color: ext.accent.withValues(alpha: 0.5),
+            ),
+            const SizedBox(width: DesignTokens.space3),
+            Expanded(
+              child: PremiumSheetHeader(
+                compact: true,
+                title: 'Az önceki arama',
+                subtitle: widget.draft.phone,
+              ),
+            ),
+          ],
+        ),
+        bottomActions: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const PremiumBottomSheetHandle(),
-            Padding(
-              padding: const EdgeInsets.only(bottom: DesignTokens.space3),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.call_received_rounded,
-                    size: DesignTokens.iconLg,
-                    color: ext.accent.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(width: DesignTokens.space3),
-                  Expanded(
-                    child: PremiumSheetHeader(
-                      compact: true,
-                      title: 'Az önceki arama',
-                      subtitle: widget.draft.phone,
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _saving ? null : _openWizard,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          DesignTokens.radiusControl,
+                        ),
+                      ),
+                      side: BorderSide(color: ext.borderSubtle),
+                    ),
+                    child: Text(
+                      'Detaylı sihirbaz',
+                      style: AppTypography.secondaryButton(context),
                     ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: DesignTokens.space3),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    onPressed: saveOnPressed,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: ext.accent,
+                      foregroundColor: ext.onBrand,
+                      minimumSize: const Size(0, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          DesignTokens.radiusControl,
+                        ),
+                      ),
+                    ),
+                    child: _saving
+                        ? SizedBox(
+                            height: DesignTokens.iconMd,
+                            width: DesignTokens.iconMd,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: ext.onBrand,
+                            ),
+                          )
+                        : Text(
+                            _outcomeCode == null
+                                ? 'Kaydet'
+                                : 'Sonucu kaydet',
+                            style: AppTypography.primaryButton(context),
+                          ),
+                  ),
+                ),
+              ],
             ),
+            if (_completedMessage != null) ...[
+              const SizedBox(height: DesignTokens.space3),
+              Container(
+                padding: const EdgeInsets.all(DesignTokens.space3),
+                decoration: BoxDecoration(
+                  color: ext.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  border: Border.all(
+                    color: ext.success.withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Text(
+                  _completedMessage!,
+                  style: AppTypography.bodyStrong(context)
+                      .copyWith(color: ext.success),
+                ),
+              ),
+            ],
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             Container(
               padding: const EdgeInsets.all(DesignTokens.space4),
               decoration: BoxDecoration(
@@ -535,83 +597,10 @@ class _PostCallQuickCaptureBodyState
               onTap: _pickDate,
             ),
             ],
-            const SizedBox(height: DesignTokens.space3),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _saving ? null : _openWizard,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          DesignTokens.radiusControl,
-                        ),
-                      ),
-                      side: BorderSide(color: ext.borderSubtle),
-                    ),
-                    child: Text(
-                      'Detaylı sihirbaz',
-                      style: AppTypography.secondaryButton(context),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: DesignTokens.space3),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    onPressed: saveOnPressed,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: ext.accent,
-                      foregroundColor: ext.onBrand,
-                      minimumSize: const Size(0, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          DesignTokens.radiusControl,
-                        ),
-                      ),
-                    ),
-                    child: _saving
-                        ? SizedBox(
-                            height: DesignTokens.iconMd,
-                            width: DesignTokens.iconMd,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: ext.onBrand,
-                            ),
-                          )
-                        : Text(
-                            _outcomeCode == null
-                                ? 'Kaydet'
-                                : 'Sonucu kaydet',
-                            style: AppTypography.primaryButton(context),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-            if (_completedMessage != null) ...[
-              const SizedBox(height: DesignTokens.space3),
-              Container(
-                padding: const EdgeInsets.all(DesignTokens.space3),
-                decoration: BoxDecoration(
-                  color: ext.success.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  border: Border.all(
-                    color: ext.success.withValues(alpha: 0.45),
-                  ),
-                ),
-                child: Text(
-                  _completedMessage!,
-                  style: AppTypography.bodyStrong(context)
-                      .copyWith(color: ext.success),
-                ),
-              ),
-            ],
+            const SizedBox(height: DesignTokens.space2),
           ],
         ),
       ),
-    ),
     );
   }
 }

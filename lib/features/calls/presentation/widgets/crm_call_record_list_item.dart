@@ -27,13 +27,23 @@ class CrmCallRecordListItem extends StatelessWidget {
     this.memoryHint,
     this.confidenceKind,
     this.onOpenCustomerCard,
-    this.padding = const EdgeInsets.fromLTRB(
-      DesignTokens.space4,
-      DesignTokens.space3 + 2,
-      DesignTokens.space4,
-      DesignTokens.space3 + 2,
-    ),
+    this.dense = false,
+    this.padding,
   });
+
+  static const EdgeInsets _defaultPadding = EdgeInsets.fromLTRB(
+    DesignTokens.space4,
+    DesignTokens.space3 + 2,
+    DesignTokens.space4,
+    DesignTokens.space3 + 2,
+  );
+
+  static const EdgeInsets _densePadding = EdgeInsets.fromLTRB(
+    DesignTokens.space3 + 2,
+    DesignTokens.space2,
+    DesignTokens.space3 + 2,
+    DesignTokens.space2,
+  );
 
   final String title;
   final String? phoneSubtitle;
@@ -57,13 +67,16 @@ class CrmCallRecordListItem extends StatelessWidget {
   final CallConfidenceKind? confidenceKind;
   /// Bağlı müşteri kartına git.
   final VoidCallback? onOpenCustomerCard;
-  final EdgeInsetsGeometry padding;
+  final bool dense;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final resolvedPadding =
+        padding ?? (dense ? _densePadding : _defaultPadding);
     final child = Padding(
-      padding: padding,
+      padding: resolvedPadding,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -81,7 +94,7 @@ class CrmCallRecordListItem extends StatelessWidget {
                   onIdentityLongPress: onIdentityLongPress,
                   ext: ext,
                 ),
-                if (onOpenCustomerCard != null) ...[
+                if (!dense && onOpenCustomerCard != null) ...[
                   const SizedBox(height: DesignTokens.space1 + 1),
                   Align(
                     alignment: Alignment.centerLeft,
@@ -106,7 +119,7 @@ class CrmCallRecordListItem extends StatelessWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: DesignTokens.space2 + 3),
+                SizedBox(height: dense ? DesignTokens.space1 + 2 : DesignTokens.space2 + 3),
                 Wrap(
                   spacing: DesignTokens.space2,
                   runSpacing: 6,
@@ -175,11 +188,13 @@ class CrmCallRecordListItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                if (notePreview != null && notePreview!.trim().isNotEmpty) ...[
+                if (!dense &&
+                    notePreview != null &&
+                    notePreview!.trim().isNotEmpty) ...[
                   const SizedBox(height: DesignTokens.space2 + 2),
                   Text(
                     notePreview!,
-                    maxLines: 2,
+                    maxLines: dense ? 1 : 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.body(context).copyWith(
                       color: ext.textPrimary.withValues(alpha: 0.94),

@@ -18,17 +18,13 @@ import 'package:go_router/go_router.dart';
 /// Yazarken sayfa komutları ve müşteri araması yapar.
 class CommandPalette {
   static void show(BuildContext context) {
-    showPremiumModalBottomSheet<void>(
+    showPremiumDraggableBottomSheet<void>(
       context: context,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (_, scrollController) => _CommandPaletteContent(
-          scrollController: scrollController,
-          onClose: () => Navigator.pop(ctx),
-        ),
+      initialChildSize: 0.72,
+      maxChildSize: 0.92,
+      builder: (ctx, scrollController) => _CommandPaletteContent(
+        scrollController: scrollController,
+        onClose: () => Navigator.pop(ctx),
       ),
     );
   }

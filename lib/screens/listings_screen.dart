@@ -18,6 +18,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 
 class ListingsPage extends ConsumerStatefulWidget {
   const ListingsPage({super.key});
@@ -46,32 +47,22 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            PremiumPageHeader(
+              title: l10n.t('title_listings'),
+              subtitle: _segment == 0 || !showMarket
+                  ? l10n.t('listings_subtitle_owned')
+                  : l10n.t('listings_subtitle_market'),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 DesignTokens.space6,
-                DesignTokens.space3,
+                0,
                 DesignTokens.space6,
                 DesignTokens.space2,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    l10n.t('title_listings'),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: ext.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: DesignTokens.space1),
-                  Text(
-                    _segment == 0 || !showMarket
-                        ? l10n.t('listings_subtitle_owned')
-                        : l10n.t('listings_subtitle_market'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: ext.textSecondary,
-                        ),
-                  ),
                   if (showMarket) ...[
                     const SizedBox(height: DesignTokens.space4),
                     SegmentedButton<int>(

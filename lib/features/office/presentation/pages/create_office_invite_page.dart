@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/features/office/domain/office_exception.dart'
 import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
 import 'package:emlakmaster_mobile/features/office/presentation/utils/office_error_ui.dart';
 import 'package:emlakmaster_mobile/features/office/services/office_setup_service.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
@@ -84,11 +85,11 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
     final ext = AppThemeExtension.of(context);
     return Scaffold(
       backgroundColor: ext.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Davet oluştur'),
+      appBar: emlakAppBar(
+        context,
+        backgroundColor: ext.background,
         foregroundColor: ext.foreground,
+        title: const Text('Davet oluştur'),
       ),
       body: SafeArea(
         child: ListView(

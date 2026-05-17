@@ -1,9 +1,8 @@
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/my_external_listings_inner.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 /// Tam ekran «Benim ilanlarım» (router’dan açılır).
 class MyExternalListingsPage extends StatelessWidget {
@@ -24,7 +23,7 @@ class MyExternalListingsPage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
               child: Row(
                 children: [
-                  if (context.canPop()) const AppBackButton(),
+                  const PremiumNavLeading(),
                   Expanded(
                     child: Text(
                       l10n.t('my_external_listings_title'),

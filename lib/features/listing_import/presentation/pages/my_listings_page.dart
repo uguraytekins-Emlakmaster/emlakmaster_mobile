@@ -10,7 +10,7 @@ import 'package:emlakmaster_mobile/features/listing_import/domain/import_task_st
 import 'package:emlakmaster_mobile/features/listing_import/domain/listing_import_task_entity.dart';
 import 'package:emlakmaster_mobile/features/listing_import/presentation/providers/listing_import_providers.dart';
 import 'package:emlakmaster_mobile/features/listing_import/presentation/widgets/listing_import_shimmer.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,7 +60,6 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
     final listingsAsync = ref.watch(myListingsProvider);
     final historyAsync = ref.watch(importHistoryProvider);
@@ -72,39 +71,25 @@ class _MyListingsPageState extends ConsumerState<MyListingsPage> {
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space2,
-                  DesignTokens.space2,
-                  DesignTokens.space4,
-                  0,
-                ),
-                child: Row(
-                  children: [
-                    const AppBackButton(),
-                    Expanded(
-                      child: Text(
-                        'Benim ilanlarım',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: AppThemeExtension.of(context).textPrimary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+              child: PremiumPageHeader(
+                title: 'Benim ilanlarım',
+                trailing: [
+                  if (canManage) ...[
+                    IconButton(
+                      tooltip: 'Mağaza toplu içe aktar',
+                      onPressed: () => context.push(AppRouter.routeImportHub),
+                      icon: Icon(Icons.add_circle_outline_rounded,
+                          color: AppThemeExtension.of(context).accent),
                     ),
-                    if (canManage) ...[
-                      IconButton(
-                        tooltip: 'Mağaza toplu içe aktar',
-                        onPressed: () => context.push(AppRouter.routeImportHub),
-                        icon: Icon(Icons.add_circle_outline_rounded, color: AppThemeExtension.of(context).accent),
-                      ),
-                      IconButton(
-                        tooltip: 'Geçmiş',
-                        onPressed: () => context.push(AppRouter.routeImportHistory),
-                        icon: Icon(Icons.history_rounded, color: AppThemeExtension.of(context).textSecondary),
-                      ),
-                    ],
+                    IconButton(
+                      tooltip: 'Geçmiş',
+                      onPressed: () =>
+                          context.push(AppRouter.routeImportHistory),
+                      icon: Icon(Icons.history_rounded,
+                          color: AppThemeExtension.of(context).textSecondary),
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
             listingsAsync.when(

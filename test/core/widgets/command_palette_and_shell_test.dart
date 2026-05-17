@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
@@ -166,9 +167,19 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Müşterilerim'), findsOneWidget);
-    expect(find.text('İlanlar'), findsOneWidget);
-    expect(find.text('Çağrılarım'), findsOneWidget);
+    expect(find.text(ProductLabels.myCustomers), findsOneWidget);
+    expect(find.text(ProductLabels.myCalls), findsOneWidget);
+    final listScrollable = find.descendant(
+      of: find.byType(DraggableScrollableSheet),
+      matching: find.byType(Scrollable),
+    );
+    expect(listScrollable, findsWidgets);
+    await tester.scrollUntilVisible(
+      find.text(ProductLabels.listings),
+      48,
+      scrollable: listScrollable.first,
+    );
+    expect(find.text(ProductLabels.listings), findsOneWidget);
     expect(find.text('Ofis yönetimi'), findsNothing);
   });
 

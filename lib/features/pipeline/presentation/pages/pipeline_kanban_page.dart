@@ -7,7 +7,7 @@ import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers
 import 'package:emlakmaster_mobile/features/lead_temperature_engine/presentation/providers/lead_temperature_provider.dart';
 import 'package:emlakmaster_mobile/shared/models/lead_temperature.dart';
 import 'package:emlakmaster_mobile/shared/models/pipeline_models.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +40,8 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
             pinned: true,
             backgroundColor: ext.background,
             foregroundColor: ext.textPrimary,
-            leading: context.canPop() ? const AppBackButton() : null,
+            leading: const PremiumNavLeading(),
+            leadingWidth: PremiumNavLeading.leadingWidth(context),
             automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 56, bottom: 16),

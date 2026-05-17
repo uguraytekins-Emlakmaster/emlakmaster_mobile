@@ -109,11 +109,13 @@ class _AnimatedSurfaceState extends State<_AnimatedSurface> {
       padding: widget.padding ??
           const EdgeInsets.all(DesignTokens.space4),
       transform: hoverTransform,
-      decoration: BoxDecoration(
-        color: baseColor,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      decoration: ext.premiumSurfaceDecoration(
+        goldBorder: _hovering && interactive,
+        radius: DesignTokens.radiusLg,
+        baseColor: baseColor,
+      ).copyWith(
         border: Border.all(color: borderColor),
-        boxShadow: hoverShadow,
+        boxShadow: hoverShadow.isEmpty ? null : hoverShadow,
       ),
       child: widget.child,
     );

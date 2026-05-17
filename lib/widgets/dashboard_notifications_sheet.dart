@@ -14,19 +14,15 @@ import 'package:go_router/go_router.dart';
 void showDashboardNotificationsSheet(BuildContext context, {required String uid}) {
   final rootContext = context;
 
-  showPremiumModalBottomSheet<void>(
+  showPremiumDraggableBottomSheet<void>(
     context: context,
-    builder: (ctx) {
+    initialChildSize: 0.45,
+    maxChildSize: 0.85,
+    builder: (ctx, scroll) {
       final ext = AppThemeExtension.of(ctx);
       final fg = ext.textPrimary;
 
-      return DraggableScrollableSheet(
-        initialChildSize: 0.45,
-        minChildSize: 0.3,
-        maxChildSize: 0.85,
-        expand: false,
-        builder: (_, scroll) {
-          return Column(
+      return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const PremiumBottomSheetHandle(),
@@ -214,8 +210,6 @@ void showDashboardNotificationsSheet(BuildContext context, {required String uid}
               ),
             ],
           );
-        },
-      );
     },
   );
 }

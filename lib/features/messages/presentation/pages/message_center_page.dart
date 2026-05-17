@@ -10,7 +10,6 @@ import 'package:emlakmaster_mobile/features/messages/domain/team_channel_id.dart
 import 'package:emlakmaster_mobile/features/messages/domain/team_channel_type.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_providers.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,11 +69,10 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: PremiumPageHeader(
                 title: ProductLabels.messageCenter,
                 subtitle: 'Tüm platformlardan gelen mesajlar tek yerde.',
-                showBack: context.canPop(),
               ),
             ),
             SliverToBoxAdapter(
@@ -330,7 +328,7 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
       padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
       child: Row(
         children: [
-          if (context.canPop()) const AppBackButton(),
+          const PremiumNavLeading(),
           Expanded(
             child: Text(
               ProductLabels.messageCenter,

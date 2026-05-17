@@ -15,6 +15,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surfa
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
@@ -33,24 +34,14 @@ Future<void> showCallIdentityQuickActionsSheet(
   if (digits.isEmpty) return;
 
   final anchor = context;
-
   AppFeedback.lightImpact();
-  final sheetExt = AppThemeExtension.of(context);
-  final theme = Theme.of(context);
 
-  await showModalBottomSheet<void>(
+  await showPremiumScrollableBottomSheet<void>(
     context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    backgroundColor: sheetExt.surfaceElevated,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(DesignTokens.radiusLg),
-      ),
-    ),
+    maxHeightFactor: 0.92,
     builder: (ctx) {
       final ext = AppThemeExtension.of(ctx);
-      final bottom = MediaQuery.paddingOf(ctx).bottom;
+      final theme = Theme.of(ctx);
       final cid = customerId?.trim();
       final hasCustomer = cid != null && cid.isNotEmpty;
       final label = displayLabel?.trim();
@@ -60,36 +51,15 @@ Future<void> showCallIdentityQuickActionsSheet(
           ? label
           : null;
       final initialPhone = CrmCallRecordDisplay.formatPhone(rawPhone);
+      final docId = firestoreCallDocId?.trim();
 
-      return Padding(
-        padding: EdgeInsets.fromLTRB(
-          DesignTokens.space4,
-          DesignTokens.space2,
-          DesignTokens.space4,
-          DesignTokens.space4 + bottom,
-        ),
+      return PremiumScrollableBottomSheetShell(
+        title: label?.isNotEmpty == true ? label! : 'Hızlı işlemler',
+        subtitle: rawPhone,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              label?.isNotEmpty == true ? label! : 'Hızlı işlemler',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: ext.textPrimary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.2,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space1),
-            Text(
-              rawPhone,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: ext.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
             if (hasCustomer) ...[
-              const SizedBox(height: DesignTokens.space2),
               Text(
                 'Müşteri kartına bağlı — özet ve geçmiş için kartı açın.',
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -102,8 +72,7 @@ Future<void> showCallIdentityQuickActionsSheet(
               const CallConfidenceBadge(
                 kind: CallConfidenceKind.emlakMasterOriginated,
               ),
-            ] else ...[
-              const SizedBox(height: DesignTokens.space2),
+            ] else
               Text(
                 'Bilinmeyen numara — CRM\'de arayın veya müşteriye bağlayın.',
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -112,21 +81,9 @@ Future<void> showCallIdentityQuickActionsSheet(
                   height: 1.35,
                 ),
               ),
-            ],
-            if (firestoreCallDocId != null &&
-                firestoreCallDocId.trim().isNotEmpty) ...[
-              const SizedBox(height: DesignTokens.space3),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Hızlı not',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: ext.textSecondary,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.04,
-                  ),
-                ),
-              ),
+            if (docId != null && docId.isNotEmpty) ...[
+              const SizedBox(height: DesignTokens.space4),
+              _SectionLabel('Hızlı not'),
               const SizedBox(height: DesignTokens.space2),
               Wrap(
                 spacing: DesignTokens.space2,
@@ -140,9 +97,8 @@ Future<void> showCallIdentityQuickActionsSheet(
                       child: InkWell(
                         onTap: () async {
                           AppFeedback.selectionClick();
-                          final id = firestoreCallDocId.trim();
                           await FirestoreService.appendQuickCaptureNoteSnippet(
-                            callId: id,
+                            callId: docId,
                             snippet: snippet,
                           );
                           if (!anchor.mounted) return;
@@ -176,7 +132,7 @@ Future<void> showCallIdentityQuickActionsSheet(
               ),
             ],
             if (!hasCustomer) ...[
-              const SizedBox(height: DesignTokens.space3),
+              const SizedBox(height: DesignTokens.space4),
               _SheetTile(
                 icon: Icons.link_rounded,
                 label: 'Müşteriye bağla',
@@ -220,43 +176,104 @@ Future<void> showCallIdentityQuickActionsSheet(
                   ),
                 ),
               ),
+            ] else ...[
+              const SizedBox(height: DesignTokens.space4),
+              _SheetTile(
+                icon: Icons.open_in_new_rounded,
+                label: 'Kartı aç',
+                color: ext.accent,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  AppFeedback.lightImpact();
+                  ctx.push('/customer/$cid');
+                },
+              ),
             ],
             const SizedBox(height: DesignTokens.space4),
-            _SheetTile(
-              icon: Icons.call_rounded,
-              label: 'CRM\'de Ara',
-              color: ext.success,
-              onTap: () {
-                Navigator.pop(ctx);
-                startCrmOutboundCall(
-                  anchor,
-                  phone: rawPhone,
-                  customerId: cid,
-                  startedFromScreen: 'call_action_sheet',
-                );
-              },
+            _SectionLabel('İletişim'),
+            const SizedBox(height: DesignTokens.space2),
+            _ActionGrid(
+              children: [
+                _GridAction(
+                  icon: Icons.call_rounded,
+                  label: 'CRM\'de Ara',
+                  color: ext.success,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    startCrmOutboundCall(
+                      anchor,
+                      phone: rawPhone,
+                      customerId: cid,
+                      startedFromScreen: 'call_action_sheet',
+                    );
+                  },
+                ),
+                _GridAction(
+                  icon: Icons.phone_in_talk_outlined,
+                  label: 'Rehberde Ara',
+                  color: ext.textSecondary,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final ok = await OutboundPhoneDial.launchDial(rawPhone);
+                    if (!ok && anchor.mounted) {
+                      ScaffoldMessenger.of(anchor).showSnackBar(
+                        const SnackBar(content: Text('Arama başlatılamadı.')),
+                      );
+                    } else if (ok && anchor.mounted) {
+                      showCallsSurfaceAck(
+                        anchor,
+                        'Rehber araması — CRM kaydı otomatik açılmaz',
+                        icon: Icons.phone_in_talk_outlined,
+                      );
+                    }
+                  },
+                ),
+                _GridAction(
+                  icon: Icons.sms_rounded,
+                  label: 'Mesaj yaz',
+                  color: ext.info,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final ok = await SmsLauncher.openBulkSms([rawPhone]);
+                    if (!ok && anchor.mounted) {
+                      ScaffoldMessenger.of(anchor).showSnackBar(
+                        const SnackBar(
+                            content: Text('Mesaj uygulaması açılamadı.')),
+                      );
+                    } else if (ok && anchor.mounted) {
+                      showCallsSurfaceAck(
+                        anchor,
+                        'SMS akışı hazırlandı',
+                        icon: Icons.sms_rounded,
+                      );
+                    }
+                  },
+                ),
+                _GridAction(
+                  icon: Icons.chat_rounded,
+                  label: 'WhatsApp aç',
+                  color: const Color(0xFF25D366),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final ok = await WhatsAppLauncher.openChat(rawPhone);
+                    if (!ok && anchor.mounted) {
+                      ScaffoldMessenger.of(anchor).showSnackBar(
+                        const SnackBar(content: Text('WhatsApp açılamadı.')),
+                      );
+                    } else if (ok && anchor.mounted) {
+                      showCallsSurfaceAck(
+                        anchor,
+                        'WhatsApp açıldı',
+                        icon: Icons.chat_rounded,
+                      );
+                    }
+                  },
+                ),
+              ],
             ),
-            // Rehberde Ara: kasıtlı ham tel: — CRM handoff taslağı oluşturmaz.
-            _SheetTile(
-              icon: Icons.phone_in_talk_outlined,
-              label: 'Rehberde Ara',
-              color: ext.textSecondary,
-              onTap: () async {
-                Navigator.pop(ctx);
-                final ok = await OutboundPhoneDial.launchDial(rawPhone);
-                if (!ok && anchor.mounted) {
-                  ScaffoldMessenger.of(anchor).showSnackBar(
-                    const SnackBar(content: Text('Arama başlatılamadı.')),
-                  );
-                } else if (ok && anchor.mounted) {
-                  showCallsSurfaceAck(
-                    anchor,
-                    'Rehber araması — CRM kaydı otomatik açılmaz',
-                    icon: Icons.phone_in_talk_outlined,
-                  );
-                }
-              },
-            ),
+            const SizedBox(height: DesignTokens.space4),
+            _SectionLabel('CRM'),
+            const SizedBox(height: DesignTokens.space2),
             Consumer(
               builder: (context, ref, _) => _SheetTile(
                 icon: Icons.schedule_rounded,
@@ -275,57 +292,6 @@ Future<void> showCallIdentityQuickActionsSheet(
                 },
               ),
             ),
-            _SheetTile(
-              icon: Icons.sms_rounded,
-              label: 'Mesaj yaz',
-              color: ext.info,
-              onTap: () async {
-                Navigator.pop(ctx);
-                final ok = await SmsLauncher.openBulkSms([rawPhone]);
-                if (!ok && anchor.mounted) {
-                  ScaffoldMessenger.of(anchor).showSnackBar(
-                    const SnackBar(content: Text('Mesaj uygulaması açılamadı.')),
-                  );
-                } else if (ok && anchor.mounted) {
-                  showCallsSurfaceAck(
-                    anchor,
-                    'SMS akışı hazırlandı',
-                    icon: Icons.sms_rounded,
-                  );
-                }
-              },
-            ),
-            _SheetTile(
-              icon: Icons.chat_rounded,
-              label: 'WhatsApp aç',
-              color: const Color(0xFF25D366),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final ok = await WhatsAppLauncher.openChat(rawPhone);
-                if (!ok && anchor.mounted) {
-                  ScaffoldMessenger.of(anchor).showSnackBar(
-                    const SnackBar(content: Text('WhatsApp açılamadı.')),
-                  );
-                } else if (ok && anchor.mounted) {
-                  showCallsSurfaceAck(
-                    anchor,
-                    'WhatsApp açıldı',
-                    icon: Icons.chat_rounded,
-                  );
-                }
-              },
-            ),
-            if (hasCustomer)
-              _SheetTile(
-                icon: Icons.open_in_new_rounded,
-                label: 'Kartı aç',
-                color: ext.accent,
-                onTap: () {
-                  Navigator.pop(ctx);
-                  AppFeedback.lightImpact();
-                  ctx.push('/customer/$cid');
-                },
-              ),
             if (!hasCustomer) ...[
               _SheetTile(
                 icon: Icons.link_rounded,
@@ -364,9 +330,8 @@ Future<void> showCallIdentityQuickActionsSheet(
                     if (trimmed != null && trimmed.isNotEmpty)
                       'customerId': trimmed,
                     'phone': rawPhone,
-                    if (firestoreCallDocId != null &&
-                        firestoreCallDocId.trim().isNotEmpty)
-                      'callSessionId': firestoreCallDocId.trim(),
+                    if (docId != null && docId.isNotEmpty)
+                      'callSessionId': docId,
                   },
                 );
               },
@@ -389,11 +354,105 @@ Future<void> showCallIdentityQuickActionsSheet(
                 );
               },
             ),
+            const SizedBox(height: DesignTokens.space2),
           ],
         ),
       );
     },
   );
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: ext.textSecondary,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.04,
+          ),
+    );
+  }
+}
+
+class _ActionGrid extends StatelessWidget {
+  const _ActionGrid({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = DesignTokens.space2;
+        final itemWidth = (constraints.maxWidth - spacing) / 2;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final c in children)
+              SizedBox(width: itemWidth, child: c),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _GridAction extends StatelessWidget {
+  const _GridAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Material(
+      color: ext.card,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.space3,
+            vertical: DesignTokens.space3,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: DesignTokens.space2),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: ext.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: DesignTokens.fontSizeSm,
+                        height: 1.2,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SheetTile extends StatelessWidget {
@@ -440,6 +499,8 @@ class _SheetTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: ext.textPrimary,
                           fontWeight: FontWeight.w600,

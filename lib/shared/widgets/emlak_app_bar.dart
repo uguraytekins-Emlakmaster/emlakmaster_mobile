@@ -1,9 +1,10 @@
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-/// Tüm tam sayfa rotalarında tutarlı geri butonu + AppBar.
+/// Premium AppBar — geri + ana sayfa, obsidyen yüzey, altın krom.
 PreferredSizeWidget emlakAppBar(
   BuildContext context, {
   required Widget title,
@@ -11,27 +12,26 @@ PreferredSizeWidget emlakAppBar(
   PreferredSizeWidget? bottom,
   Color? backgroundColor,
   Color? foregroundColor,
-  bool centerTitle = true,
+  bool centerTitle = false,
   double? elevation,
+  bool showHomeWhenCanPop = true,
 }) {
   final theme = Theme.of(context);
-  final bg = backgroundColor ??
-      theme.appBarTheme.backgroundColor ??
-      theme.scaffoldBackgroundColor;
-  final fg = foregroundColor ??
-      theme.appBarTheme.foregroundColor ??
-      theme.colorScheme.onSurface;
-  final canPop = context.canPop();
-  final titleStyle =
-      theme.appBarTheme.titleTextStyle ?? AppTypography.pageHeading(context);
-  final maxTitleWidth = MediaQuery.sizeOf(context).width - 112;
+  final ext = AppThemeExtension.of(context);
+  final bg = backgroundColor ?? ext.background;
+  final fg = foregroundColor ?? ext.textPrimary;
+  final maxTitleWidth = MediaQuery.sizeOf(context).width - 128;
   return AppBar(
-    leading: canPop ? const AppBackButton() : null,
+    leading: PremiumNavLeading(showHomeWhenCanPop: showHomeWhenCanPop),
+    leadingWidth: PremiumNavLeading.leadingWidth(context),
     automaticallyImplyLeading: false,
     title: ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxTitleWidth.clamp(160, 560)),
       child: DefaultTextStyle.merge(
-        style: titleStyle,
+        style: AppTypography.pageHeading(context).copyWith(
+          color: fg,
+          fontSize: DesignTokens.fontSizeLg,
+        ),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         textAlign: centerTitle ? TextAlign.center : TextAlign.start,
@@ -42,11 +42,11 @@ PreferredSizeWidget emlakAppBar(
     bottom: bottom,
     backgroundColor: bg,
     foregroundColor: fg,
-    elevation: elevation ?? theme.appBarTheme.elevation ?? 0,
+    elevation: elevation ?? 0,
     surfaceTintColor: Colors.transparent,
     scrolledUnderElevation: 0,
     centerTitle: centerTitle,
-    iconTheme: theme.appBarTheme.iconTheme?.copyWith(color: fg) ??
-        IconThemeData(color: fg),
+    iconTheme: IconThemeData(color: ext.accent),
+    actionsIconTheme: IconThemeData(color: ext.accent),
   );
 }

@@ -6,7 +6,7 @@ import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
@@ -45,12 +45,12 @@ class CustomerDetailPage extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     return Scaffold(
       backgroundColor: ext.background,
-      appBar: AppBar(
+      appBar: emlakAppBar(
+        context,
         title: const Text('Müşteri'),
         backgroundColor: ext.background,
         foregroundColor: ext.textPrimary,
-        leading: const AppBackButton(),
-        automaticallyImplyLeading: false,
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.call_rounded),

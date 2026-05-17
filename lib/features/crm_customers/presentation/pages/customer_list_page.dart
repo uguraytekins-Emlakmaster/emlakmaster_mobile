@@ -19,6 +19,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/widgets/empty_state.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import '../widgets/customer_card.dart';
 
 /// Liste altı — dock bar + büyük metin ölçeği için güvenli boşluk (SE / erişilebilirlik).
@@ -136,47 +137,50 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               child: CustomScrollView(
                 cacheExtent: 320,
                 slivers: [
+                  if (!_selectionMode)
+                    SliverToBoxAdapter(
+                      child: PremiumPageHeader(
+                        title: AppLocalizations.of(context)
+                            .t('title_customers'),
+                        subtitle:
+                            'İlişki portföyün — arama, sıcaklık ve hızlı aksiyon tek yerde.',
+                      ),
+                    ),
+                  if (_selectionMode)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          DesignTokens.space6,
+                          DesignTokens.space3,
+                          DesignTokens.space6,
+                          DesignTokens.space3,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                AppLocalizations.of(context).tArgs(
+                                  'n_selected',
+                                  ['${_selectedIds.length}'],
+                                ),
+                                style: AppTypography.pageHeading(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(
                         DesignTokens.space6,
-                        DesignTokens.space5,
+                        0,
                         DesignTokens.space6,
                         DesignTokens.space3,
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _selectionMode
-                                      ? AppLocalizations.of(context).tArgs(
-                                          'n_selected',
-                                          ['${_selectedIds.length}'])
-                                      : AppLocalizations.of(context)
-                                          .t('title_customers'),
-                                  style: AppTypography.pageHeading(context),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (!_selectionMode) ...[
-                                  const SizedBox(height: DesignTokens.space2),
-                                  Text(
-                                    'İlişki portföyün — arama, sıcaklık ve hızlı aksiyon tek yerde.',
-                                    style: AppTypography.meta(context).copyWith(
-                                      color: ext.textTertiary,
-                                      height: 1.35,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
                           if (_selectionMode) ...[
                             TextButton(
                               onPressed: () => setState(() {
@@ -212,7 +216,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                 ),
                               ),
                             ),
-                          ] else
+                          ] else ...[
+                            const Spacer(),
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -257,6 +262,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                 ),
                               ],
                             ),
+                          ],
                         ],
                       ),
                     ),

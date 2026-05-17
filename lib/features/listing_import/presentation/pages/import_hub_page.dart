@@ -26,7 +26,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:uuid/uuid.dart';
 
 /// Yönetici mağaza toplu içe aktarma — dosya birincil; URL deneysel ikincil.
@@ -694,32 +694,11 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
             DesignTokens.space6,
           ),
           children: [
-            Row(
-              children: [
-                const AppBackButton(),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Toplu ilan akışı',
-                        style: AppTypography.cardHeading(context).copyWith(
-                          color: ext.foreground,
-                          fontSize: DesignTokens.fontSizeLg,
-                        ),
-                      ),
-                      const SizedBox(height: DesignTokens.titleSubtitleGap),
-                      Text(
-                        'Vitrin ilanlarınızı tek hamlede İlanlarım alanına taşıyın',
-                        style: AppTypography.body(context).copyWith(
-                          color: ext.foregroundSecondary,
-                          fontSize: DesignTokens.fontSizeSm,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            PremiumPageHeader(
+              title: 'Toplu ilan akışı',
+              subtitle:
+                  'Vitrin ilanlarınızı tek hamlede İlanlarım alanına taşıyın',
+              trailing: [
                 TextButton(
                   style:
                       TextButton.styleFrom(foregroundColor: ext.textSecondary),
