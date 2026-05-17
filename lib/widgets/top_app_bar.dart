@@ -31,9 +31,27 @@ class DashboardTopAppBar extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: SessionAvatarButton(size: 44),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: SessionAvatarButton(size: 48),
+                  ),
+                  Positioned(
+                    right: -1,
+                    bottom: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: ext.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: ext.background, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -42,17 +60,30 @@ class DashboardTopAppBar extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Rainbow Gayrimenkul',
-                      style: AppTypography.pageHeading(context).copyWith(
-                        fontSize: DesignTokens.fontSizeXl,
-                        height: 1.12,
-                      ),
+                      'Merhaba, Rainbow Gayrimenkul',
+                      style: AppTypography.pageEyebrow(context),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: DesignTokens.space1),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Yönetici komuta ekranı',
+                            style: AppTypography.pageHeading(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(Icons.verified_rounded,
+                            size: 20, color: ext.accent.withValues(alpha: 0.9)),
+                      ],
+                    ),
                     const SizedBox(height: DesignTokens.space2),
                     Text(
-                      'Yönetici komuta ekranı · ofis, risk ve performans tek bakışta',
+                      'Ofis, risk ve performans tek bakışta',
                       style: AppTypography.meta(context).copyWith(
                         color: ext.textTertiary,
                         height: 1.35,

@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -274,6 +275,8 @@ class CrmIosDialerShell extends ConsumerWidget {
                               onLongPressZero: () =>
                                   _longPressZero(dialNotifier),
                             ),
+                            const SizedBox(height: 8),
+                            const _DialerBottomControlRow(),
                             const SizedBox(height: 10),
                             DialerGreenCallButton(
                               tokens: t,
@@ -296,14 +299,65 @@ class CrmIosDialerShell extends ConsumerWidget {
   }
 }
 
+class _DialerBottomControlRow extends StatelessWidget {
+  const _DialerBottomControlRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = DialerThemeTokens.of(context);
+    Widget item(IconData icon, String label, {bool active = false}) {
+      return Expanded(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: active ? const Color(0xFF30D158) : t.labelSecondary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: active ? const Color(0xFF30D158) : t.labelSecondary,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            if (active)
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                width: 20,
+                height: 2,
+                color: const Color(0xFF30D158),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        item(Icons.dialpad_rounded, 'Klavye', active: true),
+        item(Icons.mic_off_outlined, 'Sessiz'),
+        item(Icons.volume_up_outlined, 'Hoparlör'),
+        item(Icons.pause_rounded, 'Beklet'),
+        item(Icons.more_horiz_rounded, 'Daha fazla'),
+      ],
+    );
+  }
+}
+
 class _OutgoingLineCapsule extends StatelessWidget {
   const _OutgoingLineCapsule({
     required this.officeName,
     required this.tokens,
+    this.premiumGold = false,
   });
 
   final String? officeName;
   final DialerThemeTokens tokens;
+  final bool premiumGold;
 
   @override
   Widget build(BuildContext context) {
@@ -313,7 +367,11 @@ class _OutgoingLineCapsule extends StatelessWidget {
       decoration: BoxDecoration(
         color: tokens.capsuleFill,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: tokens.capsuleBorder),
+        border: Border.all(
+          color: premiumGold
+              ? const Color(0xFFD4AF37).withValues(alpha: 0.42)
+              : tokens.capsuleBorder,
+        ),
         boxShadow: [
           BoxShadow(
             color: tokens.capsuleShadow,
@@ -420,19 +478,55 @@ class _DialNumberDisplay extends StatelessWidget {
 
     return Row(
       children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: tokens.capsuleFill,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: tokens.capsuleBorder),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('🇹🇷', style: TextStyle(fontSize: 16 * textScale)),
+                const SizedBox(width: 4),
+                Text(
+                  '+90',
+                  style: TextStyle(
+                    color: tokens.labelPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14 * textScale,
+                  ),
+                ),
+                Icon(Icons.expand_more_rounded,
+                    size: 18, color: tokens.labelSecondary),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
         Expanded(child: Center(child: numberWidget)),
         if (hasDigits)
           IconButton(
-            tooltip: 'Sil',
-            onPressed: onBackspace,
+            tooltip: 'Kişiler',
+            onPressed: () {},
             icon: Icon(
-              Icons.backspace_outlined,
+              Icons.person_outline_rounded,
               color: tokens.labelSecondary,
               size: 26,
             ),
           )
         else
-          const SizedBox(width: 48),
+          IconButton(
+            tooltip: 'Kişiler',
+            onPressed: () {},
+            icon: Icon(
+              Icons.person_outline_rounded,
+              color: tokens.labelSecondary,
+              size: 26,
+            ),
+          ),
       ],
     );
   }

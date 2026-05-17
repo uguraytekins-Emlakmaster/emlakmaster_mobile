@@ -384,29 +384,21 @@ class _LeanCardShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final borderColor = featured
-        ? ext.accent.withValues(alpha: 0.34)
-        : ext.border.withValues(alpha: 0.48);
     return RepaintBoundary(
       child: Padding(
         padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(dense ? DesignTokens.space3 : DesignTokens.space4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
-            color: featured
-                ? ext.accent.withValues(alpha: 0.045)
+        child: DecoratedBox(
+          decoration: ext.premiumSurfaceDecoration(
+            goldBorder: featured,
+            radius: DashboardLayoutTokens.radiusCardM,
+            baseColor: featured
+                ? ext.accent.withValues(alpha: 0.05)
                 : ext.surfaceElevated,
-            border: Border.all(color: borderColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: featured ? 0.1 : 0.08),
-                blurRadius: featured ? 14 : 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
+          child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+          padding: EdgeInsets.all(dense ? DesignTokens.space3 : DesignTokens.space4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -442,6 +434,8 @@ class _LeanCardShell extends StatelessWidget {
               SizedBox(height: dense ? DesignTokens.space2 : DesignTokens.space3),
               child,
             ],
+          ),
+          ),
           ),
         ),
       ),

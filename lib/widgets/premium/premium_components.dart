@@ -447,6 +447,7 @@ class PremiumSearchBar extends StatelessWidget {
   const PremiumSearchBar({
     super.key,
     this.controller,
+    this.focusNode,
     this.hintText = 'Ara…',
     this.onSubmitted,
     this.onChanged,
@@ -456,6 +457,7 @@ class PremiumSearchBar extends StatelessWidget {
   });
 
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final String hintText;
   final ValueChanged<String>? onSubmitted;
   final ValueChanged<String>? onChanged;
@@ -477,6 +479,7 @@ class PremiumSearchBar extends StatelessWidget {
             ),
             child: TextField(
               controller: controller,
+              focusNode: focusNode,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
               style: TextStyle(color: ext.textPrimary),

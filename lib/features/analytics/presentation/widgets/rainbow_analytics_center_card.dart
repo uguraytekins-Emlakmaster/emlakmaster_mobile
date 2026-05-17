@@ -38,27 +38,9 @@ class RainbowAnalyticsCenterCard extends ConsumerWidget {
           child: RepaintBoundary(
             child: Container(
               width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    ext.surfaceElevated,
-                    Color.alphaBlend(
-                      ext.foreground.withValues(alpha: 0.04),
-                      ext.surface,
-                    ),
-                  ],
-                ),
-                border: Border.all(color: ext.accent.withValues(alpha: 0.42)),
-                boxShadow: [
-                  BoxShadow(
-                    color: ext.shadowColor.withValues(alpha: 0.14),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+              decoration: ext.premiumSurfaceDecoration(
+                goldBorder: true,
+                radius: DashboardLayoutTokens.radiusCardL,
               ),
               child: ClipRRect(
                 borderRadius: radius,

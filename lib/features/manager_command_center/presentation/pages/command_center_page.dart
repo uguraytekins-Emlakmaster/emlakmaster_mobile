@@ -41,7 +41,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/design_tokens.dart';
-import '../../../../shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
 import '../../../../shared/models/customer_models.dart';
@@ -716,132 +717,40 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     );
   }
 
-  Widget _managerQuickFilterStrip() {
-    final ext = AppThemeExtension.of(context);
-    Widget chip(CallSurfaceQuickFilter f, String label) {
-      final sel = _managerQuickFilter == f;
-      return Padding(
-        padding: const EdgeInsets.only(right: DesignTokens.space2),
-        child: FilterChip(
-          selected: sel,
-          showCheckmark: true,
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-          side: BorderSide(
-            color: sel
-                ? ext.accent.withValues(alpha: 0.26)
-                : ext.border.withValues(alpha: 0.38),
-          ),
-          label: Text(label),
-          onSelected: (_) => setState(() => _managerQuickFilter = f),
-          selectedColor: ext.accent.withValues(alpha: 0.11),
-          checkmarkColor: ext.accent,
-          labelStyle: TextStyle(
-            fontSize: 12.5,
-            fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
-            color: sel ? ext.textPrimary : ext.textSecondary,
-          ),
-        ),
-      );
-    }
+  static const List<CallSurfaceQuickFilter> _quickFilterOrder = [
+    CallSurfaceQuickFilter.all,
+    CallSurfaceQuickFilter.today,
+    CallSurfaceQuickFilter.unanswered,
+    CallSurfaceQuickFilter.hot,
+    CallSurfaceQuickFilter.reached,
+    CallSurfaceQuickFilter.fresh,
+  ];
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space4,
-        0,
-        DesignTokens.space4,
-        DesignTokens.space2,
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            chip(CallSurfaceQuickFilter.all, 'Tümü'),
-            chip(CallSurfaceQuickFilter.today, 'Bugün'),
-            chip(CallSurfaceQuickFilter.unanswered, 'Cevapsız'),
-            chip(CallSurfaceQuickFilter.hot, 'Operasyon'),
-            chip(CallSurfaceQuickFilter.reached, 'Ulaşılan'),
-            chip(CallSurfaceQuickFilter.fresh, 'Yeni'),
-          ],
-        ),
-      ),
-    );
+  static const List<String> _quickFilterLabels = [
+    'Tümü',
+    'Bugün',
+    'Cevapsız',
+    'Operasyon',
+    'Ulaşılan',
+    'Yeni',
+  ];
+
+  int _quickFilterIndex() {
+    final i = _quickFilterOrder.indexOf(_managerQuickFilter);
+    return i < 0 ? 0 : i;
   }
 
-  Widget _buildSearchBar() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final ext = AppThemeExtension.of(context);
-    final surfaceCard = isDark ? ext.card : ext.surface;
-    final textPrimary = ext.textPrimary;
-    final textSecondary = ext.textSecondary;
-    final border = ext.border;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              style: TextStyle(color: textPrimary, fontSize: 15),
-              decoration: InputDecoration(
-                hintText: 'Telefon, sonuç, not, müşteri veya danışman...',
-                hintStyle: TextStyle(
-                  color: isDark
-                      ? textSecondary.withValues(alpha: 0.7)
-                      : ext.textPassive,
-                  fontSize: 14,
-                ),
-                prefixIcon: Icon(Icons.search_rounded,
-                    color: ext.accent.withValues(alpha: 0.9),
-                    size: 22),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear_rounded,
-                            size: 20, color: textSecondary),
-                        onPressed: () {
-                          _searchController.clear();
-                          _searchFocusNode.unfocus();
-                        },
-                        tooltip: 'Temizle',
-                      )
-                    : null,
-                filled: true,
-                fillColor: surfaceCard,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide: BorderSide(color: border.withValues(alpha: 0.6)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  borderSide:
-                      BorderSide(color: ext.accent, width: 1.2),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-          ),
-          const SizedBox(width: DesignTokens.space2),
-          _TapShadowButton(
-            onPressed: () {
-              if (_searchQuery.isEmpty) {
-                _searchFocusNode.requestFocus();
-              }
-            },
-            icon: Icons.search_rounded,
-            label: 'Ara',
-          ),
-        ],
-      ),
-    );
+  String _scopeLabel(_CommandScope s) {
+    switch (s) {
+      case _CommandScope.all:
+        return 'Tüm kayıtlar';
+      case _CommandScope.consultant:
+        return 'Danışman';
+      case _CommandScope.customer:
+        return 'Müşteri';
+      case _CommandScope.pending:
+        return 'Eksik kayıt';
+    }
   }
 
   @override
@@ -858,165 +767,67 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         ? AppThemeExtension.of(context).surface
         : AppThemeExtension.of(context).surface;
     final borderColor = AppThemeExtension.of(context).border;
+    final ext = AppThemeExtension.of(context);
     return Scaffold(
       backgroundColor: bg,
-      appBar: emlakAppBar(
-        context,
-        title: const Text(ProductLabels.callRecords),
-        backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
-        foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.download_rounded),
-            onPressed: () {
-              final docs = _lastFilteredDocs;
-              if (docs == null || docs.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Dışa aktarılacak veri yok.')),
-                );
-                return;
-              }
-              final csv = callsToCsv(docs);
-              Clipboard.setData(ClipboardData(text: csv));
-              showCallsSurfaceAck(
-                context,
-                'CSV panoya hazır · ${docs.length} satır',
-              );
-            },
-            tooltip: 'CSV dışa aktar',
-          ),
-        ],
-      ),
       body: SafeArea(
         child: Column(
           children: [
-            Material(
-              color: surface,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space4,
-                  DesignTokens.space2 + 2,
-                  DesignTokens.space4,
-                  DesignTokens.space2,
+            PremiumCallCenterPageHeader(
+              title: ProductLabels.callRecords,
+              subtitle: 'CRM çağrı merkezi',
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.download_rounded, color: ext.accent),
+                  onPressed: () {
+                    final docs = _lastFilteredDocs;
+                    if (docs == null || docs.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Dışa aktarılacak veri yok.')),
+                      );
+                      return;
+                    }
+                    final csv = callsToCsv(docs);
+                    Clipboard.setData(ClipboardData(text: csv));
+                    showCallsSurfaceAck(
+                      context,
+                      'CSV panoya hazır · ${docs.length} satır',
+                    );
+                  },
+                  tooltip: 'CSV dışa aktar',
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      size: 18,
-                      color: AppThemeExtension.of(context).accent.withValues(alpha: 0.85),
-                    ),
-                    const SizedBox(width: DesignTokens.space2 + 2),
-                    Expanded(
-                      child: Text(
-                        'Bu ekranda çağrıların CRM özeti görünür: sonuç, saat ve kısa not.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: isDark
-                              ? AppThemeExtension.of(context).textSecondary
-                              : AppThemeExtension.of(context).textSecondary,
-                          height: 1.42,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ],
+                IconButton(
+                  icon: Icon(Icons.tune_rounded, color: ext.textSecondary),
+                  onPressed: () => _searchFocusNode.requestFocus(),
                 ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: DesignTokens.screenEdgePadding,
+              ),
+              child: PremiumInfoBanner(
+                message:
+                    'Bu ekranda çağrıların CRM özeti görünür: sonuç, saat ve kısa not.',
               ),
             ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(DesignTokens.space4, 0,
-                  DesignTokens.space4, DesignTokens.space1 + 2),
-              child: SegmentedButton<_CommandScope>(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                DesignTokens.screenEdgePadding,
+                DesignTokens.space2,
+                DesignTokens.screenEdgePadding,
+                DesignTokens.space2,
+              ),
+              child: PremiumSegmentedControl<_CommandScope>(
                 segments: const [
-                  ButtonSegment(
-                    value: _CommandScope.all,
-                    label: Text('Tüm kayıtlar'),
-                    icon: Icon(Icons.list_alt_rounded, size: 15),
-                  ),
-                  ButtonSegment(
-                    value: _CommandScope.consultant,
-                    label: Text('Danışman'),
-                    icon: Icon(Icons.person_search_rounded, size: 15),
-                  ),
-                  ButtonSegment(
-                    value: _CommandScope.customer,
-                    label: Text('Müşteri'),
-                    icon: Icon(Icons.people_alt_rounded, size: 15),
-                  ),
-                  ButtonSegment(
-                    value: _CommandScope.pending,
-                    label: Text('Eksik kayıt'),
-                    icon: Icon(Icons.pending_actions_rounded, size: 15),
-                  ),
+                  _CommandScope.all,
+                  _CommandScope.consultant,
+                  _CommandScope.customer,
+                  _CommandScope.pending,
                 ],
-                selected: {_commandScope},
-                onSelectionChanged: (s) =>
-                    setState(() => _commandScope = s.first),
-                style: ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                  padding: WidgetStateProperty.all(
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  ),
-                  side: WidgetStateProperty.resolveWith(
-                    (states) => BorderSide(
-                      color: borderColor.withValues(alpha: 0.38),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Material(
-              color: surface,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space4,
-                  DesignTokens.space1 + 2,
-                  DesignTokens.space4,
-                  DesignTokens.space1 + 2,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      'Görünüm',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: isDark
-                            ? AppThemeExtension.of(context).textSecondary
-                            : AppThemeExtension.of(context).textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    SegmentedButton<int>(
-                      segments: const [
-                        ButtonSegment(
-                            value: 0,
-                            icon: Icon(Icons.table_rows_rounded, size: 17)),
-                        ButtonSegment(
-                            value: 1,
-                            icon: Icon(Icons.grid_view_rounded, size: 17)),
-                        ButtonSegment(
-                            value: 2,
-                            icon: Icon(Icons.timeline_rounded, size: 17)),
-                      ],
-                      selected: {_viewIndex},
-                      onSelectionChanged: (s) =>
-                          setState(() => _viewIndex = s.first),
-                      style: ButtonStyle(
-                        visualDensity: VisualDensity.compact,
-                        padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 5)),
-                        side: WidgetStateProperty.resolveWith(
-                          (states) => BorderSide(
-                            color: borderColor.withValues(alpha: 0.38),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                selected: _commandScope,
+                onSelected: (s) => setState(() => _commandScope = s),
+                labelBuilder: (s) => _scopeLabel(s),
               ),
             ),
             _CommandCenterFilters(
@@ -1033,8 +844,23 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               onOutcomeChanged: (outcome) =>
                   setState(() => _filterOutcome = outcome),
             ),
-            _buildSearchBar(),
-            _managerQuickFilterStrip(),
+            PremiumCallSearchRow(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              onSearchTap: () {
+                if (_searchQuery.isEmpty) {
+                  _searchFocusNode.requestFocus();
+                }
+              },
+            ),
+            PremiumCallQuickFilterStrip(
+              labels: _quickFilterLabels,
+              selectedIndex: _quickFilterIndex(),
+              onSelected: (i) => setState(
+                () => _managerQuickFilter = _quickFilterOrder[i],
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space2),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirestoreService.agentsStream(),
@@ -1255,6 +1081,9 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          PremiumCallRecordsKpiCard(
+                            stats: CallRecordKpiStats.fromFirestoreDocs(docs),
+                          ),
                           ManagerCallsTeamRhythmStrip(
                             line: ManagerCallsTeamRhythmLogic.computeLine(
                               docs,

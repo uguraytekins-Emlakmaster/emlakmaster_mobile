@@ -9,7 +9,8 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
 import 'package:emlakmaster_mobile/core/utils/sms_launcher.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
@@ -68,6 +69,31 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   final Set<String> _selectedIds = {};
   bool _isSyncingDeviceCalls = false;
   CallSurfaceQuickFilter _quickFilter = CallSurfaceQuickFilter.all;
+
+  static const List<CallSurfaceQuickFilter> _quickFilterOrder = [
+    CallSurfaceQuickFilter.all,
+    CallSurfaceQuickFilter.today,
+    CallSurfaceQuickFilter.unanswered,
+    CallSurfaceQuickFilter.callback,
+    CallSurfaceQuickFilter.hot,
+    CallSurfaceQuickFilter.reached,
+    CallSurfaceQuickFilter.fresh,
+  ];
+
+  static const List<String> _quickFilterLabels = [
+    'Tümü',
+    'Bugün',
+    'Cevapsız',
+    'Geri aranacak',
+    'Operasyon',
+    'Ulaşılan',
+    'Yeni',
+  ];
+
+  int _quickFilterIndex() {
+    final i = _quickFilterOrder.indexOf(_quickFilter);
+    return i < 0 ? 0 : i;
+  }
 
   /// WhatsApp sırayla aç: kuyruk ve şu anki indeks (açılan bir sonraki).
   List<String>? _whatsappQueue;
@@ -672,75 +698,49 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: emlakAppBar(
-        context,
-        title: Text(
-          ProductLabels.myCalls,
-          style: AppTypography.pageHeading(context).copyWith(
-            fontSize: DesignTokens.fontSizeXl,
-            letterSpacing: -0.32,
-            height: 1.06,
-          ),
-        ),
-        backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
-        foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
-        actions: [
-          if (io.Platform.isAndroid)
-            IconButton(
-              style: IconButton.styleFrom(
-                minimumSize: const Size(44, 44),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                foregroundColor:
-                    theme.appBarTheme.actionsIconTheme?.color ?? ext.accent,
-              ),
-              icon: _isSyncingDeviceCalls
-                  ? SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: ext.accent),
-                    )
-                  : const Icon(Icons.phone_android_rounded),
-              tooltip: 'Telefon görüşmelerini içeri al',
-              onPressed: _isSyncingDeviceCalls ? null : _syncDeviceCallLog,
+      body: SafeArea(
+        child: Column(
+          children: [
+            PremiumCallCenterPageHeader(
+              title: ProductLabels.myCalls,
+              subtitle: 'CRM çağrı merkezi',
+              actions: [
+                if (io.Platform.isAndroid)
+                  IconButton(
+                    icon: _isSyncingDeviceCalls
+                        ? SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: ext.accent,
+                            ),
+                          )
+                        : Icon(Icons.phone_android_rounded,
+                            color: ext.accent),
+                    tooltip: 'Telefon görüşmelerini içeri al',
+                    onPressed:
+                        _isSyncingDeviceCalls ? null : _syncDeviceCallLog,
+                  ),
+                IconButton(
+                  icon: Icon(Icons.copy_rounded, color: ext.accent),
+                  tooltip: 'CSV\'yi panoya al',
+                  onPressed: _copyCsvToClipboard,
+                ),
+                IconButton(
+                  icon: Icon(Icons.sms_rounded, color: ext.accent),
+                  tooltip: 'Toplu SMS gönder',
+                  onPressed: _openBulkSms,
+                ),
+                IconButton(
+                  icon: Icon(Icons.chat_rounded, color: ext.accent),
+                  tooltip: 'WhatsApp akışını aç',
+                  onPressed: _openWhatsAppBulk,
+                ),
+              ],
             ),
-          IconButton(
-            style: IconButton.styleFrom(
-              minimumSize: const Size(44, 44),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              foregroundColor:
-                  theme.appBarTheme.actionsIconTheme?.color ?? ext.accent,
-            ),
-            icon: const Icon(Icons.copy_rounded),
-            tooltip: 'CSV\'yi panoya al',
-            onPressed: _copyCsvToClipboard,
-          ),
-          IconButton(
-            style: IconButton.styleFrom(
-              minimumSize: const Size(44, 44),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              foregroundColor:
-                  theme.appBarTheme.actionsIconTheme?.color ?? ext.accent,
-            ),
-            icon: const Icon(Icons.sms_rounded),
-            tooltip: 'Toplu SMS gönder',
-            onPressed: _openBulkSms,
-          ),
-          IconButton(
-            style: IconButton.styleFrom(
-              minimumSize: const Size(44, 44),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              foregroundColor:
-                  theme.appBarTheme.actionsIconTheme?.color ?? ext.accent,
-            ),
-            icon: const Icon(Icons.chat_rounded),
-            tooltip: 'WhatsApp akışını aç',
-            onPressed: _openWhatsAppBulk,
-          ),
-        ],
-      ),
-      body: callsAsync.when(
+            Expanded(
+              child: callsAsync.when(
         loading: () => Center(
           child: CircularProgressIndicator(
               color: AppThemeExtension.of(context).accent),
@@ -868,9 +868,16 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (io.Platform.isIOS) _buildIosInfoBanner(context),
-                _consultantIntelligenceRow(
-                    context, stats, ext, fg, textSecondary),
-                _consultantQuickFilterStrip(ext),
+                PremiumCallRecordsKpiCard(
+                  stats: CallRecordKpiStats.fromFirestoreDocs(_docs),
+                ),
+                PremiumCallQuickFilterStrip(
+                  labels: _quickFilterLabels,
+                  selectedIndex: _quickFilterIndex(),
+                  onSelected: (i) => setState(
+                    () => _quickFilter = _quickFilterOrder[i],
+                  ),
+                ),
                 Expanded(
                   child: Center(
                     child: Padding(
@@ -998,10 +1005,17 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   ),
                 ),
               ),
-              _consultantIntelligenceRow(
-                  context, stats, ext, fg, textSecondary),
+              PremiumCallRecordsKpiCard(
+                stats: CallRecordKpiStats.fromFirestoreDocs(_docs),
+              ),
               const CallbackQueueStrip(),
-              _consultantQuickFilterStrip(ext),
+              PremiumCallQuickFilterStrip(
+                labels: _quickFilterLabels,
+                selectedIndex: _quickFilterIndex(),
+                onSelected: (i) => setState(
+                  () => _quickFilter = _quickFilterOrder[i],
+                ),
+              ),
               if (_quickFilter == CallSurfaceQuickFilter.callback &&
                   visibleTotal > 0)
                 CallCallbackWorkModeCue(count: visibleTotal),
@@ -1381,6 +1395,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
             ],
           );
         },
+      ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: hasQueue
           ? Material(

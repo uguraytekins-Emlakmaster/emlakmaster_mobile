@@ -141,25 +141,12 @@ class _KpiChipState extends State<_KpiChip> {
                   widget.primary ? DesignTokens.space4 + 2 : DesignTokens.space4,
               vertical: DesignTokens.space3,
             ),
-            decoration: BoxDecoration(
-              color: widget.primary
+            decoration: ext.premiumSurfaceDecoration(
+              goldBorder: emphasized,
+              radius: DashboardLayoutTokens.radiusCardM,
+              baseColor: widget.primary
                   ? ext.accent.withValues(alpha: 0.07)
                   : ext.surfaceElevated,
-              borderRadius:
-                  BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
-              border: Border.all(
-                color: emphasized
-                    ? ext.accent.withValues(alpha: widget.primary ? 0.48 : 0.35)
-                    : ext.borderSubtle,
-                width: widget.primary ? 1 : 0.8,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: ext.shadowColor.withValues(alpha: 0.25),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
