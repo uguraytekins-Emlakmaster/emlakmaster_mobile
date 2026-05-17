@@ -37,6 +37,7 @@ import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound
 import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/office_wide_customers_stream_provider.dart';
+import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -150,6 +151,28 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       _teamMemberIds = [];
       _searchController.clear();
     });
+  }
+
+  bool _handleExitSearch() {
+    if (_searchFocusNode.hasFocus) {
+      _searchFocusNode.unfocus();
+      return true;
+    }
+    if (_searchQuery.isEmpty && _searchController.text.trim().isEmpty) {
+      return false;
+    }
+    setState(() => _searchController.clear());
+    return true;
+  }
+
+  bool _handleCloseFilters() {
+    final hasFilters = _filterTeamId != null ||
+        _filterAgentId != null ||
+        _filterOutcome != null ||
+        _managerQuickFilter != CallSurfaceQuickFilter.all;
+    if (!hasFilters) return false;
+    _clearFilters();
+    return true;
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _callsStreamForScope() {
@@ -914,7 +937,10 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         : AppThemeExtension.of(context).surface;
     final borderColor = AppThemeExtension.of(context).border;
     final ext = AppThemeExtension.of(context);
-    return Scaffold(
+    return ShellTabBackBinding(
+      onExitSearch: _handleExitSearch,
+      onCloseFilters: _handleCloseFilters,
+      child: Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         bottom: false,
@@ -1207,6 +1233,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

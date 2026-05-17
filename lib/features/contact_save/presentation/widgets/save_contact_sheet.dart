@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/navigation/sheet_back_behavior.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -87,6 +88,14 @@ class _SaveContactSheetContentState
     _emailController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  bool get _isDirty {
+    String norm(String? v) => (v ?? '').trim();
+    return norm(_nameController.text) != norm(widget.initialName) ||
+        norm(_phoneController.text) != norm(widget.initialPhone) ||
+        norm(_emailController.text) != norm(widget.initialEmail) ||
+        norm(_noteController.text) != norm(widget.initialNote);
   }
 
   ContactSaveRequest get _request => ContactSaveRequest(
@@ -273,7 +282,9 @@ class _SaveContactSheetContentState
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return PremiumScrollableBottomSheetShell(
+    return sheetBackWrapper(
+      isDirty: _isDirty && !_saving,
+      child: PremiumScrollableBottomSheetShell(
       title: 'Rehbere ve uygulamaya kaydet',
       subtitle:
           'Ses veya yazı ile girin. CRM eşlemesi korunur; rehber izni ayrı sorulur.',
@@ -530,6 +541,7 @@ class _SaveContactSheetContentState
             ],
           ],
         ),
+    ),
     );
   }
 }

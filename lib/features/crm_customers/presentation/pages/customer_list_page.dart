@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
+import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
@@ -116,6 +117,23 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     }
   }
 
+  bool _handleExitSearch() {
+    if (_searchQuery.isEmpty && _searchController.text.trim().isEmpty) {
+      return false;
+    }
+    setState(() => _searchController.clear());
+    return true;
+  }
+
+  bool _handleClearSelection() {
+    if (!_selectionMode) return false;
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
@@ -128,7 +146,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
           orElse: () => false,
         );
 
-    return Scaffold(
+    return ShellTabBackBinding(
+      onExitSearch: _handleExitSearch,
+      onClearSelection: _handleClearSelection,
+      child: Scaffold(
       backgroundColor: ext.background,
       body: SafeArea(
         child: Column(
@@ -481,6 +502,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               ),
           ],
         ),
+      ),
       ),
     );
   }

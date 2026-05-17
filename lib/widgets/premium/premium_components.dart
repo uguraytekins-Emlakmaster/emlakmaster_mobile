@@ -3,6 +3,8 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_sparkline.dart';
+import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/navigation/app_back_dispatcher.dart';
 import 'package:flutter/material.dart';
 
 // Ortak premium bileşenler — performans için const ve hafif boya tercih edilir.
@@ -97,7 +99,16 @@ class PremiumPageHeader extends StatelessWidget {
               padding: const EdgeInsets.only(right: DesignTokens.space3),
               child: _PremiumIconContainer(
                 icon: Icons.arrow_back_ios_new_rounded,
-                onTap: onBack ?? () => Navigator.maybePop(context),
+                onTap: onBack ??
+                    () {
+                      final shell = context.findAncestorStateOfType<
+                          AdaptiveShellScaffoldState>();
+                      AppBackDispatcher.tryPop(
+                        context,
+                        onShellBack:
+                            shell != null ? shell.tryPopTabHistory : null,
+                      );
+                    },
               ),
             ),
           if (leading != null) ...[

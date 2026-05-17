@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/navigation/discard_changes_dialog.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -261,6 +262,15 @@ class _PostCallQuickCaptureBodyState
     );
   }
 
+  bool get _captureDirty =>
+      !_saved &&
+      !_saving &&
+      (_outcomeCode != null ||
+          _noteCtrl.text.trim().isNotEmpty ||
+          _createTask ||
+          _followUpAt != null ||
+          (_heatBand != null && _heatBand!.isNotEmpty));
+
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
@@ -280,9 +290,22 @@ class _PostCallQuickCaptureBodyState
     }
 
     return PopScope(
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop && !_saved && !_saving) {
-          ref.read(postCallCaptureProvider.notifier).markCaptureAbandoned();
+      canPop: !_captureDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          if (!_saved && !_saving) {
+            ref.read(postCallCaptureProvider.notifier).markCaptureAbandoned();
+          }
+          return;
+        }
+        if (!_captureDirty) return;
+        final leave = await showDiscardChangesDialog(context);
+        if (!mounted || leave != true) return;
+        ref.read(postCallCaptureProvider.notifier).markCaptureAbandoned();
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          Navigator.of(context).maybePop();
         }
       },
       child: PremiumScrollableBottomSheetShell(

@@ -1,7 +1,8 @@
+import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/navigation/app_back_dispatcher.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Şık, hızlı geri: hafif haptic, altın vurgu, yuvarlatılmış dokunma alanı.
@@ -30,14 +31,16 @@ class AppBackButton extends StatelessWidget {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       onPressed: () {
-        AppFeedback.lightImpact();
         if (onPressed != null) {
+          AppFeedback.lightImpact();
           onPressed!();
           return;
         }
-        if (context.canPop()) {
-          context.pop();
-        }
+        final shell = context.findAncestorStateOfType<AdaptiveShellScaffoldState>();
+        AppBackDispatcher.tryPop(
+          context,
+          onShellBack: shell?.tryPopTabHistory,
+        );
       },
     );
   }

@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
+import 'package:emlakmaster_mobile/core/navigation/sheet_back_behavior.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -391,9 +392,12 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         TextEditingController(text: data['title'] as String? ?? '');
     final customerId = (data['customerId'] as String?)?.trim();
     final done = data['done'] == true;
-    var pickedDate = (data['dueAt'] as Timestamp?)?.toDate() ??
+    final initialTitle = data['title'] as String? ?? '';
+    final initialDue = (data['dueAt'] as Timestamp?)?.toDate() ??
         (data['dueDate'] as Timestamp?)?.toDate();
-    var recurrence = data['recurrence'] as String?;
+    var pickedDate = initialDue;
+    final initialRecurrence = data['recurrence'] as String?;
+    var recurrence = initialRecurrence;
     var saving = false;
 
     showPremiumScrollableBottomSheet<void>(
@@ -402,7 +406,13 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         builder: (ctx, setModal) {
           final ext = AppThemeExtension.of(ctx);
           final recurrenceLabel = taskRecurrenceLabel(recurrence);
-          return PremiumScrollableBottomSheetShell(
+          final dirty = titleController.text.trim() != initialTitle.trim() ||
+              recurrence != initialRecurrence ||
+              pickedDate?.millisecondsSinceEpoch !=
+                  initialDue?.millisecondsSinceEpoch;
+          return sheetBackWrapper(
+            isDirty: dirty && !saving,
+            child: PremiumScrollableBottomSheetShell(
             title: 'Görev detayı',
             subtitle: done
                 ? 'Tamamlandı'
@@ -567,6 +577,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 ),
               ],
             ),
+          ),
           );
         },
       ),

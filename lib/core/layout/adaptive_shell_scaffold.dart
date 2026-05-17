@@ -6,6 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../logging/app_logger.dart';
+import '../navigation/app_exit_confirm.dart';
+import '../navigation/app_back_dispatcher.dart';
+import '../navigation/back_navigation_scope.dart';
+import '../navigation/shell_navigation_host.dart';
+import '../navigation/shell_tab_back_host.dart';
+import '../navigation/tab_history_controller.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
@@ -71,6 +77,19 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
 
 class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   int _currentIndex = 0;
+  final TabHistoryController _tabHistory = TabHistoryController();
+  BackNavigationCallback? _tabBackHandler;
+
+  /// Aktif [pages] indeksi (sekme geri kaydı için).
+  int get activeTabIndex => _currentIndex;
+
+  void registerTabBackHandler(int pageIndex, BackNavigationCallback? handler) {
+    if (pageIndex != _currentIndex) return;
+    _tabBackHandler = handler;
+  }
+
+  /// Uygulama içi geri — önce sekme içi mod, sonra sekme geçmişi.
+  bool tryPopTabHistory() => _tryPopTabHistory();
 
   /// Yalnızca ziyaret edilen sekmeler gerçek widget ile oluşturulur.
   final Set<int> _materialized = {0};
@@ -180,6 +199,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       idx,
       source: 'queuedShortcut(${command.shortcut})',
       haptic: false,
+      recordHistory: false,
     );
     if (_hasReplayableShortcut()) {
       _scheduleShortcutReplay();
@@ -331,10 +351,32 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     if (_materialized.isEmpty) _materialized.add(0);
   }
 
+  Future<void> _onShellSystemBack() async {
+    await AppBackDispatcher.handleShellSystemBack(
+      context,
+      tryPopTab: _tryPopTabHistory,
+      onExitApp: () => maybeExitApplication(context),
+    );
+  }
+
+  bool _tryPopTabHistory() {
+    if (_tabBackHandler?.call() == true) return true;
+    final prev = _tabHistory.popTab();
+    if (prev == null) return false;
+    _applyTabSelection(
+      prev,
+      source: 'systemBackTab',
+      haptic: false,
+      recordHistory: false,
+    );
+    return true;
+  }
+
   void _applyTabSelection(
     int pageIndex, {
     required String source,
     bool haptic = true,
+    bool recordHistory = true,
   }) {
     final navHighlight = _bottomNavSelectedIndex(pageIndex);
     final label = navHighlight >= 0 && navHighlight < widget.navItems.length
@@ -369,6 +411,11 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     if (haptic) {
       AppFeedback.lightImpact();
     }
+    if (recordHistory) {
+      _tabHistory.recordVisit(pageIndex);
+    } else {
+      _tabHistory.jumpWithoutHistory(pageIndex);
+    }
     _shellLog(
       '$source pageIndex=$pageIndex (was $_currentIndex) tabId=${_tabIdentityFor(widget, pageIndex)}',
     );
@@ -397,7 +444,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   }
 
   /// Programatik sekme geçişi — [pages] indeksine gider (gizli sekmeler dahil).
-  void jumpToTab(int pageIndex) {
+  void jumpToTab(int pageIndex, {bool recordHistory = true}) {
     if (widget.pages.isEmpty) {
       _shellLog('jumpToTab noop: empty pages');
       return;
@@ -410,7 +457,12 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     }
     if (pageIndex == _currentIndex) return;
     _shellLog('jumpToTab page=$pageIndex (was $_currentIndex)');
-    _applyTabSelection(pageIndex, source: 'jumpToTab', haptic: false);
+    _applyTabSelection(
+      pageIndex,
+      source: 'jumpToTab',
+      haptic: false,
+      recordHistory: recordHistory,
+    );
   }
 
   @override
@@ -530,7 +582,10 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                   child: TickerMode(
                     enabled: i == safeIndex,
                     child: _materialized.contains(i)
-                        ? widget.pages[i]
+                        ? ShellTabBackHost(
+                            pageIndex: i,
+                            child: widget.pages[i],
+                          )
                         : (i == safeIndex
                             ? _inactiveSlotPlaceholder(context, i)
                             : ColoredBox(
@@ -545,8 +600,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       ],
     );
 
-    if (isWide) {
-      return Scaffold(
+    Widget shell = isWide
+        ? Scaffold(
         backgroundColor: ext.background,
         body: Row(
           children: [
@@ -569,10 +624,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
             Expanded(child: body),
           ],
         ),
-      );
-    }
-
-    return Scaffold(
+      )
+        : Scaffold(
       backgroundColor: ext.background,
       body: body,
       floatingActionButton: widget.fab,
@@ -587,5 +640,18 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
         ),
       ),
     );
+
+    shell = PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _onShellSystemBack();
+      },
+      child: ShellNavigationHost(
+        onShellSystemBack: _onShellSystemBack,
+        child: shell,
+      ),
+    );
+    return shell;
   }
 }
