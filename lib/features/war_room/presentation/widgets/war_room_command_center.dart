@@ -624,57 +624,61 @@ class _GlassCard extends StatelessWidget {
     final titleColor = isDark
         ? AppThemeExtension.of(context).onAccentLight
         : AppThemeExtension.of(context).textPrimary;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.all(DesignTokens.cardPaddingStandard),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            color: surface.withValues(alpha: isDark ? 0.6 : 0.95),
-            border: Border.all(
-                color: AppThemeExtension.of(context)
-                    .accent
-                    .withValues(alpha: 0.25)),
-            boxShadow: isDark
-                ? [
-                    BoxShadow(
-                      color: AppThemeExtension.of(context)
-                          .brandNavy
-                          .withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+    final useBlur = !AppLifecyclePowerService.shouldReduceMotion;
+    final card = Container(
+      padding: const EdgeInsets.all(DesignTokens.cardPaddingStandard),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        color: surface.withValues(alpha: isDark ? (useBlur ? 0.6 : 0.88) : 0.95),
+        border: Border.all(
+            color: AppThemeExtension.of(context)
+                .accent
+                .withValues(alpha: 0.25)),
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: AppThemeExtension.of(context)
+                      .brandNavy
+                      .withValues(alpha: 0.3),
+                  blurRadius: useBlur ? 20 : 8,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(icon,
-                      color: AppThemeExtension.of(context).accent, size: 22),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: titleColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
+              Icon(icon,
+                  color: AppThemeExtension.of(context).accent, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: titleColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  letterSpacing: 0.5,
+                ),
               ),
-              const SizedBox(height: 12),
-              child,
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+      child: useBlur
+          ? BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: card,
+            )
+          : card,
     );
   }
 }

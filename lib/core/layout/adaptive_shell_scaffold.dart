@@ -12,6 +12,7 @@ import '../navigation/back_navigation_scope.dart';
 import '../navigation/shell_navigation_host.dart';
 import '../navigation/shell_tab_back_host.dart';
 import '../navigation/tab_history_controller.dart';
+import '../performance/shell_tab_keep_alive.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
@@ -584,7 +585,9 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                     child: _materialized.contains(i)
                         ? ShellTabBackHost(
                             pageIndex: i,
-                            child: widget.pages[i],
+                            child: ShellTabKeepAlive(
+                              child: widget.pages[i],
+                            ),
                           )
                         : (i == safeIndex
                             ? _inactiveSlotPlaceholder(context, i)

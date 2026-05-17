@@ -12,6 +12,7 @@ import 'package:emlakmaster_mobile/features/listing_import/presentation/provider
 import 'package:emlakmaster_mobile/features/listing_import/presentation/widgets/listing_import_shimmer.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -567,10 +568,11 @@ class _ListingCard extends StatelessWidget {
             AspectRatio(
               aspectRatio: 16 / 9,
               child: listing.images.isNotEmpty
-                  ? Image.network(
-                      listing.images.first,
+                  ? CachedNetworkImage(
+                      imageUrl: listing.images.first,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      memCacheWidth: 640,
+                      errorWidget: (_, __, ___) => Container(
                         color: AppThemeExtension.of(context).surfaceElevated,
                         child: const Icon(Icons.image_not_supported_outlined),
                       ),

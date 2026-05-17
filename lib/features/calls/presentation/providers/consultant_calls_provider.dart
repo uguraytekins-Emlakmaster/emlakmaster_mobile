@@ -12,7 +12,9 @@ import '../../../../features/auth/presentation/providers/auth_provider.dart';
 /// List<QueryDocumentSnapshot> döner; sayfa snapshot.docs yerine bu listeyi kullanır.
 final consultantCallsStreamProvider = StreamProvider.autoDispose<
     List<QueryDocumentSnapshot<Map<String, dynamic>>>>((ref) {
-  final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
+  final uid = ref.watch(
+    currentUserProvider.select((v) => v.valueOrNull?.uid),
+  );
   if (uid == null || uid.isEmpty) return const Stream.empty();
 
   final byAdvisor = FirestoreService.callsByAdvisorStream(uid);

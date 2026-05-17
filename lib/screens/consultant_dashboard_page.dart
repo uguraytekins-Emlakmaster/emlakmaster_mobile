@@ -3,7 +3,6 @@ import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
@@ -15,6 +14,8 @@ import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/prior
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_dashboard_kpi_providers.dart';
+import 'package:emlakmaster_mobile/screens/providers/consultant_dashboard_kpi_providers.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
@@ -397,10 +398,9 @@ class _ConsultantTeamLine extends ConsumerWidget {
         if (doc == null) return const SizedBox.shrink();
         final teamId = doc.teamId;
         if (teamId == null || teamId.isEmpty) return const SizedBox.shrink();
-        return StreamBuilder(
-          stream: FirestoreService.teamDocStream(teamId),
-          builder: (context, teamSnap) {
-            final team = teamSnap.data;
+        final teamAsync = ref.watch(teamDocSnapshotProvider(teamId));
+        return teamAsync.when(
+          data: (team) {
             return FutureBuilder<UserDoc?>(
               future: doc.managerId != null && doc.managerId!.isNotEmpty
                   ? UserRepository.getUserDoc(doc.managerId!)
@@ -424,6 +424,8 @@ class _ConsultantTeamLine extends ConsumerWidget {
               },
             );
           },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
         );
       },
       loading: () => const SizedBox.shrink(),
@@ -711,54 +713,39 @@ class _TodayKpiRow extends ConsumerWidget {
     return Row(
       children: [
         Expanded(
-          child: StreamBuilder<int>(
-            stream: FirestoreService.todayCallsCountStream(),
-            builder: (context, snap) {
-              final value = snap.data ?? 0;
-              return _KpiChip(
-                icon: Icons.phone_in_talk_rounded,
-                label: AppLocalizations.of(context).t('today_calls'),
-                value: '$value',
-                labelStyle: textStyleLabel,
-                valueStyle: textStyleValue,
-                onTap: openCalls,
-                emphasized: true,
-              );
-            },
+          child: _KpiChip(
+            icon: Icons.phone_in_talk_rounded,
+            label: AppLocalizations.of(context).t('today_calls'),
+            value:
+                '${ref.watch(todayCallsCountProvider).valueOrNull ?? 0}',
+            labelStyle: textStyleLabel,
+            valueStyle: textStyleValue,
+            onTap: openCalls,
+            emphasized: true,
           ),
         ),
         const SizedBox(width: DesignTokens.space2),
         Expanded(
-          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirestoreService.tasksByAdvisorStream(uid),
-            builder: (context, snap) {
-              final value = snap.data?.docs.length ?? 0;
-              return _KpiChip(
-                icon: Icons.task_alt_rounded,
-                label: AppLocalizations.of(context).t('open_tasks'),
-                value: '$value',
-                labelStyle: textStyleLabel,
-                valueStyle: textStyleValue,
-                onTap: openTasks,
-              );
-            },
+          child: _KpiChip(
+            icon: Icons.task_alt_rounded,
+            label: AppLocalizations.of(context).t('open_tasks'),
+            value:
+                '${ref.watch(advisorOpenTasksCountProvider(uid)).valueOrNull ?? 0}',
+            labelStyle: textStyleLabel,
+            valueStyle: textStyleValue,
+            onTap: openTasks,
           ),
         ),
         const SizedBox(width: DesignTokens.space2),
         Expanded(
-          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirestoreService.pipelineItemsByAdvisorStream(uid),
-            builder: (context, snap) {
-              final value = snap.data?.docs.length ?? 0;
-              return _KpiChip(
-                icon: Icons.account_tree_rounded,
-                label: AppLocalizations.of(context).t('active_pipeline'),
-                value: '$value',
-                labelStyle: textStyleLabel,
-                valueStyle: textStyleValue,
-                onTap: openPipeline,
-              );
-            },
+          child: _KpiChip(
+            icon: Icons.account_tree_rounded,
+            label: AppLocalizations.of(context).t('active_pipeline'),
+            value:
+                '${ref.watch(advisorPipelineCountProvider(uid)).valueOrNull ?? 0}',
+            labelStyle: textStyleLabel,
+            valueStyle: textStyleValue,
+            onTap: openPipeline,
           ),
         ),
       ],
@@ -1081,13 +1068,11 @@ class _WeeklyGoalCard extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
-    return StreamBuilder<int>(
-      stream: FirestoreService.agentWeeklyCallCountStream(uid),
-      builder: (context, snap) {
-        final current = snap.data ?? 0;
-        final progress =
-            weeklyGoal > 0 ? (current / weeklyGoal).clamp(0.0, 1.0) : 0.0;
-        return Container(
+    final weeklyAsync = ref.watch(agentWeeklyCallCountProvider(uid));
+    final current = weeklyAsync.valueOrNull ?? 0;
+    final progress =
+        weeklyGoal > 0 ? (current / weeklyGoal).clamp(0.0, 1.0) : 0.0;
+    return Container(
           constraints: const BoxConstraints(
               minHeight: DashboardLayoutTokens.minHeightOperationalCard),
           padding: const EdgeInsets.symmetric(
@@ -1137,8 +1122,6 @@ class _WeeklyGoalCard extends ConsumerWidget {
             ],
           ),
         );
-      },
-    );
   }
 }
 

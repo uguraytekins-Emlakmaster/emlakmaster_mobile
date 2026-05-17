@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/features/messages/domain/team_channel_entity.
 import 'package:emlakmaster_mobile/features/messages/domain/team_channel_id.dart';
 import 'package:emlakmaster_mobile/features/messages/domain/team_channel_type.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_providers.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/widgets/team_general_channel_bootstrap.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
@@ -34,10 +35,9 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
     final officeId = ref.watch(teamChatOfficeIdProvider);
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
 
-    ref.listen(teamGeneralChannelReadyProvider, (_, __) {});
-
     if (officeId == null || uid == null) {
-      return Scaffold(
+      return TeamGeneralChannelBootstrap(
+        child: Scaffold(
         backgroundColor: ext.background,
         body: SafeArea(
           child: Column(
@@ -58,13 +58,15 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
             ],
           ),
         ),
+      ),
       );
     }
 
     final channelsAsync = ref.watch(teamChannelsProvider);
     final membersAsync = ref.watch(officeTeamMemberProfilesProvider);
 
-    return Scaffold(
+    return TeamGeneralChannelBootstrap(
+      child: Scaffold(
       backgroundColor: ext.background,
       body: SafeArea(
         child: CustomScrollView(
@@ -332,6 +334,7 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
           ],
         ),
       ),
+    ),
     );
   }
 

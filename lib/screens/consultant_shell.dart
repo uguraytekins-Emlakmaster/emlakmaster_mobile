@@ -1,6 +1,5 @@
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
-import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_return_prompt_host.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
@@ -70,7 +69,13 @@ class ConsultantShellPage extends StatefulWidget {
 class _ConsultantShellPageState extends State<ConsultantShellPage> {
   final GlobalKey<AdaptiveShellScaffoldState> _shellKey =
       GlobalKey<AdaptiveShellScaffoldState>();
-  int _shellPageIndex = 0;
+  final ValueNotifier<int> _shellPageIndex = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    _shellPageIndex.dispose();
+    super.dispose();
+  }
 
   void _openMoreSheet() {
     showConsultantMoreSheet(
@@ -82,10 +87,6 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    AppLogger.state(
-      '[startup][ConsultantShell] build tabs=${ConsultantShellPage._navItems.length} '
-      'pages=${ConsultantShellPage._pages.length}',
-    );
     return ConsultantShellNav(
       goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
       child: Column(
@@ -93,7 +94,13 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
           const SyncStatusBanner(compact: true),
           const CallReturnPromptHost(),
           const PostCallDraftRecoveryCard(),
-          if (_shellPageIndex != 2) const PostCallCaptureShellStrip(),
+          ValueListenableBuilder<int>(
+            valueListenable: _shellPageIndex,
+            builder: (context, pageIndex, _) {
+              if (pageIndex == 2) return const SizedBox.shrink();
+              return const PostCallCaptureShellStrip();
+            },
+          ),
           Expanded(
             child: AdaptiveShellScaffold(
               key: _shellKey,
@@ -101,8 +108,8 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
               pages: ConsultantShellPage._pages,
               navPageIndices: ConsultantShellPage._navPageIndices,
               onIndexChanged: (i) {
-                if (_shellPageIndex != i) {
-                  setState(() => _shellPageIndex = i);
+                if (_shellPageIndex.value != i) {
+                  _shellPageIndex.value = i;
                 }
               },
               onMoreNavTap: _openMoreSheet,

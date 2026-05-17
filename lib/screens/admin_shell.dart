@@ -51,7 +51,13 @@ class AdminShellPage extends ConsumerStatefulWidget {
 }
 
 class _AdminShellPageState extends ConsumerState<AdminShellPage> {
-  int _shellPageIndex = 0;
+  final ValueNotifier<int> _shellPageIndex = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    _shellPageIndex.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,9 +154,16 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
         const SyncStatusBanner(compact: true),
         const CallReturnPromptHost(),
         const PostCallDraftRecoveryCard(),
-        if (commandCenterPageIndex < 0 ||
-            _shellPageIndex != commandCenterPageIndex)
-          const PostCallCaptureShellStrip(),
+        ValueListenableBuilder<int>(
+          valueListenable: _shellPageIndex,
+          builder: (context, pageIndex, _) {
+            if (commandCenterPageIndex < 0 ||
+                pageIndex == commandCenterPageIndex) {
+              return const SizedBox.shrink();
+            }
+            return const PostCallCaptureShellStrip();
+          },
+        ),
         Expanded(
           child: AdaptiveShellScaffold(
             navItems: navItems,
@@ -158,8 +171,8 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
             tabIds: tabIds,
             title: ProductLabels.managerWorkspace,
             onIndexChanged: (i) {
-              if (_shellPageIndex != i) {
-                setState(() => _shellPageIndex = i);
+              if (_shellPageIndex.value != i) {
+                _shellPageIndex.value = i;
               }
             },
             shortcutMap: {

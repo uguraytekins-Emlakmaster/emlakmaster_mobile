@@ -3,12 +3,14 @@ import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.da
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
+import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_filtered_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_row_snapshots_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
-import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,23 +42,27 @@ class CustomerListPage extends ConsumerStatefulWidget {
 }
 
 class _CustomerListPageState extends ConsumerState<CustomerListPage> {
-  final TextEditingController _searchController = TextEditingController();
+  late final DebouncedSearchController _debouncedSearch;
   String _searchQuery = '';
   bool _selectionMode = false;
   final Set<String> _selectedIds = {};
 
+  TextEditingController get _searchController => _debouncedSearch.controller;
+
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() {
-      setState(
-          () => _searchQuery = _searchController.text.trim().toLowerCase());
-    });
+    _debouncedSearch = DebouncedSearchController(
+      onQueryChanged: (q) {
+        if (!mounted) return;
+        setState(() => _searchQuery = q.toLowerCase());
+      },
+    );
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _debouncedSearch.dispose();
     super.dispose();
   }
 
@@ -297,198 +303,12 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   ),
                   const SliverPadding(
                       padding: EdgeInsets.only(top: DesignTokens.space3)),
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: asyncCustomers.when(
-                      loading: () => Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: CircularProgressIndicator(color: ext.accent),
-                        ),
-                      ),
-                      error: (_, __) => Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: EmptyState(
-                            premiumVisual: true,
-                            grouped: true,
-                            icon: Icons.cloud_off_rounded,
-                            title: AppLocalizations.of(context)
-                                .t('customer_list_load_error'),
-                            subtitle:
-                                'Bağlantıyı kontrol edin; bir süre sonra yenileyin.',
-                          ),
-                        ),
-                      ),
-                      data: (entities) {
-                        final filtered = _searchQuery.isEmpty
-                            ? List<CustomerEntity>.from(entities)
-                            : entities.where((e) {
-                                final q = _searchQuery;
-                                final name = (e.fullName ?? '').toLowerCase();
-                                final phone = (e.primaryPhone ?? '')
-                                    .replaceAll(RegExp(r'\s'), '');
-                                final email = (e.email ?? '').toLowerCase();
-                                final queryNoSpaces =
-                                    q.replaceAll(RegExp(r'\s'), '');
-                                return name.contains(q) ||
-                                    email.contains(q) ||
-                                    phone.contains(queryNoSpaces) ||
-                                    (queryNoSpaces.isNotEmpty &&
-                                        phone.contains(queryNoSpaces));
-                              }).toList();
-                        final riskIds =
-                            ref.watch(syncDelayedRiskCustomerIdsProvider);
-                        if (filtered.length > 1) {
-                          filtered.sort((a, b) {
-                            final ar = riskIds.contains(a.id);
-                            final br = riskIds.contains(b.id);
-                            if (ar != br) return ar ? -1 : 1;
-                            return b.updatedAt.compareTo(a.updatedAt);
-                          });
-                        }
-                        if (filtered.isEmpty) {
-                          final l10n = AppLocalizations.of(context);
-                          final noCustomers = entities.isEmpty;
-                          final noSearchHits =
-                              !noCustomers && _searchQuery.isNotEmpty;
-                          if (noCustomers) {
-                            return LayoutBuilder(
-                              builder: (context, constraints) {
-                                return SingleChildScrollView(
-                                  physics: const ClampingScrollPhysics(),
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minHeight: constraints.maxHeight,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        DesignTokens.space5,
-                                        DesignTokens.space4,
-                                        DesignTokens.space5,
-                                        DesignTokens.space6,
-                                      ),
-                                      child: Center(
-                                        child:
-                                            _ConsultantCustomersEmptyLaunchpad(
-                                          onPrimaryAdd: () {
-                                            AppFeedback.lightImpact();
-                                            showSaveContactSheet(
-                                              context,
-                                              source: 'crm_empty_launchpad',
-                                            );
-                                          },
-                                          onVoiceQuickAdd: () {
-                                            AppFeedback.lightImpact();
-                                            showSaveContactSheet(
-                                              context,
-                                              source: 'crm_empty_voice',
-                                            );
-                                          },
-                                          onOpenCalls: () {
-                                            AppFeedback.lightImpact();
-                                            final shell =
-                                                ConsultantShellNav.maybeOf(
-                                                    context);
-                                            if (shell != null) {
-                                              ConsultantShellNav.goToCallsTab(
-                                                  context);
-                                            } else {
-                                              ref
-                                                  .read(
-                                                    mainShellShortcutProvider
-                                                        .notifier,
-                                                  )
-                                                  .enqueue(
-                                                    MainShellShortcut
-                                                        .openCallsTab,
-                                                  );
-                                              context.go(AppRouter.routeHome);
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          }
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              top: noSearchHits ? DesignTokens.space2 : 0,
-                            ),
-                            child: EmptyState(
-                              premiumVisual: true,
-                              grouped: true,
-                              anchorAboveCenter: true,
-                              icon: Icons.people_rounded,
-                              title: noSearchHits
-                                  ? l10n.t('empty_search_title')
-                                  : l10n.t('empty_customers_title'),
-                              subtitle: noSearchHits
-                                  ? l10n.tArgs('empty_search_subtitle',
-                                      [_searchController.text.trim()])
-                                  : l10n.t('empty_customers_subtitle'),
-                            ),
-                          );
-                        }
-                        return ListView.builder(
-                          padding: EdgeInsets.fromLTRB(
-                            DesignTokens.space5,
-                            0,
-                            DesignTokens.space5,
-                            showAddDock
-                                ? _customerListDockBottomReserve(context)
-                                : DesignTokens.space4,
-                          ),
-                          itemCount: filtered.length,
-                          cacheExtent: 200,
-                          semanticChildCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            final entity = filtered[index];
-                            final isSelected = _selectedIds.contains(entity.id);
-                            return RepaintBoundary(
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    bottom: DesignTokens.space3),
-                                child: CustomerCard(
-                                  customer: entity,
-                                  onTap: () {
-                                    if (_selectionMode) {
-                                      setState(() {
-                                        if (isSelected) {
-                                          _selectedIds.remove(entity.id);
-                                        } else {
-                                          _selectedIds.add(entity.id);
-                                        }
-                                      });
-                                    } else {
-                                      if (entity.id.startsWith('__dev_demo_')) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Demo kayıt — gerçek müşteri için arama veya müşteri oluşturun.',
-                                            ),
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
-                                        );
-                                        return;
-                                      }
-                                      context.push(AppRouter.routeCustomerDetail
-                                          .replaceFirst(':id', entity.id));
-                                    }
-                                  },
-                                  selectionMode: _selectionMode,
-                                  isSelected: isSelected,
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+                  ..._customerListBodySlivers(
+                    context: context,
+                    ref: ref,
+                    ext: ext,
+                    asyncCustomers: asyncCustomers,
+                    showAddDock: showAddDock,
                   ),
                 ],
               ),
@@ -504,6 +324,193 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         ),
       ),
       ),
+    );
+  }
+
+  List<Widget> _customerListBodySlivers({
+    required BuildContext context,
+    required WidgetRef ref,
+    required AppThemeExtension ext,
+    required AsyncValue<List<CustomerEntity>> asyncCustomers,
+    required bool showAddDock,
+  }) {
+    return asyncCustomers.when(
+      loading: () => [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: CircularProgressIndicator(color: ext.accent),
+            ),
+          ),
+        ),
+      ],
+      error: (_, __) => [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: EmptyState(
+                premiumVisual: true,
+                grouped: true,
+                icon: Icons.cloud_off_rounded,
+                title: AppLocalizations.of(context)
+                    .t('customer_list_load_error'),
+                subtitle:
+                    'Bağlantıyı kontrol edin; bir süre sonra yenileyin.',
+              ),
+            ),
+          ),
+        ),
+      ],
+      data: (entities) {
+        final filtered =
+            ref.watch(customerListFilteredProvider(_searchQuery));
+        final rowSnapshots =
+            ref.watch(customerListRowSnapshotsProvider(_searchQuery));
+        final listBottom = showAddDock
+            ? _customerListDockBottomReserve(context)
+            : DesignTokens.space4;
+
+        if (filtered.isEmpty) {
+          final l10n = AppLocalizations.of(context);
+          final noCustomers = entities.isEmpty;
+          final noSearchHits = !noCustomers && _searchQuery.isNotEmpty;
+          if (noCustomers) {
+            return [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    DesignTokens.space5,
+                    DesignTokens.space4,
+                    DesignTokens.space5,
+                    DesignTokens.space6,
+                  ),
+                  child: Center(
+                    child: _ConsultantCustomersEmptyLaunchpad(
+                      onPrimaryAdd: () {
+                        AppFeedback.lightImpact();
+                        showSaveContactSheet(
+                          context,
+                          source: 'crm_empty_launchpad',
+                        );
+                      },
+                      onVoiceQuickAdd: () {
+                        AppFeedback.lightImpact();
+                        showSaveContactSheet(
+                          context,
+                          source: 'crm_empty_voice',
+                        );
+                      },
+                      onOpenCalls: () {
+                        AppFeedback.lightImpact();
+                        final shell = ConsultantShellNav.maybeOf(context);
+                        if (shell != null) {
+                          ConsultantShellNav.goToCallsTab(context);
+                        } else {
+                          ref
+                              .read(mainShellShortcutProvider.notifier)
+                              .enqueue(MainShellShortcut.openCallsTab);
+                          context.go(AppRouter.routeHome);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ];
+          }
+          return [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: noSearchHits ? DesignTokens.space2 : 0,
+                ),
+                child: EmptyState(
+                  premiumVisual: true,
+                  grouped: true,
+                  anchorAboveCenter: true,
+                  icon: Icons.people_rounded,
+                  title: noSearchHits
+                      ? l10n.t('empty_search_title')
+                      : l10n.t('empty_customers_title'),
+                  subtitle: noSearchHits
+                      ? l10n.tArgs(
+                          'empty_search_subtitle',
+                          [_searchController.text.trim()],
+                        )
+                      : l10n.t('empty_customers_subtitle'),
+                ),
+              ),
+            ),
+          ];
+        }
+
+        return [
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              DesignTokens.space5,
+              0,
+              DesignTokens.space5,
+              listBottom,
+            ),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final entity = filtered[index];
+                  final row = rowSnapshots[entity.id];
+                  if (row == null) return const SizedBox.shrink();
+                  final isSelected = _selectedIds.contains(entity.id);
+                  return RepaintBoundary(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          bottom: DesignTokens.space3),
+                      child: CustomerCard(
+                        customer: entity,
+                        row: row,
+                        onTap: () {
+                          if (_selectionMode) {
+                            setState(() {
+                              if (isSelected) {
+                                _selectedIds.remove(entity.id);
+                              } else {
+                                _selectedIds.add(entity.id);
+                              }
+                            });
+                          } else {
+                            if (entity.id.startsWith('__dev_demo_')) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Demo kayıt — gerçek müşteri için arama veya müşteri oluşturun.',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                              return;
+                            }
+                            context.push(
+                              AppRouter.routeCustomerDetail
+                                  .replaceFirst(':id', entity.id),
+                            );
+                          }
+                        },
+                        selectionMode: _selectionMode,
+                        isSelected: isSelected,
+                      ),
+                    ),
+                  );
+                },
+                childCount: filtered.length,
+              ),
+            ),
+          ),
+        ];
+      },
     );
   }
 }

@@ -1,20 +1,14 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
-import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
-import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/crm_customers/domain/broker_customer_alert.dart';
-import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
-import 'package:emlakmaster_mobile/features/revenue_engine/presentation/providers/revenue_engine_providers.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_list_row_snapshot.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_customer_row_badges.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_ui_formatters.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import '../../../../core/utils/last_contact_label.dart';
-import '../../../../features/lead_temperature_engine/presentation/providers/lead_temperature_provider.dart';
 import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/models/lead_temperature.dart';
 
@@ -23,36 +17,30 @@ String _avatarLetter(String? fullName) {
   return fullName.trim().substring(0, 1).toUpperCase();
 }
 
-/// Müşteri kartı: isim, telefon, sıcaklık (stored veya Lead Temperature Engine), son aksiyon.
-class CustomerCard extends ConsumerWidget {
+/// Müşteri kartı — liste satırı [CustomerListRowSnapshot] ile beslenir (provider yok).
+class CustomerCard extends StatelessWidget {
   const CustomerCard({
     super.key,
     required this.customer,
+    required this.row,
     this.onTap,
     this.selectionMode = false,
     this.isSelected = false,
   });
 
   final CustomerEntity customer;
+  final CustomerListRowSnapshot row;
   final VoidCallback? onTap;
   final bool selectionMode;
   final bool isSelected;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final temperatureScore =
-        ref.watch(leadTemperatureForCustomerProvider(customer));
-    final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
-    final brokerAlert =
-        role.isManagerTier && brokerAlertsActiveForCustomer(customer);
-    final revenueSignal = ref.watch(
-      customerRevenueSignalsMapProvider.select((m) => m[customer.id]),
-    );
-    final fallbackSyncRisk = ref.watch(
-      syncDelayedRiskCustomerIdsProvider
-          .select((ids) => ids.contains(customer.id)),
-    );
-    final syncDelayedRisk = revenueSignal?.syncDelayedRisk ?? fallbackSyncRisk;
+  Widget build(BuildContext context) {
+    final temperatureScore = row.temperatureScore;
+    final revenueSignal = row.revenueSignal;
+    final syncDelayedRisk = row.syncDelayedRisk;
+    final brokerAlert = row.showBrokerAlert;
+
     return Semantics(
       label: '${customer.fullName} müşteri kartı',
       button: true,
@@ -262,37 +250,10 @@ class _TemperatureChip extends StatelessWidget {
       child: Text(
         '${(value * 100).toInt()}%',
         style: TextStyle(
-            color: color,
-            fontSize: DesignTokens.fontSizeXs,
-            fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
-class _LastContactChip extends StatelessWidget {
-  const _LastContactChip({required this.lastAt});
-  final DateTime? lastAt;
-
-  @override
-  Widget build(BuildContext context) {
-    final type = LastContactLabel.colorType(lastAt);
-    Color color = AppThemeExtension.of(context).textTertiary;
-    if (type == 1) {
-      color = AppThemeExtension.of(context).success;
-    } else if (type == 2) {
-      color = AppThemeExtension.of(context).warning;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-      ),
-      child: Text(
-        LastContactLabel.label(lastAt),
-        style:
-            TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w500),
+          color: color,
+          fontSize: DesignTokens.fontSizeXs,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -360,3 +321,34 @@ class _LeadScoreChip extends StatelessWidget {
     );
   }
 }
+
+class _LastContactChip extends StatelessWidget {
+  const _LastContactChip({required this.lastAt});
+
+  final DateTime? lastAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final type = LastContactLabel.colorType(lastAt);
+    Color color = AppThemeExtension.of(context).textTertiary;
+    if (type == 1) {
+      color = AppThemeExtension.of(context).success;
+    } else if (type == 2) {
+      color = AppThemeExtension.of(context).warning;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+      ),
+      child: Text(
+        LastContactLabel.label(lastAt),
+        style:
+            TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+}
+
+/// Sıcaklık skoru + emoji: 🔥92 satın almaya çok yakın, 🟡55 araştırıyor, 🔵20 sadece bakıyor.

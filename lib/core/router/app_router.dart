@@ -10,6 +10,7 @@ import '../logging/app_logger.dart';
 import '../deep_linking/pending_deep_link_store.dart';
 import '../../features/office/domain/office_exception.dart';
 import '../../features/office/presentation/utils/office_error_ui.dart';
+import '../router/fast_page_transitions.dart';
 import '../widgets/app_loading.dart';
 import '../widgets/startup_recovery_scaffold.dart';
 import '../services/analytics_service.dart';
@@ -318,13 +319,10 @@ class AppRouter {
         ),
         GoRoute(
           path: routeWorkspaceSetup,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const WorkspaceSetupPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -337,68 +335,50 @@ class AppRouter {
         ),
         GoRoute(
           path: routeOfficeCreate,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const CreateOfficePage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeOfficeJoin,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const JoinOfficePage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeOfficeInviteCreate,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const CreateOfficeInvitePage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeOfficeRecovery,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const OfficeRecoveryPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeOfficeAdmin,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const OfficeAdminPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeMessageCenter,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const MessageCenterPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -442,7 +422,7 @@ class AppRouter {
           path: routeCall,
           pageBuilder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: CallScreen(
@@ -451,9 +431,6 @@ class AppRouter {
                 inAppCrmSession: extra?['inAppCrmSession'] as bool? ?? false,
                 startedFromScreen: extra?['startedFromScreen'] as String?,
               ),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -461,7 +438,7 @@ class AppRouter {
           path: routeCallSummary,
           pageBuilder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: PostCallWizardScreen(
@@ -471,78 +448,57 @@ class AppRouter {
                 phoneNumber: extra?['phone'] as String?,
                 callSessionId: extra?['callSessionId'] as String?,
               ),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
         GoRoute(
           path: routeConsultantCalls,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ConsultantCallsPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeResurrection,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ConsultantResurrectionPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeCommandCenter,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const LazyCommandCenterPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeWarRoom,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const LazyWarRoomPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeBrokerCommand,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const LazyBrokerCommandPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeCustomerDetail,
           pageBuilder: (context, state) {
             final id = state.pathParameters['id'] ?? '';
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: CustomerDetailPage(customerId: id),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -562,35 +518,26 @@ class AppRouter {
         ),
         GoRoute(
           path: routePipeline,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const PipelineKanbanPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeNotifications,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const NotificationsCenterPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeBulkCampaign,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const BulkCampaignPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -609,13 +556,10 @@ class AppRouter {
         ),
         GoRoute(
           path: routeRainbowIntelHistory,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const IntelReportHistoryPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -638,13 +582,10 @@ class AppRouter {
         ),
         GoRoute(
           path: routeConnectedAccounts,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ConnectedPlatformsPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -666,13 +607,10 @@ class AppRouter {
         ),
         GoRoute(
           path: routeMyExternalListings,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const MyExternalListingsPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
@@ -692,24 +630,18 @@ class AppRouter {
         ),
         GoRoute(
           path: routeImportHub,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ImportHubPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
         GoRoute(
           path: routeImportHistory,
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
+          pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
             child: const ImportHistoryPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) =>
-                    FadeTransition(opacity: animation, child: child),
           ),
         ),
       ],

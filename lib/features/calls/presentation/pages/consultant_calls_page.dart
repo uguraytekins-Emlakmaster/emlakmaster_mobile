@@ -24,7 +24,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
-import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_name_lookup_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/firestore_agent_display_names_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
@@ -49,7 +49,6 @@ import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound
 import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
@@ -808,9 +807,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     final callsAsync = ref.watch(consultantCallsStreamProvider);
     final currentUid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
-    final customers = ref.watch(customerListForAgentProvider).valueOrNull ??
-        const <CustomerEntity>[];
-    final customerById = {for (final c in customers) c.id: c};
     final agentNames =
         ref.watch(firestoreAgentDisplayNamesProvider).valueOrNull ??
             const <String, String>{};
@@ -911,6 +907,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
           ),
         ),
         data: (docs) {
+          final customerNames = ref.watch(customerNameLookupProvider);
           _docs = docs;
           if (kDebugMode) {
             AppLogger.d('[consultant_calls] loaded docs=${docs.length}');
@@ -1090,7 +1087,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       );
                       final custName =
                           r.customerId != null && r.customerId!.isNotEmpty
-                              ? customerById[r.customerId!]?.fullName
+                              ? customerNames[r.customerId!]
                               : null;
                       final formattedPhone =
                           CrmCallRecordDisplay.formatPhone(r.phoneNumber);
@@ -1140,7 +1137,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         index: index,
                         filteredLocals: filteredLocals,
                         filteredDocs: filteredDocs,
-                        child: Slidable(
+                        child: RepaintBoundary(
+                          child: Slidable(
                         key: ValueKey('sl_local_${r.id}'),
                         startActionPane: ActionPane(
                           motion: const DrawerMotion(),
@@ -1225,6 +1223,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           ),
                         ),
                       ),
+                        ),
                       );
                     }
                     final doc =
@@ -1265,7 +1264,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     final customerId = (data['customerId'] as String?)?.trim();
                     final customerName =
                         customerId != null && customerId.isNotEmpty
-                            ? customerById[customerId]?.fullName
+                            ? customerNames[customerId]
                             : null;
                     final note =
                         CrmCallRecordDisplay.notePreviewFromFirestoreData(
@@ -1342,7 +1341,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       index: index,
                       filteredLocals: filteredLocals,
                       filteredDocs: filteredDocs,
-                      child: Slidable(
+                      child: RepaintBoundary(
+                        child: Slidable(
                       key: ValueKey('sl_fs_$id'),
                       startActionPane: ActionPane(
                         motion: const DrawerMotion(),
@@ -1441,6 +1441,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                             : const ServerOnlyCallSourceIcon(),
                       ),
                     ),
+                      ),
                     );
                     },
                     childCount: visibleTotal,
