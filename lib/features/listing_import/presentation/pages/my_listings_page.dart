@@ -556,7 +556,11 @@ class _ListingCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          context.push(
+            AppRouter.routeListingDetail.replaceFirst(':id', listing.id),
+          );
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

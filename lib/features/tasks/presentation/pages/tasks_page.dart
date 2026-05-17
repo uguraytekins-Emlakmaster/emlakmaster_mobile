@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/features/tasks/domain/task_recurrence.dart';
 
 /// Danışman görevleri: vade tarihine göre liste, yapıldı işaretleme, görev ekleme.
 class TasksPage extends ConsumerStatefulWidget {
@@ -120,7 +122,11 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                           label: 'Hızlı işlemler',
                           icon: Icons.bolt_rounded,
                         ),
-                        const _TasksQuickActionsRow(),
+                        _TasksQuickActionsRow(
+                          onAddTask: () => _showAddTaskDialog(context, ref, uid),
+                          onRecurring: () =>
+                              _showRecurringTasksSheet(context, ref, uid),
+                        ),
                         const SizedBox(height: DesignTokens.space6),
                         const _TasksWeeklyStatsStrip(),
                       ],
@@ -178,7 +184,15 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                               dueAt != null && dueAt.isBefore(today) && !done,
                           onToggleDone: () => _toggleDone(id, d, !done),
                           onDelete: () => _confirmDeleteTask(id, title),
-                          onTap: () => _toggleDone(id, d, !done),
+                          onTap: () => _showTaskDetailSheet(
+                            context,
+                            ref: ref,
+                            uid: uid,
+                            id: id,
+                            data: d,
+                            onToggleDone: () => _toggleDone(id, d, !done),
+                            onDelete: () => _confirmDeleteTask(id, title),
+                          ),
                         );
                       },
                     ),
@@ -219,6 +233,35 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         'id': id,
         'done': done,
       });
+      if (!wasDone &&
+          done &&
+          current['recurrence'] is String &&
+          (current['recurrence'] as String).isNotEmpty) {
+        final due = (current['dueAt'] as Timestamp?)?.toDate() ??
+            (current['dueDate'] as Timestamp?)?.toDate() ??
+            DateTime.now();
+        final recurrence = current['recurrence'] as String;
+        final title = current['title'] as String? ?? 'Görev';
+        await FirestoreService.setTask({
+          'advisorId': current['advisorId'] as String? ?? '',
+          'title': title,
+          'dueAt': Timestamp.fromDate(nextDueForRecurrence(due, recurrence)),
+          'done': false,
+          'recurrence': recurrence,
+          if (customerId != null && customerId.isNotEmpty)
+            'customerId': customerId,
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Tekrar eden görev: sonraki vade ${taskRecurrenceLabel(recurrence)?.toLowerCase() ?? ''} için eklendi.',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
       if (!wasDone && done && customerId != null && customerId.isNotEmpty) {
         try {
           await FirestoreService.mergeCustomerCrmAfterTaskCompleted(customerId);
@@ -334,11 +377,301 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     }
   }
 
-  void _showAddTaskDialog(BuildContext context, WidgetRef ref, String uid) {
+  void _showTaskDetailSheet(
+    BuildContext context, {
+    required WidgetRef ref,
+    required String uid,
+    required String id,
+    required Map<String, dynamic> data,
+    required VoidCallback onToggleDone,
+    required VoidCallback onDelete,
+  }) {
+    AppFeedback.lightImpact();
+    final titleController =
+        TextEditingController(text: data['title'] as String? ?? '');
+    final customerId = (data['customerId'] as String?)?.trim();
+    final done = data['done'] == true;
+    var pickedDate = (data['dueAt'] as Timestamp?)?.toDate() ??
+        (data['dueDate'] as Timestamp?)?.toDate();
+    var recurrence = data['recurrence'] as String?;
+    var saving = false;
+
+    showPremiumScrollableBottomSheet<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModal) {
+          final ext = AppThemeExtension.of(ctx);
+          final recurrenceLabel = taskRecurrenceLabel(recurrence);
+          return PremiumScrollableBottomSheetShell(
+            title: 'Görev detayı',
+            subtitle: done
+                ? 'Tamamlandı'
+                : recurrenceLabel != null
+                    ? 'Tekrar: $recurrenceLabel'
+                    : 'Düzenleyip kaydedin',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Başlık',
+                    filled: true,
+                    fillColor: ext.surfaceElevated,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space3),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final date = await showDatePicker(
+                      context: ctx,
+                      initialDate: pickedDate ?? DateTime.now(),
+                      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                      lastDate: DateTime.now().add(const Duration(days: 730)),
+                    );
+                    if (date != null) setModal(() => pickedDate = date);
+                  },
+                  icon: const Icon(Icons.calendar_today_rounded),
+                  label: Text(
+                    pickedDate != null
+                        ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
+                        : 'Vade tarihi seç',
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space3),
+                DropdownButtonFormField<String?>(
+                  value: recurrence,
+                  decoration: InputDecoration(
+                    labelText: 'Tekrar',
+                    filled: true,
+                    fillColor: ext.surfaceElevated,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('Tek seferlik')),
+                    DropdownMenuItem(value: 'daily', child: Text('Her gün')),
+                    DropdownMenuItem(value: 'weekly', child: Text('Her hafta')),
+                    DropdownMenuItem(value: 'monthly', child: Text('Her ay')),
+                  ],
+                  onChanged: (v) => setModal(() => recurrence = v),
+                ),
+                if (customerId != null && customerId.isNotEmpty) ...[
+                  const SizedBox(height: DesignTokens.space3),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.push(
+                        AppRouter.routeCustomerDetail
+                            .replaceFirst(':id', customerId),
+                      );
+                    },
+                    icon: const Icon(Icons.person_rounded),
+                    label: const Text('Müşteriyi aç'),
+                  ),
+                ],
+              ],
+            ),
+            bottomActions: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton(
+                  onPressed: saving
+                      ? null
+                      : () async {
+                          final title = titleController.text.trim();
+                          if (title.isEmpty) return;
+                          setModal(() => saving = true);
+                          try {
+                            await FirestoreService.setTask({
+                              ...data,
+                              'id': id,
+                              'advisorId': uid,
+                              'title': title,
+                              if (pickedDate != null)
+                                'dueAt': Timestamp.fromDate(pickedDate!),
+                              'recurrence': recurrence,
+                            });
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            if (context.mounted) {
+                              showPremiumActionFeedback(
+                                context,
+                                title: 'Görev güncellendi',
+                                message: 'Değişiklikler kaydedildi.',
+                                type: PremiumActionFeedbackType.success,
+                                useSheet: false,
+                              );
+                            }
+                          } catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(
+                                  content: Text('Kaydedilemedi: $e'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (ctx.mounted) setModal(() => saving = false);
+                          }
+                        },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ext.accent,
+                    foregroundColor: ext.onBrand,
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  child: saving
+                      ? SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: ext.onBrand,
+                          ),
+                        )
+                      : const Text('Kaydet'),
+                ),
+                const SizedBox(height: DesignTokens.space2),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    onToggleDone();
+                  },
+                  icon: Icon(done ? Icons.undo_rounded : Icons.check_rounded),
+                  label: Text(done ? 'Yeniden aç' : 'Tamamlandı işaretle'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ext.surfaceElevated,
+                    foregroundColor: ext.textPrimary,
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space2),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    onDelete();
+                  },
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  label: const Text('Görevi sil'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: ext.danger,
+                    side: BorderSide(color: ext.danger.withValues(alpha: 0.6)),
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showRecurringTasksSheet(
+    BuildContext context,
+    WidgetRef ref,
+    String uid,
+  ) {
+    AppFeedback.lightImpact();
+    showPremiumScrollableBottomSheet<void>(
+      context: context,
+      builder: (ctx) => StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: FirestoreService.tasksByAdvisorStream(uid),
+        builder: (context, snap) {
+          final docs = (snap.data?.docs ?? [])
+              .where((d) {
+                final r = d.data()['recurrence'];
+                return r is String && r.isNotEmpty;
+              })
+              .toList();
+          return PremiumScrollableBottomSheetShell(
+            title: 'Tekrar eden görevler',
+            subtitle: docs.isEmpty
+                ? 'Rutin görev tanımlayın; tamamlanınca sonraki vade otomatik eklenir.'
+                : '${docs.length} rutin kayıt',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (docs.isEmpty)
+                  Text(
+                    'Henüz tekrarlı görev yok. Yeni görev eklerken “Tekrar” alanından günlük, haftalık veya aylık seçebilirsiniz.',
+                    style: AppTypography.body(ctx),
+                  )
+                else
+                  ...docs.map((doc) {
+                    final d = doc.data();
+                    final title = d['title'] as String? ?? 'Görev';
+                    final recurrence = d['recurrence'] as String? ?? '';
+                    final due = (d['dueAt'] as Timestamp?)?.toDate();
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(title),
+                      subtitle: Text(
+                        '${taskRecurrenceLabel(recurrence) ?? recurrence}'
+                        '${due != null ? ' · ${due.day}.${due.month}.${due.year}' : ''}',
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _showTaskDetailSheet(
+                          context,
+                          ref: ref,
+                          uid: uid,
+                          id: doc.id,
+                          data: d,
+                          onToggleDone: () => _toggleDone(
+                            doc.id,
+                            d,
+                            !(d['done'] == true),
+                          ),
+                          onDelete: () => _confirmDeleteTask(doc.id, title),
+                        );
+                      },
+                    );
+                  }),
+              ],
+            ),
+            bottomActions: FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showAddTaskDialog(
+                  context,
+                  ref,
+                  uid,
+                  initialRecurrence: 'weekly',
+                );
+              },
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Rutin görev ekle'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppThemeExtension.of(ctx).accent,
+                foregroundColor: AppThemeExtension.of(ctx).onBrand,
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showAddTaskDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String uid, {
+    String? initialRecurrence,
+  }) {
     AppFeedback.lightImpact();
     final titleController = TextEditingController();
     final customerIdController = TextEditingController();
     DateTime? pickedDate;
+    String? recurrence = initialRecurrence;
 
     showPremiumModalBottomSheet<void>(
       context: context,
@@ -438,44 +771,85 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   const SizedBox(height: DesignTokens.space4),
                   StatefulBuilder(
                     builder: (ctx, setModalState) {
-                      return OutlinedButton.icon(
-                        onPressed: () async {
-                          final date = await showDatePicker(
-                            context: ctx,
-                            initialDate:
-                                DateTime.now().add(const Duration(days: 1)),
-                            firstDate: DateTime.now(),
-                            lastDate:
-                                DateTime.now().add(const Duration(days: 365)),
-                          );
-                          if (date != null) {
-                            setModalState(() => pickedDate = date);
-                          }
-                        },
-                        icon: Icon(
-                          Icons.calendar_today_rounded,
-                          size: DesignTokens.iconMd,
-                          color: AppThemeExtension.of(context).accent,
-                        ),
-                        label: Text(
-                          pickedDate != null
-                              ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
-                              : 'Vade tarihi seç',
-                          style: TextStyle(
-                              color: AppThemeExtension.of(context).accent),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppThemeExtension.of(context).accent,
-                          minimumSize: const Size(double.infinity, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              DesignTokens.radiusControl,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              final date = await showDatePicker(
+                                context: ctx,
+                                initialDate:
+                                    DateTime.now().add(const Duration(days: 1)),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now()
+                                    .add(const Duration(days: 365)),
+                              );
+                              if (date != null) {
+                                setModalState(() => pickedDate = date);
+                              }
+                            },
+                            icon: Icon(
+                              Icons.calendar_today_rounded,
+                              size: DesignTokens.iconMd,
+                              color: AppThemeExtension.of(context).accent,
+                            ),
+                            label: Text(
+                              pickedDate != null
+                                  ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
+                                  : 'Vade tarihi seç',
+                              style: TextStyle(
+                                  color: AppThemeExtension.of(context).accent),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  AppThemeExtension.of(context).accent,
+                              minimumSize: const Size(double.infinity, 48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusControl,
+                                ),
+                              ),
+                              side: BorderSide(
+                                color: AppThemeExtension.of(context).accent,
+                              ),
                             ),
                           ),
-                          side: BorderSide(
-                            color: AppThemeExtension.of(context).accent,
+                          const SizedBox(height: DesignTokens.space3),
+                          DropdownButtonFormField<String?>(
+                            value: recurrence,
+                            decoration: InputDecoration(
+                              labelText: 'Tekrar',
+                              filled: true,
+                              fillColor:
+                                  AppThemeExtension.of(context).background,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusControl,
+                                ),
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: null,
+                                child: Text('Tek seferlik'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'daily',
+                                child: Text('Her gün'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'weekly',
+                                child: Text('Her hafta'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'monthly',
+                                child: Text('Her ay'),
+                              ),
+                            ],
+                            onChanged: (v) =>
+                                setModalState(() => recurrence = v),
                           ),
-                        ),
+                        ],
                       );
                     },
                   ),
@@ -515,6 +889,8 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                                       ),
                                 'done': false,
                                 if (custId.isNotEmpty) 'customerId': custId,
+                                if (recurrence != null && recurrence!.isNotEmpty)
+                                  'recurrence': recurrence,
                               });
                               if (ctx.mounted) {
                                 ScaffoldMessenger.of(ctx).showSnackBar(
@@ -779,18 +1155,31 @@ class _TaskTile extends StatelessWidget {
   }
 }
 
-class _TasksQuickActionsRow extends StatelessWidget {
-  const _TasksQuickActionsRow();
+class _TasksQuickActionsRow extends ConsumerWidget {
+  const _TasksQuickActionsRow({
+    required this.onAddTask,
+    required this.onRecurring,
+  });
+
+  final VoidCallback onAddTask;
+  final VoidCallback onRecurring;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
         Expanded(
           child: _TasksQuickActionCard(
             icon: Icons.event_repeat_rounded,
             title: 'Takip et',
-            subtitle: 'Ajandaya ekle',
+            subtitle: 'Takip akışı',
+            onTap: () {
+              AppFeedback.lightImpact();
+              ref
+                  .read(mainShellShortcutProvider.notifier)
+                  .enqueue(MainShellShortcut.openFollowUpTab);
+              context.go(AppRouter.routeHome);
+            },
           ),
         ),
         const SizedBox(width: DesignTokens.space2),
@@ -798,7 +1187,11 @@ class _TasksQuickActionsRow extends StatelessWidget {
           child: _TasksQuickActionCard(
             icon: Icons.notifications_active_outlined,
             title: 'Hatırlat',
-            subtitle: 'Bildirim kur',
+            subtitle: 'Görev ekle',
+            onTap: () {
+              AppFeedback.lightImpact();
+              onAddTask();
+            },
           ),
         ),
         const SizedBox(width: DesignTokens.space2),
@@ -807,6 +1200,10 @@ class _TasksQuickActionsRow extends StatelessWidget {
             icon: Icons.timer_outlined,
             title: 'Tekrar eden',
             subtitle: 'Rutin görev',
+            onTap: () {
+              AppFeedback.lightImpact();
+              onRecurring();
+            },
           ),
         ),
         const SizedBox(width: DesignTokens.space2),
@@ -840,7 +1237,13 @@ class _TasksQuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return PremiumSurfaceCard(
-      onTap: onTap,
+      onTap: onTap ??
+          () => showPremiumActionFeedback(
+                context,
+                title: title,
+                message: 'Bu kısayol henüz bağlanmadı.',
+                type: PremiumActionFeedbackType.warning,
+              ),
       padding: const EdgeInsets.all(DesignTokens.space3),
       child: Column(
         children: [

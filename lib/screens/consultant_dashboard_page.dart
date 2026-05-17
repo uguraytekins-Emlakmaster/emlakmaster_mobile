@@ -1238,8 +1238,34 @@ class _QuickStatsCard extends ConsumerWidget {
     final pad = compact ? DesignTokens.space4 : DesignTokens.space5;
     final iconBox = compact ? DesignTokens.space2 : DesignTokens.space3;
     final iconSize = compact ? 20.0 : 24.0;
+    void openFollowUp() {
+      AppFeedback.mediumImpact();
+      ref
+          .read(mainShellShortcutProvider.notifier)
+          .enqueue(MainShellShortcut.openFollowUpTab);
+      context.go(AppRouter.routeHome);
+    }
+
     return RepaintBoundary(
-      child: Container(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (count > 0) {
+              openFollowUp();
+            } else {
+              showPremiumActionFeedback(
+                context,
+                title: ProductLabels.followUp,
+                message:
+                    'Şu an yeniden temas bekleyen müşteri yok. Yeni takip kayıtları burada görünecek.',
+                type: PremiumActionFeedbackType.info,
+              );
+            }
+          },
+          borderRadius:
+              BorderRadius.circular(DashboardLayoutTokens.radiusCardM),
+          child: Container(
         constraints: BoxConstraints(
           minHeight: compact
               ? DashboardLayoutTokens.minHeightOperationalCard
@@ -1314,10 +1340,7 @@ class _QuickStatsCard extends ConsumerWidget {
                       visualDensity: VisualDensity.compact,
                       foregroundColor: ext.accent,
                     ),
-                    onPressed: () {
-                      AppFeedback.mediumImpact();
-                      context.push(AppRouter.routeResurrection);
-                    },
+                    onPressed: openFollowUp,
                     child: const Text('Görüntüle'),
                   ),
               ],
@@ -1346,6 +1369,8 @@ class _QuickStatsCard extends ConsumerWidget {
               ),
             ],
           ],
+        ),
+          ),
         ),
       ),
     );

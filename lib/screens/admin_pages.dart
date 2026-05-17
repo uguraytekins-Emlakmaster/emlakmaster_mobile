@@ -165,10 +165,21 @@ class AdminReportsPage extends ConsumerWidget {
           ],
           if (showAuditComingSoon) ...[
             const SizedBox(height: DesignTokens.space4),
-            const _ComingSoonReportCard(
+            _ComingSoonReportCard(
               icon: Icons.history_rounded,
               title: 'İşlem kaydı',
               subtitle: 'Sistem hareketleri için ayrıntılı görünüm yakında',
+              onExplore: () {
+                context.push(AppRouter.routeCommandCenter);
+                showPremiumActionFeedback(
+                  context,
+                  title: 'Çağrı kayıtları açık',
+                  message:
+                      'Tam denetim günlüğü hazırlanıyor. Şimdilik Komuta Merkezi çağrı kayıtlarından ekip hareketlerini izleyebilirsiniz.',
+                  type: PremiumActionFeedbackType.info,
+                  useSheet: false,
+                );
+              },
             ),
           ],
           if (canViewPipeline) ...[
@@ -237,11 +248,12 @@ class _AdminReportsPerformanceCard extends StatelessWidget {
             style: AppTypography.meta(context).copyWith(height: 1.4),
           ),
           const SizedBox(height: DesignTokens.space3),
-          const _ComingSoonReportCard(
+          _ComingSoonReportCard(
             icon: Icons.analytics_rounded,
             title: 'Performans görünümü',
             subtitle:
                 'Çağrı ve kapanış eğilimleri için ayrıntılı rapor yakında',
+            onExplore: () => context.push(AppRouter.routeRainbowAnalytics),
           ),
         ],
       ),
@@ -312,13 +324,14 @@ class _AdminReportsPerfSectionState extends State<_AdminReportsPerfSection> {
                 ),
               );
             }
-            return const Padding(
-              padding: EdgeInsets.only(bottom: DesignTokens.space4),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: DesignTokens.space4),
               child: _ComingSoonReportCard(
                 icon: Icons.analytics_rounded,
                 title: 'Performans görünümü',
                 subtitle:
                     'Çağrı ve kapanış eğilimleri için ayrıntılı rapor yakında',
+                onExplore: () => context.push(AppRouter.routeRainbowAnalytics),
               ),
             );
           },
@@ -401,17 +414,19 @@ class _AdminPerfErrorCard extends StatelessWidget {
   }
 }
 
-/// Rapor kartı: henüz ekranı olmayan veya yakında tamamlanacak özellikler (canlı hissi vermez).
+/// Rapor kartı: henüz ekranı olmayan veya yakında tamamlanacak özellikler.
 class _ComingSoonReportCard extends StatelessWidget {
   const _ComingSoonReportCard({
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.onExplore,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback? onExplore;
 
   @override
   Widget build(BuildContext context) {
@@ -419,7 +434,22 @@ class _ComingSoonReportCard extends StatelessWidget {
     final surface = ext.surface;
     final border = ext.border;
     final muted = ext.textSecondary.withValues(alpha: 0.88);
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+        onTap: () {
+          if (onExplore != null) {
+            onExplore!();
+            return;
+          }
+          showPremiumComingSoon(
+            context,
+            title: title,
+            message: subtitle,
+          );
+        },
+        child: Container(
       padding: const EdgeInsets.all(DesignTokens.space5),
       decoration: BoxDecoration(
         color: surface,
@@ -486,6 +516,8 @@ class _ComingSoonReportCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

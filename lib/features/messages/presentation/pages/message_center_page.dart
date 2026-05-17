@@ -306,14 +306,26 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
                 );
               },
             ),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 24, 20, 32),
-                child: _InfoBanner(
-                  icon: Icons.hub_outlined,
-                  muted: true,
-                  text:
-                      'Sahibinden ve diğer platform mesajları sonraki aşamada buraya eklenecek.',
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                    onTap: () => showPremiumComingSoon(
+                      context,
+                      title: 'Harici platform mesajları',
+                      message:
+                          'Sahibinden ve diğer kanalların senkronu hazırlanıyor. Ekip sohbeti yukarıdaki kanallardan anlık çalışır.',
+                    ),
+                    child: const _InfoBanner(
+                      icon: Icons.hub_outlined,
+                      muted: true,
+                      text:
+                          'Sahibinden ve diğer platform mesajları sonraki aşamada buraya eklenecek. Dokunun.',
+                    ),
+                  ),
                 ),
               ),
             ),

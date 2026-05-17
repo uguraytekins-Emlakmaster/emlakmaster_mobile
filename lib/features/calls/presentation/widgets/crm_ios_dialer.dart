@@ -4,6 +4,8 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/dialer_contact_picker.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 
 /// Dialer ekranı — [ThemeData.brightness] ile açık / koyu (iPhone Phone’a yakın).
 @immutable
@@ -261,6 +263,16 @@ class CrmIosDialerShell extends ConsumerWidget {
                                   textScale: maxScale,
                                   tokens: t,
                                   onBackspace: () => _backspace(dialNotifier),
+                                  onPickContact: () async {
+                                    final picked =
+                                        await pickDialerContactPhone(context);
+                                    if (picked != null && picked.isNotEmpty) {
+                                      dialNotifier.value =
+                                          OutboundPhoneDial.sanitizeDialEntry(
+                                        picked,
+                                      );
+                                    }
+                                  },
                                 ),
                               ),
                             ),
@@ -437,6 +449,7 @@ class _DialNumberDisplay extends StatelessWidget {
     required this.textScale,
     required this.tokens,
     required this.onBackspace,
+    required this.onPickContact,
   });
 
   final String display;
@@ -444,6 +457,7 @@ class _DialNumberDisplay extends StatelessWidget {
   final double textScale;
   final DialerThemeTokens tokens;
   final VoidCallback onBackspace;
+  final Future<void> Function() onPickContact;
 
   @override
   Widget build(BuildContext context) {
@@ -507,26 +521,15 @@ class _DialNumberDisplay extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(child: Center(child: numberWidget)),
-        if (hasDigits)
-          IconButton(
-            tooltip: 'Kişiler',
-            onPressed: () {},
-            icon: Icon(
-              Icons.person_outline_rounded,
-              color: tokens.labelSecondary,
-              size: 26,
-            ),
-          )
-        else
-          IconButton(
-            tooltip: 'Kişiler',
-            onPressed: () {},
-            icon: Icon(
-              Icons.person_outline_rounded,
-              color: tokens.labelSecondary,
-              size: 26,
-            ),
+        IconButton(
+          tooltip: 'Kişiler',
+          onPressed: () => onPickContact(),
+          icon: Icon(
+            Icons.person_outline_rounded,
+            color: tokens.labelSecondary,
+            size: 26,
           ),
+        ),
       ],
     );
   }
