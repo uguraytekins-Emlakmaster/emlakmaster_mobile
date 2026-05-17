@@ -9,6 +9,8 @@ import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/sa
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/office_customer_name_lookup_provider.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_feed_data.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_feed_filters.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
+import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_calls_display_provider.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_stream_providers.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/utils/command_center_call_filter.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
@@ -23,7 +25,7 @@ typedef CommandCenterSliversBuilder = List<Widget> Function(
 );
 
 /// Çağrı akışı + filtre — iç içe StreamBuilder yerine Riverpod.
-class CommandCenterCallsFeed extends ConsumerWidget {
+class CommandCenterCallsFeed extends ConsumerStatefulWidget {
   const CommandCenterCallsFeed({
     super.key,
     required this.filters,
@@ -44,13 +46,34 @@ class CommandCenterCallsFeed extends ConsumerWidget {
   final Color fg;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CommandCenterCallsFeed> createState() =>
+      _CommandCenterCallsFeedState();
+}
+
+class _CommandCenterCallsFeedState extends ConsumerState<CommandCenterCallsFeed> {
+  final _readyTracker = ShellScreenReadyTracker('command_center');
+
+  @override
+  Widget build(BuildContext context) {
+    final filters = widget.filters;
+    final onFilteredDocsChanged = widget.onFilteredDocsChanged;
+    final chromeSliversBuilder = widget.chromeSliversBuilder;
+    final scopeSliversBuilder = widget.scopeSliversBuilder;
+    final onClearFilters = widget.onClearFilters;
+    final fg = widget.fg;
+
     final callsScope = filters.callsStreamScope;
     final agentNames =
         ref.watch(commandCenterAgentNamesProvider).valueOrNull ??
             const <String, String>{};
     final callsAsync =
-        ref.watch(commandCenterCallsStreamProvider(callsScope));
+        ref.watch(commandCenterCallsDisplayProvider(callsScope));
+
+    ref.listen(commandCenterCallsDisplayProvider(callsScope), (previous, next) {
+      if (next.hasValue) {
+        _readyTracker.onContentReady(itemCount: next.value!.length);
+      }
+    });
 
     return callsAsync.when(
       loading: () => Center(
@@ -83,9 +106,10 @@ class CommandCenterCallsFeed extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
               TextButton.icon(
-                onPressed: () => ref.invalidate(
-                  commandCenterCallsStreamProvider(callsScope),
-                ),
+                onPressed: () {
+                  ref.invalidate(commandCenterCallsStreamProvider(callsScope));
+                  ref.invalidate(commandCenterCallsStaleCacheProvider(callsScope));
+                },
                 icon: const Icon(Icons.refresh_rounded, size: 20),
                 label: const Text('Tekrar dene'),
                 style: TextButton.styleFrom(
@@ -96,8 +120,7 @@ class CommandCenterCallsFeed extends ConsumerWidget {
           ),
         ),
       ),
-      data: (snapshot) {
-        final docs = snapshot.docs;
+      data: (docs) {
         final currentUid = ref.watch(
           currentUserProvider.select((a) => a.valueOrNull?.uid),
         );

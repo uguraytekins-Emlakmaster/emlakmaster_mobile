@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
@@ -42,6 +43,7 @@ class CustomerListPage extends ConsumerStatefulWidget {
 }
 
 class _CustomerListPageState extends ConsumerState<CustomerListPage> {
+  final _readyTracker = ShellScreenReadyTracker('customer_list');
   late final DebouncedSearchController _debouncedSearch;
   String _searchQuery = '';
   bool _selectionMode = false;
@@ -146,6 +148,11 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final uid =
         ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
     final asyncCustomers = ref.watch(customerListForAgentProvider);
+    ref.listen(customerListForAgentProvider, (previous, next) {
+      if (next.hasValue) {
+        _readyTracker.onContentReady(itemCount: next.value!.length);
+      }
+    });
     final showAddDock = uid.isNotEmpty &&
         asyncCustomers.maybeWhen(
           data: (list) => list.isNotEmpty,

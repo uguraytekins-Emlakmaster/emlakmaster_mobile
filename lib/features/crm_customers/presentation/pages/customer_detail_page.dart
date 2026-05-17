@@ -13,6 +13,7 @@ import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/ti
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_timeline_row.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_timeline_rows_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/manager_customer_crm_call_strip.dart';
@@ -77,6 +78,7 @@ class CustomerDetailPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _CustomerDetailReadyProbe(customerId: customerId),
                     _CustomerHeader(customerId: customerId),
                     CustomerRevenueIntelligenceStrip(customerId: customerId),
                     CustomerTimelineIntelligenceStrip(customerId: customerId),
@@ -504,6 +506,30 @@ class _PortfolioMatchSection extends ConsumerWidget {
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
     );
+  }
+}
+
+class _CustomerDetailReadyProbe extends ConsumerStatefulWidget {
+  const _CustomerDetailReadyProbe({required this.customerId});
+  final String customerId;
+
+  @override
+  ConsumerState<_CustomerDetailReadyProbe> createState() =>
+      _CustomerDetailReadyProbeState();
+}
+
+class _CustomerDetailReadyProbeState
+    extends ConsumerState<_CustomerDetailReadyProbe> {
+  final _readyTracker = ShellScreenReadyTracker('customer_detail');
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(customerEntityByIdProvider(widget.customerId), (previous, next) {
+      if (next.hasValue && next.value != null) {
+        _readyTracker.onContentReady();
+      }
+    });
+    return const SizedBox.shrink();
   }
 }
 

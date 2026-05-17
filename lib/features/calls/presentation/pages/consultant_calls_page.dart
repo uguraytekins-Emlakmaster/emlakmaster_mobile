@@ -25,7 +25,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_name_lookup_provider.dart';
-import 'package:emlakmaster_mobile/core/performance/shell_screen_timing.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_display_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/firestore_agent_display_names_provider.dart';
@@ -69,6 +69,7 @@ class ConsultantCallsPage extends ConsumerStatefulWidget {
 }
 
 class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
+  final _readyTracker = ShellScreenReadyTracker('consultant_calls');
   final Set<String> _selectedIds = {};
   bool _isSyncingDeviceCalls = false;
   CallSurfaceQuickFilter _quickFilter = CallSurfaceQuickFilter.all;
@@ -807,6 +808,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         : AppThemeExtension.of(context).textSecondary;
     final ext = AppThemeExtension.of(context);
     final callsAsync = ref.watch(consultantCallsDisplayProvider);
+    ref.listen(consultantCallsDisplayProvider, (previous, next) {
+      if (next.hasValue) {
+        _readyTracker.onContentReady(itemCount: next.value!.length);
+      }
+    });
     final currentUid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     final agentNames =

@@ -29,4 +29,5 @@ alwaysApply: false
 - Ağ görselleri: `CachedNetworkImage` + `memCacheWidth`.
 
 ## Ölçüm
-- İlk içerik hazır: `logShellScreenReady(screenName, elapsedMs)`.
+- İlk içerik hazır: `ShellScreenReadyTracker` + `ref.listen` → `logShellScreenReady`.
+- Komuta Merkezi / danışman çağrıları: `*CallsDisplayProvider` (stale-while-revalidate).
