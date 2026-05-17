@@ -1,84 +1,19 @@
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/models/dialer_control_prefs.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/dialer_contact_picker.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/dialer_contact_search_header.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/dialer_theme_tokens.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/ios_dial_keypad.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_action_feedback.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
-
-/// Dialer ekranı — [ThemeData.brightness] ile açık / koyu (iPhone Phone’a yakın).
-@immutable
-class DialerThemeTokens {
-  const DialerThemeTokens({
-    required this.pageBg,
-    required this.keyFill,
-    required this.keyFillPressed,
-    required this.labelPrimary,
-    required this.labelSecondary,
-    required this.callGreen,
-    required this.capsuleFill,
-    required this.capsuleBorder,
-    required this.keyShadow,
-    required this.capsuleShadow,
-    required this.inkSplash,
-    required this.inkHighlight,
-    required this.callButtonShadow,
-  });
-
-  final Color pageBg;
-  final Color keyFill;
-  final Color keyFillPressed;
-  final Color labelPrimary;
-  final Color labelSecondary;
-  final Color callGreen;
-  final Color capsuleFill;
-  final Color capsuleBorder;
-  final Color keyShadow;
-  final Color capsuleShadow;
-  final Color inkSplash;
-  final Color inkHighlight;
-  final Color callButtonShadow;
-
-  factory DialerThemeTokens.of(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (isDark) {
-      return const DialerThemeTokens(
-        pageBg: Color(0xFF000000),
-        keyFill: Color(0xFF3A3A3C),
-        keyFillPressed: Color(0xFF48484A),
-        labelPrimary: Color(0xFFFFFFFF),
-        labelSecondary: Color(0xFF8E8E93),
-        callGreen: Color(0xFF30D158),
-        capsuleFill: Color(0xFF1C1C1E),
-        capsuleBorder: Color(0x38FFFFFF),
-        keyShadow: Color(0xB3000000),
-        capsuleShadow: Color(0x99000000),
-        inkSplash: Color(0x33FFFFFF),
-        inkHighlight: Color(0x18FFFFFF),
-        callButtonShadow: Color(0x6630D158),
-      );
-    }
-    return const DialerThemeTokens(
-      pageBg: Color(0xFFF2F2F7),
-      keyFill: Color(0xFFE4E4EA),
-      keyFillPressed: Color(0xFFD1D1D6),
-      labelPrimary: Color(0xFF000000),
-      labelSecondary: Color(0xFF8E8E93),
-      callGreen: Color(0xFF34C759),
-      capsuleFill: Color(0xFFFFFFFF),
-      capsuleBorder: Color(0x14000000),
-      keyShadow: Color(0x0D000000),
-      capsuleShadow: Color(0x0A000000),
-      inkSplash: Color(0x1F000000),
-      inkHighlight: Color(0x0A000000),
-      callButtonShadow: Color(0x22000000),
-    );
-  }
-}
+import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 
 /// CRM “Yeni arama” — tuş takımı öncelikli, hafif iOS hissi.
-class CrmIosDialerShell extends ConsumerWidget {
+class CrmIosDialerShell extends ConsumerStatefulWidget {
   const CrmIosDialerShell({
     super.key,
     required this.dialNotifier,
@@ -86,6 +21,7 @@ class CrmIosDialerShell extends ConsumerWidget {
     required this.bottomInset,
     required this.onDismiss,
     required this.onStartCall,
+    this.onControlPrefsChanged,
   });
 
   final ValueNotifier<String> dialNotifier;
@@ -93,6 +29,15 @@ class CrmIosDialerShell extends ConsumerWidget {
   final double bottomInset;
   final VoidCallback onDismiss;
   final VoidCallback onStartCall;
+  final ValueChanged<DialerControlPrefs>? onControlPrefsChanged;
+
+  @override
+  ConsumerState<CrmIosDialerShell> createState() => _CrmIosDialerShellState();
+}
+
+class _CrmIosDialerShellState extends ConsumerState<CrmIosDialerShell> {
+  DialerControlPrefs _controls = const DialerControlPrefs();
+  String? _selectedContactName;
 
   static const Map<String, String> _ituLetters = {
     '2': 'ABC',
@@ -147,16 +92,74 @@ class CrmIosDialerShell extends ConsumerWidget {
     AppFeedback.lightImpact();
     final v = n.value;
     n.value = v.isEmpty ? '' : v.substring(0, v.length - 1);
+    if (n.value.isEmpty) {
+      setState(() => _selectedContactName = null);
+    }
+  }
+
+  void _updateControls(DialerControlPrefs next) {
+    setState(() => _controls = next);
+    widget.onControlPrefsChanged?.call(next);
+  }
+
+  void _showMoreSheet(BuildContext context, DialerThemeTokens t) {
+    AppFeedback.lightImpact();
+    showPremiumScrollableBottomSheet<void>(
+      context: context,
+      maxHeightFactor: 0.42,
+      builder: (ctx) => PremiumScrollableBottomSheetShell(
+        title: 'Arama seçenekleri',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              leading: Icon(Icons.contacts_rounded, color: t.labelPrimary),
+              title: Text('Rehber listesi', style: TextStyle(color: t.labelPrimary)),
+              subtitle: Text(
+                'Tüm kişileri aç',
+                style: TextStyle(color: t.labelSecondary, fontSize: 13),
+              ),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final picked = await pickDialerContactPhone(context);
+                if (picked != null && picked.isNotEmpty) {
+                  widget.dialNotifier.value =
+                      OutboundPhoneDial.sanitizeDialEntry(picked);
+                }
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.flag_rounded, color: t.labelPrimary),
+              title: Text('Ülke kodu', style: TextStyle(color: t.labelPrimary)),
+              subtitle: Text(
+                'Türkiye (+90) — diğer ülkeler yakında',
+                style: TextStyle(color: t.labelSecondary, fontSize: 13),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                showPremiumActionFeedback(
+                  context,
+                  title: 'Ülke kodu',
+                  message: 'Şu an giden aramalar +90 Türkiye formatında başlar.',
+                  type: PremiumActionFeedbackType.info,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final t = DialerThemeTokens.of(context);
     final officeName = ref.watch(
       currentOfficeProvider.select((o) => o.valueOrNull?.name),
     );
     final textScaler = MediaQuery.of(context).textScaler;
     final maxScale = textScaler.scale(1.0).clamp(1.0, 1.35);
+    final dialNotifier = widget.dialNotifier;
 
     return ColoredBox(
       color: t.pageBg,
@@ -170,7 +173,7 @@ class CrmIosDialerShell extends ConsumerWidget {
                 children: [
                   IconButton(
                     tooltip: 'Kapat',
-                    onPressed: onDismiss,
+                    onPressed: widget.onDismiss,
                     icon: Icon(
                       Icons.keyboard_arrow_down_rounded,
                       color: t.labelSecondary,
@@ -193,7 +196,7 @@ class CrmIosDialerShell extends ConsumerWidget {
                 ],
               ),
             ),
-            if (inAppCrmSession)
+            if (widget.inAppCrmSession)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
                 child: Text(
@@ -226,9 +229,13 @@ class CrmIosDialerShell extends ConsumerWidget {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 360),
-                  child: _OutgoingLineCapsule(
-                    officeName: officeName,
+                  child: DialerContactSearchHeader(
                     tokens: t,
+                    officeName: officeName,
+                    dialNotifier: dialNotifier,
+                    onContactSelected: (name) {
+                      setState(() => _selectedContactName = name);
+                    },
                   ),
                 ),
               ),
@@ -237,7 +244,7 @@ class CrmIosDialerShell extends ConsumerWidget {
               child: ValueListenableBuilder<String>(
                 valueListenable: dialNotifier,
                 builder: (context, digits, _) {
-                  final display = inAppCrmSession
+                  final display = widget.inAppCrmSession
                       ? digits
                       : OutboundPhoneDial.formatDialDisplayTurkeyFirst(digits);
                   final canStart =
@@ -259,24 +266,15 @@ class CrmIosDialerShell extends ConsumerWidget {
                               child: Center(
                                 child: _DialNumberDisplay(
                                   display: display,
+                                  contactName: _selectedContactName,
                                   hasDigits: digits.trim().isNotEmpty,
                                   textScale: maxScale,
                                   tokens: t,
                                   onBackspace: () => _backspace(dialNotifier),
-                                  onPickContact: () async {
-                                    final picked =
-                                        await pickDialerContactPhone(context);
-                                    if (picked != null && picked.isNotEmpty) {
-                                      dialNotifier.value =
-                                          OutboundPhoneDial.sanitizeDialEntry(
-                                        picked,
-                                      );
-                                    }
-                                  },
                                 ),
                               ),
                             ),
-                            _IosDialKeypad(
+                            IosDialKeypad(
                               keyDiameter: keyD,
                               gapH: gapH,
                               gapV: gapV,
@@ -284,18 +282,52 @@ class CrmIosDialerShell extends ConsumerWidget {
                               keyOrder: _keyOrder,
                               tokens: t,
                               onDigit: (k) => _append(dialNotifier, k),
+                              onBackspace: () => _backspace(dialNotifier),
                               onLongPressZero: () =>
                                   _longPressZero(dialNotifier),
                             ),
                             const SizedBox(height: 8),
-                            const _DialerBottomControlRow(),
+                            _DialerBottomControlRow(
+                              controls: _controls,
+                              onToggleMute: () {
+                                AppFeedback.selectionClick();
+                                _updateControls(
+                                  _controls.copyWith(muted: !_controls.muted),
+                                );
+                              },
+                              onToggleSpeaker: () {
+                                AppFeedback.selectionClick();
+                                _updateControls(
+                                  _controls.copyWith(
+                                    speakerOn: !_controls.speakerOn,
+                                  ),
+                                );
+                              },
+                              onToggleHold: () {
+                                AppFeedback.selectionClick();
+                                final next = _controls.copyWith(
+                                  onHold: !_controls.onHold,
+                                );
+                                _updateControls(next);
+                                if (next.onHold) {
+                                  showPremiumActionFeedback(
+                                    context,
+                                    title: 'Bekletme',
+                                    message:
+                                        'Görüşme başladığında bekletme sistem telefonundan yönetilir.',
+                                    type: PremiumActionFeedbackType.info,
+                                  );
+                                }
+                              },
+                              onMore: () => _showMoreSheet(context, t),
+                            ),
                             const SizedBox(height: 10),
                             DialerGreenCallButton(
                               tokens: t,
                               enabled: canStart,
-                              onPressed: onStartCall,
+                              onPressed: widget.onStartCall,
                             ),
-                            SizedBox(height: bottomInset + 12),
+                            SizedBox(height: widget.bottomInset + 12),
                           ],
                         ),
                       );
@@ -312,38 +344,66 @@ class CrmIosDialerShell extends ConsumerWidget {
 }
 
 class _DialerBottomControlRow extends StatelessWidget {
-  const _DialerBottomControlRow();
+  const _DialerBottomControlRow({
+    required this.controls,
+    required this.onToggleMute,
+    required this.onToggleSpeaker,
+    required this.onToggleHold,
+    required this.onMore,
+  });
+
+  final DialerControlPrefs controls;
+  final VoidCallback onToggleMute;
+  final VoidCallback onToggleSpeaker;
+  final VoidCallback onToggleHold;
+  final VoidCallback onMore;
 
   @override
   Widget build(BuildContext context) {
     final t = DialerThemeTokens.of(context);
-    Widget item(IconData icon, String label, {bool active = false}) {
+    Widget item(
+      IconData icon,
+      String label, {
+      bool active = false,
+      VoidCallback? onTap,
+    }) {
       return Expanded(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: active ? const Color(0xFF30D158) : t.labelSecondary,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: active ? const Color(0xFF30D158) : t.labelSecondary,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 22,
+                    color: active ? const Color(0xFF30D158) : t.labelSecondary,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color:
+                          active ? const Color(0xFF30D158) : t.labelSecondary,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                  if (active)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      width: 20,
+                      height: 2,
+                      color: const Color(0xFF30D158),
+                    ),
+                ],
               ),
             ),
-            if (active)
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                width: 20,
-                height: 2,
-                color: const Color(0xFF30D158),
-              ),
-          ],
+          ),
         ),
       );
     }
@@ -351,93 +411,28 @@ class _DialerBottomControlRow extends StatelessWidget {
     return Row(
       children: [
         item(Icons.dialpad_rounded, 'Klavye', active: true),
-        item(Icons.mic_off_outlined, 'Sessiz'),
-        item(Icons.volume_up_outlined, 'Hoparlör'),
-        item(Icons.pause_rounded, 'Beklet'),
-        item(Icons.more_horiz_rounded, 'Daha fazla'),
+        item(
+          controls.muted ? Icons.mic_off_rounded : Icons.mic_rounded,
+          'Sessiz',
+          active: controls.muted,
+          onTap: onToggleMute,
+        ),
+        item(
+          controls.speakerOn
+              ? Icons.volume_up_rounded
+              : Icons.volume_up_outlined,
+          'Hoparlör',
+          active: controls.speakerOn,
+          onTap: onToggleSpeaker,
+        ),
+        item(
+          Icons.pause_rounded,
+          'Beklet',
+          active: controls.onHold,
+          onTap: onToggleHold,
+        ),
+        item(Icons.more_horiz_rounded, 'Daha fazla', onTap: onMore),
       ],
-    );
-  }
-}
-
-class _OutgoingLineCapsule extends StatelessWidget {
-  const _OutgoingLineCapsule({
-    required this.officeName,
-    required this.tokens,
-    this.premiumGold = false,
-  });
-
-  final String? officeName;
-  final DialerThemeTokens tokens;
-  final bool premiumGold;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasName = officeName != null && officeName!.trim().isNotEmpty;
-    final lineTitle = hasName ? officeName!.trim() : 'Kurumsal çıkış hattı';
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: tokens.capsuleFill,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: premiumGold
-              ? const Color(0xFFD4AF37).withValues(alpha: 0.42)
-              : tokens.capsuleBorder,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: tokens.capsuleShadow,
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Row(
-          children: [
-            Icon(
-              Icons.swap_horiz_rounded,
-              size: 18,
-              color: tokens.labelSecondary,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Giden hat',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: tokens.labelSecondary,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    lineTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.labelPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: tokens.labelSecondary,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -445,277 +440,77 @@ class _OutgoingLineCapsule extends StatelessWidget {
 class _DialNumberDisplay extends StatelessWidget {
   const _DialNumberDisplay({
     required this.display,
+    required this.contactName,
     required this.hasDigits,
     required this.textScale,
     required this.tokens,
     required this.onBackspace,
-    required this.onPickContact,
   });
 
   final String display;
+  final String? contactName;
   final bool hasDigits;
   final double textScale;
   final DialerThemeTokens tokens;
   final VoidCallback onBackspace;
-  final Future<void> Function() onPickContact;
 
   @override
   Widget build(BuildContext context) {
+    final name = contactName?.trim();
     final numberWidget = hasDigits
-        ? FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              display,
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 36 * textScale,
-                fontWeight: FontWeight.w300,
-                height: 1.12,
-                letterSpacing: 0.5,
-                color: tokens.labelPrimary,
-                fontFeatures: const [FontFeature.tabularFigures()],
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (name != null && name.isNotEmpty) ...[
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 22 * textScale,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.labelPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  display,
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: name != null && name.isNotEmpty
+                        ? 28 * textScale
+                        : 36 * textScale,
+                    fontWeight: FontWeight.w300,
+                    height: 1.12,
+                    letterSpacing: 0.5,
+                    color: tokens.labelPrimary,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
               ),
-            ),
+            ],
           )
         : Text(
-            'Numara girin',
+            'Numara girin veya üstten rehberde arayın',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 26 * textScale,
+              fontSize: 20 * textScale,
               fontWeight: FontWeight.w400,
               color: tokens.labelSecondary,
-              height: 1.1,
+              height: 1.2,
             ),
           );
 
-    return Row(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: tokens.capsuleFill,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: tokens.capsuleBorder),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('🇹🇷', style: TextStyle(fontSize: 16 * textScale)),
-                const SizedBox(width: 4),
-                Text(
-                  '+90',
-                  style: TextStyle(
-                    color: tokens.labelPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14 * textScale,
-                  ),
-                ),
-                Icon(Icons.expand_more_rounded,
-                    size: 18, color: tokens.labelSecondary),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(child: Center(child: numberWidget)),
-        IconButton(
-          tooltip: 'Kişiler',
-          onPressed: () => onPickContact(),
-          icon: Icon(
-            Icons.person_outline_rounded,
-            color: tokens.labelSecondary,
-            size: 26,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _IosDialKeypad extends StatelessWidget {
-  const _IosDialKeypad({
-    required this.keyDiameter,
-    required this.gapH,
-    required this.gapV,
-    required this.ituLetters,
-    required this.keyOrder,
-    required this.tokens,
-    required this.onDigit,
-    required this.onLongPressZero,
-  });
-
-  final double keyDiameter;
-  final double gapH;
-  final double gapV;
-  final Map<String, String> ituLetters;
-  final List<String> keyOrder;
-  final DialerThemeTokens tokens;
-  final ValueChanged<String> onDigit;
-  final VoidCallback onLongPressZero;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget row3(int a, int b, int c) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _IosDialKey(
-            label: keyOrder[a],
-            letters: ituLetters[keyOrder[a]],
-            diameter: keyDiameter,
-            tokens: tokens,
-            onTap: () => onDigit(keyOrder[a]),
-            onLongPress: keyOrder[a] == '0' ? onLongPressZero : null,
-          ),
-          SizedBox(width: gapH),
-          _IosDialKey(
-            label: keyOrder[b],
-            letters: ituLetters[keyOrder[b]],
-            diameter: keyDiameter,
-            tokens: tokens,
-            onTap: () => onDigit(keyOrder[b]),
-            onLongPress: keyOrder[b] == '0' ? onLongPressZero : null,
-          ),
-          SizedBox(width: gapH),
-          _IosDialKey(
-            label: keyOrder[c],
-            letters: ituLetters[keyOrder[c]],
-            diameter: keyDiameter,
-            tokens: tokens,
-            onTap: () => onDigit(keyOrder[c]),
-            onLongPress: keyOrder[c] == '0' ? onLongPressZero : null,
-          ),
-        ],
-      );
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        row3(0, 1, 2),
-        SizedBox(height: gapV),
-        row3(3, 4, 5),
-        SizedBox(height: gapV),
-        row3(6, 7, 8),
-        SizedBox(height: gapV + 2),
-        row3(9, 10, 11),
-      ],
-    );
-  }
-}
-
-class _IosDialKey extends StatefulWidget {
-  const _IosDialKey({
-    required this.label,
-    required this.letters,
-    required this.diameter,
-    required this.tokens,
-    required this.onTap,
-    this.onLongPress,
-  });
-
-  final String label;
-  final String? letters;
-  final double diameter;
-  final DialerThemeTokens tokens;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-
-  @override
-  State<_IosDialKey> createState() => _IosDialKeyState();
-}
-
-class _IosDialKeyState extends State<_IosDialKey> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final letterSize = (widget.diameter * 0.11).clamp(8.0, 11.0);
-    final digitSize = (widget.diameter * 0.36).clamp(26.0, 32.0);
-
-    return Listener(
-      onPointerDown: (_) => setState(() => _pressed = true),
-      onPointerUp: (_) => setState(() => _pressed = false),
-      onPointerCancel: (_) => setState(() => _pressed = false),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: widget.onTap,
-          onLongPress: widget.onLongPress,
-          splashColor: widget.tokens.inkSplash,
-          highlightColor: widget.tokens.inkHighlight,
-          child: AnimatedScale(
-            scale: _pressed ? 0.94 : 1.0,
-            duration: const Duration(milliseconds: 80),
-            curve: Curves.easeOut,
-            child: Ink(
-              width: widget.diameter,
-              height: widget.diameter,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _pressed
-                    ? widget.tokens.keyFillPressed
-                    : widget.tokens.keyFill,
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.tokens.keyShadow,
-                    blurRadius: 1,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: widget.letters != null && widget.letters!.isNotEmpty
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.label,
-                            style: TextStyle(
-                              fontSize: digitSize,
-                              fontWeight: FontWeight.w400,
-                              height: 1.0,
-                              color: widget.tokens.labelPrimary,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: widget.diameter * 0.02),
-                          Text(
-                            widget.letters!,
-                            style: TextStyle(
-                              fontSize: letterSize,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.8,
-                              height: 1.0,
-                              color: widget.tokens.labelSecondary,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Text(
-                        widget.label,
-                        style: TextStyle(
-                          fontSize: digitSize,
-                          fontWeight: FontWeight.w400,
-                          height: 1.0,
-                          color: widget.tokens.labelPrimary,
-                          fontFeatures: const [
-                            FontFeature.tabularFigures(),
-                          ],
-                        ),
-                      ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    return Center(child: numberWidget);
   }
 }
 

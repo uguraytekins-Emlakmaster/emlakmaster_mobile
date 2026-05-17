@@ -36,6 +36,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_iden
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_card_memory_hints.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_date_sections.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_contextual_insight.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
@@ -105,6 +106,32 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
 
   void _openCustomerDirectoryForLinking() {
     ConsultantShellNav.goToCustomersTab(context);
+  }
+
+  Widget _listRowWithDateHeader({
+    required int index,
+    required List<LocalCallRecord> filteredLocals,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> filteredDocs,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (callListShouldShowDateHeader(
+          index: index,
+          filteredLocals: filteredLocals,
+          filteredDocs: filteredDocs,
+        ))
+          CallListDateSectionHeader(
+            label: callListDateHeaderLabelForIndex(
+              index: index,
+              filteredLocals: filteredLocals,
+              filteredDocs: filteredDocs,
+            ),
+          ),
+        child,
+      ],
+    );
   }
 
   void _selectAll(
@@ -956,7 +983,14 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   _quickFilter,
                 ),
               )
-              .toList();
+              .toList()
+            ..sort((a, b) {
+              final ta = CrmCallRecordHelpers.createdAtOf(a.data()) ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              final tb = CrmCallRecordHelpers.createdAtOf(b.data()) ??
+                  DateTime.fromMillisecondsSinceEpoch(0);
+              return tb.compareTo(ta);
+            });
           final filteredLocals = localStandalone
               .where(
                 (r) => CallSurfaceQuickFilterLogic.matchesLocalRecord(
@@ -1049,8 +1083,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       final r = filteredLocals[index];
                       final dt =
                           DateTime.fromMillisecondsSinceEpoch(r.createdAt);
-                      final dateStr =
-                          '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+                      final callTime = callListTimeLabel(dt);
                       final outcomeStr = r.outcome ?? '—';
                       final syncHint = _syncSubtitleHint(
                         deriveLocalCallSyncUiState(r, nowMs: nowMs),
@@ -1103,7 +1136,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         outcome: r.outcome,
                         memoryHint: localMemory,
                       );
-                      return Slidable(
+                      return _listRowWithDateHeader(
+                        index: index,
+                        filteredLocals: filteredLocals,
+                        filteredDocs: filteredDocs,
+                        child: Slidable(
                         key: ValueKey('sl_local_${r.id}'),
                         startActionPane: ActionPane(
                           motion: const DrawerMotion(),
@@ -1159,7 +1196,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         child: _LocalCallRecordCard(
                           title: localTitle,
                           phoneSubtitle: phoneUnder,
-                          dateStr: dateStr,
+                          callTimeLabel: callTime,
                           outcome: QuickCallOutcome.labelTr(outcomeStr),
                           syncHint: syncHint,
                           note: r.notes,
@@ -1187,6 +1224,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                     : null,
                           ),
                         ),
+                      ),
                       );
                     }
                     final doc =
@@ -1215,13 +1253,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                                 .kOutcomeCodeLabelsTr[outcomeRaw] ??
                             outcomeRaw)
                         : '—';
-                    final createdAt = data['createdAt'];
-                    String dateStr = '—';
-                    if (createdAt is Timestamp) {
-                      final dt = createdAt.toDate();
-                      dateStr =
-                          '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
-                    }
+                    final createdDt = CrmCallRecordHelpers.createdAtOf(data);
+                    final callTime = createdDt != null
+                        ? callListTimeLabel(createdDt)
+                        : null;
                     final selected = _selectedIds.contains(id);
                     final hasPhone = rawPhone.trim().isNotEmpty;
                     final contactName =
@@ -1247,7 +1282,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     );
                     final contextLine = CrmCallRecordDisplay.contextLine(
                       advisorPart: advisorPart,
-                      dateTime: dateStr,
+                      dateTime: '',
                       duration: durationStr,
                     );
                     final completionLabel =
@@ -1303,7 +1338,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       memoryHint: memoryHint,
                     );
 
-                    return Slidable(
+                    return _listRowWithDateHeader(
+                      index: index,
+                      filteredLocals: filteredLocals,
+                      filteredDocs: filteredDocs,
+                      child: Slidable(
                       key: ValueKey('sl_fs_$id'),
                       startActionPane: ActionPane(
                         motion: const DrawerMotion(),
@@ -1374,6 +1413,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         showPriorityRail: showPriorityRail,
                         memoryHint: memoryHint,
                         confidenceKind: confidenceKind,
+                        callTimeLabel: callTime,
                         rawPhone: rawPhone,
                         customerId: customerId,
                         firestoreDocId: id,
@@ -1400,6 +1440,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                               )
                             : const ServerOnlyCallSourceIcon(),
                       ),
+                    ),
                     );
                     },
                     childCount: visibleTotal,
@@ -1467,7 +1508,7 @@ class _LocalCallRecordCard extends StatelessWidget {
   const _LocalCallRecordCard({
     required this.title,
     this.phoneSubtitle,
-    required this.dateStr,
+    this.callTimeLabel,
     required this.outcome,
     required this.syncHint,
     required this.note,
@@ -1488,7 +1529,7 @@ class _LocalCallRecordCard extends StatelessWidget {
 
   final String title;
   final String? phoneSubtitle;
-  final String dateStr;
+  final String? callTimeLabel;
   final String outcome;
   final String syncHint;
   final String? note;
@@ -1511,7 +1552,7 @@ class _LocalCallRecordCard extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     final contextLine = CrmCallRecordDisplay.contextLine(
       advisorPart: 'Bu cihaz',
-      dateTime: dateStr,
+      dateTime: '',
     );
     final callable = OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
     final cid = customerId?.trim();
@@ -1523,6 +1564,7 @@ class _LocalCallRecordCard extends StatelessWidget {
         dense: true,
         title: title,
         phoneSubtitle: phoneSubtitle,
+        callTimeLabel: callTimeLabel,
         outcomeLabel: outcome,
         captureLabel: syncHint,
         contextLine: contextLine,
@@ -1594,6 +1636,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     required this.showPriorityRail,
     this.memoryHint,
     this.confidenceKind,
+    this.callTimeLabel,
     required this.rawPhone,
     this.customerId,
     this.firestoreDocId,
@@ -1609,6 +1652,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
   final VoidCallback? onSelect;
   final String title;
   final String? phoneSubtitle;
+  final String? callTimeLabel;
   final String outcome;
   final String contextLine;
   final String stateLabel;
@@ -1743,6 +1787,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
                   dense: true,
                   title: title,
                   phoneSubtitle: phoneSubtitle,
+                  callTimeLabel: callTimeLabel,
                   outcomeLabel: outcome,
                   captureLabel: stateLabel,
                   contextLine: contextLine,

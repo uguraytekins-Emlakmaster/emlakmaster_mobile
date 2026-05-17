@@ -15,7 +15,10 @@ import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dar
 import 'package:emlakmaster_mobile/features/ai_sales_assistant/presentation/widgets/ai_sales_assistant_panel.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/outbound_system_handoff_page.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/models/dialer_control_prefs.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_ios_dialer.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/dialer_theme_tokens.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/ios_dial_keypad.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,6 +79,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
   /// Tuş takımından basılan rakamlar (aramada DTMF gösterimi)
   String _keypadDigits = '';
+
+  DialerControlPrefs _dialControlPrefs = const DialerControlPrefs();
 
   /// Sürükleme başlangıç Y ve fraction (drag callback için)
   double _keypadDragStartY = 0;
@@ -197,6 +202,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
     _dialDigits = OutboundPhoneDial.sanitizeDialEntry(rawEntry);
     setState(() {
       _isDialMode = false;
+      _isMuted = _dialControlPrefs.muted;
+      _isSpeakerOn = _dialControlPrefs.speakerOn;
     });
     _startElapsedTicker();
     Future<void>.delayed(const Duration(milliseconds: 800), () {
@@ -303,8 +310,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
     }
   }
 
-  /// Kompakt tuş takımı + tutamaç + güvenli alan için yeterli yükseklik (kesilme önleme).
-  static const double _keypadSheetMaxFraction = 0.58;
+  /// Görüşme DTMF paneli — tam tuş takımı için yeterli yükseklik.
+  static const double _keypadSheetMaxFraction = 0.62;
 
   Widget _buildDraggableKeypadSheet(
       double screenHeight, AppThemeExtension ext) {
@@ -361,42 +368,72 @@ class _CallScreenState extends ConsumerState<CallScreen>
                             Padding(
                               padding: const EdgeInsets.fromLTRB(
                                 DesignTokens.space6,
-                                DesignTokens.space3,
+                                DesignTokens.space2,
                                 DesignTokens.space6,
                                 DesignTokens.space2,
                               ),
                               child: Text(
-                                'Ton: $_keypadDigits',
+                                _keypadDigits,
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context)
                                     .textTheme
-                                    .labelMedium
+                                    .titleMedium
                                     ?.copyWith(
-                                      color: ext.textSecondary,
+                                      color: ext.textPrimary,
+                                      fontWeight: FontWeight.w300,
+                                      letterSpacing: 1.2,
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
                                     ),
                               ),
                             ),
                           Expanded(
                             child: LayoutBuilder(
                               builder: (context, constraints) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: DesignTokens.space2),
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        maxWidth: constraints.maxWidth,
-                                        maxHeight: constraints.maxHeight,
-                                      ),
-                                      child: _KeypadSheet(
-                                        onKeyPressed: (key) {
-                                          setState(() => _keypadDigits += key);
-                                        },
-                                      ),
-                                    ),
+                                final w = constraints.maxWidth;
+                                final keyD = (w * 0.195).clamp(68.0, 80.0);
+                                final gapH = (w * 0.045).clamp(12.0, 20.0);
+                                final gapV = gapH * 0.92;
+                                final t = DialerThemeTokens.inCallDtmf(context);
+                                const itu = {
+                                  '2': 'ABC',
+                                  '3': 'DEF',
+                                  '4': 'GHI',
+                                  '5': 'JKL',
+                                  '6': 'MNO',
+                                  '7': 'PQRS',
+                                  '8': 'TUV',
+                                  '9': 'WXYZ',
+                                  '0': '+',
+                                };
+                                const order = [
+                                  '1', '2', '3', '4', '5', '6',
+                                  '7', '8', '9', '*', '0', '#',
+                                ];
+                                return Center(
+                                  child: IosDialKeypad(
+                                    keyDiameter: keyD,
+                                    gapH: gapH,
+                                    gapV: gapV,
+                                    ituLetters: itu,
+                                    keyOrder: order,
+                                    tokens: t,
+                                    visualMode: DialKeyVisualMode.inCallDtmf,
+                                    onDigit: (key) {
+                                      setState(() => _keypadDigits += key);
+                                    },
+                                    onBackspace: () {
+                                      if (_keypadDigits.isEmpty) return;
+                                      setState(() {
+                                        _keypadDigits = _keypadDigits.substring(
+                                          0,
+                                          _keypadDigits.length - 1,
+                                        );
+                                      });
+                                    },
                                   ),
                                 );
                               },
@@ -426,6 +463,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
         dialNotifier: entry,
         inAppCrmSession: widget.inAppCrmSession,
         bottomInset: bottomInset,
+        onControlPrefsChanged: (prefs) => _dialControlPrefs = prefs,
         onDismiss: () {
           AppFeedback.lightImpact();
           context.pop();
@@ -1355,267 +1393,6 @@ class _RoundIconButton extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _KeypadSheet extends StatelessWidget {
-  const _KeypadSheet({this.onKeyPressed});
-
-  final void Function(String key)? onKeyPressed;
-
-  static const double _keyDiameterCompact = 72.0;
-  static const double _keySpacingCompact = 12.0;
-
-  static const Map<String, String> _dialLetterRow = {
-    '2': 'ABC',
-    '3': 'DEF',
-    '4': 'GHI',
-    '5': 'JKL',
-    '6': 'MNO',
-    '7': 'PQRS',
-    '8': 'TUV',
-    '9': 'WXYZ',
-    '0': '+',
-  };
-
-  static const int _columns = 3;
-  static const int _rows = 4;
-
-  void _tapKey(String keyLabel) {
-    AppFeedback.selectionClick();
-    onKeyPressed?.call(keyLabel);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    final theme = Theme.of(context);
-    const d = _keyDiameterCompact;
-    const gapH = _keySpacingCompact;
-    const gapV = _keySpacingCompact;
-    const labelSize = 24.0;
-    const padH = DesignTokens.space4;
-    const padV = DesignTokens.space4;
-
-    const keys = <String>[
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      '*',
-      '0',
-      '#',
-    ];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: padH, vertical: padV),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
-        border: Border.all(color: ext.border.withValues(alpha: 0.48)),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color.lerp(ext.surfaceElevated, ext.surface, 0.12)!,
-            ext.surfaceElevated,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: ext.shadowColor.withValues(alpha: 0.22),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: _columns * d + (_columns - 1) * gapH,
-        height: _rows * d + (_rows - 1) * gapV,
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: _columns,
-            mainAxisSpacing: gapV,
-            crossAxisSpacing: gapH,
-            mainAxisExtent: d,
-          ),
-          itemCount: keys.length,
-          itemBuilder: (context, index) {
-            final keyLabel = keys[index];
-            return _KeypadDialKey(
-              label: keyLabel,
-              diameter: d,
-              labelFontSize: labelSize,
-              dialMode: false,
-              letterRow: _dialLetterRow[keyLabel],
-              ext: ext,
-              theme: theme,
-              onTap: () => _tapKey(keyLabel),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _KeypadDialKey extends StatelessWidget {
-  const _KeypadDialKey({
-    required this.label,
-    required this.diameter,
-    required this.labelFontSize,
-    required this.dialMode,
-    this.letterRow,
-    required this.ext,
-    required this.theme,
-    required this.onTap,
-  });
-
-  final String label;
-  final double diameter;
-  final double labelFontSize;
-  final bool dialMode;
-
-  /// ITU E.161 harf satırı (2–9, 0 altında +); * / # boş.
-  final String? letterRow;
-  final AppThemeExtension ext;
-  final ThemeData theme;
-  final VoidCallback onTap;
-
-  /// Kömür yüzey + ince altın rim — lüks CRM, dünya çapı çevir ergonomisi.
-  BoxDecoration _dialModeFaceDecoration() {
-    final charcoalTop = Color.lerp(ext.surface, ext.surfaceElevated, 0.55)!;
-    final charcoalMid = Color.lerp(ext.surface, ext.background, 0.35)!;
-    final charcoalBottom = Color.lerp(ext.surface, ext.background, 0.55)!;
-    final goldRim =
-        Color.lerp(ext.border, ext.accent, 0.28)!.withValues(alpha: 0.42);
-    return BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color.lerp(charcoalTop, ext.accent, 0.045)!,
-          charcoalMid,
-          charcoalBottom,
-        ],
-        stops: const [0.0, 0.42, 1.0],
-      ),
-      border: Border.all(color: goldRim, width: 0.75),
-      boxShadow: [
-        BoxShadow(
-          color: ext.shadowColor.withValues(alpha: 0.55),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-          spreadRadius: -2,
-        ),
-        BoxShadow(
-          color: ext.accent.withValues(alpha: 0.085),
-          blurRadius: 20,
-          offset: const Offset(0, 7),
-          spreadRadius: -6,
-        ),
-      ],
-    );
-  }
-
-  BoxDecoration _compactFaceDecoration() {
-    return BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color.lerp(ext.surface, ext.surfaceElevated, 0.35)!,
-          ext.surface.withValues(alpha: 0.97),
-        ],
-      ),
-      border: Border.all(
-        color: ext.border.withValues(alpha: 0.52),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: ext.shadowColor.withValues(alpha: 0.1),
-          blurRadius: 6,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasLetters = letterRow != null && letterRow!.isNotEmpty;
-    final warmSplash = Color.lerp(ext.accent, ext.surfaceElevated, 0.18)!
-        .withValues(alpha: dialMode ? 0.22 : 0.14);
-    final warmHighlight = Color.lerp(ext.accent, ext.surfaceElevated, 0.3)!
-        .withValues(alpha: dialMode ? 0.095 : 0.07);
-
-    final digitColor = dialMode
-        ? Color.lerp(ext.textPrimary, ext.accent, 0.06)
-        : ext.textPrimary;
-
-    final labelStyle = theme.textTheme.headlineSmall?.copyWith(
-      color: digitColor,
-      fontWeight: FontWeight.w500,
-      fontSize: labelFontSize,
-      height: 1.0,
-      fontFeatures: const [FontFeature.tabularFigures()],
-      shadows: dialMode
-          ? [
-              Shadow(
-                color: ext.shadowColor.withValues(alpha: 0.5),
-                offset: const Offset(0, 1),
-                blurRadius: 2,
-              ),
-            ]
-          : null,
-    );
-
-    final letterStyle = theme.textTheme.labelSmall?.copyWith(
-      color: Color.lerp(ext.textTertiary, ext.accent, 0.22),
-      fontWeight: FontWeight.w600,
-      fontSize: (diameter * 0.108).clamp(9.0, 11.0),
-      letterSpacing: 0.65,
-      height: 1.0,
-    );
-
-    final content = hasLetters
-        ? Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(label, style: labelStyle),
-              SizedBox(height: diameter * 0.028),
-              Text(letterRow!, style: letterStyle),
-            ],
-          )
-        : Text(label, style: labelStyle);
-
-    return Material(
-      color: Colors.transparent,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        splashColor: warmSplash,
-        highlightColor: warmHighlight,
-        splashFactory: InkRipple.splashFactory,
-        onTap: onTap,
-        child: Ink(
-          height: diameter,
-          width: diameter,
-          decoration:
-              dialMode ? _dialModeFaceDecoration() : _compactFaceDecoration(),
-          child: Center(child: content),
-        ),
       ),
     );
   }

@@ -1,20 +1,17 @@
-import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/contact_save/data/contact_permission_helper.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/dialer_contact_directory.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_action_feedback.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
 
 /// Tuş takımından rehber kişisi seç — ilk telefon numarasını döner.
 Future<String?> pickDialerContactPhone(BuildContext context) async {
-  final perm =
-      await ContactPermissionHelper.instance.requestContactPermission();
+  final loaded = await loadDialerContactDirectory();
   if (!context.mounted) return null;
-  switch (perm) {
-    case ContactPermissionResult.permanentlyDenied:
+  switch (loaded.perm) {
+    case DialerContactsLoadResult.permanentlyDenied:
       await showPremiumActionFeedback(
         context,
         title: 'Rehber izni gerekli',
@@ -23,7 +20,7 @@ Future<String?> pickDialerContactPhone(BuildContext context) async {
         type: PremiumActionFeedbackType.warning,
       );
       return null;
-    case ContactPermissionResult.denied:
+    case DialerContactsLoadResult.denied:
       await showPremiumActionFeedback(
         context,
         title: 'Rehber izni reddedildi',
@@ -32,23 +29,11 @@ Future<String?> pickDialerContactPhone(BuildContext context) async {
         type: PremiumActionFeedbackType.info,
       );
       return null;
-    case ContactPermissionResult.granted:
+    case DialerContactsLoadResult.granted:
       break;
   }
 
-  final contacts = await FlutterContacts.getAll(
-    properties: {ContactProperty.phone},
-  );
-  if (!context.mounted) return null;
-
-  final withPhone = contacts
-      .where((c) => c.phones.isNotEmpty)
-      .toList()
-    ..sort(
-      (a, b) => (a.displayName ?? '')
-          .toLowerCase()
-          .compareTo((b.displayName ?? '').toLowerCase()),
-    );
+  final withPhone = loaded.contacts;
 
   if (withPhone.isEmpty) {
     await showPremiumActionFeedback(
@@ -68,16 +53,9 @@ Future<String?> pickDialerContactPhone(BuildContext context) async {
       var query = '';
       return StatefulBuilder(
         builder: (ctx, setModal) {
-          final q = query.trim().toLowerCase();
-          final filtered = q.isEmpty
+          final filtered = query.trim().isEmpty
               ? withPhone
-              : withPhone.where((c) {
-                  final name = (c.displayName ?? '').toLowerCase();
-                  final phones = c.phones
-                      .map((p) => p.number.replaceAll(RegExp(r'\D'), ''))
-                      .join(' ');
-                  return name.contains(q) || phones.contains(q.replaceAll(RegExp(r'\D'), ''));
-                }).toList();
+              : filterDialerContacts(withPhone, query);
 
           return PremiumScrollableBottomSheetShell(
             title: 'Rehberden seç',
@@ -108,30 +86,26 @@ Future<String?> pickDialerContactPhone(BuildContext context) async {
                   )
                 else
                   ...filtered.take(80).map((c) {
-                    final phone = c.phones.first.number;
-                    final digits = OutboundPhoneDial.digitsOnly(phone);
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
                         backgroundColor: ext.accent.withValues(alpha: 0.12),
                         child: Text(
-                          (c.displayName ?? '').isNotEmpty
-                              ? (c.displayName ?? '')[0].toUpperCase()
+                          c.displayName.isNotEmpty
+                              ? c.displayName[0].toUpperCase()
                               : '?',
                           style: TextStyle(color: ext.accent),
                         ),
                       ),
                       title: Text(
-                        (c.displayName ?? '').isEmpty
-                            ? 'İsimsiz'
-                            : c.displayName!,
+                        c.displayName.isEmpty ? 'İsimsiz' : c.displayName,
                         style: AppTypography.bodyStrong(ctx),
                       ),
                       subtitle: Text(
-                        phone,
+                        c.phoneDisplay,
                         style: AppTypography.meta(ctx),
                       ),
-                      onTap: () => Navigator.pop(ctx, digits),
+                      onTap: () => Navigator.pop(ctx, c.phoneDigits),
                     );
                   }),
               ],

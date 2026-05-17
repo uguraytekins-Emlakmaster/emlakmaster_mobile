@@ -27,6 +27,7 @@ class CrmCallRecordListItem extends StatelessWidget {
     this.memoryHint,
     this.confidenceKind,
     this.onOpenCustomerCard,
+    this.callTimeLabel,
     this.dense = false,
     this.padding,
   });
@@ -67,6 +68,8 @@ class CrmCallRecordListItem extends StatelessWidget {
   final CallConfidenceKind? confidenceKind;
   /// Bağlı müşteri kartına git.
   final VoidCallback? onOpenCustomerCard;
+  /// iPhone Phone tarzı sağ üst saat (14:35).
+  final String? callTimeLabel;
   final bool dense;
   final EdgeInsetsGeometry? padding;
 
@@ -90,6 +93,7 @@ class CrmCallRecordListItem extends StatelessWidget {
                   title: title,
                   phoneSubtitle: phoneSubtitle,
                   identityFootnote: identityFootnote,
+                  callTimeLabel: callTimeLabel,
                   onIdentityTap: onIdentityTap,
                   onIdentityLongPress: onIdentityLongPress,
                   ext: ext,
@@ -245,6 +249,7 @@ class _IdentityBlock extends StatelessWidget {
     required this.title,
     required this.phoneSubtitle,
     required this.identityFootnote,
+    required this.callTimeLabel,
     required this.onIdentityTap,
     required this.onIdentityLongPress,
     required this.ext,
@@ -253,6 +258,7 @@ class _IdentityBlock extends StatelessWidget {
   final String title;
   final String? phoneSubtitle;
   final String? identityFootnote;
+  final String? callTimeLabel;
   final VoidCallback? onIdentityTap;
   final VoidCallback? onIdentityLongPress;
   final AppThemeExtension ext;
@@ -281,6 +287,17 @@ class _IdentityBlock extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (callTimeLabel != null && callTimeLabel!.trim().isNotEmpty) ...[
+              const SizedBox(width: DesignTokens.space2),
+              Text(
+                callTimeLabel!,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: ext.textTertiary,
+                  fontWeight: FontWeight.w500,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
             if (hasGesture) ...[
               const SizedBox(width: DesignTokens.space2),
               Icon(

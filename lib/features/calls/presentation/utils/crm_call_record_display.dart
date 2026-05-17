@@ -91,7 +91,12 @@ abstract final class CrmCallRecordDisplay {
   }) {
     final dur = duration?.trim();
     final hasDur = dur != null && dur.isNotEmpty && dur != '—';
-    return hasDur ? '$advisorPart · $dateTime · $dur' : '$advisorPart · $dateTime';
+    final dt = dateTime.trim();
+    final hasDt = dt.isNotEmpty && dt != '—';
+    if (hasDt && hasDur) return '$advisorPart · $dt · $dur';
+    if (hasDt) return '$advisorPart · $dt';
+    if (hasDur) return '$advisorPart · $dur';
+    return advisorPart;
   }
 
   /// Çağrı belgesinden ilk anlamlı not / özet (liste önizlemesi).
