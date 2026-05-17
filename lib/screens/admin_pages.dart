@@ -13,6 +13,8 @@ import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
@@ -78,30 +80,32 @@ class AdminReportsPage extends ConsumerWidget {
     final showAuditComingSoon = FeaturePermission.canViewAuditLog(role);
     final canViewCallCenter = FeaturePermission.canViewAllCalls(role);
 
-    final theme = Theme.of(context);
     final ext = AppThemeExtension.of(context);
     final bg = ext.background;
-    final fg = ext.textPrimary;
+    final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
     return Scaffold(
       backgroundColor: bg,
-      appBar: emlakAppBar(
-        context,
-        backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
-        foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
-        title: const Text('İçgörüler ve Kadro'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(DesignTokens.space6),
+      body: SafeArea(
+        child: ListView(
+        padding: EdgeInsets.fromLTRB(
+          DesignTokens.space6,
+          DesignTokens.space3,
+          DesignTokens.space6,
+          bottomPad,
+        ),
         children: [
+          const PremiumPageHeader(
+            title: 'İçgörüler ve Kadro',
+            subtitle: 'Performansı izle, ekibini güçlendir.',
+          ),
+          const _AdminReportsPerformanceCard(),
+          const SizedBox(height: DesignTokens.space4),
           if (canViewCallCenter) ...[
-            InkWell(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            PremiumIconTile(
+              icon: Icons.phone_callback_rounded,
+              title: ProductLabels.callCenter,
+              subtitle: 'Danışman, müşteri ve kayıt görünümleri tek yerde.',
               onTap: () => context.push(AppRouter.routeCommandCenter),
-              child: const _SectionCard(
-                icon: Icons.phone_callback_rounded,
-                title: ProductLabels.callCenter,
-                subtitle: 'Danışman, müşteri ve kayıt görünümleri tek yerde.',
-              ),
             ),
             const SizedBox(height: DesignTokens.space4),
           ],
@@ -136,33 +140,27 @@ class AdminReportsPage extends ConsumerWidget {
             ),
           const _AdminReportsPerfSection(),
           const SizedBox(height: DesignTokens.space4),
-          InkWell(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          PremiumIconTile(
+            icon: Icons.groups_rounded,
+            title: 'Kadro ve yetkiler',
+            subtitle: 'Danışmanlar, ekip dağılımı ve erişim ayarları',
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AdminConsultantsPage()),
               );
             },
-            child: const _SectionCard(
-              icon: Icons.groups_rounded,
-              title: 'Kadro ve yetkiler',
-              subtitle: 'Danışmanlar, ekip dağılımı ve erişim ayarları',
-            ),
           ),
           if (canManageTeams) ...[
             const SizedBox(height: DesignTokens.space4),
-            InkWell(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            PremiumIconTile(
+              icon: Icons.group_work_rounded,
+              title: 'Ekipler',
+              subtitle: 'Kurulum, lider ataması ve ekip yapısı',
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const AdminTeamsPage()),
                 );
               },
-              child: const _SectionCard(
-                icon: Icons.group_work_rounded,
-                title: 'Ekipler',
-                subtitle: 'Kurulum, lider ataması ve ekip yapısı',
-              ),
             ),
           ],
           if (showAuditComingSoon) ...[
@@ -175,16 +173,76 @@ class AdminReportsPage extends ConsumerWidget {
           ],
           if (canViewPipeline) ...[
             const SizedBox(height: DesignTokens.space4),
-            InkWell(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            PremiumIconTile(
+              icon: Icons.view_kanban_rounded,
+              title: 'Fırsat hattı',
+              subtitle: 'Canlı kanban görünümü; aşamalar ve açık fırsatlar',
               onTap: () => context.push(AppRouter.routePipeline),
-              child: const _SectionCard(
-                icon: Icons.view_kanban_rounded,
-                title: 'Fırsat hattı',
-                subtitle: 'Canlı kanban görünümü; aşamalar ve açık fırsatlar',
-              ),
             ),
           ],
+          const SizedBox(height: DesignTokens.space6),
+          PremiumSurfaceCard(
+            goldBorder: true,
+            child: Row(
+              children: [
+                Icon(Icons.star_rounded, color: ext.accent, size: 28),
+                const SizedBox(width: DesignTokens.space4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Veriler seninle anlam kazanır.',
+                        style: AppTypography.cardHeading(context),
+                      ),
+                      Text(
+                        'Raporlarını keşfet, ekibini yönet, büyümeyi hızlandır.',
+                        style: AppTypography.meta(context),
+                      ),
+                    ],
+                  ),
+                ),
+                PremiumCtaButton(
+                  expanded: false,
+                  label: 'Raporları aç',
+                  icon: Icons.bar_chart_rounded,
+                  onPressed: () => context.push(AppRouter.routeCommandCenter),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+}
+
+class _AdminReportsPerformanceCard extends StatelessWidget {
+  const _AdminReportsPerformanceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return PremiumSurfaceCard(
+      goldBorder: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const PremiumSectionHeader(
+            label: 'Genel performans',
+            icon: Icons.insights_rounded,
+          ),
+          Text(
+            'Çağrı ve kapanış kayıtları biriktikçe ekip performans özeti burada derlenecek.',
+            style: AppTypography.meta(context).copyWith(height: 1.4),
+          ),
+          const SizedBox(height: DesignTokens.space3),
+          const _ComingSoonReportCard(
+            icon: Icons.analytics_rounded,
+            title: 'Performans görünümü',
+            subtitle:
+                'Çağrı ve kapanış eğilimleri için ayrıntılı rapor yakında',
+          ),
         ],
       ),
     );

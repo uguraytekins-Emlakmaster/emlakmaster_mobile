@@ -46,6 +46,8 @@ abstract final class DashboardLayoutTokens {
   }
 
   static double contentScrollBottomInset(BuildContext context) {
-    return DesignTokens.space6;
+    final bottomSafe = MediaQuery.paddingOf(context).bottom;
+    // Yüzen premium alt dock + nefes payı
+    return DesignTokens.space6 + 76 + bottomSafe;
   }
 }

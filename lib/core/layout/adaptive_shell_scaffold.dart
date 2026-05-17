@@ -9,6 +9,7 @@ import '../logging/app_logger.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
+import '../../widgets/premium/premium_bottom_nav_dock.dart';
 
 /// Nav item for [AdaptiveShellScaffold].
 class AdaptiveNavItem {
@@ -577,63 +578,12 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       floatingActionButton: widget.fab,
       floatingActionButtonLocation:
           widget.fabLocation ?? FloatingActionButtonLocation.centerFloat,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: surface,
-          border: Border(
-              top: BorderSide(color: ext.border.withValues(alpha: 0.55))),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(widget.navItems.length, (i) {
-                final item = widget.navItems[i];
-                final isSelected = selectedNavIndex == i;
-                return Expanded(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _onNavTap(i),
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusMd),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              item.icon,
-                              size: 22,
-                              color: isSelected ? primary : navUnselectedColor,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              item.label,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                height: 1.2,
-                                letterSpacing: 0.15,
-                                color:
-                                    isSelected ? primary : navUnselectedColor,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
+      bottomNavigationBar: ColoredBox(
+        color: Colors.transparent,
+        child: PremiumBottomNavDock(
+          items: widget.navItems,
+          selectedIndex: selectedNavIndex,
+          onTap: _onNavTap,
         ),
       ),
     );

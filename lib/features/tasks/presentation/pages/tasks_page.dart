@@ -7,8 +7,8 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
-import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_insight_provider.dart';
@@ -33,14 +33,9 @@ class _TasksPageState extends ConsumerState<TasksPage> {
   Widget build(BuildContext context) {
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
     return Scaffold(
       backgroundColor: AppThemeExtension.of(context).background,
-      appBar: emlakAppBar(
-        context,
-        backgroundColor: AppThemeExtension.of(context).background,
-        foregroundColor: AppThemeExtension.of(context).textPrimary,
-        title: const Text(ProductLabels.myTasks),
-      ),
       body: uid.isEmpty
           ? Center(
               child: Text(
@@ -48,7 +43,16 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 style: AppTypography.body(context),
               ),
             )
-          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          : SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const PremiumPageHeader(
+                    title: ProductLabels.myTasks,
+                    subtitle: 'Tüm görevlerini tek yerde yönet.',
+                  ),
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               key: ValueKey(_tasksRetryKey),
               stream: FirestoreService.tasksByAdvisorStream(uid),
               builder: (context, snapshot) {
@@ -93,17 +97,33 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     .where((d) => !_deletingIds.contains(d.id))
                     .toList();
                 if (docs.isEmpty) {
-                  return Center(
-                    child: EmptyState(
-                      premiumVisual: true,
-                      grouped: true,
-                      icon: Icons.task_alt_rounded,
-                      title: AppLocalizations.of(context).t('empty_tasks'),
-                      subtitle:
-                          AppLocalizations.of(context).t('empty_tasks_sub'),
-                      actionLabel:
-                          AppLocalizations.of(context).t('empty_tasks_cta'),
-                      onAction: () => _showAddTaskDialog(context, ref, uid),
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      DesignTokens.space5,
+                      0,
+                      DesignTokens.space5,
+                      bottomPad,
+                    ),
+                    child: Column(
+                      children: [
+                        PremiumEmptyState(
+                          icon: Icons.task_alt_rounded,
+                          title: AppLocalizations.of(context).t('empty_tasks'),
+                          subtitle:
+                              AppLocalizations.of(context).t('empty_tasks_sub'),
+                          actionLabel:
+                              AppLocalizations.of(context).t('empty_tasks_cta'),
+                          onAction: () => _showAddTaskDialog(context, ref, uid),
+                        ),
+                        const SizedBox(height: DesignTokens.space6),
+                        const PremiumSectionHeader(
+                          label: 'Hızlı işlemler',
+                          icon: Icons.bolt_rounded,
+                        ),
+                        const _TasksQuickActionsRow(),
+                        const SizedBox(height: DesignTokens.space6),
+                        const _TasksWeeklyStatsStrip(),
+                      ],
                     ),
                   );
                 }
@@ -115,11 +135,11 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   clipBehavior: Clip.none,
                   children: [
                     ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(
+                      padding: EdgeInsets.fromLTRB(
                         DesignTokens.space6,
                         DesignTokens.space4,
                         DesignTokens.space6,
-                        88,
+                        bottomPad + 72,
                       ),
                       itemCount: docs.length + headerCount,
                       cacheExtent: 300,
@@ -177,6 +197,10 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   ],
                 );
               },
+            ),
+                  ),
+                ],
+              ),
             ),
     );
   }
@@ -752,5 +776,153 @@ class _TaskTile extends StatelessWidget {
     if (diff == -1) return 'Dün (geçti)';
     if (diff < -1) return '${-diff} gün önce (geçti)';
     return '${due.day}.${due.month}.${due.year}';
+  }
+}
+
+class _TasksQuickActionsRow extends StatelessWidget {
+  const _TasksQuickActionsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _TasksQuickActionCard(
+            icon: Icons.event_repeat_rounded,
+            title: 'Takip et',
+            subtitle: 'Ajandaya ekle',
+          ),
+        ),
+        const SizedBox(width: DesignTokens.space2),
+        Expanded(
+          child: _TasksQuickActionCard(
+            icon: Icons.notifications_active_outlined,
+            title: 'Hatırlat',
+            subtitle: 'Bildirim kur',
+          ),
+        ),
+        const SizedBox(width: DesignTokens.space2),
+        Expanded(
+          child: _TasksQuickActionCard(
+            icon: Icons.timer_outlined,
+            title: 'Tekrar eden',
+            subtitle: 'Rutin görev',
+          ),
+        ),
+        const SizedBox(width: DesignTokens.space2),
+        Expanded(
+          child: _TasksQuickActionCard(
+            icon: Icons.bar_chart_rounded,
+            title: 'Raporlar',
+            subtitle: 'Özet gör',
+            onTap: () => context.push(AppRouter.routePipeline),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TasksQuickActionCard extends StatelessWidget {
+  const _TasksQuickActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return PremiumSurfaceCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(DesignTokens.space3),
+      child: Column(
+        children: [
+          Icon(icon, color: ext.accent, size: 22),
+          const SizedBox(height: DesignTokens.space2),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: ext.textPrimary,
+              fontSize: DesignTokens.fontSizeXs,
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: ext.textTertiary,
+              fontSize: 9,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TasksWeeklyStatsStrip extends StatelessWidget {
+  const _TasksWeeklyStatsStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    const stats = [
+      ('0', 'Tamamlanan'),
+      ('0', 'Devam eden'),
+      ('0', 'Hatırlatma'),
+      ('0%', 'Tamamlama'),
+    ];
+    return PremiumSurfaceCard(
+      padding: const EdgeInsets.symmetric(
+        vertical: DesignTokens.space4,
+        horizontal: DesignTokens.space3,
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < stats.length; i++) ...[
+            if (i > 0)
+              Container(
+                width: 1,
+                height: 36,
+                color: AppThemeExtension.of(context)
+                    .border
+                    .withValues(alpha: 0.35),
+              ),
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    stats[i].$1,
+                    style: AppTypography.metricValue(context).copyWith(
+                      fontSize: DesignTokens.fontSizeLg,
+                    ),
+                  ),
+                  Text(
+                    stats[i].$2,
+                    style: TextStyle(
+                      color: AppThemeExtension.of(context).textTertiary,
+                      fontSize: 9,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

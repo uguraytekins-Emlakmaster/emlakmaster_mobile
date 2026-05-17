@@ -29,6 +29,7 @@ import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:emlakmaster_mobile/widgets/session_avatar_button.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -85,8 +86,39 @@ class ConsultantDashboardPage extends ConsumerWidget {
                       children: [
                         _DashboardHeroHeader(
                           greeting: greeting,
-                          tagline:
-                              'Bugünkü oyun alanın — çağrı, müşteri ve momentum tek ekranda.',
+                          tagline: 'Danışman Paneli',
+                        ),
+                        const SizedBox(height: DesignTokens.space4),
+                        PremiumSearchBar(
+                          hintText: 'Müşteri, ilan veya görev ara…',
+                          showMic: true,
+                          onSubmitted: (_) {
+                            ref
+                                .read(mainShellShortcutProvider.notifier)
+                                .enqueue(MainShellShortcut.openCustomersTab);
+                            context.go(AppRouter.routeHome);
+                          },
+                          trailing: Material(
+                            color: ext.accent.withValues(alpha: 0.12),
+                            borderRadius:
+                                BorderRadius.circular(DesignTokens.radiusMd),
+                            child: InkWell(
+                              onTap: () {
+                                ref
+                                    .read(mainShellShortcutProvider.notifier)
+                                    .enqueue(
+                                        MainShellShortcut.openCustomersTab);
+                                context.go(AppRouter.routeHome);
+                              },
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusMd),
+                              child: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Icon(Icons.auto_awesome_rounded,
+                                    color: ext.accent, size: 22),
+                              ),
+                            ),
+                          ),
                         ),
                         const SizedBox(
                             height: DashboardLayoutTokens.gapHeroToOperational),
@@ -269,9 +301,27 @@ class _DashboardHeroHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 2),
-          child: SessionAvatarButton(size: 44),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: SessionAvatarButton(size: 48),
+            ),
+            Positioned(
+              right: -1,
+              bottom: 0,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: ext.success,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: ext.background, width: 2),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -285,20 +335,29 @@ class _DashboardHeroHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: DesignTokens.space1),
-              Text(
-                AppLocalizations.of(context).t('my_summary'),
-                style: AppTypography.pageHeading(context),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      tagline,
+                      style: AppTypography.pageHeading(context),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(Icons.verified_rounded,
+                      size: 20, color: ext.accent.withValues(alpha: 0.9)),
+                ],
               ),
               const SizedBox(height: DesignTokens.space2),
               Text(
-                tagline,
+                'Bugünkü oyun alanın — çağrı, müşteri ve momentum tek ekranda.',
                 style: AppTypography.meta(context).copyWith(
                   color: ext.textTertiary,
                   height: 1.35,
                 ),
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -384,39 +443,13 @@ class _ConsultantActionAnchor extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardM);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        color: ext.surfaceElevated,
-        border: Border.all(color: ext.border.withValues(alpha: 0.55)),
-        boxShadow: [
-          BoxShadow(
-            color: ext.shadowColor.withValues(alpha: 0.16),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
+      decoration: ext.premiumSurfaceDecoration(
+        goldBorder: true,
+        radius: DashboardLayoutTokens.radiusCardM,
       ),
       child: ClipRRect(
         borderRadius: radius,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              height: 3,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      ext.accent.withValues(alpha: 0.85),
-                      ext.accent.withValues(alpha: 0.15),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Padding(
+        child: Padding(
               padding: const EdgeInsets.fromLTRB(
                 DesignTokens.space4,
                 DesignTokens.space5,
@@ -549,9 +582,7 @@ class _ConsultantActionAnchor extends StatelessWidget {
                 },
               ),
             ),
-          ],
         ),
-      ),
     );
   }
 }
@@ -770,11 +801,13 @@ class _KpiChip extends StatelessWidget {
         horizontal: emphasized ? DesignTokens.space3 + 1 : DesignTokens.space3,
         vertical: DesignTokens.space3,
       ),
-      decoration: BoxDecoration(
-        color: emphasized
+      decoration: ext.premiumSurfaceDecoration(
+        goldBorder: emphasized,
+        radius: DashboardLayoutTokens.radiusCardS,
+        baseColor: emphasized
             ? ext.accent.withValues(alpha: 0.06)
             : ext.surfaceElevated,
-        borderRadius: radius,
+      ).copyWith(
         border: Border.all(color: borderColor),
       ),
       child: Row(

@@ -37,7 +37,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/design_tokens.dart';
-import '../../../../shared/widgets/emlak_app_bar.dart';
+import '../../../../widgets/premium/premium_ui_kit.dart';
 import '../../../../screens/placeholder_pages.dart'
     show NotificationsSection, ThemeSection;
 
@@ -66,16 +66,9 @@ class SettingsPage extends ConsumerWidget {
     final localeState = ref.watch(localeProvider);
     final theme = Theme.of(context);
 
+    final ext = AppThemeExtension.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: emlakAppBar(
-        context,
-        title: Text(l10n.t('title_settings')),
-        backgroundColor:
-            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
-        foregroundColor:
-            theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
-      ),
+      backgroundColor: ext.background,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
@@ -85,8 +78,14 @@ class SettingsPage extends ConsumerWidget {
             DesignTokens.space8,
           ),
           children: [
-            const _SectionHeader(
-                title: 'Hesap Alanı', icon: Icons.person_rounded),
+            PremiumPageHeader(
+              title: l10n.t('title_settings'),
+              subtitle: 'Sisteminizi dilediğiniz gibi yönetin.',
+            ),
+            const PremiumSectionHeader(
+              label: 'Hesap Alanı',
+              icon: Icons.person_rounded,
+            ),
             _sectionCard(
               context,
               children: [
@@ -809,21 +808,13 @@ class SettingsPage extends ConsumerWidget {
   Widget _sectionCard(BuildContext context,
       {required List<Widget> children, bool muted = false}) {
     final ext = AppThemeExtension.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: muted
+    return DecoratedBox(
+      decoration: ext.premiumSurfaceDecoration(
+        goldBorder: !muted,
+        radius: DesignTokens.radiusCardPrimary,
+        baseColor: muted
             ? ext.surfaceElevated.withValues(alpha: 0.88)
             : ext.surfaceElevated,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-        border: Border.all(
-            color: ext.border.withValues(alpha: muted ? 0.35 : 0.45)),
-        boxShadow: [
-          BoxShadow(
-            color: ext.shadowColor.withValues(alpha: muted ? 0.06 : 0.12),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

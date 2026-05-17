@@ -124,6 +124,44 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     );
   }
 
+  /// Premium CRM kartı — obsidyen → grafit gradient, isteğe bağlı şampanya kenar.
+  BoxDecoration premiumSurfaceDecoration({
+    bool goldBorder = false,
+    double radius = DesignTokens.radiusCardPrimary,
+    Color? baseColor,
+  }) {
+    final base = baseColor ?? card;
+    final top = Color.lerp(base, surfaceElevated, 0.35)!;
+    final bottom = Color.lerp(base, background, 0.2)!;
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[top, bottom],
+      ),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: goldBorder
+            ? brandPrimary.withValues(alpha: 0.42)
+            : border.withValues(alpha: 0.45),
+        width: goldBorder ? 1 : 0.75,
+      ),
+      boxShadow: <BoxShadow>[
+        BoxShadow(
+          color: shadowColor.withValues(alpha: 0.28),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+        if (goldBorder)
+          BoxShadow(
+            color: brandPrimary.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 2),
+          ),
+      ],
+    );
+  }
+
   /// Pipeline / şampiyon kartları.
   BoxDecoration championCardDecoration({bool withGlow = false, Color? borderColor}) {
     return BoxDecoration(

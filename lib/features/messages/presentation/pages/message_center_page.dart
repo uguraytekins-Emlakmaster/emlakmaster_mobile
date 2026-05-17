@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/features/messages/domain/team_channel_type.da
 import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_providers.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -69,15 +70,70 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(child: _header(context, ext)),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
+              child: PremiumPageHeader(
+                title: ProductLabels.messageCenter,
+                subtitle: 'Tüm platformlardan gelen mesajlar tek yerde.',
+                showBack: context.canPop(),
+              ),
+            ),
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
-                child: _InfoBanner(
-                  icon: Icons.groups_rounded,
-                  text:
-                      'Ofis ekibinizle anlık mesajlaşın. Mesajlar Firestore üzerinden canlı senkronize edilir.',
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    PremiumStatusPill(
+                      label: 'Canlı sohbet',
+                      color: ext.success,
+                    ),
+                    const SizedBox(width: 8),
+                    PremiumStatusPill(
+                      label: 'Önizleme: harici kanallar',
+                      outlined: true,
+                    ),
+                  ],
                 ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                child: PremiumInfoBanner(
+                  message:
+                      'Ofis ekibinizle anlık mesajlaşın. WhatsApp / Instagram entegrasyonu hazırlık aşamasında — şu an yalnızca ekip sohbeti canlıdır.',
+                  icon: Icons.groups_rounded,
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: channelsAsync.when(
+                data: (channels) {
+                  final total = channels.length + 1;
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: PremiumMetricCard(
+                            icon: Icons.forum_outlined,
+                            label: 'Toplam konuşma',
+                            value: '$total',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: PremiumMetricCard(
+                            icon: Icons.mark_chat_unread_outlined,
+                            label: 'Okunmamış',
+                            value: '—',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
               ),
             ),
             SliverToBoxAdapter(
