@@ -150,7 +150,10 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
     );
     final cidTrim = custId?.trim();
 
-    final card = CrmCallOperatingCard(
+    final card = Semantics(
+      label: 'Çağrı kaydı: $title',
+      button: true,
+      child: CrmCallOperatingCard(
       dense: true,
       rhythm: cardRhythm,
       showPriorityRail: showPriorityRail,
@@ -210,6 +213,7 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
           child: Icon(Icons.call_rounded, color: ext.accent, size: 18),
         ),
         trailing: trailing,
+      ),
       ),
     );
 

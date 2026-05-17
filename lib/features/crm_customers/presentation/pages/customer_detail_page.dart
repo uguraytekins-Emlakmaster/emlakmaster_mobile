@@ -12,6 +12,9 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_timeline_row.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_timeline_rows_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/manager_customer_crm_call_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_insight_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_smart_task_strip.dart';
@@ -504,24 +507,16 @@ class _PortfolioMatchSection extends ConsumerWidget {
   }
 }
 
-class _CustomerHeader extends StatelessWidget {
+class _CustomerHeader extends ConsumerWidget {
   const _CustomerHeader({required this.customerId});
   final String customerId;
 
-  static DateTime? _parseDate(dynamic v) {
-    if (v == null) return null;
-    if (v is Timestamp) return v.toDate();
-    if (v is DateTime) return v;
-    return null;
-  }
-
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirestoreService.customerStream(customerId),
-      builder: (context, snapshot) {
-        final ext = AppThemeExtension.of(context);
-        if (!snapshot.hasData || snapshot.data?.data() == null) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entityAsync = ref.watch(customerEntityByIdProvider(customerId));
+    final ext = AppThemeExtension.of(context);
+    return entityAsync.when(
+      loading: () {
           return Container(
             padding: const EdgeInsets.all(DesignTokens.space5),
             decoration: BoxDecoration(
@@ -543,17 +538,16 @@ class _CustomerHeader extends StatelessWidget {
               ],
             ),
           );
-        }
-        final data = snapshot.data!.data()!;
-        final fullName = data['fullName'] as String? ??
-            data['customerIntent'] as String? ??
-            'Müşteri';
-        final phone =
-            data['primaryPhone'] as String? ?? data['phone'] as String? ?? '—';
-        final email = data['email'] as String? ?? '—';
-        final nextStep = data['lastNextStepSuggestion'] as String?;
-        final temp = (data['leadTemperature'] as num?)?.toDouble();
-        final updatedAt = _parseDate(data['updatedAt']);
+      },
+      error: (_, __) => const SizedBox.shrink(),
+      data: (entity) {
+        if (entity == null) return const SizedBox.shrink();
+        final fullName = entity.fullName ?? 'Müşteri';
+        final phone = entity.primaryPhone ?? '—';
+        final email = entity.email ?? '—';
+        final nextStep = entity.nextSuggestedAction;
+        final temp = entity.leadTemperature;
+        final updatedAt = entity.updatedAt;
         return Container(
           padding: const EdgeInsets.all(DesignTokens.space5),
           decoration: BoxDecoration(
@@ -1059,130 +1053,66 @@ class _ActionChip extends StatelessWidget {
   }
 }
 
-class _CustomerTimeline extends StatelessWidget {
+class _CustomerTimeline extends ConsumerWidget {
   const _CustomerTimeline({required this.customerId});
   final String customerId;
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirestoreService.callSummariesByCustomerStream(customerId),
-      builder: (context, callSnap) {
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirestoreService.notesByCustomerStream(customerId),
-          builder: (context, noteSnap) {
-            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirestoreService.visitsByCustomerStream(customerId),
-              builder: (context, visitSnap) {
-                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirestoreService.offersByCustomerStream(customerId),
-                  builder: (context, offerSnap) {
-                    final ext = AppThemeExtension.of(context);
-                    final items = <_TimelineRow>[];
-                    add(String id, TimelineItemType type, String title,
-                        String subtitle, DateTime at) {
-                      items.add(_TimelineRow(
-                          id: id,
-                          type: type,
-                          title: title,
-                          subtitle: subtitle,
-                          at: at));
-                    }
-
-                    for (final d in callSnap.data?.docs ?? []) {
-                      final d2 = d.data();
-                      final at = (d2['createdAt'] as Timestamp?)?.toDate() ??
-                          DateTime.now();
-                      add(d.id, TimelineItemType.callSummary, 'Çağrı özeti',
-                          d2['customerIntent'] as String? ?? '—', at);
-                    }
-                    for (final d in noteSnap.data?.docs ?? []) {
-                      final d2 = d.data();
-                      final at = (d2['createdAt'] as Timestamp?)?.toDate() ??
-                          DateTime.now();
-                      add(d.id, TimelineItemType.note, 'Not',
-                          d2['content'] as String? ?? '—', at);
-                    }
-                    for (final d in visitSnap.data?.docs ?? []) {
-                      final d2 = d.data();
-                      final at = (d2['scheduledAt'] as Timestamp?)?.toDate() ??
-                          (d2['createdAt'] as Timestamp?)?.toDate() ??
-                          DateTime.now();
-                      add(d.id, TimelineItemType.visit, 'Ziyaret',
-                          d2['notes'] as String? ?? '—', at);
-                    }
-                    for (final d in offerSnap.data?.docs ?? []) {
-                      final d2 = d.data();
-                      final amount = d2['amount'] ?? d2['price'];
-                      final at = (d2['createdAt'] as Timestamp?)?.toDate() ??
-                          DateTime.now();
-                      add(d.id, TimelineItemType.offer, 'Teklif',
-                          amount != null ? '$amount' : '—', at);
-                    }
-                    items.sort((a, b) => b.at.compareTo(a.at));
-                    if (items.isEmpty) {
-                      return Container(
-                        padding: const EdgeInsets.all(DesignTokens.space6),
-                        decoration: BoxDecoration(
-                          color: ext.surface.withValues(alpha: 0.5),
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.radiusMd),
-                          border: Border.all(color: ext.border),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(Icons.timeline_rounded,
-                                size: 40, color: ext.textTertiary),
-                            const SizedBox(height: DesignTokens.space3),
-                            Text(
-                              'Henüz kayıt yok',
-                              style: TextStyle(
-                                  color: ext.textSecondary,
-                                  fontSize: DesignTokens.fontSizeSm),
-                            ),
-                            Text(
-                              'Çağrı özeti, not, ziyaret veya teklif eklendikçe burada görünecek.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: ext.textTertiary,
-                                  fontSize: DesignTokens.fontSizeXs),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    return Column(
-                      children:
-                          items.map((e) => _TimelineTile(row: e)).toList(),
-                    );
-                  },
-                );
-              },
-            );
-          },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final timelineAsync =
+        ref.watch(customerTimelineRowsProvider(customerId));
+    final ext = AppThemeExtension.of(context);
+    return timelineAsync.when(
+      loading: () => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(DesignTokens.space6),
+          child: CircularProgressIndicator(
+              strokeWidth: 2, color: ext.accent),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (items) {
+        if (items.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(DesignTokens.space6),
+            decoration: BoxDecoration(
+              color: ext.surface.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              border: Border.all(color: ext.border),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.timeline_rounded,
+                    size: 40, color: ext.textTertiary),
+                const SizedBox(height: DesignTokens.space3),
+                Text(
+                  'Henüz kayıt yok',
+                  style: TextStyle(
+                      color: ext.textSecondary,
+                      fontSize: DesignTokens.fontSizeSm),
+                ),
+                Text(
+                  'Çağrı özeti, not, ziyaret veya teklif eklendikçe burada görünecek.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: ext.textTertiary,
+                      fontSize: DesignTokens.fontSizeXs),
+                ),
+              ],
+            ),
+          );
+        }
+        return Column(
+          children: items.map((e) => _TimelineTile(row: e)).toList(),
         );
       },
     );
   }
 }
 
-class _TimelineRow {
-  _TimelineRow(
-      {required this.id,
-      required this.type,
-      required this.title,
-      required this.subtitle,
-      required this.at});
-  final String id;
-  final TimelineItemType type;
-  final String title;
-  final String subtitle;
-  final DateTime at;
-}
-
 class _TimelineTile extends StatelessWidget {
   const _TimelineTile({required this.row});
-  final _TimelineRow row;
+  final CustomerTimelineRow row;
 
   IconData get _icon {
     switch (row.type) {

@@ -25,6 +25,8 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_name_lookup_provider.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_timing.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_display_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/firestore_agent_display_names_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
@@ -804,7 +806,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         ? AppThemeExtension.of(context).textSecondary
         : AppThemeExtension.of(context).textSecondary;
     final ext = AppThemeExtension.of(context);
-    final callsAsync = ref.watch(consultantCallsStreamProvider);
+    final callsAsync = ref.watch(consultantCallsDisplayProvider);
     final currentUid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     final agentNames =

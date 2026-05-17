@@ -23,6 +23,7 @@ abstract final class AnalyticsEvents {
   static const String callsDeviceSyncError = 'calls_device_sync_error';
   static const String magicCallTap = 'magic_call_tap';
   static const String consultantCallsTap = 'consultant_calls_tap';
+  static const String screenContentReady = 'screen_content_ready';
   static const String limitReachedCall = 'limit_reached_call';
   static const String limitReachedAi = 'limit_reached_ai';
   static const String upgradeClicked = 'upgrade_clicked';
@@ -36,6 +37,8 @@ abstract final class AnalyticsEvents {
 
   // Param anahtarları (tutarlılık)
   static const String paramCount = 'count';
+  static const String paramScreen = 'screen';
+  static const String paramDurationMs = 'duration_ms';
   static const String paramListingId = 'listing_id';
   static const String paramSource = 'source';
   static const String paramSetting = 'setting';

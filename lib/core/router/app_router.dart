@@ -387,7 +387,7 @@ class AppRouter {
             final extra = state.extra as Map<String, dynamic>? ?? {};
             final officeId = extra['officeId'] as String? ?? '';
             final channelId = extra['channelId'] as String? ?? '';
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: TeamThreadPage(
@@ -396,9 +396,6 @@ class AppRouter {
                 title: extra['title'] as String? ?? 'Sohbet',
                 subtitle: extra['subtitle'] as String? ?? '',
               ),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -506,13 +503,10 @@ class AppRouter {
           path: routeListingDetail,
           pageBuilder: (context, state) {
             final id = state.pathParameters['id'] ?? '';
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: ListingDetailPage(listingId: id),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -544,13 +538,10 @@ class AppRouter {
           path: routeRainbowAnalytics,
           pageBuilder: (context, state) {
             final listingId = state.uri.queryParameters['listingId'];
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: RainbowAnalyticsCenterPage(prefillListingId: listingId),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -570,13 +561,10 @@ class AppRouter {
               regionId: id,
               extra: state.extra,
             );
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: RegionInsightPage(region: region),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -592,16 +580,13 @@ class AppRouter {
           path: routePlatformSetupWizard,
           pageBuilder: (context, state) {
             final extra = state.extra as PlatformSetupWizardArgs?;
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: PlatformSetupWizardPage(
                 initialPlatform: extra?.initialPlatform,
                 editMode: extra?.editMode ?? false,
               ),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),
@@ -618,13 +603,10 @@ class AppRouter {
           pageBuilder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
             final taskId = extra?['importTaskId'] as String?;
-            return CustomTransitionPage<void>(
+            return fastFadePage<void>(
               key: state.pageKey,
               name: state.matchedLocation,
               child: MyListingsPage(initialImportTaskId: taskId),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) =>
-                      FadeTransition(opacity: animation, child: child),
             );
           },
         ),

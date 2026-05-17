@@ -1,0 +1,32 @@
+---
+description: Emlak Master shell ve liste performans sözleşmesi
+globs:
+  - "**/emlakmaster_mobile/lib/**"
+alwaysApply: false
+---
+
+# Performans sözleşmesi (emlakmaster_mobile)
+
+## Shell ve sekmeler
+- Tab gövdeleri: `ShellTabKeepAlive` + `RepaintBoundary`.
+- Sekme değişiminde yalnızca strip/banner için `ValueListenableBuilder`; tüm `Column` için `setState` yok.
+
+## Listeler
+- Tek `CustomScrollView` + `SliverList`; iç içe `ListView` kullanma.
+- Arama: `DebouncedSearchController` (~280 ms).
+- Satır başına `ref.watch` yok; liste `*RowSnapshotsProvider` veya DTO ile beslenir.
+
+## Stream / Riverpod
+- İç içe `StreamBuilder` yerine `StreamProvider` + `select`.
+- Zayıf ağ: `*DisplayProvider` + stale cache (çağrı listesi örneği: `consultantCallsDisplayProvider`).
+
+## Navigasyon
+- Sık CRM modalları: `fastFadePage` (120 ms).
+- Auth/shell: `NoTransitionPage`.
+
+## Görsel maliyet
+- `BackdropFilter` yalnızca `!AppLifecyclePowerService.shouldReduceMotion` iken.
+- Ağ görselleri: `CachedNetworkImage` + `memCacheWidth`.
+
+## Ölçüm
+- İlk içerik hazır: `logShellScreenReady(screenName, elapsedMs)`.

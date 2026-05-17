@@ -12,7 +12,7 @@ import 'package:emlakmaster_mobile/features/listing_import/presentation/provider
 import 'package:emlakmaster_mobile/features/listing_import/presentation/widgets/listing_import_shimmer.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:emlakmaster_mobile/features/listing_import/presentation/widgets/listing_thumbnail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -565,23 +565,15 @@ class _ListingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: listing.images.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: listing.images.first,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 640,
-                      errorWidget: (_, __, ___) => Container(
-                        color: AppThemeExtension.of(context).surfaceElevated,
-                        child: const Icon(Icons.image_not_supported_outlined),
-                      ),
-                    )
-                  : Container(
+            listing.images.isNotEmpty
+                ? ListingThumbnail(imageUrl: listing.images.first)
+                : AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Container(
                       color: AppThemeExtension.of(context).surfaceElevated,
                       child: const Icon(Icons.photo_outlined),
                     ),
-            ),
+                  ),
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
