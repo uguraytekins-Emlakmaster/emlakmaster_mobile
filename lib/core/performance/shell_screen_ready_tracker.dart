@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/performance/shell_screen_timing.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Shell / ağır ekran — ilk içerik hazır olduğunda tek seferlik analytics.
@@ -33,4 +34,47 @@ void listenShellScreenReady<T>({
       itemCount: itemCount?.call(next.requireValue),
     );
   }, fireImmediately: true);
+}
+
+/// Alt ağaç sarmalayıcı — shell sekmelerinde tek satır analytics bağlantısı.
+class ShellScreenReadyListener extends ConsumerStatefulWidget {
+  const ShellScreenReadyListener({
+    super.key,
+    required this.screenName,
+    required this.provider,
+    required this.child,
+    this.itemCount,
+  });
+
+  final String screenName;
+  final ProviderListenable<AsyncValue<dynamic>> provider;
+  final int? Function(dynamic value)? itemCount;
+  final Widget child;
+
+  @override
+  ConsumerState<ShellScreenReadyListener> createState() =>
+      _ShellScreenReadyListenerState();
+}
+
+class _ShellScreenReadyListenerState
+    extends ConsumerState<ShellScreenReadyListener> {
+  late final ShellScreenReadyTracker _tracker;
+
+  @override
+  void initState() {
+    super.initState();
+    _tracker = ShellScreenReadyTracker(widget.screenName);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(widget.provider, (previous, next) {
+      if (next.hasValue) {
+        _tracker.onContentReady(
+          itemCount: widget.itemCount?.call(next.requireValue),
+        );
+      }
+    });
+    return widget.child;
+  }
 }

@@ -15,7 +15,9 @@ import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broke
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/manager_revenue_summary_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broker_dashboard_alerts_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/smart_task_suggestions_card.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/dashboard_kpi_section.dart';
+import 'package:emlakmaster_mobile/screens/providers/consultant_dashboard_kpi_providers.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/lean_admin_dashboard_balance_cards.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/manager_platform_connections_summary_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
@@ -309,7 +311,13 @@ class DashboardPage extends ConsumerWidget {
           ),
         ),
       );
-      return WelcomePatronOverlay(child: content);
+      return WelcomePatronOverlay(
+        child: ShellScreenReadyListener(
+          screenName: 'admin_dashboard',
+          provider: todayCallsCountProvider,
+          child: content,
+        ),
+      );
     } catch (e, st) {
       debugPrint('DashboardPage build error: $e');
       debugPrint(st.toString());

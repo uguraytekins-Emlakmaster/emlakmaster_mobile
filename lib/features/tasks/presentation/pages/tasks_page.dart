@@ -18,7 +18,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/tasks/domain/task_recurrence.dart';
+import 'package:emlakmaster_mobile/features/tasks/presentation/providers/advisor_tasks_display_provider.dart';
+import 'package:emlakmaster_mobile/features/tasks/presentation/providers/advisor_tasks_stream_provider.dart';
 
 /// Danışman görevleri: vade tarihine göre liste, yapıldı işaretleme, görev ekleme.
 class TasksPage extends ConsumerStatefulWidget {
@@ -29,6 +32,7 @@ class TasksPage extends ConsumerStatefulWidget {
 }
 
 class _TasksPageState extends ConsumerState<TasksPage> {
+  final _readyTracker = ShellScreenReadyTracker('tasks');
   int _tasksRetryKey = 0;
   final Set<String> _deletingIds = <String>{};
 
@@ -55,12 +59,16 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     subtitle: 'Tüm görevlerini tek yerde yönet.',
                   ),
                   Expanded(
-                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    child: Builder(
               key: ValueKey(_tasksRetryKey),
-              stream: FirestoreService.tasksByAdvisorStream(uid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting &&
-                    !snapshot.hasData) {
+              builder: (context) {
+                final tasksAsync = ref.watch(advisorTasksDisplayProvider(uid));
+                ref.listen(advisorTasksDisplayProvider(uid), (previous, next) {
+                  if (next.hasValue) {
+                    _readyTracker.onContentReady(itemCount: next.value!.length);
+                  }
+                });
+                if (tasksAsync.isLoading && !tasksAsync.hasValue) {
                   return Center(
                     child: CircularProgressIndicator(
                       color: AppThemeExtension.of(context).accent,
@@ -68,7 +76,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     ),
                   );
                 }
-                if (snapshot.hasError) {
+                if (tasksAsync.hasError && !tasksAsync.hasValue) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(DesignTokens.space6),
@@ -88,7 +96,11 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                           ),
                           const SizedBox(height: DesignTokens.space4),
                           TextButton(
-                            onPressed: () => setState(() => _tasksRetryKey++),
+                            onPressed: () {
+                              ref.invalidate(advisorTasksStreamProvider(uid));
+                              ref.invalidate(advisorTasksStaleCacheProvider(uid));
+                              setState(() => _tasksRetryKey++);
+                            },
                             child: const Text('Tekrar dene'),
                           ),
                         ],
@@ -96,7 +108,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     ),
                   );
                 }
-                final docs = (snapshot.data?.docs ?? [])
+                final docs = (tasksAsync.valueOrNull ?? [])
                     .where((d) => !_deletingIds.contains(d.id))
                     .toList();
                 if (docs.isEmpty) {
@@ -592,15 +604,19 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     AppFeedback.lightImpact();
     showPremiumScrollableBottomSheet<void>(
       context: context,
-      builder: (ctx) => StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirestoreService.tasksByAdvisorStream(uid),
-        builder: (context, snap) {
-          final docs = (snap.data?.docs ?? [])
-              .where((d) {
-                final r = d.data()['recurrence'];
-                return r is String && r.isNotEmpty;
-              })
-              .toList();
+      builder: (ctx) => Consumer(
+        builder: (context, ref, _) {
+          final snap = ref.watch(advisorTasksStreamProvider(uid));
+          final docs = snap.when(
+            data: (snapshot) => snapshot.docs
+                .where((d) {
+                  final r = d.data()['recurrence'];
+                  return r is String && r.isNotEmpty;
+                })
+                .toList(),
+            loading: () => <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+            error: (_, __) => <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+          );
           return PremiumScrollableBottomSheetShell(
             title: 'Tekrar eden görevler',
             subtitle: docs.isEmpty

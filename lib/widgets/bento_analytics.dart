@@ -1,117 +1,93 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/bento_power_analytics_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class BentoPowerAnalytics extends StatelessWidget {
+class BentoPowerAnalytics extends ConsumerWidget {
   const BentoPowerAnalytics({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    return StreamBuilder<int>(
-      stream: FirestoreService.callsCountStream(),
-      builder: (context, callsSnapshot) {
-        return StreamBuilder<int>(
-          stream: FirestoreService.dealsCountStream(),
-          builder: (context, dealsSnapshot) {
-            final callsCount = callsSnapshot.data ?? 0;
-            final dealsCount = dealsSnapshot.data ?? 0;
-            final isLoading =
-                callsSnapshot.connectionState == ConnectionState.waiting &&
-                    !callsSnapshot.hasData;
+    final snapshotAsync = ref.watch(bentoPowerAnalyticsSnapshotProvider);
 
-            if (isLoading && !callsSnapshot.hasData) {
-              return _AnalyticsLoading();
-            }
-
-            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirestoreService.agentsStream(),
-              builder: (context, agentsSnapshot) {
-                int missed = 0;
-                if (agentsSnapshot.hasData && agentsSnapshot.data!.docs.isNotEmpty) {
-                  for (final doc in agentsSnapshot.data!.docs) {
-                    missed += (doc.data()['missedCalls'] as num?)?.toInt() ?? 0;
-                  }
-                }
-
-                return RepaintBoundary(
-                  child: Container(
-                  decoration: ext.surfaceCardDecoration(
-                    surfaceColor: Color.alphaBlend(
-                      ext.foreground.withValues(alpha: 0.04),
-                      ext.surface,
+    return snapshotAsync.when(
+      loading: () => _AnalyticsLoading(),
+      error: (_, __) => _AnalyticsLoading(),
+      data: (snap) {
+        return RepaintBoundary(
+          child: Container(
+            decoration: ext.surfaceCardDecoration(
+              surfaceColor: Color.alphaBlend(
+                ext.foreground.withValues(alpha: 0.04),
+                ext.surface,
+              ),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Power Analytics',
+                      style: TextStyle(
+                        color: ext.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        color: ext.accent.withValues(alpha: 0.2),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Power Analytics',
-                            style: TextStyle(
-                              color: ext.textPrimary,
-                              fontWeight: FontWeight.w600,
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: ext.accent,
+                              shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(6),
-                              color: ext.accent.withValues(alpha: 0.2),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: BoxDecoration(
-                                    color: ext.accent,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Canlı',
-                                  style: TextStyle(
-                                    color: ext.accent,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                          const SizedBox(width: 4),
+                          Text(
+                            'Canlı',
+                            style: TextStyle(
+                              color: ext.accent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Çağrı & işlem sayıları (calls / deals)',
-                        style: TextStyle(color: ext.textTertiary, fontSize: 11),
-                      ),
-                      const SizedBox(height: 16),
-                      RepaintBoundary(
-                        child: DonutChartsRow(
-                          callTrafficValue: '$callsCount',
-                          callTrafficSub: 'Çağrı (calls)',
-                          missedValue: '$missed',
-                          missedSub: 'Geri dönülmeyen',
-                          dealValue: '$dealsCount',
-                          dealSub: 'İşlem (deals)',
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Çağrı & işlem sayıları (calls / deals)',
+                  style: TextStyle(color: ext.textTertiary, fontSize: 11),
+                ),
+                const SizedBox(height: 16),
+                RepaintBoundary(
+                  child: DonutChartsRow(
+                    callTrafficValue: '${snap.callsCount}',
+                    callTrafficSub: 'Çağrı (calls)',
+                    missedValue: '${snap.missedCalls}',
+                    missedSub: 'Geri dönülmeyen',
+                    dealValue: '${snap.dealsCount}',
+                    dealSub: 'İşlem (deals)',
                   ),
                 ),
-              );
-              },
-            );
-          },
+              ],
+            ),
+          ),
         );
       },
     );

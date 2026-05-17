@@ -1,6 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// War Room ekip filtresi — paylaşılan tek abonelik.
+final warRoomTeamsProvider = StreamProvider.autoDispose<List<TeamDoc>>((ref) {
+  return FirestoreService.teamsStream();
+});
 
 /// War Room: Son eklenen lead'ler (Lead Pulse).
 final recentLeadsStreamProvider = StreamProvider<QuerySnapshot<Map<String, dynamic>>>((ref) {

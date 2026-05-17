@@ -5,6 +5,8 @@ import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/wid
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
+import 'package:emlakmaster_mobile/features/war_room/data/war_room_providers.dart';
 import 'package:emlakmaster_mobile/features/war_room/presentation/widgets/war_room_command_center.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,7 +50,14 @@ class _WarRoomBody extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const Expanded(child: WarRoomCommandCenter()),
+            Expanded(
+              child: ShellScreenReadyListener(
+                screenName: 'war_room',
+                provider: recentLeadsStreamProvider,
+                itemCount: (v) => v.docs.length,
+                child: const WarRoomCommandCenter(),
+              ),
+            ),
             _ResurrectionStrip(),
           ],
         ),

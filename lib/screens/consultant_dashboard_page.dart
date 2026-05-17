@@ -25,6 +25,7 @@ import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
@@ -66,7 +67,10 @@ class ConsultantDashboardPage extends ConsumerWidget {
       }
       final greeting = '$salutation, $firstName';
 
-      return Material(
+      return ShellScreenReadyListener(
+        screenName: 'consultant_dashboard',
+        provider: todayCallsCountProvider,
+        child: Material(
         color: ext.background,
         child: SafeArea(
           child: RepaintBoundary(
@@ -241,6 +245,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
             ),
           ),
         ),
+      ),
       );
     } catch (e, st) {
       AppLogger.e('ConsultantDashboardPage build', e, st);

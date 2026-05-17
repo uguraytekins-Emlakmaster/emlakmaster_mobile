@@ -9,6 +9,8 @@ import 'package:emlakmaster_mobile/features/listings/data/listing_row_factory.da
 import 'package:emlakmaster_mobile/features/listings/domain/listing_row_view.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/market_feed_rows_provider.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
+import 'package:emlakmaster_mobile/features/listings/presentation/providers/owned_listing_rows_display_provider.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/owned_listing_rows_provider.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
@@ -43,7 +45,11 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
 
     return Scaffold(
       backgroundColor: ext.background,
-      body: SafeArea(
+      body: ShellScreenReadyListener(
+        screenName: 'listings',
+        provider: ownedListingRowsDisplayProvider,
+        itemCount: (v) => (v as List).length,
+        child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -101,6 +107,7 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -113,7 +120,7 @@ class _OwnedPane extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final async = ref.watch(ownedListingRowsProvider);
+    final async = ref.watch(ownedListingRowsDisplayProvider);
     final canManagePlatformIntegrations = ref.watch(canManagePlatformIntegrationsProvider);
 
     return async.when(
@@ -129,7 +136,10 @@ class _OwnedPane extends ConsumerWidget {
             icon: Icons.cloud_off_outlined,
             title: l10n.t('listings_load_error'),
             actionLabel: 'Tekrar dene',
-            onAction: () => ref.invalidate(ownedListingRowsProvider),
+            onAction: () {
+              ref.invalidate(ownedListingRowsProvider);
+              ref.invalidate(ownedListingRowsStaleCacheProvider);
+            },
           ),
         ),
       ),

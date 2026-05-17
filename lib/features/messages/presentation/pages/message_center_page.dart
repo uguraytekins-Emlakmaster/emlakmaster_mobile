@@ -8,6 +8,7 @@ import 'package:emlakmaster_mobile/features/messages/data/team_chat_repository.d
 import 'package:emlakmaster_mobile/features/messages/domain/team_channel_entity.dart';
 import 'package:emlakmaster_mobile/features/messages/domain/team_channel_id.dart';
 import 'package:emlakmaster_mobile/features/messages/domain/team_channel_type.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_providers.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/widgets/team_general_channel_bootstrap.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
@@ -65,7 +66,11 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
     final channelsAsync = ref.watch(teamChannelsProvider);
     final membersAsync = ref.watch(officeTeamMemberProfilesProvider);
 
-    return TeamGeneralChannelBootstrap(
+    return ShellScreenReadyListener(
+      screenName: 'messages',
+      provider: teamChannelsProvider,
+      itemCount: (v) => (v as List).length,
+      child: TeamGeneralChannelBootstrap(
       child: Scaffold(
       backgroundColor: ext.background,
       body: SafeArea(
@@ -334,6 +339,7 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
           ],
         ),
       ),
+    ),
     ),
     );
   }

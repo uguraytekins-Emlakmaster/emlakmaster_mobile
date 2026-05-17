@@ -328,10 +328,11 @@ class _WarRoomTeamFilter extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final selectedId = ref.watch(warRoomSelectedTeamIdProvider);
-    return StreamBuilder<List<TeamDoc>>(
-      stream: FirestoreService.teamsStream(),
-      builder: (context, snap) {
-        final teams = snap.data ?? [];
+    final teamsAsync = ref.watch(warRoomTeamsProvider);
+    return teamsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (teams) {
         if (teams.isEmpty) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.only(right: 8),

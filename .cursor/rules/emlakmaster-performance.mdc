@@ -30,4 +30,6 @@ alwaysApply: false
 
 ## Ölçüm
 - İlk içerik hazır: `ShellScreenReadyTracker` + `ref.listen` → `logShellScreenReady`.
-- Komuta Merkezi / danışman çağrıları: `*CallsDisplayProvider` (stale-while-revalidate).
+- Komuta Merkezi / danışman çağrıları / görevler / ilanlar: `*DisplayProvider` (stale-while-revalidate).
+- Shell sekmeleri: `ShellScreenReadyListener(screenName, provider, child)`.
+- İç içe `StreamBuilder` yasak; `StreamProvider` + tek `ref.watch`.
