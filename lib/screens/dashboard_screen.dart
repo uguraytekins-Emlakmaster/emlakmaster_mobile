@@ -15,6 +15,7 @@ import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broke
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/manager_revenue_summary_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broker_dashboard_alerts_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/smart_task_suggestions_card.dart';
+import 'package:emlakmaster_mobile/core/performance/deferred_mount_section.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/dashboard_kpi_section.dart';
 import 'package:emlakmaster_mobile/screens/providers/consultant_dashboard_kpi_providers.dart';
@@ -159,14 +160,27 @@ class DashboardPage extends ConsumerWidget {
                           ),
                         ),
                         SizedBox(height: gapOp * 0.85),
-                        px(const AiUsageIndicator(compact: true)),
-                        px(const ManagerRevenueSummaryCard()),
-                        px(const ManagerEscalationsCard()),
-                        px(const PostCallCaptureDashboardReminder()),
-                        px(const BrokerDashboardAlertsCard()),
-                        px(const SmartTaskSuggestionsCard()),
-                        px(const ExecutionRemindersCard(
-                            surface: ExecutionReminderSurface.broker)),
+                        DeferredMountSection(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              px(const AiUsageIndicator(compact: true)),
+                              SizedBox(height: gapOp * 0.85),
+                              px(const ManagerRevenueSummaryCard()),
+                              SizedBox(height: gapOp * 0.85),
+                              px(const ManagerEscalationsCard()),
+                              SizedBox(height: gapOp * 0.85),
+                              px(const PostCallCaptureDashboardReminder()),
+                              SizedBox(height: gapOp * 0.85),
+                              px(const BrokerDashboardAlertsCard()),
+                              SizedBox(height: gapOp * 0.85),
+                              px(const SmartTaskSuggestionsCard()),
+                              SizedBox(height: gapOp * 0.85),
+                              px(const ExecutionRemindersCard(
+                                  surface: ExecutionReminderSurface.broker)),
+                            ],
+                          ),
+                        ),
                         // —— Ofis momentumu — KPI ——
                         if (kpiBar) ...[
                           SizedBox(height: gapOp),
@@ -235,7 +249,7 @@ class DashboardPage extends ConsumerWidget {
                         ],
                         if (dailyBrief) px(const DailyBriefPanel()),
                         if (!lean)
-                          _DeferredDashboardSection(
+                          DeferredMountSection(
                             delay: const Duration(milliseconds: 450),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -332,41 +346,5 @@ class DashboardPage extends ConsumerWidget {
         ),
       );
     }
-  }
-}
-
-class _DeferredDashboardSection extends StatefulWidget {
-  const _DeferredDashboardSection({
-    required this.child,
-    required this.delay,
-  });
-
-  final Widget child;
-  final Duration delay;
-
-  @override
-  State<_DeferredDashboardSection> createState() =>
-      _DeferredDashboardSectionState();
-}
-
-class _DeferredDashboardSectionState extends State<_DeferredDashboardSection> {
-  bool _enabled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future<void>.delayed(widget.delay, () {
-        if (mounted) {
-          setState(() => _enabled = true);
-        }
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_enabled) return const SizedBox.shrink();
-    return widget.child;
   }
 }

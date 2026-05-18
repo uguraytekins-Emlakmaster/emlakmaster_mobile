@@ -8,7 +8,8 @@ alwaysApply: false
 # Performans sözleşmesi (emlakmaster_mobile)
 
 ## Shell ve sekmeler
-- Tab gövdeleri: `ShellTabKeepAlive` + `RepaintBoundary`.
+- Pasif sekme: `ShellLazyTab` (child unmount — Firestore dinleyicileri durur).
+- Aktif sekme: `RepaintBoundary` / liste satırı izolasyonu.
 - Sekme değişiminde yalnızca strip/banner için `ValueListenableBuilder`; tüm `Column` için `setState` yok.
 
 ## Listeler

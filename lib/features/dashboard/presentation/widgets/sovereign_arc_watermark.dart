@@ -37,14 +37,20 @@ class SovereignArcWatermark extends StatefulWidget {
 }
 
 class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
-  Offset _pointer = Offset.zero;
+  final ValueNotifier<Offset> _pointer = ValueNotifier(Offset.zero);
 
-  double _angleForSize(Size size) {
+  @override
+  void dispose() {
+    _pointer.dispose();
+    super.dispose();
+  }
+
+  double _angleForSize(Size size, Offset pointer) {
     if (size.width <= 0 || size.height <= 0) return 0;
     final cx = size.width / 2;
     final cy = size.height / 2;
-    final dx = _pointer.dx - cx;
-    final dy = _pointer.dy - cy;
+    final dx = pointer.dx - cx;
+    final dy = pointer.dy - cy;
     final base = (dx * 0.00008 + dy * 0.00006).clamp(-0.12, 0.12);
     return -base;
   }
@@ -80,28 +86,34 @@ class _SovereignArcWatermarkState extends State<SovereignArcWatermark> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
-        final arcWidget = RepaintBoundary(
-          child: IgnorePointer(
-            child: Transform.rotate(
-              angle: _angleForSize(size),
-              child: CustomPaint(
-                painter: _SovereignArcPainter(accent),
-                size: size,
-              ),
-            ),
-          ),
-        );
-        final stack = Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(child: arcWidget),
-            widget.child,
-          ],
-        );
         return Listener(
-          onPointerMove: (e) => setState(() => _pointer = e.localPosition),
-          onPointerHover: (e) => setState(() => _pointer = e.localPosition),
-          child: stack,
+          onPointerMove: (e) => _pointer.value = e.localPosition,
+          onPointerHover: (e) => _pointer.value = e.localPosition,
+          child: Stack(
+            clipBehavior: Clip.none,
+            fit: StackFit.expand,
+            children: [
+              Positioned.fill(
+                child: ListenableBuilder(
+                  listenable: _pointer,
+                  builder: (context, _) {
+                    return RepaintBoundary(
+                      child: IgnorePointer(
+                        child: Transform.rotate(
+                          angle: _angleForSize(size, _pointer.value),
+                          child: CustomPaint(
+                            painter: _SovereignArcPainter(accent),
+                            size: size,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              widget.child,
+            ],
+          ),
         );
       },
     );

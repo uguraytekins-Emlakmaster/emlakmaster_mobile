@@ -9,7 +9,9 @@ import 'package:emlakmaster_mobile/features/tasks/presentation/providers/advisor
 import 'package:emlakmaster_mobile/screens/providers/consultant_dashboard_kpi_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Sekme ilk kez materialize olurken Firestore aboneliklerini erken başlatır.
+/// Aktif sekme seçildikten sonra (gecikmeli) stream önbelleğini ısıtır.
+/// Pasif sekmeler [ShellLazyTab] ile unmount olduğu için prefetch yalnızca
+/// kullanıcı o sekmeye geçerken çalışmalıdır.
 void prefetchShellTab(WidgetRef ref, Object? tabId) {
   if (tabId == null) return;
   final id = tabId.toString();

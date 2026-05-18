@@ -12,7 +12,7 @@ import '../navigation/back_navigation_scope.dart';
 import '../navigation/shell_navigation_host.dart';
 import '../navigation/shell_tab_back_host.dart';
 import '../navigation/tab_history_controller.dart';
-import '../performance/shell_tab_keep_alive.dart';
+import '../performance/shell_lazy_tab.dart';
 import '../performance/shell_tab_prefetch.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
@@ -288,10 +288,6 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       'materialized=$_materialized',
     );
     _scheduleShortcutReplay();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      prefetchShellTab(ref, _tabIdentityFor(widget, _currentIndex));
-    });
   }
 
   @override
@@ -432,7 +428,10 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       _materialized.add(pageIndex);
     });
     if (firstVisit) {
-      prefetchShellTab(ref, tabId);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _currentIndex != pageIndex) return;
+        prefetchShellTab(ref, tabId);
+      });
     }
     if (_traceEnabled) {
       developer.log(
@@ -583,30 +582,31 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
             ),
           ),
         Expanded(
-          child: IndexedStack(
-            index: safeIndex,
-            sizing: StackFit.expand,
+          child: Stack(
+            fit: StackFit.expand,
             children: [
               for (var i = 0; i < widget.pages.length; i++)
-                IgnorePointer(
-                  ignoring: i != safeIndex,
-                  child: TickerMode(
-                    enabled: i == safeIndex,
-                    child: _materialized.contains(i)
-                        ? ShellTabBackHost(
-                            pageIndex: i,
-                            child: ShellTabKeepAlive(
-                              child: widget.pages[i],
-                            ),
-                          )
-                        : (i == safeIndex
-                            ? _inactiveSlotPlaceholder(context, i)
-                            : ColoredBox(
-                                color: ext.background,
-                                child: const SizedBox.expand(),
-                              )),
+                if (_materialized.contains(i))
+                  Positioned.fill(
+                    key: ValueKey(_tabIdentityFor(widget, i)),
+                    child: IgnorePointer(
+                      ignoring: i != safeIndex,
+                      child: TickerMode(
+                        enabled: i == safeIndex,
+                        child: ShellTabBackHost(
+                          pageIndex: i,
+                          child: ShellLazyTab(
+                            isActive: i == safeIndex,
+                            child: widget.pages[i],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else if (i == safeIndex)
+                  Positioned.fill(
+                    child: _inactiveSlotPlaceholder(context, i),
                   ),
-                ),
             ],
           ),
         ),

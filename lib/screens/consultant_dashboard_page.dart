@@ -13,7 +13,6 @@ import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execu
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
-import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_dashboard_kpi_providers.dart';
 import 'package:emlakmaster_mobile/screens/providers/consultant_dashboard_kpi_providers.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -25,6 +24,7 @@ import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
+import 'package:emlakmaster_mobile/core/performance/deferred_mount_section.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
@@ -142,36 +142,52 @@ class ConsultantDashboardPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: DesignTokens.space2),
                         const _TodayKpiRow(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperationalTight),
-                        const AiUsageIndicator(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperationalTight),
-                        const ConsultantPerformanceStrip(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperational),
-                        Text(
-                          'Fırsat ve gelir motoru',
-                          style: AppTypography.sectionLabel(context),
+                        DeferredMountSection(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(
+                                  height: DashboardLayoutTokens
+                                      .gapOperationalTight),
+                              const AiUsageIndicator(),
+                              const SizedBox(
+                                  height: DashboardLayoutTokens
+                                      .gapOperationalTight),
+                              const ConsultantPerformanceStrip(),
+                              const SizedBox(
+                                  height:
+                                      DashboardLayoutTokens.gapOperational),
+                              Text(
+                                'Fırsat ve gelir motoru',
+                                style: AppTypography.sectionLabel(context),
+                              ),
+                              const SizedBox(height: DesignTokens.space2),
+                              const RevenueIntelligenceDashboardSection(),
+                              const SizedBox(
+                                  height: DashboardLayoutTokens
+                                      .gapOperationalTight),
+                              const ExecutionRemindersCard(
+                                  surface:
+                                      ExecutionReminderSurface.consultant),
+                              const SizedBox(
+                                  height:
+                                      DashboardLayoutTokens.gapOperational),
+                              const PriorityCallSignalsCard(),
+                              const SizedBox(
+                                  height:
+                                      DashboardLayoutTokens.gapOperational),
+                              const SyncDelayedCustomersDashboardCard(),
+                              const SizedBox(
+                                  height:
+                                      DashboardLayoutTokens.gapOperational),
+                              const _QuickStatsCard(compact: true),
+                              const SizedBox(
+                                  height:
+                                      DashboardLayoutTokens.gapOperational),
+                              const _WeeklyGoalCard(),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: DesignTokens.space2),
-                        const RevenueIntelligenceDashboardSection(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperationalTight),
-                        const ExecutionRemindersCard(
-                            surface: ExecutionReminderSurface.consultant),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperational),
-                        const PriorityCallSignalsCard(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperational),
-                        const SyncDelayedCustomersDashboardCard(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperational),
-                        const _QuickStatsCard(compact: true),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperational),
-                        const _WeeklyGoalCard(),
                       ],
                     ),
                   ),
