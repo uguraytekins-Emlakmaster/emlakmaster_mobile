@@ -35,3 +35,5 @@ alwaysApply: false
 - İç içe `StreamBuilder` yasak; `StreamProvider` + tek `ref.watch`.
 - Dashboard ticker/kur/haber: `dashboard_shell_providers.dart` (paylaşımlı abonelik).
 - Admin ekipler/danışmanlar: `adminConsultantsTeamsProvider` / `adminTeamsListProvider`.
+- Pipeline / bildirimler / ilan detay / müşteri çağrı-not: `*DisplayProvider` ailesi (`pipeline_items`, `user_notifications`, `listing_detail`, `customer_feed_providers`).
+- Komut paleti: `officeCustomersSnapshotProvider` (tek abonelik).

@@ -3,7 +3,9 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:emlakmaster_mobile/features/pipeline/presentation/providers/pipeline_items_providers.dart';
 import 'package:emlakmaster_mobile/features/lead_temperature_engine/presentation/providers/lead_temperature_provider.dart';
 import 'package:emlakmaster_mobile/shared/models/lead_temperature.dart';
 import 'package:emlakmaster_mobile/shared/models/pipeline_models.dart';
@@ -25,11 +27,20 @@ class PipelineKanbanPage extends ConsumerStatefulWidget {
 }
 
 class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
+  final _readyTracker = ShellScreenReadyTracker('pipeline');
+
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    if (uid.isNotEmpty) {
+      ref.listen(pipelineItemsDisplayProvider(uid), (previous, next) {
+        if (next.hasValue) {
+          _readyTracker.onContentReady(itemCount: next.value!.length);
+        }
+      });
+    }
     return Scaffold(
       backgroundColor: ext.background,
       body: CustomScrollView(
@@ -87,12 +98,11 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
             )
           else
             SliverToBoxAdapter(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: FirestoreService.pipelineItemsByAdvisorStream(uid),
-                builder: (context, snapshot) {
+              child: Builder(
+                builder: (context) {
+                  final itemsAsync = ref.watch(pipelineItemsDisplayProvider(uid));
                   final sheetExt = ext;
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
+                  if (itemsAsync.isLoading && !itemsAsync.hasValue) {
                     return SizedBox(
                       height: MediaQuery.of(context).size.height * 0.5,
                       child: Center(
@@ -120,7 +130,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                       ),
                     );
                   }
-                  final docs = snapshot.data?.docs ?? [];
+                  final docs = itemsAsync.valueOrNull ?? [];
                   final items = docs.map((d) {
                     final data = d.data();
                     return _PipelineCardData(

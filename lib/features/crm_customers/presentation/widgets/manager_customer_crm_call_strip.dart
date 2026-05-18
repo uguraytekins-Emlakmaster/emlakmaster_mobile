@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/features/calls/domain/local_call_record_fires
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/firestore_agent_display_names_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_feed_providers.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_contextual_insight.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
@@ -37,19 +38,14 @@ class ManagerCustomerCrmCallStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirestoreService.callsByCustomerStream(customerId),
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting && !snap.hasData) {
-          return const Padding(
-            padding: EdgeInsets.only(bottom: DesignTokens.space4),
-            child: LinearProgressIndicator(minHeight: 2),
-          );
-        }
-        if (snap.hasError) {
-          return const SizedBox.shrink();
-        }
-        final docs = snap.data?.docs ?? [];
+    final callsAsync = ref.watch(customerCallsDisplayProvider(customerId));
+    return callsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.only(bottom: DesignTokens.space4),
+        child: LinearProgressIndicator(minHeight: 2),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (docs) {
         if (docs.isEmpty) return const SizedBox.shrink();
         final locals =
             ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];

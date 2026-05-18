@@ -13,6 +13,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/features/ai_sales_assistant/presentation/widgets/ai_sales_assistant_panel.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/agent_doc_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/outbound_system_handoff_page.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/models/dialer_control_prefs.dart';
@@ -854,38 +855,7 @@ class _CallHeroCard extends ConsumerWidget {
           identity(),
           const SizedBox(height: DesignTokens.space5),
           if (uid != null && uid.isNotEmpty)
-            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              stream: FirestoreService.agentDocStream(uid),
-              builder: (context, snap) {
-                var district = '—';
-                var city = '—';
-                if (snap.hasData && snap.data!.exists) {
-                  final d = snap.data!.data();
-                  final c = d?['locationCity'] as String?;
-                  final dist = d?['locationDistrict'] as String?;
-                  if (c != null && c.isNotEmpty) city = c;
-                  if (dist != null && dist.isNotEmpty) district = dist;
-                }
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.place_outlined,
-                        size: 16, color: ext.textTertiary),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        '$district · $city',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: ext.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            )
+            _AgentLocationRow(uid: uid)
           else
             Text(
               'Hat konumu: profilden tanımlanır',
@@ -1311,6 +1281,45 @@ class _SiriWaveBarsAnimatedState extends State<_SiriWaveBarsAnimated>
 }
 
 /// Görüşme alt şeridi: ikincil kontroller — büyük dokunma, net hiyerarşi.
+class _AgentLocationRow extends ConsumerWidget {
+  const _AgentLocationRow({required this.uid});
+
+  final String uid;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
+    final snap = ref.watch(agentDocProvider(uid)).valueOrNull;
+    var district = '—';
+    var city = '—';
+    if (snap != null && snap.exists) {
+      final d = snap.data();
+      final c = d?['locationCity'] as String?;
+      final dist = d?['locationDistrict'] as String?;
+      if (c != null && c.isNotEmpty) city = c;
+      if (dist != null && dist.isNotEmpty) district = dist;
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.place_outlined, size: 16, color: ext.textTertiary),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            '$district · $city',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: ext.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _RoundIconButton extends StatelessWidget {
   static const double _diameter = 72;
   static const double _iconSize = 28;

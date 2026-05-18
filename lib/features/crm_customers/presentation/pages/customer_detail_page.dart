@@ -15,6 +15,7 @@ import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_perm
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_timeline_row.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_feed_providers.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_timeline_rows_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/manager_customer_crm_call_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_insight_strip.dart';
@@ -306,79 +307,8 @@ class CustomerDetailPage extends ConsumerWidget {
                                 const SizedBox(height: DesignTokens.space2),
                                 SizedBox(
                                   height: 140,
-                                  child: StreamBuilder<
-                                      QuerySnapshot<Map<String, dynamic>>>(
-                                    stream:
-                                        FirestoreService.notesByCustomerStream(
-                                            customerId),
-                                    builder: (context, snap) {
-                                      final docs = snap.data?.docs ?? [];
-                                      if (snap.connectionState ==
-                                              ConnectionState.waiting &&
-                                          docs.isEmpty) {
-                                        return Center(
-                                          child: SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: ext.accent,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      if (docs.isEmpty) {
-                                        return Center(
-                                          child: Text(
-                                            'Henüz not yok. Kayıt tamamlanınca burada görünür.',
-                                            textAlign: TextAlign.center,
-                                            style: AppTypography.body(context)
-                                                .copyWith(
-                                              color: ext.textTertiary,
-                                              fontSize: DesignTokens.fontSizeSm,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      return ListView.separated(
-                                        itemCount:
-                                            docs.length > 5 ? 5 : docs.length,
-                                        separatorBuilder: (_, __) =>
-                                            const SizedBox(
-                                                height: DesignTokens.space2),
-                                        itemBuilder: (_, i) {
-                                          final c = docs[i].data()['content']
-                                                  as String? ??
-                                              '—';
-                                          return Container(
-                                            padding: const EdgeInsets.all(
-                                                DesignTokens.space3),
-                                            decoration: BoxDecoration(
-                                              color: ext.background,
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                      DesignTokens
-                                                          .radiusControl),
-                                              border: Border.all(
-                                                color: ext.border
-                                                    .withValues(alpha: 0.45),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              c,
-                                              maxLines: 3,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: AppTypography.body(context)
-                                                  .copyWith(
-                                                color: ext.textSecondary,
-                                                fontSize:
-                                                    DesignTokens.fontSizeSm,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
+                                  child: _CustomerNotesPreview(
+                                    customerId: customerId,
                                   ),
                                 ),
                                 const SizedBox(height: DesignTokens.space5),
@@ -505,6 +435,68 @@ class _PortfolioMatchSection extends ConsumerWidget {
       },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _CustomerNotesPreview extends ConsumerWidget {
+  const _CustomerNotesPreview({required this.customerId});
+
+  final String customerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
+    final notesAsync = ref.watch(customerNotesDisplayProvider(customerId));
+    return notesAsync.when(
+      loading: () => Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2, color: ext.accent),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (docs) {
+        if (docs.isEmpty) {
+          return Center(
+            child: Text(
+              'Henüz not yok. Kayıt tamamlanınca burada görünür.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body(context).copyWith(
+                color: ext.textTertiary,
+                fontSize: DesignTokens.fontSizeSm,
+              ),
+            ),
+          );
+        }
+        return ListView.separated(
+          itemCount: docs.length > 5 ? 5 : docs.length,
+          separatorBuilder: (_, __) =>
+              const SizedBox(height: DesignTokens.space2),
+          itemBuilder: (_, i) {
+            final c = docs[i].data()['content'] as String? ?? '—';
+            return Container(
+              padding: const EdgeInsets.all(DesignTokens.space3),
+              decoration: BoxDecoration(
+                color: ext.background,
+                borderRadius:
+                    BorderRadius.circular(DesignTokens.radiusControl),
+                border: Border.all(color: ext.border.withValues(alpha: 0.45)),
+              ),
+              child: Text(
+                c,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.body(context).copyWith(
+                  color: ext.textSecondary,
+                  fontSize: DesignTokens.fontSizeSm,
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

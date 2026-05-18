@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_feed_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -178,10 +179,11 @@ class _CommandPaletteContentState
                       style: AppTypography.sectionLabel(context)
                           .copyWith(color: ext.foregroundMuted)),
                   const SizedBox(height: DesignTokens.space2),
-                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: FirestoreService.customersStream(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
+                  Builder(
+                    builder: (context) {
+                      final customersAsync =
+                          ref.watch(officeCustomersSnapshotProvider);
+                      if (!customersAsync.hasValue) {
                         return Padding(
                           padding: const EdgeInsets.all(DesignTokens.space4),
                           child: Center(
@@ -194,7 +196,7 @@ class _CommandPaletteContentState
                           ),
                         );
                       }
-                      final docs = snapshot.data!.docs;
+                      final docs = customersAsync.requireValue.docs;
                       final q = _query.replaceAll(RegExp(r'\s'), '');
                       final filtered = docs
                           .where((d) {

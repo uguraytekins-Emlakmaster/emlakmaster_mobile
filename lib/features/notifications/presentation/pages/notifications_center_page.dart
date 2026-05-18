@@ -4,19 +4,36 @@ import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/notifications/presentation/providers/user_notifications_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Bildirim merkezi: in-app bildirimler, boş durumlar [EmptyState] ile hizalı.
-class NotificationsCenterPage extends ConsumerWidget {
+class NotificationsCenterPage extends ConsumerStatefulWidget {
   const NotificationsCenterPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationsCenterPage> createState() =>
+      _NotificationsCenterPageState();
+}
+
+class _NotificationsCenterPageState extends ConsumerState<NotificationsCenterPage> {
+  final _readyTracker = ShellScreenReadyTracker('notifications_center');
+
+  @override
+  Widget build(BuildContext context) {
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     final ext = AppThemeExtension.of(context);
+    if (uid.isNotEmpty) {
+      ref.listen(userNotificationsDisplayProvider(uid), (previous, next) {
+        if (next.hasValue) {
+          _readyTracker.onContentReady(itemCount: next.value!.length);
+        }
+      });
+    }
     return Scaffold(
       backgroundColor: ext.background,
       appBar: emlakAppBar(
@@ -44,11 +61,12 @@ class NotificationsCenterPage extends ConsumerWidget {
                 ),
               ),
             )
-          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirestoreService.notificationsByUserStream(uid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting &&
-                    !snapshot.hasData) {
+          : Builder(
+              builder: (context) {
+                final notificationsAsync =
+                    ref.watch(userNotificationsDisplayProvider(uid));
+                if (notificationsAsync.isLoading &&
+                    !notificationsAsync.hasValue) {
                   return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -73,7 +91,7 @@ class NotificationsCenterPage extends ConsumerWidget {
                     ),
                   );
                 }
-                final docs = snapshot.data?.docs ?? [];
+                final docs = notificationsAsync.valueOrNull ?? [];
                 if (docs.isEmpty) {
                   return const Center(
                     child: Padding(

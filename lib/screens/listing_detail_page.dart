@@ -3,37 +3,66 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
-import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
+import 'package:emlakmaster_mobile/features/listings/presentation/providers/listing_detail_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// İlan detay: galeri (tek görsel), başlık, fiyat, konum, açıklama.
-class ListingDetailPage extends StatelessWidget {
+class ListingDetailPage extends ConsumerWidget {
   const ListingDetailPage({super.key, required this.listingId});
 
   final String listingId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
     final theme = Theme.of(context);
+    final listingAsync = ref.watch(listingDocDisplayProvider(listingId));
+
     return Scaffold(
       backgroundColor: ext.background,
-      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: FirestoreService.listingDocStream(listingId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              !snapshot.hasData) {
-            return Center(
-              child:
-                  CircularProgressIndicator(color: ext.accent, strokeWidth: 2),
-            );
-          }
-          if (snapshot.hasError ||
-              !snapshot.hasData ||
-              !snapshot.data!.exists) {
+      body: listingAsync.when(
+        loading: () => Center(
+          child: CircularProgressIndicator(color: ext.accent, strokeWidth: 2),
+        ),
+        error: (_, __) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: ext.textTertiary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'İlan yüklenemedi.',
+                  style: TextStyle(
+                    color: ext.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                TextButton.icon(
+                  onPressed: () {
+                    ref.invalidate(listingDocStreamProvider(listingId));
+                    ref.invalidate(listingDocStaleCacheProvider(listingId));
+                  },
+                  icon: Icon(Icons.refresh_rounded, color: ext.accent),
+                  label: Text('Tekrar dene', style: TextStyle(color: ext.accent)),
+                ),
+              ],
+            ),
+          ),
+        ),
+        data: (snapshot) {
+          if (!snapshot.exists) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -41,15 +70,13 @@ class ListingDetailPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.error_outline_rounded,
+                      Icons.home_work_outlined,
                       size: 48,
                       color: ext.textTertiary,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      snapshot.hasError
-                          ? 'İlan yüklenemedi.'
-                          : 'İlan bulunamadı.',
+                      'İlan bulunamadı.',
                       style: TextStyle(
                         color: ext.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -68,7 +95,7 @@ class ListingDetailPage extends StatelessWidget {
             );
           }
 
-          final d = snapshot.data!.data() ?? <String, dynamic>{};
+          final d = snapshot.data() ?? <String, dynamic>{};
           final imageUrl = d['imageUrl'] as String?;
           final title = d['title'] as String? ?? 'İlan';
           final priceRaw = d['price'];
@@ -95,6 +122,7 @@ class ListingDetailPage extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: imageUrl,
                           fit: BoxFit.cover,
+                          memCacheWidth: 960,
                           placeholder: (_, __) => LayoutBuilder(
                             builder: (context, c) => ShimmerPlaceholder(
                               width: c.maxWidth > 0 ? c.maxWidth : 400,

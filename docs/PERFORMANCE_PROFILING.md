@@ -16,6 +16,8 @@ Hızlı kontrol listesi — shell sekmesi veya büyük refactor sonrası.
 | Jank (kırmızı çubuk) | Sekme geçişinde **0–1** kısa spike |
 | `screen_content_ready` (Analytics) | İlk içerik **&lt; 800 ms** (ağ koşuluna bağlı) |
 
+Kayıtlı ekran adları: `consultant_dashboard`, `admin_dashboard`, `messages`, `tasks`, `listings`, `consultant_calls`, `customer_list`, `customer_detail`, `command_center`, `war_room`, `admin_reports`, `pipeline`, `notifications_center`.
+
 ## Bilinen iyi kalıplar
 
 - Liste: `SliverList` / `ListView.builder`, satırda `ref.watch` yok
