@@ -186,25 +186,28 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                         final dueAt = (d['dueAt'] as Timestamp?)?.toDate();
                         final done = d['done'] == true;
                         final customerId = d['customerId'] as String?;
-                        return _TaskTile(
-                          id: id,
-                          title: title,
-                          dueAt: dueAt,
-                          done: done,
-                          customerId: customerId,
-                          isDeleting: _deletingIds.contains(id),
-                          isOverdue:
-                              dueAt != null && dueAt.isBefore(today) && !done,
-                          onToggleDone: () => _toggleDone(id, d, !done),
-                          onDelete: () => _confirmDeleteTask(id, title),
-                          onTap: () => _showTaskDetailSheet(
-                            context,
-                            ref: ref,
-                            uid: uid,
+                        return RepaintBoundary(
+                          child: _TaskTile(
                             id: id,
-                            data: d,
+                            title: title,
+                            dueAt: dueAt,
+                            done: done,
+                            customerId: customerId,
+                            isDeleting: _deletingIds.contains(id),
+                            isOverdue: dueAt != null &&
+                                dueAt.isBefore(today) &&
+                                !done,
                             onToggleDone: () => _toggleDone(id, d, !done),
                             onDelete: () => _confirmDeleteTask(id, title),
+                            onTap: () => _showTaskDetailSheet(
+                              context,
+                              ref: ref,
+                              uid: uid,
+                              id: id,
+                              data: d,
+                              onToggleDone: () => _toggleDone(id, d, !done),
+                              onDelete: () => _confirmDeleteTask(id, title),
+                            ),
                           ),
                         );
                       },

@@ -162,13 +162,15 @@ abstract final class CommandCenterListSlivers {
             ),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
-                (context, index) => CommandCenterCrmRecordTile(
-                  doc: config.filtered[index],
-                  agentNames: config.agentNames,
-                  locals: config.locals,
-                  currentUid: config.currentUid,
-                  customerFullNameById: config.customerFullNameById,
-                  nowMs: nowMs,
+                (context, index) => RepaintBoundary(
+                  child: CommandCenterCrmRecordTile(
+                    doc: config.filtered[index],
+                    agentNames: config.agentNames,
+                    locals: config.locals,
+                    currentUid: config.currentUid,
+                    customerFullNameById: config.customerFullNameById,
+                    nowMs: nowMs,
+                  ),
                 ),
                 childCount: config.filtered.length,
               ),
@@ -271,35 +273,39 @@ abstract final class CommandCenterListSlivers {
                   '$completed tamam · $handoffs handoff';
               final captureLabel =
                   pending > 0 ? '$pending takip' : '${list.length} kayıt';
-              return CrmCallOperatingCard(
-                dense: true,
-                child: CrmCallRecordListItem(
+              return RepaintBoundary(
+                child: CrmCallOperatingCard(
                   dense: true,
-                  title: name,
-                  outcomeLabel: outcomeLast,
-                  captureLabel: captureLabel,
-                  contextLine: contextLine,
-                  notePreview: noteLast,
-                  technicalFootnote:
-                      'Danışman ${CrmCallRecordDisplay.ellipsedMiddle(e.key)}',
-                  leading: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.078),
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusSm + 2),
-                      border: Border.all(
-                        color: accent.withValues(alpha: 0.20),
+                  child: CrmCallRecordListItem(
+                    dense: true,
+                    title: name,
+                    outcomeLabel: outcomeLast,
+                    captureLabel: captureLabel,
+                    contextLine: contextLine,
+                    notePreview: noteLast,
+                    technicalFootnote:
+                        'Danışman ${CrmCallRecordDisplay.ellipsedMiddle(e.key)}',
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.078),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusSm + 2),
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.20),
+                        ),
                       ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
-                      style: TextStyle(
-                        color: accent,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                      alignment: Alignment.center,
+                      child: Text(
+                        name.isNotEmpty
+                            ? name.substring(0, 1).toUpperCase()
+                            : '?',
+                        style: TextStyle(
+                          color: accent,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -418,35 +424,39 @@ abstract final class CommandCenterListSlivers {
               );
               final captureLabel =
                   pending > 0 ? '$pending takip' : '${list.length} kayıt';
-              return CrmCallOperatingCard(
-                dense: true,
-                child: CrmCallRecordListItem(
+              return RepaintBoundary(
+                child: CrmCallOperatingCard(
                   dense: true,
-                  title: title,
-                  phoneSubtitle: phoneUnder,
-                  outcomeLabel: outcome,
-                  captureLabel: captureLabel,
-                  contextLine: contextLine,
-                  technicalFootnote:
-                      'Müşteri ${CrmCallRecordDisplay.ellipsedMiddle(e.key, head: 6)}',
-                  leading: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.078),
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusSm + 2),
-                      border: Border.all(
-                        color: accent.withValues(alpha: 0.20),
+                  child: CrmCallRecordListItem(
+                    dense: true,
+                    title: title,
+                    phoneSubtitle: phoneUnder,
+                    outcomeLabel: outcome,
+                    captureLabel: captureLabel,
+                    contextLine: contextLine,
+                    technicalFootnote:
+                        'Müşteri ${CrmCallRecordDisplay.ellipsedMiddle(e.key, head: 6)}',
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.078),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusSm + 2),
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.20),
+                        ),
                       ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      title.isNotEmpty ? title.substring(0, 1).toUpperCase() : '?',
-                      style: TextStyle(
-                        color: accent,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                      alignment: Alignment.center,
+                      child: Text(
+                        title.isNotEmpty
+                            ? title.substring(0, 1).toUpperCase()
+                            : '?',
+                        style: TextStyle(
+                          color: accent,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
