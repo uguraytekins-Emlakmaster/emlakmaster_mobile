@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
-import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/features/war_room/data/war_room_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Diyarbakır ilçe adlarına göre sembolik harita üzerinde x,y oranları (0-1).
 final Map<String, Offset> _districtPositions = {
@@ -19,7 +20,7 @@ final Map<String, Offset> _districtPositions = {
   'Çüngüş': const Offset(0.22, 0.88),
 };
 
-class BentoSahaRadar extends StatelessWidget {
+class BentoSahaRadar extends ConsumerWidget {
   /// [outerContentWidth] verildiğinde iç [LayoutBuilder] kullanılmaz (dashboard + scroll
   /// gövdesinde `!_debugDoingThisLayout` riskini azaltır).
   const BentoSahaRadar({
@@ -50,24 +51,21 @@ class BentoSahaRadar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirestoreService.agentsStream(),
-      builder: (context, snapshot) {
-        final agents = snapshot.hasData
-            ? snapshot.data!.docs
-            : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-        final withLocation = agents.where((d) {
+    final agentsAsync = ref.watch(agentsSnapshotProvider);
+    final agents = agentsAsync.valueOrNull?.docs ??
+        <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    final withLocation = agents.where((d) {
           final data = d.data();
           final city = data['locationCity'] as String?;
           final district = data['locationDistrict'] as String?;
           return (city != null && city.isNotEmpty) ||
               (district != null && district.isNotEmpty);
         }).toList();
-        final subtitle = snapshot.hasData
-            ? '${withLocation.length} danışman harita üzerinde'
-            : 'Yükleniyor...';
+    final subtitle = agentsAsync.hasValue
+        ? '${withLocation.length} danışman harita üzerinde'
+        : 'Yükleniyor...';
 
         final mapArea = SizedBox(
           height: 160,
@@ -79,7 +77,7 @@ class BentoSahaRadar extends StatelessWidget {
                 color: ext.surfaceElevated,
                 border: Border.all(color: ext.accent.withValues(alpha: 0.12)),
               ),
-              child: snapshot.hasData
+              child: agentsAsync.hasValue
                   ? CustomPaint(
                       painter: DiyarbakirMapPainter(
                         agents: withLocation,
@@ -163,8 +161,6 @@ class BentoSahaRadar extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: inner,
         );
-      },
-    );
   }
 }
 

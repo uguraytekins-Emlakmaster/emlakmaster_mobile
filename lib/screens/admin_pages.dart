@@ -23,6 +23,9 @@ import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
+import 'package:emlakmaster_mobile/features/admin_consultants/presentation/providers/admin_consultants_providers.dart';
+import 'package:emlakmaster_mobile/screens/providers/admin_reports_perf_provider.dart';
 
 /// Yönetici paneli – Ekonomi & Piyasa: kur, altın, piyasa nabzı, ticker.
 class AdminEconomyPage extends StatelessWidget {
@@ -85,7 +88,10 @@ class AdminReportsPage extends ConsumerWidget {
     final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
     return Scaffold(
       backgroundColor: bg,
-      body: SafeArea(
+      body: ShellScreenReadyListener(
+        screenName: 'admin_reports',
+        provider: adminReportsPerfProvider,
+        child: SafeArea(
         child: ListView(
         padding: EdgeInsets.fromLTRB(
           DesignTokens.space6,
@@ -110,34 +116,7 @@ class AdminReportsPage extends ConsumerWidget {
             const SizedBox(height: DesignTokens.space4),
           ],
           if (canManageTeams)
-            StreamBuilder<List<TeamDoc>>(
-              stream: FirestoreService.teamsStream(),
-              builder: (context, snap) {
-                final teams = snap.data ?? [];
-                if (teams.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-                    child: InkWell(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusLg),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const AdminTeamsPage()),
-                        );
-                      },
-                      child: const _SectionCard(
-                        featured: true,
-                        icon: Icons.group_add_rounded,
-                        title: 'İlk kadroyu kurun',
-                        subtitle: 'Rolleri ve üyeleri tek akıştan yönetin.',
-                      ),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+            const _AdminReportsTeamsEmptyCard(),
           const _AdminReportsPerfSection(),
           const SizedBox(height: DesignTokens.space4),
           PremiumIconTile(
@@ -225,6 +204,40 @@ class AdminReportsPage extends ConsumerWidget {
         ],
       ),
       ),
+      ),
+    );
+  }
+}
+
+class _AdminReportsTeamsEmptyCard extends ConsumerWidget {
+  const _AdminReportsTeamsEmptyCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final teamsAsync = ref.watch(adminConsultantsTeamsProvider);
+    return teamsAsync.when(
+      data: (teams) {
+        if (teams.isNotEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: DesignTokens.space4),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AdminTeamsPage()),
+              );
+            },
+            child: const _SectionCard(
+              featured: true,
+              icon: Icons.group_add_rounded,
+              title: 'İlk kadroyu kurun',
+              subtitle: 'Rolleri ve üyeleri tek akıştan yönetin.',
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }
@@ -262,79 +275,54 @@ class _AdminReportsPerformanceCard extends StatelessWidget {
 }
 
 /// Yönetici performans özeti: en az bir çağrı özeti veya işlem kaydı yoksa boş durum.
-class _AdminReportsPerfSection extends StatefulWidget {
+class _AdminReportsPerfSection extends ConsumerWidget {
   const _AdminReportsPerfSection();
 
   @override
-  State<_AdminReportsPerfSection> createState() =>
-      _AdminReportsPerfSectionState();
-}
-
-class _AdminReportsPerfSectionState extends State<_AdminReportsPerfSection> {
-  int _streamEpoch = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      key: ValueKey<int>(_streamEpoch),
-      stream: FirestoreService.callSummariesSampleStream(),
-      builder: (context, summariesSnap) {
-        if (summariesSnap.hasError) {
-          return _AdminPerfErrorCard(
-            onRetry: () => setState(() => _streamEpoch++),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final perfAsync = ref.watch(adminReportsPerfProvider);
+    return perfAsync.when(
+      loading: () => const _AdminPerfLoadingCard(),
+      error: (_, __) => _AdminPerfErrorCard(
+        onRetry: () {
+          ref.invalidate(adminCallSummariesSampleProvider);
+          ref.invalidate(adminDealsSampleProvider);
+        },
+      ),
+      data: (perf) {
+        if (!perf.hasAnyData) {
+          final l10n = AppLocalizations.of(context);
+          return Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: DesignTokens.space4),
+              child: EmptyState(
+                compact: true,
+                grouped: true,
+                icon: Icons.analytics_outlined,
+                title: l10n.t('empty_reports_title'),
+                subtitle: l10n.t('empty_reports_sub'),
+                outlinedActionLabel: l10n.t('empty_reports_cta'),
+                onOutlinedAction: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AdminConsultantsPage(),
+                    ),
+                  );
+                },
+              ),
+            ),
           );
         }
-        if (!summariesSnap.hasData) {
-          return const _AdminPerfLoadingCard();
-        }
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirestoreService.dealsSampleStream(),
-          builder: (context, dealsSnap) {
-            if (dealsSnap.hasError) {
-              return _AdminPerfErrorCard(
-                onRetry: () => setState(() => _streamEpoch++),
-              );
-            }
-            if (!dealsSnap.hasData) {
-              return const _AdminPerfLoadingCard();
-            }
-            final hasSummaries = summariesSnap.data!.docs.isNotEmpty;
-            final hasDeals = dealsSnap.data!.docs.isNotEmpty;
-            if (!hasSummaries && !hasDeals) {
-              final l10n = AppLocalizations.of(context);
-              return Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-                  child: EmptyState(
-                    compact: true,
-                    grouped: true,
-                    icon: Icons.analytics_outlined,
-                    title: l10n.t('empty_reports_title'),
-                    subtitle: l10n.t('empty_reports_sub'),
-                    outlinedActionLabel: l10n.t('empty_reports_cta'),
-                    onOutlinedAction: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const AdminConsultantsPage(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              );
-            }
-            return Padding(
-              padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-              child: _ComingSoonReportCard(
-                icon: Icons.analytics_rounded,
-                title: 'Performans görünümü',
-                subtitle:
-                    'Çağrı ve kapanış eğilimleri için ayrıntılı rapor yakında',
-                onExplore: () => context.push(AppRouter.routeRainbowAnalytics),
-              ),
-            );
-          },
+        return Padding(
+          padding: const EdgeInsets.only(bottom: DesignTokens.space4),
+          child: _ComingSoonReportCard(
+            icon: Icons.analytics_rounded,
+            title: 'Performans görünümü',
+            subtitle:
+                'Çağrı ve kapanış eğilimleri için ayrıntılı rapor yakında',
+            onExplore: () => context.push(AppRouter.routeRainbowAnalytics),
+          ),
         );
       },
     );

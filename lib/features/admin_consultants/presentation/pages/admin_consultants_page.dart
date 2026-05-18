@@ -7,6 +7,8 @@ import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
+import 'package:emlakmaster_mobile/features/admin_consultants/presentation/providers/admin_consultants_providers.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,7 +63,14 @@ class AdminConsultantsPage extends ConsumerWidget {
             ),
         ],
       ),
-      body: _AdminConsultantsBody(canEditTeamRole: FeaturePermission.canManageTeams(currentRole)),
+      body: ShellScreenReadyListener(
+        screenName: 'admin_consultants',
+        provider: adminConsultantsListProvider,
+        itemCount: (v) => (v as List).length,
+        child: _AdminConsultantsBody(
+          canEditTeamRole: FeaturePermission.canManageTeams(currentRole),
+        ),
+      ),
     );
   }
 
@@ -71,7 +80,7 @@ class AdminConsultantsPage extends ConsumerWidget {
     String email = '';
     String inviteRole = AppRole.agent.id;
     String? teamId;
-    final teams = await FirestoreService.teamsStream().first;
+    final teams = await ref.read(adminConsultantsTeamsProvider.future);
     if (teams.isNotEmpty) teamId = teams.first.id;
 
     if (!context.mounted) return;
@@ -218,9 +227,31 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
   String? _filterRole;
   String? _filterTeamId;
 
+  List<UserDoc> _filteredList(List<UserDoc> source) {
+    var list = source;
+    if (_search.isNotEmpty) {
+      list = list.where((u) {
+        final name = (u.name ?? '').toLowerCase();
+        final em = (u.email ?? '').toLowerCase();
+        return name.contains(_search) || em.contains(_search);
+      }).toList();
+    }
+    if (_filterRole != null && _filterRole!.isNotEmpty) {
+      list = list.where((u) => u.role == _filterRole).toList();
+    }
+    if (_filterTeamId != null && _filterTeamId!.isNotEmpty) {
+      list = list.where((u) => u.teamId == _filterTeamId).toList();
+    }
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final teamsAsync = ref.watch(adminConsultantsTeamsProvider);
+    final consultantsAsync = ref.watch(adminConsultantsListProvider);
+    final teams = teamsAsync.valueOrNull ?? [];
+    final teamNames = {for (final t in teams) t.id: t.name};
 
     return Column(
       children: [
@@ -251,165 +282,225 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
             onChanged: (value) => setState(() => _search = value.trim().toLowerCase()),
           ),
         ),
-        StreamBuilder<List<TeamDoc>>(
-          stream: FirestoreService.teamsStream(),
-          builder: (context, teamSnap) {
-            final teams = teamSnap.data ?? [];
-            return StreamBuilder<List<UserDoc>>(
-              stream: FirestoreService.consultantsStream(),
-              builder: (context, snap) {
-                if (snap.hasError) {
-                  return Expanded(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(snap.error.toString(), style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm), textAlign: TextAlign.center),
-                          const SizedBox(height: DesignTokens.space3),
-                          TextButton(onPressed: () => setState(() {}), child: Text(l10n.t('retry'))),
-                        ],
-                      ),
+        consultantsAsync.when(
+          loading: () => const Expanded(
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    e.toString(),
+                    style: TextStyle(
+                      color: AppThemeExtension.of(context).textSecondary,
+                      fontSize: DesignTokens.fontSizeSm,
                     ),
-                  );
-                }
-                if (!snap.hasData) {
-                  return Expanded(
-                    child: Center(
-                      child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
-                    ),
-                  );
-                }
-                var list = snap.data!;
-                if (_search.isNotEmpty) {
-                  list = list.where((u) {
-                    final name = (u.name ?? '').toLowerCase();
-                    final em = (u.email ?? '').toLowerCase();
-                    return name.contains(_search) || em.contains(_search);
-                  }).toList();
-                }
-                if (_filterRole != null && _filterRole!.isNotEmpty) {
-                  list = list.where((u) => u.role == _filterRole).toList();
-                }
-                if (_filterTeamId != null && _filterTeamId!.isNotEmpty) {
-                  list = list.where((u) => u.teamId == _filterTeamId).toList();
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String?>(
-                            value: _filterRole,
-                            isExpanded: true,
-                            hint: Text(l10n.t('label_role'), style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 13)),
-                            dropdownColor: AppThemeExtension.of(context).surface,
-                            items: [
-                              DropdownMenuItem<String?>(child: Text(l10n.t('filter_role_all'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary))),
-                              ...AppRole.values.where((r) => r.isManagerTier || r == AppRole.agent).map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: TextStyle(color: AppThemeExtension.of(context).textPrimary)))),
-                            ],
-                            onChanged: (v) => setState(() => _filterRole = v),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: DesignTokens.space3),
-                      if (teams.isNotEmpty)
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: DesignTokens.space3),
+                  TextButton(
+                    onPressed: () {
+                      ref.invalidate(adminConsultantsListProvider);
+                      ref.invalidate(adminConsultantsTeamsProvider);
+                    },
+                    child: Text(l10n.t('retry')),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          data: (consultants) {
+            return Expanded(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4),
+                    child: Row(
+                      children: [
                         Expanded(
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String?>(
-                              value: _filterTeamId,
+                              value: _filterRole,
                               isExpanded: true,
-                              hint: Text(l10n.t('label_team'), style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: 13)),
+                              hint: Text(
+                                l10n.t('label_role'),
+                                style: TextStyle(
+                                  color: AppThemeExtension.of(context).textTertiary,
+                                  fontSize: 13,
+                                ),
+                              ),
                               dropdownColor: AppThemeExtension.of(context).surface,
                               items: [
-                                DropdownMenuItem<String?>(child: Text(l10n.t('filter_team_all'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary))),
-                                ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: TextStyle(color: AppThemeExtension.of(context).textPrimary), overflow: TextOverflow.ellipsis))),
+                                DropdownMenuItem<String?>(
+                                  child: Text(
+                                    l10n.t('filter_role_all'),
+                                    style: TextStyle(
+                                      color: AppThemeExtension.of(context).textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                ...AppRole.values
+                                    .where((r) => r.isManagerTier || r == AppRole.agent)
+                                    .map(
+                                      (r) => DropdownMenuItem(
+                                        value: r.id,
+                                        child: Text(
+                                          r.label,
+                                          style: TextStyle(
+                                            color: AppThemeExtension.of(context).textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                               ],
-                              onChanged: (v) => setState(() => _filterTeamId = v),
+                              onChanged: (v) => setState(() => _filterRole = v),
                             ),
                           ),
                         ),
-                    ],
+                        const SizedBox(width: DesignTokens.space3),
+                        if (teams.isNotEmpty)
+                          Expanded(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String?>(
+                                value: _filterTeamId,
+                                isExpanded: true,
+                                hint: Text(
+                                  l10n.t('label_team'),
+                                  style: TextStyle(
+                                    color: AppThemeExtension.of(context).textTertiary,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                dropdownColor: AppThemeExtension.of(context).surface,
+                                items: [
+                                  DropdownMenuItem<String?>(
+                                    child: Text(
+                                      l10n.t('filter_team_all'),
+                                      style: TextStyle(
+                                        color: AppThemeExtension.of(context).textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  ...teams.map(
+                                    (t) => DropdownMenuItem(
+                                      value: t.id,
+                                      child: Text(
+                                        t.name,
+                                        style: TextStyle(
+                                          color: AppThemeExtension.of(context).textPrimary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (v) => setState(() => _filterTeamId = v),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                );
-              },
+                  const SizedBox(height: DesignTokens.space2),
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final list = _filteredList(consultants);
+                        if (list.isEmpty) {
+                          return Center(
+                            child: Text(
+                              l10n.t('empty_consultants'),
+                              style: TextStyle(
+                                color: AppThemeExtension.of(context).textSecondary,
+                                fontSize: DesignTokens.fontSizeSm,
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(
+                            DesignTokens.space4,
+                            0,
+                            DesignTokens.space4,
+                            DesignTokens.space4,
+                          ),
+                          itemCount: list.length,
+                          itemBuilder: (context, index) {
+                            final u = list[index];
+                            final teamName = u.teamId != null
+                                ? (teamNames[u.teamId] ?? u.teamId)
+                                : '—';
+                            final roleLabel =
+                                AppRole.fromFirestoreRole(u.role).label;
+                            return Card(
+                              margin: const EdgeInsets.only(
+                                bottom: DesignTokens.space3,
+                              ),
+                              color: AppThemeExtension.of(context).surface,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  DesignTokens.radiusLg,
+                                ),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: DesignTokens.space4,
+                                  vertical: DesignTokens.space2,
+                                ),
+                                leading: CircleAvatar(
+                                  backgroundColor: AppThemeExtension.of(context)
+                                      .accent
+                                      .withValues(alpha: 0.2),
+                                  child: Icon(
+                                    Icons.person_rounded,
+                                    color: AppThemeExtension.of(context).accent,
+                                  ),
+                                ),
+                                title: Text(
+                                  u.name ?? u.email ?? u.uid,
+                                  style: TextStyle(
+                                    color: AppThemeExtension.of(context).textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  '${u.email ?? '—'} · $roleLabel · ${l10n.t('label_team')}: $teamName${u.isActive ? '' : ' · Pasif'}',
+                                  style: TextStyle(
+                                    color: AppThemeExtension.of(context).textSecondary,
+                                    fontSize: DesignTokens.fontSizeSm,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                trailing: widget.canEditTeamRole
+                                    ? IconButton(
+                                        icon: Icon(
+                                          Icons.edit_rounded,
+                                          color: AppThemeExtension.of(context).accent,
+                                          size: 20,
+                                        ),
+                                        onPressed: () => _showEditConsultantDialog(
+                                          context,
+                                          u,
+                                          teams,
+                                        ),
+                                        tooltip: l10n.t('edit_consultant'),
+                                      )
+                                    : null,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             );
           },
-        ),
-        const SizedBox(height: DesignTokens.space2),
-        Expanded(
-          child: StreamBuilder<List<TeamDoc>>(
-            stream: FirestoreService.teamsStream(),
-            builder: (context, teamSnap) {
-              final teams = teamSnap.data ?? [];
-              final teamNames = {for (final t in teams) t.id: t.name};
-              return StreamBuilder<List<UserDoc>>(
-                stream: FirestoreService.consultantsStream(),
-                builder: (context, snap) {
-                  if (!snap.hasData) return const SizedBox.shrink();
-                  var list = snap.data!;
-                  if (_search.isNotEmpty) {
-                    list = list.where((u) {
-                      final name = (u.name ?? '').toLowerCase();
-                      final em = (u.email ?? '').toLowerCase();
-                      return name.contains(_search) || em.contains(_search);
-                    }).toList();
-                  }
-                  if (_filterRole != null && _filterRole!.isNotEmpty) list = list.where((u) => u.role == _filterRole).toList();
-                  if (_filterTeamId != null && _filterTeamId!.isNotEmpty) list = list.where((u) => u.teamId == _filterTeamId).toList();
-
-                  if (list.isEmpty) {
-                    return Center(
-                      child: Text(
-                        l10n.t('empty_consultants'),
-                        style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(DesignTokens.space4, 0, DesignTokens.space4, DesignTokens.space4),
-                    itemCount: list.length,
-                    itemBuilder: (context, index) {
-                      final u = list[index];
-                      final teamName = u.teamId != null ? (teamNames[u.teamId] ?? u.teamId) : '—';
-                      final roleLabel = AppRole.fromFirestoreRole(u.role).label;
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: DesignTokens.space3),
-                        color: AppThemeExtension.of(context).surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusLg)),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4, vertical: DesignTokens.space2),
-                          leading: CircleAvatar(
-                            backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
-                            child: Icon(Icons.person_rounded, color: AppThemeExtension.of(context).accent),
-                          ),
-                          title: Text(
-                            u.name ?? u.email ?? u.uid,
-                            style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            '${u.email ?? '—'} · $roleLabel · ${l10n.t('label_team')}: $teamName${u.isActive ? '' : ' · Pasif'}',
-                            style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: widget.canEditTeamRole
-                              ? IconButton(
-                                  icon: Icon(Icons.edit_rounded, color: AppThemeExtension.of(context).accent, size: 20),
-                                  onPressed: () => _showEditConsultantDialog(context, u, teams),
-                                  tooltip: l10n.t('edit_consultant'),
-                                )
-                              : null,
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          ),
         ),
       ],
     );

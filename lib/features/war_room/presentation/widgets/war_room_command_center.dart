@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
+import 'package:emlakmaster_mobile/core/providers/dashboard_shell_providers.dart';
 import 'package:emlakmaster_mobile/features/war_room/data/war_room_providers.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
@@ -480,20 +481,17 @@ class _TopPerformersCard extends ConsumerWidget {
   }
 }
 
-class _MarketTickerCard extends StatelessWidget {
+class _MarketTickerCard extends ConsumerWidget {
   const _MarketTickerCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(officeTickerProvider).valueOrNull ??
+        FirestoreService.defaultTickerItems;
     return _GlassCard(
       title: 'Market Ticker',
       icon: Icons.trending_up_rounded,
-      child: StreamBuilder<List<String>>(
-        stream: FirestoreService.officeTickerStream,
-        initialData: FirestoreService.defaultTickerItems,
-        builder: (context, snapshot) {
-          final items = snapshot.data ?? const <String>[];
-          return Column(
+      child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -520,9 +518,7 @@ class _MarketTickerCard extends StatelessWidget {
                     ),
                   )),
             ],
-          );
-        },
-      ),
+          ),
     );
   }
 }

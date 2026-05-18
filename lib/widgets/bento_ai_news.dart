@@ -4,9 +4,9 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'dart:math' as math;
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/providers/dashboard_shell_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Firebase'de news yoksa kullanılacak sabit liste (Günün Fırsatı, Faiz Oranı vb.)
 final List<Map<String, String>> _defaultNewsItems = [
@@ -32,19 +32,17 @@ final List<Map<String, String>> _defaultNewsItems = [
   },
 ];
 
-class BentoAiNews extends StatelessWidget {
+class BentoAiNews extends ConsumerWidget {
   const BentoAiNews({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirestoreService.newsStream(),
-      builder: (context, snapshot) {
-        final ext = AppThemeExtension.of(context);
-        String title = 'Akıllı Gündem Özeti';
-        String body;
-        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-          final docs = snapshot.data!.docs;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final newsAsync = ref.watch(dashboardNewsProvider);
+    final ext = AppThemeExtension.of(context);
+    String title = 'Akıllı Gündem Özeti';
+    String body;
+    final docs = newsAsync.valueOrNull?.docs;
+    if (docs != null && docs.isNotEmpty) {
           final index = DateTime.now().millisecondsSinceEpoch % docs.length;
           final d = docs[index].data();
           title = d['title'] as String? ?? 'Günün Fırsatı';
@@ -199,7 +197,5 @@ class BentoAiNews extends StatelessWidget {
             ],
           ),
         );
-      },
-    );
   }
 }

@@ -33,3 +33,5 @@ alwaysApply: false
 - Komuta Merkezi / danışman çağrıları / görevler / ilanlar: `*DisplayProvider` (stale-while-revalidate).
 - Shell sekmeleri: `ShellScreenReadyListener(screenName, provider, child)`.
 - İç içe `StreamBuilder` yasak; `StreamProvider` + tek `ref.watch`.
+- Dashboard ticker/kur/haber: `dashboard_shell_providers.dart` (paylaşımlı abonelik).
+- Admin ekipler/danışmanlar: `adminConsultantsTeamsProvider` / `adminTeamsListProvider`.

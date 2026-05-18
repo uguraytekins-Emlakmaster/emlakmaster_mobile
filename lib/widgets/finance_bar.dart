@@ -6,8 +6,10 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
+import 'package:emlakmaster_mobile/core/providers/dashboard_shell_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Ekonomi (B): Yahoo / TCMB — [AppThemeExtension] ile light/dark uyumlu kartlar.
@@ -20,32 +22,35 @@ class FinanceBar extends StatelessWidget {
   }
 }
 
-class FinanceBarLive extends StatelessWidget {
+class FinanceBarLive extends ConsumerWidget {
   const FinanceBarLive({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final ratesAsync = ref.watch(financeRatesProvider);
+    final rates = ratesAsync.valueOrNull ?? FinanceService.getCached();
+    bool hasValidRates(FinanceRates? r) {
+      if (r == null) return false;
+      return r.usdTry > 0 || r.eurTry > 0 || r.gramGoldTry > 0;
+    }
+
+    final awaitingFirst =
+        rates == null && ratesAsync.isLoading && !ratesAsync.hasValue;
+    final awaitingValidRates = rates != null &&
+        !hasValidRates(rates) &&
+        ratesAsync.isLoading;
+    if (awaitingFirst || awaitingValidRates) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
+        child: _FinanceBarShimmer(ext: ext),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space6),
-      child: StreamBuilder<FinanceRates>(
-        stream: FinanceService.ratesStream,
-        initialData: FinanceService.getCached(),
-        builder: (context, snapshot) {
-          final rates = snapshot.data;
-          bool hasValidRates(FinanceRates? r) {
-            if (r == null) return false;
-            return r.usdTry > 0 || r.eurTry > 0 || r.gramGoldTry > 0;
-          }
-
-          final awaitingFirst = rates == null &&
-              snapshot.connectionState == ConnectionState.waiting;
-          final awaitingValidRates = rates != null &&
-              !hasValidRates(rates) &&
-              snapshot.connectionState == ConnectionState.waiting;
-          if (awaitingFirst || awaitingValidRates) {
-            return _FinanceBarShimmer(ext: ext);
-          }
+      child: Builder(
+        builder: (context) {
 
           String fmtUsd() => (rates != null && rates.usdTry > 0)
               ? rates.usdTry.toStringAsFixed(2)
@@ -130,7 +135,7 @@ class FinanceBarLive extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (snapshot.hasError)
+                      if (ratesAsync.hasError)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Text(

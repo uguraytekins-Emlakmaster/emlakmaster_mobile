@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/features/admin_teams/presentation/providers/admin_teams_providers.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -60,37 +61,39 @@ class AdminTeamsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: StreamBuilder<List<TeamDoc>>(
-        stream: FirestoreService.teamsStream(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(DesignTokens.space4),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      snapshot.error.toString(),
-                      style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: DesignTokens.space3),
-                    TextButton(
-                      onPressed: () => _showCreateTeamDialog(context, ref),
-                      child: Text(l10n.t('retry')),
-                    ),
-                  ],
+      body: ref.watch(adminTeamsListProvider).when(
+        loading: () => Center(
+          child: CircularProgressIndicator(
+            color: AppThemeExtension.of(context).accent,
+          ),
+        ),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(DesignTokens.space4),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  e.toString(),
+                  style: TextStyle(
+                    color: AppThemeExtension.of(context).textSecondary,
+                    fontSize: DesignTokens.fontSizeSm,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            );
-          }
-          if (!snapshot.hasData) {
-            return Center(
-              child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
-            );
-          }
-          final teams = snapshot.data!;
+                const SizedBox(height: DesignTokens.space3),
+                TextButton(
+                  onPressed: () {
+                    ref.invalidate(adminTeamsListProvider);
+                    _showCreateTeamDialog(context, ref);
+                  },
+                  child: Text(l10n.t('retry')),
+                ),
+              ],
+            ),
+          ),
+        ),
+        data: (teams) {
           if (teams.isEmpty) {
             return Center(
               child: Padding(

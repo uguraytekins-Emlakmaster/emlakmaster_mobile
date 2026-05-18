@@ -6,18 +6,22 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
+import 'package:emlakmaster_mobile/features/admin_teams/presentation/providers/admin_teams_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 /// Ekip detay: ad, manager seçimi, üye listesi, üye ekle / ekipten çıkar.
-class AdminTeamDetailPage extends StatefulWidget {
+class AdminTeamDetailPage extends ConsumerStatefulWidget {
   const AdminTeamDetailPage({super.key, required this.teamId});
 
   final String teamId;
 
   @override
-  State<AdminTeamDetailPage> createState() => _AdminTeamDetailPageState();
+  ConsumerState<AdminTeamDetailPage> createState() =>
+      _AdminTeamDetailPageState();
 }
 
-class _AdminTeamDetailPageState extends State<AdminTeamDetailPage> {
+class _AdminTeamDetailPageState extends ConsumerState<AdminTeamDetailPage> {
   String? _selectedManagerId;
 
   @override
@@ -32,15 +36,14 @@ class _AdminTeamDetailPageState extends State<AdminTeamDetailPage> {
         foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: Text(l10n.t('title_team_detail')),
       ),
-      body: StreamBuilder<TeamDoc?>(
-        stream: FirestoreService.teamDocStream(widget.teamId),
-        builder: (context, teamSnap) {
-          if (!teamSnap.hasData) {
-            return Center(
-              child: CircularProgressIndicator(color: AppThemeExtension.of(context).accent),
-            );
-          }
-          final team = teamSnap.data;
+      body: ref.watch(adminTeamDocProvider(widget.teamId)).when(
+        loading: () => Center(
+          child: CircularProgressIndicator(
+            color: AppThemeExtension.of(context).accent,
+          ),
+        ),
+        error: (e, _) => Center(child: Text(e.toString())),
+        data: (team) {
           if (team == null) {
             return Center(
               child: Text(
@@ -93,7 +96,7 @@ class _AdminTeamDetailPageState extends State<AdminTeamDetailPage> {
   }
 }
 
-class _TeamInfoCard extends StatelessWidget {
+class _TeamInfoCard extends ConsumerWidget {
   const _TeamInfoCard({
     required this.team,
     required this.selectedManagerId,
@@ -107,8 +110,9 @@ class _TeamInfoCard extends StatelessWidget {
   final VoidCallback onSaveManager;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final managersAsync = ref.watch(adminTeamManagersProvider);
 
     return Card(
       color: AppThemeExtension.of(context).surface,
@@ -127,29 +131,41 @@ class _TeamInfoCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: DesignTokens.space4),
-            StreamBuilder<List<UserDoc>>(
-              stream: FirestoreService.consultantsStream(),
-              builder: (context, snap) {
-                final managers = (snap.data ?? [])
-                    .where((u) => AppRole.fromFirestoreRole(u.role).isManagerTier)
+            managersAsync.when(
+              loading: () => const LinearProgressIndicator(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (consultants) {
+                final managers = consultants
+                    .where(
+                      (u) => AppRole.fromFirestoreRole(u.role).isManagerTier,
+                    )
                     .toList();
                 return DropdownButtonFormField<String>(
-                  initialValue: selectedManagerId.isEmpty ? null : selectedManagerId,
+                  initialValue:
+                      selectedManagerId.isEmpty ? null : selectedManagerId,
                   decoration: InputDecoration(
                     labelText: l10n.t('label_manager'),
                     border: const OutlineInputBorder(),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: AppThemeExtension.of(context).border,
+                      ),
+                    ),
                   ),
                   dropdownColor: AppThemeExtension.of(context).surface,
                   items: managers
-                      .map((u) => DropdownMenuItem(
-                            value: u.uid,
-                            child: Text(
-                              u.name ?? u.email ?? u.uid,
-                              style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
-                              overflow: TextOverflow.ellipsis,
+                      .map(
+                        (u) => DropdownMenuItem(
+                          value: u.uid,
+                          child: Text(
+                            u.name ?? u.email ?? u.uid,
+                            style: TextStyle(
+                              color: AppThemeExtension.of(context).textPrimary,
                             ),
-                          ))
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: onManagerChanged,
                 );
