@@ -13,6 +13,7 @@ import '../navigation/shell_navigation_host.dart';
 import '../navigation/shell_tab_back_host.dart';
 import '../navigation/tab_history_controller.dart';
 import '../performance/shell_tab_keep_alive.dart';
+import '../performance/shell_tab_prefetch.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
@@ -287,6 +288,10 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       'materialized=$_materialized',
     );
     _scheduleShortcutReplay();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      prefetchShellTab(ref, _tabIdentityFor(widget, _currentIndex));
+    });
   }
 
   @override
@@ -420,10 +425,15 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     _shellLog(
       '$source pageIndex=$pageIndex (was $_currentIndex) tabId=${_tabIdentityFor(widget, pageIndex)}',
     );
+    final tabId = _tabIdentityFor(widget, pageIndex);
+    final firstVisit = !_materialized.contains(pageIndex);
     setState(() {
       _currentIndex = pageIndex;
       _materialized.add(pageIndex);
     });
+    if (firstVisit) {
+      prefetchShellTab(ref, tabId);
+    }
     if (_traceEnabled) {
       developer.log(
         '$source applied selectedAfter=$_currentIndex resolvedPage='

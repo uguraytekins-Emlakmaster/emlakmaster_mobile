@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:go_router/go_router.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,44 @@ class ConsultantResurrectionPage extends ConsumerWidget {
     final textTertiary = isDark
         ? AppThemeExtension.of(context).textTertiary
         : AppThemeExtension.of(context).textTertiary;
+    return ShellScreenReadyListener(
+      screenName: 'follow_up',
+      provider: resurrectionQueueProvider,
+      itemCount: (v) => (v as List).length,
+      child: _FollowUpBody(
+        bg: bg,
+        fg: fg,
+        surface: surface,
+        border: border,
+        textSecondary: textSecondary,
+        textTertiary: textTertiary,
+        theme: theme,
+      ),
+    );
+  }
+}
+
+class _FollowUpBody extends ConsumerWidget {
+  const _FollowUpBody({
+    required this.bg,
+    required this.fg,
+    required this.surface,
+    required this.border,
+    required this.textSecondary,
+    required this.textTertiary,
+    required this.theme,
+  });
+
+  final Color bg;
+  final Color fg;
+  final Color surface;
+  final Color border;
+  final Color textSecondary;
+  final Color textTertiary;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Scaffold(
       backgroundColor: bg,

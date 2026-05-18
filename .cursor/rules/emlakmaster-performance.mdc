@@ -37,3 +37,5 @@ alwaysApply: false
 - Admin ekipler/danışmanlar: `adminConsultantsTeamsProvider` / `adminTeamsListProvider`.
 - Pipeline / bildirimler / ilan detay / müşteri çağrı-not: `*DisplayProvider` ailesi (`pipeline_items`, `user_notifications`, `listing_detail`, `customer_feed_providers`).
 - Komut paleti: `officeCustomersSnapshotProvider` (tek abonelik).
+- Sekme ilk açılış: `prefetchShellTab` ([shell_tab_prefetch.dart](../lib/core/performance/shell_tab_prefetch.dart)).
+- Profile tur: `scripts/run_profile_perf.sh`, debug log `[Perf] screen_content_ready`.
