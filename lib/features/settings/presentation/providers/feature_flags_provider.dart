@@ -40,7 +40,7 @@ final featureFlagsProvider =
 class FeatureFlagsNotifier
     extends StateNotifier<AsyncValue<Map<String, bool>>> {
   FeatureFlagsNotifier() : super(AsyncValue.data(_defaultFlagsMap())) {
-    _load();
+    Future<void>.delayed(Duration.zero, _load);
   }
 
   Future<void> _load() async {

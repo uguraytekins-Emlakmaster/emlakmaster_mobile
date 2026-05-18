@@ -47,6 +47,12 @@ final themeModeIndexProvider =
 class ThemeModeIndexNotifier extends StateNotifier<int> {
   ThemeModeIndexNotifier(super.initial);
 
+  /// Diskten okunan tema — runApp öncesi beklenmeden uygulanır.
+  void restoreIndex(int index) {
+    if (state == index) return;
+    state = index;
+  }
+
   Future<void> setThemeModeIndex(int index) async {
     await SettingsService.instance.setThemeModeIndex(index);
     state = index;

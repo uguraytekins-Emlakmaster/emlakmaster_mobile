@@ -67,10 +67,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
       }
       final greeting = '$salutation, $firstName';
 
-      return ShellScreenReadyListener(
-        screenName: 'consultant_dashboard',
-        provider: todayCallsCountProvider,
-        child: Material(
+      return Material(
         color: ext.background,
         child: SafeArea(
           child: RepaintBoundary(
@@ -127,29 +124,44 @@ class ConsultantDashboardPage extends ConsumerWidget {
                         ),
                         const SizedBox(
                             height: DashboardLayoutTokens.gapHeroToOperational),
-                        const PostCallCaptureDashboardReminder(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperationalTight),
-                        const _ConsultantTeamLine(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperational),
-                        const _ConsultantActionAnchor(),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapOperational),
-                        Text(
-                          'Hızlı durum',
-                          style: AppTypography.sectionLabel(context),
-                        ),
-                        const SizedBox(height: DesignTokens.space2),
-                        const _TodayKpiRow(),
                         DeferredMountSection(
+                          delay: const Duration(milliseconds: 220),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              const PostCallCaptureDashboardReminder(),
                               const SizedBox(
                                   height: DashboardLayoutTokens
                                       .gapOperationalTight),
-                              const AiUsageIndicator(),
+                              const _ConsultantTeamLine(),
+                              const SizedBox(
+                                  height:
+                                      DashboardLayoutTokens.gapOperational),
+                              const _ConsultantActionAnchor(),
+                              const SizedBox(
+                                  height:
+                                      DashboardLayoutTokens.gapOperational),
+                              Text(
+                                'Hızlı durum',
+                                style: AppTypography.sectionLabel(context),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DeferredMountSection(
+                          delay: const Duration(milliseconds: 420),
+                          child: ShellScreenReadyListener(
+                            screenName: 'consultant_dashboard',
+                            provider: todayCallsCountProvider,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const SizedBox(height: DesignTokens.space2),
+                                const _TodayKpiRow(),
+                                const SizedBox(
+                                    height: DashboardLayoutTokens
+                                        .gapOperationalTight),
+                                const AiUsageIndicator(),
                               const SizedBox(
                                   height: DashboardLayoutTokens
                                       .gapOperationalTight),
@@ -185,7 +197,8 @@ class ConsultantDashboardPage extends ConsumerWidget {
                                   height:
                                       DashboardLayoutTokens.gapOperational),
                               const _WeeklyGoalCard(),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -261,7 +274,6 @@ class ConsultantDashboardPage extends ConsumerWidget {
             ),
           ),
         ),
-      ),
       );
     } catch (e, st) {
       AppLogger.e('ConsultantDashboardPage build', e, st);

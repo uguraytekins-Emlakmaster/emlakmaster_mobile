@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_draft_recovery_card.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/pages/consultant_calls_page.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/pages/customer_list_page.dart';
+import 'package:emlakmaster_mobile/core/performance/startup_shell_chrome.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/consultant_dashboard_page.dart';
 import 'package:emlakmaster_mobile/screens/consultant_more_sheet.dart';
@@ -91,15 +92,22 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
       goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
       child: Column(
         children: [
-          const SyncStatusBanner(compact: true),
-          const CallReturnPromptHost(),
-          const PostCallDraftRecoveryCard(),
-          ValueListenableBuilder<int>(
-            valueListenable: _shellPageIndex,
-            builder: (context, pageIndex, _) {
-              if (pageIndex == 2) return const SizedBox.shrink();
-              return const PostCallCaptureShellStrip();
-            },
+          StartupShellChrome(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SyncStatusBanner(compact: true),
+                const CallReturnPromptHost(),
+                const PostCallDraftRecoveryCard(),
+                ValueListenableBuilder<int>(
+                  valueListenable: _shellPageIndex,
+                  builder: (context, pageIndex, _) {
+                    if (pageIndex == 2) return const SizedBox.shrink();
+                    return const PostCallCaptureShellStrip();
+                  },
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: AdaptiveShellScaffold(

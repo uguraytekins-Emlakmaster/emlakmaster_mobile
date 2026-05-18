@@ -76,11 +76,11 @@ Future<void> main() async {
       // Firebase + yerel onboarding bayrakları paralel; takılırsa kısa sürede runApp ile devam.
       await Future.wait<void>([
         _initFirebaseIfNeeded().timeout(
-          const Duration(seconds: 10),
+          const Duration(seconds: 4),
           onTimeout: () {
             if (kDebugMode) {
               debugPrint(
-                'Firebase: başlatma 10s zaman aşımı; uygulama yine de açılacak.',
+                'Firebase: 4s içinde hazır değil; arayüz açılıyor, init arka planda sürebilir.',
               );
             }
           },
@@ -91,7 +91,7 @@ Future<void> main() async {
               OnboardingStore.instance.warmUp(),
               LoginEntryStore.instance.warmUp(),
             ]).timeout(
-              const Duration(seconds: 3),
+              const Duration(milliseconds: 900),
               onTimeout: () {
                 if (kDebugMode) {
                   debugPrint(
@@ -249,34 +249,10 @@ Future<void> _runApp() async {
     );
   };
 
-  // Çoğunlukla main() içinde Firebase ile paralel warmUp tamamlanır; burada yedek (idempotent).
-  try {
-    await Future.wait([
-      OnboardingStore.instance.warmUp(),
-      LoginEntryStore.instance.warmUp(),
-    ]);
-    AppLogger.state('[startup] OnboardingStore + LoginEntryStore warmUp done before runApp');
-  } catch (e, st) {
-    AppLogger.e('OnboardingStore/LoginEntryStore warmUp error (pre-runApp)', e, st);
-  }
-
-  var initialThemeModeIndex = 2;
-  try {
-    initialThemeModeIndex = await SettingsService.instance.getThemeModeIndex();
-    AppLogger.state(
-      '[startup] restored themeModeIndex=$initialThemeModeIndex before runApp',
-    );
-  } catch (e, st) {
-    AppLogger.e('Theme mode restore (pre-runApp)', e, st);
-  }
-
-  AppLogger.state('[startup] runApp');
+  AppLogger.state('[startup] runApp (fast path)');
   runApp(
     ProviderScope(
       observers: kDebugMode ? [DebugRiverpodObserver()] : null,
-      overrides: [
-        initialThemeModeIndexProvider.overrideWithValue(initialThemeModeIndex),
-      ],
       child: const EmlakMasterApp(),
     ),
   );
@@ -306,7 +282,10 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     AppLogger.state('[startup] EmlakMasterApp.initState');
     AppLifecyclePowerService.instance.ensureObserved();
     _bindStartupLogging();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _runDeferredInit());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _runDeferredInit();
+      unawaited(_restoreThemeFromDisk(ref));
+    });
     if (!_isFlutterTest) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Future<void>.delayed(
@@ -434,13 +413,25 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     );
   }
 
+  static Future<void> _restoreThemeFromDisk(WidgetRef ref) async {
+    try {
+      final index = await SettingsService.instance.getThemeModeIndex();
+      ref.read(themeModeIndexProvider.notifier).restoreIndex(index);
+      AppLogger.state('[startup] themeModeIndex=$index restored post-frame');
+    } catch (e, st) {
+      AppLogger.e('Theme mode restore (post-frame)', e, st);
+    }
+  }
+
   static Future<void> _runDeferredInit() async {
     if (_deferredInitDone) return;
     _deferredInitDone = true;
     AppLogger.state('[startup] deferred init start');
     try {
-      SyncManager.init();
-      AppLogger.state('[startup] SyncManager.init done');
+      Future<void>.delayed(const Duration(milliseconds: 600), () {
+        SyncManager.init();
+        AppLogger.state('[startup] SyncManager.init done');
+      });
     } catch (e, st) {
       AppLogger.e('SyncManager init error', e, st);
     }

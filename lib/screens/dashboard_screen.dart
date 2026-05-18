@@ -154,13 +154,22 @@ class DashboardPage extends ConsumerWidget {
                         // —— Layer 1: Hero — ofis kimliği, uyarı şeridi ——
                         const DashboardTopAppBar(),
                         SizedBox(height: gapHero),
-                        px(
-                          const RepaintBoundary(
-                            child: BrokerDashboardIntelligenceSummaryCard(),
+                        DeferredMountSection(
+                          delay: const Duration(milliseconds: 200),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              px(
+                                const RepaintBoundary(
+                                  child: BrokerDashboardIntelligenceSummaryCard(),
+                                ),
+                              ),
+                              SizedBox(height: gapOp * 0.85),
+                            ],
                           ),
                         ),
-                        SizedBox(height: gapOp * 0.85),
                         DeferredMountSection(
+                          delay: const Duration(milliseconds: 380),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -178,26 +187,26 @@ class DashboardPage extends ConsumerWidget {
                               SizedBox(height: gapOp * 0.85),
                               px(const ExecutionRemindersCard(
                                   surface: ExecutionReminderSurface.broker)),
+                              if (kpiBar) ...[
+                                SizedBox(height: gapOp),
+                                px(
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Ofis momentumu',
+                                      style:
+                                          AppTypography.sectionLabel(context),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: DesignTokens.space2),
+                                px(const DashboardKpiSection()),
+                              ],
+                              if (kpiBar) SizedBox(height: gapOp),
+                              px(const PriorityCallSignalsCard()),
                             ],
                           ),
                         ),
-                        // —— Ofis momentumu — KPI ——
-                        if (kpiBar) ...[
-                          SizedBox(height: gapOp),
-                          px(
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Ofis momentumu',
-                                style: AppTypography.sectionLabel(context),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: DesignTokens.space2),
-                          px(const DashboardKpiSection()),
-                        ],
-                        if (kpiBar) SizedBox(height: gapOp),
-                        px(const PriorityCallSignalsCard()),
                         if (analyticsEnabled) ...[
                           SizedBox(height: gapOp),
                           px(
