@@ -1,5 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'dart:async' show Timer, unawaited;
+import 'dart:async' show unawaited;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,13 +8,8 @@ import 'package:go_router/go_router.dart';
 
 import '../logging/app_logger.dart';
 import '../deep_linking/pending_deep_link_store.dart';
-import '../../features/office/domain/office_exception.dart';
-import '../../features/office/presentation/utils/office_error_ui.dart';
 import '../router/fast_page_transitions.dart';
-import '../widgets/app_loading.dart';
-import '../widgets/startup_recovery_scaffold.dart';
 import '../services/analytics_service.dart';
-import '../services/auth_service.dart';
 import '../services/onboarding_store.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -645,198 +640,13 @@ class AppRouter {
   });
 }
 
-/// Giriş yapılmış kullanıcı için: rol yüklenene kadar loading, sonra child.
-class _AuthShell extends ConsumerStatefulWidget {
+/// Bootstrap tek katmanda ([RoleBasedShellSelector]); çift “yükleniyor” ekranı yok.
+class _AuthShell extends ConsumerWidget {
   const _AuthShell({required this.child});
   final Widget child;
 
   @override
-  ConsumerState<_AuthShell> createState() => _AuthShellState();
-}
-
-class _AuthShellState extends ConsumerState<_AuthShell> {
-  static const _recoveryDelay = Duration(seconds: 8);
-
-  Timer? _recoveryTimer;
-  bool _showRecovery = false;
-
-  @override
-  void dispose() {
-    _recoveryTimer?.cancel();
-    super.dispose();
-  }
-
-  void _armRecovery() {
-    if (_recoveryTimer != null || _showRecovery) return;
-    AppLogger.state('[startup][_AuthShell] loading currentRoleProvider');
-    _recoveryTimer = Timer(_recoveryDelay, () {
-      if (!mounted) return;
-      AppLogger.w('[startup][_AuthShell] recovery fallback armed');
-      setState(() => _showRecovery = true);
-    });
-  }
-
-  void _clearRecovery() {
-    if (_recoveryTimer == null && !_showRecovery) return;
-    AppLogger.state('[startup][_AuthShell] interactive again');
-    _recoveryTimer?.cancel();
-    _recoveryTimer = null;
-    _showRecovery = false;
-  }
-
-  void _retry() {
-    final uid = ref.read(currentUserProvider).valueOrNull?.uid;
-    AppLogger.state('[startup][_AuthShell] retry requested uid=${uid ?? "-"}');
-    if (uid != null && uid.isNotEmpty) {
-      ref.invalidate(userDocStreamProvider(uid));
-    }
-    ref.invalidate(primaryMembershipProvider);
-    ref.invalidate(officeAccessStateProvider);
-    ref.invalidate(currentRoleProvider);
-    setState(() {
-      _showRecovery = false;
-      _recoveryTimer?.cancel();
-      _recoveryTimer = null;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final roleAsync = ref.watch(currentRoleProvider);
-    return roleAsync.when(
-      loading: () {
-        _armRecovery();
-        if (_showRecovery) {
-          return StartupRecoveryScaffold(
-            title: 'Açılış uzadı',
-            message:
-                'Rol ve ofis alanı hazırlanırken uygulama beklenenden uzun sürdü. Yeniden deneyebilir ya da oturumu tazeleyebilirsiniz.',
-            detail: 'Bekleyen provider: currentRoleProvider',
-            onPrimary: _retry,
-            secondaryLabel: 'Çıkış yap',
-            onSecondary: () => AuthService.instance.signOut(),
-          );
-        }
-        return const _RouteLoadingScreen();
-      },
-      error: (e, _) {
-        _clearRecovery();
-        final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
-        if (uid == null || uid.isEmpty) {
-          return const _RouteLoadingScreen();
-        }
-        return _HomeShellRoleErrorScreen(uid: uid, error: e);
-      },
-      data: (_) {
-        _clearRecovery();
-        return widget.child;
-      },
-    );
-  }
-}
-
-/// Ana shell: Firestore users/{uid} dinlenemezse (permission-denied, ağ vb.) sonsuz yüklemede kalmayı önler.
-class _HomeShellRoleErrorScreen extends ConsumerWidget {
-  const _HomeShellRoleErrorScreen({required this.uid, required this.error});
-
-  final String uid;
-  final Object error;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final text = officeErrorUserMessage(error);
-    final detail = error is OfficeException ? null : error.toString();
-
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline_rounded,
-                  size: 64, color: AppThemeExtension.of(context).accent),
-              const SizedBox(height: 24),
-              Text(
-                text,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: onSurface.withValues(alpha: 0.9), fontSize: 16),
-              ),
-              if (detail != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  detail,
-                  textAlign: TextAlign.center,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: onSurface.withValues(alpha: 0.55), fontSize: 11),
-                ),
-              ],
-              const SizedBox(height: 32),
-              FilledButton.icon(
-                onPressed: () {
-                  ref.invalidate(userDocStreamProvider(uid));
-                },
-                icon: const Icon(Icons.refresh_rounded, size: 20),
-                label: const Text('Tekrar dene'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppThemeExtension.of(context).accent,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  await AuthService.instance.signOut();
-                },
-                icon: const Icon(Icons.logout_rounded, size: 20),
-                label: const Text('Çıkış yap'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: onSurface.withValues(alpha: 0.9),
-                  side: BorderSide(color: onSurface.withValues(alpha: 0.4)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RouteLoadingScreen extends StatelessWidget {
-  const _RouteLoadingScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppLoading(),
-            const SizedBox(height: 24),
-            Text(
-              'Yükleniyor...',
-              style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-                  fontSize: 14),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) => child;
 }
 
 class _AnalyticsRouteObserver extends NavigatorObserver {

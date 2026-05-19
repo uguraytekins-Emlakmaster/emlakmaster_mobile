@@ -23,7 +23,7 @@ final currentUserProvider = StreamProvider<User?>((ref) {
 /// users/{uid} stream. Rol değişikliklerini canlı dinler.
 final userDocStreamProvider =
     StreamProvider.autoDispose.family<UserDoc?, String>((ref, uid) {
-  return UserRepository.userDocStream(uid);
+  return UserRepository.userDocStreamHydrated(uid);
 });
 
 /// İlk girişte users doc yoksa rol seçim ekranı gösterilir; doc burada oluşturulur (ensureUserDoc artık otomatik çağrılmaz).

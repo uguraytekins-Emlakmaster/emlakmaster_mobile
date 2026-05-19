@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/widgets/app_loading.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_bootstrap_skeleton.dart';
 import 'package:emlakmaster_mobile/core/widgets/startup_recovery_scaffold.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -94,7 +92,7 @@ class _RoleBasedShellSelectorState
         onSecondary: () => AuthService.instance.signOut(),
       );
     }
-    return _ShellLoading(reason: reason);
+    return const ShellBootstrapSkeleton();
   }
 
   @override
@@ -105,21 +103,17 @@ class _RoleBasedShellSelectorState
     }
     // Router ile aynı kaynak: currentRoleProvider (+ isteğe bağlı override) → displayRoleProvider.
     // users/{uid}.role tek başına ofis üyeliği rolüyle çakışmasın diye doc bootstrap / gate’lerde bekle.
+    if (ref.watch(needsRoleSelectionProvider) ||
+        ref.watch(needsOfficeSetupProvider) ||
+        ref.watch(needsOfficeRecoveryProvider)) {
+      return const _ShellRouterGatePending();
+    }
     if (ref.watch(userDocBootstrapPendingProvider)) {
-      return _loadingOrRecovery('userDocBootstrapPending');
-    }
-    if (ref.watch(needsRoleSelectionProvider)) {
-      return _loadingOrRecovery('needsRoleSelection');
-    }
-    if (ref.watch(needsOfficeSetupProvider)) {
-      return _loadingOrRecovery('needsOfficeSetup');
-    }
-    if (ref.watch(needsOfficeRecoveryProvider)) {
-      return _loadingOrRecovery('needsOfficeRecovery');
+      return const ShellBootstrapSkeleton();
     }
     final roleAsync = ref.watch(displayRoleProvider);
     return roleAsync.when(
-      loading: () => _loadingOrRecovery('displayRoleProvider.loading'),
+      loading: () => const ShellBootstrapSkeleton(),
       error: (e, st) {
         _clearLoadingReason();
         AppLogger.e('[startup][RoleShell] displayRoleProvider error', e, st);
@@ -174,46 +168,15 @@ class _ShellRoleErrorScreen extends ConsumerWidget {
   }
 }
 
-class _ShellLoading extends StatelessWidget {
-  const _ShellLoading({required this.reason});
-
-  final String reason;
+/// Router rol/ofis kapısına yönlendirirken tam ekran spinner göstermez.
+class _ShellRouterGatePending extends StatelessWidget {
+  const _ShellRouterGatePending();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Açık temada scaffold beyazı "boş ekran" gibi görünmesin.
-      backgroundColor: AppThemeExtension.of(context).background,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppLoading(),
-            const SizedBox(height: 24),
-            Text(
-              'Panel hazırlanıyor...',
-              style: TextStyle(
-                color: AppThemeExtension.of(context)
-                    .textPrimary
-                    .withValues(alpha: 0.9),
-                fontSize: 14,
-              ),
-            ),
-            if (kDebugMode) ...[
-              const SizedBox(height: 8),
-              Text(
-                reason,
-                style: TextStyle(
-                  color: AppThemeExtension.of(context)
-                      .textSecondary
-                      .withValues(alpha: 0.72),
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return ColoredBox(
+      color: AppThemeExtension.of(context).background,
+      child: const SizedBox.expand(),
     );
   }
 }

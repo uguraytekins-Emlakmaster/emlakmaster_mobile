@@ -154,8 +154,7 @@ class DashboardPage extends ConsumerWidget {
                         // —— Layer 1: Hero — ofis kimliği, uyarı şeridi ——
                         const DashboardTopAppBar(),
                         SizedBox(height: gapHero),
-                        DeferredMountSection(
-                          delay: const Duration(milliseconds: 200),
+                        DeferredMountSection.dashboardOperational(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -168,8 +167,7 @@ class DashboardPage extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        DeferredMountSection(
-                          delay: const Duration(milliseconds: 380),
+                        DeferredMountSection.dashboardPrimary(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -207,8 +205,7 @@ class DashboardPage extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        DeferredMountSection(
-                          delay: const Duration(milliseconds: 520),
+                        DeferredMountSection.dashboardSecondary(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -269,8 +266,7 @@ class DashboardPage extends ConsumerWidget {
                           ),
                         ),
                         if (!lean)
-                          DeferredMountSection(
-                            delay: const Duration(milliseconds: 450),
+                          DeferredMountSection.dashboardInsight(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [

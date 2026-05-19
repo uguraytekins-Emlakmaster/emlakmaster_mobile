@@ -96,6 +96,18 @@ class UserRepository {
     });
   }
 
+  /// Tek seferlik `get` + canlı stream — bootstrap “Panel hazırlanıyor” süresini kısaltır.
+  static Stream<UserDoc?> userDocStreamHydrated(String uid) async* {
+    try {
+      yield await getUserDoc(uid);
+    } catch (e, st) {
+      if (kDebugMode) {
+        AppLogger.e('UserRepository.userDocStreamHydrated get($uid)', e, st);
+      }
+    }
+    yield* userDocStream(uid);
+  }
+
   /// Yeni kullanıcı dokümanı oluşturur veya günceller. İlk girişte role=superAdmin kullanılabilir.
   static Future<void> setUserDoc({
     required String uid,

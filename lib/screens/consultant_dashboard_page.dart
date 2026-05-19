@@ -124,8 +124,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
                         ),
                         const SizedBox(
                             height: DashboardLayoutTokens.gapHeroToOperational),
-                        DeferredMountSection(
-                          delay: const Duration(milliseconds: 220),
+                        DeferredMountSection.dashboardOperational(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -148,8 +147,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        DeferredMountSection(
-                          delay: const Duration(milliseconds: 420),
+                        DeferredMountSection.dashboardPrimary(
                           child: ShellScreenReadyListener(
                             screenName: 'consultant_dashboard',
                             provider: todayCallsCountProvider,

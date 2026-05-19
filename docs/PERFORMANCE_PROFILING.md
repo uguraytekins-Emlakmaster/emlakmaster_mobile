@@ -8,7 +8,9 @@ Hızlı kontrol listesi — shell sekmesi veya büyük refactor sonrası.
 2. İlk ~0,5 sn: selamlama + arama / üst bar; kartlar **kademeli** gelir (`DeferredMountSection`).
 3. Kabuk şeritleri (senkron, post-call) ~480 ms sonra (`StartupShellChrome`).
 4. Pasif sekme Firestore dinlemez (`ShellLazyTab`).
-5. Uzun **“Panel hazırlanıyor…”** → Firestore rol/ofis; konsolda `[startup][RoleShell] loading reason=...`
+5. Bootstrap: `userDocStreamHydrated` (önce `get`, sonra stream) + `ShellBootstrapSkeleton` — çift `_AuthShell` / “Panel hazırlanıyor” kaldırıldı.
+
+`StartupMountSchedule` / `DeferredMountSection.*` — tüm mount gecikmeleri tek dosyada.
 
 `main.dart`: `runApp` öncesi Firebase üst sınır ~4 sn, onboarding warmUp ~900 ms; tema diskten ilk kareden sonra.
 
