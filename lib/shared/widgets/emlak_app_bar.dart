@@ -16,7 +16,6 @@ PreferredSizeWidget emlakAppBar(
   double? elevation,
   bool showHomeWhenCanPop = true,
 }) {
-  final theme = Theme.of(context);
   final ext = AppThemeExtension.of(context);
   final bg = backgroundColor ?? ext.background;
   final fg = foregroundColor ?? ext.textPrimary;

@@ -10,7 +10,6 @@ import 'package:emlakmaster_mobile/features/listings/domain/listing_row_view.dar
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/external_listings/presentation/providers/external_listings_provider.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/market_feed_rows_display_provider.dart';
-import 'package:emlakmaster_mobile/features/listings/presentation/providers/market_feed_rows_provider.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/owned_listing_rows_display_provider.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/owned_listing_rows_provider.dart';

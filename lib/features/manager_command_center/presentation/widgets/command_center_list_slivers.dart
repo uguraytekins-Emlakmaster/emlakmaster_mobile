@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
@@ -387,7 +386,6 @@ abstract final class CommandCenterListSlivers {
               final data = last.data();
               final agent = CrmCallRecordHelpers.agentIdOf(data);
               final outcome = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
-              final cap = CrmCallRecordHelpers.captureStatusTr(data);
               final dt = CrmCallRecordHelpers.createdAtOf(data);
               final timeStr = dt != null
                   ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'

@@ -2,7 +2,6 @@ import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'dart:ui';
 
-import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';

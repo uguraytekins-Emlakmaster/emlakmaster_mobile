@@ -1,6 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';

@@ -460,99 +460,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     );
   }
 
-  Widget _consultantIntelligenceRow(
-    BuildContext context,
-    CallSurfaceListStats stats,
-    AppThemeExtension ext,
-    Color fg,
-    Color textSecondary,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space4,
-        0,
-        DesignTokens.space4,
-        DesignTokens.space2,
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: ext.infoSurface.withValues(alpha: 0.42),
-          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-          border: Border.all(color: ext.border.withValues(alpha: 0.42)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space3 + 2,
-            vertical: DesignTokens.space2 + 2,
-          ),
-          child: Text(
-            'Bugün ${stats.today} kayıt · '
-            'Tamamlanması gereken ${stats.pendingCapture} · '
-            'Cevapsız ${stats.unanswered}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: textSecondary,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
-                ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _consultantQuickFilterStrip(AppThemeExtension ext) {
-    Widget chip(CallSurfaceQuickFilter f, String label) {
-      final sel = _quickFilter == f;
-      return Padding(
-        padding: const EdgeInsets.only(right: DesignTokens.space2),
-        child: FilterChip(
-          selected: sel,
-          showCheckmark: true,
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-          side: BorderSide(
-            color: sel
-                ? ext.accent.withValues(alpha: 0.26)
-                : ext.border.withValues(alpha: 0.38),
-          ),
-          label: Text(label),
-          onSelected: (_) => setState(() => _quickFilter = f),
-          selectedColor: ext.accent.withValues(alpha: 0.11),
-          checkmarkColor: ext.accent,
-          labelStyle: TextStyle(
-            color: sel ? ext.textPrimary : ext.textSecondary,
-            fontWeight: sel ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 12.5,
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        DesignTokens.space4,
-        0,
-        DesignTokens.space4,
-        DesignTokens.space2,
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            chip(CallSurfaceQuickFilter.all, 'Tümü'),
-            chip(CallSurfaceQuickFilter.today, 'Bugün'),
-            chip(CallSurfaceQuickFilter.unanswered, 'Cevapsız'),
-            chip(CallSurfaceQuickFilter.callback, 'Geri aranacak'),
-            chip(CallSurfaceQuickFilter.reached, 'Ulaşılan'),
-            chip(CallSurfaceQuickFilter.hot, 'Sıcak'),
-            chip(CallSurfaceQuickFilter.fresh, 'Yeni'),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _consultantSelectionCommandBar(
     BuildContext context,
     AppThemeExtension ext,
@@ -1006,10 +913,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               .toList();
           final visibleTotal =
               filteredLocals.length + filteredDocs.length;
-          final stats = CallSurfaceListStats.blendedConsultant(
-            docs: _docs,
-            locals: localStandalone,
-          );
           if (visibleTotal == 0 && totalCount > 0) {
             return CustomScrollView(
               slivers: [

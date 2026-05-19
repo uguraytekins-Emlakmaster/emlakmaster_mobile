@@ -3,7 +3,6 @@ import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';

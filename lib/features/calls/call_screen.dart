@@ -4,8 +4,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';

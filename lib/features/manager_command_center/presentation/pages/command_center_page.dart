@@ -21,7 +21,6 @@ import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
 /// Yönetici çağrı merkezi: tüm çağrılar. Sadece canViewAllCalls rolleri erişebilir.
@@ -33,8 +32,6 @@ class CommandCenterPage extends ConsumerStatefulWidget {
 }
 
 class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
-  final int _viewIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     final roleAsync = ref.watch(displayRoleProvider);
@@ -61,22 +58,20 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
                 'Bu alan yalnızca yönetim ve operasyon ekiplerine açıktır.',
           );
         }
-        return _CommandCenterBody(viewIndex: _viewIndex);
+        return const _CommandCenterBody();
       },
     );
   }
 }
 
 class _CommandCenterBody extends ConsumerStatefulWidget {
-  const _CommandCenterBody({required int viewIndex}) : _viewIndex = viewIndex;
-  final int _viewIndex;
+  const _CommandCenterBody();
 
   @override
   ConsumerState<_CommandCenterBody> createState() => _CommandCenterBodyState();
 }
 
 class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
-  late int _viewIndex;
   CommandCenterViewScope _commandScope = CommandCenterViewScope.all;
   String? _filterTeamId;
   String? _filterAgentId;
@@ -94,7 +89,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   @override
   void initState() {
     super.initState();
-    _viewIndex = widget._viewIndex;
     _debouncedSearch = DebouncedSearchController(
       onQueryChanged: (q) {
         if (!mounted) return;
@@ -217,8 +211,6 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final bg = AppThemeExtension.of(context).background;
     final fg = AppThemeExtension.of(context).textPrimary;
     final ext = AppThemeExtension.of(context);

@@ -1,5 +1,4 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
