@@ -2,6 +2,16 @@
 
 Hızlı kontrol listesi — shell sekmesi veya büyük refactor sonrası.
 
+## Soğuk açılış (ilk launch)
+
+1. **Release/profile** ile ölçün; debug mod kasıtlı olarak yavaştır.
+2. İlk ~0,5 sn: selamlama + arama / üst bar; kartlar **kademeli** gelir (`DeferredMountSection`).
+3. Kabuk şeritleri (senkron, post-call) ~480 ms sonra (`StartupShellChrome`).
+4. Pasif sekme Firestore dinlemez (`ShellLazyTab`).
+5. Uzun **“Panel hazırlanıyor…”** → Firestore rol/ofis; konsolda `[startup][RoleShell] loading reason=...`
+
+`main.dart`: `runApp` öncesi Firebase üst sınır ~4 sn, onboarding warmUp ~900 ms; tema diskten ilk kareden sonra.
+
 ## Otomatik başlatma (macOS)
 
 ```bash

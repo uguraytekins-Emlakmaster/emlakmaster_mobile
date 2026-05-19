@@ -207,56 +207,67 @@ class DashboardPage extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        if (analyticsEnabled) ...[
-                          SizedBox(height: gapOp),
-                          px(
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'İçgörü ve analitik',
-                                style: AppTypography.sectionLabel(context),
+                        DeferredMountSection(
+                          delay: const Duration(milliseconds: 520),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (analyticsEnabled) ...[
+                                SizedBox(height: gapOp),
+                                px(
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'İçgörü ve analitik',
+                                      style:
+                                          AppTypography.sectionLabel(context),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: DesignTokens.space2),
+                                px(RainbowAnalyticsCenterCard(
+                                  paddedContentWidth: bentoInsightContentW,
+                                )),
+                              ],
+                              SizedBox(height: gapOp),
+                              px(
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Bağlantı ve sistem',
+                                    style:
+                                        AppTypography.sectionLabel(context),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: DesignTokens.space2),
-                          px(RainbowAnalyticsCenterCard(
-                            paddedContentWidth: bentoInsightContentW,
-                          )),
-                        ],
-                        SizedBox(height: gapOp),
-                        px(
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Bağlantı ve sistem',
-                              style: AppTypography.sectionLabel(context),
-                            ),
+                              const SizedBox(height: DesignTokens.space2),
+                              px(const ManagerPlatformConnectionsSummaryCard()),
+                              if (lean) ...[
+                                SizedBox(height: gapOp * 0.75),
+                                px(
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Operasyonel odak',
+                                      style:
+                                          AppTypography.sectionLabel(context),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: DesignTokens.space2),
+                                px(const LeanAdminTodayFocusCard()),
+                                px(const LeanAdminOfficePulseCard()),
+                              ],
+                              if (!lean) ...[
+                                px(const HotLeadRadarPanel()),
+                                SizedBox(height: gapOp),
+                                px(const MissedOpportunitiesPanel()),
+                                SizedBox(height: gapOp),
+                              ],
+                              if (dailyBrief) px(const DailyBriefPanel()),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: DesignTokens.space2),
-                        px(const ManagerPlatformConnectionsSummaryCard()),
-                        if (lean) ...[
-                          SizedBox(height: gapOp * 0.75),
-                          px(
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Operasyonel odak',
-                                style: AppTypography.sectionLabel(context),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: DesignTokens.space2),
-                          px(const LeanAdminTodayFocusCard()),
-                          px(const LeanAdminOfficePulseCard()),
-                        ],
-                        if (!lean) ...[
-                          px(const HotLeadRadarPanel()),
-                          SizedBox(height: gapOp),
-                          px(const MissedOpportunitiesPanel()),
-                          SizedBox(height: gapOp),
-                        ],
-                        if (dailyBrief) px(const DailyBriefPanel()),
                         if (!lean)
                           DeferredMountSection(
                             delay: const Duration(milliseconds: 450),

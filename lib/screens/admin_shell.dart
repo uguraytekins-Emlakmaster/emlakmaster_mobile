@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/features/war_room/presentation/pages/war_room
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_return_prompt_host.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_draft_recovery_card.dart';
+import 'package:emlakmaster_mobile/core/performance/startup_shell_chrome.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
@@ -151,18 +152,25 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
     // sürekli 0'a döner ve alt sekme dokunuşları Dashboard'ta kalır (P0 gerçek cihaz).
     return Column(
       children: [
-        const SyncStatusBanner(compact: true),
-        const CallReturnPromptHost(),
-        const PostCallDraftRecoveryCard(),
-        ValueListenableBuilder<int>(
-          valueListenable: _shellPageIndex,
-          builder: (context, pageIndex, _) {
-            if (commandCenterPageIndex < 0 ||
-                pageIndex == commandCenterPageIndex) {
-              return const SizedBox.shrink();
-            }
-            return const PostCallCaptureShellStrip();
-          },
+        StartupShellChrome(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SyncStatusBanner(compact: true),
+              const CallReturnPromptHost(),
+              const PostCallDraftRecoveryCard(),
+              ValueListenableBuilder<int>(
+                valueListenable: _shellPageIndex,
+                builder: (context, pageIndex, _) {
+                  if (commandCenterPageIndex < 0 ||
+                      pageIndex == commandCenterPageIndex) {
+                    return const SizedBox.shrink();
+                  }
+                  return const PostCallCaptureShellStrip();
+                },
+              ),
+            ],
+          ),
         ),
         Expanded(
           child: AdaptiveShellScaffold(
