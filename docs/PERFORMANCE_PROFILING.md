@@ -5,14 +5,29 @@ Hızlı kontrol listesi — shell sekmesi veya büyük refactor sonrası.
 ## Soğuk açılış (ilk launch)
 
 1. **Release/profile** ile ölçün; debug mod kasıtlı olarak yavaştır.
-2. İlk ~0,5 sn: selamlama + arama / üst bar; kartlar **kademeli** gelir (`DeferredMountSection`).
-3. Kabuk şeritleri (senkron, post-call) ~480 ms sonra (`StartupShellChrome`).
-4. Pasif sekme Firestore dinlemez (`ShellLazyTab`).
-5. Bootstrap: `userDocStreamHydrated` (önce `get`, sonra stream) + `ShellBootstrapSkeleton` — çift `_AuthShell` / “Panel hazırlanıyor” kaldırıldı.
+2. Baseline kaydı: `./scripts/capture_startup_baseline.sh` → log `docs/perf_logs/startup_*_profile.log` → kapanınca otomatik özet → tabloları `docs/perf_baseline.md` şablonuna yapıştırın. Eski log: `./scripts/parse_perf_log.sh docs/perf_logs/….log`
+3. Konsol kilometre taşları (profile’da da görünür):
+
+   ```text
+   [Perf] startup_milestone name=main_entered elapsed_ms=...
+   [Perf] startup_milestone name=bootstrap_parallel_done elapsed_ms=...
+   [Perf] startup_milestone name=run_app elapsed_ms=...
+   [Perf] startup_milestone name=first_frame elapsed_ms=...
+   [Perf] startup_milestone name=role_shell_interactive elapsed_ms=...
+   [Perf] startup_milestone name=role_shell_resolved elapsed_ms=...
+   [Perf] screen_content_ready screen=consultant_dashboard 412ms items=...
+   ```
+
+4. İlk ~0,5 sn: selamlama + arama / üst bar; kartlar **kademeli** gelir (`DeferredMountSection`).
+5. Kabuk şeritleri (senkron, post-call) ~480 ms sonra (`StartupShellChrome`).
+6. Pasif sekme Firestore dinlemez (`ShellLazyTab`).
+7. Bootstrap: `userDocStreamHydrated` (önce `get`, sonra stream) + `ShellBootstrapSkeleton` — çift `_AuthShell` / “Panel hazırlanıyor” kaldırıldı.
 
 `StartupMountSchedule` / `DeferredMountSection.*` — tüm mount gecikmeleri tek dosyada.
 
 `main.dart`: `runApp` öncesi Firebase üst sınır ~4 sn, onboarding warmUp ~900 ms; tema diskten ilk kareden sonra.
+
+**Firebase Analytics (profile/release):** `startup_milestone` (`milestone`, `duration_ms`) — konsol olmadan karşılaştırma için.
 
 ## Otomatik başlatma (macOS)
 
@@ -38,9 +53,9 @@ Shield kullanıyorsanız `run_with_shield.sh` üzerinden profile modda açar.
 | Jank (kırmızı çubuk) | Sekme geçişinde **0–1** kısa spike |
 | `screen_content_ready` (Analytics) | İlk içerik **&lt; 800 ms** (ağ koşuluna bağlı) |
 
-## Debug konsol (geliştirme)
+## Konsol (debug + profile)
 
-Debug build'de her ekran hazır olduğunda:
+Debug ve **profile** build'de her ekran hazır olduğunda:
 
 ```text
 [Perf] screen_content_ready screen=consultant_calls 412ms items=24

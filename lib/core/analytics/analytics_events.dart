@@ -24,6 +24,8 @@ abstract final class AnalyticsEvents {
   static const String magicCallTap = 'magic_call_tap';
   static const String consultantCallsTap = 'consultant_calls_tap';
   static const String screenContentReady = 'screen_content_ready';
+  /// Soğuk açılış kilometre taşı (profile/release; [StartupPerfMarkers]).
+  static const String startupMilestone = 'startup_milestone';
   static const String limitReachedCall = 'limit_reached_call';
   static const String limitReachedAi = 'limit_reached_ai';
   static const String upgradeClicked = 'upgrade_clicked';
@@ -39,6 +41,7 @@ abstract final class AnalyticsEvents {
   static const String paramCount = 'count';
   static const String paramScreen = 'screen';
   static const String paramDurationMs = 'duration_ms';
+  static const String paramMilestone = 'milestone';
   static const String paramListingId = 'listing_id';
   static const String paramSource = 'source';
   static const String paramSetting = 'setting';

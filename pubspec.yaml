@@ -117,9 +117,10 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # Yalnızca runtime / launcher kaynakları (tasarım varyantları: assets/archive/branding/)
   assets:
-    - assets/onboarding/
-    - assets/branding/
+    - assets/branding/emlak_master_app_icon_MASTER.png
+    - assets/branding/emlak_master_app_icon_IOS_STORE_OPAQUE.png
     - assets/sounds/
 
   # An image asset can refer to one or more resolution-specific "variants", see

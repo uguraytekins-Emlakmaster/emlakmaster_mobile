@@ -21,6 +21,7 @@ import 'package:emlakmaster_mobile/core/services/call_record_sync_orchestrator.d
 import 'package:emlakmaster_mobile/core/services/sync_manager.dart';
 import 'package:emlakmaster_mobile/core/widgets/connectivity_banner.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/performance/startup_perf_markers.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
@@ -60,6 +61,7 @@ Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     AppLogger.state('[startup] main entered');
+    StartupPerfMarkers.once('main_entered');
 
     // Flutter dışı async hatalar (native plugin vb.) — zone ile yakalanmayabilir.
     PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
@@ -107,6 +109,7 @@ Future<void> main() async {
         }(),
       ]);
       AppLogger.state('[startup] bootstrap parallel init done');
+      StartupPerfMarkers.once('bootstrap_parallel_done');
     } catch (e, st) {
       AppLogger.e('Bootstrap paralel init', e, st);
     }
@@ -250,6 +253,7 @@ Future<void> _runApp() async {
   };
 
   AppLogger.state('[startup] runApp (fast path)');
+  StartupPerfMarkers.once('run_app');
   runApp(
     ProviderScope(
       observers: kDebugMode ? [DebugRiverpodObserver()] : null,
@@ -283,6 +287,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     AppLifecyclePowerService.instance.ensureObserved();
     _bindStartupLogging();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      StartupPerfMarkers.once('first_frame');
       _runDeferredInit();
       unawaited(_restoreThemeFromDisk(ref));
     });

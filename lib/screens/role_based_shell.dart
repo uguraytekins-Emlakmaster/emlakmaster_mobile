@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_bootstrap_skeleton.dart';
+import 'package:emlakmaster_mobile/core/performance/startup_perf_markers.dart';
 import 'package:emlakmaster_mobile/core/widgets/startup_recovery_scaffold.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -57,6 +58,7 @@ class _RoleBasedShellSelectorState
   void _clearLoadingReason() {
     if (_loadingReason == null && !_showRecovery) return;
     AppLogger.state('[startup][RoleShell] interactive again');
+    StartupPerfMarkers.once('role_shell_interactive');
     _recoveryTimer?.cancel();
     _recoveryTimer = null;
     _loadingReason = null;
@@ -128,6 +130,7 @@ class _RoleBasedShellSelectorState
 
   Widget _buildForRole(BuildContext context, WidgetRef ref, AppRole role) {
     AppLogger.state('[startup][RoleShell] resolved shell for role=$role');
+    StartupPerfMarkers.once('role_shell_resolved');
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
     if (FeaturePermission.seesClientPanel(role)) return const ClientShellPage();
     final forceConsultant = preferConsultant == true;

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Geçici 4×4 PNG üretir (yalnızca asset yolu doğrulaması için).
-# Gerçek tanıtım ekran görüntülerini assets/onboarding/ altına manuel koyun.
+# Gerçek tanıtım ekran görüntüleri: assets/archive/onboarding/ (bundle dışı).
+# Runtime’da kullanmak için pubspec’e assets/onboarding/ ekleyin.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUT="$ROOT/assets/onboarding"
+OUT="$ROOT/assets/archive/onboarding"
 mkdir -p "$OUT"
 OUT="$OUT" python3 - <<'PY'
 import os

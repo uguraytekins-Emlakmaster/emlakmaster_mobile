@@ -9,7 +9,8 @@ echo "1. Uygulama profile modda açılacak (macOS)."
 echo "2. DevTools → Performance → Record"
 echo "3. Sekmeler: Özet → Çağrılar → Müşteriler → Görevler → İlanlar"
 echo "4. Debug konsolda [Perf] screen_content_ready satırlarına bak"
-echo "5. Detay: docs/PERFORMANCE_PROFILING.md"
+echo "5. Soğuk açılış kaydı: ./scripts/capture_startup_baseline.sh"
+echo "6. Detay: docs/PERFORMANCE_PROFILING.md"
 echo ""
 
 if [[ -x scripts/run_with_shield.sh ]]; then

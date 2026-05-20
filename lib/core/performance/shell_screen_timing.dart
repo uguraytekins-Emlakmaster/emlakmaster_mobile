@@ -9,7 +9,7 @@ void logShellScreenReady({
   required int elapsedMs,
   int? itemCount,
 }) {
-  if (kDebugMode) {
+  if (kDebugMode || kProfileMode) {
     final countSuffix = itemCount != null ? ' items=$itemCount' : '';
     AppLogger.d(
       '[Perf] screen_content_ready screen=$screenName ${elapsedMs}ms$countSuffix',
