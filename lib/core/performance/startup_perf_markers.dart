@@ -12,10 +12,14 @@ abstract final class StartupPerfMarkers {
   static final Stopwatch _sw = Stopwatch()..start();
   static final Set<String> _seen = {};
 
+  /// `flutter test --dart-define=CAPTURE_STARTUP_PERF=true` ile otomatik baseline.
+  static const bool _captureMode = bool.fromEnvironment('CAPTURE_STARTUP_PERF');
+
   static bool get _logsEnabled =>
-      (kDebugMode || kProfileMode) && !_isFlutterTest;
+      _captureMode || ((kDebugMode || kProfileMode) && !_isFlutterTest);
 
   static bool get _isFlutterTest {
+    if (_captureMode) return false;
     try {
       final name = WidgetsBinding.instance.runtimeType.toString();
       return name.contains('TestWidgetsFlutterBinding') ||
@@ -41,9 +45,14 @@ abstract final class StartupPerfMarkers {
 
   static void _log(String name) {
     final elapsedMs = _sw.elapsedMilliseconds;
-    debugPrint(
-      '[Perf] startup_milestone name=$name elapsed_ms=$elapsedMs',
-    );
+    final line =
+        '[Perf] startup_milestone name=$name elapsed_ms=$elapsedMs';
+    if (_captureMode) {
+      // ignore: avoid_print
+      print(line);
+    } else {
+      debugPrint(line);
+    }
     if (kReleaseMode || kProfileMode) {
       AnalyticsService.instance.logEvent(
         AnalyticsEvents.startupMilestone,

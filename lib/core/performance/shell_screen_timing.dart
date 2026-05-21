@@ -9,11 +9,15 @@ void logShellScreenReady({
   required int elapsedMs,
   int? itemCount,
 }) {
-  if (kDebugMode || kProfileMode) {
-    final countSuffix = itemCount != null ? ' items=$itemCount' : '';
-    AppLogger.d(
-      '[Perf] screen_content_ready screen=$screenName ${elapsedMs}ms$countSuffix',
-    );
+  const capture = bool.fromEnvironment('CAPTURE_STARTUP_PERF');
+  final countSuffix = itemCount != null ? ' items=$itemCount' : '';
+  final line =
+      '[Perf] screen_content_ready screen=$screenName ${elapsedMs}ms$countSuffix';
+  if (capture) {
+    // ignore: avoid_print
+    print(line);
+  } else if (kDebugMode || kProfileMode) {
+    AppLogger.d(line);
   }
   AnalyticsService.instance.logEvent(
     AnalyticsEvents.screenContentReady,

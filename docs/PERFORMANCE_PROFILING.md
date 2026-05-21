@@ -5,7 +5,10 @@ Hızlı kontrol listesi — shell sekmesi veya büyük refactor sonrası.
 ## Soğuk açılış (ilk launch)
 
 1. **Release/profile** ile ölçün; debug mod kasıtlı olarak yavaştır.
-2. Baseline kaydı: `./scripts/capture_startup_baseline.sh` → log `docs/perf_logs/startup_*_profile.log` → kapanınca otomatik özet → tabloları `docs/perf_baseline.md` şablonuna yapıştırın. Eski log: `./scripts/parse_perf_log.sh docs/perf_logs/….log`
+2. Baseline kaydı:
+   - **macOS profile (tercih):** `./scripts/capture_startup_baseline.sh` → log `docs/perf_logs/startup_*_profile.log`
+   - **Otomatik (imza yok / CI):** `./scripts/capture_startup_baseline_automated.sh` → `docs/perf_baseline.md` güncellenir
+   - Eski log özeti: `./scripts/parse_perf_log.sh docs/perf_logs/….log`
 3. Konsol kilometre taşları (profile’da da görünür):
 
    ```text
