@@ -65,3 +65,4 @@ tools/github_listings_ingest/.env.local
 
 # Facebook Login (App ID / Client Token — git’e eklenmesin)
 scripts/facebook_credentials.txt
+dist/
