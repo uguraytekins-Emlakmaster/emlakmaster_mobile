@@ -17,6 +17,13 @@ SKIP_BUILD=0 bash scripts/pre_release_check.sh   # test + analiz + release build
 ./scripts/package_macos_release.sh
 ```
 
+## Dağıtım hazırlık kontrolü
+
+```bash
+./scripts/check_macos_distribution_ready.sh   # eksikleri listeler
+./scripts/open_developer_id_setup.sh        # sertifika + Xcode
+```
+
 ## Başka Mac’lere dağıtım (notarization)
 
 Şu an Xcode **Apple Development** ile imzalıyor; Gatekeeper başka makinelerde **reddeder**.
