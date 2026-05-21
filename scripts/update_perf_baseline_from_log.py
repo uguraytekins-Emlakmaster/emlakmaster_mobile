@@ -63,10 +63,27 @@ def replace_between(doc: str, start: str, end: str, replacement: str) -> str:
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("log_file", type=Path)
-    p.add_argument("--device", default="macOS (automated)")
+    p.add_argument(
+        "--mode",
+        choices=("automated", "profile"),
+        default="automated",
+        help="automated: test binding; profile: macOS --profile soğuk açılış",
+    )
+    p.add_argument("--device", default=None)
     p.add_argument("--role", default="—")
-    p.add_argument("--note", default="CAPTURE_STARTUP_PERF otomatik test")
+    p.add_argument("--note", default=None)
     args = p.parse_args()
+
+    if args.device is None:
+        args.device = (
+            "macOS (profile)" if args.mode == "profile" else "macOS (automated test)"
+        )
+    if args.note is None:
+        args.note = (
+            "capture_startup_baseline.sh; giriş sonrası role_shell/dashboard eksik olabilir"
+            if args.mode == "profile"
+            else "CAPTURE_STARTUP_PERF; profile macOS için capture_startup_baseline.sh"
+        )
 
     text = args.log_file.read_text(encoding="utf-8", errors="replace")
     milestones, screens = parse_log(text)
@@ -77,15 +94,32 @@ def main() -> None:
     today = date.today().isoformat()
     doc = BASELINE.read_text(encoding="utf-8")
 
+    mode_label = "profile" if args.mode == "profile" else "automated test"
     summary_row = (
-        f"| {today} | automated test | {args.device} | {args.role} | {args.note} |"
+        f"| {today} | {mode_label} | {args.device} | {args.role} | {args.note} |"
     )
-    doc = re.sub(
-        r"\| 2026-05-19 \| profile \| macOS \(ölçüm bekleniyor\).*?\|\n",
-        summary_row + "\n",
-        doc,
-        count=1,
-    )
+    if args.mode == "profile":
+        if re.search(r"\| YYYY-MM-DD \| profile \|", doc):
+            doc = re.sub(
+                r"\| YYYY-MM-DD \| profile \| macOS … \| consultant / admin \| \|",
+                summary_row,
+                doc,
+                count=1,
+            )
+        elif not re.search(re.escape(summary_row), doc):
+            doc = re.sub(
+                r"(\| 2026-05-21 \| automated test \|.*?\|\n)",
+                r"\1" + summary_row + "\n",
+                doc,
+                count=1,
+            )
+    else:
+        doc = re.sub(
+            r"\| 2026-05-19 \| profile \| macOS \(ölçüm bekleniyor\).*?\|\n",
+            summary_row + "\n",
+            doc,
+            count=1,
+        )
 
     m_rows: list[list[str]] = []
     for name, hint in TARGETS.items():

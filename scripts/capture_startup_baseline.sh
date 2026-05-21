@@ -26,6 +26,10 @@ echo ""
 echo "Firebase Analytics (profile/release): olay startup_milestone"
 echo "DevTools: Performance → Record (ilk 10 sn, sekme turu opsiyonel)."
 echo ""
+echo "İlk macOS profile build imza hatası alırsanız (No profiles for …):"
+echo "  cd macos && xcodebuild -workspace Runner.xcworkspace -scheme Runner \\"
+echo "    -configuration Profile -allowProvisioningUpdates build"
+echo ""
 
 _run() {
   if [[ -x scripts/run_with_shield.sh ]]; then
@@ -44,6 +48,10 @@ if [[ -x "$PARSE" ]]; then
   "$PARSE" "$LOG_FILE"
 elif [[ -f "$PARSE" ]]; then
   bash "$PARSE" "$LOG_FILE"
+fi
+
+if [[ -x "$ROOT/scripts/update_perf_baseline_from_log.py" ]]; then
+  python3 "$ROOT/scripts/update_perf_baseline_from_log.py" "$LOG_FILE" --mode profile
 fi
 
 exit "$EXIT"
