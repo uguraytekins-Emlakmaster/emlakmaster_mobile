@@ -1,11 +1,18 @@
-# Performans baseline (elle doldurun)
+# Performans baseline
 
-Her büyük perf değişikliğinden sonra **profile** modda, uygulama **tamamen kapalıyken** bir kez ölçün.
+## Hızlı komutlar
 
-```bash
-chmod +x scripts/capture_startup_baseline.sh
-./scripts/capture_startup_baseline.sh
-```
+| Amaç | Komut |
+|------|--------|
+| CI / PR regresyon | `./scripts/verify_startup_perf.sh` |
+| Otomatik milestone (imza yok) | `./scripts/capture_startup_baseline_automated.sh` |
+| macOS profile soğuk açılış | `./scripts/capture_startup_baseline.sh` |
+| Tam baseline (imza + giriş + dashboard) | `./scripts/capture_startup_baseline_full.sh` |
+| Süre sınırlı profile (agent) | `CAPTURE_DURATION_SEC=120 ./scripts/run_profile_timed_capture.sh` |
+| Eşik kontrolü (log) | `python3 scripts/check_perf_thresholds.py docs/perf_logs/….log --mode profile` |
+| Bundle boyutu | `./scripts/check_macos_bundle_size.sh` |
+
+Eşikler: `scripts/perf_thresholds.json`
 
 Terminal filtresi: `[Perf]`
 
@@ -15,6 +22,7 @@ Terminal filtresi: `[Perf]`
 |-------|-----|-------|-----|-----|
 | 2026-05-21 | automated test | macOS (automated test) | — | CAPTURE_STARTUP_PERF; profile macOS için capture_startup_baseline.sh |
 | 2026-05-21 | profile | macOS (profile) | — | run_profile_timed_capture 90s; giriş yapılmadı — role_shell/dashboard bekleniyor |
+| YYYY-MM-DD | profile (tam) | macOS … | consultant / admin | capture_startup_baseline_full.sh — giriş + dashboard |
 
 ### Startup milestone (`elapsed_ms` = main()'den itibaren)
 
@@ -46,9 +54,9 @@ flutter: [Perf] startup_milestone name=first_frame elapsed_ms=45
 
 ## Yorum
 
-- **2026-05-21 otomatik satır:** `capture_startup_baseline_automated.sh` (test binding). `bootstrap_parallel_done` / `run_app` burada 0 ms — gerçek Firebase bootstrap yalnızca profile’da ölçülür.
-- **2026-05-21 profile satır (kısmi):** macOS `--profile` soğuk açılış — `first_frame` **45 ms**, bootstrap **37 ms**. Giriş yapılmadığı için `role_shell_*` ve dashboard satırları boş; tam baseline için `./scripts/capture_startup_baseline.sh` ile giriş yapıp dashboard’a gelin.
-- **İlk macOS imza hatası:** `No profiles for com.uguraytekin.emlakmastermobile` → bir kez `xcodebuild … -allowProvisioningUpdates build` (script başında not var); sonrasında `flutter build macos --profile` çalışır.
-- **Debug mod** kasıtlı yavaştır; karşılaştırma için yalnızca profile/release kullanın.
-- `role_shell_*` süreleri Firestore / ağ gecikmesine bağlıdır; kod regresyonu için aynı Wi‑Fi ve hesapla tekrarlayın.
-- Sekme geçişi jank için DevTools timeline + `docs/PERFORMANCE_PROFILING.md`.
+- **Otomatik satır:** test binding; `bootstrap`/`run_app` burada 0 ms olabilir — gerçek Firebase yalnızca profile’da.
+- **Profile (kısmi):** soğuk açılış `first_frame` **45 ms**; tam kayıt için `capture_startup_baseline_full.sh` ile giriş + dashboard.
+- **CI:** `verify_startup_perf.sh` — `first_frame` ≤ 250 ms (automated).
+- **İmza:** `ensure_macos_profile_signing.sh` veya Xcode Team + `-allowProvisioningUpdates`.
+- **Debug mod** karşılaştırma için kullanılmaz; yalnızca profile/release.
+- Sekme jank: `docs/PERFORMANCE_PROFILING.md`.

@@ -92,4 +92,16 @@ Xcode / VS Code **Debug Console** veya terminal çıktısında filtre: `Perf`
 ```bash
 flutter test
 flutter analyze lib/core/performance lib/core/layout/adaptive_shell_scaffold.dart
+./scripts/verify_startup_perf.sh
+```
+
+CI (`/.github/workflows/ci.yml`) her PR’da `verify_startup_perf.sh` çalıştırır. Eşikler: `scripts/perf_thresholds.json`.
+
+Release öncesi (macOS):
+
+```bash
+./scripts/ensure_macos_profile_signing.sh
+flutter build macos --profile
+./scripts/check_macos_bundle_size.sh
+./scripts/capture_startup_baseline_full.sh
 ```

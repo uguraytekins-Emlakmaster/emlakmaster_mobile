@@ -30,3 +30,6 @@ jobs:
 
       - name: Run tests
         run: flutter test
+
+      - name: Startup perf regression (automated)
+        run: bash scripts/verify_startup_perf.sh

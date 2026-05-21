@@ -18,7 +18,9 @@ flutter test test/performance/startup_baseline_capture_test.dart \
 
 "$ROOT/scripts/parse_perf_log.sh" "$LOG_FILE"
 
-if [[ -x "$ROOT/scripts/update_perf_baseline_from_log.py" ]]; then
+python3 "$ROOT/scripts/check_perf_thresholds.py" "$LOG_FILE" --mode automated
+
+if [[ "${SKIP_BASELINE_UPDATE:-}" != "1" ]] && [[ -f "$ROOT/scripts/update_perf_baseline_from_log.py" ]]; then
   python3 "$ROOT/scripts/update_perf_baseline_from_log.py" "$LOG_FILE" \
     --device "macOS (automated test)" \
     --note "CAPTURE_STARTUP_PERF; profile macOS için capture_startup_baseline.sh"

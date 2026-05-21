@@ -42,4 +42,6 @@ alwaysApply: false
 - Pipeline / bildirimler / ilan detay / müşteri çağrı-not: `*DisplayProvider` ailesi (`pipeline_items`, `user_notifications`, `listing_detail`, `customer_feed_providers`).
 - Komut paleti: `officeCustomersSnapshotProvider` (tek abonelik).
 - Sekme ilk açılış: `prefetchShellTab` ([shell_tab_prefetch.dart](../lib/core/performance/shell_tab_prefetch.dart)).
-- Profile tur: `scripts/run_profile_perf.sh`, debug log `[Perf] screen_content_ready`.
+- Profile tur: `scripts/run_profile_perf.sh`, `[Perf] screen_content_ready` (profile/debug `debugPrint`).
+- CI regresyon: `scripts/verify_startup_perf.sh` — eşikler `scripts/perf_thresholds.json`.
+- Tam baseline: `scripts/capture_startup_baseline_full.sh`; bundle: `scripts/check_macos_bundle_size.sh`.

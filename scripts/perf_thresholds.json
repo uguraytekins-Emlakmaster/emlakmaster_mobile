@@ -1,0 +1,40 @@
+{
+  "automated": {
+    "description": "CAPTURE_STARTUP_PERF test binding — CI regresyon",
+    "required_milestones": [
+      "main_entered",
+      "bootstrap_parallel_done",
+      "run_app",
+      "first_frame"
+    ],
+    "limits_ms": {
+      "bootstrap_parallel_done": 100,
+      "run_app": 100,
+      "first_frame": 250
+    }
+  },
+  "profile": {
+    "description": "macOS --profile soğuk açılış — docs/perf_baseline.md hedefleri",
+    "required_milestones": [
+      "main_entered",
+      "bootstrap_parallel_done",
+      "run_app",
+      "first_frame"
+    ],
+    "limits_ms": {
+      "bootstrap_parallel_done": 4500,
+      "run_app": 5000,
+      "first_frame": 5500
+    },
+    "optional_milestones": [
+      "role_shell_interactive",
+      "role_shell_resolved"
+    ],
+    "screen_limits_ms": {
+      "consultant_dashboard": 8000,
+      "admin_dashboard": 8000,
+      "consultant_calls": 8000,
+      "customer_list": 8000
+    }
+  }
+}

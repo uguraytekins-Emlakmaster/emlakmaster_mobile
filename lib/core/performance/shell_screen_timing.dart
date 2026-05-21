@@ -1,5 +1,4 @@
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
-import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:flutter/foundation.dart';
 
@@ -17,7 +16,7 @@ void logShellScreenReady({
     // ignore: avoid_print
     print(line);
   } else if (kDebugMode || kProfileMode) {
-    AppLogger.d(line);
+    debugPrint(line);
   }
   AnalyticsService.instance.logEvent(
     AnalyticsEvents.screenContentReady,

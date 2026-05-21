@@ -29,4 +29,13 @@ if [[ -x "$ROOT/scripts/parse_perf_log.sh" ]]; then
   "$ROOT/scripts/parse_perf_log.sh" "$LOG_FILE"
 fi
 
+if [[ -f "$ROOT/scripts/check_perf_thresholds.py" ]]; then
+  python3 "$ROOT/scripts/check_perf_thresholds.py" "$LOG_FILE" --mode profile || true
+fi
+
+if [[ "${SKIP_BASELINE_UPDATE:-}" != "1" ]] && [[ -f "$ROOT/scripts/update_perf_baseline_from_log.py" ]]; then
+  python3 "$ROOT/scripts/update_perf_baseline_from_log.py" "$LOG_FILE" --mode profile \
+    --note "run_profile_timed_capture ${DURATION}s"
+fi
+
 echo "LOG_FILE=$LOG_FILE"
