@@ -40,11 +40,17 @@ rm -f "$ZIP"
 ditto -c -k --keepParent "$APP" "$ZIP"
 
 echo "Notarytool gönderimi…"
-xcrun notarytool submit "$ZIP" \
-  --apple-id "$APPLE_ID" \
-  --password "$APPLE_APP_PASSWORD" \
-  --team-id "$APPLE_TEAM_ID" \
-  --wait
+if [[ -n "${NOTARY_KEYCHAIN_PROFILE:-}" ]]; then
+  xcrun notarytool submit "$ZIP" \
+    --keychain-profile "$NOTARY_KEYCHAIN_PROFILE" \
+    --wait
+else
+  xcrun notarytool submit "$ZIP" \
+    --apple-id "$APPLE_ID" \
+    --password "$APPLE_APP_PASSWORD" \
+    --team-id "$APPLE_TEAM_ID" \
+    --wait
+fi
 
 xcrun stapler staple "$APP"
 echo "Staple tamam."

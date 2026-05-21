@@ -28,6 +28,19 @@ SKIP_BUILD=0 bash scripts/pre_release_check.sh   # test + analiz + release build
 
 Şu an Xcode **Apple Development** ile imzalıyor; Gatekeeper başka makinelerde **reddeder**.
 
+**Otomatik kurulum (CSR + bekle + export):**
+
+```bash
+./scripts/complete_macos_distribution.sh
+```
+
+CSR dosyası: `dist/macos/signing/developer_id.csr` (Finder’da açıldı).
+
+**Xcode export hatası** (`Team does not have permission to create Developer ID`):
+- [Apple Developer Program](https://developer.apple.com/programs/) üyeliği ($99/yıl) gerekir
+- Hesapta **Admin** rolü olmalı
+- [Certificates](https://developer.apple.com/account/resources/certificates/add) → **Developer ID Application** → CSR yükle → `.cer` indir → çift tık
+
 1. [Apple Developer](https://developer.apple.com) → **Certificates** → **Developer ID Application**
 2. Xcode → Runner → **Signing & Capabilities** → Release için Developer ID
 3. Yeniden build:
