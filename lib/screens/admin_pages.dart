@@ -4,8 +4,6 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/admin_consultants/presentation/pages/admin_consultants_page.dart';
-import 'package:emlakmaster_mobile/features/admin_teams/presentation/pages/admin_teams_page.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -120,11 +118,7 @@ class AdminReportsPage extends ConsumerWidget {
             icon: Icons.groups_rounded,
             title: 'Kadro ve yetkiler',
             subtitle: 'Danışmanlar, ekip dağılımı ve erişim ayarları',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AdminConsultantsPage()),
-              );
-            },
+            onTap: () => context.push(AppRouter.routeAdminConsultants),
           ),
           if (canManageTeams) ...[
             const SizedBox(height: DesignTokens.space4),
@@ -132,11 +126,7 @@ class AdminReportsPage extends ConsumerWidget {
               icon: Icons.group_work_rounded,
               title: 'Ekipler',
               subtitle: 'Kurulum, lider ataması ve ekip yapısı',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AdminTeamsPage()),
-                );
-              },
+              onTap: () => context.push(AppRouter.routeAdminTeams),
             ),
           ],
           if (showAuditComingSoon) ...[
@@ -152,7 +142,6 @@ class AdminReportsPage extends ConsumerWidget {
                   title: 'Çağrı kayıtları açık',
                   message:
                       'Tam denetim günlüğü hazırlanıyor. Şimdilik Komuta Merkezi çağrı kayıtlarından ekip hareketlerini izleyebilirsiniz.',
-                  type: PremiumActionFeedbackType.info,
                   useSheet: false,
                 );
               },
@@ -219,11 +208,7 @@ class _AdminReportsTeamsEmptyCard extends ConsumerWidget {
           padding: const EdgeInsets.only(bottom: DesignTokens.space4),
           child: InkWell(
             borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AdminTeamsPage()),
-              );
-            },
+            onTap: () => context.push(AppRouter.routeAdminTeams),
             child: const _SectionCard(
               featured: true,
               icon: Icons.group_add_rounded,
@@ -300,13 +285,8 @@ class _AdminReportsPerfSection extends ConsumerWidget {
                 title: l10n.t('empty_reports_title'),
                 subtitle: l10n.t('empty_reports_sub'),
                 outlinedActionLabel: l10n.t('empty_reports_cta'),
-                onOutlinedAction: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AdminConsultantsPage(),
-                    ),
-                  );
-                },
+                onOutlinedAction: () =>
+                    context.push(AppRouter.routeAdminConsultants),
               ),
             ),
           );

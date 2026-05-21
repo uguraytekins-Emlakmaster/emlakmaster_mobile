@@ -1,6 +1,6 @@
+import 'package:emlakmaster_mobile/core/navigation/app_back_dispatcher.dart';
 import 'package:emlakmaster_mobile/core/navigation/discard_changes_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 /// Kaydedilmemiş form — geri / sistem geri önce onay ister.
 class UnsavedChangesGuard extends StatelessWidget {
@@ -24,11 +24,7 @@ class UnsavedChangesGuard extends StatelessWidget {
         final leave = await showDiscardChangesDialog(context);
         if (!context.mounted || leave != true) return;
         onPopConfirmed?.call();
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          Navigator.of(context).maybePop();
-        }
+        AppBackDispatcher.popRoute(context);
       },
       child: child,
     );

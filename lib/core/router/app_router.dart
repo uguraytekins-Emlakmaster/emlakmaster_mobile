@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../logging/app_logger.dart';
+import '../navigation/app_back_dispatcher.dart';
 import '../deep_linking/pending_deep_link_store.dart';
 import '../router/fast_page_transitions.dart';
 import '../services/analytics_service.dart';
@@ -47,6 +48,9 @@ import '../../features/office/presentation/pages/join_office_page.dart';
 import '../../features/office/presentation/pages/office_admin_page.dart';
 import '../../features/office/presentation/pages/office_gate_page.dart';
 import '../../features/office/presentation/pages/office_recovery_page.dart';
+import '../../features/admin_consultants/presentation/pages/admin_consultants_page.dart';
+import '../../features/admin_teams/presentation/pages/admin_team_detail_page.dart';
+import '../../features/admin_teams/presentation/pages/admin_teams_page.dart';
 import '../intelligence/region_heatmap_defaults.dart';
 
 /// go_router ile merkezi routing. Login router içinde; beyaz ekran önlenir.
@@ -85,7 +89,8 @@ class AppRouter {
         path == routePipeline ||
         path == routeResurrection ||
         path == routeNotifications ||
-        path.startsWith('/customer/');
+        path.startsWith('/customer/') ||
+        path.startsWith('/admin/');
   }
 
   static String _userFriendlyErrorMessage(Object? error) {
@@ -138,6 +143,13 @@ class AppRouter {
 
   /// İçe aktarılan ilanlar (yerel motor — Phase 1.5).
   static const String routeMyListings = '/listings/my-imported';
+
+  static const String routeAdminConsultants = '/admin/consultants';
+  static const String routeAdminTeams = '/admin/teams';
+  static const String routeAdminTeamDetail = '/admin/teams/:teamId';
+
+  static String adminTeamDetailPath(String teamId) =>
+      '/admin/teams/${Uri.encodeComponent(teamId)}';
 
   static String regionInsightPath(String regionId) =>
       '/region-insight/${Uri.encodeComponent(regionId)}';
@@ -621,6 +633,33 @@ class AppRouter {
             child: const ImportHistoryPage(),
           ),
         ),
+        GoRoute(
+          path: routeAdminConsultants,
+          pageBuilder: (context, state) => fastFadePage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const AdminConsultantsPage(),
+          ),
+        ),
+        GoRoute(
+          path: routeAdminTeams,
+          pageBuilder: (context, state) => fastFadePage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const AdminTeamsPage(),
+          ),
+        ),
+        GoRoute(
+          path: routeAdminTeamDetail,
+          pageBuilder: (context, state) {
+            final teamId = state.pathParameters['teamId'] ?? '';
+            return fastFadePage<void>(
+              key: state.pageKey,
+              name: state.matchedLocation,
+              child: AdminTeamDetailPage(teamId: teamId),
+            );
+          },
+        ),
       ],
     );
   }
@@ -712,7 +751,7 @@ class _ErrorFallbackScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
-    final canPop = Navigator.of(context).canPop();
+    final canPop = AppBackDispatcher.canPopRoute(context);
     return Scaffold(
       backgroundColor: AppThemeExtension.of(context).background,
       body: SafeArea(
@@ -758,7 +797,7 @@ class _ErrorFallbackScreen extends StatelessWidget {
                   ),
                   if (canPop)
                     OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).maybePop(),
+                      onPressed: () => AppBackDispatcher.popRoute(context),
                       icon: const Icon(Icons.arrow_back_rounded),
                       label: const Text('Geri Dön'),
                     ),

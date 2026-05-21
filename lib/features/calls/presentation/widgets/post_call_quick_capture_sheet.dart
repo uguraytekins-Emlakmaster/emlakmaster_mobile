@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/navigation/app_back_dispatcher.dart';
 import 'package:emlakmaster_mobile/core/navigation/discard_changes_dialog.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -302,11 +303,7 @@ class _PostCallQuickCaptureBodyState
         final leave = await showDiscardChangesDialog(context);
         if (!mounted || leave != true) return;
         ref.read(postCallCaptureProvider.notifier).markCaptureAbandoned();
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          Navigator.of(context).maybePop();
-        }
+        AppBackDispatcher.popRoute(context);
       },
       child: PremiumScrollableBottomSheetShell(
         header: Row(

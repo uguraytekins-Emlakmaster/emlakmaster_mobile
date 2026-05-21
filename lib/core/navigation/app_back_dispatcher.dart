@@ -3,9 +3,38 @@ import 'package:emlakmaster_mobile/core/navigation/back_navigation_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Merkezi geri: route → sekme içi → [onShellBack] → çıkış.
+/// Merkezi geri: route → Navigator yığını → sekme içi → [onShellBack] → çıkış.
 class AppBackDispatcher {
   AppBackDispatcher._();
+
+  static bool _routerCanPop(BuildContext context) {
+    try {
+      return GoRouter.of(context).canPop();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// go_router veya üstüne eklenen [Navigator.push] rotası kapatılabilir mi?
+  static bool canPopRoute(BuildContext context) {
+    if (_routerCanPop(context)) return true;
+    final nav = Navigator.maybeOf(context);
+    return nav != null && nav.canPop();
+  }
+
+  /// Önce go_router, sonra yerel Navigator (MaterialPageRoute vb.).
+  static bool popRoute(BuildContext context) {
+    if (_routerCanPop(context)) {
+      context.pop();
+      return true;
+    }
+    final nav = Navigator.maybeOf(context);
+    if (nav != null && nav.canPop()) {
+      nav.pop();
+      return true;
+    }
+    return false;
+  }
 
   /// Uygulama içi geri düğmesi.
   static Future<bool> tryPop(
@@ -20,8 +49,7 @@ class AppBackDispatcher {
       return true;
     }
 
-    if (context.canPop()) {
-      context.pop();
+    if (popRoute(context)) {
       return true;
     }
 
@@ -48,8 +76,7 @@ class AppBackDispatcher {
       return true;
     }
 
-    if (context.canPop()) {
-      context.pop();
+    if (popRoute(context)) {
       return true;
     }
 

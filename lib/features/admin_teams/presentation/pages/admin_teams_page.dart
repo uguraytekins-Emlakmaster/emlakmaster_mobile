@@ -8,10 +8,10 @@ import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'admin_team_detail_page.dart';
+import 'package:go_router/go_router.dart';
 /// Admin → Ekip listesi: ekipler, yeni ekip, detaya geçiş.
 class AdminTeamsPage extends ConsumerWidget {
   const AdminTeamsPage({super.key});
@@ -145,10 +145,8 @@ class AdminTeamsPage extends ConsumerWidget {
                   final team = teams[index];
                   return _TeamListTile(
                     team: team,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => AdminTeamDetailPage(teamId: team.id),
-                      ),
+                    onTap: () => context.push(
+                      AppRouter.adminTeamDetailPath(team.id),
                     ),
                   );
                 },

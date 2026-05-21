@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/navigation/app_back_dispatcher.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -62,7 +63,7 @@ class PremiumNavLeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canPop = context.canPop();
+    final canPop = AppBackDispatcher.canPopRoute(context);
     if (!canPop) {
       return const PremiumHomeButton(compact: true);
     }
@@ -76,7 +77,7 @@ class PremiumNavLeading extends StatelessWidget {
   }
 
   static double leadingWidth(BuildContext context) {
-    if (!context.canPop()) return 52;
+    if (!AppBackDispatcher.canPopRoute(context)) return 52;
     return 96;
   }
 }
