@@ -5,9 +5,15 @@ import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_timeline_filter.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_edit_sheet.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_next_best_action_button.dart';
+import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_timeline_row.dart';
@@ -50,55 +56,12 @@ class CustomerDetailPage extends ConsumerWidget {
       length: 3,
       child: Scaffold(
         backgroundColor: ext.background,
-        appBar: emlakAppBar(
-          context,
-          title: const Text('Müşteri'),
-          backgroundColor: ext.background,
-          foregroundColor: ext.textPrimary,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.call_rounded),
-              onPressed: () => context.push(
-                AppRouter.routeCall,
-                extra: {
-                  'customerId': customerId,
-                  'startedFromScreen': 'customer_detail',
-                },
-              ),
-              tooltip: 'Ara',
-            ),
-          ],
-          bottom: TabBar(
-            labelColor: ext.accent,
-            unselectedLabelColor: ext.textSecondary,
-            indicatorColor: ext.accent,
-            tabs: const [
-              Tab(text: 'Özet'),
-              Tab(text: 'Görüşmeler'),
-              Tab(text: 'Akış'),
-            ],
-          ),
-        ),
         body: SafeArea(
-          top: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.space4,
-                  DesignTokens.space3,
-                  DesignTokens.space4,
-                  DesignTokens.space2,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _CustomerDetailReadyProbe(customerId: customerId),
-                    _CustomerHeader(customerId: customerId),
-                  ],
-                ),
-              ),
+              _CustomerDetailReadyProbe(customerId: customerId),
+              _CustomerDetailChrome(customerId: customerId),
               Expanded(
                 child: TabBarView(
                   children: [
@@ -107,23 +70,9 @@ class CustomerDetailPage extends ConsumerWidget {
                       padding: const EdgeInsets.all(DesignTokens.space4),
                       child: CustomerCrmCallStrip(customerId: customerId),
                     ),
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(DesignTokens.space4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Zaman çizelgesi',
-                            style: AppTypography.cardHeading(context).copyWith(
-                              color: ext.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: DesignTokens.space2),
-                          _TimelineActions(customerId: customerId),
-                          const SizedBox(height: DesignTokens.space3),
-                          _CustomerTimeline(customerId: customerId),
-                        ],
-                      ),
+                    _CustomerFlowTab(
+                      customerId: customerId,
+                      onAddNote: () => _showAddNoteSheet(context, ref, customerId),
                     ),
                   ],
                 ),
@@ -154,41 +103,106 @@ class CustomerDetailPage extends ConsumerWidget {
     final controller = TextEditingController();
     showPremiumModalBottomSheet<void>(
       context: context,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space5,
-            DesignTokens.space2,
-            DesignTokens.space5,
-            DesignTokens.space6,
+      builder: (ctx) => PremiumScrollableBottomSheetShell(
+        title: 'Not ekle',
+        subtitle: 'Şablon seçin veya doğrudan yazın',
+        bottomActions: FilledButton.icon(
+          onPressed: () async {
+            Future<void> attemptSave() async {
+              final content = controller.text.trim();
+              if (content.isEmpty) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(
+                    content: const Text('Lütfen not içeriği girin.'),
+                    backgroundColor: ext.danger,
+                  ),
+                );
+                return;
+              }
+              final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+              if (uid.isEmpty) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(
+                    content: const Text('Giriş yapılmamış.'),
+                    backgroundColor: ext.danger,
+                  ),
+                );
+                return;
+              }
+              try {
+                await runWithResilienceWidget(
+                  () => FirestoreService.saveNote(
+                    customerId: customerId,
+                    content: content,
+                    advisorId: uid,
+                  ),
+                  ref: ref,
+                );
+                AppFeedback.mediumImpact();
+                ref.invalidate(customerTimelineRowsProvider(customerId));
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: const Text('Not kaydedildi.'),
+                      backgroundColor: ext.accent,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (!ctx.mounted) return;
+                showPremiumModalBottomSheet<void>(
+                  context: ctx,
+                  useRootNavigator: true,
+                  builder: (panelCtx) => PremiumScrollableBottomSheetShell(
+                    title: 'Kayıt tamamlanamadı',
+                    subtitle: FirestoreService.userFacingErrorMessage(e),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Kayıtlı notlar',
+                          style: AppTypography.cardHeading(context).copyWith(
+                            fontSize: DesignTokens.fontSizeSm,
+                            color: ext.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: DesignTokens.space2),
+                        SizedBox(
+                          height: 140,
+                          child: _CustomerNotesPreview(
+                            customerId: customerId,
+                          ),
+                        ),
+                        const SizedBox(height: DesignTokens.space4),
+                        FilledButton(
+                          onPressed: () {
+                            Navigator.pop(panelCtx);
+                            attemptSave();
+                          },
+                          child: const Text('Tekrar dene'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+            }
+
+            await attemptSave();
+          },
+          icon: const Icon(Icons.save_rounded),
+          label: const Text('Kaydet'),
+          style: FilledButton.styleFrom(
+            backgroundColor: ext.accent,
+            foregroundColor: ext.onBrand,
+            minimumSize: const Size(double.infinity, 48),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const PremiumBottomSheetHandle(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Expanded(
-                    child: PremiumSheetHeader(
-                      compact: true,
-                      title: 'Not ekle',
-                      subtitle: 'Şablon seçin veya doğrudan yazın',
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Kapat',
-                    style: IconButton.styleFrom(
-                      foregroundColor: ext.textTertiary,
-                    ),
-                    onPressed: () => Navigator.pop(ctx),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: DesignTokens.space3),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
               Wrap(
                 spacing: DesignTokens.space2,
                 runSpacing: DesignTokens.space2,
@@ -227,129 +241,9 @@ class CustomerDetailPage extends ConsumerWidget {
                   fillColor: ext.background,
                 ),
               ),
-              const SizedBox(height: DesignTokens.space4),
-              FilledButton.icon(
-                onPressed: () async {
-                  Future<void> attemptSave() async {
-                    final content = controller.text.trim();
-                    if (content.isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(
-                          content: const Text('Lütfen not içeriği girin.'),
-                          backgroundColor: ext.danger,
-                        ),
-                      );
-                      return;
-                    }
-                    final uid =
-                        ref.read(currentUserProvider).valueOrNull?.uid ?? '';
-                    if (uid.isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(
-                          content: const Text('Giriş yapılmamış.'),
-                          backgroundColor: ext.danger,
-                        ),
-                      );
-                      return;
-                    }
-                    try {
-                      await runWithResilienceWidget(
-                        () => FirestoreService.saveNote(
-                          customerId: customerId,
-                          content: content,
-                          advisorId: uid,
-                        ),
-                        ref: ref,
-                      );
-                      AppFeedback.mediumImpact();
-                      if (ctx.mounted) {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(
-                            content: const Text('Not kaydedildi.'),
-                            backgroundColor: ext.accent,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (!ctx.mounted) return;
-                      showPremiumModalBottomSheet<void>(
-                        context: ctx,
-                        useRootNavigator: true,
-                        builder: (panelCtx) => Padding(
-                          padding: EdgeInsets.only(
-                            bottom: MediaQuery.viewInsetsOf(panelCtx).bottom,
-                          ),
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.fromLTRB(
-                              DesignTokens.space5,
-                              DesignTokens.space2,
-                              DesignTokens.space5,
-                              DesignTokens.space6,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                const PremiumBottomSheetHandle(),
-                                PremiumSheetHeader(
-                                  compact: true,
-                                  title: 'Kayıt tamamlanamadı',
-                                  subtitle:
-                                      FirestoreService.userFacingErrorMessage(
-                                          e),
-                                ),
-                                const SizedBox(height: DesignTokens.space5),
-                                Text(
-                                  'Kayıtlı notlar',
-                                  style: AppTypography.cardHeading(context)
-                                      .copyWith(
-                                    fontSize: DesignTokens.fontSizeSm,
-                                    color: ext.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(height: DesignTokens.space2),
-                                SizedBox(
-                                  height: 140,
-                                  child: _CustomerNotesPreview(
-                                    customerId: customerId,
-                                  ),
-                                ),
-                                const SizedBox(height: DesignTokens.space5),
-                                FilledButton(
-                                  onPressed: () {
-                                    Navigator.pop(panelCtx);
-                                    attemptSave();
-                                  },
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: ext.accent,
-                                    foregroundColor: ext.onBrand,
-                                  ),
-                                  child: const Text('Tekrar dene'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                  }
-
-                  await attemptSave();
-                },
-                icon: const Icon(Icons.save_rounded),
-                label: const Text('Kaydet'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: ext.accent,
-                  foregroundColor: ext.onBrand,
-                  minimumSize: const Size(double.infinity, 48),
-                ),
-              ),
             ],
           ),
         ),
-      ),
     );
   }
 }
@@ -369,6 +263,7 @@ class _CustomerDetailOverviewTab extends ConsumerWidget {
           CustomerRevenueIntelligenceStrip(customerId: customerId),
           CustomerTimelineIntelligenceStrip(customerId: customerId),
           CustomerInsightStrip(customerId: customerId),
+          CustomerNextBestActionButton(customerId: customerId),
           Consumer(
             builder: (context, ref, _) {
               final role =
@@ -396,6 +291,8 @@ class _PortfolioMatchSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final entity = ref.watch(customerEntityByIdProvider(customerId)).valueOrNull;
+    final phone = entity?.primaryPhone?.trim() ?? '';
     final async = ref.watch(topMatchedListingsForCustomerProvider(customerId));
     return async.when(
       data: (list) {
@@ -454,6 +351,29 @@ class _PortfolioMatchSection extends ConsumerWidget {
                       ],
                     ),
                   )),
+              if (phone.isNotEmpty) ...[
+                const SizedBox(height: DesignTokens.space3),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final msg =
+                        'Merhaba, size uygun ${list.length} ilan seçtik. Detay paylaşayım mı?';
+                    final ok =
+                        await WhatsAppLauncher.openChat(phone, message: msg);
+                    if (!ok && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('WhatsApp açılamadı.'),
+                          backgroundColor: ext.danger,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.chat_rounded,
+                      size: 18, color: Color(0xFF25D366)),
+                  label: const Text('Eşleşen ilanları WhatsApp ile gönder'),
+                ),
+              ],
             ],
           ),
         );
@@ -550,160 +470,320 @@ class _CustomerDetailReadyProbeState
   }
 }
 
-class _CustomerHeader extends ConsumerWidget {
-  const _CustomerHeader({required this.customerId});
+class _CustomerDetailChrome extends ConsumerWidget {
+  const _CustomerDetailChrome({required this.customerId});
   final String customerId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entityAsync = ref.watch(customerEntityByIdProvider(customerId));
     final ext = AppThemeExtension.of(context);
+    final entityAsync = ref.watch(customerEntityByIdProvider(customerId));
     return entityAsync.when(
-      loading: () {
-          return Container(
-            padding: const EdgeInsets.all(DesignTokens.space5),
-            decoration: BoxDecoration(
-              color: ext.surface,
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-              border: Border.all(color: ext.border),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: ext.accent),
+      loading: () => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PremiumPageHeader(
+            title: 'Müşteri',
+            subtitle: 'Yükleniyor…',
+            showNavigation: true,
+          ),
+          const LinearProgressIndicator(minHeight: 2),
+        ],
+      ),
+      error: (_, __) => PremiumPageHeader(
+        title: 'Müşteri',
+        subtitle: 'Yüklenemedi',
+        showNavigation: true,
+      ),
+      data: (entity) {
+        final fullName = entity?.fullName?.trim().isNotEmpty == true
+            ? entity!.fullName!.trim()
+            : 'Müşteri';
+        final phone = entity?.primaryPhone?.trim() ?? '';
+        final subtitle = phone.isNotEmpty
+            ? phone
+            : (entity?.email?.trim().isNotEmpty == true
+                ? entity!.email!.trim()
+                : null);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PremiumPageHeader(
+              title: fullName,
+              subtitle: subtitle,
+              showNavigation: true,
+              trailing: [
+                if (entity != null)
+                  IconButton(
+                    tooltip: 'Düzenle',
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () => showCustomerEditSheet(
+                      context,
+                      ref,
+                      customerId: customerId,
+                      entity: entity,
+                    ),
+                  ),
+                IconButton(
+                  tooltip: 'Ara',
+                  icon: const Icon(Icons.call_rounded),
+                  onPressed: () {
+                    if (phone.isNotEmpty) {
+                      startCrmOutboundCall(
+                        context,
+                        phone: phone,
+                        customerId: customerId,
+                        startedFromScreen: 'customer_detail_header',
+                      );
+                    } else {
+                      context.push(
+                        AppRouter.routeCall,
+                        extra: {
+                          'customerId': customerId,
+                          'startedFromScreen': 'customer_detail',
+                        },
+                      );
+                    }
+                  },
                 ),
-                const SizedBox(width: DesignTokens.space4),
-                Text('Yükleniyor...',
-                    style: TextStyle(color: ext.textSecondary)),
               ],
             ),
-          );
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: DesignTokens.space4,
+              ),
+              child: _CustomerQuickActionsRow(
+                customerId: customerId,
+                phone: phone,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            if (entity != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: DesignTokens.space4,
+                ),
+                child: _CustomerSummaryCard(entity: entity),
+              ),
+            TabBar(
+              labelColor: ext.accent,
+              unselectedLabelColor: ext.textSecondary,
+              indicatorColor: ext.accent,
+              tabs: const [
+                Tab(text: 'Özet'),
+                Tab(text: 'Görüşmeler'),
+                Tab(text: 'Akış'),
+              ],
+            ),
+          ],
+        );
       },
-      error: (_, __) => const SizedBox.shrink(),
-      data: (entity) {
-        if (entity == null) return const SizedBox.shrink();
-        final fullName = entity.fullName ?? 'Müşteri';
-        final phone = entity.primaryPhone ?? '—';
-        final email = entity.email ?? '—';
-        final nextStep = entity.nextSuggestedAction;
-        final temp = entity.leadTemperature;
-        final updatedAt = entity.updatedAt;
-        return Container(
-          padding: const EdgeInsets.all(DesignTokens.space5),
+    );
+  }
+}
+
+class _CustomerQuickActionsRow extends ConsumerWidget {
+  const _CustomerQuickActionsRow({
+    required this.customerId,
+    required this.phone,
+  });
+
+  final String customerId;
+  final String phone;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: DesignTokens.space3),
+      child: Row(
+        children: [
+          Expanded(
+            child: _QuickActionButton(
+              icon: Icons.call_rounded,
+              label: 'Ara',
+              onTap: () {
+                if (phone.isNotEmpty) {
+                  startCrmOutboundCall(
+                    context,
+                    phone: phone,
+                    customerId: customerId,
+                    startedFromScreen: 'customer_detail_quick',
+                  );
+                } else {
+                  context.push(
+                    AppRouter.routeCall,
+                    extra: {
+                      'customerId': customerId,
+                      'startedFromScreen': 'customer_detail',
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: DesignTokens.space2),
+          Expanded(
+            child: _QuickActionButton(
+              icon: Icons.chat_rounded,
+              label: 'WhatsApp',
+              iconColor: const Color(0xFF25D366),
+              onTap: () async {
+                if (phone.isEmpty) return;
+                final ok = await WhatsAppLauncher.openChat(phone);
+                if (!ok && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('WhatsApp açılamadı.'),
+                      backgroundColor: ext.danger,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: DesignTokens.space2),
+          Expanded(
+            child: _QuickActionButton(
+              icon: Icons.task_alt_rounded,
+              label: 'Görev',
+              onTap: () async {
+                final uid =
+                    ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+                if (uid.isEmpty) return;
+                final entity = ref
+                    .read(customerEntityByIdProvider(customerId))
+                    .valueOrNull;
+                await FirestoreService.setTask({
+                  'advisorId': uid,
+                  'customerId': customerId,
+                  'title':
+                      'Takip — ${entity?.fullName?.trim().isNotEmpty == true ? entity!.fullName!.trim() : customerId}',
+                  'dueAt': Timestamp.fromDate(
+                    DateTime.now().add(const Duration(days: 1)),
+                  ),
+                  'done': false,
+                });
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Görev eklendi.'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: DesignTokens.space2),
+          Expanded(
+            child: _QuickActionButton(
+              icon: Icons.handshake_rounded,
+              label: 'Teklif',
+              onTap: () =>
+                  _TimelineActions._showAddOfferSheet(context, ref, customerId),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActionButton extends StatelessWidget {
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.iconColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Material(
+      color: ext.surface,
+      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: ext.surface,
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
             border: Border.all(color: ext.border),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: ext.accent.withValues(alpha: 0.2),
-                    radius: 28,
-                    child: Text(
-                      fullName.trim().isEmpty
-                          ? '?'
-                          : fullName.trim().substring(0, 1).toUpperCase(),
-                      style: TextStyle(
-                          color: ext.accent,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 20),
-                    ),
-                  ),
-                  const SizedBox(width: DesignTokens.space4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fullName,
-                          style: AppTypography.pageHeading(context).copyWith(
-                            fontSize: DesignTokens.fontSizeXl,
-                          ),
-                        ),
-                        if (phone != '—')
-                          Text(
-                            phone,
-                            style: AppTypography.body(context),
-                          ),
-                        if (email != '—')
-                          Text(
-                            email,
-                            style: AppTypography.meta(context),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (temp != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: ext.accent.withValues(alpha: 0.2),
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.radiusSm),
-                      ),
-                      child: Text(
-                        '${(temp * 100).toInt()}%',
-                        style: TextStyle(
-                            color: ext.accent,
-                            fontSize: DesignTokens.fontSizeXs,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                ],
-              ),
-              if (nextStep != null && nextStep.isNotEmpty) ...[
-                const SizedBox(height: DesignTokens.space3),
-                Text(
-                  'Sonraki adım: $nextStep',
-                  style: AppTypography.body(context),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              Padding(
-                padding: const EdgeInsets.only(top: DesignTokens.space2),
-                child: Text(
-                  'Son güncelleme: ${updatedAt.day}.${updatedAt.month}.${updatedAt.year}',
-                  style: AppTypography.meta(context),
+              Icon(icon, size: 20, color: iconColor ?? ext.accent),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: ext.textPrimary,
+                  fontSize: DesignTokens.fontSizeXs,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              if (phone != '—' && phone.isNotEmpty) ...[
-                const SizedBox(height: DesignTokens.space4),
-                Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: () async {
-                        final ok = await WhatsAppLauncher.openChat(phone);
-                        if (!ok && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                  'WhatsApp açılamadı. Numarayı kontrol edin.'),
-                              backgroundColor: ext.danger,
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.chat_rounded,
-                          size: 18, color: Color(0xFF25D366)),
-                      label: Text('WhatsApp\'ta aç',
-                          style: TextStyle(color: ext.accent)),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomerSummaryCard extends StatelessWidget {
+  const _CustomerSummaryCard({required this.entity});
+  final CustomerEntity entity;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final nextStep = entity.nextSuggestedAction;
+    final temp = entity.leadTemperature;
+    final updatedAt = entity.updatedAt;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: DesignTokens.space3),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(DesignTokens.space4),
+        decoration: BoxDecoration(
+          color: ext.surface,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+          border: Border.all(color: ext.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (temp != null)
+              Text(
+                'Sıcaklık göstergesi: ${(temp * 100).toInt()}%',
+                style: AppTypography.meta(context),
+              ),
+            if (nextStep != null && nextStep.isNotEmpty) ...[
+              if (temp != null) const SizedBox(height: DesignTokens.space2),
+              Text(
+                'Sonraki adım: $nextStep',
+                style: AppTypography.body(context),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            const SizedBox(height: DesignTokens.space2),
+            Text(
+              'Son güncelleme: ${updatedAt.day}.${updatedAt.month}.${updatedAt.year}',
+              style: AppTypography.meta(context),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1095,14 +1175,65 @@ class _ActionChip extends StatelessWidget {
   }
 }
 
-class _CustomerTimeline extends ConsumerWidget {
-  const _CustomerTimeline({required this.customerId});
+class _CustomerFlowTab extends StatelessWidget {
+  const _CustomerFlowTab({
+    required this.customerId,
+    required this.onAddNote,
+  });
+
   final String customerId;
+  final VoidCallback onAddNote;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(DesignTokens.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Zaman çizelgesi',
+            style: AppTypography.cardHeading(context).copyWith(
+              color: ext.textSecondary,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space2),
+          _TimelineActions(customerId: customerId),
+          const SizedBox(height: DesignTokens.space3),
+          _CustomerTimeline(
+            customerId: customerId,
+            onAddNote: onAddNote,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CustomerTimeline extends ConsumerStatefulWidget {
+  const _CustomerTimeline({
+    required this.customerId,
+    required this.onAddNote,
+  });
+
+  final String customerId;
+  final VoidCallback onAddNote;
+
+  static const int _pageSize = 20;
+
+  @override
+  ConsumerState<_CustomerTimeline> createState() => _CustomerTimelineState();
+}
+
+class _CustomerTimelineState extends ConsumerState<_CustomerTimeline> {
+  CustomerTimelineFilter _filter = CustomerTimelineFilter.all;
+  int _visibleCount = _CustomerTimeline._pageSize;
+
+  @override
+  Widget build(BuildContext context) {
     final timelineAsync =
-        ref.watch(customerTimelineRowsProvider(customerId));
+        ref.watch(customerTimelineRowsProvider(widget.customerId));
     final ext = AppThemeExtension.of(context);
     return timelineAsync.when(
       loading: () => Center(
@@ -1114,40 +1245,141 @@ class _CustomerTimeline extends ConsumerWidget {
       ),
       error: (_, __) => const SizedBox.shrink(),
       data: (items) {
-        if (items.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(DesignTokens.space6),
-            decoration: BoxDecoration(
-              color: ext.surface.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              border: Border.all(color: ext.border),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.timeline_rounded,
-                    size: 40, color: ext.textTertiary),
-                const SizedBox(height: DesignTokens.space3),
-                Text(
-                  'Henüz kayıt yok',
-                  style: TextStyle(
-                      color: ext.textSecondary,
-                      fontSize: DesignTokens.fontSizeSm),
-                ),
-                Text(
-                  'Çağrı özeti, not, ziyaret veya teklif eklendikçe burada görünecek.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: ext.textTertiary,
-                      fontSize: DesignTokens.fontSizeXs),
-                ),
-              ],
-            ),
-          );
-        }
+        final filtered = items
+            .where((e) => CustomerTimelineFilterLogic.matches(e, _filter))
+            .toList();
+        final visible = filtered.take(_visibleCount).toList();
+        final hasMore = filtered.length > _visibleCount;
+
         return Column(
-          children: items.map((e) => _TimelineTile(row: e)).toList(),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: CustomerTimelineFilter.values.map((f) {
+                  final selected = _filter == f;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: DesignTokens.space2),
+                    child: FilterChip(
+                      label: Text(f.labelTr),
+                      selected: selected,
+                      onSelected: (_) {
+                        setState(() {
+                          _filter = f;
+                          _visibleCount = _CustomerTimeline._pageSize;
+                        });
+                      },
+                      selectedColor: ext.accent.withValues(alpha: 0.2),
+                      checkmarkColor: ext.accent,
+                      labelStyle: TextStyle(
+                        color: selected ? ext.accent : ext.textSecondary,
+                        fontSize: DesignTokens.fontSizeSm,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: DesignTokens.space3),
+            if (items.isEmpty)
+              _buildEmptyAll(context, ext)
+            else ...[
+              if (filtered.isEmpty)
+                _buildEmptyFilter(context, ext)
+              else ...[
+                ...visible.map((e) => _TimelineTile(row: e)),
+                if (hasMore)
+                  Padding(
+                    padding: const EdgeInsets.only(top: DesignTokens.space2),
+                    child: OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _visibleCount += _CustomerTimeline._pageSize;
+                        });
+                      },
+                      child: Text(
+                        'Daha fazla göster (${filtered.length - _visibleCount} kaldı)',
+                      ),
+                    ),
+                  ),
+              ],
+            ],
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildEmptyAll(BuildContext context, AppThemeExtension ext) {
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.space6),
+      decoration: BoxDecoration(
+        color: ext.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        border: Border.all(color: ext.border),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.timeline_rounded, size: 40, color: ext.textTertiary),
+          const SizedBox(height: DesignTokens.space3),
+          Text(
+            'Henüz kayıt yok',
+            style: TextStyle(
+              color: ext.textSecondary,
+              fontSize: DesignTokens.fontSizeSm,
+            ),
+          ),
+          Text(
+            'Çağrı özeti, not, ziyaret veya teklif eklendikçe burada görünecek.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: ext.textTertiary,
+              fontSize: DesignTokens.fontSizeXs,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space3),
+          FilledButton.icon(
+            onPressed: widget.onAddNote,
+            icon: const Icon(Icons.note_add_rounded, size: 18),
+            label: const Text('İlk notu ekle'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyFilter(BuildContext context, AppThemeExtension ext) {
+    return Container(
+      padding: const EdgeInsets.all(DesignTokens.space5),
+      decoration: BoxDecoration(
+        color: ext.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        border: Border.all(color: ext.border),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Bu filtrede kayıt yok',
+            style: TextStyle(
+              color: ext.textSecondary,
+              fontSize: DesignTokens.fontSizeSm,
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space2),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _filter = CustomerTimelineFilter.all;
+                _visibleCount = _CustomerTimeline._pageSize;
+              });
+            },
+            child: const Text('Tümünü göster'),
+          ),
+        ],
+      ),
     );
   }
 }
