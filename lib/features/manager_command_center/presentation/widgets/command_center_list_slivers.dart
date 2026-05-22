@@ -459,7 +459,6 @@ abstract final class CommandCenterListSlivers {
               final title = CrmCallRecordDisplay.primaryTitle(
                 customerFullName: config.customerFullNameById[e.key],
                 contactDisplayName: contactName,
-                rawPhone: null,
               );
               final subtitle =
                   'Son görüşme: $timeStr · ${list.length} kayıt'
@@ -630,7 +629,6 @@ abstract final class CommandCenterListSlivers {
               final title = CrmCallRecordDisplay.primaryTitle(
                 customerFullName: config.customerFullNameById[e.key],
                 contactDisplayName: contactName,
-                rawPhone: null,
               );
               final subtitle =
                   'Son: $timeStr · ${list.length} kayıt'

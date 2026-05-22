@@ -528,21 +528,19 @@ class _CustomerDetailChrome extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     final entityAsync = ref.watch(customerEntityByIdProvider(customerId));
     return entityAsync.when(
-      loading: () => Column(
+      loading: () => const Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PremiumPageHeader(
             title: 'Müşteri',
             subtitle: 'Yükleniyor…',
-            showNavigation: true,
           ),
-          const LinearProgressIndicator(minHeight: 2),
+          LinearProgressIndicator(minHeight: 2),
         ],
       ),
-      error: (_, __) => PremiumPageHeader(
+      error: (_, __) => const PremiumPageHeader(
         title: 'Müşteri',
         subtitle: 'Yüklenemedi',
-        showNavigation: true,
       ),
       data: (entity) {
         final fullName = entity?.fullName?.trim().isNotEmpty == true
@@ -560,7 +558,6 @@ class _CustomerDetailChrome extends ConsumerWidget {
             PremiumPageHeader(
               title: fullName,
               subtitle: subtitle,
-              showNavigation: true,
               trailing: [
                 if (entity != null)
                   IconButton(
