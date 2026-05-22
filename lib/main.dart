@@ -28,6 +28,8 @@ import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
+import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_local_notifications.dart';
+import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_notification_bridge.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_inbox_listener.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_local_notifications.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_push_navigation.dart';
@@ -307,7 +309,12 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
                     .requestPermissionIfNeeded();
               }),
             );
+            unawaited(
+              ExecutionReminderLocalNotifications.instance
+                  .ensureInitialized(),
+            );
             TeamChatInboxListener.attach(ref);
+            ExecutionReminderNotificationBridge.attach(ref);
             unawaited(TeamChatPushNavigation.attach(ref));
           },
         );
