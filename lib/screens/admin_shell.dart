@@ -140,6 +140,23 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
     final messagesIndex =
         tabIds.indexOf(_AdminShellTab.messages).clamp(0, tabIds.length - 1);
     final commandCenterPageIndex = tabIds.indexOf(_AdminShellTab.commandCenter);
+    final warRoomPageIndex = tabIds.indexOf(_AdminShellTab.warRoom);
+    final reportsPageIndex = tabIds.indexOf(_AdminShellTab.reports);
+    final economyPageIndex = tabIds.indexOf(_AdminShellTab.economy);
+
+    final shortcutMap = <MainShellShortcut, int>{
+      MainShellShortcut.openHomeTab: 0,
+      MainShellShortcut.openMessageCenterTab: messagesIndex,
+      MainShellShortcut.openAccountTab: settingsIndex,
+      if (commandCenterPageIndex >= 0)
+        MainShellShortcut.openCallsTab: commandCenterPageIndex,
+      if (warRoomPageIndex >= 0)
+        MainShellShortcut.openListingsTab: warRoomPageIndex,
+      if (reportsPageIndex >= 0)
+        MainShellShortcut.openTasksTab: reportsPageIndex,
+      if (economyPageIndex >= 0)
+        MainShellShortcut.openFollowUpTab: economyPageIndex,
+    };
     assert(
       navItems.length == pages.length,
       'AdminShell: navItems (${navItems.length}) and pages (${pages.length}) must stay in sync',
@@ -189,11 +206,7 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
                   _shellPageIndex.value = i;
                 }
               },
-              shortcutMap: {
-                MainShellShortcut.openHomeTab: 0,
-                MainShellShortcut.openMessageCenterTab: messagesIndex,
-                MainShellShortcut.openAccountTab: settingsIndex,
-              },
+              shortcutMap: shortcutMap,
             ),
           ),
         ),
