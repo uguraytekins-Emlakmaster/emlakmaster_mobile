@@ -9,8 +9,9 @@ import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import '../../../../core/utils/last_contact_label.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
+
 import '../../../../shared/models/customer_models.dart';
-import '../../../../shared/models/lead_temperature.dart';
 
 String _avatarLetter(String? fullName) {
   if (fullName == null || fullName.trim().isEmpty) return '?';
@@ -36,7 +37,7 @@ class CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final temperatureScore = row.temperatureScore;
+    final crmHeat = row.crmHeat;
     final revenueSignal = row.revenueSignal;
     final syncDelayedRisk = row.syncDelayedRisk;
     final brokerAlert = row.showBrokerAlert;
@@ -131,9 +132,7 @@ class CustomerCard extends StatelessWidget {
                     else if (customer.leadTemperature != null)
                       _TemperatureChip(value: customer.leadTemperature!)
                     else
-                      _LeadScoreChip(
-                          score: temperatureScore.score,
-                          level: temperatureScore.level),
+                      _CrmHeatChip(heat: crmHeat),
                     if (brokerAlert)
                       Padding(
                         padding: const EdgeInsets.only(left: DesignTokens.space2),
@@ -259,64 +258,57 @@ class _TemperatureChip extends StatelessWidget {
   }
 }
 
-/// Sıcaklık skoru + emoji: 🔥92 satın almaya çok yakın, 🟡55 araştırıyor, 🔵20 sadece bakıyor.
-class _LeadScoreChip extends StatelessWidget {
-  const _LeadScoreChip({required this.score, required this.level});
+/// CRM sıcaklık — detay ekranı ile aynı skor motoru.
+class _CrmHeatChip extends StatelessWidget {
+  const _CrmHeatChip({required this.heat});
 
-  final double score;
-  final LeadTemperatureLevel level;
+  final CustomerHeatSnapshot heat;
 
-  static String _emoji(LeadTemperatureLevel level) {
+  static String _emoji(CustomerHeatLevel level) {
     switch (level) {
-      case LeadTemperatureLevel.urgent:
-      case LeadTemperatureLevel.hot:
+      case CustomerHeatLevel.hot:
         return '🔥';
-      case LeadTemperatureLevel.warm:
-      case LeadTemperatureLevel.reactivationCandidate:
+      case CustomerHeatLevel.warm:
         return '🟡';
-      default:
+      case CustomerHeatLevel.cool:
         return '🔵';
+      case CustomerHeatLevel.cold:
+        return '⚪';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    Color color = AppThemeExtension.of(context).textTertiary;
-    switch (level) {
-      case LeadTemperatureLevel.urgent:
-        color = AppThemeExtension.of(context).danger;
-        break;
-      case LeadTemperatureLevel.hot:
-        color = AppThemeExtension.of(context).success;
-        break;
-      case LeadTemperatureLevel.warm:
-      case LeadTemperatureLevel.reactivationCandidate:
-        color = AppThemeExtension.of(context).warning;
-        break;
-      default:
-        color = AppThemeExtension.of(context).info;
-    }
-    final emoji = _emoji(level);
-    final scoreInt = score.round().clamp(0, 100);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 12)),
-          const SizedBox(width: 4),
-          Text(
-            '$scoreInt',
-            style: TextStyle(
+    final ext = AppThemeExtension.of(context);
+    final color = switch (heat.heatLevel) {
+      CustomerHeatLevel.hot => ext.warning,
+      CustomerHeatLevel.warm => ext.accent,
+      CustomerHeatLevel.cool => ext.textSecondary,
+      CustomerHeatLevel.cold => ext.textTertiary,
+    };
+    return Tooltip(
+      message: heat.heatReasonSummary,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_emoji(heat.heatLevel), style: const TextStyle(fontSize: 12)),
+            const SizedBox(width: 4),
+            Text(
+              '${heat.heatScore}',
+              style: TextStyle(
                 color: color,
                 fontSize: DesignTokens.fontSizeXs,
-                fontWeight: FontWeight.w700),
-          ),
-        ],
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

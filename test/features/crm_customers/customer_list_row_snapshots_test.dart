@@ -2,7 +2,6 @@ import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_row_snapshots_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
-import 'package:emlakmaster_mobile/features/lead_temperature_engine/presentation/providers/lead_temperature_by_customer_id_provider.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/providers/revenue_engine_providers.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +29,6 @@ void main() {
         ),
         syncDelayedRiskCustomerIdsProvider.overrideWith((ref) => {'a'}),
         customerRevenueSignalsMapProvider.overrideWith((ref) => const {}),
-        leadTemperatureByCustomerIdProvider.overrideWith((ref) => const {}),
       ],
     );
     addTearDown(container.dispose);
@@ -46,5 +44,6 @@ void main() {
         container.read(customerListRowSnapshotsProvider('ayşe'));
     expect(snapshots.containsKey('b'), isTrue);
     expect(snapshots['b']!.syncDelayedRisk, isFalse);
+    expect(snapshots['b']!.crmHeat.heatScore, inInclusiveRange(0, 100));
   });
 }
