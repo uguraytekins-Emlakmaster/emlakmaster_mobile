@@ -10,7 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
-import 'package:emlakmaster_mobile/features/calls/application/call_recording_playback.dart';
+import 'package:emlakmaster_mobile/features/calls/application/call_record_detail_navigation.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_source.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_record_row_summary.dart';
@@ -1444,12 +1444,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     final durationSec = duration?.toInt();
                     final playLabel =
                         CrmCallRecordHelpers.formatDurationMmSs(durationSec);
-                    final recordingUrl =
-                        CrmCallRecordHelpers.playableRecordingUrl(data);
-                    final hasRecording = recordingUrl != null &&
-                        recordingUrl.isNotEmpty;
-                    final showPlay = hasRecording;
-                    final showDetail = !hasRecording && playLabel.isNotEmpty;
+                    final showDetail = playLabel.isNotEmpty;
                     final customerLinkHint =
                         (customerId == null || customerId.isEmpty)
                             ? 'Müşteri kartı yok'
@@ -1524,9 +1519,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         outcome: outcomeStr,
                         statusLabel: statusLabel,
                         metaLine: metaLine,
-                        playDurationLabel:
-                            (showPlay || showDetail) ? playLabel : null,
-                        recordingUrl: recordingUrl,
+                        playDurationLabel: showDetail ? playLabel : null,
                         customerLinkHint: customerLinkHint,
                         rawPhone: rawPhone,
                         customerId: customerId,
@@ -1698,7 +1691,6 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     this.statusLabel,
     this.metaLine,
     this.playDurationLabel,
-    this.recordingUrl,
     this.customerLinkHint,
     required this.rawPhone,
     this.customerId,
@@ -1720,7 +1712,6 @@ class _FirestoreCallRecordCard extends StatelessWidget {
   final String? statusLabel;
   final String? metaLine;
   final String? playDurationLabel;
-  final String? recordingUrl;
   final String? customerLinkHint;
   final String rawPhone;
   final String? customerId;
@@ -1737,10 +1728,10 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     final callable =
         enabled && OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
     final playLabel = playDurationLabel?.trim();
-    final hasRecording =
-        recordingUrl != null && recordingUrl!.trim().isNotEmpty;
-    final hasPlay = hasRecording;
-    final hasDetail = !hasPlay && playLabel != null && playLabel.isNotEmpty;
+    final hasDetail = firestoreDocId != null &&
+        firestoreDocId!.trim().isNotEmpty &&
+        playLabel != null &&
+        playLabel.isNotEmpty;
 
     void openActions() {
       showCallIdentityQuickActionsSheet(
@@ -1754,27 +1745,12 @@ class _FirestoreCallRecordCard extends StatelessWidget {
       );
     }
 
-    void onPlayTap() {
-      unawaited(
-        CallRecordingPlayback.playOrOpenDetail(
-          context: context,
-          recordingUrl: recordingUrl,
-          firestoreDocId: firestoreDocId,
-          title: playLabel ?? title,
-          onFallback: openActions,
-        ),
-      );
-    }
-
     void onDetailTap() {
-      if (firestoreDocId != null && firestoreDocId!.isNotEmpty) {
-        context.push(
-          AppRouter.routeCallSummary,
-          extra: {'callDocId': firestoreDocId},
-        );
-      } else {
-        openActions();
-      }
+      CallRecordDetailNavigation.openSummary(
+        context,
+        firestoreDocId: firestoreDocId,
+        onFallback: openActions,
+      );
     }
 
     return CrmCallOperatingCard(
@@ -1795,9 +1771,8 @@ class _FirestoreCallRecordCard extends StatelessWidget {
             : null,
         customerLinkHint: customerLinkHint,
         onMenu: callable ? openActions : null,
-        onPlay: hasPlay ? onPlayTap : null,
         onDetail: hasDetail ? onDetailTap : null,
-        playDurationLabel: hasPlay || hasDetail ? playLabel : null,
+        playDurationLabel: hasDetail ? playLabel : null,
         trailing: trailing,
         onTap: showCheckbox && onSelect != null
             ? onSelect

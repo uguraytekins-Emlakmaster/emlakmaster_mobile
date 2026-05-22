@@ -10,13 +10,12 @@ import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
-import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_timeline_row.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_feed_providers.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_timeline_rows_provider.dart';
-import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/manager_customer_crm_call_strip.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_crm_call_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_insight_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_smart_task_strip.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_last_call_signals_section.dart';
@@ -47,95 +46,102 @@ class CustomerDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    return Scaffold(
-      backgroundColor: ext.background,
-      appBar: emlakAppBar(
-        context,
-        title: const Text('Müşteri'),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
         backgroundColor: ext.background,
-        foregroundColor: ext.textPrimary,
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.call_rounded),
-            onPressed: () => context.push(
-              AppRouter.routeCall,
-              extra: {
-                'customerId': customerId,
-                'startedFromScreen': 'customer_detail',
-              },
+        appBar: emlakAppBar(
+          context,
+          title: const Text('Müşteri'),
+          backgroundColor: ext.background,
+          foregroundColor: ext.textPrimary,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.call_rounded),
+              onPressed: () => context.push(
+                AppRouter.routeCall,
+                extra: {
+                  'customerId': customerId,
+                  'startedFromScreen': 'customer_detail',
+                },
+              ),
+              tooltip: 'Ara',
             ),
-            tooltip: 'Ara',
+          ],
+          bottom: TabBar(
+            labelColor: ext.accent,
+            unselectedLabelColor: ext.textSecondary,
+            indicatorColor: ext.accent,
+            tabs: const [
+              Tab(text: 'Özet'),
+              Tab(text: 'Görüşmeler'),
+              Tab(text: 'Akış'),
+            ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(DesignTokens.space4),
+        ),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space4,
+                  DesignTokens.space3,
+                  DesignTokens.space4,
+                  DesignTokens.space2,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _CustomerDetailReadyProbe(customerId: customerId),
                     _CustomerHeader(customerId: customerId),
-                    CustomerRevenueIntelligenceStrip(customerId: customerId),
-                    CustomerTimelineIntelligenceStrip(customerId: customerId),
-                    CustomerInsightStrip(customerId: customerId),
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final role = ref.watch(displayRoleOrNullProvider) ??
-                            AppRole.guest;
-                        if (!role.isManagerTier) return const SizedBox.shrink();
-                        return CustomerSmartTaskStrip(customerId: customerId);
-                      },
-                    ),
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final role =
-                            ref.watch(displayRoleProvider).valueOrNull ??
-                                AppRole.guest;
-                        if (!FeaturePermission.canViewAllCalls(role)) {
-                          return const SizedBox.shrink();
-                        }
-                        return ManagerCustomerCrmCallStrip(
-                            customerId: customerId);
-                      },
-                    ),
-                    CustomerLastCallSignalsSection(customerId: customerId),
-                    CustomerPostCallAiInsightStrip(customerId: customerId),
-                    CustomerTranscriptHintStrip(customerId: customerId),
-                    const SizedBox(height: DesignTokens.space5),
-                    _PortfolioMatchSection(customerId: customerId),
-                    const SizedBox(height: DesignTokens.space5),
-                    Text(
-                      'Zaman çizelgesi',
-                      style: AppTypography.cardHeading(context).copyWith(
-                        color: ext.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.space2),
-                    _TimelineActions(customerId: customerId),
-                    const SizedBox(height: DesignTokens.space3),
-                    _CustomerTimeline(customerId: customerId),
                   ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _CustomerDetailOverviewTab(customerId: customerId),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(DesignTokens.space4),
+                      child: CustomerCrmCallStrip(customerId: customerId),
+                    ),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(DesignTokens.space4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Zaman çizelgesi',
+                            style: AppTypography.cardHeading(context).copyWith(
+                              color: ext.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.space2),
+                          _TimelineActions(customerId: customerId),
+                          const SizedBox(height: DesignTokens.space3),
+                          _CustomerTimeline(customerId: customerId),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddNoteSheet(context, ref, customerId),
-        backgroundColor: ext.accent,
-        foregroundColor: ext.onBrand,
-        tooltip: 'Not ekle',
-        icon: const Icon(Icons.note_add_rounded),
-        label: Text(
-          'Not ekle',
-          style: AppTypography.secondaryButton(context).copyWith(
-            color: ext.onBrand,
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => _showAddNoteSheet(context, ref, customerId),
+          backgroundColor: ext.accent,
+          foregroundColor: ext.onBrand,
+          tooltip: 'Not ekle',
+          icon: const Icon(Icons.note_add_rounded),
+          label: Text(
+            'Not ekle',
+            style: AppTypography.secondaryButton(context).copyWith(
+              color: ext.onBrand,
+            ),
           ),
         ),
       ),
@@ -319,13 +325,6 @@ class CustomerDetailPage extends ConsumerWidget {
                                   style: FilledButton.styleFrom(
                                     backgroundColor: ext.accent,
                                     foregroundColor: ext.onBrand,
-                                    minimumSize:
-                                        const Size(double.infinity, 48),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        DesignTokens.radiusControl,
-                                      ),
-                                    ),
                                   ),
                                   child: const Text('Tekrar dene'),
                                 ),
@@ -339,20 +338,12 @@ class CustomerDetailPage extends ConsumerWidget {
 
                   await attemptSave();
                 },
-                icon: const Icon(
-                  Icons.check_rounded,
-                  size: DesignTokens.iconMd,
-                ),
+                icon: const Icon(Icons.save_rounded),
                 label: const Text('Kaydet'),
                 style: FilledButton.styleFrom(
                   backgroundColor: ext.accent,
                   foregroundColor: ext.onBrand,
                   minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      DesignTokens.radiusControl,
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -362,6 +353,41 @@ class CustomerDetailPage extends ConsumerWidget {
     );
   }
 }
+
+class _CustomerDetailOverviewTab extends ConsumerWidget {
+  const _CustomerDetailOverviewTab({required this.customerId});
+
+  final String customerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(DesignTokens.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          CustomerRevenueIntelligenceStrip(customerId: customerId),
+          CustomerTimelineIntelligenceStrip(customerId: customerId),
+          CustomerInsightStrip(customerId: customerId),
+          Consumer(
+            builder: (context, ref, _) {
+              final role =
+                  ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
+              if (!role.isManagerTier) return const SizedBox.shrink();
+              return CustomerSmartTaskStrip(customerId: customerId);
+            },
+          ),
+          CustomerLastCallSignalsSection(customerId: customerId),
+          CustomerPostCallAiInsightStrip(customerId: customerId),
+          CustomerTranscriptHintStrip(customerId: customerId),
+          const SizedBox(height: DesignTokens.space5),
+          _PortfolioMatchSection(customerId: customerId),
+        ],
+      ),
+    );
+  }
+}
+
 
 class _PortfolioMatchSection extends ConsumerWidget {
   const _PortfolioMatchSection({required this.customerId});
@@ -642,14 +668,13 @@ class _CustomerHeader extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
-              if (updatedAt != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: DesignTokens.space2),
-                  child: Text(
-                    'Son güncelleme: ${updatedAt.day}.${updatedAt.month}.${updatedAt.year}',
-                    style: AppTypography.meta(context),
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(top: DesignTokens.space2),
+                child: Text(
+                  'Son güncelleme: ${updatedAt.day}.${updatedAt.month}.${updatedAt.year}',
+                  style: AppTypography.meta(context),
                 ),
+              ),
               if (phone != '—' && phone.isNotEmpty) ...[
                 const SizedBox(height: DesignTokens.space4),
                 Row(

@@ -6,7 +6,7 @@ import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/features/calls/application/call_recording_playback.dart';
+import 'package:emlakmaster_mobile/features/calls/application/call_record_detail_navigation.dart';
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_record_firestore_match.dart';
@@ -119,12 +119,7 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
     final hasCustomerSlide = custId != null && custId.isNotEmpty;
 
     final playLabel = CrmCallRecordHelpers.formatDurationMmSs(duration?.toInt());
-    final recordingUrl = CrmCallRecordHelpers.playableRecordingUrl(data);
-    final hasRecording =
-        recordingUrl != null && recordingUrl.trim().isNotEmpty;
-    final hasPlay = hasRecording;
-    final hasDetail =
-        !hasPlay && playLabel.isNotEmpty;
+    final hasDetail = playLabel.isNotEmpty;
     final customerLinkHint =
         (custId == null || custId.isEmpty) ? 'Müşteri kartı yok' : null;
 
@@ -145,22 +140,11 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
       );
     }
 
-    void onPlayTap() {
-      unawaited(
-        CallRecordingPlayback.playOrOpenDetail(
-          context: context,
-          recordingUrl: recordingUrl,
-          firestoreDocId: id,
-          title: playLabel.isNotEmpty ? playLabel : title,
-          onFallback: openActions,
-        ),
-      );
-    }
-
     void onDetailTap() {
-      context.push(
-        AppRouter.routeCallSummary,
-        extra: {'callDocId': id},
+      CallRecordDetailNavigation.openSummary(
+        context,
+        firestoreDocId: id,
+        onFallback: openActions,
       );
     }
 
@@ -181,10 +165,8 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
           leadingColor: isIncoming ? ext.success : ext.info,
           customerLinkHint: customerLinkHint,
           onMenu: callable ? openActions : null,
-          onPlay: hasPlay ? onPlayTap : null,
           onDetail: hasDetail ? onDetailTap : null,
-          playDurationLabel:
-              (hasPlay || hasDetail) && playLabel.isNotEmpty ? playLabel : null,
+          playDurationLabel: hasDetail && playLabel.isNotEmpty ? playLabel : null,
           trailing: trailing,
           onTap: callable ? openActions : null,
         ),
