@@ -59,22 +59,26 @@ class ShellScreenReadyListener extends ConsumerStatefulWidget {
 class _ShellScreenReadyListenerState
     extends ConsumerState<ShellScreenReadyListener> {
   late final ShellScreenReadyTracker _tracker;
+  ProviderSubscription<AsyncValue<dynamic>>? _providerSub;
 
   @override
   void initState() {
     super.initState();
     _tracker = ShellScreenReadyTracker(widget.screenName);
+    _providerSub = ref.listenManual(widget.provider, (previous, next) {
+      if (!next.hasValue) return;
+      _tracker.onContentReady(
+        itemCount: widget.itemCount?.call(next.requireValue),
+      );
+    }, fireImmediately: true);
   }
 
   @override
-  Widget build(BuildContext context) {
-    ref.listen(widget.provider, (previous, next) {
-      if (next.hasValue) {
-        _tracker.onContentReady(
-          itemCount: widget.itemCount?.call(next.requireValue),
-        );
-      }
-    });
-    return widget.child;
+  void dispose() {
+    _providerSub?.close();
+    super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

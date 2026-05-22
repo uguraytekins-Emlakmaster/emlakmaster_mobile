@@ -34,7 +34,22 @@
       "consultant_dashboard": 8000,
       "admin_dashboard": 8000,
       "consultant_calls": 8000,
-      "customer_list": 8000
+      "customer_list": 8000,
+      "customer_detail": 8000,
+      "tasks": 8000,
+      "pipeline": 8000,
+      "command_center": 8000,
+      "notifications_center": 8000
+    },
+    "screen_targets_ms": {
+      "consultant_dashboard": 800,
+      "admin_dashboard": 800,
+      "consultant_calls": 800,
+      "customer_list": 400,
+      "customer_detail": 800,
+      "tasks": 800,
+      "pipeline": 800,
+      "command_center": 800
     }
   }
 }

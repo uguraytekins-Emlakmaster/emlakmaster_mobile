@@ -42,7 +42,11 @@ Terminal filtresi: `[Perf]`
 |--------|-----|-------|
 | consultant_dashboard / admin_dashboard | | |
 | consultant_calls | | |
-| customer_list | | |
+| customer_list | | hedef ≤ 400 ms (profile) |
+| customer_detail | | hedef ≤ 800 ms |
+| tasks | | |
+| pipeline | | |
+| command_center | | |
 
 ### Ham log (yapıştırın)
 

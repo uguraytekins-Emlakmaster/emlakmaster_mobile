@@ -71,6 +71,15 @@ def main() -> int:
         if ms > limit:
             errors.append(f"screen {name}: {ms}ms > limit {limit}ms")
 
+    for name, target in cfg.get("screen_targets_ms", {}).items():
+        if name not in screens:
+            continue
+        ms = screens[name]
+        if ms > target:
+            warnings.append(
+                f"screen {name}: {ms}ms > hedef {target}ms (profile iyileştirme)"
+            )
+
     for name in cfg.get("optional_milestones", []):
         if name not in milestones:
             warnings.append(f"opsiyonel milestone yok: {name}")
