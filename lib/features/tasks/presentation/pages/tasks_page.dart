@@ -31,10 +31,13 @@ class TasksPage extends ConsumerStatefulWidget {
   ConsumerState<TasksPage> createState() => _TasksPageState();
 }
 
+enum _TasksListFilter { all, today, overdue, open }
+
 class _TasksPageState extends ConsumerState<TasksPage> {
   final _readyTracker = ShellScreenReadyTracker('tasks');
   int _tasksRetryKey = 0;
   final Set<String> _deletingIds = <String>{};
+  _TasksListFilter _listFilter = _TasksListFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +60,33 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                   const PremiumPageHeader(
                     title: ProductLabels.myTasks,
                     subtitle: 'Tüm görevlerini tek yerde yönet.',
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      DesignTokens.space5,
+                      0,
+                      DesignTokens.space5,
+                      DesignTokens.space3,
+                    ),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final f in _TasksListFilter.values)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                right: DesignTokens.space2,
+                              ),
+                              child: FilterChip(
+                                label: Text(_tasksFilterLabel(f)),
+                                selected: _listFilter == f,
+                                onSelected: (_) =>
+                                    setState(() => _listFilter = f),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: Builder(
@@ -108,8 +138,11 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     ),
                   );
                 }
+                final now = DateTime.now();
+                final today = DateTime(now.year, now.month, now.day);
                 final docs = (tasksAsync.valueOrNull ?? [])
                     .where((d) => !_deletingIds.contains(d.id))
+                    .where((d) => _matchesTasksFilter(d, today))
                     .toList();
                 if (docs.isEmpty) {
                   return SingleChildScrollView(
@@ -146,8 +179,6 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     ),
                   );
                 }
-                final now = DateTime.now();
-                final today = DateTime(now.year, now.month, now.day);
                 final lowDensity = docs.isNotEmpty && docs.length <= 4;
                 final headerCount = lowDensity ? 1 : 0;
                 return Stack(
@@ -233,6 +264,32 @@ class _TasksPageState extends ConsumerState<TasksPage> {
               ),
             ),
     );
+  }
+
+  String _tasksFilterLabel(_TasksListFilter f) => switch (f) {
+        _TasksListFilter.all => 'Tümü',
+        _TasksListFilter.today => 'Bugün',
+        _TasksListFilter.overdue => 'Gecikmiş',
+        _TasksListFilter.open => 'Açık',
+      };
+
+  bool _matchesTasksFilter(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    DateTime today,
+  ) {
+    final d = doc.data();
+    final done = d['done'] == true;
+    final dueAt = (d['dueAt'] as Timestamp?)?.toDate();
+    return switch (_listFilter) {
+      _TasksListFilter.all => true,
+      _TasksListFilter.open => !done,
+      _TasksListFilter.today =>
+        !done && dueAt != null && DateTime(dueAt.year, dueAt.month, dueAt.day) == today,
+      _TasksListFilter.overdue =>
+        !done &&
+            dueAt != null &&
+            DateTime(dueAt.year, dueAt.month, dueAt.day).isBefore(today),
+    };
   }
 
   Future<void> _toggleDone(

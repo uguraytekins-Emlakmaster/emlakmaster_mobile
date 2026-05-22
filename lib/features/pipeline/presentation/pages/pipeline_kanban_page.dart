@@ -28,19 +28,46 @@ class PipelineKanbanPage extends ConsumerStatefulWidget {
 
 class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
   final _readyTracker = ShellScreenReadyTracker('pipeline');
+  ProviderSubscription<AsyncValue<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>?
+      _pipelineReadySub;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bindReadyTracker());
+  }
+
+  void _bindReadyTracker() {
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+    if (uid.isEmpty) return;
+    _pipelineReadySub?.close();
+    _pipelineReadySub = ref.listenManual(
+      pipelineItemsDisplayProvider(uid),
+      (previous, next) {
+        if (next.hasValue) {
+          _readyTracker.onContentReady(itemCount: next.value!.length);
+        }
+      },
+      fireImmediately: true,
+    );
+  }
+
+  @override
+  void dispose() {
+    _pipelineReadySub?.close();
+    super.dispose();
+  }
+
+  Future<void> _refreshPipeline(String uid) async {
+    ref.invalidate(pipelineItemsDisplayProvider(uid));
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+  }
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
-    if (uid.isNotEmpty) {
-      ref.listen(pipelineItemsDisplayProvider(uid), (previous, next) {
-        if (next.hasValue) {
-          _readyTracker.onContentReady(itemCount: next.value!.length);
-        }
-      });
-    }
     return Scaffold(
       backgroundColor: ext.background,
       body: CustomScrollView(
@@ -98,7 +125,10 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
             )
           else
             SliverToBoxAdapter(
-              child: Builder(
+              child: RefreshIndicator(
+                color: ext.accent,
+                onRefresh: () => _refreshPipeline(uid),
+                child: Builder(
                 builder: (context) {
                   final itemsAsync = ref.watch(pipelineItemsDisplayProvider(uid));
                   final sheetExt = ext;
@@ -162,6 +192,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                     ),
                   );
                 },
+              ),
               ),
             ),
         ],
