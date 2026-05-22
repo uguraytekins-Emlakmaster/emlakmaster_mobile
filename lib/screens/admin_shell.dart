@@ -17,6 +17,7 @@ import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:emlakmaster_mobile/screens/admin_pages.dart';
+import 'package:emlakmaster_mobile/screens/admin_shell_nav.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,6 +53,8 @@ class AdminShellPage extends ConsumerStatefulWidget {
 }
 
 class _AdminShellPageState extends ConsumerState<AdminShellPage> {
+  final GlobalKey<AdaptiveShellScaffoldState> _shellKey =
+      GlobalKey<AdaptiveShellScaffoldState>();
   final ValueNotifier<int> _shellPageIndex = ValueNotifier<int>(0);
 
   @override
@@ -173,21 +176,25 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
           ),
         ),
         Expanded(
-          child: AdaptiveShellScaffold(
-            navItems: navItems,
-            pages: pages,
-            tabIds: tabIds,
-            title: ProductLabels.managerWorkspace,
-            onIndexChanged: (i) {
-              if (_shellPageIndex.value != i) {
-                _shellPageIndex.value = i;
-              }
-            },
-            shortcutMap: {
-              MainShellShortcut.openHomeTab: 0,
-              MainShellShortcut.openMessageCenterTab: messagesIndex,
-              MainShellShortcut.openAccountTab: settingsIndex,
-            },
+          child: AdminShellNav(
+            goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
+            child: AdaptiveShellScaffold(
+              key: _shellKey,
+              navItems: navItems,
+              pages: pages,
+              tabIds: tabIds,
+              title: ProductLabels.managerWorkspace,
+              onIndexChanged: (i) {
+                if (_shellPageIndex.value != i) {
+                  _shellPageIndex.value = i;
+                }
+              },
+              shortcutMap: {
+                MainShellShortcut.openHomeTab: 0,
+                MainShellShortcut.openMessageCenterTab: messagesIndex,
+                MainShellShortcut.openAccountTab: settingsIndex,
+              },
+            ),
           ),
         ),
       ],

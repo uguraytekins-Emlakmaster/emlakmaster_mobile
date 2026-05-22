@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/navigation/app_back_dispatcher.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/screens/admin_shell_nav.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
@@ -11,9 +12,12 @@ import 'package:go_router/go_router.dart';
 /// Kabuk içi Günüm / Komuta Merkezi veya [AppRouter.routeHome].
 void navigateToAppHome(BuildContext context) {
   AppFeedback.lightImpact();
-  final shell = ConsultantShellNav.maybeOf(context);
-  if (shell != null) {
+  if (ConsultantShellNav.maybeOf(context) != null) {
     ConsultantShellNav.goToHomeTab(context);
+    return;
+  }
+  if (AdminShellNav.maybeOf(context) != null) {
+    AdminShellNav.goToHomeTab(context);
     return;
   }
   if (context.mounted) {
