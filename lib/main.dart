@@ -34,7 +34,7 @@ import 'package:emlakmaster_mobile/features/tasks/data/task_due_local_notificati
 import 'package:emlakmaster_mobile/features/tasks/data/task_due_notification_bridge.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_inbox_listener.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_local_notifications.dart';
-import 'package:emlakmaster_mobile/features/messages/data/team_chat_push_navigation.dart';
+import 'package:emlakmaster_mobile/core/notifications/crm_push_navigation.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_access_state.dart';
 import 'package:emlakmaster_mobile/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -319,7 +319,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
             TeamChatInboxListener.attach(ref);
             ExecutionReminderNotificationBridge.attach(ref);
             TaskDueNotificationBridge.attach(ref);
-            unawaited(TeamChatPushNavigation.attach(ref));
+            unawaited(CrmPushNavigation.attach(ref));
           },
         );
       });
