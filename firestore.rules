@@ -238,6 +238,38 @@ service cloud.firestore {
         && sameOfficeAsAssignedAgent(agentId)
         && isOfficeManagerForIntelligence(oid);
     }
+    /// Danışman kendi kaydı; ofis yöneticisi aynı ofisteki danışman; super_admin global.
+    function canAccessAgentOwnedDoc(agentId) {
+      return agentId == request.auth.uid
+        || canAccessAgentDocOfficeWide(agentId)
+        || isSuperAdminUser();
+    }
+    function canAccessAgentDocOfficeWide(agentId) {
+      let oid = userOfficeId(request.auth.uid);
+      return agentId is string && agentId.size() > 0
+        && oid is string && oid.size() > 0
+        && isActiveOfficeMember(oid)
+        && sameOfficeAsAssignedAgent(agentId)
+        && isOfficeManagerForIntelligence(oid);
+    }
+    function canCreateAgentOwnedDoc(agentId) {
+      return agentId == request.auth.uid
+        || canAccessAgentDocOfficeWide(agentId)
+        || isSuperAdminUser();
+    }
+    function advisorIdFieldMatchesOnCreate(advisorId) {
+      return advisorId == request.auth.uid
+        || canAccessAgentDocOfficeWide(advisorId)
+        || isSuperAdminUser();
+    }
+    function advisorIdFieldMatchesOnUpdate(advisorId) {
+      return advisorId == resource.data.advisorId
+        && (
+          advisorId == request.auth.uid
+          || canAccessAgentDocOfficeWide(advisorId)
+          || isSuperAdminUser()
+        );
+    }
 
     // -------------------------------------------------------------------------
     // users: kullanıcı kendi dokümanını MUTLAKA okuyabilir (giriş sonrası rol yüklemesi için).
@@ -433,30 +465,41 @@ service cloud.firestore {
     // calls: danışman sadece kendi agentId'li çağrıları görür; yönetici hepsini
     // -------------------------------------------------------------------------
     match /calls/{docId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.agentId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow read: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.agentId);
+      allow create: if isSignedIn()
+        && canCreateAgentOwnedDoc(request.resource.data.agentId);
+      allow update: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.agentId)
+        && request.resource.data.agentId == resource.data.agentId;
       allow delete: if false;
     }
 
     match /deals/{docId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.agentId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.agentId == request.auth.uid);
+      allow read: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.agentId);
+      allow create: if isSignedIn()
+        && canCreateAgentOwnedDoc(request.resource.data.agentId);
+      allow update: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.agentId)
+        && request.resource.data.agentId == resource.data.agentId;
       allow delete: if false;
     }
 
     // agentId veya assignedAgentId (AI Call Brain / haftalık sorgu ile uyumlu)
     match /call_summaries/{docId} {
-      allow read: if isSignedIn() && (isManager()
-        || resource.data.agentId == request.auth.uid
-        || resource.data.assignedAgentId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager()
-        || request.resource.data.agentId == request.auth.uid
-        || request.resource.data.assignedAgentId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager()
-        || resource.data.agentId == request.auth.uid
-        || resource.data.assignedAgentId == request.auth.uid);
+      allow read: if isSignedIn() && (
+        canAccessAgentOwnedDoc(resource.data.get('agentId', ''))
+        || canAccessAgentOwnedDoc(resource.data.get('assignedAgentId', ''))
+      );
+      allow create: if isSignedIn() && (
+        canCreateAgentOwnedDoc(request.resource.data.get('agentId', ''))
+        || canCreateAgentOwnedDoc(request.resource.data.get('assignedAgentId', ''))
+      );
+      allow update: if isSignedIn() && (
+        canAccessAgentOwnedDoc(resource.data.get('agentId', ''))
+        || canAccessAgentOwnedDoc(resource.data.get('assignedAgentId', ''))
+      );
       allow delete: if false;
     }
 
@@ -542,42 +585,61 @@ service cloud.firestore {
 
     // notes: danışman sadece kendi eklediği notlara (advisorId == uid) veya yönetici hepsine
     match /notes/{noteId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow read: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      allow create: if isSignedIn()
+        && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
+      allow update: if isSignedIn()
+        && advisorIdFieldMatchesOnUpdate(request.resource.data.advisorId);
       allow delete: if false;
     }
 
     // tasks: danışman kendi görevleri (advisorId)
     match /tasks/{taskId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow read: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      allow create: if isSignedIn()
+        && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
+      allow update: if isSignedIn()
+        && advisorIdFieldMatchesOnUpdate(request.resource.data.advisorId);
+      allow delete: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
     }
 
     // visits: danışman sadece kendi advisorId'li kayıtları görür/oluşturur/günceller; yönetici hepsini.
     match /visits/{visitId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow read: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      allow create: if isSignedIn()
+        && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
+      allow update: if isSignedIn()
+        && advisorIdFieldMatchesOnUpdate(request.resource.data.advisorId);
+      allow delete: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
     }
 
     // offers: danışman sadece kendi advisorId'li teklifleri görür/oluşturur/günceller; yönetici hepsini.
     match /offers/{offerId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow read: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      allow create: if isSignedIn()
+        && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
+      allow update: if isSignedIn()
+        && advisorIdFieldMatchesOnUpdate(request.resource.data.advisorId);
+      allow delete: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
     }
 
     // pipeline_items: danışman kendi pipeline
     match /pipeline_items/{itemId} {
-      allow read: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow create: if isSignedIn() && (isManager() || request.resource.data.advisorId == request.auth.uid);
-      allow update: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
-      allow delete: if isSignedIn() && (isManager() || resource.data.advisorId == request.auth.uid);
+      allow read: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      allow create: if isSignedIn()
+        && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
+      allow update: if isSignedIn()
+        && advisorIdFieldMatchesOnUpdate(request.resource.data.advisorId);
+      allow delete: if isSignedIn()
+        && canAccessAgentOwnedDoc(resource.data.advisorId);
     }
 
     // analytics: yönetici yazar; ayrıca giriş yapmış kullanıcı güvenli istemci rollup (Spark, Blaze gerekmez).
