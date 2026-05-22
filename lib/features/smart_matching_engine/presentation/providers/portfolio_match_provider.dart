@@ -1,6 +1,8 @@
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:emlakmaster_mobile/features/smart_matching_engine/data/listing_for_match.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
+import 'package:emlakmaster_mobile/features/listings/presentation/providers/listing_detail_providers.dart';
 import 'package:emlakmaster_mobile/features/smart_matching_engine/domain/usecases/compute_top_matched_listings_isolate.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:flutter/foundation.dart';
@@ -41,6 +43,61 @@ Map<String, dynamic> _customerToMapForMatch(CustomerEntity c) => {
     };
 
 /// Ekranda gösterim için: eşleşen ilan + başlık + skor.
+/// İlan için en uygun müşteriler (portföy eşleştirme motoru ters yön).
+final topMatchedCustomersForListingProvider =
+    FutureProvider.autoDispose.family<List<MatchedCustomerDisplay>, String>(
+        (ref, listingId) async {
+  final snap = await ref.watch(listingDocStreamProvider(listingId).future);
+  if (!snap.exists) return [];
+  final listing = ListingForMatch.fromMap(listingId, snap.data() ?? {});
+  final customers = ref.watch(customerListEntitiesProvider);
+  if (customers.isEmpty) return [];
+
+  final input = <String, dynamic>{
+    'listing': listing.toMap(),
+    'customers': customers
+        .map(
+          (c) => {
+            'id': c.id,
+            'name': c.fullName ?? 'Müşteri',
+            'budgetMin': c.budgetMin,
+            'budgetMax': c.budgetMax,
+            'regionPreferences': c.regionPreferences,
+            'tags': c.tags,
+          },
+        )
+        .toList(),
+  };
+  final raw = await compute(computeTopMatchedCustomersForListing, input);
+  return raw
+      .map(
+        (m) => MatchedCustomerDisplay(
+          customerId: m['customerId'] as String? ?? '',
+          name: m['name'] as String? ?? 'Müşteri',
+          score: (m['score'] as num?)?.toDouble() ?? 0,
+          confidenceScore: (m['confidenceScore'] as num?)?.toDouble() ?? 0,
+          aiExplanation: m['aiExplanation'] as String?,
+        ),
+      )
+      .toList();
+});
+
+class MatchedCustomerDisplay {
+  const MatchedCustomerDisplay({
+    required this.customerId,
+    required this.name,
+    this.score = 0,
+    this.confidenceScore = 0,
+    this.aiExplanation,
+  });
+
+  final String customerId;
+  final String name;
+  final double score;
+  final double confidenceScore;
+  final String? aiExplanation;
+}
+
 class MatchedListingDisplay {
   const MatchedListingDisplay({
     required this.listingId,

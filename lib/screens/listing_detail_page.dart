@@ -4,7 +4,9 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:emlakmaster_mobile/core/widgets/shimmer_placeholder.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/listing_detail_providers.dart';
+import 'package:emlakmaster_mobile/features/listings/presentation/widgets/listing_matched_customers_section.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
@@ -196,30 +198,76 @@ class ListingDetailPage extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            AppFeedback.mediumImpact();
-                            context.push(
-                              '${AppRouter.routeRainbowAnalytics}?listingId=$listingId',
-                            );
-                          },
-                          icon:
-                              Icon(Icons.auto_graph_rounded, color: ext.accent),
-                          label: Text(
-                            'İçgörü raporu oluştur',
-                            style: TextStyle(
-                              color: ext.accent,
-                              fontWeight: FontWeight.w600,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                AppFeedback.lightImpact();
+                                final shareText = [
+                                  title,
+                                  location,
+                                  priceStr.contains('₺')
+                                      ? priceStr
+                                      : '$priceStr ₺',
+                                  if (description.isNotEmpty) description,
+                                ].join('\n');
+                                await Clipboard.setData(
+                                  ClipboardData(text: shareText),
+                                );
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                        'İlan metni panoya kopyalandı — WhatsApp veya SMS ile paylaşabilirsiniz.',
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor: ext.accent,
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: Icon(Icons.share_rounded, color: ext.accent),
+                              label: Text(
+                                'Paylaş',
+                                style: TextStyle(
+                                  color: ext.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: ext.accent),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
                             ),
                           ),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: ext.accent),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: () {
+                                AppFeedback.mediumImpact();
+                                context.push(
+                                  '${AppRouter.routeRainbowAnalytics}?listingId=$listingId',
+                                );
+                              },
+                              icon: Icon(
+                                Icons.auto_graph_rounded,
+                                color: ext.onBrand,
+                              ),
+                              label: const Text('İçgörü'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: ext.accent,
+                                foregroundColor: ext.onBrand,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
+                      const SizedBox(height: 20),
+                      ListingMatchedCustomersSection(listingId: listingId),
                       if (description.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         Text(
