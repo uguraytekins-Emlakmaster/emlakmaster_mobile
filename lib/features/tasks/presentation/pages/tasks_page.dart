@@ -569,7 +569,10 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     ),
                   ),
                   items: const [
-                    DropdownMenuItem(child: Text('Tek seferlik')),
+                    DropdownMenuItem(
+                      value: null,
+                      child: Text('Tek seferlik'),
+                    ),
                     DropdownMenuItem(value: 'daily', child: Text('Her gün')),
                     DropdownMenuItem(value: 'weekly', child: Text('Her hafta')),
                     DropdownMenuItem(value: 'monthly', child: Text('Her ay')),
@@ -860,6 +863,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                             ),
                             items: const [
                               DropdownMenuItem(
+                                value: null,
                                 child: Text('Tek seferlik'),
                               ),
                               DropdownMenuItem(
