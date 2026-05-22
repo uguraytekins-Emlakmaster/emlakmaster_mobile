@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_next_best_action.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_crm_refresh.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/providers/advisor_tasks_stream_provider.dart'
     show advisorTasksStreamProvider;
 import 'package:flutter/material.dart';
@@ -68,6 +69,7 @@ abstract final class CustomerDetailActions {
           'done': false,
         });
         ref.invalidate(advisorTasksStreamProvider(uid));
+        invalidateCustomerCrmCascade(ref, customerId);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

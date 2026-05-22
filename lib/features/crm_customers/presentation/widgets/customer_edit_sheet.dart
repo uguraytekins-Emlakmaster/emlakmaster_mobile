@@ -3,7 +3,7 @@ import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_crm_refresh.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
@@ -63,7 +63,7 @@ void showCustomerEditSheet(
                         ),
                         ref: ref,
                       );
-                      ref.invalidate(customerEntityByIdProvider(customerId));
+                      invalidateCustomerCrmCascade(ref, customerId);
                       if (ctx.mounted) {
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(ctx).showSnackBar(

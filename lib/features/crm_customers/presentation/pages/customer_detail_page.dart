@@ -13,6 +13,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_timeline_filter.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_edit_sheet.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/customer_next_best_action_button.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_crm_refresh.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:emlakmaster_mobile/features/customer_timeline/domain/entities/timeline_item.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -35,10 +36,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
-/// Müşteri detay: üstte bilgi kartı, altta timeline, Not ekle FAB.
-class CustomerDetailPage extends ConsumerWidget {
+/// Müşteri detay: premium chrome, lazy sekmeler, Not ekle FAB.
+class CustomerDetailPage extends ConsumerStatefulWidget {
   const CustomerDetailPage({super.key, required this.customerId});
   final String customerId;
+
+  @override
+  ConsumerState<CustomerDetailPage> createState() => _CustomerDetailPageState();
+}
+
+class _CustomerDetailPageState extends ConsumerState<CustomerDetailPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+  final Set<int> _visitedTabIndexes = {0};
 
   static const List<String> _noteTemplates = [
     'Teklif gönderildi.',
@@ -50,51 +60,86 @@ class CustomerDetailPage extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    setState(() => _visitedTabIndexes.add(_tabController.index));
+  }
+
+  String get _customerId => widget.customerId;
+
+  @override
+  Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: ext.background,
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _CustomerDetailReadyProbe(customerId: customerId),
-              _CustomerDetailChrome(customerId: customerId),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    _CustomerDetailOverviewTab(customerId: customerId),
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(DesignTokens.space4),
-                      child: CustomerCrmCallStrip(customerId: customerId),
-                    ),
-                    _CustomerFlowTab(
-                      customerId: customerId,
-                      onAddNote: () => _showAddNoteSheet(context, ref, customerId),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _showAddNoteSheet(context, ref, customerId),
-          backgroundColor: ext.accent,
-          foregroundColor: ext.onBrand,
-          tooltip: 'Not ekle',
-          icon: const Icon(Icons.note_add_rounded),
-          label: Text(
-            'Not ekle',
-            style: AppTypography.secondaryButton(context).copyWith(
-              color: ext.onBrand,
+    return Scaffold(
+      backgroundColor: ext.background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _CustomerDetailReadyProbe(customerId: _customerId),
+            _CustomerDetailChrome(
+              customerId: _customerId,
+              tabController: _tabController,
             ),
+            Expanded(
+              child: AnimatedBuilder(
+                animation: _tabController,
+                builder: (context, _) => _buildActiveTab(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddNoteSheet(context, ref, _customerId),
+        backgroundColor: ext.accent,
+        foregroundColor: ext.onBrand,
+        tooltip: 'Not ekle',
+        icon: const Icon(Icons.note_add_rounded),
+        label: Text(
+          'Not ekle',
+          style: AppTypography.secondaryButton(context).copyWith(
+            color: ext.onBrand,
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildActiveTab(BuildContext context) {
+    final index = _tabController.index;
+    if (!_visitedTabIndexes.contains(index)) {
+      return const SizedBox.shrink();
+    }
+    switch (index) {
+      case 0:
+        return _CustomerDetailOverviewTab(customerId: _customerId);
+      case 1:
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(DesignTokens.space4),
+          child: CustomerCrmCallStrip(customerId: _customerId),
+        );
+      case 2:
+        return _CustomerFlowTab(
+          customerId: _customerId,
+          onAddNote: () => _showAddNoteSheet(context, ref, _customerId),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   static void _showAddNoteSheet(
@@ -139,7 +184,7 @@ class CustomerDetailPage extends ConsumerWidget {
                   ref: ref,
                 );
                 AppFeedback.mediumImpact();
-                ref.invalidate(customerTimelineRowsProvider(customerId));
+                invalidateCustomerCrmCascade(ref, customerId);
                 if (ctx.mounted) {
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(ctx).showSnackBar(
@@ -471,8 +516,12 @@ class _CustomerDetailReadyProbeState
 }
 
 class _CustomerDetailChrome extends ConsumerWidget {
-  const _CustomerDetailChrome({required this.customerId});
+  const _CustomerDetailChrome({
+    required this.customerId,
+    required this.tabController,
+  });
   final String customerId;
+  final TabController tabController;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -566,6 +615,7 @@ class _CustomerDetailChrome extends ConsumerWidget {
                 child: _CustomerSummaryCard(entity: entity),
               ),
             TabBar(
+              controller: tabController,
               labelColor: ext.accent,
               unselectedLabelColor: ext.textSecondary,
               indicatorColor: ext.accent,
@@ -665,6 +715,7 @@ class _CustomerQuickActionsRow extends ConsumerWidget {
                   ),
                   'done': false,
                 });
+                invalidateCustomerCrmCascade(ref, customerId);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -681,8 +732,11 @@ class _CustomerQuickActionsRow extends ConsumerWidget {
             child: _QuickActionButton(
               icon: Icons.handshake_rounded,
               label: 'Teklif',
-              onTap: () =>
-                  _TimelineActions._showAddOfferSheet(context, ref, customerId),
+              onTap: () => _TimelineActions._showAddOfferSheet(
+                context,
+                ref,
+                customerId,
+              ),
             ),
           ),
         ],
@@ -932,6 +986,7 @@ class _TimelineActions extends ConsumerWidget {
                                 ? null
                                 : notesController.text.trim(),
                           );
+                          invalidateCustomerCrmCascade(ref, customerId);
                           if (ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
                               SnackBar(
@@ -1093,6 +1148,7 @@ class _TimelineActions extends ConsumerWidget {
                                   ? null
                                   : notesController.text.trim(),
                             );
+                            invalidateCustomerCrmCascade(ref, customerId);
                             if (ctx.mounted) {
                               ScaffoldMessenger.of(ctx).showSnackBar(
                                 SnackBar(

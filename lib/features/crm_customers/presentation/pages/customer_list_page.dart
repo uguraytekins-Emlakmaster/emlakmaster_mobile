@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/sa
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_filtered_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_row_snapshots_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_crm_refresh.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:flutter/material.dart';
@@ -500,10 +501,17 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                               );
                               return;
                             }
-                            context.push(
-                              AppRouter.routeCustomerDetail
-                                  .replaceFirst(':id', entity.id),
-                            );
+                            final customerId = entity.id;
+                            context
+                                .push(
+                                  AppRouter.routeCustomerDetail
+                                      .replaceFirst(':id', customerId),
+                                )
+                                .then((_) {
+                              if (context.mounted) {
+                                invalidateCustomerCrmCascade(ref, customerId);
+                              }
+                            });
                           }
                         },
                         selectionMode: _selectionMode,

@@ -81,6 +81,12 @@ Xcode / VS Code **Debug Console** veya terminal çıktısında filtre: `Perf`
 - Dashboard widget: `StreamProvider` + tek `ref.watch`, iç içe `StreamBuilder` yok
 - `lib/` içinde canlı `StreamBuilder` kullanılmaz
 
+## Müşteri detay (lazy sekmeler + liste senkronu)
+
+- **Lazy sekmeler:** `CustomerDetailPage` yalnızca seçili sekmeyi oluşturur (Özet ilk açılış; Görüşmeler/Akış ilk ziyarette).
+- **Liste ↔ detay:** Detayda not/teklif/ziyaret/düzenleme veya listeden dönüşte `invalidateCustomerCrmCascade` — `customerInsightProvider`, liste stream ve sıcaklık haritası aynı turda yenilenir.
+- Ölçüm: `[Perf] screen_content_ready screen=customer_detail` (ilk içerik = entity yüklendiğinde).
+
 ## Sorun görürsen
 
 1. Performance timeline'da en uzun `build` widget'ını not et
@@ -100,8 +106,9 @@ CI (`/.github/workflows/ci.yml`) her PR’da `verify_startup_perf.sh` çalışt�
 Release öncesi (macOS):
 
 ```bash
-./scripts/ensure_macos_profile_signing.sh
-flutter build macos --profile
-./scripts/check_macos_bundle_size.sh
+./scripts/pre_release_check.sh
+# İsteğe bağlı release derlemesi:
+SKIP_BUILD=0 ./scripts/pre_release_check.sh
+# Tam perf baseline (girişli):
 ./scripts/capture_startup_baseline_full.sh
 ```
