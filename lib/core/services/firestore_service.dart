@@ -400,6 +400,9 @@ class FirestoreService {
   /// Müşteri listesi ilk sayfa boyutu (Firestore maliyeti + ilk boyama).
   static const int customerListPageSize = 40;
 
+  /// Danışman çağrı geçmişi — advisorId + agentId stream başına limit.
+  static const int callsListPageSize = 60;
+
   /// Danışmana atanan müşteriler, en yeni kayıt önce. Üretim CRM listesi bunu kullanır.
   static Stream<QuerySnapshot<Map<String, dynamic>>>
       customersByAssignedAgentStream(
@@ -708,8 +711,28 @@ class FirestoreService {
         .collection(AppConstants.colCalls)
         .where('advisorId', isEqualTo: advisorId)
         .orderBy('createdAt', descending: true)
-        .limit(500)
+        .limit(callsListPageSize)
         .snapshots();
+  }
+
+  static Future<QuerySnapshot<Map<String, dynamic>>> fetchCallsByAdvisorPage(
+    String advisorId, {
+    required DocumentSnapshot<Map<String, dynamic>> startAfter,
+  }) async {
+    await ensureInitialized();
+    if (!_initialized || advisorId.isEmpty) {
+      return FirebaseFirestore.instance
+          .collection(AppConstants.colCalls)
+          .limit(0)
+          .get();
+    }
+    return FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .where('advisorId', isEqualTo: advisorId)
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(startAfter)
+        .limit(callsListPageSize)
+        .get();
   }
 
   /// Cihaz çağrı günlüğünden senkronize edilen kayıt (tekilleştirme için doc id verilir, merge).
@@ -1079,8 +1102,28 @@ class FirestoreService {
         .collection(AppConstants.colCalls)
         .where('agentId', isEqualTo: agentId)
         .orderBy('createdAt', descending: true)
-        .limit(500)
+        .limit(callsListPageSize)
         .snapshots();
+  }
+
+  static Future<QuerySnapshot<Map<String, dynamic>>> fetchCallsByAgentIdPage(
+    String agentId, {
+    required DocumentSnapshot<Map<String, dynamic>> startAfter,
+  }) async {
+    await ensureInitialized();
+    if (!_initialized || agentId.isEmpty) {
+      return FirebaseFirestore.instance
+          .collection(AppConstants.colCalls)
+          .limit(0)
+          .get();
+    }
+    return FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .where('agentId', isEqualTo: agentId)
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(startAfter)
+        .limit(callsListPageSize)
+        .get();
   }
 
   /// calls koleksiyonundaki döküman sayısı (Call Traffic için).

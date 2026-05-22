@@ -38,6 +38,7 @@ import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_display_provider.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_extra_page_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/firestore_agent_display_names_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
@@ -1017,6 +1018,10 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         ),
         data: (docs) {
           final customerNames = ref.watch(customerNameLookupProvider);
+          final canLoadMore = ref.watch(consultantCallsCanLoadMoreProvider);
+          final extraPage = currentUid.isEmpty
+              ? null
+              : ref.watch(consultantCallsExtraPageProvider(currentUid));
           _docs = docs;
           if (kDebugMode) {
             AppLogger.d('[consultant_calls] loaded docs=${docs.length}');
@@ -1555,6 +1560,41 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   ),
                 ),
               ),
+              if (_viewMode == CallListViewMode.list && canLoadMore)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      DesignTokens.space4,
+                      DesignTokens.space3,
+                      DesignTokens.space4,
+                      listBottomInset,
+                    ),
+                    child: Center(
+                      child: extraPage?.loading == true
+                          ? Padding(
+                              padding:
+                                  const EdgeInsets.all(DesignTokens.space4),
+                              child: CircularProgressIndicator(
+                                color: ext.accent,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : OutlinedButton.icon(
+                              onPressed: currentUid.isEmpty
+                                  ? null
+                                  : () => ref
+                                      .read(
+                                        consultantCallsExtraPageProvider(
+                                          currentUid,
+                                        ).notifier,
+                                      )
+                                      .loadMore(currentUid),
+                              icon: const Icon(Icons.expand_more_rounded),
+                              label: const Text('Daha fazla çağrı yükle'),
+                            ),
+                    ),
+                  ),
+                ),
             ],
             ),
           );

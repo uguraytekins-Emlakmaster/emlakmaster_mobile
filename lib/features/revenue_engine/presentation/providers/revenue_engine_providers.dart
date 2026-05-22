@@ -136,7 +136,8 @@ final advisorTasksMetaProvider = StreamProvider<AdvisorTasksMeta>((ref) {
 final customerRevenueSignalsMapProvider =
     Provider<Map<String, CustomerRevenueSignals>>((ref) {
   final customersAsync = ref.watch(customerListForAgentProvider);
-  final calls = ref.watch(consultantCallsStreamProvider).valueOrNull ?? [];
+  final calls =
+      ref.watch(consultantCallsStreamProvider).valueOrNull?.docs ?? [];
   final locals = ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
   final tasksMeta = ref.watch(advisorTasksMetaProvider).valueOrNull;
   final syncRisk = ref.watch(syncDelayedRiskCustomerIdsProvider);
@@ -184,7 +185,8 @@ final advisorPerformanceRollupProvider =
       inactivityPenaltyDays: 0,
     );
   }
-  final calls = ref.watch(consultantCallsStreamProvider).valueOrNull ?? [];
+  final calls =
+      ref.watch(consultantCallsStreamProvider).valueOrNull?.docs ?? [];
   final tasksMeta = ref.watch(advisorTasksMetaProvider).valueOrNull;
   return buildRollupForAdvisor(
     advisorId: uid,
