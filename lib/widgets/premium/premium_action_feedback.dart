@@ -36,7 +36,6 @@ Future<void> showPremiumActionFeedback(
     context: context,
     maxHeightFactor: 0.42,
     builder: (ctx) => PremiumScrollableBottomSheetShell(
-      showHandle: true,
       header: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

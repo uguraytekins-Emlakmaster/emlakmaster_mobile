@@ -20,7 +20,6 @@ class CommandPalette {
     showPremiumDraggableBottomSheet<void>(
       context: context,
       initialChildSize: 0.72,
-      maxChildSize: 0.92,
       builder: (ctx, scrollController) => _CommandPaletteContent(
         scrollController: scrollController,
         onClose: () => Navigator.pop(ctx),

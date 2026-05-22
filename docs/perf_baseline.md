@@ -11,6 +11,7 @@
 | Süre sınırlı profile (agent) | `CAPTURE_DURATION_SEC=120 ./scripts/run_profile_timed_capture.sh` |
 | Eşik kontrolü (log) | `python3 scripts/check_perf_thresholds.py docs/perf_logs/….log --mode profile` |
 | Bundle boyutu | `./scripts/check_macos_bundle_size.sh` |
+| Dağıtım öncesi (hepsi) | `./scripts/pre_release_check.sh` |
 
 Eşikler: `scripts/perf_thresholds.json`
 

@@ -958,7 +958,6 @@ class _ConsultantAcademyCard extends StatelessWidget {
                 showPremiumDraggableBottomSheet<void>(
                   context: context,
                   initialChildSize: 0.55,
-                  maxChildSize: 0.92,
                   builder: (ctx, scroll) => SingleChildScrollView(
                       controller: scroll,
                       padding: const EdgeInsets.fromLTRB(
@@ -1273,7 +1272,6 @@ class _QuickStatsCard extends ConsumerWidget {
                 title: ProductLabels.followUp,
                 message:
                     'Şu an yeniden temas bekleyen müşteri yok. Yeni takip kayıtları burada görünecek.',
-                type: PremiumActionFeedbackType.info,
               );
             }
           },

@@ -811,7 +811,6 @@ class SettingsPage extends ConsumerWidget {
     return DecoratedBox(
       decoration: ext.premiumSurfaceDecoration(
         goldBorder: !muted,
-        radius: DesignTokens.radiusCardPrimary,
         baseColor: muted
             ? ext.surfaceElevated.withValues(alpha: 0.88)
             : ext.surfaceElevated,

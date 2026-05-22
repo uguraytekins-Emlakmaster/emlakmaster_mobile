@@ -40,7 +40,7 @@ class ShellBootstrapSkeleton extends StatelessWidget {
             children: [
               bar(height: 22, width: 220),
               const SizedBox(height: DesignTokens.space3),
-              bar(height: 14, width: 160),
+              bar(width: 160),
               const SizedBox(height: DesignTokens.space5),
               bar(height: 48),
               const SizedBox(height: DesignTokens.space6),
@@ -55,7 +55,6 @@ class ShellBootstrapSkeleton extends StatelessWidget {
               ),
               const Spacer(),
               Align(
-                alignment: Alignment.center,
                 child: SizedBox(
                   width: 22,
                   height: 22,

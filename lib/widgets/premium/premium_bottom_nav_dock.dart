@@ -154,7 +154,6 @@ class _CenterNavSlot extends StatelessWidget {
           children: [
             Material(
               color: ext.accent,
-              elevation: 0,
               shape: const CircleBorder(),
               child: InkWell(
                 onTap: onTap,

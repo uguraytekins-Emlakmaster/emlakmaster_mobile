@@ -106,7 +106,7 @@ class PremiumPageHeader extends StatelessWidget {
                       AppBackDispatcher.tryPop(
                         context,
                         onShellBack:
-                            shell != null ? shell.tryPopTabHistory : null,
+                            shell?.tryPopTabHistory,
                       );
                     },
               ),
@@ -367,7 +367,6 @@ class PremiumSegmentedControl<T> extends StatelessWidget {
                     border: active
                         ? Border.all(
                             color: ext.accent.withValues(alpha: 0.55),
-                            width: 1,
                           )
                         : null,
                   ),
@@ -787,7 +786,6 @@ class PremiumInfoBanner extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return DecoratedBox(
       decoration: ext.premiumSurfaceDecoration(
-        goldBorder: false,
         radius: DesignTokens.radiusLg,
       ),
       child: Padding(

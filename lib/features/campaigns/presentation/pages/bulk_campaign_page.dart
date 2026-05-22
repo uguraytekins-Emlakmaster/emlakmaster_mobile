@@ -146,7 +146,6 @@ class BulkCampaignPage extends ConsumerWidget {
       appBar: emlakAppBar(
         context,
         backgroundColor: Colors.transparent,
-        centerTitle: false,
         title: Text(
           AppLocalizations.of(context).t('title_bulk_campaign'),
           style: const TextStyle(

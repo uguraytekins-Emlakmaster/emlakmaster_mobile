@@ -92,7 +92,7 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
                       color: ext.success,
                     ),
                     const SizedBox(width: 8),
-                    PremiumStatusPill(
+                    const PremiumStatusPill(
                       label: 'Önizleme: harici kanallar',
                       outlined: true,
                     ),
@@ -100,9 +100,9 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
                 ),
               ),
             ),
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                padding: EdgeInsets.fromLTRB(20, 12, 20, 12),
                 child: PremiumInfoBanner(
                   message:
                       'Ofis ekibinizle anlık mesajlaşın. WhatsApp / Instagram entegrasyonu hazırlık aşamasında — şu an yalnızca ekip sohbeti canlıdır.',
