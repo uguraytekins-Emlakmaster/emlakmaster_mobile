@@ -30,6 +30,8 @@ import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_local_notifications.dart';
 import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_notification_bridge.dart';
+import 'package:emlakmaster_mobile/features/tasks/data/task_due_local_notifications.dart';
+import 'package:emlakmaster_mobile/features/tasks/data/task_due_notification_bridge.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_inbox_listener.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_local_notifications.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_push_navigation.dart';
@@ -313,8 +315,10 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
               ExecutionReminderLocalNotifications.instance
                   .ensureInitialized(),
             );
+            unawaited(TaskDueLocalNotifications.instance.ensureInitialized());
             TeamChatInboxListener.attach(ref);
             ExecutionReminderNotificationBridge.attach(ref);
+            TaskDueNotificationBridge.attach(ref);
             unawaited(TeamChatPushNavigation.attach(ref));
           },
         );

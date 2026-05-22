@@ -46,5 +46,8 @@ if [[ "$SKIP_BUILD" != "1" ]]; then
 fi
 
 echo ""
+echo "Firestore rules (prod): scripts/deploy_firestore_rules.sh"
+echo "Tam perf baseline: scripts/capture_startup_baseline_full.sh"
+echo ""
 echo "Pre-release kontrolleri tamamlandı."
 echo "Dağıtım: docs/MACOS_RELEASE.md"
