@@ -204,7 +204,12 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     }
   }
 
-  final signals = canUseAi ? _signalsFor(outcomeCode, heatBand) : null;
+  final signals = _signalsFor(
+    outcomeCode: outcomeCode,
+    heatBand: heatBand,
+    note: trimmed,
+    useAiEnrichment: canUseAi,
+  );
 
   var taskCreated = false;
   final hiveAfterPatch =
@@ -408,25 +413,65 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
   );
 }
 
-Map<String, dynamic>? _signalsFor(String outcomeCode, String? heatBand) {
-  final interest = switch (heatBand) {
-    'hot' => PostCallCrmSignals.interestHigh,
-    'warm' => PostCallCrmSignals.interestMedium,
-    'cold' => PostCallCrmSignals.interestLow,
-    _ => PostCallCrmSignals.interestMedium,
-  };
-  final urgency = outcomeCode == QuickCallOutcome.callbackScheduled
-      ? PostCallCrmSignals.urgencyHigh
-      : outcomeCode == QuickCallOutcome.noAnswer ||
-              outcomeCode == QuickCallOutcome.busy
-          ? PostCallCrmSignals.urgencyMedium
-          : PostCallCrmSignals.urgencyLow;
+Map<String, dynamic>? _signalsFor({
+  required String outcomeCode,
+  String? heatBand,
+  String? note,
+  required bool useAiEnrichment,
+}) {
+  final outcomeLabel = QuickCallOutcome.labelTr(outcomeCode);
+  final seed = [
+    if (note != null && note.isNotEmpty) note,
+    outcomeLabel,
+  ].join(' ');
+  var signals = extractPostCallCrmSignals(seed);
 
-  return PostCallCrmSignals(
-    interestLevel: interest,
-    nextActionHint: QuickCallOutcome.labelTr(outcomeCode),
-    appointmentMentioned: outcomeCode == QuickCallOutcome.appointmentSet,
-    priceObjection: false,
-    followUpUrgency: urgency,
-  ).toFirestorePayload();
+  if (heatBand != null && heatBand.isNotEmpty) {
+    final interest = switch (heatBand) {
+      'hot' => PostCallCrmSignals.interestHigh,
+      'warm' => PostCallCrmSignals.interestMedium,
+      'cold' => PostCallCrmSignals.interestLow,
+      _ => signals.interestLevel,
+    };
+    signals = PostCallCrmSignals(
+      interestLevel: interest,
+      nextActionHint: signals.nextActionHint,
+      appointmentMentioned: signals.appointmentMentioned,
+      priceObjection: signals.priceObjection,
+      followUpUrgency: signals.followUpUrgency,
+    );
+  }
+
+  if (outcomeCode == QuickCallOutcome.callbackScheduled &&
+      signals.followUpUrgency == PostCallCrmSignals.urgencyNone) {
+    signals = PostCallCrmSignals(
+      interestLevel: signals.interestLevel,
+      nextActionHint: signals.nextActionHint.isNotEmpty
+          ? signals.nextActionHint
+          : 'Planlanan geri aramayı takvime ve göreve bağlayın.',
+      appointmentMentioned: signals.appointmentMentioned,
+      priceObjection: signals.priceObjection,
+      followUpUrgency: PostCallCrmSignals.urgencyHigh,
+    );
+  }
+  if (outcomeCode == QuickCallOutcome.appointmentSet) {
+    signals = PostCallCrmSignals(
+      interestLevel: signals.interestLevel,
+      nextActionHint: signals.nextActionHint,
+      appointmentMentioned: true,
+      priceObjection: signals.priceObjection,
+      followUpUrgency: signals.followUpUrgency,
+    );
+  }
+  if (!useAiEnrichment && signals.nextActionHint.isEmpty) {
+    signals = PostCallCrmSignals(
+      interestLevel: signals.interestLevel,
+      nextActionHint: outcomeLabel,
+      appointmentMentioned: signals.appointmentMentioned,
+      priceObjection: signals.priceObjection,
+      followUpUrgency: signals.followUpUrgency,
+    );
+  }
+
+  return signals.toFirestorePayload();
 }

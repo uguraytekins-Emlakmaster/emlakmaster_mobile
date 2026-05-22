@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/application/apply_quick_call_capture.dart';
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
+import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_call_capture_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_outcome_chip_row.dart';
@@ -540,6 +541,7 @@ class _PostCallQuickCaptureBodyState
             TextField(
               controller: _noteCtrl,
               maxLines: 2,
+              onChanged: (_) => setState(() {}),
               style: AppTypography.bodyStrong(context)
                   .copyWith(color: ext.textPrimary),
               decoration: InputDecoration(
@@ -552,6 +554,42 @@ class _PostCallQuickCaptureBodyState
                       BorderRadius.circular(DesignTokens.radiusControl),
                 ),
               ),
+            ),
+            Builder(
+              builder: (context) {
+                final parts = <String>[
+                  if (_noteCtrl.text.trim().isNotEmpty) _noteCtrl.text.trim(),
+                  if (_outcomeCode != null)
+                    QuickCallOutcome.labelTr(_outcomeCode!),
+                ];
+                final hint = parts.isEmpty
+                    ? ''
+                    : extractPostCallCrmSignals(parts.join(' '))
+                        .nextActionHint;
+                if (hint.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: DesignTokens.space3),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(DesignTokens.space3),
+                    decoration: BoxDecoration(
+                      color: ext.accent.withValues(alpha: 0.08),
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusMd),
+                      border: Border.all(
+                        color: ext.accent.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Text(
+                      'Önerilen adım: $hint',
+                      style: AppTypography.body(context).copyWith(
+                        color: ext.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: DesignTokens.space4),
             Text(
