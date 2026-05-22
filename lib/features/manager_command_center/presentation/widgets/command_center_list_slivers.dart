@@ -10,7 +10,6 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_grou
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_record_row_summary.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_detail_sheet.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_trend_chart.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_record_grid_tile.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_banner.dart';
@@ -149,6 +148,7 @@ abstract final class CommandCenterListSlivers {
           expanded: chrome.kpiExpanded,
           onToggleExpanded: chrome.onToggleKpiExpanded,
           onPeriodTap: chrome.onKpiPeriodTap,
+          listViewMode: chrome.viewMode,
           onDetailTap: () => showCallKpiDetailSheet(
             context,
             snapshot: kpiSnapshot,
@@ -170,22 +170,6 @@ abstract final class CommandCenterListSlivers {
                     color: AppThemeExtension.of(context).warning,
                     fontWeight: FontWeight.w600,
                   ),
-            ),
-          ),
-        ),
-      if (chrome.viewMode == CallListViewMode.chart)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              DesignTokens.screenEdgePadding,
-              DesignTokens.space1,
-              DesignTokens.screenEdgePadding,
-              DesignTokens.space1,
-            ),
-            child: PremiumSurfaceCard(
-              goldBorder: true,
-              padding: const EdgeInsets.all(DesignTokens.space3),
-              child: CallKpiTrendChart(snapshot: kpiSnapshot),
             ),
           ),
         ),
@@ -212,6 +196,17 @@ abstract final class CommandCenterListSlivers {
     if (config.viewMode == CallListViewMode.chart) {
       return const [];
     }
+    if (config.viewMode == CallListViewMode.grid) {
+      switch (config.scope) {
+        case CommandCenterViewScope.consultant:
+          return _consultantGroupedGridSlivers(context, config);
+        case CommandCenterViewScope.customer:
+          return _customerGroupedGridSlivers(context, config);
+        case CommandCenterViewScope.all:
+        case CommandCenterViewScope.pending:
+          return _flatRecordGridSlivers(context, config);
+      }
+    }
     switch (config.scope) {
       case CommandCenterViewScope.consultant:
         return _consultantGroupedSlivers(context, config);
@@ -220,36 +215,6 @@ abstract final class CommandCenterListSlivers {
       case CommandCenterViewScope.all:
       case CommandCenterViewScope.pending:
         final nowMs = DateTime.now().millisecondsSinceEpoch;
-        if (config.viewMode == CallListViewMode.grid) {
-          return [
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                DesignTokens.space4,
-                DesignTokens.space1,
-                DesignTokens.space4,
-                config.listBottomInset,
-              ),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: DesignTokens.space2,
-                  crossAxisSpacing: DesignTokens.space2,
-                  childAspectRatio: 0.92,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => RepaintBoundary(
-                    child: _commandCenterGridCell(
-                      context,
-                      doc: config.filtered[index],
-                      customerFullNameById: config.customerFullNameById,
-                    ),
-                  ),
-                  childCount: config.filtered.length,
-                ),
-              ),
-            ),
-          ];
-        }
         return [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
@@ -276,6 +241,40 @@ abstract final class CommandCenterListSlivers {
           ),
         ];
     }
+  }
+
+  static List<Widget> _flatRecordGridSlivers(
+    BuildContext context,
+    CommandCenterScopeConfig config,
+  ) {
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space1,
+          DesignTokens.space4,
+          config.listBottomInset,
+        ),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: DesignTokens.space2,
+            crossAxisSpacing: DesignTokens.space2,
+            childAspectRatio: 0.92,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => RepaintBoundary(
+              child: _commandCenterGridCell(
+                context,
+                doc: config.filtered[index],
+                customerFullNameById: config.customerFullNameById,
+              ),
+            ),
+            childCount: config.filtered.length,
+          ),
+        ),
+      ),
+    ];
   }
 
   static List<Widget> _consultantGroupedSlivers(
@@ -464,6 +463,177 @@ abstract final class CommandCenterListSlivers {
               );
               final subtitle =
                   'Son görüşme: $timeStr · ${list.length} kayıt'
+                  '${pending > 0 ? ' · $pending bekleyen' : ''}';
+              return RepaintBoundary(
+                child: CallGroupSummaryTile(
+                  title: title,
+                  subtitle: subtitle,
+                  outcomeLabel: outcome,
+                  badgeLabel: pending > 0 ? '$pending takip' : null,
+                  leadingLetter: title,
+                  onTap: config.onDrillCustomer != null
+                      ? () => config.onDrillCustomer!(e.key)
+                      : null,
+                ),
+              );
+            },
+            childCount: entries.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  static List<Widget> _consultantGroupedGridSlivers(
+    BuildContext context,
+    CommandCenterScopeConfig config,
+  ) {
+    final grouped =
+        <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    for (final d in config.filtered) {
+      final aid = CrmCallRecordHelpers.agentIdOf(d.data());
+      if (aid.isEmpty) continue;
+      grouped.putIfAbsent(aid, () => []).add(d);
+    }
+    for (final list in grouped.values) {
+      list.sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    }
+    final entries = grouped.entries.toList()
+      ..sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.value.first.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.value.first.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    if (entries.isEmpty) {
+      return _consultantGroupedSlivers(context, config);
+    }
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space1,
+          DesignTokens.space4,
+          config.listBottomInset,
+        ),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: DesignTokens.space2,
+            crossAxisSpacing: DesignTokens.space2,
+            childAspectRatio: 1.05,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final e = entries[index];
+              final list = e.value;
+              final name = config.agentNames[e.key] ?? e.key;
+              final pending = list
+                  .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
+                  .length;
+              final last = list.first;
+              final lastData = last.data();
+              final dt = CrmCallRecordHelpers.createdAtOf(lastData);
+              final timeStr = dt != null
+                  ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
+                  : '—';
+              final outcomeLast =
+                  CrmCallRecordHelpers.outcomeDisplayTrDefault(lastData);
+              final duration = lastData['durationSec'] as num?;
+              final durationStr =
+                  duration != null ? '${duration.toInt()} sn' : null;
+              final subtitle = 'Son: $timeStr'
+                  '${durationStr != null ? ' · $durationStr' : ''} · '
+                  '${list.length} kayıt'
+                  '${pending > 0 ? ' · $pending bekleyen' : ''}';
+              return RepaintBoundary(
+                child: CallGroupSummaryTile(
+                  title: name,
+                  subtitle: subtitle,
+                  outcomeLabel: outcomeLast,
+                  badgeLabel: pending > 0 ? '$pending takip' : null,
+                  leadingLetter: name,
+                  onTap: config.onDrillAgent != null
+                      ? () => config.onDrillAgent!(e.key)
+                      : null,
+                ),
+              );
+            },
+            childCount: entries.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  static List<Widget> _customerGroupedGridSlivers(
+    BuildContext context,
+    CommandCenterScopeConfig config,
+  ) {
+    final grouped =
+        <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    for (final d in config.filtered) {
+      final cid = CrmCallRecordHelpers.customerIdOf(d.data());
+      if (cid == null) continue;
+      grouped.putIfAbsent(cid, () => []).add(d);
+    }
+    for (final list in grouped.values) {
+      list.sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    }
+    final entries = grouped.entries.toList()
+      ..sort((a, b) {
+        final ta = CrmCallRecordHelpers.createdAtOf(a.value.first.data());
+        final tb = CrmCallRecordHelpers.createdAtOf(b.value.first.data());
+        return (tb ?? DateTime(1970)).compareTo(ta ?? DateTime(1970));
+      });
+    if (entries.isEmpty) {
+      return _customerGroupedSlivers(context, config);
+    }
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(
+          DesignTokens.space4,
+          DesignTokens.space1,
+          DesignTokens.space4,
+          config.listBottomInset,
+        ),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: DesignTokens.space2,
+            crossAxisSpacing: DesignTokens.space2,
+            childAspectRatio: 1.05,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final e = entries[index];
+              final list = e.value;
+              final last = list.first;
+              final data = last.data();
+              final outcome = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
+              final dt = CrmCallRecordHelpers.createdAtOf(data);
+              final timeStr = dt != null
+                  ? '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'
+                  : '—';
+              final pending = list
+                  .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
+                  .length;
+              final contactName =
+                  CrmCallRecordDisplay.contactNameFromCallData(data);
+              final title = CrmCallRecordDisplay.primaryTitle(
+                customerFullName: config.customerFullNameById[e.key],
+                contactDisplayName: contactName,
+                rawPhone: null,
+              );
+              final subtitle =
+                  'Son: $timeStr · ${list.length} kayıt'
                   '${pending > 0 ? ' · $pending bekleyen' : ''}';
               return RepaintBoundary(
                 child: CallGroupSummaryTile(

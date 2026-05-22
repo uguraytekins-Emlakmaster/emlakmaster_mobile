@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_trend_chart.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_source.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
@@ -88,6 +89,7 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
     this.onPeriodTap,
     this.onDetailTap,
     this.showHeroTotal = true,
+    this.listViewMode = CallListViewMode.list,
   });
 
   final CallKpiPeriodSnapshot snapshot;
@@ -96,12 +98,14 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
   final VoidCallback? onPeriodTap;
   final VoidCallback? onDetailTap;
   final bool showHeroTotal;
+  final CallListViewMode listViewMode;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final stats = snapshot.current;
     final prev = snapshot.previous;
+    final chartPrimary = listViewMode == CallListViewMode.chart;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         DesignTokens.screenEdgePadding,
@@ -229,63 +233,66 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
             ],
             if (expanded) ...[
               SizedBox(height: showHeroTotal ? DesignTokens.space3 : DesignTokens.space2),
-              Row(
-                children: [
-                  Expanded(
-                    child: _KpiMini(
-                      icon: Icons.call_received_rounded,
-                      label: 'Gelen',
-                      value: '${stats.incoming}',
-                      color: ext.accent,
-                      delta: snapshot.percentDelta(
-                        stats.incoming,
-                        prev.incoming,
+              if (chartPrimary)
+                CallKpiTrendChart(snapshot: snapshot)
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _KpiMini(
+                        icon: Icons.call_received_rounded,
+                        label: 'Gelen',
+                        value: '${stats.incoming}',
+                        color: ext.accent,
+                        delta: snapshot.percentDelta(
+                          stats.incoming,
+                          prev.incoming,
+                        ),
+                        showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                       ),
-                      showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                     ),
-                  ),
-                  Expanded(
-                    child: _KpiMini(
-                      icon: Icons.call_made_rounded,
-                      label: 'Giden',
-                      value: '${stats.outgoing}',
-                      color: ext.success,
-                      delta: snapshot.percentDelta(
-                        stats.outgoing,
-                        prev.outgoing,
+                    Expanded(
+                      child: _KpiMini(
+                        icon: Icons.call_made_rounded,
+                        label: 'Giden',
+                        value: '${stats.outgoing}',
+                        color: ext.success,
+                        delta: snapshot.percentDelta(
+                          stats.outgoing,
+                          prev.outgoing,
+                        ),
+                        showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                       ),
-                      showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                     ),
-                  ),
-                  Expanded(
-                    child: _KpiMini(
-                      icon: Icons.check_circle_outline_rounded,
-                      label: 'Cevaplanan',
-                      value: '${stats.answered}',
-                      color: ext.accent,
-                      delta: snapshot.percentDelta(
-                        stats.answered,
-                        prev.answered,
+                    Expanded(
+                      child: _KpiMini(
+                        icon: Icons.check_circle_outline_rounded,
+                        label: 'Cevaplanan',
+                        value: '${stats.answered}',
+                        color: ext.accent,
+                        delta: snapshot.percentDelta(
+                          stats.answered,
+                          prev.answered,
+                        ),
+                        showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                       ),
-                      showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                     ),
-                  ),
-                  Expanded(
-                    child: _KpiMini(
-                      icon: Icons.phone_missed_rounded,
-                      label: 'Cevapsız',
-                      value: '${stats.missed}',
-                      color: ext.danger,
-                      delta: snapshot.percentDelta(
-                        stats.missed,
-                        prev.missed,
+                    Expanded(
+                      child: _KpiMini(
+                        icon: Icons.phone_missed_rounded,
+                        label: 'Cevapsız',
+                        value: '${stats.missed}',
+                        color: ext.danger,
+                        delta: snapshot.percentDelta(
+                          stats.missed,
+                          prev.missed,
+                        ),
+                        showDelta: snapshot.period == CallKpiPeriod.thisMonth,
+                        invertDeltaColors: true,
                       ),
-                      showDelta: snapshot.period == CallKpiPeriod.thisMonth,
-                      invertDeltaColors: true,
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ],
         ),

@@ -151,6 +151,7 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
           context: context,
           recordingUrl: recordingUrl,
           firestoreDocId: id,
+          title: playLabel.isNotEmpty ? playLabel : title,
           onFallback: openActions,
         ),
       );

@@ -14,7 +14,6 @@ import 'package:emlakmaster_mobile/features/calls/application/call_recording_pla
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_source.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_record_row_summary.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_trend_chart.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_record_grid_tile.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/consultant_calls_search_filter.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/android_call_log_sync_cta.dart';
@@ -682,6 +681,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         child: PremiumCallRecordsKpiCard(
           snapshot: kpiSnapshot,
           expanded: _kpiExpanded,
+          listViewMode: _viewMode,
           onToggleExpanded: () => setState(() => _kpiExpanded = !_kpiExpanded),
           onPeriodTap: _cycleKpiPeriod,
           onDetailTap: () => showCallKpiDetailSheet(
@@ -703,28 +703,15 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
           onSelected: (i) => setState(() => _quickFilter = _quickFilterOrder[i]),
         ),
       ),
-      if (_viewMode == CallListViewMode.chart)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              DesignTokens.screenEdgePadding,
-              DesignTokens.space1,
-              DesignTokens.screenEdgePadding,
-              DesignTokens.space1,
-            ),
-            child: PremiumSurfaceCard(
-              goldBorder: true,
-              padding: const EdgeInsets.all(DesignTokens.space3),
-              child: CallKpiTrendChart(snapshot: kpiSnapshot),
-            ),
-          ),
-        ),
       SliverToBoxAdapter(
         child: PremiumCallListToolbar(
           sortMode: _sortMode,
           onSortChanged: (m) => setState(() => _sortMode = m),
           viewMode: _viewMode,
-          onViewModeChanged: (m) => setState(() => _viewMode = m),
+          onViewModeChanged: (m) => setState(() {
+            _viewMode = m;
+            if (m == CallListViewMode.chart) _kpiExpanded = true;
+          }),
           trailing: _selectionMode || _selectedIds.isNotEmpty
               ? TextButton(
                   onPressed: _exitSelectionMode,
@@ -1773,6 +1760,7 @@ class _FirestoreCallRecordCard extends StatelessWidget {
           context: context,
           recordingUrl: recordingUrl,
           firestoreDocId: firestoreDocId,
+          title: playLabel ?? title,
           onFallback: openActions,
         ),
       );

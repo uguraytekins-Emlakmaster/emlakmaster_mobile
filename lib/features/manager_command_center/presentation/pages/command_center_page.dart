@@ -227,7 +227,10 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         sortMode: _sortMode,
         onSortChanged: (m) => setState(() => _sortMode = m),
         viewMode: _viewMode,
-        onViewModeChanged: (m) => setState(() => _viewMode = m),
+        onViewModeChanged: (m) => setState(() {
+          _viewMode = m;
+          if (m == CallListViewMode.chart) _kpiExpanded = true;
+        }),
         kpiPeriod: _kpiPeriod,
         onKpiPeriodTap: _cycleKpiPeriod,
         onEksikKayitChipTap: _toggleEksikKayitScope,
