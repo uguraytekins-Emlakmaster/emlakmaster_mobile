@@ -434,75 +434,6 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 : recurrenceLabel != null
                     ? 'Tekrar: $recurrenceLabel'
                     : 'Düzenleyip kaydedin',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Başlık',
-                    filled: true,
-                    fillColor: ext.surfaceElevated,
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusControl),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: DesignTokens.space3),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                      context: ctx,
-                      initialDate: pickedDate ?? DateTime.now(),
-                      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                      lastDate: DateTime.now().add(const Duration(days: 730)),
-                    );
-                    if (date != null) setModal(() => pickedDate = date);
-                  },
-                  icon: const Icon(Icons.calendar_today_rounded),
-                  label: Text(
-                    pickedDate != null
-                        ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
-                        : 'Vade tarihi seç',
-                  ),
-                ),
-                const SizedBox(height: DesignTokens.space3),
-                DropdownButtonFormField<String?>(
-                  value: recurrence,
-                  decoration: InputDecoration(
-                    labelText: 'Tekrar',
-                    filled: true,
-                    fillColor: ext.surfaceElevated,
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusControl),
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text('Tek seferlik')),
-                    DropdownMenuItem(value: 'daily', child: Text('Her gün')),
-                    DropdownMenuItem(value: 'weekly', child: Text('Her hafta')),
-                    DropdownMenuItem(value: 'monthly', child: Text('Her ay')),
-                  ],
-                  onChanged: (v) => setModal(() => recurrence = v),
-                ),
-                if (customerId != null && customerId.isNotEmpty) ...[
-                  const SizedBox(height: DesignTokens.space3),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      context.push(
-                        AppRouter.routeCustomerDetail
-                            .replaceFirst(':id', customerId),
-                      );
-                    },
-                    icon: const Icon(Icons.person_rounded),
-                    label: const Text('Müşteriyi aç'),
-                  ),
-                ],
-              ],
-            ),
             bottomActions: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -592,6 +523,75 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 ),
               ],
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Başlık',
+                    filled: true,
+                    fillColor: ext.surfaceElevated,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space3),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final date = await showDatePicker(
+                      context: ctx,
+                      initialDate: pickedDate ?? DateTime.now(),
+                      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                      lastDate: DateTime.now().add(const Duration(days: 730)),
+                    );
+                    if (date != null) setModal(() => pickedDate = date);
+                  },
+                  icon: const Icon(Icons.calendar_today_rounded),
+                  label: Text(
+                    pickedDate != null
+                        ? '${pickedDate!.day}.${pickedDate!.month}.${pickedDate!.year}'
+                        : 'Vade tarihi seç',
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space3),
+                DropdownButtonFormField<String?>(
+                  initialValue: recurrence,
+                  decoration: InputDecoration(
+                    labelText: 'Tekrar',
+                    filled: true,
+                    fillColor: ext.surfaceElevated,
+                    border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('Tek seferlik')),
+                    DropdownMenuItem(value: 'daily', child: Text('Her gün')),
+                    DropdownMenuItem(value: 'weekly', child: Text('Her hafta')),
+                    DropdownMenuItem(value: 'monthly', child: Text('Her ay')),
+                  ],
+                  onChanged: (v) => setModal(() => recurrence = v),
+                ),
+                if (customerId != null && customerId.isNotEmpty) ...[
+                  const SizedBox(height: DesignTokens.space3),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.push(
+                        AppRouter.routeCustomerDetail
+                            .replaceFirst(':id', customerId),
+                      );
+                    },
+                    icon: const Icon(Icons.person_rounded),
+                    label: const Text('Müşteriyi aç'),
+                  ),
+                ],
+              ],
+            ),
           ),
           );
         },
@@ -625,6 +625,24 @@ class _TasksPageState extends ConsumerState<TasksPage> {
             subtitle: docs.isEmpty
                 ? 'Rutin görev tanımlayın; tamamlanınca sonraki vade otomatik eklenir.'
                 : '${docs.length} rutin kayıt',
+            bottomActions: FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showAddTaskDialog(
+                  context,
+                  ref,
+                  uid,
+                  initialRecurrence: 'weekly',
+                );
+              },
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Rutin görev ekle'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppThemeExtension.of(ctx).accent,
+                foregroundColor: AppThemeExtension.of(ctx).onBrand,
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -666,24 +684,6 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                     );
                   }),
               ],
-            ),
-            bottomActions: FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _showAddTaskDialog(
-                  context,
-                  ref,
-                  uid,
-                  initialRecurrence: 'weekly',
-                );
-              },
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Rutin görev ekle'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppThemeExtension.of(ctx).accent,
-                foregroundColor: AppThemeExtension.of(ctx).onBrand,
-                minimumSize: const Size(double.infinity, 48),
-              ),
             ),
           );
         },
@@ -846,7 +846,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                           ),
                           const SizedBox(height: DesignTokens.space3),
                           DropdownButtonFormField<String?>(
-                            value: recurrence,
+                            initialValue: recurrence,
                             decoration: InputDecoration(
                               labelText: 'Tekrar',
                               filled: true,

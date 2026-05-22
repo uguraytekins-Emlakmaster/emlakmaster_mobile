@@ -70,7 +70,6 @@ Future<T?> showPremiumDraggableBottomSheet<T>({
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
-    useSafeArea: false,
     useRootNavigator: useRootNavigator,
     backgroundColor: Colors.transparent,
     barrierColor: ext.shadowColor.withValues(alpha: isDark ? 0.52 : 0.18),
@@ -91,7 +90,6 @@ Future<T?> showPremiumDraggableBottomSheet<T>({
                   expand: false,
                   initialChildSize: initialChildSize,
                   minChildSize: minChildSize,
-                  maxChildSize: 1.0,
                   builder: (sheetCtx, scrollController) =>
                       builder(sheetCtx, scrollController),
                 ),
@@ -222,7 +220,7 @@ class PremiumScrollableBottomSheetShell extends StatelessWidget {
         if (showHandle) const PremiumBottomSheetHandle(),
         if (header != null)
           Padding(
-            padding: EdgeInsets.fromLTRB(
+            padding: const EdgeInsets.fromLTRB(
               DesignTokens.space5,
               0,
               DesignTokens.space5,
@@ -232,7 +230,7 @@ class PremiumScrollableBottomSheetShell extends StatelessWidget {
           )
         else if (title != null)
           Padding(
-            padding: EdgeInsets.fromLTRB(
+            padding: const EdgeInsets.fromLTRB(
               DesignTokens.space5,
               0,
               DesignTokens.space5,
@@ -259,6 +257,7 @@ class PremiumScrollableBottomSheetShell extends StatelessWidget {
             ),
           ),
         Flexible(
+          fit: FlexFit.loose,
           child: SingleChildScrollView(
             padding: edge,
             child: child,
