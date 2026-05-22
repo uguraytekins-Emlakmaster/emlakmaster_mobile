@@ -143,7 +143,8 @@ final customerRevenueSignalsMapProvider =
   final cache = ref.watch(_customerSignalsCacheProvider);
 
   return customersAsync.maybeWhen(
-    data: (customers) {
+    data: (page) {
+      final customers = page.entities;
       final inputHash = Object.hash(
         _hashCustomersForRevenue(customers),
         _hashCallDocs(calls),
@@ -208,7 +209,8 @@ final revenueDashboardSnapshotProvider =
   final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
 
   return customersAsync.maybeWhen(
-    data: (customers) {
+    data: (page) {
+      final customers = page.entities;
       final byId = {for (final c in customers) c.id: c};
       final leaderboard = <ConsultantLeaderboardEntry>[
         if (uid.isNotEmpty)

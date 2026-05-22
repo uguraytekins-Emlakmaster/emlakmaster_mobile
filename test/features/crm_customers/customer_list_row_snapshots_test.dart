@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_filtered_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_row_snapshots_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_list_page_data.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/providers/revenue_engine_providers.dart';
@@ -22,10 +23,14 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         customerListForAgentProvider.overrideWith(
-          (ref) => Stream.value([
-            _entity('a'),
-            _entity('b', name: 'Ayşe'),
-          ]),
+          (ref) => Stream.value(
+            CustomerListPageData(
+              entities: [
+                _entity('a'),
+                _entity('b', name: 'Ayşe'),
+              ],
+            ),
+          ),
         ),
         syncDelayedRiskCustomerIdsProvider.overrideWith((ref) => {'a'}),
         customerRevenueSignalsMapProvider.overrideWith((ref) => const {}),

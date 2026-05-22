@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Danışman müşteri listesi için toplu sıcaklık skorları (kart başına family yok).
 final leadTemperatureByCustomerIdProvider =
     Provider.autoDispose<Map<String, LeadTemperatureScore>>((ref) {
-  final customers = ref.watch(customerListForAgentProvider).valueOrNull;
-  if (customers == null || customers.isEmpty) return const {};
+  final customers = ref.watch(customerListEntitiesProvider);
+  if (customers.isEmpty) return const {};
   final repo = ref.watch(leadTemperatureRepositoryProvider);
   return {
     for (final c in customers)

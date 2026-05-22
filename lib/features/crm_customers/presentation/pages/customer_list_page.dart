@@ -12,6 +12,7 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_filtered_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_row_snapshots_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_crm_refresh.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_extra_page_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:flutter/material.dart';
@@ -149,14 +150,19 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     final uid =
         ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
     final asyncCustomers = ref.watch(customerListForAgentProvider);
+    final extraPage = uid.isEmpty
+        ? null
+        : ref.watch(customerListExtraPageProvider(uid));
     ref.listen(customerListForAgentProvider, (previous, next) {
       if (next.hasValue) {
-        _readyTracker.onContentReady(itemCount: next.value!.length);
+        _readyTracker.onContentReady(
+          itemCount: next.value!.entities.length,
+        );
       }
     });
     final showAddDock = uid.isNotEmpty &&
         asyncCustomers.maybeWhen(
-          data: (list) => list.isNotEmpty,
+          data: (page) => page.entities.isNotEmpty,
           orElse: () => false,
         );
 
@@ -373,7 +379,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
           ),
         ),
       ],
-      data: (entities) {
+      data: (page) {
         final filtered =
             ref.watch(customerListFilteredProvider(_searchQuery));
         final rowSnapshots =
@@ -381,10 +387,13 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         final listBottom = showAddDock
             ? _customerListDockBottomReserve(context)
             : DesignTokens.space4;
+        final canLoadMore =
+            uid.isNotEmpty && (page.hasMore || (extraPage?.hasMore ?? false));
 
         if (filtered.isEmpty) {
           final l10n = AppLocalizations.of(context);
-          final noCustomers = entities.isEmpty;
+          final noCustomers = page.entities.isEmpty &&
+              (extraPage?.extraEntities.isEmpty ?? true);
           final noSearchHits = !noCustomers && _searchQuery.isNotEmpty;
           if (noCustomers) {
             return [
@@ -524,6 +533,34 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               ),
             ),
           ),
+          if (canLoadMore)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  DesignTokens.space5,
+                  DesignTokens.space2,
+                  DesignTokens.space5,
+                  listBottom,
+                ),
+                child: Center(
+                  child: extraPage?.loading == true
+                      ? Padding(
+                          padding: const EdgeInsets.all(DesignTokens.space4),
+                          child: CircularProgressIndicator(
+                            color: ext.accent,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : OutlinedButton.icon(
+                          onPressed: () => ref
+                              .read(customerListExtraPageProvider(uid).notifier)
+                              .loadMore(uid),
+                          icon: const Icon(Icons.expand_more_rounded),
+                          label: const Text('Daha fazla müşteri yükle'),
+                        ),
+                ),
+              ),
+            ),
         ];
       },
     );

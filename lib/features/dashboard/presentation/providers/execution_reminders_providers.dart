@@ -16,8 +16,8 @@ final consultantExecutionRemindersProvider =
   if (uid.isEmpty) return [];
   final async = ref.watch(customerListForAgentProvider);
   return async.when(
-    data: (customers) async {
-      final raw = aggregateExecutionReminders(customers);
+    data: (page) async {
+      final raw = aggregateExecutionReminders(page.entities);
       final store = ref.read(executionReminderDedupeStoreProvider);
       final out = <ExecutionReminderItem>[];
       for (final r in raw) {

@@ -1,3 +1,5 @@
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_extra_page_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/sync_delayed_risk_customer_ids_provider.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
@@ -6,7 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Arama + risk sıralaması — liste gövdesi tek [SliverList] için önceden hesaplanır.
 final customerListFilteredProvider =
     Provider.autoDispose.family<List<CustomerEntity>, String>((ref, searchQueryLower) {
-  final entities = ref.watch(customerListForAgentProvider).valueOrNull;
+  final page = ref.watch(customerListForAgentProvider).valueOrNull;
+  final uid = ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
+  final extra = uid.isEmpty
+      ? const <CustomerEntity>[]
+      : ref.watch(customerListExtraPageProvider(uid)).extraEntities;
+  final entities = page == null
+      ? null
+      : [...page.entities, ...extra];
   if (entities == null || entities.isEmpty) return const [];
 
   final q = searchQueryLower;

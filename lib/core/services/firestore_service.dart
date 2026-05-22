@@ -397,6 +397,9 @@ class FirestoreService {
         .snapshots();
   }
 
+  /// Müşteri listesi ilk sayfa boyutu (Firestore maliyeti + ilk boyama).
+  static const int customerListPageSize = 40;
+
   /// Danışmana atanan müşteriler, en yeni kayıt önce. Üretim CRM listesi bunu kullanır.
   static Stream<QuerySnapshot<Map<String, dynamic>>>
       customersByAssignedAgentStream(
@@ -412,12 +415,34 @@ class FirestoreService {
           .collection(AppConstants.colCustomers)
           .where('assignedAgentId', isEqualTo: agentId)
           .orderBy('createdAt', descending: true)
-          .limit(200)
+          .limit(customerListPageSize)
           .snapshots();
     } catch (e, st) {
       if (kDebugMode) debugPrint('customersByAssignedAgentStream: $e $st');
       yield* const Stream.empty();
     }
+  }
+
+  /// Müşteri listesi — sonraki sayfa (stream ilk sayfadan sonra).
+  static Future<QuerySnapshot<Map<String, dynamic>>>
+      fetchCustomersByAssignedAgentPage(
+    String agentId, {
+    required DocumentSnapshot<Map<String, dynamic>> startAfter,
+  }) async {
+    await ensureInitialized();
+    if (!_initialized || agentId.isEmpty) {
+      return FirebaseFirestore.instance
+          .collection(AppConstants.colCustomers)
+          .limit(0)
+          .get();
+    }
+    return FirebaseFirestore.instance
+        .collection(AppConstants.colCustomers)
+        .where('assignedAgentId', isEqualTo: agentId)
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(startAfter)
+        .limit(customerListPageSize)
+        .get();
   }
 
   /// War Room Lead Pulse: son eklenen lead'ler (updatedAt desc fallback; index gerekebilir).

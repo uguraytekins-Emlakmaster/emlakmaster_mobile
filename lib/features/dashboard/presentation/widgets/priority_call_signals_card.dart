@@ -41,8 +41,8 @@ class PriorityCallSignalsCard extends ConsumerWidget {
         : 'Yüksek ilgi, acil takip, randevu veya fiyat itirazı';
 
     return async.when(
-      data: (customers) {
-        final ranked = customers
+      data: (page) {
+        final ranked = page.entities
             .where((c) =>
                 c.lastCallSummarySignals != null &&
                 postCallSignalsIsPriority(c.lastCallSummarySignals!))

@@ -1,23 +1,25 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
 import 'package:emlakmaster_mobile/core/data/crm_dev_demo_customers.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/data/customer_mapper.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_list_page_data.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kReleaseMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Giriş yapan danışmana atanmış müşteriler. Release’te asla demo kullanılmaz; dev’de yalnızca Firestore yok/hata iken demo.
+/// Giriş yapan danışmana atanmış müşteriler (ilk sayfa, canlı). Release’te asla demo.
 final customerListForAgentProvider =
-    StreamProvider.autoDispose<List<CustomerEntity>>((ref) {
+    StreamProvider.autoDispose<CustomerListPageData>((ref) {
   final uid = ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
   if (uid.isEmpty) {
-    return Stream<List<CustomerEntity>>.value(const []);
+    return Stream<CustomerListPageData>.value(CustomerListPageData.empty);
   }
 
-  final controller = StreamController<List<CustomerEntity>>.broadcast();
+  final controller = StreamController<CustomerListPageData>.broadcast();
   late final StreamSubscription sub;
   sub = FirestoreService.customersByAssignedAgentStream(uid).listen(
     (snap) {
@@ -25,21 +27,33 @@ final customerListForAgentProvider =
           .map((d) => CustomerMapper.fromQueryDoc(d))
           .whereType<CustomerEntity>()
           .toList();
-      // Firestore hazır: gerçek snapshot (boş dahil). Release’te demo yok.
+      final page = CustomerListPageData(
+        entities: list,
+        hasMore: snap.docs.length >= FirestoreService.customerListPageSize,
+        lastDocument: snap.docs.isEmpty ? null : snap.docs.last,
+      );
       if (FirestoreService.isFirestoreReady) {
-        controller.add(list);
+        controller.add(page);
       } else if (!kReleaseMode && isDevMode && list.isEmpty) {
-        controller.add(List<CustomerEntity>.from(crmDevDemoCustomers));
+        controller.add(
+          CustomerListPageData(
+            entities: List<CustomerEntity>.from(crmDevDemoCustomers),
+          ),
+        );
       } else {
-        controller.add(list);
+        controller.add(page);
       }
     },
     onError: (Object e, StackTrace st) {
       debugPrint('[customerListForAgentProvider] $e');
       if (!kReleaseMode && isDevMode) {
-        controller.add(List<CustomerEntity>.from(crmDevDemoCustomers));
+        controller.add(
+          CustomerListPageData(
+            entities: List<CustomerEntity>.from(crmDevDemoCustomers),
+          ),
+        );
       } else {
-        controller.add(const <CustomerEntity>[]);
+        controller.add(CustomerListPageData.empty);
       }
     },
   );
@@ -50,4 +64,11 @@ final customerListForAgentProvider =
   });
 
   return controller.stream;
+});
+
+/// Geriye uyumluluk: yalnızca entity listesi.
+final customerListEntitiesProvider =
+    Provider.autoDispose<List<CustomerEntity>>((ref) {
+  return ref.watch(customerListForAgentProvider).valueOrNull?.entities ??
+      const [];
 });

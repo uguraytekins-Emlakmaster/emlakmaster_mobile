@@ -28,7 +28,7 @@ void prefetchShellTab(WidgetRef ref, Object? tabId) {
       ref.read(consultantCallsDisplayProvider);
       break;
     case 'customers':
-      ref.read(customerListForAgentProvider);
+      ref.read(customerListEntitiesProvider);
       break;
     case 'listings':
       ref.read(ownedListingRowsDisplayProvider);
