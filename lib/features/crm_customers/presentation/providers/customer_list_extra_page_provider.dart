@@ -72,7 +72,6 @@ class CustomerListExtraPageNotifier
     } finally {
       state = CustomerListExtraPageState(
         extraEntities: state.extraEntities,
-        loading: false,
         hasMore: state.hasMore,
         lastDocument: state.lastDocument,
       );

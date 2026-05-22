@@ -36,7 +36,6 @@ class TaskDueLocalNotifications {
         'task_due',
         'Görev hatırlatıcıları',
         description: 'Vadesi gelen veya geçen görevler',
-        importance: Importance.defaultImportance,
       );
       await _plugin
           .resolvePlatformSpecificImplementation<

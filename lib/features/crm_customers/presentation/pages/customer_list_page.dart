@@ -13,6 +13,7 @@ import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_row_snapshots_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_crm_refresh.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_extra_page_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_list_page_data.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:flutter/material.dart';
@@ -322,6 +323,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     ref: ref,
                     ext: ext,
                     asyncCustomers: asyncCustomers,
+                    uid: uid,
+                    extraPage: extraPage,
                     showAddDock: showAddDock,
                   ),
                 ],
@@ -345,7 +348,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     required BuildContext context,
     required WidgetRef ref,
     required AppThemeExtension ext,
-    required AsyncValue<List<CustomerEntity>> asyncCustomers,
+    required AsyncValue<CustomerListPageData> asyncCustomers,
+    required String uid,
+    required CustomerListExtraPageState? extraPage,
     required bool showAddDock,
   }) {
     return asyncCustomers.when(

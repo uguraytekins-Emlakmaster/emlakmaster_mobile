@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
 import 'package:emlakmaster_mobile/core/data/crm_dev_demo_customers.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';

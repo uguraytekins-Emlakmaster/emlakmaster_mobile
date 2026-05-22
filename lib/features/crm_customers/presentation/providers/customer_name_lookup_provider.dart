@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final customerNameLookupProvider =
     Provider.autoDispose<Map<String, String>>((ref) {
   final customers = ref.watch(customerListEntitiesProvider);
-  if (customers == null || customers.isEmpty) return const {};
+  if (customers.isEmpty) return const {};
   return {
     for (final c in customers)
       if (c.id.isNotEmpty) c.id: (c.fullName ?? '').trim(),

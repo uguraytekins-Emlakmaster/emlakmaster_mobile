@@ -257,7 +257,6 @@ class PremiumScrollableBottomSheetShell extends StatelessWidget {
             ),
           ),
         Flexible(
-          fit: FlexFit.loose,
           child: SingleChildScrollView(
             padding: edge,
             child: child,

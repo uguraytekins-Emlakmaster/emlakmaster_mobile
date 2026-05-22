@@ -100,7 +100,6 @@ class ConsultantCallsExtraPageNotifier
     } finally {
       state = ConsultantCallsExtraPageState(
         extraDocs: state.extraDocs,
-        loading: false,
         hasMoreAdvisor: state.hasMoreAdvisor,
         hasMoreAgent: state.hasMoreAgent,
         lastAdvisorDoc: state.lastAdvisorDoc,

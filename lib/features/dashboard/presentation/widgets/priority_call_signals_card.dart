@@ -32,7 +32,7 @@ class PriorityCallSignalsCard extends ConsumerWidget {
 
     final AsyncValue<List<CustomerEntity>> async = useOfficeWide && officeId.isNotEmpty
         ? ref.watch(officeWideCustomerListProvider(officeId))
-        : ref.watch(customerListForAgentProvider);
+        : ref.watch(customerListForAgentProvider).whenData((page) => page.entities);
 
     final maxRows =
         useOfficeWide && officeId.isNotEmpty ? _maxRowsOffice : _maxRowsConsultant;
@@ -41,8 +41,8 @@ class PriorityCallSignalsCard extends ConsumerWidget {
         : 'Yüksek ilgi, acil takip, randevu veya fiyat itirazı';
 
     return async.when(
-      data: (page) {
-        final ranked = page.entities
+      data: (entities) {
+        final ranked = entities
             .where((c) =>
                 c.lastCallSummarySignals != null &&
                 postCallSignalsIsPriority(c.lastCallSummarySignals!))
