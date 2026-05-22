@@ -1,3 +1,5 @@
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_view_scope.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_stream_providers.dart';
@@ -12,6 +14,9 @@ class CommandCenterFeedFilters {
     this.filterOutcome,
     this.teamMemberIds = const [],
     this.quickFilter = CallSurfaceQuickFilter.all,
+    this.sortMode = CallListSortMode.lastCall,
+    this.kpiPeriod = CallKpiPeriod.thisMonth,
+    this.filterCustomerId,
   });
 
   final CommandCenterViewScope viewScope;
@@ -21,6 +26,9 @@ class CommandCenterFeedFilters {
   final String? filterOutcome;
   final List<String> teamMemberIds;
   final CallSurfaceQuickFilter quickFilter;
+  final CallListSortMode sortMode;
+  final CallKpiPeriod kpiPeriod;
+  final String? filterCustomerId;
 
   CommandCenterCallsScope get callsStreamScope =>
       viewScope == CommandCenterViewScope.pending
@@ -30,6 +38,7 @@ class CommandCenterFeedFilters {
   bool get hasActiveFilters =>
       filterTeamId != null ||
       filterAgentId != null ||
+      filterCustomerId != null ||
       filterOutcome != null ||
       quickFilter != CallSurfaceQuickFilter.all ||
       searchQueryLower.isNotEmpty;

@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_chrome_config.dart';
@@ -75,6 +77,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   CommandCenterViewScope _commandScope = CommandCenterViewScope.all;
   String? _filterTeamId;
   String? _filterAgentId;
+  String? _filterCustomerId;
   String? _filterOutcome;
   String _searchQuery = '';
   late final DebouncedSearchController _debouncedSearch;
@@ -84,7 +87,9 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   List<QueryDocumentSnapshot<Map<String, dynamic>>>? _lastFilteredDocs;
   List<String> _teamMemberIds = [];
   CallSurfaceQuickFilter _managerQuickFilter = CallSurfaceQuickFilter.all;
-  bool _kpiExpanded = true;
+  bool _kpiExpanded = false;
+  CallListSortMode _sortMode = CallListSortMode.lastCall;
+  CallKpiPeriod _kpiPeriod = CallKpiPeriod.thisMonth;
 
   @override
   void initState() {
@@ -108,9 +113,32 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     setState(() {
       _filterTeamId = null;
       _filterAgentId = null;
+      _filterCustomerId = null;
       _filterOutcome = null;
       _teamMemberIds = [];
       _searchController.clear();
+      if (_commandScope == CommandCenterViewScope.pending) {
+        _commandScope = CommandCenterViewScope.all;
+      }
+    });
+  }
+
+  void _cycleKpiPeriod() {
+    setState(() {
+      _kpiPeriod = _kpiPeriod == CallKpiPeriod.thisMonth
+          ? CallKpiPeriod.allTime
+          : CallKpiPeriod.thisMonth;
+    });
+  }
+
+  void _toggleEksikKayitScope() {
+    setState(() {
+      if (_commandScope == CommandCenterViewScope.pending) {
+        _commandScope = CommandCenterViewScope.all;
+      } else {
+        _commandScope = CommandCenterViewScope.pending;
+        _managerQuickFilter = CallSurfaceQuickFilter.all;
+      }
     });
   }
 
@@ -129,6 +157,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   bool _handleCloseFilters() {
     final hasFilters = _filterTeamId != null ||
         _filterAgentId != null ||
+        _filterCustomerId != null ||
         _filterOutcome != null ||
         _managerQuickFilter != CallSurfaceQuickFilter.all;
     if (!hasFilters) return false;
@@ -141,10 +170,29 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         searchQueryLower: _searchQuery.toLowerCase(),
         filterTeamId: _filterTeamId,
         filterAgentId: _filterAgentId,
+        filterCustomerId: _filterCustomerId,
         filterOutcome: _filterOutcome,
         teamMemberIds: _teamMemberIds,
         quickFilter: _managerQuickFilter,
+        sortMode: _sortMode,
+        kpiPeriod: _kpiPeriod,
       );
+
+  void _drillToAgent(String agentId) {
+    setState(() {
+      _commandScope = CommandCenterViewScope.all;
+      _filterAgentId = agentId;
+      _filterCustomerId = null;
+    });
+  }
+
+  void _drillToCustomer(String customerId) {
+    setState(() {
+      _commandScope = CommandCenterViewScope.all;
+      _filterCustomerId = customerId;
+      _filterAgentId = null;
+    });
+  }
 
   CommandCenterChromeConfig get _chromeConfig => CommandCenterChromeConfig(
         scope: _commandScope,
@@ -165,11 +213,23 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         }),
         onAgentChanged: (id) => setState(() => _filterAgentId = id),
         onOutcomeChanged: (outcome) => setState(() => _filterOutcome = outcome),
-        onQuickFilterChanged: (f) => setState(() => _managerQuickFilter = f),
+        onQuickFilterChanged: (f) => setState(() {
+          _managerQuickFilter = f;
+          if (_commandScope == CommandCenterViewScope.pending) {
+            _commandScope = CommandCenterViewScope.all;
+          }
+        }),
         onToggleKpiExpanded: () => setState(() => _kpiExpanded = !_kpiExpanded),
         onSearchTap: () {
           if (_searchQuery.isEmpty) _searchFocusNode.requestFocus();
         },
+        sortMode: _sortMode,
+        onSortChanged: (m) => setState(() => _sortMode = m),
+        kpiPeriod: _kpiPeriod,
+        onKpiPeriodTap: _cycleKpiPeriod,
+        onEksikKayitChipTap: _toggleEksikKayitScope,
+        eksikKayitChipSelected:
+            _commandScope == CommandCenterViewScope.pending,
       );
 
   List<Widget> _managerChromeSlivers(
@@ -206,6 +266,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           customerFullNameById: customerFullNameById,
           listBottomInset: listBottomInset,
           onClearFilters: _clearFilters,
+          onDrillAgent: _drillToAgent,
+          onDrillCustomer: _drillToCustomer,
         ),
       );
 
@@ -228,29 +290,46 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 title: ProductLabels.callRecords,
                 subtitle: 'CRM çağrı merkezi',
                 actions: [
-                  IconButton(
-                    icon: Icon(Icons.download_rounded, color: ext.accent),
-                    onPressed: () {
-                      final docs = _lastFilteredDocs;
-                      if (docs == null || docs.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Dışa aktarılacak veri yok.')),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_horiz_rounded, color: ext.accent),
+                    onSelected: (value) {
+                      if (value == 'csv') {
+                        final docs = _lastFilteredDocs;
+                        if (docs == null || docs.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Dışa aktarılacak veri yok.')),
+                          );
+                          return;
+                        }
+                        final csv = callsToCsv(docs);
+                        Clipboard.setData(ClipboardData(text: csv));
+                        showCallsSurfaceAck(
+                          context,
+                          'CSV panoya hazır · ${docs.length} satır',
                         );
-                        return;
+                      } else if (value == 'search') {
+                        _searchFocusNode.requestFocus();
                       }
-                      final csv = callsToCsv(docs);
-                      Clipboard.setData(ClipboardData(text: csv));
-                      showCallsSurfaceAck(
-                        context,
-                        'CSV panoya hazır · ${docs.length} satır',
-                      );
                     },
-                    tooltip: 'CSV dışa aktar',
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.tune_rounded, color: ext.textSecondary),
-                    onPressed: () => _searchFocusNode.requestFocus(),
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'csv',
+                        child: ListTile(
+                          leading: Icon(Icons.download_rounded),
+                          title: Text('CSV dışa aktar'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'search',
+                        child: ListTile(
+                          leading: Icon(Icons.tune_rounded),
+                          title: Text('Arama ve filtre'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

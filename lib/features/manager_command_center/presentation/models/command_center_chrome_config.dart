@@ -1,3 +1,5 @@
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_view_scope.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +24,13 @@ class CommandCenterChromeConfig {
     required this.onQuickFilterChanged,
     required this.onToggleKpiExpanded,
     required this.onSearchTap,
+    required this.sortMode,
+    required this.onSortChanged,
+    required this.kpiPeriod,
+    required this.onKpiPeriodTap,
+    this.onKpiDetailTap,
+    this.onEksikKayitChipTap,
+    this.eksikKayitChipSelected = false,
   });
 
   final CommandCenterViewScope scope;
@@ -41,4 +50,11 @@ class CommandCenterChromeConfig {
   final ValueChanged<CallSurfaceQuickFilter> onQuickFilterChanged;
   final VoidCallback onToggleKpiExpanded;
   final VoidCallback onSearchTap;
+  final CallListSortMode sortMode;
+  final ValueChanged<CallListSortMode> onSortChanged;
+  final CallKpiPeriod kpiPeriod;
+  final VoidCallback onKpiPeriodTap;
+  final VoidCallback? onKpiDetailTap;
+  final VoidCallback? onEksikKayitChipTap;
+  final bool eksikKayitChipSelected;
 }

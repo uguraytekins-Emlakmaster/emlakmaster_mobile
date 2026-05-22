@@ -16,6 +16,7 @@ import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_pro
 import 'package:emlakmaster_mobile/features/calls/presentation/outbound_system_handoff_page.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/models/dialer_control_prefs.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_ios_dialer.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_banner.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/dialer_theme_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/ios_dial_keypad.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
@@ -458,16 +459,23 @@ class _CallScreenState extends ConsumerState<CallScreen>
       return const SizedBox.shrink();
     }
     return Positioned.fill(
-      child: CrmIosDialerShell(
-        dialNotifier: entry,
-        inAppCrmSession: widget.inAppCrmSession,
-        bottomInset: bottomInset,
-        onControlPrefsChanged: (prefs) => _dialControlPrefs = prefs,
-        onDismiss: () {
-          AppFeedback.lightImpact();
-          context.pop();
-        },
-        onStartCall: _startCallWithDialNumber,
+      child: Column(
+        children: [
+          const PostCallCaptureBanner(),
+          Expanded(
+            child: CrmIosDialerShell(
+              dialNotifier: entry,
+              inAppCrmSession: widget.inAppCrmSession,
+              bottomInset: bottomInset,
+              onControlPrefsChanged: (prefs) => _dialControlPrefs = prefs,
+              onDismiss: () {
+                AppFeedback.lightImpact();
+                context.pop();
+              },
+              onStartCall: _startCallWithDialNumber,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1009,6 +1017,24 @@ class _InCallSessionBody extends ConsumerWidget {
               ],
             ),
           ),
+          const PostCallCaptureBanner(),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.screenEdgePadding,
+            ),
+            child: Text(
+              isMagicCallSession
+                  ? 'CRM uygulama içi oturum — kayıt ve süre bu oturumda tutulur.'
+                  : 'Görüşme sistem telefonuna devredilir; sonuç sonrası CRM kaydı tamamlanır.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: ext.textTertiary,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+          ),
+          const SizedBox(height: DesignTokens.space2),
           Expanded(
             child: SingleChildScrollView(
               padding:

@@ -22,6 +22,11 @@ List<QueryDocumentSnapshot<Map<String, dynamic>>> filterCommandCenterCalls({
     if (filters.filterAgentId != null && agentId != filters.filterAgentId) {
       return false;
     }
+    final custId = CrmCallRecordHelpers.customerIdOf(data);
+    if (filters.filterCustomerId != null &&
+        custId != filters.filterCustomerId) {
+      return false;
+    }
     if (filters.filterOutcome != null &&
         (data['outcome'] as String? ?? data['callOutcome'] as String?) !=
             filters.filterOutcome) {

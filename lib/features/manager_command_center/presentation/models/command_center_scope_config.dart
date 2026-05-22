@@ -14,6 +14,8 @@ class CommandCenterScopeConfig {
     required this.customerFullNameById,
     required this.listBottomInset,
     required this.onClearFilters,
+    this.onDrillAgent,
+    this.onDrillCustomer,
   });
 
   final CommandCenterViewScope scope;
@@ -24,4 +26,6 @@ class CommandCenterScopeConfig {
   final Map<String, String> customerFullNameById;
   final double listBottomInset;
   final VoidCallback onClearFilters;
+  final void Function(String agentId)? onDrillAgent;
+  final void Function(String customerId)? onDrillCustomer;
 }

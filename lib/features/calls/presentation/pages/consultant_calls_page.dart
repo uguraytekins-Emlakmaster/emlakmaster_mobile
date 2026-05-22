@@ -9,6 +9,14 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_source.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/consultant_calls_search_filter.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/android_call_log_sync_cta.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_detail_sheet.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_pending_strip.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_call_center_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
@@ -25,6 +33,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_name_lookup_provider.dart';
+import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_display_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
@@ -33,22 +42,16 @@ import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_c
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_record_premium_tile.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_card_memory_hints.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_date_sections.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_contextual_insight.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/callback_queue_strip.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_banner.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
-import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
@@ -58,6 +61,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Danışmanın tüm çağrıları (gelen/giden), numaralar, toplu veri export ve toplu SMS.
 class ConsultantCallsPage extends ConsumerStatefulWidget {
@@ -73,7 +77,14 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   final Set<String> _selectedIds = {};
   bool _isSyncingDeviceCalls = false;
   CallSurfaceQuickFilter _quickFilter = CallSurfaceQuickFilter.all;
-  bool _kpiExpanded = true;
+  bool _kpiExpanded = false;
+  CallListSortMode _sortMode = CallListSortMode.lastCall;
+  CallKpiPeriod _kpiPeriod = CallKpiPeriod.thisMonth;
+  bool _selectionMode = false;
+  CallListSource _listSource = CallListSource.all;
+  String _searchQuery = '';
+  late final DebouncedSearchController _debouncedSearch;
+  final FocusNode _searchFocusNode = FocusNode();
 
   static const List<CallSurfaceQuickFilter> _quickFilterOrder = [
     CallSurfaceQuickFilter.all,
@@ -81,8 +92,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     CallSurfaceQuickFilter.unanswered,
     CallSurfaceQuickFilter.callback,
     CallSurfaceQuickFilter.hot,
-    CallSurfaceQuickFilter.reached,
-    CallSurfaceQuickFilter.fresh,
   ];
 
   static const List<String> _quickFilterLabels = [
@@ -91,8 +100,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     'Cevapsız',
     'Geri aranacak',
     'Operasyon',
-    'Ulaşılan',
-    'Yeni',
   ];
 
   int _quickFilterIndex() {
@@ -105,6 +112,45 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   int _whatsappIndex = 0;
   String _whatsappMessage = '';
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _debouncedSearch = DebouncedSearchController(
+      onQueryChanged: (q) {
+        if (!mounted) return;
+        setState(() => _searchQuery = q);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _debouncedSearch.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  TextEditingController get _searchController => _debouncedSearch.controller;
+
+  Future<void> _refreshCalls() async {
+    ref.invalidate(consultantCallsStreamProvider);
+    ref.invalidate(localCallRecordsStreamProvider);
+    if (io.Platform.isAndroid) {
+      await _syncDeviceCallLog();
+    }
+  }
+
+  int _pendingLocalCount(List<LocalCallRecord> locals, int nowMs) {
+    var n = 0;
+    for (final r in locals) {
+      final st = deriveLocalCallSyncUiState(r, nowMs: nowMs);
+      if (st != LocalCallSyncUiState.synced || !r.hasQuickCapturePayload) {
+        n++;
+      }
+    }
+    return n;
+  }
 
   void _openCustomerDirectoryForLinking() {
     ConsultantShellNav.goToCustomersTab(context);
@@ -154,12 +200,33 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
 
   void _toggleSelection(String id) {
     setState(() {
+      _selectionMode = true;
       if (_selectedIds.contains(id)) {
         _selectedIds.remove(id);
+        if (_selectedIds.isEmpty) _selectionMode = false;
       } else {
         AppFeedback.selectionClick();
         _selectedIds.add(id);
       }
+    });
+  }
+
+  void _enterSelectionMode() {
+    setState(() => _selectionMode = true);
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  void _cycleKpiPeriod() {
+    setState(() {
+      _kpiPeriod = _kpiPeriod == CallKpiPeriod.thisMonth
+          ? CallKpiPeriod.allTime
+          : CallKpiPeriod.thisMonth;
     });
   }
 
@@ -532,22 +599,64 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     required List<QueryDocumentSnapshot<Map<String, dynamic>>> filteredDocs,
     required int visibleTotal,
     required int totalCount,
+    required int pendingLocalCount,
   }) {
     final theme = Theme.of(context);
     final fg = ext.textPrimary;
     final textSecondary = ext.textSecondary;
+    final kpiSnapshot =
+        CallKpiPeriodLogic.snapshotFromDocs(_docs, _kpiPeriod);
+
     return [
-      if (io.Platform.isIOS)
-        SliverToBoxAdapter(child: _buildIosInfoBanner(context)),
       const SliverToBoxAdapter(child: PostCallCaptureBanner()),
+      if (io.Platform.isIOS)
+        const SliverToBoxAdapter(
+          child: PremiumCallsPlatformHint(
+            message:
+                'iOS’ta yalnızca uygulama içi görüşmeler listelenir; sistem arama geçmişi dahil değildir.',
+          ),
+        ),
+      if (io.Platform.isAndroid)
+        SliverToBoxAdapter(
+          child: AndroidCallLogSyncCta(
+            isSyncing: _isSyncingDeviceCalls,
+            onSync: _syncDeviceCallLog,
+          ),
+        ),
       SliverToBoxAdapter(
-        child: PremiumCallRecordsKpiCard(
-          stats: CallRecordKpiStats.fromFirestoreDocs(_docs),
-          expanded: _kpiExpanded,
-          onToggleExpanded: () => setState(() => _kpiExpanded = !_kpiExpanded),
+        child: PremiumCallSearchRow(
+          controller: _searchController,
+          focusNode: _searchFocusNode,
+          onSearchTap: () {
+            if (_searchQuery.isEmpty) _searchFocusNode.requestFocus();
+          },
         ),
       ),
-      const SliverToBoxAdapter(child: CallbackQueueStrip()),
+      SliverToBoxAdapter(
+        child: CallSyncPendingStrip(
+          pendingCount: pendingLocalCount,
+          onTap: () => setState(() => _listSource = CallListSource.deviceDraft),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: PremiumCallRecordsKpiCard(
+          snapshot: kpiSnapshot,
+          expanded: _kpiExpanded,
+          onToggleExpanded: () => setState(() => _kpiExpanded = !_kpiExpanded),
+          onPeriodTap: _cycleKpiPeriod,
+          onDetailTap: () => showCallKpiDetailSheet(
+            context,
+            snapshot: kpiSnapshot,
+          ),
+          showHeroTotal: true,
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: PremiumCallSourceFilterStrip(
+          selected: _listSource,
+          onSelected: (s) => setState(() => _listSource = s),
+        ),
+      ),
       SliverToBoxAdapter(
         child: PremiumCallQuickFilterStrip(
           labels: _quickFilterLabels,
@@ -555,10 +664,21 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
           onSelected: (i) => setState(() => _quickFilter = _quickFilterOrder[i]),
         ),
       ),
-      if (_quickFilter == CallSurfaceQuickFilter.callback && visibleTotal > 0)
-        SliverToBoxAdapter(
-          child: CallCallbackWorkModeCue(count: visibleTotal),
+      SliverToBoxAdapter(
+        child: PremiumCallListToolbar(
+          sortMode: _sortMode,
+          onSortChanged: (m) => setState(() => _sortMode = m),
+          trailing: _selectionMode || _selectedIds.isNotEmpty
+              ? TextButton(
+                  onPressed: _exitSelectionMode,
+                  child: const Text('Seçimi bitir'),
+                )
+              : TextButton(
+                  onPressed: _enterSelectionMode,
+                  child: const Text('Seç'),
+                ),
         ),
+      ),
       if (_selectedIds.isNotEmpty)
         SliverToBoxAdapter(
           child: _consultantSelectionCommandBar(context, ext, fg),
@@ -578,9 +698,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: _quickFilter == CallSurfaceQuickFilter.all
-                            ? '$totalCount'
-                            : '$visibleTotal',
+                        text: _quickFilterLabels[_quickFilterIndex()],
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: fg,
                           fontWeight: FontWeight.w700,
@@ -588,8 +706,8 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       ),
                       TextSpan(
                         text: _quickFilter == CallSurfaceQuickFilter.all
-                            ? ' görüşme'
-                            : ' görüşme · filtreli',
+                            ? ' · $totalCount kayıt'
+                            : ' · $visibleTotal kayıt',
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: textSecondary,
                           fontWeight: FontWeight.w500,
@@ -601,28 +719,30 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              TextButton(
-                onPressed: () => _selectAll(true, filteredDocs),
-                style: TextButton.styleFrom(
-                  foregroundColor: ext.accent,
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              if (_selectionMode || _selectedIds.isNotEmpty) ...[
+                TextButton(
+                  onPressed: () => _selectAll(true, filteredDocs),
+                  style: TextButton.styleFrom(
+                    foregroundColor: ext.accent,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Hepsini seç'),
                 ),
-                child: const Text('Hepsini seç'),
-              ),
-              TextButton(
-                onPressed: () => _selectAll(false),
-                style: TextButton.styleFrom(
-                  foregroundColor: textSecondary,
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                TextButton(
+                  onPressed: _exitSelectionMode,
+                  style: TextButton.styleFrom(
+                    foregroundColor: textSecondary,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Seçimi kaldır'),
                 ),
-                child: const Text('Seçimi kaldır'),
-              ),
+              ],
             ],
           ),
         ),
@@ -751,37 +871,67 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               title: ProductLabels.myCalls,
               subtitle: 'CRM çağrı merkezi',
               actions: [
-                if (io.Platform.isAndroid)
-                  IconButton(
-                    icon: _isSyncingDeviceCalls
-                        ? SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: ext.accent,
-                            ),
-                          )
-                        : Icon(Icons.phone_android_rounded,
-                            color: ext.accent),
-                    tooltip: 'Telefon görüşmelerini içeri al',
-                    onPressed:
-                        _isSyncingDeviceCalls ? null : _syncDeviceCallLog,
-                  ),
-                IconButton(
-                  icon: Icon(Icons.copy_rounded, color: ext.accent),
-                  tooltip: 'CSV\'yi panoya al',
-                  onPressed: _copyCsvToClipboard,
-                ),
-                IconButton(
-                  icon: Icon(Icons.sms_rounded, color: ext.accent),
-                  tooltip: 'Toplu SMS gönder',
-                  onPressed: _openBulkSms,
-                ),
-                IconButton(
-                  icon: Icon(Icons.chat_rounded, color: ext.accent),
-                  tooltip: 'WhatsApp akışını aç',
-                  onPressed: _openWhatsAppBulk,
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_horiz_rounded, color: ext.accent),
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'csv':
+                        _copyCsvToClipboard();
+                      case 'sms':
+                        _openBulkSms();
+                      case 'whatsapp':
+                        _openWhatsAppBulk();
+                      case 'sync':
+                        if (io.Platform.isAndroid && !_isSyncingDeviceCalls) {
+                          unawaited(_syncDeviceCallLog());
+                        }
+                      case 'select':
+                        _enterSelectionMode();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'csv',
+                      child: ListTile(
+                        leading: Icon(Icons.copy_rounded),
+                        title: Text('CSV dışa aktar'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'sms',
+                      child: ListTile(
+                        leading: Icon(Icons.sms_rounded),
+                        title: Text('Toplu SMS'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'whatsapp',
+                      child: ListTile(
+                        leading: Icon(Icons.chat_rounded),
+                        title: Text('WhatsApp akışı'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    if (io.Platform.isAndroid)
+                      const PopupMenuItem(
+                        value: 'sync',
+                        child: ListTile(
+                          leading: Icon(Icons.phone_android_rounded),
+                          title: Text('Telefon geçmişini içeri al'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    const PopupMenuItem(
+                      value: 'select',
+                      child: ListTile(
+                        leading: Icon(Icons.checklist_rounded),
+                        title: Text('Toplu seçim'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -888,33 +1038,56 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
             );
           }
           final totalCount = localStandalone.length + _docs.length;
-          final filteredDocs = _docs
+          final pendingLocalCount = _pendingLocalCount(localStandalone, nowMs);
+          final searchLower = _searchQuery.toLowerCase();
+          final periodDocs = _kpiPeriod == CallKpiPeriod.thisMonth
+              ? CallKpiPeriodLogic.filterDocs(_docs, _kpiPeriod).toList()
+              : _docs;
+          var filteredDocs = periodDocs
               .where(
                 (d) => CallSurfaceQuickFilterLogic.matchesFirestoreDoc(
                   d,
                   _quickFilter,
                 ),
               )
-              .toList()
-            ..sort((a, b) {
-              final ta = CrmCallRecordHelpers.createdAtOf(a.data()) ??
-                  DateTime.fromMillisecondsSinceEpoch(0);
-              final tb = CrmCallRecordHelpers.createdAtOf(b.data()) ??
-                  DateTime.fromMillisecondsSinceEpoch(0);
-              return tb.compareTo(ta);
-            });
-          final filteredLocals = localStandalone
+              .where(
+                (d) => ConsultantCallsSearchFilter.matchesFirestoreDoc(
+                  d,
+                  searchLower,
+                  customerNames,
+                ),
+              )
+              .toList();
+          if (_listSource == CallListSource.deviceDraft) {
+            filteredDocs = [];
+          }
+          CallListSortLogic.sortFirestoreDocs(filteredDocs, _sortMode);
+          var filteredLocals = localStandalone
               .where(
                 (r) => CallSurfaceQuickFilterLogic.matchesLocalRecord(
                   r,
                   _quickFilter,
                 ),
               )
+              .where(
+                (r) => ConsultantCallsSearchFilter.matchesLocalRecord(
+                  r,
+                  searchLower,
+                  customerNames,
+                ),
+              )
               .toList();
+          if (_listSource == CallListSource.crmOnly) {
+            filteredLocals = [];
+          }
+          CallListSortLogic.sortLocalRecords(filteredLocals, _sortMode);
           final visibleTotal =
               filteredLocals.length + filteredDocs.length;
           if (visibleTotal == 0 && totalCount > 0) {
-            return CustomScrollView(
+            return RefreshIndicator(
+              color: ext.accent,
+              onRefresh: _refreshCalls,
+              child: CustomScrollView(
               slivers: [
                 ..._callsChromeSlivers(
                   context: context,
@@ -922,6 +1095,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   filteredDocs: filteredDocs,
                   visibleTotal: visibleTotal,
                   totalCount: totalCount,
+                  pendingLocalCount: pendingLocalCount,
                 ),
                 SliverFillRemaining(
                   hasScrollBody: false,
@@ -963,11 +1137,15 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   ),
                 ),
               ],
+              ),
             );
           }
           final listBottomInset =
               DashboardLayoutTokens.contentScrollBottomInset(context);
-          return CustomScrollView(
+          return RefreshIndicator(
+            color: ext.accent,
+            onRefresh: _refreshCalls,
+            child: CustomScrollView(
             cacheExtent: 480,
             slivers: [
               ..._callsChromeSlivers(
@@ -976,6 +1154,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                 filteredDocs: filteredDocs,
                 visibleTotal: visibleTotal,
                 totalCount: totalCount,
+                pendingLocalCount: pendingLocalCount,
               ),
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(
@@ -1000,50 +1179,18 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                           r.customerId != null && r.customerId!.isNotEmpty
                               ? customerNames[r.customerId!]
                               : null;
-                      final formattedPhone =
-                          CrmCallRecordDisplay.formatPhone(r.phoneNumber);
                       final localTitle = CrmCallRecordDisplay.primaryTitle(
                         customerFullName: custName,
                         rawPhone: r.phoneNumber,
                       );
-                      final phoneUnder =
-                          CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
-                        title: localTitle,
-                        formattedPhone: formattedPhone,
-                      )
-                              ? formattedPhone
-                              : null;
-                      final localFoot = CrmCallRecordDisplay.technicalFootnote(
-                        firestoreDocId: r.firestoreDocumentId,
-                        customerId: r.customerId,
+                      final localDirection =
+                          CallRecordPremiumTile.formatDirectionDuration(
+                        isIncoming: false,
                       );
-                      final localIdentityHint =
-                          ((r.customerId?.isEmpty) ?? true) &&
-                                  custName == null
-                              ? 'Yeni kişi · Müşteri kartına bağlı değil'
-                              : null;
-                      final localInsight =
-                          CallSurfaceContextualInsight.forLocalDraft(
-                        outcome: r.outcome,
-                        hasCallablePhone: OutboundPhoneDial.isLikelyCallablePhone(
-                            r.phoneNumber),
-                        hasNote: (r.notes?.trim().isNotEmpty ?? false),
-                      );
-                      final localRhythm =
-                          CallSurfaceCardRhythmLogic.forLocalDraft(r);
-                      final localRail =
-                          CallSurfacePriorityMarkers.railForLocal(r);
-                      final localMemory = CallCardMemoryHints.forLocal(
-                        createdAtMs: r.createdAt,
-                        notes: r.notes,
-                        outcome: r.outcome,
-                        followUpReminderAtMs: r.followUpReminderAtMs,
-                      );
-                      final localConfidence = CallConfidenceLabels.resolveForRecord(
-                        startedFromScreen: r.startedFromScreen,
-                        outcome: r.outcome,
-                        memoryHint: localMemory,
-                      );
+                      final localMeta = 'Sen · $callTime';
+                      final localStatus = syncHint.trim().isNotEmpty
+                          ? syncHint
+                          : null;
                       return _listRowWithDateHeader(
                         index: index,
                         filteredLocals: filteredLocals,
@@ -1104,18 +1251,15 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         ),
                         child: _LocalCallRecordCard(
                           title: localTitle,
-                          phoneSubtitle: phoneUnder,
-                          callTimeLabel: callTime,
+                          directionDuration: localDirection,
                           outcome: QuickCallOutcome.labelTr(outcomeStr),
-                          syncHint: syncHint,
-                          note: r.notes,
-                          technicalFootnote: localFoot,
-                          identityFootnote: localIdentityHint,
-                          contextualInsight: localInsight,
-                          cardRhythm: localRhythm,
-                          showPriorityRail: localRail,
-                          memoryHint: localMemory,
-                          confidenceKind: localConfidence,
+                          statusLabel: localStatus,
+                          metaLine: localMeta,
+                          customerLinkHint:
+                              (r.customerId == null ||
+                                      r.customerId!.isEmpty)
+                                  ? 'Müşteri kartı yok'
+                                  : null,
                           rawPhone: r.phoneNumber,
                           customerId: r.customerId,
                           firestoreDocId: r.firestoreDocumentId,
@@ -1148,14 +1292,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     final rawPhone = data['phoneNumber'] as String? ??
                         data['phone'] as String? ??
                         '';
-                    final hasPhoneDigits =
-                        rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
-                    final phone = hasPhoneDigits
-                        ? CrmCallRecordDisplay.formatPhone(rawPhone)
-                        : '—';
                     final duration = data['durationSec'] as num?;
-                    final durationStr =
-                        duration != null ? '${duration.toInt()} sn' : '—';
                     final outcomeRaw = data['outcome'] as String? ??
                         data['callOutcome'] as String?;
                     final outcomeStr = outcomeRaw != null
@@ -1177,11 +1314,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         customerId != null && customerId.isNotEmpty
                             ? customerNames[customerId]
                             : null;
-                    final note =
-                        CrmCallRecordDisplay.notePreviewFromFirestoreData(
-                      data,
-                      maxLen: 160,
-                    );
                     final advisorId = (data['advisorId'] as String?)?.trim() ??
                         (data['agentId'] as String?)?.trim() ??
                         '';
@@ -1189,11 +1321,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       advisorAgentId: advisorId,
                       currentUid: currentUid,
                       agentNames: agentNames,
-                    );
-                    final contextLine = CrmCallRecordDisplay.contextLine(
-                      advisorPart: advisorPart,
-                      dateTime: '',
-                      duration: durationStr,
                     );
                     final completionLabel =
                         CrmCallRecordHelpers.captureStatusTr(data);
@@ -1206,47 +1333,36 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       contactDisplayName: contactName,
                       rawPhone: rawPhone.isEmpty ? null : rawPhone,
                     );
-                    final phoneUnder =
-                        CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
-                      title: rowTitle,
-                      formattedPhone: phone,
-                    )
-                            ? phone
+                    final directionDuration =
+                        CallRecordPremiumTile.formatDirectionDuration(
+                      isIncoming: isIncoming,
+                      durationSec: duration?.toInt(),
+                    );
+                    final metaParts = <String>[
+                      if (advisorPart.trim().isNotEmpty) advisorPart,
+                      if (callTime != null) callTime,
+                    ];
+                    final metaLine =
+                        metaParts.isEmpty ? null : metaParts.join(' · ');
+                    final statusLabel = completionLabel.trim().isNotEmpty &&
+                            completionLabel != '—'
+                        ? completionLabel
+                        : null;
+                    final bulkSelect =
+                        _selectionMode || _selectedIds.isNotEmpty;
+                    final durationSec = duration?.toInt();
+                    final playLabel =
+                        CrmCallRecordHelpers.formatDurationMmSs(durationSec);
+                    final recordingUrl =
+                        CrmCallRecordHelpers.playableRecordingUrl(data);
+                    final hasRecording = recordingUrl != null &&
+                        recordingUrl.isNotEmpty;
+                    final showPlay = hasRecording;
+                    final showDetail = !hasRecording && playLabel.isNotEmpty;
+                    final customerLinkHint =
+                        (customerId == null || customerId.isEmpty)
+                            ? 'Müşteri kartı yok'
                             : null;
-                    final technicalMeta =
-                        CrmCallRecordDisplay.technicalFootnote(
-                      firestoreDocId: id,
-                      customerId: customerId,
-                    );
-                    final identityHint =
-                        (customerId == null || customerId.isEmpty) &&
-                                (contactName?.trim().isEmpty ?? true) &&
-                                (resolvedCustomerName == null ||
-                                    resolvedCustomerName.isEmpty)
-                            ? 'Yeni kişi · Müşteri kartına bağlı değil'
-                            : null;
-
-                    final fsInsight = CallSurfaceContextualInsight.forFirestoreData(
-                      data,
-                      notePreview: note,
-                      hasCallablePhone: hasPhone &&
-                          OutboundPhoneDial.isLikelyCallablePhone(rawPhone),
-                    );
-                    final cardRhythm =
-                        CallSurfaceCardRhythmLogic.forFirestore(data);
-                    final showPriorityRail =
-                        CallSurfacePriorityMarkers.railForFirestore(data);
-                    final memoryHint = CallCardMemoryHints.forFirestore(
-                      data,
-                      notePreview: note,
-                    );
-                    final confidenceKind = CallConfidenceLabels.resolveForRecord(
-                      startedFromScreen: data['startedFromScreen'] as String?,
-                      outcome: (data['outcome'] as String?) ??
-                          (data['callOutcome'] as String?),
-                      quickOutcomeCode: data['quickOutcomeCode'] as String?,
-                      memoryHint: memoryHint,
-                    );
 
                     return _listRowWithDateHeader(
                       index: index,
@@ -1311,20 +1427,16 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                         selected: selected,
                         enabled: hasPhone,
                         onSelect: hasPhone ? () => _toggleSelection(id) : null,
+                        showCheckbox: bulkSelect,
                         title: rowTitle,
-                        phoneSubtitle: phoneUnder,
+                        directionDuration: directionDuration,
                         outcome: outcomeStr,
-                        contextLine: contextLine,
-                        stateLabel: completionLabel,
-                        note: note,
-                        technicalMeta: technicalMeta,
-                        identityFootnote: identityHint,
-                        contextualInsight: fsInsight,
-                        cardRhythm: cardRhythm,
-                        showPriorityRail: showPriorityRail,
-                        memoryHint: memoryHint,
-                        confidenceKind: confidenceKind,
-                        callTimeLabel: callTime,
+                        statusLabel: statusLabel,
+                        metaLine: metaLine,
+                        playDurationLabel:
+                            (showPlay || showDetail) ? playLabel : null,
+                        recordingUrl: recordingUrl,
+                        customerLinkHint: customerLinkHint,
                         rawPhone: rawPhone,
                         customerId: customerId,
                         firestoreDocId: id,
@@ -1360,10 +1472,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                 ),
               ),
             ],
+            ),
           );
         },
       ),
-            ),
+    ),
           ],
         ),
       ),
@@ -1419,18 +1532,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
 class _LocalCallRecordCard extends StatelessWidget {
   const _LocalCallRecordCard({
     required this.title,
-    this.phoneSubtitle,
-    this.callTimeLabel,
+    required this.directionDuration,
     required this.outcome,
-    required this.syncHint,
-    required this.note,
-    this.technicalFootnote,
-    this.identityFootnote,
-    this.contextualInsight,
-    required this.cardRhythm,
-    required this.showPriorityRail,
-    this.memoryHint,
-    this.confidenceKind,
+    this.statusLabel,
+    this.metaLine,
+    this.customerLinkHint,
     required this.rawPhone,
     this.customerId,
     this.firestoreDocId,
@@ -1440,18 +1546,11 @@ class _LocalCallRecordCard extends StatelessWidget {
   });
 
   final String title;
-  final String? phoneSubtitle;
-  final String? callTimeLabel;
+  final String directionDuration;
   final String outcome;
-  final String syncHint;
-  final String? note;
-  final String? technicalFootnote;
-  final String? identityFootnote;
-  final String? contextualInsight;
-  final CallSurfaceCardRhythm cardRhythm;
-  final bool showPriorityRail;
-  final String? memoryHint;
-  final CallConfidenceKind? confidenceKind;
+  final String? statusLabel;
+  final String? metaLine;
+  final String? customerLinkHint;
   final String rawPhone;
   final String? customerId;
   final String? firestoreDocId;
@@ -1462,69 +1561,36 @@ class _LocalCallRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final contextLine = CrmCallRecordDisplay.contextLine(
-      advisorPart: 'Bu cihaz',
-      dateTime: '',
-    );
-    final callable = OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
-    final cid = customerId?.trim();
+    void openActions() {
+      showCallIdentityQuickActionsSheet(
+        context,
+        rawPhone: rawPhone,
+        customerId: customerId,
+        displayLabel: title,
+        firestoreCallDocId: firestoreDocId,
+        onCallListMutated: onCallListMutated,
+        onOpenCustomerDirectory: onOpenCustomerDirectory,
+      );
+    }
+
     return CrmCallOperatingCard(
-      rhythm: cardRhythm,
-      showPriorityRail: showPriorityRail,
       dense: true,
-      child: CrmCallRecordListItem(
-        dense: true,
+      child: CallRecordPremiumTile(
         title: title,
-        phoneSubtitle: phoneSubtitle,
-        callTimeLabel: callTimeLabel,
+        directionDuration: directionDuration,
         outcomeLabel: outcome,
-        captureLabel: syncHint,
-        contextLine: contextLine,
-        notePreview: note,
-        technicalFootnote: technicalFootnote,
-        identityFootnote: identityFootnote,
-        contextualInsight: contextualInsight,
-        memoryHint: memoryHint,
-        confidenceKind: confidenceKind,
-        onOpenCustomerCard: cid != null && cid.isNotEmpty
-            ? () => context.push('/customer/$cid')
-            : null,
-        onIdentityTap: callable
-            ? () => showCallIdentityQuickActionsSheet(
-                  context,
-                  rawPhone: rawPhone,
-                  customerId: customerId,
-                  displayLabel: title,
-                  firestoreCallDocId: firestoreDocId,
-                  onCallListMutated: onCallListMutated,
-                  onOpenCustomerDirectory: onOpenCustomerDirectory,
-                )
-            : null,
-        onIdentityLongPress: callable
-            ? () {
-                AppFeedback.mediumImpact();
-                startCrmOutboundCall(
-                  context,
-                  phone: rawPhone,
-                  customerId: customerId,
-                  startedFromScreen: 'consultant_calls',
-                );
-              }
-            : null,
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: ext.textSecondary.withValues(alpha: 0.075),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
-            border: Border.all(
-              color: ext.border.withValues(alpha: 0.38),
-            ),
-          ),
-          child: Icon(Icons.phone_in_talk_rounded,
-              color: ext.textSecondary, size: 18),
+        statusLabel: statusLabel,
+        metaLine: metaLine,
+        leadingIcon: Icons.call_made_rounded,
+        leadingColor: ext.info,
+        leadingBadge: SizedBox(
+          width: 18,
+          height: 18,
+          child: FittedBox(child: syncIcon),
         ),
-        trailing: syncIcon,
+        customerLinkHint: customerLinkHint,
+        onMenu: openActions,
+        onTap: openActions,
       ),
     );
   }
@@ -1536,19 +1602,13 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     required this.enabled,
     required this.onSelect,
     required this.title,
-    this.phoneSubtitle,
+    required this.directionDuration,
     required this.outcome,
-    required this.contextLine,
-    required this.stateLabel,
-    required this.note,
-    this.technicalMeta,
-    this.identityFootnote,
-    this.contextualInsight,
-    required this.cardRhythm,
-    required this.showPriorityRail,
-    this.memoryHint,
-    this.confidenceKind,
-    this.callTimeLabel,
+    this.statusLabel,
+    this.metaLine,
+    this.playDurationLabel,
+    this.recordingUrl,
+    this.customerLinkHint,
     required this.rawPhone,
     this.customerId,
     this.firestoreDocId,
@@ -1557,25 +1617,20 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     required this.leadingIcon,
     required this.leadingColor,
     required this.trailing,
+    this.showCheckbox = false,
   });
 
   final bool selected;
   final bool enabled;
   final VoidCallback? onSelect;
   final String title;
-  final String? phoneSubtitle;
-  final String? callTimeLabel;
+  final String directionDuration;
   final String outcome;
-  final String contextLine;
-  final String stateLabel;
-  final String? note;
-  final String? technicalMeta;
-  final String? identityFootnote;
-  final String? contextualInsight;
-  final CallSurfaceCardRhythm cardRhythm;
-  final bool showPriorityRail;
-  final String? memoryHint;
-  final CallConfidenceKind? confidenceKind;
+  final String? statusLabel;
+  final String? metaLine;
+  final String? playDurationLabel;
+  final String? recordingUrl;
+  final String? customerLinkHint;
   final String rawPhone;
   final String? customerId;
   final String? firestoreDocId;
@@ -1584,182 +1639,71 @@ class _FirestoreCallRecordCard extends StatelessWidget {
   final IconData leadingIcon;
   final Color leadingColor;
   final Widget trailing;
+  final bool showCheckbox;
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
     final callable =
         enabled && OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
+    final playLabel = playDurationLabel?.trim();
+    final hasRecording =
+        recordingUrl != null && recordingUrl!.trim().isNotEmpty;
+    final hasPlay = hasRecording;
+    final hasDetail = !hasPlay && playLabel != null && playLabel.isNotEmpty;
 
-    Widget? belowChips;
-    if (selected && callable) {
-      final actionStyle = TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.compact,
-      );
-      belowChips = Padding(
-        padding: const EdgeInsets.only(top: 2),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Wrap(
-            spacing: DesignTokens.space2,
-            runSpacing: 6,
-            children: [
-              TextButton.icon(
-                style: actionStyle,
-                onPressed: () {
-                  AppFeedback.mediumImpact();
-                  startCrmOutboundCall(
-                    context,
-                    phone: rawPhone,
-                    customerId: customerId,
-                    startedFromScreen: 'consultant_calls',
-                  );
-                },
-                icon: Icon(Icons.call_rounded, size: 17, color: ext.accent),
-                label: Text(
-                  'Ara',
-                  style: TextStyle(
-                    color: ext.accent,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              TextButton.icon(
-                style: actionStyle,
-                onPressed: () {
-                  showCallIdentityQuickActionsSheet(
-                    context,
-                    rawPhone: rawPhone,
-                    customerId: customerId,
-                    displayLabel: title,
-                    firestoreCallDocId: firestoreDocId,
-                    onCallListMutated: onCallListMutated,
-                    onOpenCustomerDirectory: onOpenCustomerDirectory,
-                  );
-                },
-                icon: Icon(Icons.more_horiz_rounded,
-                    size: 17, color: ext.textSecondary),
-                label: Text(
-                  'İşlemler',
-                  style: TextStyle(
-                    color: ext.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    void openActions() {
+      showCallIdentityQuickActionsSheet(
+        context,
+        rawPhone: rawPhone,
+        customerId: customerId,
+        displayLabel: title,
+        firestoreCallDocId: firestoreDocId,
+        onCallListMutated: onCallListMutated,
+        onOpenCustomerDirectory: onOpenCustomerDirectory,
       );
     }
 
-    final cid = customerId?.trim();
+    void onPlayTap() {
+      final url = recordingUrl!.trim();
+      unawaited(launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication));
+    }
+
+    void onDetailTap() {
+      if (firestoreDocId != null && firestoreDocId!.isNotEmpty) {
+        context.push(
+          AppRouter.routeCallSummary,
+          extra: {'callDocId': firestoreDocId},
+        );
+      } else {
+        openActions();
+      }
+    }
 
     return CrmCallOperatingCard(
       selected: selected,
-      rhythm: cardRhythm,
-      showPriorityRail: showPriorityRail,
       dense: true,
-      child: InkWell(
-        onTap: enabled ? onSelect : null,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-        child: Padding(
-          padding: EdgeInsets.zero,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 4, top: 4),
-                child: CheckboxTheme(
-                  data: CheckboxThemeData(
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    side: BorderSide(
-                      color: ext.border.withValues(alpha: 0.55),
-                      width: 1.1,
-                    ),
-                  ),
-                  child: Checkbox(
-                    value: selected,
-                    onChanged: enabled ? (_) => onSelect?.call() : null,
-                    activeColor: ext.accent,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: CrmCallRecordListItem(
-                  dense: true,
-                  title: title,
-                  phoneSubtitle: phoneSubtitle,
-                  callTimeLabel: callTimeLabel,
-                  outcomeLabel: outcome,
-                  captureLabel: stateLabel,
-                  contextLine: contextLine,
-                  notePreview: note,
-                  technicalFootnote: technicalMeta,
-                  identityFootnote: identityFootnote,
-                  contextualInsight: contextualInsight,
-                  memoryHint: memoryHint,
-                  confidenceKind: confidenceKind,
-                  onOpenCustomerCard: cid != null && cid.isNotEmpty
-                      ? () => context.push('/customer/$cid')
-                      : null,
-                  onIdentityTap: callable
-                      ? () => showCallIdentityQuickActionsSheet(
-                            context,
-                            rawPhone: rawPhone,
-                            customerId: customerId,
-                            displayLabel: title,
-                            firestoreCallDocId: firestoreDocId,
-                            onCallListMutated: onCallListMutated,
-                            onOpenCustomerDirectory: onOpenCustomerDirectory,
-                          )
-                      : null,
-                  onIdentityLongPress: callable
-                      ? () {
-                          AppFeedback.mediumImpact();
-                          startCrmOutboundCall(
-                            context,
-                            phone: rawPhone,
-                            customerId: customerId,
-                            startedFromScreen: 'consultant_calls',
-                          );
-                        }
-                      : null,
-                  belowChipsRow: belowChips,
-                  leading: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: leadingColor.withValues(alpha: 0.085),
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusSm + 2),
-                      border: Border.all(
-                        color: leadingColor.withValues(alpha: 0.22),
-                      ),
-                    ),
-                    child: Icon(leadingIcon, color: leadingColor, size: 18),
-                  ),
-                  trailing: trailing,
-                  padding: const EdgeInsets.fromLTRB(
-                    0,
-                    DesignTokens.space2,
-                    DesignTokens.space3,
-                    DesignTokens.space2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      child: CallRecordPremiumTile(
+        title: title,
+        directionDuration: directionDuration,
+        outcomeLabel: outcome,
+        statusLabel: statusLabel,
+        metaLine: metaLine,
+        leadingIcon: leadingIcon,
+        leadingColor: leadingColor,
+        showCheckbox: showCheckbox,
+        checked: selected,
+        onCheckChanged: enabled && onSelect != null
+            ? (_) => onSelect!()
+            : null,
+        customerLinkHint: customerLinkHint,
+        onMenu: callable ? openActions : null,
+        onPlay: hasPlay ? onPlayTap : null,
+        onDetail: hasDetail ? onDetailTap : null,
+        playDurationLabel: hasPlay || hasDetail ? playLabel : null,
+        trailing: trailing,
+        onTap: showCheckbox && onSelect != null
+            ? onSelect
+            : (callable ? openActions : null),
       ),
     );
   }

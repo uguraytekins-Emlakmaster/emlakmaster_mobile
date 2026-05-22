@@ -5,9 +5,9 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/manager_calls_team_rhythm_strip.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_group_summary_tile.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_detail_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_banner.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_chrome_config.dart';
@@ -55,19 +55,11 @@ abstract final class CommandCenterListSlivers {
     required List<QueryDocumentSnapshot<Map<String, dynamic>>> filtered,
     required Map<String, String> agentNames,
   }) {
+    final kpiSnapshot =
+        CallKpiPeriodLogic.snapshotFromDocs(docs, chrome.kpiPeriod);
+
     return [
       const SliverToBoxAdapter(child: PostCallCaptureBanner()),
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.screenEdgePadding,
-          ),
-          child: PremiumInfoBanner(
-            message:
-                'Bu ekranda çağrıların CRM özeti görünür: sonuç, saat ve kısa not.',
-          ),
-        ),
-      ),
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -81,9 +73,10 @@ abstract final class CommandCenterListSlivers {
               CommandCenterViewScope.all,
               CommandCenterViewScope.consultant,
               CommandCenterViewScope.customer,
-              CommandCenterViewScope.pending,
             ],
-            selected: chrome.scope,
+            selected: chrome.scope == CommandCenterViewScope.pending
+                ? CommandCenterViewScope.all
+                : chrome.scope,
             onSelected: chrome.onScopeChanged,
             labelBuilder: (s) => s.labelTr,
           ),
@@ -112,23 +105,70 @@ abstract final class CommandCenterListSlivers {
         ),
       ),
       SliverToBoxAdapter(
-        child: PremiumCallQuickFilterStrip(
-          labels: _quickFilterLabels,
-          selectedIndex: _quickFilterIndex(chrome.quickFilter),
-          onSelected: (i) =>
-              chrome.onQuickFilterChanged(_quickFilterOrder[i]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PremiumCallQuickFilterStrip(
+              labels: _quickFilterLabels,
+              selectedIndex: chrome.eksikKayitChipSelected
+                  ? -1
+                  : _quickFilterIndex(chrome.quickFilter),
+              onSelected: (i) {
+                chrome.onQuickFilterChanged(_quickFilterOrder[i]);
+              },
+            ),
+            if (chrome.onEksikKayitChipTap != null)
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: DesignTokens.screenEdgePadding,
+                  top: 6,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: PremiumFilterChip(
+                    label: 'Eksik kayıt',
+                    selected: chrome.eksikKayitChipSelected,
+                    onTap: chrome.onEksikKayitChipTap!,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
       SliverToBoxAdapter(
         child: PremiumCallRecordsKpiCard(
-          stats: CallRecordKpiStats.fromFirestoreDocs(docs),
+          snapshot: kpiSnapshot,
           expanded: chrome.kpiExpanded,
           onToggleExpanded: chrome.onToggleKpiExpanded,
+          onPeriodTap: chrome.onKpiPeriodTap,
+          onDetailTap: () => showCallKpiDetailSheet(
+            context,
+            snapshot: kpiSnapshot,
+          ),
         ),
       ),
+      if (chrome.eksikKayitChipSelected && filtered.isNotEmpty)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.screenEdgePadding,
+              DesignTokens.space1,
+              DesignTokens.screenEdgePadding,
+              0,
+            ),
+            child: Text(
+              'Sonuç bekleyen ${filtered.length} kayıt',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppThemeExtension.of(context).warning,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+        ),
       SliverToBoxAdapter(
-        child: ManagerCallsTeamRhythmStrip(
-          line: ManagerCallsTeamRhythmLogic.computeLine(docs, agentNames),
+        child: PremiumCallListToolbar(
+          sortMode: chrome.sortMode,
+          onSortChanged: chrome.onSortChanged,
         ),
       ),
       if (chrome.quickFilter == CallSurfaceQuickFilter.callback &&
@@ -229,7 +269,6 @@ abstract final class CommandCenterListSlivers {
         ),
       ];
     }
-    final accent = AppThemeExtension.of(context).accent;
     return [
       SliverPadding(
         padding: EdgeInsets.fromLTRB(
@@ -247,12 +286,6 @@ abstract final class CommandCenterListSlivers {
               final pending = list
                   .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
                   .length;
-              final completed = list
-                  .where((d) => CrmCallRecordHelpers.hasCaptureCompleted(d.data()))
-                  .length;
-              final handoffs = list
-                  .where((d) => CrmCallRecordHelpers.isSystemHandoff(d.data()))
-                  .length;
               final last = list.first;
               final lastData = last.data();
               final dt = CrmCallRecordHelpers.createdAtOf(lastData);
@@ -261,53 +294,25 @@ abstract final class CommandCenterListSlivers {
                   : '—';
               final outcomeLast =
                   CrmCallRecordHelpers.outcomeDisplayTrDefault(lastData);
-              final noteLast =
-                  CrmCallRecordDisplay.notePreviewFromFirestoreData(lastData);
               final duration = lastData['durationSec'] as num?;
               final durationStr =
                   duration != null ? '${duration.toInt()} sn' : null;
-              final contextLine = 'Son görüşme: $timeStr'
+              final subtitle = 'Son görüşme: $timeStr'
                   '${durationStr != null ? ' · $durationStr' : ''} · '
-                  '${list.length} kayıt · $pending bekleyen · '
-                  '$completed tamam · $handoffs handoff';
-              final captureLabel =
-                  pending > 0 ? '$pending takip' : '${list.length} kayıt';
+                  '${list.length} kayıt'
+                  '${pending > 0 ? ' · $pending bekleyen' : ''}';
+              final badgeLabel =
+                  pending > 0 ? '$pending takip' : null;
               return RepaintBoundary(
-                child: CrmCallOperatingCard(
-                  dense: true,
-                  child: CrmCallRecordListItem(
-                    dense: true,
-                    title: name,
-                    outcomeLabel: outcomeLast,
-                    captureLabel: captureLabel,
-                    contextLine: contextLine,
-                    notePreview: noteLast,
-                    technicalFootnote:
-                        'Danışman ${CrmCallRecordDisplay.ellipsedMiddle(e.key)}',
-                    leading: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.078),
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.radiusSm + 2),
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.20),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        name.isNotEmpty
-                            ? name.substring(0, 1).toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          color: accent,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
+                child: CallGroupSummaryTile(
+                  title: name,
+                  subtitle: subtitle,
+                  outcomeLabel: outcomeLast,
+                  badgeLabel: badgeLabel,
+                  leadingLetter: name,
+                  onTap: config.onDrillAgent != null
+                      ? () => config.onDrillAgent!(e.key)
+                      : null,
                 ),
               );
             },
@@ -368,7 +373,6 @@ abstract final class CommandCenterListSlivers {
         ),
       ];
     }
-    final accent = AppThemeExtension.of(context).accent;
     return [
       SliverPadding(
         padding: EdgeInsets.fromLTRB(
@@ -384,7 +388,6 @@ abstract final class CommandCenterListSlivers {
               final list = e.value;
               final last = list.first;
               final data = last.data();
-              final agent = CrmCallRecordHelpers.agentIdOf(data);
               final outcome = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
               final dt = CrmCallRecordHelpers.createdAtOf(data);
               final timeStr = dt != null
@@ -393,71 +396,26 @@ abstract final class CommandCenterListSlivers {
               final pending = list
                   .where((d) => CrmCallRecordHelpers.isHandoffPending(d.data()))
                   .length;
-              final rawPhone =
-                  (data['phoneNumber'] ?? data['phone'] ?? '').toString();
-              final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
-              final formattedPhone =
-                  hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
               final contactName =
                   CrmCallRecordDisplay.contactNameFromCallData(data);
               final title = CrmCallRecordDisplay.primaryTitle(
                 customerFullName: config.customerFullNameById[e.key],
                 contactDisplayName: contactName,
-                rawPhone: hasDigits ? rawPhone : null,
+                rawPhone: null,
               );
-              final phoneUnder = CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
-                title: title,
-                formattedPhone: formattedPhone,
-              )
-                  ? formattedPhone
-                  : null;
-              final advisorPart = CrmCallRecordDisplay.advisorContext(
-                advisorAgentId: agent,
-                currentUid: null,
-                agentNames: config.agentNames,
-              );
-              final contextLine = CrmCallRecordDisplay.contextLine(
-                advisorPart: advisorPart,
-                dateTime: timeStr,
-              );
-              final captureLabel =
-                  pending > 0 ? '$pending takip' : '${list.length} kayıt';
+              final subtitle =
+                  'Son görüşme: $timeStr · ${list.length} kayıt'
+                  '${pending > 0 ? ' · $pending bekleyen' : ''}';
               return RepaintBoundary(
-                child: CrmCallOperatingCard(
-                  dense: true,
-                  child: CrmCallRecordListItem(
-                    dense: true,
-                    title: title,
-                    phoneSubtitle: phoneUnder,
-                    outcomeLabel: outcome,
-                    captureLabel: captureLabel,
-                    contextLine: contextLine,
-                    technicalFootnote:
-                        'Müşteri ${CrmCallRecordDisplay.ellipsedMiddle(e.key, head: 6)}',
-                    leading: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.078),
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.radiusSm + 2),
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.20),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        title.isNotEmpty
-                            ? title.substring(0, 1).toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          color: accent,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
+                child: CallGroupSummaryTile(
+                  title: title,
+                  subtitle: subtitle,
+                  outcomeLabel: outcome,
+                  badgeLabel: pending > 0 ? '$pending takip' : null,
+                  leadingLetter: title,
+                  onTap: config.onDrillCustomer != null
+                      ? () => config.onDrillCustomer!(e.key)
+                      : null,
                 ),
               );
             },

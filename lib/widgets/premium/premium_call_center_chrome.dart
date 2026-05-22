@@ -1,60 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_source.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
-
-/// Çağrı merkezi / kayıtlar ekranları için ortak KPI özeti.
-class CallRecordKpiStats {
-  const CallRecordKpiStats({
-    required this.total,
-    required this.incoming,
-    required this.outgoing,
-    required this.answered,
-    required this.missed,
-  });
-
-  final int total;
-  final int incoming;
-  final int outgoing;
-  final int answered;
-  final int missed;
-
-  static CallRecordKpiStats fromFirestoreDocs(
-    Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-  ) {
-    var incoming = 0;
-    var outgoing = 0;
-    var missed = 0;
-    var answered = 0;
-    for (final d in docs) {
-      final data = d.data();
-      final direction = (data['direction'] as String? ?? 'outgoing').toLowerCase();
-      if (direction == 'incoming') {
-        incoming++;
-      } else {
-        outgoing++;
-      }
-      final oc = (data['outcome'] as String? ?? '').toLowerCase();
-      if (oc == 'missed' || oc == 'no_answer' || oc == 'cevapsiz') {
-        missed++;
-      } else if (oc.isNotEmpty) {
-        answered++;
-      }
-    }
-    final total = docs.length;
-    return CallRecordKpiStats(
-      total: total,
-      incoming: incoming,
-      outgoing: outgoing,
-      answered: answered,
-      missed: missed,
-    );
-  }
-}
 
 class PremiumCallCenterPageHeader extends StatelessWidget {
   const PremiumCallCenterPageHeader({
@@ -81,7 +33,6 @@ class PremiumCallCenterPageHeader extends StatelessWidget {
         compact ? DesignTokens.space2 : DesignTokens.space3,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Padding(
             padding: EdgeInsets.only(right: DesignTokens.space2),
@@ -131,20 +82,26 @@ class PremiumCallCenterPageHeader extends StatelessWidget {
 class PremiumCallRecordsKpiCard extends StatelessWidget {
   const PremiumCallRecordsKpiCard({
     super.key,
-    required this.stats,
-    this.periodLabel = 'Bu ay',
+    required this.snapshot,
     this.expanded = true,
     this.onToggleExpanded,
+    this.onPeriodTap,
+    this.onDetailTap,
+    this.showHeroTotal = true,
   });
 
-  final CallRecordKpiStats stats;
-  final String periodLabel;
+  final CallKpiPeriodSnapshot snapshot;
   final bool expanded;
   final VoidCallback? onToggleExpanded;
+  final VoidCallback? onPeriodTap;
+  final VoidCallback? onDetailTap;
+  final bool showHeroTotal;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final stats = snapshot.current;
+    final prev = snapshot.previous;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         DesignTokens.screenEdgePadding,
@@ -163,34 +120,63 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: ext.surface,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
-                    border: Border.all(color: ext.border.withValues(alpha: 0.5)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 13, color: ext.textSecondary),
-                      const SizedBox(width: 5),
-                      Text(
-                        periodLabel,
-                        style: TextStyle(
-                          color: ext.textSecondary,
-                          fontSize: DesignTokens.fontSizeXs + 1,
-                          fontWeight: FontWeight.w600,
+                InkWell(
+                  onTap: onPeriodTap,
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ext.surface,
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusPill),
+                      border:
+                          Border.all(color: ext.border.withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13, color: ext.textSecondary),
+                        const SizedBox(width: 5),
+                        Text(
+                          snapshot.period.labelTr,
+                          style: TextStyle(
+                            color: ext.textSecondary,
+                            fontSize: DesignTokens.fontSizeXs + 1,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
+                        if (onPeriodTap != null) ...[
+                          const SizedBox(width: 2),
+                          Icon(Icons.expand_more_rounded,
+                              size: 16, color: ext.textSecondary),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
                 const Spacer(),
+                if (onDetailTap != null)
+                  TextButton(
+                    onPressed: onDetailTap,
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      'Detaylı özet >',
+                      style: TextStyle(
+                        color: ext.accent,
+                        fontSize: DesignTokens.fontSizeSm,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 if (onToggleExpanded != null)
                   TextButton.icon(
                     onPressed: onToggleExpanded,
@@ -202,7 +188,9 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                       color: ext.textSecondary,
                     ),
                     label: Text(
-                      expanded ? 'İstatistikleri gizle' : 'İstatistikleri göster',
+                      expanded
+                          ? 'İstatistikleri gizle'
+                          : 'İstatistikleri göster',
                       style: TextStyle(
                         color: ext.textSecondary,
                         fontSize: DesignTokens.fontSizeSm,
@@ -218,8 +206,29 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                   ),
               ],
             ),
-            if (expanded) ...[
+            if (showHeroTotal) ...[
               const SizedBox(height: DesignTokens.space3),
+              Text(
+                '${stats.total}',
+                style: TextStyle(
+                  color: ext.accent,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 40,
+                  height: 1,
+                  letterSpacing: -1,
+                ),
+              ),
+              Text(
+                'Toplam çağrı',
+                style: TextStyle(
+                  color: ext.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: DesignTokens.fontSizeSm,
+                ),
+              ),
+            ],
+            if (expanded) ...[
+              SizedBox(height: showHeroTotal ? DesignTokens.space3 : DesignTokens.space2),
               Row(
                 children: [
                   Expanded(
@@ -228,6 +237,11 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                       label: 'Gelen',
                       value: '${stats.incoming}',
                       color: ext.accent,
+                      delta: snapshot.percentDelta(
+                        stats.incoming,
+                        prev.incoming,
+                      ),
+                      showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                     ),
                   ),
                   Expanded(
@@ -236,6 +250,11 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                       label: 'Giden',
                       value: '${stats.outgoing}',
                       color: ext.success,
+                      delta: snapshot.percentDelta(
+                        stats.outgoing,
+                        prev.outgoing,
+                      ),
+                      showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                     ),
                   ),
                   Expanded(
@@ -244,6 +263,11 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                       label: 'Cevaplanan',
                       value: '${stats.answered}',
                       color: ext.accent,
+                      delta: snapshot.percentDelta(
+                        stats.answered,
+                        prev.answered,
+                      ),
+                      showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                     ),
                   ),
                   Expanded(
@@ -252,6 +276,12 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                       label: 'Cevapsız',
                       value: '${stats.missed}',
                       color: ext.danger,
+                      delta: snapshot.percentDelta(
+                        stats.missed,
+                        prev.missed,
+                      ),
+                      showDelta: snapshot.period == CallKpiPeriod.thisMonth,
+                      invertDeltaColors: true,
                     ),
                   ),
                 ],
@@ -270,16 +300,37 @@ class _KpiMini extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    this.delta,
+    this.showDelta = false,
+    this.invertDeltaColors = false,
   });
 
   final IconData icon;
   final String label;
   final String value;
   final Color color;
+  final int? delta;
+  final bool showDelta;
+  final bool invertDeltaColors;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final d = delta;
+    Widget? deltaChip;
+    if (showDelta && d != null) {
+      final positive = d >= 0;
+      final good = invertDeltaColors ? !positive : positive;
+      final sign = positive ? '+' : '';
+      deltaChip = Text(
+        '$sign$d%',
+        style: TextStyle(
+          color: good ? ext.success : ext.danger,
+          fontSize: DesignTokens.fontSizeXs,
+          fontWeight: FontWeight.w700,
+        ),
+      );
+    }
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -293,6 +344,7 @@ class _KpiMini extends StatelessWidget {
             fontSize: DesignTokens.fontSizeMd,
           ),
         ),
+        if (deltaChip != null) deltaChip,
         Text(
           label,
           style: TextStyle(
@@ -407,6 +459,148 @@ class PremiumCallSearchRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Sıralama satırı — mockup: “Sırala: Son arama” + liste görünümü.
+class PremiumCallListToolbar extends StatelessWidget {
+  const PremiumCallListToolbar({
+    super.key,
+    required this.sortMode,
+    required this.onSortChanged,
+    this.trailing,
+  });
+
+  final CallListSortMode sortMode;
+  final ValueChanged<CallListSortMode> onSortChanged;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.screenEdgePadding,
+        DesignTokens.space1,
+        DesignTokens.screenEdgePadding,
+        DesignTokens.space1,
+      ),
+      child: Row(
+        children: [
+          PopupMenuButton<CallListSortMode>(
+            initialValue: sortMode,
+            onSelected: onSortChanged,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.sort_rounded, size: 18, color: ext.textSecondary),
+                const SizedBox(width: 6),
+                Text(
+                  'Sırala: ${sortMode.labelTr}',
+                  style: TextStyle(
+                    color: ext.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: DesignTokens.fontSizeSm,
+                  ),
+                ),
+                Icon(Icons.expand_more_rounded,
+                    size: 18, color: ext.textSecondary),
+              ],
+            ),
+            itemBuilder: (context) => CallListSortMode.values
+                .map(
+                  (m) => PopupMenuItem(
+                    value: m,
+                    child: Text(m.labelTr),
+                  ),
+                )
+                .toList(),
+          ),
+          const Spacer(),
+          Icon(Icons.view_list_rounded, color: ext.accent, size: 22),
+          const SizedBox(width: DesignTokens.space2),
+          Tooltip(
+            message: 'Izgara görünümü — yakında',
+            child: Icon(Icons.grid_view_rounded,
+                color: ext.textTertiary.withValues(alpha: 0.45), size: 22),
+          ),
+          const SizedBox(width: DesignTokens.space2),
+          Tooltip(
+            message: 'Grafik görünümü — yakında',
+            child: Icon(Icons.bar_chart_rounded,
+                color: ext.textTertiary.withValues(alpha: 0.45), size: 22),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: DesignTokens.space2),
+            trailing!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// CRM / bu cihaz kaynak filtresi.
+class PremiumCallSourceFilterStrip extends StatelessWidget {
+  const PremiumCallSourceFilterStrip({
+    super.key,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final CallListSource selected;
+  final ValueChanged<CallListSource> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 34,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.screenEdgePadding,
+        ),
+        itemCount: CallListSource.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final src = CallListSource.values[i];
+          return PremiumFilterChip(
+            label: src.labelTr,
+            selected: selected == src,
+            onTap: () => onSelected(src),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// iOS / platform kısıt bilgisi — danışman listesi üstü.
+class PremiumCallsPlatformHint extends StatelessWidget {
+  const PremiumCallsPlatformHint({super.key, required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.screenEdgePadding,
+        0,
+        DesignTokens.screenEdgePadding,
+        DesignTokens.space1,
+      ),
+      child: Text(
+        message,
+        style: TextStyle(
+          color: ext.textTertiary,
+          fontSize: DesignTokens.fontSizeXs,
+          fontWeight: FontWeight.w500,
+          height: 1.35,
+        ),
       ),
     );
   }

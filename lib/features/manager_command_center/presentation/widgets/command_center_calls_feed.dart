@@ -12,6 +12,8 @@ import 'package:emlakmaster_mobile/features/manager_command_center/presentation/
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_calls_display_provider.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_stream_providers.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/utils/command_center_call_filter.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
@@ -136,11 +138,16 @@ class _CommandCenterCallsFeedState extends ConsumerState<CommandCenterCallsFeed>
         final locals =
             ref.watch(localCallRecordsStreamProvider).valueOrNull ?? [];
 
-        final filtered = filterCommandCenterCalls(
+        var filtered = filterCommandCenterCalls(
           docs: docs,
           filters: filters,
           customerFullNameById: customerFullNameById,
         );
+        if (filters.kpiPeriod == CallKpiPeriod.thisMonth) {
+          filtered =
+              CallKpiPeriodLogic.filterDocs(filtered, filters.kpiPeriod).toList();
+        }
+        CallListSortLogic.sortFirestoreDocs(filtered, filters.sortMode);
         onFilteredDocsChanged(filtered);
 
         final listBottomInset =
@@ -158,7 +165,14 @@ class _CommandCenterCallsFeedState extends ConsumerState<CommandCenterCallsFeed>
         if (filtered.isEmpty) {
           final hasAnyDocs = docs.isNotEmpty;
           final l10n = AppLocalizations.of(context);
-          return CustomScrollView(
+          return RefreshIndicator(
+            color: AppThemeExtension.of(context).accent,
+            onRefresh: () async {
+              ref.invalidate(commandCenterCallsStreamProvider(callsScope));
+              ref.invalidate(
+                  commandCenterCallsStaleCacheProvider(callsScope));
+            },
+            child: CustomScrollView(
             slivers: [
               ...chrome,
               SliverFillRemaining(
@@ -207,15 +221,23 @@ class _CommandCenterCallsFeedState extends ConsumerState<CommandCenterCallsFeed>
                       ),
               ),
             ],
+            ),
           );
         }
 
-        return CustomScrollView(
+        return RefreshIndicator(
+          color: AppThemeExtension.of(context).accent,
+          onRefresh: () async {
+            ref.invalidate(commandCenterCallsStreamProvider(callsScope));
+            ref.invalidate(commandCenterCallsStaleCacheProvider(callsScope));
+          },
+          child: CustomScrollView(
           cacheExtent: 480,
           slivers: [
             ...chrome,
             ...scopeSliversBuilder(context, feedData, listBottomInset),
           ],
+          ),
         );
       },
     );

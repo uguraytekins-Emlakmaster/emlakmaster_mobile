@@ -79,4 +79,51 @@ abstract final class CrmCallRecordHelpers {
     if (isHandoffPending(data)) return 'Sonuç bekleniyor';
     return 'Kayıt süreci';
   }
+
+  static bool isMissedOutcome(Map<String, dynamic> data) {
+    final oc = (data['outcome'] as String? ?? data['callOutcome'] as String? ?? '')
+        .toLowerCase();
+    return oc == 'missed' ||
+        oc == 'no_answer' ||
+        oc == 'busy' ||
+        oc == 'failed' ||
+        oc == 'cevapsiz';
+  }
+
+  static bool isAnsweredOutcome(Map<String, dynamic> data) {
+    if (isMissedOutcome(data)) return false;
+    if (isHandoffPending(data)) return false;
+    final oc = (data['outcome'] as String? ?? data['callOutcome'] as String? ?? '')
+        .trim();
+    if (oc.isEmpty) return hasCaptureCompleted(data);
+    return oc == 'reached' ||
+        oc == 'connected' ||
+        oc == 'completed' ||
+        oc == 'appointment_set' ||
+        oc == 'offer_sent' ||
+        oc == 'callback_scheduled';
+  }
+
+  /// Kayıt dinleme URL’si (varsa).
+  static String? playableRecordingUrl(Map<String, dynamic> data) {
+    for (final key in const [
+      'recordingUrl',
+      'recording_url',
+      'audioUrl',
+      'audio_url',
+      'mediaUrl',
+      'media_url',
+    ]) {
+      final v = data[key];
+      if (v is String && v.trim().isNotEmpty) return v.trim();
+    }
+    return null;
+  }
+
+  static String formatDurationMmSs(int? durationSec) {
+    if (durationSec == null || durationSec <= 0) return '';
+    final m = durationSec ~/ 60;
+    final s = durationSec % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
 }

@@ -6,26 +6,22 @@ import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
-import 'package:emlakmaster_mobile/features/calls/domain/call_confidence.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_record_firestore_match.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_sync_ui_state.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_card_memory_hints.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_contextual_insight.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_record_premium_tile.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_status_icon.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_operating_card.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/crm_call_record_list_item.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Tek CRM çağrı satırı — slidable aksiyonlar ve yerel senkron rozeti.
 class CommandCenterCrmRecordTile extends ConsumerWidget {
@@ -51,13 +47,14 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
     final data = doc.data();
     final id = doc.id;
     final agentId = CrmCallRecordHelpers.agentIdOf(data);
+    final direction = data['direction'] as String? ??
+        data['callDirection'] as String? ??
+        '';
+    final isIncoming = direction == 'incoming';
     final duration = data['durationSec'] as num?;
-    final durationStr = duration != null ? '${duration.toInt()} sn' : null;
     final outcomeStr = CrmCallRecordHelpers.outcomeDisplayTrDefault(data);
     final rawPhone = (data['phoneNumber'] ?? data['phone'] ?? '').toString();
     final hasDigits = rawPhone.replaceAll(RegExp(r'\D'), '').isNotEmpty;
-    final formattedPhone =
-        hasDigits ? CrmCallRecordDisplay.formatPhone(rawPhone) : '—';
     final contactName = CrmCallRecordDisplay.contactNameFromCallData(data);
     final custId = CrmCallRecordHelpers.customerIdOf(data);
     final resolvedCustomerName =
@@ -70,12 +67,6 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
       contactDisplayName: contactName,
       rawPhone: hasDigits ? rawPhone : null,
     );
-    final phoneUnder = CrmCallRecordDisplay.shouldShowPhoneUnderTitle(
-      title: title,
-      formattedPhone: formattedPhone,
-    )
-        ? formattedPhone
-        : null;
     final createdAt = data['createdAt'];
     String timeStr = '—';
     if (createdAt is Timestamp) {
@@ -84,24 +75,22 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
           '${dt.day}.${dt.month}.${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
     }
     final cap = CrmCallRecordHelpers.captureStatusTr(data);
-    final shortNote = CrmCallRecordDisplay.notePreviewFromFirestoreData(
-      data,
-      maxLen: 80,
-    );
     final advisorPart = CrmCallRecordDisplay.advisorContext(
       advisorAgentId: agentId,
       currentUid: currentUid,
       agentNames: agentNames,
     );
-    final contextLine = CrmCallRecordDisplay.contextLine(
-      advisorPart: advisorPart,
-      dateTime: timeStr,
-      duration: durationStr,
+    final directionDuration = CallRecordPremiumTile.formatDirectionDuration(
+      isIncoming: isIncoming,
+      durationSec: duration?.toInt(),
     );
-    final foot = CrmCallRecordDisplay.technicalFootnote(
-      firestoreDocId: id,
-      customerId: custId,
-    );
+    final metaParts = <String>[
+      if (advisorPart.trim().isNotEmpty) advisorPart,
+      if (timeStr != '—') timeStr,
+    ];
+    final metaLine = metaParts.isEmpty ? null : metaParts.join(' · ');
+    final statusLabel =
+        cap.trim().isNotEmpty && cap != '—' ? cap : null;
     final localMatch = matchLocalCallRecordForFirestoreDoc(
       locals: locals,
       docId: id,
@@ -125,95 +114,75 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
       );
     }
     final ext = AppThemeExtension.of(context);
-    final identityHint = (custId == null || custId.isEmpty) &&
-            (contactName?.trim().isEmpty ?? true)
-        ? 'Yeni kişi · Müşteri kartına bağlı değil'
-        : null;
     final callable =
         hasDigits && OutboundPhoneDial.isLikelyCallablePhone(rawPhone);
     final hasCustomerSlide = custId != null && custId.isNotEmpty;
-    final rowInsight = CallSurfaceContextualInsight.forFirestoreData(
-      data,
-      notePreview: shortNote,
-      hasCallablePhone: callable,
-    );
-    final cardRhythm = CallSurfaceCardRhythmLogic.forFirestore(data);
-    final showPriorityRail =
-        CallSurfacePriorityMarkers.railForFirestore(data);
-    final memoryHint =
-        CallCardMemoryHints.forFirestore(data, notePreview: shortNote);
-    final confidenceKind = CallConfidenceLabels.resolveForRecord(
-      startedFromScreen: data['startedFromScreen'] as String?,
-      outcome: (data['outcome'] as String?) ?? (data['callOutcome'] as String?),
-      quickOutcomeCode: data['quickOutcomeCode'] as String?,
-      memoryHint: memoryHint,
-    );
-    final cidTrim = custId?.trim();
+
+    final playLabel = CrmCallRecordHelpers.formatDurationMmSs(duration?.toInt());
+    final recordingUrl = CrmCallRecordHelpers.playableRecordingUrl(data);
+    final hasRecording =
+        recordingUrl != null && recordingUrl.trim().isNotEmpty;
+    final hasPlay = hasRecording;
+    final hasDetail =
+        !hasPlay && playLabel.isNotEmpty;
+    final customerLinkHint =
+        (custId == null || custId.isEmpty) ? 'Müşteri kartı yok' : null;
+
+    void openActions() {
+      showCallIdentityQuickActionsSheet(
+        context,
+        rawPhone: rawPhone,
+        customerId: custId,
+        displayLabel: title,
+        firestoreCallDocId: id,
+        onOpenCustomerDirectory: () {
+          AppFeedback.lightImpact();
+          ref
+              .read(mainShellShortcutProvider.notifier)
+              .enqueue(MainShellShortcut.openHomeTab);
+          context.go(AppRouter.routeHome);
+        },
+      );
+    }
+
+    void onPlayTap() {
+      unawaited(launchUrl(
+        Uri.parse(recordingUrl!.trim()),
+        mode: LaunchMode.externalApplication,
+      ));
+    }
+
+    void onDetailTap() {
+      context.push(
+        AppRouter.routeCallSummary,
+        extra: {'callDocId': id},
+      );
+    }
 
     final card = Semantics(
       label: 'Çağrı kaydı: $title',
       button: true,
       child: CrmCallOperatingCard(
-      dense: true,
-      rhythm: cardRhythm,
-      showPriorityRail: showPriorityRail,
-      child: CrmCallRecordListItem(
         dense: true,
-        title: title,
-        phoneSubtitle: phoneUnder,
-        outcomeLabel: outcomeStr,
-        captureLabel: cap,
-        contextLine: contextLine,
-        notePreview: shortNote,
-        technicalFootnote: foot,
-        identityFootnote: identityHint,
-        contextualInsight: rowInsight,
-        memoryHint: memoryHint,
-        confidenceKind: confidenceKind,
-        onOpenCustomerCard: cidTrim != null && cidTrim.isNotEmpty
-            ? () => context.push('/customer/$cidTrim')
-            : null,
-        onIdentityTap: callable
-            ? () => showCallIdentityQuickActionsSheet(
-                  context,
-                  rawPhone: rawPhone,
-                  customerId: custId,
-                  displayLabel: title,
-                  firestoreCallDocId: id,
-                  onOpenCustomerDirectory: () {
-                    AppFeedback.lightImpact();
-                    ref
-                        .read(mainShellShortcutProvider.notifier)
-                        .enqueue(MainShellShortcut.openHomeTab);
-                    context.go(AppRouter.routeHome);
-                  },
-                )
-            : null,
-        onIdentityLongPress: callable
-            ? () {
-                AppFeedback.mediumImpact();
-                startCrmOutboundCall(
-                  context,
-                  phone: rawPhone,
-                  customerId: custId,
-                  startedFromScreen: 'command_center',
-                );
-              }
-            : null,
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: ext.accent.withValues(alpha: 0.078),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusSm + 2),
-            border: Border.all(
-              color: ext.accent.withValues(alpha: 0.20),
-            ),
-          ),
-          child: Icon(Icons.call_rounded, color: ext.accent, size: 18),
+        child: CallRecordPremiumTile(
+          title: title,
+          directionDuration: directionDuration,
+          outcomeLabel: outcomeStr,
+          statusLabel: statusLabel,
+          metaLine: metaLine,
+          leadingIcon: isIncoming
+              ? Icons.call_received_rounded
+              : Icons.call_made_rounded,
+          leadingColor: isIncoming ? ext.success : ext.info,
+          customerLinkHint: customerLinkHint,
+          onMenu: callable ? openActions : null,
+          onPlay: hasPlay ? onPlayTap : null,
+          onDetail: hasDetail ? onDetailTap : null,
+          playDurationLabel:
+              (hasPlay || hasDetail) && playLabel.isNotEmpty ? playLabel : null,
+          trailing: trailing,
+          onTap: callable ? openActions : null,
         ),
-        trailing: trailing,
-      ),
       ),
     );
 
