@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_trend_chart.dart';
 import 'package:flutter/material.dart';
 
 /// KPI kartı “Detaylı özet” — dönem karşılaştırmalı özet.
@@ -109,6 +110,8 @@ class _CallKpiDetailSheetBody extends StatelessWidget {
                   color: ext.textSecondary,
                 ),
           ),
+          const SizedBox(height: DesignTokens.space3),
+          CallKpiTrendChart(snapshot: snapshot),
           const SizedBox(height: DesignTokens.space3),
           const Divider(height: 1),
           row('Gelen', c.incoming, p.incoming),

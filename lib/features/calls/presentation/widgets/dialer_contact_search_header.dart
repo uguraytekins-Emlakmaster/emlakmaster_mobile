@@ -231,7 +231,7 @@ class _DialerContactSearchHeaderState extends State<DialerContactSearchHeader> {
                 return ListTile(
                   dense: true,
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                      const EdgeInsets.symmetric(horizontal: 12),
                   leading: CircleAvatar(
                     radius: 18,
                     backgroundColor: t.keyFill,

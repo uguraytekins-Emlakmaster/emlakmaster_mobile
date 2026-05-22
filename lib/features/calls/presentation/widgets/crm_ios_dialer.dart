@@ -141,7 +141,6 @@ class _CrmIosDialerShellState extends ConsumerState<CrmIosDialerShell> {
                   context,
                   title: 'Ülke kodu',
                   message: 'Şu an giden aramalar +90 Türkiye formatında başlar.',
-                  type: PremiumActionFeedbackType.info,
                 );
               },
             ),
@@ -315,7 +314,6 @@ class _CrmIosDialerShellState extends ConsumerState<CrmIosDialerShell> {
                                     title: 'Bekletme',
                                     message:
                                         'Görüşme başladığında bekletme sistem telefonundan yönetilir.',
-                                    type: PremiumActionFeedbackType.info,
                                   );
                                 }
                               },

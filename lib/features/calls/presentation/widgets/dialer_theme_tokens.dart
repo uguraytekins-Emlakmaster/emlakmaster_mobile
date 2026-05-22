@@ -89,7 +89,6 @@ class DialerThemeTokens {
       inkSplash: base.inkSplash,
       inkHighlight: base.inkHighlight,
       callButtonShadow: base.callButtonShadow,
-      accentGlow: const Color(0xFFD4AF37),
     );
   }
 }

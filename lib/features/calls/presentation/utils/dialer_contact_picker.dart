@@ -26,7 +26,6 @@ Future<String?> pickDialerContactPhone(BuildContext context) async {
         title: 'Rehber izni reddedildi',
         message:
             'İzin verirseniz kişi listesinden numara seçebilirsiniz; aksi halde tuş takımından girebilirsiniz.',
-        type: PremiumActionFeedbackType.info,
       );
       return null;
     case DialerContactsLoadResult.granted:
@@ -40,7 +39,6 @@ Future<String?> pickDialerContactPhone(BuildContext context) async {
       context,
       title: 'Telefonlu kişi yok',
       message: 'Rehberinizde kayıtlı telefon numarası bulunamadı.',
-      type: PremiumActionFeedbackType.info,
     );
     return null;
   }

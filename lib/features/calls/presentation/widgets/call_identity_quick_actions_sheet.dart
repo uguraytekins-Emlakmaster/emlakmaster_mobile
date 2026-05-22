@@ -83,7 +83,7 @@ Future<void> showCallIdentityQuickActionsSheet(
               ),
             if (docId != null && docId.isNotEmpty) ...[
               const SizedBox(height: DesignTokens.space4),
-              _SectionLabel('Hızlı not'),
+              const _SectionLabel('Hızlı not'),
               const SizedBox(height: DesignTokens.space2),
               Wrap(
                 spacing: DesignTokens.space2,
@@ -190,7 +190,7 @@ Future<void> showCallIdentityQuickActionsSheet(
               ),
             ],
             const SizedBox(height: DesignTokens.space4),
-            _SectionLabel('İletişim'),
+            const _SectionLabel('İletişim'),
             const SizedBox(height: DesignTokens.space2),
             _ActionGrid(
               children: [
@@ -272,7 +272,7 @@ Future<void> showCallIdentityQuickActionsSheet(
               ],
             ),
             const SizedBox(height: DesignTokens.space4),
-            _SectionLabel('CRM'),
+            const _SectionLabel('CRM'),
             const SizedBox(height: DesignTokens.space2),
             Consumer(
               builder: (context, ref, _) => _SheetTile(

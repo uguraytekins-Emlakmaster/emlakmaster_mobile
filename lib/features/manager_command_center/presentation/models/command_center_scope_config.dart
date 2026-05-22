@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_view_scope.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +14,7 @@ class CommandCenterScopeConfig {
     required this.currentUid,
     required this.customerFullNameById,
     required this.listBottomInset,
+    this.viewMode = CallListViewMode.list,
     required this.onClearFilters,
     this.onDrillAgent,
     this.onDrillCustomer,
@@ -25,6 +27,7 @@ class CommandCenterScopeConfig {
   final String? currentUid;
   final Map<String, String> customerFullNameById;
   final double listBottomInset;
+  final CallListViewMode viewMode;
   final VoidCallback onClearFilters;
   final void Function(String agentId)? onDrillAgent;
   final void Function(String customerId)? onDrillCustomer;

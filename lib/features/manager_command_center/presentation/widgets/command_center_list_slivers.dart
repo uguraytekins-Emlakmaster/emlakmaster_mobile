@@ -7,8 +7,16 @@ import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_re
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_callback_work_mode_cue.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_group_summary_tile.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_record_row_summary.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_detail_sheet.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_trend_chart.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_record_grid_tile.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_banner.dart';
+import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
+import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/domain/crm_call_record_helpers.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_chrome_config.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_scope_config.dart';
@@ -165,10 +173,28 @@ abstract final class CommandCenterListSlivers {
             ),
           ),
         ),
+      if (chrome.viewMode == CallListViewMode.chart)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.screenEdgePadding,
+              DesignTokens.space1,
+              DesignTokens.screenEdgePadding,
+              DesignTokens.space1,
+            ),
+            child: PremiumSurfaceCard(
+              goldBorder: true,
+              padding: const EdgeInsets.all(DesignTokens.space3),
+              child: CallKpiTrendChart(snapshot: kpiSnapshot),
+            ),
+          ),
+        ),
       SliverToBoxAdapter(
         child: PremiumCallListToolbar(
           sortMode: chrome.sortMode,
           onSortChanged: chrome.onSortChanged,
+          viewMode: chrome.viewMode,
+          onViewModeChanged: chrome.onViewModeChanged,
         ),
       ),
       if (chrome.quickFilter == CallSurfaceQuickFilter.callback &&
@@ -183,6 +209,9 @@ abstract final class CommandCenterListSlivers {
     BuildContext context, {
     required CommandCenterScopeConfig config,
   }) {
+    if (config.viewMode == CallListViewMode.chart) {
+      return const [];
+    }
     switch (config.scope) {
       case CommandCenterViewScope.consultant:
         return _consultantGroupedSlivers(context, config);
@@ -191,6 +220,36 @@ abstract final class CommandCenterListSlivers {
       case CommandCenterViewScope.all:
       case CommandCenterViewScope.pending:
         final nowMs = DateTime.now().millisecondsSinceEpoch;
+        if (config.viewMode == CallListViewMode.grid) {
+          return [
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                DesignTokens.space4,
+                DesignTokens.space1,
+                DesignTokens.space4,
+                config.listBottomInset,
+              ),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: DesignTokens.space2,
+                  crossAxisSpacing: DesignTokens.space2,
+                  childAspectRatio: 0.92,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => RepaintBoundary(
+                    child: _commandCenterGridCell(
+                      context,
+                      doc: config.filtered[index],
+                      customerFullNameById: config.customerFullNameById,
+                    ),
+                  ),
+                  childCount: config.filtered.length,
+                ),
+              ),
+            ),
+          ];
+        }
         return [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
@@ -424,5 +483,32 @@ abstract final class CommandCenterListSlivers {
         ),
       ),
     ];
+  }
+
+  static Widget _commandCenterGridCell(
+    BuildContext context, {
+    required QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    required Map<String, String> customerFullNameById,
+  }) {
+    final row = CallRecordRowSummary.fromFirestore(doc, customerFullNameById);
+    return CallRecordGridTile(
+      title: row.title,
+      directionDuration: row.directionDuration,
+      outcomeLabel: row.outcomeLabel,
+      onTap: () => showCallIdentityQuickActionsSheet(
+        context,
+        rawPhone: row.rawPhone,
+        customerId: row.customerId,
+        displayLabel: row.title,
+        firestoreCallDocId: row.firestoreDocId,
+        onOpenCustomerDirectory: () {
+          AppFeedback.lightImpact();
+          ProviderScope.containerOf(context)
+              .read(mainShellShortcutProvider.notifier)
+              .enqueue(MainShellShortcut.openHomeTab);
+          context.go(AppRouter.routeHome);
+        },
+      ),
+    );
   }
 }

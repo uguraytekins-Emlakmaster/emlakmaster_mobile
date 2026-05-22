@@ -28,6 +28,8 @@ class CommandCenterChromeConfig {
     required this.onSortChanged,
     required this.kpiPeriod,
     required this.onKpiPeriodTap,
+    this.viewMode = CallListViewMode.list,
+    this.onViewModeChanged,
     this.onKpiDetailTap,
     this.onEksikKayitChipTap,
     this.eksikKayitChipSelected = false,
@@ -54,6 +56,8 @@ class CommandCenterChromeConfig {
   final ValueChanged<CallListSortMode> onSortChanged;
   final CallKpiPeriod kpiPeriod;
   final VoidCallback onKpiPeriodTap;
+  final CallListViewMode viewMode;
+  final ValueChanged<CallListViewMode>? onViewModeChanged;
   final VoidCallback? onKpiDetailTap;
   final VoidCallback? onEksikKayitChipTap;
   final bool eksikKayitChipSelected;

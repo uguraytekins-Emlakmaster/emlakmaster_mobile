@@ -89,6 +89,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
   CallSurfaceQuickFilter _managerQuickFilter = CallSurfaceQuickFilter.all;
   bool _kpiExpanded = false;
   CallListSortMode _sortMode = CallListSortMode.lastCall;
+  CallListViewMode _viewMode = CallListViewMode.list;
   CallKpiPeriod _kpiPeriod = CallKpiPeriod.thisMonth;
 
   @override
@@ -225,6 +226,8 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
         },
         sortMode: _sortMode,
         onSortChanged: (m) => setState(() => _sortMode = m),
+        viewMode: _viewMode,
+        onViewModeChanged: (m) => setState(() => _viewMode = m),
         kpiPeriod: _kpiPeriod,
         onKpiPeriodTap: _cycleKpiPeriod,
         onEksikKayitChipTap: _toggleEksikKayitScope,
@@ -265,6 +268,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           currentUid: currentUid,
           customerFullNameById: customerFullNameById,
           listBottomInset: listBottomInset,
+          viewMode: _viewMode,
           onClearFilters: _clearFilters,
           onDrillAgent: _drillToAgent,
           onDrillCustomer: _drillToCustomer,

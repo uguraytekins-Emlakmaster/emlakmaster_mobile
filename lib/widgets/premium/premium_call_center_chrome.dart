@@ -470,11 +470,15 @@ class PremiumCallListToolbar extends StatelessWidget {
     super.key,
     required this.sortMode,
     required this.onSortChanged,
+    this.viewMode = CallListViewMode.list,
+    this.onViewModeChanged,
     this.trailing,
   });
 
   final CallListSortMode sortMode;
   final ValueChanged<CallListSortMode> onSortChanged;
+  final CallListViewMode viewMode;
+  final ValueChanged<CallListViewMode>? onViewModeChanged;
   final Widget? trailing;
 
   @override
@@ -519,24 +523,66 @@ class PremiumCallListToolbar extends StatelessWidget {
                 .toList(),
           ),
           const Spacer(),
-          Icon(Icons.view_list_rounded, color: ext.accent, size: 22),
-          const SizedBox(width: DesignTokens.space2),
-          Tooltip(
-            message: 'Izgara görünümü — yakında',
-            child: Icon(Icons.grid_view_rounded,
-                color: ext.textTertiary.withValues(alpha: 0.45), size: 22),
+          _ViewModeIcon(
+            mode: CallListViewMode.list,
+            selected: viewMode,
+            icon: Icons.view_list_rounded,
+            onTap: onViewModeChanged,
           ),
           const SizedBox(width: DesignTokens.space2),
-          Tooltip(
-            message: 'Grafik görünümü — yakında',
-            child: Icon(Icons.bar_chart_rounded,
-                color: ext.textTertiary.withValues(alpha: 0.45), size: 22),
+          _ViewModeIcon(
+            mode: CallListViewMode.grid,
+            selected: viewMode,
+            icon: Icons.grid_view_rounded,
+            onTap: onViewModeChanged,
+          ),
+          const SizedBox(width: DesignTokens.space2),
+          _ViewModeIcon(
+            mode: CallListViewMode.chart,
+            selected: viewMode,
+            icon: Icons.bar_chart_rounded,
+            onTap: onViewModeChanged,
           ),
           if (trailing != null) ...[
             const SizedBox(width: DesignTokens.space2),
             trailing!,
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _ViewModeIcon extends StatelessWidget {
+  const _ViewModeIcon({
+    required this.mode,
+    required this.selected,
+    required this.icon,
+    this.onTap,
+  });
+
+  final CallListViewMode mode;
+  final CallListViewMode selected;
+  final IconData icon;
+  final ValueChanged<CallListViewMode>? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final active = mode == selected;
+    final color = active
+        ? ext.accent
+        : ext.textTertiary.withValues(alpha: onTap == null ? 0.35 : 0.55);
+    return Tooltip(
+      message: mode.labelTr,
+      child: InkWell(
+        onTap: onTap == null
+            ? null
+            : () {
+                if (!active) onTap!(mode);
+              },
+        borderRadius: BorderRadius.circular(8),
+        child: Icon(icon, color: color, size: 22),
       ),
     );
   }

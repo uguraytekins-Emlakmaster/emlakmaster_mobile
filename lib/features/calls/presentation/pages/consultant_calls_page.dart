@@ -10,13 +10,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
+import 'package:emlakmaster_mobile/features/calls/application/call_recording_playback.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_source.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_record_row_summary.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_trend_chart.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_record_grid_tile.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/consultant_calls_search_filter.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/android_call_log_sync_cta.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_detail_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_pending_strip.dart';
-import 'package:emlakmaster_mobile/widgets/premium/premium_call_center_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
@@ -61,8 +64,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 /// Danışmanın tüm çağrıları (gelen/giden), numaralar, toplu veri export ve toplu SMS.
 class ConsultantCallsPage extends ConsumerStatefulWidget {
   const ConsultantCallsPage({super.key});
@@ -79,6 +80,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
   CallSurfaceQuickFilter _quickFilter = CallSurfaceQuickFilter.all;
   bool _kpiExpanded = false;
   CallListSortMode _sortMode = CallListSortMode.lastCall;
+  CallListViewMode _viewMode = CallListViewMode.list;
   CallKpiPeriod _kpiPeriod = CallKpiPeriod.thisMonth;
   bool _selectionMode = false;
   CallListSource _listSource = CallListSource.all;
@@ -179,6 +181,44 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
           ),
         child,
       ],
+    );
+  }
+
+  Widget _consultantGridCell(
+    BuildContext context, {
+    required int index,
+    required List<LocalCallRecord> filteredLocals,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> filteredDocs,
+    required Map<String, String> customerNames,
+  }) {
+    final CallRecordRowSummary row;
+    if (index < filteredLocals.length) {
+      row = CallRecordRowSummary.fromLocal(
+        filteredLocals[index],
+        customerNames,
+      );
+    } else {
+      row = CallRecordRowSummary.fromFirestore(
+        filteredDocs[index - filteredLocals.length],
+        customerNames,
+      );
+    }
+    return RepaintBoundary(
+      child: CallRecordGridTile(
+        title: row.title,
+        directionDuration: row.directionDuration,
+        outcomeLabel: row.outcomeLabel,
+        onTap: () => showCallIdentityQuickActionsSheet(
+          context,
+          rawPhone: row.rawPhone,
+          customerId: row.customerId,
+          displayLabel: row.title,
+          firestoreCallDocId: row.firestoreDocId,
+          onCallListMutated: () =>
+              ref.invalidate(consultantCallsStreamProvider),
+          onOpenCustomerDirectory: _openCustomerDirectoryForLinking,
+        ),
+      ),
     );
   }
 
@@ -648,7 +688,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
             context,
             snapshot: kpiSnapshot,
           ),
-          showHeroTotal: true,
         ),
       ),
       SliverToBoxAdapter(
@@ -664,10 +703,28 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
           onSelected: (i) => setState(() => _quickFilter = _quickFilterOrder[i]),
         ),
       ),
+      if (_viewMode == CallListViewMode.chart)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.screenEdgePadding,
+              DesignTokens.space1,
+              DesignTokens.screenEdgePadding,
+              DesignTokens.space1,
+            ),
+            child: PremiumSurfaceCard(
+              goldBorder: true,
+              padding: const EdgeInsets.all(DesignTokens.space3),
+              child: CallKpiTrendChart(snapshot: kpiSnapshot),
+            ),
+          ),
+        ),
       SliverToBoxAdapter(
         child: PremiumCallListToolbar(
           sortMode: _sortMode,
           onSortChanged: (m) => setState(() => _sortMode = m),
+          viewMode: _viewMode,
+          onViewModeChanged: (m) => setState(() => _viewMode = m),
           trailing: _selectionMode || _selectedIds.isNotEmpty
               ? TextButton(
                   onPressed: _exitSelectionMode,
@@ -1156,6 +1213,53 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                 totalCount: totalCount,
                 pendingLocalCount: pendingLocalCount,
               ),
+              if (_viewMode == CallListViewMode.chart)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      DesignTokens.space4,
+                      DesignTokens.space2,
+                      DesignTokens.space4,
+                      listBottomInset,
+                    ),
+                    child: Text(
+                      'Kayıt listesi için liste veya ızgara görünümüne geçin.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: textSecondary,
+                      ),
+                    ),
+                  ),
+                )
+              else if (_viewMode == CallListViewMode.grid)
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    DesignTokens.space4,
+                    DesignTokens.space1,
+                    DesignTokens.space4,
+                    listBottomInset,
+                  ),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: DesignTokens.space2,
+                      crossAxisSpacing: DesignTokens.space2,
+                      childAspectRatio: 0.92,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _consultantGridCell(
+                        context,
+                        index: index,
+                        filteredLocals: filteredLocals,
+                        filteredDocs: filteredDocs,
+                        customerNames: customerNames,
+                      ),
+                      childCount: visibleTotal,
+                    ),
+                  ),
+                )
+              else
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(
                   DesignTokens.space4,
@@ -1664,8 +1768,14 @@ class _FirestoreCallRecordCard extends StatelessWidget {
     }
 
     void onPlayTap() {
-      final url = recordingUrl!.trim();
-      unawaited(launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication));
+      unawaited(
+        CallRecordingPlayback.playOrOpenDetail(
+          context: context,
+          recordingUrl: recordingUrl,
+          firestoreDocId: firestoreDocId,
+          onFallback: openActions,
+        ),
+      );
     }
 
     void onDetailTap() {

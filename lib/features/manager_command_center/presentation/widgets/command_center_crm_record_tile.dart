@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/features/calls/application/call_recording_playback.dart';
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
 import 'package:emlakmaster_mobile/features/calls/data/local_call_record.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/local_call_record_firestore_match.dart';
@@ -21,7 +22,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Tek CRM çağrı satırı — slidable aksiyonlar ve yerel senkron rozeti.
 class CommandCenterCrmRecordTile extends ConsumerWidget {
@@ -146,10 +146,14 @@ class CommandCenterCrmRecordTile extends ConsumerWidget {
     }
 
     void onPlayTap() {
-      unawaited(launchUrl(
-        Uri.parse(recordingUrl!.trim()),
-        mode: LaunchMode.externalApplication,
-      ));
+      unawaited(
+        CallRecordingPlayback.playOrOpenDetail(
+          context: context,
+          recordingUrl: recordingUrl,
+          firestoreDocId: id,
+          onFallback: openActions,
+        ),
+      );
     }
 
     void onDetailTap() {

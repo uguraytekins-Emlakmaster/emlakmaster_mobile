@@ -22,6 +22,26 @@ extension CallListSortModeLabels on CallListSortMode {
   }
 }
 
+/// Çağrı geçmişi görünüm modu.
+enum CallListViewMode {
+  list,
+  grid,
+  chart,
+}
+
+extension CallListViewModeLabels on CallListViewMode {
+  String get labelTr {
+    switch (this) {
+      case CallListViewMode.list:
+        return 'Liste';
+      case CallListViewMode.grid:
+        return 'Izgara';
+      case CallListViewMode.chart:
+        return 'Grafik';
+    }
+  }
+}
+
 abstract final class CallListSortLogic {
   CallListSortLogic._();
 
