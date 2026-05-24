@@ -40,6 +40,8 @@ import 'package:emlakmaster_mobile/features/hot_lead_radar/presentation/widgets/
 import 'package:emlakmaster_mobile/features/missed_opportunities/presentation/widgets/missed_opportunities_panel.dart';
 import 'package:emlakmaster_mobile/features/opportunity_radar/presentation/widgets/opportunity_radar_widget.dart';
 import 'package:emlakmaster_mobile/features/region_demand_map/presentation/widgets/region_demand_map_panel.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/top_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,7 +76,7 @@ class DashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     try {
-      final ext = AppThemeExtension.of(context);
+      final premium = PremiumThemeExtension.of(context);
       // Granular select: tam Map değişince değil, ilgili bayraklar değişince yeniden çiz.
       final compact = ref.watch(
         featureFlagsProvider.select(
@@ -133,17 +135,18 @@ class DashboardPage extends ConsumerWidget {
 
       // Kabuk zaten [Scaffold] + alt nav; iç içe ikinci [Scaffold] bazı cihazlarda
       // PageView gövdesinde boyama/hit-test sapmalarına yol açabiliyor.
-      final content = Material(
-        color: ext.background,
+      final content = PremiumShellBackdrop(
+        child: Material(
+        color: Colors.transparent,
         child: SafeArea(
           child: SovereignArcWatermark(
             child: RepaintBoundary(
               child: ColoredBox(
-                color: ext.background,
+                color: Colors.transparent,
                 child: RefreshIndicator(
                   onRefresh: () => _onRefresh(ref),
-                  color: ext.accent,
-                  backgroundColor: ext.surface,
+                  color: premium.champagneGold,
+                  backgroundColor: premium.glassSurface,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.only(bottom: scrollBottomPad),
@@ -340,7 +343,8 @@ class DashboardPage extends ConsumerWidget {
             ),
           ),
         ),
-      );
+      ),
+    );
       return WelcomePatronOverlay(
         child: ShellScreenReadyListener(
           screenName: 'admin_dashboard',

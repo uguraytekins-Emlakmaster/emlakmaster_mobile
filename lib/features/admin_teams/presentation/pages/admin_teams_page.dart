@@ -9,6 +9,8 @@ import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,11 +22,12 @@ class AdminTeamsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentRole = ref.watch(currentRoleOrNullProvider) ?? AppRole.guest;
     if (!FeaturePermission.canManageTeams(currentRole)) {
-      return Scaffold(
-        backgroundColor: AppThemeExtension.of(context).background,
+      return PremiumShellBackdrop(
+        child: Scaffold(
+        backgroundColor: Colors.transparent,
         appBar: emlakAppBar(
           context,
-          backgroundColor: AppThemeExtension.of(context).background,
+          backgroundColor: Colors.transparent,
           foregroundColor: AppThemeExtension.of(context).textPrimary,
           title: Text(AppLocalizations.of(context).t('title_admin_teams')),
         ),
@@ -41,16 +44,19 @@ class AdminTeamsPage extends ConsumerWidget {
             ),
           ),
         ),
+      ),
       );
     }
 
     final l10n = AppLocalizations.of(context);
+    final premium = PremiumThemeExtension.of(context);
 
-    return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: emlakAppBar(
         context,
-        backgroundColor: AppThemeExtension.of(context).background,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: Text(l10n.t('title_admin_teams')),
         actions: [
@@ -64,7 +70,7 @@ class AdminTeamsPage extends ConsumerWidget {
       body: ref.watch(adminTeamsListProvider).when(
         loading: () => Center(
           child: CircularProgressIndicator(
-            color: AppThemeExtension.of(context).accent,
+            color: premium.champagneGold,
           ),
         ),
         error: (e, _) => Center(
@@ -156,14 +162,16 @@ class AdminTeamsPage extends ConsumerWidget {
                 bottom: DesignTokens.space4,
                 child: FloatingActionButton(
                   onPressed: () => _showCreateTeamDialog(context, ref),
-                  backgroundColor: AppThemeExtension.of(context).accent,
-                  child: Icon(Icons.add_rounded, color: AppThemeExtension.of(context).onAccentLight),
+                  backgroundColor: premium.champagneGold,
+                  child: Icon(Icons.add_rounded,
+                      color: AppThemeExtension.of(context).onAccentLight),
                 ),
               ),
             ],
           );
         },
       ),
+    ),
     );
   }
 

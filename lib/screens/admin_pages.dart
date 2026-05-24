@@ -15,6 +15,7 @@ import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/shared/widgets/skeleton_loader.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,13 +31,13 @@ class AdminEconomyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final ext = AppThemeExtension.of(context);
-    final bg = ext.background;
     final fg = ext.textPrimary;
-    return Scaffold(
-      backgroundColor: bg,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: emlakAppBar(
         context,
-        backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
+        backgroundColor: Colors.transparent,
         foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
         title: const Text('Piyasa Nabzı'),
       ),
@@ -62,6 +63,7 @@ class AdminEconomyPage extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -79,10 +81,10 @@ class AdminReportsPage extends ConsumerWidget {
     final canViewCallCenter = FeaturePermission.canViewAllCalls(role);
 
     final ext = AppThemeExtension.of(context);
-    final bg = ext.background;
     final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
-    return Scaffold(
-      backgroundColor: bg,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: ShellScreenReadyListener(
         screenName: 'admin_reports',
         provider: adminReportsPerfProvider,
@@ -191,6 +193,7 @@ class AdminReportsPage extends ConsumerWidget {
       ),
       ),
       ),
+    ),
     );
   }
 }

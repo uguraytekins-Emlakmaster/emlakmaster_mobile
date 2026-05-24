@@ -7,6 +7,8 @@ import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/admin_teams/presentation/providers/admin_teams_providers.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,19 +29,21 @@ class _AdminTeamDetailPageState extends ConsumerState<AdminTeamDetailPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final premium = PremiumThemeExtension.of(context);
 
-    return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: emlakAppBar(
         context,
-        backgroundColor: AppThemeExtension.of(context).background,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: Text(l10n.t('title_team_detail')),
       ),
       body: ref.watch(adminTeamDocProvider(widget.teamId)).when(
         loading: () => Center(
           child: CircularProgressIndicator(
-            color: AppThemeExtension.of(context).accent,
+            color: premium.champagneGold,
           ),
         ),
         error: (e, _) => Center(child: Text(e.toString())),
@@ -70,6 +74,7 @@ class _AdminTeamDetailPageState extends ConsumerState<AdminTeamDetailPage> {
           );
         },
       ),
+    ),
     );
   }
 

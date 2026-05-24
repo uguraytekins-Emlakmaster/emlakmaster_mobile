@@ -8,6 +8,8 @@ import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/pro
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/war_room/data/war_room_providers.dart';
 import 'package:emlakmaster_mobile/features/war_room/presentation/widgets/war_room_command_center.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/unauthorized_screen.dart';
@@ -20,12 +22,18 @@ class WarRoomPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final roleAsync = ref.watch(displayRoleProvider);
-    final ext = AppThemeExtension.of(context);
     return roleAsync.when(
-      loading: () => Scaffold(
-        backgroundColor: ext.background,
-        body: Center(child: CircularProgressIndicator(color: ext.accent)),
+      loading: () {
+        final premium = PremiumThemeExtension.of(context);
+        return PremiumShellBackdrop(
+        child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: CircularProgressIndicator(color: premium.champagneGold),
+        ),
       ),
+    );
+      },
       error: (_, __) => const UnauthorizedScreen(
         message: 'Yetki bilgisi alınamadı.',
       ),
@@ -44,9 +52,9 @@ class WarRoomPage extends ConsumerWidget {
 class _WarRoomBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bg = AppThemeExtension.of(context).background;
-    return Scaffold(
-      backgroundColor: bg,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
@@ -62,6 +70,7 @@ class _WarRoomBody extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -70,8 +79,9 @@ class _ResurrectionStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    final surface = ext.surface;
-    final border = ext.border;
+    final premium = PremiumThemeExtension.of(context);
+    final surface = premium.glassSurface;
+    final border = premium.glassBorder;
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -117,7 +127,7 @@ class _ResurrectionStrip extends ConsumerWidget {
                       avatar: Icon(
                         Icons.person_outline_rounded,
                         size: DesignTokens.iconSm,
-                        color: ext.accent,
+                        color: premium.champagneGold,
                       ),
                       label: Text(
                         '${e.customerName ?? e.customerId} · ${e.daysSilent ?? 0}g',
@@ -146,7 +156,7 @@ class _ResurrectionStrip extends ConsumerWidget {
               child: Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: ext.accent,
+                  color: premium.champagneGold,
                 ),
               ),
             ),
@@ -172,13 +182,14 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space2),
       child: Row(
         children: [
           Icon(icon,
               size: DesignTokens.iconMd,
-              color: ext.accent.withValues(alpha: 0.85)),
+              color: premium.champagneGold.withValues(alpha: 0.85)),
           const SizedBox(width: DesignTokens.space2),
           Text(
             title,

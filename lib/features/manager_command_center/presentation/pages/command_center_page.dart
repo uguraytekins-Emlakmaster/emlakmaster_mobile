@@ -17,6 +17,8 @@ import 'package:emlakmaster_mobile/features/manager_command_center/presentation/
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_view_scope.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/widgets/command_center_calls_feed.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/widgets/command_center_list_slivers.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_call_center_chrome.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
@@ -37,18 +39,16 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
   @override
   Widget build(BuildContext context) {
     final roleAsync = ref.watch(displayRoleProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final loadingBg = isDark
-        ? AppThemeExtension.of(context).background
-        : AppThemeExtension.of(context).background;
+    final premium = PremiumThemeExtension.of(context);
     return roleAsync.when(
-      loading: () => Scaffold(
-        backgroundColor: loadingBg,
+      loading: () => PremiumShellBackdrop(
+        child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: Center(
           child: CircularProgressIndicator(
-              color: AppThemeExtension.of(context).accent),
+              color: premium.champagneGold),
         ),
+      ),
       ),
       error: (_, __) => const UnauthorizedScreen(
         message: 'Yetki bilgisi alınamadı. Oturumu yenileyip yeniden deneyin.',
@@ -280,14 +280,15 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = AppThemeExtension.of(context).background;
-    final fg = AppThemeExtension.of(context).textPrimary;
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
+    final fg = ext.textPrimary;
     return ShellTabBackBinding(
       onExitSearch: _handleExitSearch,
       onCloseFilters: _handleCloseFilters,
-      child: Scaffold(
-        backgroundColor: bg,
+      child: PremiumShellBackdrop(
+        child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           bottom: false,
           child: Column(
@@ -298,7 +299,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 subtitle: 'CRM çağrı merkezi',
                 actions: [
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_horiz_rounded, color: ext.accent),
+                    icon: Icon(Icons.more_horiz_rounded, color: premium.champagneGold),
                     onSelected: (value) {
                       if (value == 'csv') {
                         final docs = _lastFilteredDocs;
@@ -369,6 +370,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

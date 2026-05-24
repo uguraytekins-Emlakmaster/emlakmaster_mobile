@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/providers/dashboard_shell_providers.dart';
 import 'package:emlakmaster_mobile/features/war_room/data/war_room_providers.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -23,32 +24,15 @@ class WarRoomCommandCenter extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final surface = isDark
-        ? AppThemeExtension.of(context).surface
-        : AppThemeExtension.of(context).surface;
+    final premium = PremiumThemeExtension.of(context);
+    final surface = premium.glassSurface;
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= _breakpointWide;
-    final gradientColors = isDark
-        ? [
-            AppThemeExtension.of(context).background,
-            AppThemeExtension.of(context).background.withValues(alpha: 0.4)
-          ]
-        : [
-            AppThemeExtension.of(context).background,
-            AppThemeExtension.of(context).background
-          ];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
-        ),
-      ),
+      color: Colors.transparent,
       child: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -57,7 +41,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
             ref.invalidate(dealsCountProvider);
             ref.invalidate(officeMonthlyTargetProvider);
           },
-          color: AppThemeExtension.of(context).accent,
+          color: premium.champagneGold,
           backgroundColor: surface,
           child: CustomScrollView(
             slivers: [
@@ -69,7 +53,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
                       const PremiumNavLeading(),
                       const SizedBox(width: 4),
                       Icon(Icons.military_tech_rounded,
-                          color: AppThemeExtension.of(context).accent,
+                          color: premium.champagneGold,
                           size: 28),
                       const SizedBox(width: 12),
                       Expanded(

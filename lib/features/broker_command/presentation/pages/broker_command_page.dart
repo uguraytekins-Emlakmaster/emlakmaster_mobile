@@ -15,6 +15,8 @@ import 'package:emlakmaster_mobile/features/region_demand_map/presentation/widge
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,10 +31,13 @@ class BrokerCommandPage extends ConsumerWidget {
     final roleAsync = ref.watch(displayRoleProvider);
     return roleAsync.when(
       loading: () {
-        final ext = AppThemeExtension.of(context);
-        return Scaffold(
-          backgroundColor: ext.background,
-          body: Center(child: CircularProgressIndicator(color: ext.accent)),
+        final premium = PremiumThemeExtension.of(context);
+        return PremiumShellBackdrop(
+          child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(
+              child: CircularProgressIndicator(color: premium.champagneGold)),
+        ),
         );
       },
       error: (_, __) => const UnauthorizedScreen(
@@ -56,6 +61,7 @@ class _BrokerCommandBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     const h = DashboardLayoutTokens.horizontalPadding;
     final paddedContentW = MediaQuery.sizeOf(context).width - 2 * h;
     const gapOp = DashboardLayoutTokens.gapOperational;
@@ -67,21 +73,22 @@ class _BrokerCommandBody extends StatelessWidget {
           child: child,
         );
 
-    return Scaffold(
-      backgroundColor: ext.background,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: emlakAppBar(
         context,
         title: Text(
           ProductLabels.operationsDeck,
           style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w700),
         ),
-        backgroundColor: ext.background,
+        backgroundColor: Colors.transparent,
         foregroundColor: ext.textPrimary,
       ),
       body: RefreshIndicator(
         onRefresh: () async {},
-        color: ext.accent,
-        backgroundColor: ext.surface,
+        color: premium.champagneGold,
+        backgroundColor: premium.glassSurface,
         child: ListView(
           padding: EdgeInsets.only(
             top: DashboardLayoutTokens.pageTopInset,
@@ -113,7 +120,7 @@ class _BrokerCommandBody extends StatelessWidget {
                       Text(
                         'KOMUTA',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: ext.accent.withValues(alpha: 0.85),
+                              color: premium.champagneGold.withValues(alpha: 0.85),
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.4,
                             ),
@@ -182,7 +189,7 @@ class _BrokerCommandBody extends StatelessWidget {
                       Text(
                         'Kadro ritmi',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: ext.accent,
+                              color: premium.champagneGold,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -202,6 +209,7 @@ class _BrokerCommandBody extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

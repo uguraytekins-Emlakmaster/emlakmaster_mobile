@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_perm
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/admin_consultants/presentation/providers/admin_consultants_providers.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Admin → Danışman Yönetimi: consultant-tier listesi, filtreler (rol/ekip), düzenleme ve yeni danışman bilgisi.
@@ -21,11 +22,12 @@ class AdminConsultantsPage extends ConsumerWidget {
     final currentRole = ref.watch(currentRoleOrNullProvider) ?? AppRole.guest;
     if (!FeaturePermission.canManageConsultants(currentRole)) {
       final l10n = AppLocalizations.of(context);
-      return Scaffold(
-        backgroundColor: AppThemeExtension.of(context).background,
+      return PremiumShellBackdrop(
+        child: Scaffold(
+        backgroundColor: Colors.transparent,
         appBar: emlakAppBar(
           context,
-          backgroundColor: AppThemeExtension.of(context).background,
+          backgroundColor: Colors.transparent,
           foregroundColor: AppThemeExtension.of(context).textPrimary,
           title: Text(l10n.t('title_admin_consultants')),
         ),
@@ -42,16 +44,18 @@ class AdminConsultantsPage extends ConsumerWidget {
             ),
           ),
         ),
+      ),
       );
     }
 
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: emlakAppBar(
         context,
-        backgroundColor: AppThemeExtension.of(context).background,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppThemeExtension.of(context).textPrimary,
         title: Text(l10n.t('title_admin_consultants')),
         actions: [
@@ -71,6 +75,7 @@ class AdminConsultantsPage extends ConsumerWidget {
           canEditTeamRole: FeaturePermission.canManageTeams(currentRole),
         ),
       ),
+    ),
     );
   }
 
