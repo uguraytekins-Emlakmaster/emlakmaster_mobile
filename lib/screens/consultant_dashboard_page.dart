@@ -34,6 +34,7 @@ import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,7 +47,6 @@ class ConsultantDashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     try {
-      final ext = AppThemeExtension.of(context);
       final premium = PremiumThemeExtension.of(context);
       final lean = ref.watch(
         featureFlagsProvider.select(
@@ -91,10 +91,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _DashboardHeroHeader(
-                          greeting: greeting,
-                          tagline: 'Danışman Paneli',
-                        ),
+                        _ConsultantDashboardHeroCard(greeting: greeting),
                         const SizedBox(height: DesignTokens.space4),
                         PremiumSearchBar(
                           hintText: 'Müşteri, ilan veya görev ara…',
@@ -127,81 +124,91 @@ class ConsultantDashboardPage extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(
-                            height: DashboardLayoutTokens.gapHeroToOperational),
-                        DeferredMountSection.dashboardOperational(
+                        const SizedBox(height: DesignTokens.space5),
+                        DeferredMountSection.dashboardPrimary(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const PostCallCaptureDashboardReminder(),
-                              const SizedBox(
-                                  height: DashboardLayoutTokens
-                                      .gapOperationalTight),
-                              const _ConsultantTeamLine(),
-                              const SizedBox(
-                                  height:
-                                      DashboardLayoutTokens.gapOperational),
-                              const _ConsultantActionAnchor(),
-                              const SizedBox(
-                                  height:
-                                      DashboardLayoutTokens.gapOperational),
-                              Text(
-                                'Hızlı durum',
-                                style: AppTypography.sectionLabel(context),
+                              const PremiumSectionHeader(
+                                label: 'Günün özeti',
+                                icon: Icons.insights_rounded,
+                              ),
+                              ShellScreenReadyListener(
+                                screenName: 'consultant_dashboard',
+                                provider: todayCallsCountProvider,
+                                child: const Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _ConsultantKpiBento(),
+                                    SizedBox(
+                                        height: DesignTokens.space5),
+                                    PremiumSectionHeader(
+                                      label: 'Hızlı erişim',
+                                      icon: Icons.grid_view_rounded,
+                                    ),
+                                    _ConsultantQuickNavGrid(),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        DeferredMountSection.dashboardPrimary(
-                          child: ShellScreenReadyListener(
-                            screenName: 'consultant_dashboard',
-                            provider: todayCallsCountProvider,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                const SizedBox(height: DesignTokens.space2),
-                                const _TodayKpiRow(),
-                                const SizedBox(
-                                    height: DashboardLayoutTokens
-                                        .gapOperationalTight),
-                                const AiUsageIndicator(),
-                              const SizedBox(
+                        const DeferredMountSection.dashboardOperational(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              PostCallCaptureDashboardReminder(),
+                              SizedBox(
                                   height: DashboardLayoutTokens
                                       .gapOperationalTight),
-                              const ConsultantPerformanceStrip(),
-                              const SizedBox(
+                              _ConsultantActionAnchor(),
+                            ],
+                          ),
+                        ),
+                        const DeferredMountSection.dashboardPrimary(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(
+                                  height: DashboardLayoutTokens.gapOperational),
+                              PremiumSectionHeader(
+                                label: 'Operasyon',
+                                icon: Icons.bolt_rounded,
+                              ),
+                              AiUsageIndicator(),
+                              SizedBox(
+                                  height: DashboardLayoutTokens
+                                      .gapOperationalTight),
+                              ConsultantPerformanceStrip(),
+                              SizedBox(
                                   height:
                                       DashboardLayoutTokens.gapOperational),
-                              Text(
-                                'Fırsat ve gelir motoru',
-                                style: AppTypography.sectionLabel(context),
+                              PremiumSectionHeader(
+                                label: 'Fırsat ve gelir motoru',
+                                icon: Icons.trending_up_rounded,
                               ),
-                              const SizedBox(height: DesignTokens.space2),
-                              const RevenueIntelligenceDashboardSection(),
-                              const SizedBox(
+                              SizedBox(height: DesignTokens.space2),
+                              RevenueIntelligenceDashboardSection(),
+                              SizedBox(
                                   height: DashboardLayoutTokens
                                       .gapOperationalTight),
-                              const ExecutionRemindersCard(
+                              ExecutionRemindersCard(
                                   surface:
                                       ExecutionReminderSurface.consultant),
-                              const SizedBox(
+                              SizedBox(
                                   height:
                                       DashboardLayoutTokens.gapOperational),
-                              const PriorityCallSignalsCard(),
-                              const SizedBox(
+                              PriorityCallSignalsCard(),
+                              SizedBox(
                                   height:
                                       DashboardLayoutTokens.gapOperational),
-                              const SyncDelayedCustomersDashboardCard(),
-                              const SizedBox(
+                              SyncDelayedCustomersDashboardCard(),
+                              SizedBox(
                                   height:
                                       DashboardLayoutTokens.gapOperational),
-                              const _QuickStatsCard(compact: true),
-                              const SizedBox(
-                                  height:
-                                      DashboardLayoutTokens.gapOperational),
-                              const _WeeklyGoalCard(),
-                              ],
-                            ),
+                              _ConsultantGoalStatsRow(),
+                            ],
                           ),
                         ),
                       ],
@@ -323,100 +330,420 @@ class ConsultantDashboardPage extends ConsumerWidget {
   }
 }
 
-/// Hero katmanı: selam + başlık + günlük bağlam + bildirim.
-class _DashboardHeroHeader extends StatelessWidget {
-  const _DashboardHeroHeader({
-    required this.greeting,
-    required this.tagline,
-  });
+/// Figma-style hero card: gold accent rail, avatar, greeting, date chip, notifications.
+class _ConsultantDashboardHeroCard extends ConsumerWidget {
+  const _ConsultantDashboardHeroCard({required this.greeting});
 
   final String greeting;
-  final String tagline;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
+    final now = DateTime.now();
+    final dateLabel =
+        '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
+
+    return PremiumSurfaceCard(
+      goldBorder: true,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            height: 4,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  premium.champagneGold,
+                  premium.champagneGold.withValues(alpha: 0.15),
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(DesignTokens.radiusCardPrimary),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space4,
+              DesignTokens.space4,
+              DesignTokens.space3,
+              DesignTokens.space3,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2),
+                      child: SessionAvatarButton(size: 52),
+                    ),
+                    Positioned(
+                      right: -1,
+                      bottom: 0,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: ext.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: premium.glassSurface,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: DesignTokens.space3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        greeting,
+                        style: AppTypography.pageEyebrow(context),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: DesignTokens.space1),
+                      Text(
+                        ProductLabels.consultantHome,
+                        style: AppTypography.pageHeading(context).copyWith(
+                          fontSize: DesignTokens.fontSize2xl,
+                          height: 1.1,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: DesignTokens.space2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: DesignTokens.space2,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: premium.champagneGold.withValues(alpha: 0.1),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.radiusPill),
+                          border: Border.all(
+                            color: premium.champagneGold.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Text(
+                          'Bugün · $dateLabel',
+                          style: TextStyle(
+                            color: premium.champagneGold,
+                            fontSize: DesignTokens.fontSizeXs,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => context.push(AppRouter.routeNotifications),
+                  icon: Icon(
+                    Icons.notifications_outlined,
+                    color: premium.champagneGold,
+                    size: 24,
+                  ),
+                  tooltip: AppLocalizations.of(context).t('notifications'),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(
+              DesignTokens.space4,
+              DesignTokens.space2,
+              DesignTokens.space4,
+              DesignTokens.space3,
+            ),
+            child: _ConsultantTeamLine(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 2+1 bento KPI grid — vertical metric cards (Figma executive layout).
+class _ConsultantKpiBento extends ConsumerWidget {
+  const _ConsultantKpiBento();
+
+  static const double _twoColBreakpoint = 340;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final uid =
+        ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    final calls =
+        '${ref.watch(todayCallsCountProvider).valueOrNull ?? 0}';
+    final tasks =
+        '${ref.watch(advisorOpenTasksCountProvider(uid)).valueOrNull ?? 0}';
+    final pipeline =
+        '${ref.watch(advisorPipelineCountProvider(uid)).valueOrNull ?? 0}';
+    final l10n = AppLocalizations.of(context);
+
+    void openCalls() {
+      AppFeedback.lightImpact();
+      context.push(AppRouter.routeConsultantCalls);
+    }
+
+    void openTasks() {
+      AppFeedback.lightImpact();
+      ref
+          .read(mainShellShortcutProvider.notifier)
+          .enqueue(MainShellShortcut.openTasksTab);
+      context.go(AppRouter.routeHome);
+    }
+
+    void openPipeline() {
+      AppFeedback.lightImpact();
+      context.push(AppRouter.routePipeline);
+    }
+
+    PremiumMetricCard metric({
+      required IconData icon,
+      required String label,
+      required String value,
+      required VoidCallback onTap,
+      bool emphasized = false,
+    }) {
+      return PremiumMetricCard(
+        icon: icon,
+        label: label,
+        value: value,
+        onTap: onTap,
+        iconColor: emphasized
+            ? PremiumThemeExtension.of(context).champagneGold
+            : null,
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useTwoCol = constraints.maxWidth < _twoColBreakpoint;
+        if (useTwoCol) {
+          return Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: metric(
+                      icon: Icons.phone_in_talk_rounded,
+                      label: l10n.t('today_calls'),
+                      value: calls,
+                      onTap: openCalls,
+                      emphasized: true,
+                    ),
+                  ),
+                  const SizedBox(width: DesignTokens.space2),
+                  Expanded(
+                    child: metric(
+                      icon: Icons.task_alt_rounded,
+                      label: l10n.t('open_tasks'),
+                      value: tasks,
+                      onTap: openTasks,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: DesignTokens.space2),
+              metric(
+                icon: Icons.account_tree_rounded,
+                label: l10n.t('active_pipeline'),
+                value: pipeline,
+                onTap: openPipeline,
+              ),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: metric(
+                icon: Icons.phone_in_talk_rounded,
+                label: l10n.t('today_calls'),
+                value: calls,
+                onTap: openCalls,
+                emphasized: true,
+              ),
+            ),
+            const SizedBox(width: DesignTokens.space2),
+            Expanded(
+              child: metric(
+                icon: Icons.task_alt_rounded,
+                label: l10n.t('open_tasks'),
+                value: tasks,
+                onTap: openTasks,
+              ),
+            ),
+            const SizedBox(width: DesignTokens.space2),
+            Expanded(
+              child: metric(
+                icon: Icons.account_tree_rounded,
+                label: l10n.t('active_pipeline'),
+                value: pipeline,
+                onTap: openPipeline,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// 2×2 shortcut grid — müşteri, görev, ilan, mesaj.
+class _ConsultantQuickNavGrid extends ConsumerWidget {
+  const _ConsultantQuickNavGrid();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    void goTab(MainShellShortcut shortcut) {
+      AppFeedback.selectionClick();
+      ref.read(mainShellShortcutProvider.notifier).enqueue(shortcut);
+      context.go(AppRouter.routeHome);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cellW = (constraints.maxWidth - DesignTokens.space2) / 2;
+        return Wrap(
+          spacing: DesignTokens.space2,
+          runSpacing: DesignTokens.space2,
+          children: [
+            _ConsultantQuickNavTile(
+              width: cellW,
+              icon: Icons.people_rounded,
+              label: ProductLabels.myCustomers,
+              onTap: () => goTab(MainShellShortcut.openCustomersTab),
+            ),
+            _ConsultantQuickNavTile(
+              width: cellW,
+              icon: Icons.task_alt_rounded,
+              label: ProductLabels.myTasks,
+              onTap: () => goTab(MainShellShortcut.openTasksTab),
+            ),
+            _ConsultantQuickNavTile(
+              width: cellW,
+              icon: Icons.home_work_rounded,
+              label: ProductLabels.listings,
+              onTap: () => goTab(MainShellShortcut.openListingsTab),
+            ),
+            _ConsultantQuickNavTile(
+              width: cellW,
+              icon: Icons.forum_rounded,
+              label: ProductLabels.messageCenter,
+              onTap: () => goTab(MainShellShortcut.openMessageCenterTab),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ConsultantQuickNavTile extends StatelessWidget {
+  const _ConsultantQuickNavTile({
+    required this.width,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final double width;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
     final premium = PremiumThemeExtension.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
+    final ext = AppThemeExtension.of(context);
+    return SizedBox(
+      width: width,
+      child: PremiumCard(
+        padding: const EdgeInsets.symmetric(
+          horizontal: DesignTokens.space3,
+          vertical: DesignTokens.space4,
+        ),
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 2),
-              child: SessionAvatarButton(size: 48),
-            ),
-            Positioned(
-              right: -1,
-              bottom: 0,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: ext.success,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: ext.background, width: 2),
+            Container(
+              padding: const EdgeInsets.all(DesignTokens.space3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: premium.champagneGold.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: premium.champagneGold.withValues(alpha: 0.35),
                 ),
+              ),
+              child: Icon(icon, color: premium.champagneGold, size: 22),
+            ),
+            const SizedBox(height: DesignTokens.space2),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: ext.textPrimary,
+                fontSize: DesignTokens.fontSizeXs,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
               ),
             ),
           ],
         ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
+      ),
+    );
+  }
+}
+
+/// Haftalık hedef + takip istatistiği — yan yana (geniş) veya alt alta (dar).
+class _ConsultantGoalStatsRow extends StatelessWidget {
+  const _ConsultantGoalStatsRow();
+
+  static const double _sideBySideBreakpoint = 520;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= _sideBySideBreakpoint) {
+          return const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                greeting,
-                style: AppTypography.pageEyebrow(context),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: DesignTokens.space1),
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      tagline,
-                      style: AppTypography.pageHeading(context),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(Icons.verified_rounded,
-                      size: 20, color: premium.champagneGold),
-                ],
-              ),
-              const SizedBox(height: DesignTokens.space2),
-              Text(
-                'Bugünkü oyun alanın — çağrı, müşteri ve momentum tek ekranda.',
-                style: AppTypography.meta(context).copyWith(
-                  color: ext.textTertiary,
-                  height: 1.35,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Expanded(child: _WeeklyGoalCard()),
+              SizedBox(width: DesignTokens.space2),
+              Expanded(child: _QuickStatsCard(compact: true)),
             ],
-          ),
-        ),
-        Semantics(
-          label: AppLocalizations.of(context).t('notifications'),
-          button: true,
-          child: IconButton(
-            onPressed: () => context.push(AppRouter.routeNotifications),
-            icon: Icon(
-              Icons.notifications_outlined,
-              color: ext.textSecondary,
-              size: 24,
-            ),
-            tooltip: AppLocalizations.of(context).t('notifications'),
-            visualDensity: VisualDensity.compact,
-          ),
-        ),
-      ],
+          );
+        }
+        return const Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _WeeklyGoalCard(),
+            SizedBox(height: DesignTokens.space2),
+            _QuickStatsCard(compact: true),
+          ],
+        );
+      },
     );
   }
 }
@@ -481,148 +808,155 @@ class _ConsultantActionAnchor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardM);
-    return DecoratedBox(
-      decoration: ext.premiumSurfaceDecoration(
-        goldBorder: true,
-        radius: DashboardLayoutTokens.radiusCardM,
-      ),
-      child: ClipRRect(
-        borderRadius: radius,
-        child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                DesignTokens.space4,
-                DesignTokens.space5,
-                DesignTokens.space4,
-                DesignTokens.space4,
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final narrow = constraints.maxWidth < _narrowActionBreakpoint;
-                  final secondaryBorder =
-                      BorderSide(color: ext.border.withValues(alpha: 0.72));
-                  final secondaryShape = RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                        DashboardLayoutTokens.radiusCardS),
-                  );
-                  ButtonStyle secondaryStyle() => OutlinedButton.styleFrom(
-                        foregroundColor: ext.textPrimary,
-                        side: secondaryBorder,
-                        minimumSize: const Size(0, 48),
-                        padding: EdgeInsets.symmetric(
-                          vertical: narrow ? 14 : 12,
-                          horizontal: narrow ? 10 : 8,
-                        ),
-                        shape: secondaryShape,
-                        visualDensity: VisualDensity.standard,
-                      );
-                  final secondaryChildren = [
-                    Semantics(
-                      button: true,
-                      label: 'Akıllı görüşme ile ara',
-                      child: Tooltip(
-                        message: 'Uygulama içi kayıt oturumu',
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            AppFeedback.selectionClick();
-                            AnalyticsService.instance
-                                .logEvent(AnalyticsEvents.magicCallTap);
-                            context.push(
-                              AppRouter.routeCall,
-                              extra: const {
-                                'inAppCrmSession': true,
-                                'startedFromScreen': 'consultant_dashboard',
-                              },
-                            );
-                          },
-                          style: secondaryStyle(),
-                          icon: Icon(Icons.phone_in_talk_rounded,
-                              size: 22, color: ext.accent),
-                          label: Text(
-                            'Akıllı Görüşme',
-                            style: AppTypography.secondaryButton(context),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (!narrow) const SizedBox(width: DesignTokens.space2),
-                    if (narrow) const SizedBox(height: DesignTokens.space2),
-                    Semantics(
-                      button: true,
-                      label: 'Tüm çağrılarımı aç',
-                      child: Tooltip(
-                        message: 'Kayıtlı çağrı geçmişi',
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            AppFeedback.selectionClick();
-                            AnalyticsService.instance
-                                .logEvent(AnalyticsEvents.consultantCallsTap);
-                            context.push(AppRouter.routeConsultantCalls);
-                          },
-                          style: secondaryStyle(),
-                          icon: Icon(Icons.history_rounded,
-                              size: 22, color: ext.textSecondary),
-                          label: Text(
-                            narrow ? 'Çağrılar' : 'Çağrılarım',
-                            style: AppTypography.secondaryButton(context),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ];
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Bugünün birinci adımı',
-                        style: AppTypography.sectionLabel(context),
-                      ),
-                      const SizedBox(height: DesignTokens.space1),
-                      Text(
-                        narrow
-                            ? 'Bir görüşme günü açar; özet ve görevler ardından akışa düşer.'
-                            : 'Tek bir görüşme günü açar; özet ve görevler hemen ardından akışa düşer.',
-                        style: AppTypography.meta(context).copyWith(
-                          color: ext.textTertiary,
-                          height: 1.35,
-                        ),
-                      ),
-                      const SizedBox(height: DesignTokens.space4),
-                      _PhoneCallPrimaryButton(
-                        onPressed: () {
-                          AppFeedback.mediumImpact();
-                          context.push(
-                            AppRouter.routeCall,
-                            extra: const {
-                              'startedFromScreen': 'consultant_dashboard',
-                            },
-                          );
-                        },
-                      ),
-                      const SizedBox(height: DesignTokens.space3),
-                      if (narrow)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: secondaryChildren,
-                        )
-                      else
-                        Row(
-                          children: [
-                            Expanded(child: secondaryChildren[0]),
-                            secondaryChildren[1],
-                            Expanded(child: secondaryChildren[2]),
-                          ],
-                        ),
-                    ],
-                  );
-                },
+    final premium = PremiumThemeExtension.of(context);
+    return PremiumSurfaceCard(
+      goldBorder: true,
+      padding: const EdgeInsets.all(DesignTokens.space4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < _narrowActionBreakpoint;
+          final secondaryBorder =
+              BorderSide(color: ext.border.withValues(alpha: 0.72));
+          final secondaryShape = RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(DashboardLayoutTokens.radiusCardS),
+          );
+          ButtonStyle secondaryStyle() => OutlinedButton.styleFrom(
+                foregroundColor: ext.textPrimary,
+                side: secondaryBorder,
+                minimumSize: const Size(0, 48),
+                padding: EdgeInsets.symmetric(
+                  vertical: narrow ? 14 : 12,
+                  horizontal: narrow ? 10 : 8,
+                ),
+                shape: secondaryShape,
+                visualDensity: VisualDensity.standard,
+              );
+          final secondaryChildren = [
+            Semantics(
+              button: true,
+              label: 'Akıllı görüşme ile ara',
+              child: Tooltip(
+                message: 'Uygulama içi kayıt oturumu',
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    AppFeedback.selectionClick();
+                    AnalyticsService.instance
+                        .logEvent(AnalyticsEvents.magicCallTap);
+                    context.push(
+                      AppRouter.routeCall,
+                      extra: const {
+                        'inAppCrmSession': true,
+                        'startedFromScreen': 'consultant_dashboard',
+                      },
+                    );
+                  },
+                  style: secondaryStyle(),
+                  icon: Icon(Icons.phone_in_talk_rounded,
+                      size: 22, color: premium.champagneGold),
+                  label: Text(
+                    'Akıllı Görüşme',
+                    style: AppTypography.secondaryButton(context),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
             ),
-        ),
+            SizedBox(
+                height: narrow ? DesignTokens.space2 : DesignTokens.space2),
+            Semantics(
+              button: true,
+              label: 'Tüm çağrılarımı aç',
+              child: Tooltip(
+                message: 'Kayıtlı çağrı geçmişi',
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    AppFeedback.selectionClick();
+                    AnalyticsService.instance
+                        .logEvent(AnalyticsEvents.consultantCallsTap);
+                    context.push(AppRouter.routeConsultantCalls);
+                  },
+                  style: secondaryStyle(),
+                  icon: Icon(Icons.history_rounded,
+                      size: 22, color: ext.textSecondary),
+                  label: Text(
+                    narrow ? 'Çağrılar' : 'Çağrılarım',
+                    style: AppTypography.secondaryButton(context),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ];
+          final header = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const PremiumSectionHeader(
+                label: 'Bugünün birinci adımı',
+                icon: Icons.call_rounded,
+              ),
+              Text(
+                narrow
+                    ? 'Bir görüşme günü açar; özet ve görevler ardından akışa düşer.'
+                    : 'Tek bir görüşme günü açar; özet ve görevler hemen ardından akışa düşer.',
+                style: AppTypography.meta(context).copyWith(
+                  color: ext.textTertiary,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+          final primaryButton = _PhoneCallPrimaryButton(
+            onPressed: () {
+              AppFeedback.mediumImpact();
+              context.push(
+                AppRouter.routeCall,
+                extra: const {
+                  'startedFromScreen': 'consultant_dashboard',
+                },
+              );
+            },
+          );
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                header,
+                const SizedBox(height: DesignTokens.space3),
+                primaryButton,
+                const SizedBox(height: DesignTokens.space3),
+                ...secondaryChildren,
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    header,
+                    const SizedBox(height: DesignTokens.space3),
+                    primaryButton,
+                  ],
+                ),
+              ),
+              const SizedBox(width: DesignTokens.space3),
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: secondaryChildren,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -707,174 +1041,6 @@ class _PhoneCallPrimaryButton extends StatelessWidget {
             },
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Bugünkü hızlı KPI şeridi: çağrı, görev, pipeline.
-class _TodayKpiRow extends ConsumerWidget {
-  const _TodayKpiRow();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ext = AppThemeExtension.of(context);
-    final uid =
-        ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
-    void openCalls() {
-      AppFeedback.lightImpact();
-      context.push(AppRouter.routeConsultantCalls);
-    }
-
-    void openTasks() {
-      AppFeedback.lightImpact();
-      ref
-          .read(mainShellShortcutProvider.notifier)
-          .enqueue(MainShellShortcut.openTasksTab);
-      context.go(AppRouter.routeHome);
-    }
-
-    void openPipeline() {
-      AppFeedback.lightImpact();
-      context.push(AppRouter.routePipeline);
-    }
-
-    final textStyleLabel = TextStyle(
-      color: ext.textSecondary,
-      fontSize: DesignTokens.fontSizeSm,
-      fontWeight: FontWeight.w600,
-    );
-    final textStyleValue = AppTypography.metricValue(context).copyWith(
-      color: ext.textPrimary,
-      fontSize: DesignTokens.fontSizeXl,
-    );
-    return Row(
-      children: [
-        Expanded(
-          child: _KpiChip(
-            icon: Icons.phone_in_talk_rounded,
-            label: AppLocalizations.of(context).t('today_calls'),
-            value:
-                '${ref.watch(todayCallsCountProvider).valueOrNull ?? 0}',
-            labelStyle: textStyleLabel,
-            valueStyle: textStyleValue,
-            onTap: openCalls,
-            emphasized: true,
-          ),
-        ),
-        const SizedBox(width: DesignTokens.space2),
-        Expanded(
-          child: _KpiChip(
-            icon: Icons.task_alt_rounded,
-            label: AppLocalizations.of(context).t('open_tasks'),
-            value:
-                '${ref.watch(advisorOpenTasksCountProvider(uid)).valueOrNull ?? 0}',
-            labelStyle: textStyleLabel,
-            valueStyle: textStyleValue,
-            onTap: openTasks,
-          ),
-        ),
-        const SizedBox(width: DesignTokens.space2),
-        Expanded(
-          child: _KpiChip(
-            icon: Icons.account_tree_rounded,
-            label: AppLocalizations.of(context).t('active_pipeline'),
-            value:
-                '${ref.watch(advisorPipelineCountProvider(uid)).valueOrNull ?? 0}',
-            labelStyle: textStyleLabel,
-            valueStyle: textStyleValue,
-            onTap: openPipeline,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _KpiChip extends StatelessWidget {
-  const _KpiChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.labelStyle,
-    required this.valueStyle,
-    this.onTap,
-    this.emphasized = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final TextStyle labelStyle;
-  final TextStyle valueStyle;
-  final VoidCallback? onTap;
-  final bool emphasized;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    final radius = BorderRadius.circular(DashboardLayoutTokens.radiusCardS);
-    final borderColor =
-        emphasized ? ext.accent.withValues(alpha: 0.45) : ext.borderSubtle;
-    final child = Container(
-      constraints: BoxConstraints(
-        minHeight: emphasized
-            ? DashboardLayoutTokens.minHeightKpi + 4
-            : DashboardLayoutTokens.minHeightKpi,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: emphasized ? DesignTokens.space3 + 1 : DesignTokens.space3,
-        vertical: DesignTokens.space3,
-      ),
-      decoration: ext.premiumSurfaceDecoration(
-        goldBorder: emphasized,
-        radius: DashboardLayoutTokens.radiusCardS,
-        baseColor: emphasized
-            ? ext.accent.withValues(alpha: 0.06)
-            : ext.surfaceElevated,
-      ).copyWith(
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: emphasized ? 20 : 18, color: ext.accent),
-          const SizedBox(width: DesignTokens.space2),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: emphasized
-                      ? valueStyle.copyWith(
-                          fontSize: DesignTokens.fontSizeXl + 2,
-                          fontWeight: FontWeight.w800,
-                        )
-                      : valueStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: DesignTokens.metricLabelGap),
-                Text(label,
-                    style: labelStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-    if (onTap == null) {
-      return child;
-    }
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: radius,
-        onTap: onTap,
-        splashColor: ext.accent.withValues(alpha: 0.12),
-        child: child,
       ),
     );
   }

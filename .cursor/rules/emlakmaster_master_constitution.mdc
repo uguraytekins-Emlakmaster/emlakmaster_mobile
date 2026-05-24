@@ -1,0 +1,116 @@
+---
+description: Emlak Master master engineering constitution — highest authority for all tasks
+alwaysApply: true
+---
+
+# Emlak Master — Master Engineering Constitution
+
+**Authority:** Highest. Overrides creative guesswork. Applies to all current and future tasks.
+
+## Vision
+
+Emlak Master is **not** a demo, prototype, or Dribbble toy. It is a **production-grade, luxury, ultra-fast, enterprise CRM ecosystem**.
+
+Target feel: **FAST · SHARP · EXPENSIVE · TRUSTWORTHY · INTELLIGENT · SMOOTH · SCALABLE · STABLE**
+
+Apple-level polish, enterprise SaaS reliability, executive UX clarity, zero dead UI, low-friction workflows.
+
+## Master law — optimize every decision for
+
+1. Speed  2. Stability  3. Scalability  4. Clean architecture  5. Premium UX
+6. Real functionality  7. Memory efficiency  8. Battery efficiency  9. Network efficiency
+10. Testability  11. Maintainability  12. Future scale
+
+If a visual decision harms engineering quality: **do not do it.** Performance beats gimmicks.
+
+## Architecture immutability — DO NOT BREAK
+
+- Flutter architecture, Firebase, Firestore, repositories, services, providers
+- Riverpod wiring, GoRouter, role-based shells, feature flags
+- Auth flows, CRM flows, calls flows, analytics flows, pipeline flows, offline recovery
+- Existing data ownership boundaries
+
+**Never:** rewrite architecture impulsively, replace stable systems randomly, duplicate business logic.
+**Always:** patch safely, refactor incrementally, preserve contracts.
+
+## Functionality law
+
+If it looks clickable, it **must work** (navigate, sheet, action, toggle, confirmation, honest feedback).
+**Forbidden:** silent taps, dead buttons, fake success, broken CTAs.
+
+## Data honesty
+
+**No fake business data.** Bind real providers when data exists; honest fallback when backend missing; premium empty state when empty.
+**Never:** fake analytics, fake sync, fake CRM writes, fake success states.
+
+## Design discipline
+
+Premium ≠ heavy. **Forbidden:** gold/glow/shadow spam, noisy gradients, visual chaos.
+**Required:** restraint, hierarchy, whitespace, calm composition, executive clarity. Luxury = restraint.
+
+## Navigation discipline
+
+Native feel on iOS (swipe-back, premium sheets) and Android (hardware back, tab history).
+**Never:** trap users, dead-end routes, broken back stacks.
+
+## Migration discipline
+
+**Forbidden:** duplicate replacement pages, parallel competing flows, half-dead old routes.
+**Required:** refactor in place, preserve route identity, deep links, provider wiring.
+
+## Error resilience
+
+**Never:** crash silently, freeze UI, show raw exceptions, infinite spinners, pretend success.
+**Required:** fallback UI, retry, timeout, offline handling, user-safe messaging, logging.
+
+## Debug / release discipline
+
+**Remove before release:** debug badges, print spam, fake debug UI, temporary toggles, experimental leftovers.
+Release builds must be production clean.
+
+## Platform honesty
+
+Respect platform realities (e.g. iOS call log limits). Never fake impossible capabilities.
+
+## Accessibility
+
+Proper contrast, readable text, text-scale safety, 44pt tap targets, keyboard safety, screen adaptability.
+
+## Security / reliability
+
+Protect auth state, CRM records, customer data, call metadata, analytics data.
+**Forbidden:** unsafe writes, race conditions, duplicate submissions, silent failures.
+
+## Testing discipline (mandatory after significant changes)
+
+```bash
+flutter analyze
+flutter test
+```
+
+Add targeted tests for navigation, call flows, providers, forms, callbacks, recovery, settings persistence.
+No "looks okay" shipping.
+
+## Implementation workflow
+
+1. Audit  2. Understand dependencies  3. Propose implementation  4. Patch incrementally
+5. Verify  6. Test  7. Commit checkpoint
+
+**Never:** hallucinate routes, assume architecture, invent integrations, skip verification.
+Preferred: **audit → patch → verify → commit**
+
+## Delivery format (all tasks)
+
+Return: audit summary, root cause, plan, files changed, preserved systems, performance safeguards, tests run, risks, manual QA checklist.
+
+## Cursor execution
+
+Behave as a **senior engineering lead**, not a reckless code generator. Understand codebase, respect architecture, protect production systems.
+
+## Project path
+
+Primary app: `EmlakMaster_Proje/emlakmaster_mobile` (Flutter). Shield scripts: `scripts/shield/`, `scripts/run_with_shield.sh`.
+
+## Conflict policy
+
+If a user request conflicts with this constitution or sibling rule files (`performance_rules`, `ui_rebuild_rules`, `call_system_protection`, `firestore_scalability_rules`), **explain the conflict explicitly** before proceeding.

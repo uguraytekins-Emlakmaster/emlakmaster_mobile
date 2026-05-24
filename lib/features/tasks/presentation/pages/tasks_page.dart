@@ -45,6 +45,13 @@ class _TasksPageState extends ConsumerState<TasksPage> {
   Widget build(BuildContext context) {
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
+    if (uid.isNotEmpty) {
+      ref.listen(advisorTasksDisplayProvider(uid), (previous, next) {
+        if (next.hasValue) {
+          _readyTracker.onContentReady(itemCount: next.value!.length);
+        }
+      });
+    }
     final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
     final premium = PremiumThemeExtension.of(context);
     return PremiumShellBackdrop(
@@ -98,11 +105,6 @@ class _TasksPageState extends ConsumerState<TasksPage> {
               key: ValueKey(_tasksRetryKey),
               builder: (context) {
                 final tasksAsync = ref.watch(advisorTasksDisplayProvider(uid));
-                ref.listen(advisorTasksDisplayProvider(uid), (previous, next) {
-                  if (next.hasValue) {
-                    _readyTracker.onContentReady(itemCount: next.value!.length);
-                  }
-                });
                 if (tasksAsync.isLoading && !tasksAsync.hasValue) {
                   return Center(
                     child: CircularProgressIndicator(

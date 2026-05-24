@@ -1,0 +1,66 @@
+---
+description: Figma-reference UI rebuild discipline — real layout, not recolor passes
+globs: EmlakMaster_Proje/emlakmaster_mobile/lib/**/{screens,features,presentation,widgets}/**
+alwaysApply: false
+---
+
+# UI Rebuild Rules — Emlak Master
+
+Premium UI work is **composition rebuild**, not theme polish.
+
+## Forbidden (incomplete UI work)
+
+- Recoloring old screens only
+- Adding gradients/glass wrappers without changing hierarchy
+- Wrapping existing widgets in `PremiumCard` with same layout
+- Incremental accent swaps (`ext.accent` → `champagneGold`) as the sole change
+- Shipping debug badges/markers in release builds
+
+## Required workflow (one screen at a time)
+
+1. Inspect Figma/reference (`docs/PREMIUM_UI_IMPLEMENTATION_MAP.md`, Figma DNA tokens)
+2. Map **visible sections** in reference vs current screen
+3. Map **real providers/data** — no fake bindings
+4. Rebuild **composition**: hierarchy, spacing, card structure, action placement
+5. Preserve business logic, routes, providers, navigation
+6. Verify all actions work (Functionality law)
+7. Verify responsiveness: small iPhone, wide desktop, dark/light/system
+8. Run `flutter analyze` + `flutter test`
+
+A screen is **not complete** unless: visibly transformed, functionally wired, responsive, tested, performant.
+
+## Premium UI standards
+
+- Use shared kit: `PremiumCard`, `PremiumPageHeader`, `PremiumSectionHeader`, `PremiumMetricCard`, `PremiumSearchBar`, `PremiumShellBackdrop` (sparingly — not double-wrapped)
+- Tokens: `PremiumColorTokens`, `PremiumThemeExtension`, `DesignTokens`, `AppTypography`
+- Restraint: champagne gold for accent/hierarchy, not decoration spam
+
+## Responsive rules
+
+- `LayoutBuilder` / breakpoints for bento grids and split action rows
+- Respect `DashboardLayoutTokens.shellScrollBottomPadding` for bottom nav clearance
+- Text scale: test with enlarged system text; avoid fixed heights that clip
+
+## Safe area & keyboard
+
+- `SafeArea` on full-screen scaffolds; transparent scaffold + backdrop pattern OK
+- Forms: keyboard inset, dismiss on tap outside, no trapped focus
+
+## Bottom sheet discipline
+
+- Use `showPremiumDraggableBottomSheet`, `PremiumBottomSheetHandle`, `PremiumSheetHeader`
+- Dismiss: swipe + close affordance; no dead sheet actions
+
+## Migration (UI)
+
+- Refactor **in place** in the routed widget file
+- **No** duplicate parallel screens or competing routes
+- Do not change `app_router.dart` unless wiring fix is explicitly required
+
+## Screen delivery checklist
+
+For each rebuilt screen document: file changed, old vs new layout structure, visible differences, preserved providers, actions verified, QA notes (narrow/wide/dark/light).
+
+## Reference
+
+Figma: `DeSfzgIX9eKCeguS0sBxQX` · Inventory: `docs/product_screen_inventory.csv`
