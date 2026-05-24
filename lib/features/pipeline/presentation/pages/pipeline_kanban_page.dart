@@ -75,6 +75,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return PremiumShellBackdrop(
+      debugScreenName: 'pipeline_kanban',
       child: Scaffold(
       backgroundColor: Colors.transparent,
       body: CustomScrollView(

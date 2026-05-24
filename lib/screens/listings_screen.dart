@@ -48,6 +48,7 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
     );
 
     return PremiumShellBackdrop(
+      debugScreenName: 'listings',
       child: Scaffold(
       backgroundColor: Colors.transparent,
       body: ShellScreenReadyListener(

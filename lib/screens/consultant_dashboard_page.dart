@@ -71,6 +71,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
       final greeting = '$salutation, $firstName';
 
       return PremiumShellBackdrop(
+        debugScreenName: 'consultant_dashboard',
         child: Material(
         color: Colors.transparent,
         child: SafeArea(

@@ -173,6 +173,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
       onExitSearch: _handleExitSearch,
       onClearSelection: _handleClearSelection,
       child: PremiumShellBackdrop(
+        debugScreenName: 'customer_list',
         child: Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(

@@ -287,6 +287,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
       onExitSearch: _handleExitSearch,
       onCloseFilters: _handleCloseFilters,
       child: PremiumShellBackdrop(
+        debugScreenName: 'command_center',
         child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(

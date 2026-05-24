@@ -48,6 +48,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
     final premium = PremiumThemeExtension.of(context);
     return PremiumShellBackdrop(
+      debugScreenName: 'tasks',
       child: Scaffold(
       backgroundColor: Colors.transparent,
       body: uid.isEmpty

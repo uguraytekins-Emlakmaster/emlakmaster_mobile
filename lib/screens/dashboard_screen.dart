@@ -136,6 +136,7 @@ class DashboardPage extends ConsumerWidget {
       // Kabuk zaten [Scaffold] + alt nav; iç içe ikinci [Scaffold] bazı cihazlarda
       // PageView gövdesinde boyama/hit-test sapmalarına yol açabiliyor.
       final content = PremiumShellBackdrop(
+        debugScreenName: 'admin_dashboard',
         child: Material(
         color: Colors.transparent,
         child: SafeArea(

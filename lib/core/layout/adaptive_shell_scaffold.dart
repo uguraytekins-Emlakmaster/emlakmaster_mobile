@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
+import 'package:emlakmaster_mobile/core/debug/ui_v2_debug.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -271,6 +272,15 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     final type = safeIndex < widget.pages.length
         ? widget.pages[safeIndex].runtimeType.toString()
         : 'out_of_range';
+    final tabId = widget.tabIds != null &&
+            safeIndex >= 0 &&
+            safeIndex < widget.tabIds!.length
+        ? widget.tabIds![safeIndex].toString()
+        : '$safeIndex';
+    logUiV2Active(
+      'shell_tab',
+      detail: 'tabId=$tabId label="$label" widget=$type',
+    );
     _shellLog(
       'body activeIndex=$safeIndex label="$label" pageType=$type pageLen=$len materialized=$_materialized',
     );
@@ -560,6 +570,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     }
     _maybeLogActivePage(safeIndex);
     final body = PremiumShellBackdrop(
+      debugScreenName: 'shell',
+      debugDetail: widget.title,
       child: Column(
       children: [
         if (widget.title != null && isWide)
