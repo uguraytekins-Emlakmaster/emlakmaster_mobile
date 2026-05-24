@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'dart:async';
 import 'dart:math' as math;
@@ -544,11 +545,11 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: ext.background,
+      backgroundColor: Colors.transparent,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Positioned.fill(child: _CallSessionBackdrop(ext: ext)),
+          Positioned.fill(child: _CallSessionBackdrop()),
           if (_isDialMode) _buildDialMode(bottomInset),
           if (!_isDialMode)
             _InCallSessionBody(
@@ -630,25 +631,13 @@ String _formatElapsed(int seconds) {
 }
 
 class _CallSessionBackdrop extends StatelessWidget {
-  const _CallSessionBackdrop({required this.ext});
-
-  final AppThemeExtension ext;
+  const _CallSessionBackdrop();
 
   @override
   Widget build(BuildContext context) {
+    final premium = PremiumThemeExtension.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            ext.background,
-            Color.lerp(ext.background, ext.surfaceElevated, 0.42)!,
-            ext.background,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-      ),
+      decoration: BoxDecoration(gradient: premium.heroGradient),
     );
   }
 }

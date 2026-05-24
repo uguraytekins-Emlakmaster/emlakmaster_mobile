@@ -1,4 +1,6 @@
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_card.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/crm_call_record_display.dart';
@@ -24,6 +26,7 @@ class PostCallWizardContextStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final linked = linkedCustomerId != null && linkedCustomerId!.trim().isNotEmpty;
     final rawPhone = phoneNumber?.trim() ?? '';
     final formatted = rawPhone.isNotEmpty
@@ -53,25 +56,13 @@ class PostCallWizardContextStrip extends ConsumerWidget {
         ? 'Çağrı oturumu: ${CrmCallRecordDisplay.ellipsedMiddle(callSessionId!.trim(), head: 5)}'
         : null;
 
-    return Container(
-      width: double.infinity,
+    return PremiumCard(
+      goldBorder: true,
       padding: const EdgeInsets.fromLTRB(
         DesignTokens.space4,
         DesignTokens.space3,
         DesignTokens.space4,
         DesignTokens.space3,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardPrimary),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            ext.surfaceElevated.withValues(alpha: 0.95),
-            ext.surface.withValues(alpha: 0.88),
-          ],
-        ),
-        border: Border.all(color: ext.borderSubtle.withValues(alpha: 0.65)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

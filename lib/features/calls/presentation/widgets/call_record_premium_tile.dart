@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_outcome_style.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +61,7 @@ class CallRecordPremiumTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final outcome = CallOutcomeStyle.resolve(ext, outcomeLabel);
     final showStatus = !CallOutcomeStyle.shouldHideStatusPill(
       statusLabel: statusLabel,
@@ -92,7 +94,7 @@ class CallRecordPremiumTile extends StatelessWidget {
                 onChanged: onCheckChanged == null
                     ? null
                     : (v) => onCheckChanged!(v ?? false),
-                activeColor: ext.accent,
+                activeColor: premium.champagneGold,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),
@@ -213,7 +215,7 @@ class CallRecordPremiumTile extends StatelessWidget {
               if (showPlay) ...[
                 const SizedBox(height: 2),
                 Material(
-                  color: ext.accent.withValues(alpha: 0.12),
+                  color: premium.champagneGold.withValues(alpha: 0.12),
                   shape: const CircleBorder(),
                   child: InkWell(
                     onTap: onPlay,
@@ -222,7 +224,7 @@ class CallRecordPremiumTile extends StatelessWidget {
                       padding: const EdgeInsets.all(8),
                       child: Icon(
                         Icons.play_arrow_rounded,
-                        color: ext.accent,
+                        color: premium.champagneGold,
                         size: 22,
                       ),
                     ),

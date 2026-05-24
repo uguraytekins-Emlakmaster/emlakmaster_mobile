@@ -30,6 +30,8 @@ import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment_input.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_wizard_context_strip.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -946,9 +948,11 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
 
-    return Scaffold(
-      backgroundColor: ext.background,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Stack(
           children: [
@@ -977,6 +981,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
                               style:
                                   AppTypography.cardHeading(context).copyWith(
                                 color: ext.textPrimary,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: DesignTokens.space1),
@@ -1082,6 +1087,7 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -1100,6 +1106,7 @@ class _WizardProgressHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Row(
       children: List.generate(3, (i) {
         final active = i == currentStep;
@@ -1118,12 +1125,12 @@ class _WizardProgressHeader extends StatelessWidget {
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
                   decoration: BoxDecoration(
                     color: active
-                        ? ext.accent.withValues(alpha: 0.18)
-                        : ext.surfaceElevated.withValues(alpha: 0.55),
+                        ? premium.champagneGold.withValues(alpha: 0.18)
+                        : premium.glassSurface.withValues(alpha: 0.55),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: active
-                          ? ext.accent.withValues(alpha: 0.5)
+                          ? premium.champagneGold.withValues(alpha: 0.5)
                           : ext.borderSubtle,
                     ),
                   ),
@@ -1131,7 +1138,8 @@ class _WizardProgressHeader extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (done) ...[
-                        Icon(Icons.check_rounded, size: 14, color: ext.accent),
+                        Icon(Icons.check_rounded,
+                            size: 14, color: premium.champagneGold),
                         const SizedBox(width: 4),
                       ],
                       Flexible(
@@ -1182,6 +1190,7 @@ class _PostCallWizardBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final ime = MediaQuery.viewInsetsOf(context).bottom;
     return Padding(
       padding: EdgeInsets.only(
@@ -1220,7 +1229,7 @@ class _PostCallWizardBottomBar extends StatelessWidget {
                 FilledButton(
                   onPressed: onNext,
                   style: FilledButton.styleFrom(
-                    backgroundColor: ext.accent,
+                    backgroundColor: premium.champagneGold,
                     foregroundColor: ext.onBrand,
                   ),
                   child: Text(
@@ -1248,7 +1257,7 @@ class _PostCallWizardBottomBar extends StatelessWidget {
               ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: ext.accent,
+                backgroundColor: premium.champagneGold,
                 foregroundColor: ext.onBrand,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -1321,6 +1330,7 @@ class _SkippedAnalysisCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -1354,7 +1364,7 @@ class _SkippedAnalysisCard extends StatelessWidget {
               icon: const Icon(Icons.home_rounded, size: 20),
               label: const Text('Ana sayfaya dön'),
               style: FilledButton.styleFrom(
-                backgroundColor: ext.accent,
+                backgroundColor: premium.champagneGold,
                 foregroundColor: ext.onBrand,
               ),
             ),

@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_pe
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_trend_chart.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_source.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
 
@@ -55,6 +56,8 @@ class PremiumCallCenterPageHeader extends StatelessWidget {
                     fontSize: compact
                         ? DesignTokens.fontSizeXl
                         : DesignTokens.fontSize2xl,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.35,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -103,6 +106,7 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final stats = snapshot.current;
     final prev = snapshot.previous;
     final chartPrimary = listViewMode == CallListViewMode.chart;
@@ -175,7 +179,7 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                     child: Text(
                       'Detaylı özet >',
                       style: TextStyle(
-                        color: ext.accent,
+                        color: premium.champagneGold,
                         fontSize: DesignTokens.fontSizeSm,
                         fontWeight: FontWeight.w600,
                       ),

@@ -9,6 +9,8 @@ import 'package:emlakmaster_mobile/features/calls/data/call_local_hive_store.dar
 import 'package:emlakmaster_mobile/features/calls/data/post_call_capture_draft.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/post_call_capture_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_entity_provider.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
@@ -218,15 +220,20 @@ class _OutboundSystemHandoffPageState
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return Scaffold(
-      backgroundColor: ext.background,
+    final premium = PremiumThemeExtension.of(context);
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: ext.accent, strokeWidth: 2),
+              CircularProgressIndicator(
+                color: premium.champagneGold,
+                strokeWidth: 2,
+              ),
               const SizedBox(height: 24),
               Text(
                 'Telefon uygulamasına hazırlanıyor…',
@@ -249,6 +256,7 @@ class _OutboundSystemHandoffPageState
           ),
         ),
       ),
+    ),
     );
   }
 }

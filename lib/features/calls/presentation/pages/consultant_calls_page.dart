@@ -20,6 +20,8 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/android_c
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_detail_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_sync_pending_strip.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
 import 'package:emlakmaster_mobile/core/utils/sms_launcher.dart';
@@ -864,21 +866,11 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark
-        ? AppThemeExtension.of(context).background
-        : AppThemeExtension.of(context).background;
-    final fg = isDark
-        ? AppThemeExtension.of(context).textPrimary
-        : AppThemeExtension.of(context).textPrimary;
-    final surface = isDark
-        ? AppThemeExtension.of(context).surface
-        : AppThemeExtension.of(context).surface;
-    final textSecondary = isDark
-        ? AppThemeExtension.of(context).textSecondary
-        : AppThemeExtension.of(context).textSecondary;
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
+    final fg = ext.textPrimary;
+    final surface = ext.surface;
+    final textSecondary = ext.textSecondary;
     final callsAsync = ref.watch(consultantCallsDisplayProvider);
     ref.listen(consultantCallsDisplayProvider, (previous, next) {
       if (next.hasValue) {
@@ -905,8 +897,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
     final hasQueue =
         queue != null && queue.isNotEmpty && _whatsappIndex < queue.length;
 
-    return Scaffold(
-      backgroundColor: bg,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -917,7 +910,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               subtitle: 'CRM çağrı merkezi',
               actions: [
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_horiz_rounded, color: ext.accent),
+                  icon: Icon(Icons.more_horiz_rounded, color: premium.champagneGold),
                   onSelected: (value) {
                     switch (value) {
                       case 'csv':
@@ -1217,7 +1210,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                     child: Text(
                       'Kayıt listesi için liste veya ızgara görünümüne geçin.',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: textSecondary,
                       ),
                     ),
@@ -1615,7 +1608,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                   child: Row(
                     children: [
                       Icon(Icons.chat_rounded,
-                          color: AppThemeExtension.of(context).accent,
+                          color: premium.champagneGold,
                           size: 22),
                       const SizedBox(width: 8),
                       Expanded(
@@ -1633,8 +1626,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
                       TextButton(
                         onPressed: _openNextWhatsApp,
                         style: TextButton.styleFrom(
-                            foregroundColor:
-                                AppThemeExtension.of(context).accent),
+                            foregroundColor: premium.champagneGold),
                         child: const Text('Sıradakini aç'),
                       ),
                       TextButton(
@@ -1649,6 +1641,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               ),
             )
           : null,
+    ),
     );
   }
 }
