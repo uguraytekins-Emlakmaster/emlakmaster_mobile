@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_theme_extension.dart';
 import 'design_tokens.dart';
+import 'premium/premium_theme_extension.dart';
 import 'theme_palette.dart';
 
 /// Wealth Tech tema: Gold Century — merkezi light/dark; semantic token'lar [AppThemeExtension]'da.
@@ -14,6 +15,8 @@ abstract final class AppTheme {
 
   static ThemeData _buildTheme({required bool isDark}) {
     final ext = isDark ? AppThemeExtension.dark() : AppThemeExtension.light();
+    final premiumExt =
+        isDark ? PremiumThemeExtension.dark() : PremiumThemeExtension.light();
     final textTheme = isDark ? _textThemeDark : _textThemeLight;
     final divider = isDark ? ThemePalette.borderDark : ThemePalette.borderLight;
     final appBarBackground =
@@ -57,7 +60,7 @@ abstract final class AppTheme {
       canvasColor: ext.background,
       cardColor: ext.card,
       colorScheme: scheme,
-      extensions: <ThemeExtension<dynamic>>[ext],
+      extensions: <ThemeExtension<dynamic>>[ext, premiumExt],
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: appBarBackground,
