@@ -1,4 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
@@ -20,14 +22,19 @@ class ListingDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final theme = Theme.of(context);
     final listingAsync = ref.watch(listingDocDisplayProvider(listingId));
 
-    return Scaffold(
-      backgroundColor: ext.background,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: listingAsync.when(
         loading: () => Center(
-          child: CircularProgressIndicator(color: ext.accent, strokeWidth: 2),
+          child: CircularProgressIndicator(
+            color: premium.champagneGold,
+            strokeWidth: 2,
+          ),
         ),
         error: (_, __) => Center(
           child: Padding(
@@ -55,8 +62,11 @@ class ListingDetailPage extends ConsumerWidget {
                     ref.invalidate(listingDocStreamProvider(listingId));
                     ref.invalidate(listingDocStaleCacheProvider(listingId));
                   },
-                  icon: Icon(Icons.refresh_rounded, color: ext.accent),
-                  label: Text('Tekrar dene', style: TextStyle(color: ext.accent)),
+                  icon: Icon(Icons.refresh_rounded, color: premium.champagneGold),
+                  label: Text(
+                    'Tekrar dene',
+                    style: TextStyle(color: premium.champagneGold),
+                  ),
                 ),
               ],
             ),
@@ -87,8 +97,8 @@ class ListingDetailPage extends ConsumerWidget {
                     const SizedBox(height: 24),
                     TextButton.icon(
                       onPressed: () => context.pop(),
-                      icon: Icon(Icons.arrow_back_rounded, color: ext.accent),
-                      label: Text('Geri', style: TextStyle(color: ext.accent)),
+                      icon: Icon(Icons.arrow_back_rounded, color: premium.champagneGold),
+                      label: Text('Geri', style: TextStyle(color: premium.champagneGold)),
                     ),
                   ],
                 ),
@@ -112,7 +122,7 @@ class ListingDetailPage extends ConsumerWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                backgroundColor: ext.background,
+                backgroundColor: Colors.transparent,
                 leading: const PremiumNavLeading(),
                 leadingWidth: PremiumNavLeading.leadingWidth(context),
                 automaticallyImplyLeading: false,
@@ -145,7 +155,7 @@ class ListingDetailPage extends ConsumerWidget {
                         title,
                         style: theme.textTheme.titleLarge?.copyWith(
                           color: ext.textPrimary,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                         ),
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
@@ -192,7 +202,7 @@ class ListingDetailPage extends ConsumerWidget {
                       Text(
                         priceStr.contains('₺') ? priceStr : '$priceStr ₺',
                         style: TextStyle(
-                          color: ext.accent,
+                          color: premium.champagneGold,
                           fontWeight: FontWeight.w700,
                           fontSize: 22,
                         ),
@@ -222,21 +232,21 @@ class ListingDetailPage extends ConsumerWidget {
                                         'İlan metni panoya kopyalandı — WhatsApp veya SMS ile paylaşabilirsiniz.',
                                       ),
                                       behavior: SnackBarBehavior.floating,
-                                      backgroundColor: ext.accent,
+                                      backgroundColor: premium.champagneGold,
                                     ),
                                   );
                                 }
                               },
-                              icon: Icon(Icons.share_rounded, color: ext.accent),
+                              icon: Icon(Icons.share_rounded, color: premium.champagneGold),
                               label: Text(
                                 'Paylaş',
                                 style: TextStyle(
-                                  color: ext.accent,
+                                  color: premium.champagneGold,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: ext.accent),
+                                side: BorderSide(color: premium.champagneGold),
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 14),
                               ),
@@ -257,7 +267,7 @@ class ListingDetailPage extends ConsumerWidget {
                               ),
                               label: const Text('İçgörü'),
                               style: FilledButton.styleFrom(
-                                backgroundColor: ext.accent,
+                                backgroundColor: premium.champagneGold,
                                 foregroundColor: ext.onBrand,
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 14),
@@ -295,6 +305,7 @@ class ListingDetailPage extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 

@@ -28,7 +28,7 @@
 | **2** Navigation shell | Bottom nav, top chrome | `/`, shells | `consultant_shell.dart`, `admin_shell.dart`, `client_shell.dart`, `adaptive_shell_scaffold.dart`, `premium_bottom_nav_dock.dart` | Exists — restyle |
 | **3** Consultant CRM | Danışman panel, Müşteri listesi, Müşteri detay, Görevler, Takip, Mesajlar | tabs + `/customer/:id` | `consultant_dashboard_page.dart`, `customer_list_page.dart`, `customer_detail_page.dart`, `tasks_page.dart`, `consultant_resurrection_page.dart`, `message_center_page.dart` | **Done** — restyle |
 | **4** Call system | Çağrı geçmişi, aktif arama, post-call | `/call`, `/call/summary`, `/consultant/calls` | `consultant_calls_page.dart`, `call_screen.dart`, `post_call_wizard.dart` | **Done** — restyle |
-| **5** Listings + Pipeline | İlan listesi, ilan detay, fırsat hattı | `/listing/:id`, `/pipeline`, listings tab | `listings_screen.dart`, `listing_detail_page.dart`, `pipeline_kanban_page.dart` | Exists — restyle; create/edit **missing** |
+| **5** Listings + Pipeline | İlan listesi, ilan detay, fırsat hattı | `/listing/:id`, `/pipeline`, listings tab | `listings_screen.dart`, `listing_detail_page.dart`, `pipeline_kanban_page.dart` | **Done** — restyle |
 | **6** Broker/Admin | Broker dashboard, komuta, savaş odası, raporlar, kadro | `/`, `/command-center`, `/war-room`, `/broker-command`, `/admin/*` | `dashboard_screen.dart`, `command_center_page.dart`, `war_room_page.dart`, `admin_pages.dart`, `admin_*_page.dart` | Exists — restyle; audit log **missing** |
 | **7** Analytics + AI | Rainbow analitik, intel geçmişi, AI komutan | `/rainbow-analytics`, `/rainbow-intel-history` | `rainbow_analytics_center_page.dart`, `intel_report_history_page.dart`, `AiSalesAssistantPanel` | Exists — restyle; full AI screen **missing** |
 | **8** Integrations | Entegrasyonlar, import hub | `/settings/connected-accounts`, `/settings/import-*` | `connected_platforms_page.dart`, `import_hub_page.dart` | Exists — restyle (mock data) |
@@ -112,6 +112,7 @@
 - [x] Phase 2: wire v2 into shells (navigation chrome)
 - [x] Phase 3: consultant CRM screens (dashboard, customers, tasks, follow-up, messages)
 - [x] Phase 4: call system (calls list, active call, post-call wizard)
+- [x] Phase 5: listings and pipeline kanban screens
 
 ---
 

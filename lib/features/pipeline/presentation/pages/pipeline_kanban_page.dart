@@ -16,6 +16,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_glass_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_shadow_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_card.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Pipeline Kanban: aşama sütunları, premium kartlar, dokun ile aşama değiştir.
@@ -66,17 +71,19 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
-    return Scaffold(
-      backgroundColor: ext.background,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 120,
             floating: true,
             pinned: true,
-            backgroundColor: ext.background,
+            backgroundColor: Colors.transparent,
             foregroundColor: ext.textPrimary,
             leading: const PremiumNavLeading(),
             leadingWidth: PremiumNavLeading.leadingWidth(context),
@@ -92,17 +99,8 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                   letterSpacing: -0.5,
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      ext.accent.withValues(alpha: 0.06),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
+              background: DecoratedBox(
+                decoration: BoxDecoration(gradient: premium.heroGradient),
               ),
             ),
           ),
@@ -126,7 +124,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
           else
             SliverToBoxAdapter(
               child: RefreshIndicator(
-                color: ext.accent,
+                color: premium.champagneGold,
                 onRefresh: () => _refreshPipeline(uid),
                 child: Builder(
                 builder: (context) {
@@ -143,7 +141,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                               width: 32,
                               height: 32,
                               child: CircularProgressIndicator(
-                                color: sheetExt.accent,
+                                color: premium.champagneGold,
                                 strokeWidth: 2,
                               ),
                             ),
@@ -200,8 +198,10 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
       floatingActionButton: uid.isEmpty
           ? null
           : _ChampionFab(
+              premium: premium,
               onTap: () => _showAddToPipelineSheet(context, ref, uid),
             ),
+    ),
     );
   }
 
@@ -209,11 +209,11 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
     AppFeedback.mediumImpact();
     await FirestoreService.updatePipelineItemStage(itemId, stage.id);
     if (mounted) {
-      final ext = AppThemeExtension.of(context);
+      final premium = PremiumThemeExtension.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${stage.label} aşamasına taşındı'),
-          backgroundColor: ext.accent,
+          backgroundColor: premium.champagneGold,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -228,6 +228,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
       context: context,
       builder: (ctx) {
         final sheetExt = AppThemeExtension.of(ctx);
+        final sheetPremium = PremiumThemeExtension.of(ctx);
         return Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
           child: Padding(
@@ -248,7 +249,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                     Icon(
                       Icons.view_kanban_outlined,
                       size: DesignTokens.iconLg,
-                      color: sheetExt.accent.withValues(alpha: 0.5),
+                      color: sheetPremium.champagneGold.withValues(alpha: 0.85),
                     ),
                     const SizedBox(width: DesignTokens.space3),
                     const Expanded(
@@ -286,7 +287,7 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                       borderRadius:
                           BorderRadius.circular(DesignTokens.radiusControl),
                       borderSide: BorderSide(
-                        color: sheetExt.accent,
+                        color: sheetPremium.champagneGold,
                         width: 1.5,
                       ),
                     ),
@@ -318,18 +319,18 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
                             'stage': PipelineStage.lead.id,
                           });
                           if (ctx.mounted) {
-                            final snackExt = AppThemeExtension.of(ctx);
+                            final snackPremium = PremiumThemeExtension.of(ctx);
                             ScaffoldMessenger.of(ctx).showSnackBar(
                               SnackBar(
                                 content: const Text('Pipeline\'a eklendi.'),
-                                backgroundColor: snackExt.accent,
+                                backgroundColor: snackPremium.champagneGold,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
                           }
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: sheetExt.accent,
+                          backgroundColor: sheetPremium.champagneGold,
                           foregroundColor: sheetExt.onBrand,
                           minimumSize: const Size(0, 48),
                           shape: RoundedRectangleBorder(
@@ -475,14 +476,18 @@ class _StageColumn extends StatelessWidget {
       onStageTap;
   final void Function(_PipelineCardData item) onCardTap;
 
-  static Color _stageColor(PipelineStage s, AppThemeExtension ext) {
+  static Color _stageColor(
+    PipelineStage s,
+    AppThemeExtension ext,
+    PremiumThemeExtension premium,
+  ) {
     switch (s.id) {
       case 'lead':
         return ext.info;
       case 'qualified':
-        return ext.accent;
+        return premium.champagneGold;
       case 'proposal':
-        return ext.accent;
+        return premium.champagneGoldMuted;
       case 'negotiation':
         return ext.warning;
       case 'closed_won':
@@ -490,14 +495,15 @@ class _StageColumn extends StatelessWidget {
       case 'closed_lost':
         return ext.danger;
       default:
-        return ext.accent;
+        return premium.champagneGold;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final color = _stageColor(stage, ext);
+    final premium = PremiumThemeExtension.of(context);
+    final color = _stageColor(stage, ext, premium);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space2),
       child: Column(
@@ -587,6 +593,7 @@ class _StageColumn extends StatelessWidget {
       context: context,
       builder: (ctx) {
         final sheetExt = AppThemeExtension.of(ctx);
+        final sheetPremium = PremiumThemeExtension.of(ctx);
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -606,7 +613,7 @@ class _StageColumn extends StatelessWidget {
                     Icon(
                       Icons.swap_horiz_rounded,
                       size: DesignTokens.iconLg,
-                      color: sheetExt.accent.withValues(alpha: 0.5),
+                      color: sheetPremium.champagneGold.withValues(alpha: 0.85),
                     ),
                     const SizedBox(width: DesignTokens.space3),
                     Expanded(
@@ -641,14 +648,15 @@ class _StageColumn extends StatelessWidget {
                             BorderRadius.circular(DesignTokens.radiusControl),
                       ),
                       tileColor: isCurrent
-                          ? sheetExt.accent.withValues(alpha: 0.12)
+                          ? sheetPremium.champagneGold.withValues(alpha: 0.12)
                           : null,
                       leading: Icon(
                         isCurrent
                             ? Icons.check_circle_rounded
                             : Icons.circle_outlined,
-                        color:
-                            isCurrent ? sheetExt.accent : sheetExt.textTertiary,
+                        color: isCurrent
+                            ? sheetPremium.champagneGold
+                            : sheetExt.textTertiary,
                         size: DesignTokens.iconMd,
                       ),
                       title: Text(
@@ -702,69 +710,66 @@ class _PipelineCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onMoveStage,
-        borderRadius: BorderRadius.circular(DesignTokens.championCardRadius),
-        child: Container(
-          padding: const EdgeInsets.all(DesignTokens.space4),
-          decoration: ext.championCardDecoration(withGlow: true),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+    final premium = PremiumThemeExtension.of(context);
+    return GestureDetector(
+      onLongPress: onMoveStage,
+      child: PremiumCard(
+      goldBorder: false,
+      padding: const EdgeInsets.all(DesignTokens.space4),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      data.customerName ??
-                          'Müşteri ${data.customerId.length > 8 ? "${data.customerId.substring(0, 8)}..." : data.customerId}',
-                      style: TextStyle(
-                        color: ext.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: DesignTokens.fontSizeMd,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  _PipelineHeatChip(customerId: data.customerId),
-                ],
-              ),
-              if (data.value != null) ...[
-                const SizedBox(height: DesignTokens.space2),
-                Text(
-                  '${data.value!.toStringAsFixed(0)} ${data.currency}',
+              Expanded(
+                child: Text(
+                  data.customerName ??
+                      'Müşteri ${data.customerId.length > 8 ? "${data.customerId.substring(0, 8)}..." : data.customerId}',
                   style: TextStyle(
-                    color: ext.accent,
+                    color: ext.textPrimary,
                     fontWeight: FontWeight.w700,
-                    fontSize: DesignTokens.fontSizeSm,
+                    fontSize: DesignTokens.fontSizeMd,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-              const SizedBox(height: DesignTokens.space2),
-              Row(
-                children: [
-                  Icon(
-                    Icons.touch_app_rounded,
-                    size: 14,
-                    color: ext.textTertiary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Uzun bas: aşama değiştir',
-                    style: TextStyle(
-                      color: ext.textTertiary,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
+              ),
+              _PipelineHeatChip(customerId: data.customerId),
+            ],
+          ),
+          if (data.value != null) ...[
+            const SizedBox(height: DesignTokens.space2),
+            Text(
+              '${data.value!.toStringAsFixed(0)} ${data.currency}',
+              style: TextStyle(
+                color: premium.champagneGold,
+                fontWeight: FontWeight.w700,
+                fontSize: DesignTokens.fontSizeSm,
+              ),
+            ),
+          ],
+          const SizedBox(height: DesignTokens.space2),
+          Row(
+            children: [
+              Icon(
+                Icons.touch_app_rounded,
+                size: 14,
+                color: ext.textTertiary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Uzun bas: aşama değiştir',
+                style: TextStyle(
+                  color: ext.textTertiary,
+                  fontSize: 10,
+                ),
               ),
             ],
           ),
-        ),
+        ],
+      ),
       ),
     );
   }
@@ -813,7 +818,9 @@ class _PipelineHeatChip extends ConsumerWidget {
 }
 
 class _ChampionFab extends StatelessWidget {
-  const _ChampionFab({required this.onTap});
+  const _ChampionFab({required this.premium, required this.onTap});
+
+  final PremiumThemeExtension premium;
   final VoidCallback onTap;
 
   @override
@@ -821,28 +828,20 @@ class _ChampionFab extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 56,
-        height: 56,
+      child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: ext.accent.withValues(alpha: 0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: ext.gradientPrimary,
-          ),
+          gradient: PremiumGlassTokens.goldAccentGradient(),
+          boxShadow: PremiumShadowTokens.goldGlow(),
         ),
-        child: Icon(
-          Icons.add_rounded,
-          color: ext.onBrand,
-          size: 28,
+        child: SizedBox(
+          width: 56,
+          height: 56,
+          child: Icon(
+            Icons.add_rounded,
+            color: ext.onBrand,
+            size: 28,
+          ),
         ),
       ),
     );

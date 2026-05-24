@@ -21,6 +21,9 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_card.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 
 class ListingsPage extends ConsumerStatefulWidget {
@@ -36,7 +39,7 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final premium = PremiumThemeExtension.of(context);
     final l10n = AppLocalizations.of(context);
     final showMarket = ref.watch(
       featureFlagsProvider.select(
@@ -44,8 +47,9 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
       ),
     );
 
-    return Scaffold(
-      backgroundColor: ext.background,
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: ShellScreenReadyListener(
         screenName: 'listings',
         provider: ownedListingRowsDisplayProvider,
@@ -72,29 +76,13 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
                 children: [
                   if (showMarket) ...[
                     const SizedBox(height: DesignTokens.space4),
-                    SegmentedButton<int>(
-                      style: ButtonStyle(
-                        visualDensity: VisualDensity.compact,
-                        side: WidgetStatePropertyAll(
-                          BorderSide(color: ext.border.withValues(alpha: 0.55)),
-                        ),
-                      ),
-                      segments: [
-                        ButtonSegment<int>(
-                          value: 0,
-                          label: Text(l10n.t('listings_tab_owned')),
-                          icon: const Icon(Icons.verified_outlined, size: 18),
-                        ),
-                        ButtonSegment<int>(
-                          value: 1,
-                          label: Text(l10n.t('listings_tab_market')),
-                          icon: const Icon(Icons.public_rounded, size: 18),
-                        ),
-                      ],
-                      selected: {_segment},
-                      onSelectionChanged: (Set<int> next) {
-                        setState(() => _segment = next.first);
-                      },
+                    PremiumSegmentedControl<int>(
+                      segments: const [0, 1],
+                      selected: _segment,
+                      onSelected: (v) => setState(() => _segment = v),
+                      labelBuilder: (v) => v == 0
+                          ? l10n.t('listings_tab_owned')
+                          : l10n.t('listings_tab_market'),
                     ),
                   ],
                 ],
@@ -102,21 +90,22 @@ class _ListingsPageState extends ConsumerState<ListingsPage> {
             ),
             Expanded(
               child: showMarket && _segment == 1
-                  ? _MarketFeedPane(scheme: scheme)
-                  : _OwnedPane(scheme: scheme),
+                  ? _MarketFeedPane(premium: premium)
+                  : _OwnedPane(premium: premium),
             ),
           ],
         ),
       ),
       ),
+    ),
     );
   }
 }
 
 class _OwnedPane extends ConsumerWidget {
-  const _OwnedPane({required this.scheme});
+  const _OwnedPane({required this.premium});
 
-  final ColorScheme scheme;
+  final PremiumThemeExtension premium;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -126,7 +115,10 @@ class _OwnedPane extends ConsumerWidget {
 
     return async.when(
       loading: () => Center(
-        child: CircularProgressIndicator(color: scheme.primary, strokeWidth: 2),
+        child: CircularProgressIndicator(
+          color: premium.champagneGold,
+          strokeWidth: 2,
+        ),
       ),
       error: (_, __) => Center(
         child: Padding(
@@ -195,7 +187,7 @@ class _OwnedPane extends ConsumerWidget {
             child: Text(
               title,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: ext.textSecondary,
+                    color: PremiumThemeExtension.of(context).champagneGoldMuted,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.4,
                   ),
@@ -211,9 +203,9 @@ class _OwnedPane extends ConsumerWidget {
 }
 
 class _MarketFeedPane extends ConsumerWidget {
-  const _MarketFeedPane({required this.scheme});
+  const _MarketFeedPane({required this.premium});
 
-  final ColorScheme scheme;
+  final PremiumThemeExtension premium;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -241,7 +233,10 @@ class _MarketFeedPane extends ConsumerWidget {
     final async = ref.watch(marketFeedRowsDisplayProvider);
     return async.when(
       loading: () => Center(
-        child: CircularProgressIndicator(color: scheme.primary, strokeWidth: 2),
+        child: CircularProgressIndicator(
+          color: premium.champagneGold,
+          strokeWidth: 2,
+        ),
       ),
       error: (_, __) => Center(
         child: Padding(
@@ -334,7 +329,7 @@ class _ListingRowCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final ext = AppThemeExtension.of(context);
-    final brand = ext.brandPrimary;
+    final premium = PremiumThemeExtension.of(context);
     final title = row.title.isNotEmpty ? row.title : l10n.t('listing');
     final price = row.priceLabel.contains('₺') || row.priceLabel == '—'
         ? row.priceLabel
@@ -346,48 +341,43 @@ class _ListingRowCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _onTap(context),
-          borderRadius: BorderRadius.circular(AppSurfaces.radiusCardLg),
-          child: Container(
-            decoration: AppSurfaces.cardLevel1(context, radius: AppSurfaces.radiusCardLg),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AspectRatio(
-                  aspectRatio: 16 / 10,
-                  child: row.imageUrl != null && row.imageUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: row.imageUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => LayoutBuilder(
-                            builder: (context, c) => ShimmerPlaceholder(
-                              width: c.maxWidth,
-                              height: c.maxHeight,
-                            ),
-                          ),
-                          errorWidget: (_, __, ___) => _placeholderImage(context),
-                        )
-                      : _placeholderImage(context),
-                ),
-                Padding(
-                  padding: AppSurfaces.paddingCard,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      child: PremiumCard(
+        padding: EdgeInsets.zero,
+        onTap: () => _onTap(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 10,
+              child: row.imageUrl != null && row.imageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: row.imageUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => LayoutBuilder(
+                        builder: (context, c) => ShimmerPlaceholder(
+                          width: c.maxWidth,
+                          height: c.maxHeight,
+                        ),
+                      ),
+                      errorWidget: (_, __, ___) => _placeholderImage(context),
+                    )
+                  : _placeholderImage(context),
+            ),
+            Padding(
+              padding: AppSurfaces.paddingCard,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          _Badge(
-                            label: sourceLabel,
-                            fg: brand,
-                            bg: brand.withValues(alpha: 0.12),
-                          ),
+                      _Badge(
+                        label: sourceLabel,
+                        fg: premium.champagneGold,
+                        bg: premium.champagneGold.withValues(alpha: 0.12),
+                      ),
                           if (row.surface == ListingSurface.marketFeed)
                             _Badge(
                               label: l10n.t('listings_badge_market'),
@@ -402,7 +392,7 @@ class _ListingRowCard extends StatelessWidget {
                             ),
                         ],
                       ),
-                      if (row.surface == ListingSurface.marketFeed) ...[
+                  if (row.surface == ListingSurface.marketFeed) ...[
                         const SizedBox(height: DesignTokens.space2),
                         Text(
                           l10n.t('listings_badge_not_inventory'),
@@ -428,7 +418,7 @@ class _ListingRowCard extends StatelessWidget {
                       Text(
                         price,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: brand,
+                              color: premium.champagneGold,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -461,9 +451,7 @@ class _ListingRowCard extends StatelessWidget {
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
