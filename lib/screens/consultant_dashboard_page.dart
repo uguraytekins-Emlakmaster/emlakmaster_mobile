@@ -31,7 +31,9 @@ import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:emlakmaster_mobile/widgets/session_avatar_button.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,6 +47,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     try {
       final ext = AppThemeExtension.of(context);
+      final premium = PremiumThemeExtension.of(context);
       final lean = ref.watch(
         featureFlagsProvider.select(
           (a) => a.valueOrNull?[AppConstants.keyV1LeanProduct] ?? true,
@@ -67,8 +70,9 @@ class ConsultantDashboardPage extends ConsumerWidget {
       }
       final greeting = '$salutation, $firstName';
 
-      return Material(
-        color: ext.background,
+      return PremiumShellBackdrop(
+        child: Material(
+        color: Colors.transparent,
         child: SafeArea(
           child: RepaintBoundary(
             child: CustomScrollView(
@@ -101,7 +105,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
                             context.go(AppRouter.routeHome);
                           },
                           trailing: Material(
-                            color: ext.accent.withValues(alpha: 0.12),
+                            color: premium.champagneGold.withValues(alpha: 0.12),
                             borderRadius:
                                 BorderRadius.circular(DesignTokens.radiusMd),
                             child: InkWell(
@@ -117,7 +121,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
                               child: Padding(
                                 padding: const EdgeInsets.all(10),
                                 child: Icon(Icons.auto_awesome_rounded,
-                                    color: ext.accent, size: 22),
+                                    color: premium.champagneGold, size: 22),
                               ),
                             ),
                           ),
@@ -272,6 +276,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
             ),
           ),
         ),
+      ),
       );
     } catch (e, st) {
       AppLogger.e('ConsultantDashboardPage build', e, st);
@@ -330,6 +335,7 @@ class _DashboardHeroHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -379,7 +385,7 @@ class _DashboardHeroHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Icon(Icons.verified_rounded,
-                      size: 20, color: ext.accent.withValues(alpha: 0.9)),
+                      size: 20, color: premium.champagneGold),
                 ],
               ),
               const SizedBox(height: DesignTokens.space2),

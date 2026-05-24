@@ -12,7 +12,9 @@ import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.d
 import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_providers.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/widgets/team_general_channel_bootstrap.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,8 +40,9 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
 
     if (officeId == null || uid == null) {
       return TeamGeneralChannelBootstrap(
-        child: Scaffold(
-        backgroundColor: ext.background,
+        child: PremiumShellBackdrop(
+          child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Column(
             children: [
@@ -60,6 +63,7 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
           ),
         ),
       ),
+      ),
       );
     }
 
@@ -71,8 +75,9 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
       provider: teamChannelsProvider,
       itemCount: (v) => (v as List).length,
       child: TeamGeneralChannelBootstrap(
+      child: PremiumShellBackdrop(
       child: Scaffold(
-      backgroundColor: ext.background,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -339,6 +344,7 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
           ],
         ),
       ),
+    ),
     ),
     ),
     );

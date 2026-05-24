@@ -1,6 +1,9 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_glass_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_card.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_sparkline.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
@@ -79,6 +82,7 @@ class PremiumPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         DesignTokens.screenEdgePadding,
@@ -99,6 +103,7 @@ class PremiumPageHeader extends StatelessWidget {
               padding: const EdgeInsets.only(right: DesignTokens.space3),
               child: _PremiumIconContainer(
                 icon: Icons.arrow_back_ios_new_rounded,
+                color: premium.champagneGold,
                 onTap: onBack ??
                     () {
                       final shell = context.findAncestorStateOfType<
@@ -123,8 +128,8 @@ class PremiumPageHeader extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: ext.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.3,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.35,
                       ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -165,20 +170,20 @@ class PremiumSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.space3),
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 16, color: ext.accent),
+            Icon(icon, size: 16, color: premium.champagneGold),
             const SizedBox(width: DesignTokens.space2),
           ],
           Expanded(
             child: Text(
               label.toUpperCase(),
               style: TextStyle(
-                color: ext.accent,
+                color: premium.champagneGoldMuted,
                 fontSize: DesignTokens.fontSizeXs,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
@@ -212,26 +217,13 @@ class PremiumSurfaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    final card = DecoratedBox(
-      decoration: ext.premiumSurfaceDecoration(goldBorder: goldBorder),
-      child: Padding(padding: padding, child: child),
+    return PremiumCard(
+      padding: padding,
+      goldBorder: goldBorder,
+      onTap: onTap,
+      margin: margin,
+      child: child,
     );
-    final wrapped = onTap == null
-        ? card
-        : Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius:
-                  BorderRadius.circular(DesignTokens.radiusCardPrimary),
-              child: card,
-            ),
-          );
-    if (margin != null) {
-      return Padding(padding: margin!, child: wrapped);
-    }
-    return wrapped;
   }
 }
 
@@ -342,11 +334,12 @@ class PremiumSegmentedControl<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: ext.surface,
+        color: premium.glassSurface.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
-        border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+        border: Border.all(color: premium.glassBorder.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: segments.map((seg) {
@@ -366,15 +359,18 @@ class PremiumSegmentedControl<T> extends StatelessWidget {
                         BorderRadius.circular(DesignTokens.radiusPill),
                     border: active
                         ? Border.all(
-                            color: ext.accent.withValues(alpha: 0.55),
+                            color: premium.champagneGold.withValues(alpha: 0.55),
                           )
+                        : null,
+                    color: active
+                        ? premium.champagneGold.withValues(alpha: 0.1)
                         : null,
                   ),
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: active ? ext.accent : ext.textPassive,
+                      color: active ? premium.champagneGold : ext.textPassive,
                       fontSize: DesignTokens.fontSizeSm,
                       fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                     ),
@@ -408,6 +404,7 @@ class PremiumFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -420,10 +417,12 @@ class PremiumFilterChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
             border: Border.all(
               color: selected
-                  ? ext.accent.withValues(alpha: 0.65)
+                  ? premium.champagneGold.withValues(alpha: 0.65)
                   : ext.border.withValues(alpha: 0.45),
             ),
-            color: selected ? ext.accent.withValues(alpha: 0.08) : ext.surface,
+            color: selected
+                ? premium.champagneGold.withValues(alpha: 0.1)
+                : premium.glassSurface.withValues(alpha: 0.45),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -431,7 +430,7 @@ class PremiumFilterChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: selected ? ext.accent : ext.textSecondary,
+                  color: selected ? premium.champagneGold : ext.textSecondary,
                   fontSize: DesignTokens.fontSizeSm,
                   fontWeight: FontWeight.w600,
                 ),
@@ -490,14 +489,17 @@ class PremiumSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Row(
       children: [
         Expanded(
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: ext.surface,
+              color: premium.glassSurface.withValues(alpha: 0.72),
               borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
-              border: Border.all(color: ext.border.withValues(alpha: 0.5)),
+              border: Border.all(
+                color: premium.glassBorder.withValues(alpha: 0.35),
+              ),
             ),
             child: TextField(
               controller: controller,
@@ -508,7 +510,10 @@ class PremiumSearchBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: TextStyle(color: ext.textTertiary),
-                prefixIcon: Icon(Icons.search_rounded, color: ext.textTertiary),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: premium.champagneGoldMuted,
+                ),
                 suffixIcon: showMic
                     ? IconButton(
                         onPressed: onMicTap,
@@ -546,7 +551,8 @@ class PremiumStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final c = color ?? ext.accent;
+    final premium = PremiumThemeExtension.of(context);
+    final c = color ?? premium.champagneGold;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -784,37 +790,33 @@ class PremiumInfoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return DecoratedBox(
-      decoration: ext.premiumSurfaceDecoration(
-        radius: DesignTokens.radiusLg,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.space4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 20, color: ext.accent),
-            const SizedBox(width: DesignTokens.space3),
-            Expanded(
-              child: Text(
-                message,
-                style: TextStyle(
-                  color: ext.textSecondary,
-                  fontSize: DesignTokens.fontSizeSm,
-                  height: 1.4,
-                ),
+    final premium = PremiumThemeExtension.of(context);
+    return PremiumCard(
+      padding: const EdgeInsets.all(DesignTokens.space4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: premium.champagneGold),
+          const SizedBox(width: DesignTokens.space3),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: ext.textSecondary,
+                fontSize: DesignTokens.fontSizeSm,
+                height: 1.4,
               ),
             ),
-            if (onDismiss != null)
-              IconButton(
-                onPressed: onDismiss,
-                icon: Icon(Icons.close_rounded, color: ext.textTertiary, size: 20),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              ),
-          ],
-        ),
+          ),
+          if (onDismiss != null)
+            IconButton(
+              onPressed: onDismiss,
+              icon: Icon(Icons.close_rounded, color: ext.textTertiary, size: 20),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            ),
+        ],
       ),
     );
   }
@@ -960,14 +962,17 @@ class _PremiumIconContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final c = color ?? ext.accent;
+    final premium = PremiumThemeExtension.of(context);
+    final c = color ?? premium.champagneGold;
     final box = Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: ext.surfaceElevated,
+        color: premium.champagneGold.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-        border: Border.all(color: ext.border.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: premium.champagneGold.withValues(alpha: 0.28),
+        ),
       ),
       child: Icon(icon, color: c, size: iconSize),
     );

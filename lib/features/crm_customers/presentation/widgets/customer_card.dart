@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/models/customer_list_row_snapshot.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_customer_row_badges.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_ui_formatters.dart';
@@ -41,6 +42,8 @@ class CustomerCard extends StatelessWidget {
     final revenueSignal = row.revenueSignal;
     final syncDelayedRisk = row.syncDelayedRisk;
     final brokerAlert = row.showBrokerAlert;
+    final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
 
     return Semantics(
       label: '${customer.fullName} müşteri kartı',
@@ -54,19 +57,13 @@ class CustomerCard extends StatelessWidget {
             padding: const EdgeInsets.all(DesignTokens.space4),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppThemeExtension.of(context).accent.withValues(alpha: 0.08)
-                  : AppThemeExtension.of(context)
-                      .surface
-                      .withValues(alpha: 0.6),
+                  ? premium.champagneGold.withValues(alpha: 0.1)
+                  : premium.glassSurface.withValues(alpha: 0.72),
               borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
               border: Border.all(
                 color: isSelected
-                    ? AppThemeExtension.of(context)
-                        .accent
-                        .withValues(alpha: 0.5)
-                    : AppThemeExtension.of(context)
-                        .border
-                        .withValues(alpha: 0.5),
+                    ? premium.champagneGold.withValues(alpha: 0.55)
+                    : premium.glassBorder.withValues(alpha: 0.32),
                 width: isSelected ? 1.5 : 1,
               ),
             ),
@@ -82,22 +79,20 @@ class CustomerCard extends StatelessWidget {
                         child: Checkbox(
                           value: isSelected,
                           onChanged: (_) => onTap?.call(),
-                          activeColor: AppThemeExtension.of(context).accent,
+                          activeColor: premium.champagneGold,
                           fillColor: WidgetStateProperty.resolveWith((_) =>
                               isSelected
-                                  ? AppThemeExtension.of(context).accent
+                                  ? premium.champagneGold
                                   : Colors.transparent),
                         ),
                       ),
                     CircleAvatar(
-                      backgroundColor: AppThemeExtension.of(context)
-                          .accent
-                          .withValues(alpha: 0.2),
+                      backgroundColor: premium.champagneGold.withValues(alpha: 0.18),
                       radius: 24,
                       child: Text(
                         _avatarLetter(customer.fullName),
                         style: TextStyle(
-                          color: AppThemeExtension.of(context).accent,
+                          color: premium.champagneGold,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

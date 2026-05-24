@@ -6,6 +6,8 @@ import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
@@ -83,8 +85,10 @@ class _CustomerDetailPageState extends ConsumerState<CustomerDetailPage>
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return Scaffold(
-      backgroundColor: ext.background,
+    final premium = PremiumThemeExtension.of(context);
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -105,7 +109,7 @@ class _CustomerDetailPageState extends ConsumerState<CustomerDetailPage>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddNoteSheet(context, ref, _customerId),
-        backgroundColor: ext.accent,
+        backgroundColor: premium.champagneGold,
         foregroundColor: ext.onBrand,
         tooltip: 'Not ekle',
         icon: const Icon(Icons.note_add_rounded),
@@ -116,6 +120,7 @@ class _CustomerDetailPageState extends ConsumerState<CustomerDetailPage>
           ),
         ),
       ),
+    ),
     );
   }
 

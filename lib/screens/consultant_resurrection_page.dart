@@ -3,8 +3,10 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
@@ -19,189 +21,174 @@ class ConsultantResurrectionPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark
-        ? AppThemeExtension.of(context).background
-        : AppThemeExtension.of(context).background;
-    final fg = isDark
-        ? AppThemeExtension.of(context).textPrimary
-        : AppThemeExtension.of(context).textPrimary;
-    final surface = isDark
-        ? AppThemeExtension.of(context).surface
-        : AppThemeExtension.of(context).surface;
-    final border = isDark
-        ? AppThemeExtension.of(context).border
-        : AppThemeExtension.of(context).border;
-    final textSecondary = isDark
-        ? AppThemeExtension.of(context).textSecondary
-        : AppThemeExtension.of(context).textSecondary;
-    final textTertiary = isDark
-        ? AppThemeExtension.of(context).textTertiary
-        : AppThemeExtension.of(context).textTertiary;
     return ShellScreenReadyListener(
       screenName: 'follow_up',
       provider: resurrectionQueueProvider,
       itemCount: (v) => (v as List).length,
-      child: _FollowUpBody(
-        bg: bg,
-        fg: fg,
-        surface: surface,
-        border: border,
-        textSecondary: textSecondary,
-        textTertiary: textTertiary,
-        theme: theme,
-      ),
+      child: const _FollowUpBody(),
     );
   }
 }
 
 class _FollowUpBody extends ConsumerWidget {
-  const _FollowUpBody({
-    required this.bg,
-    required this.fg,
-    required this.surface,
-    required this.border,
-    required this.textSecondary,
-    required this.textTertiary,
-    required this.theme,
-  });
-
-  final Color bg;
-  final Color fg;
-  final Color surface;
-  final Color border;
-  final Color textSecondary;
-  final Color textTertiary;
-  final ThemeData theme;
+  const _FollowUpBody();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final resurrectionAsync = ref.watch(resurrectionQueueProvider);
-    return Scaffold(
-      backgroundColor: bg,
-      appBar: emlakAppBar(
-        context,
-        backgroundColor: theme.appBarTheme.backgroundColor ?? bg,
-        foregroundColor: theme.appBarTheme.foregroundColor ?? fg,
-        title: const Text(ProductLabels.followUp),
-      ),
-      body: resurrectionAsync.when(
-        data: (items) {
-          if (items.isEmpty) {
-            final l10n = AppLocalizations.of(context);
-            return Center(
-              child: EmptyState(
-                premiumVisual: true,
-                icon: Icons.track_changes_rounded,
-                title: l10n.t('empty_followup_title'),
-                subtitle: l10n.t('empty_followup_sub'),
-                actionLabel: l10n.t('empty_followup_cta'),
-                onAction: () => context.push(
-                  AppRouter.routeCall,
-                  extra: const {
-                    'startedFromScreen': 'consultant_resurrection',
-                  },
-                ),
+    return PremiumShellBackdrop(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const PremiumPageHeader(
+                title: ProductLabels.followUp,
+                subtitle: 'Sessiz lead’ler — yeniden temas fırsatları.',
               ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(DesignTokens.space4),
-            itemCount: items.length,
-            cacheExtent: 300,
-            itemBuilder: (context, index) {
-              final e = items[index];
-              final name = e.customerName ?? e.customerId;
-              final days = e.daysSilent ?? 0;
-              return Container(
-                margin: const EdgeInsets.only(bottom: DesignTokens.space2),
-                padding: const EdgeInsets.all(DesignTokens.space4),
-                decoration: BoxDecoration(
-                  color: surface,
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                  border: Border.all(color: border),
-                ),
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppThemeExtension.of(context)
-                          .accent
-                          .withValues(alpha: 0.15),
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusSm),
-                    ),
-                    child: Icon(
-                      Icons.person_outline_rounded,
-                      color: AppThemeExtension.of(context).accent,
-                      size: 22,
-                    ),
-                  ),
-                  title: Text(
-                    name,
-                    style: TextStyle(
-                      color: fg,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '$days gün sessiz',
-                    style: TextStyle(
-                      color: textSecondary,
-                      fontSize: DesignTokens.fontSizeSm,
-                    ),
-                  ),
-                  trailing: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: textTertiary,
-                  ),
-                  onTap: () {
-                    AppFeedback.lightImpact();
-                    showResurrectionLeadTopicSheet(
-                      context,
-                      topicTitle: ProductLabels.followUp,
-                      item: e,
+              Expanded(
+                child: resurrectionAsync.when(
+                  data: (items) {
+                    if (items.isEmpty) {
+                      final l10n = AppLocalizations.of(context);
+                      return Center(
+                        child: EmptyState(
+                          premiumVisual: true,
+                          icon: Icons.track_changes_rounded,
+                          title: l10n.t('empty_followup_title'),
+                          subtitle: l10n.t('empty_followup_sub'),
+                          actionLabel: l10n.t('empty_followup_cta'),
+                          onAction: () => context.push(
+                            AppRouter.routeCall,
+                            extra: const {
+                              'startedFromScreen': 'consultant_resurrection',
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                        DesignTokens.space5,
+                        0,
+                        DesignTokens.space5,
+                        DesignTokens.space6,
+                      ),
+                      itemCount: items.length,
+                      cacheExtent: 300,
+                      itemBuilder: (context, index) {
+                        final e = items[index];
+                        final name = e.customerName ?? e.customerId;
+                        final days = e.daysSilent ?? 0;
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: DesignTokens.space2,
+                          ),
+                          child: PremiumSurfaceCard(
+                            onTap: () {
+                              AppFeedback.lightImpact();
+                              showResurrectionLeadTopicSheet(
+                                context,
+                                topicTitle: ProductLabels.followUp,
+                                item: e,
+                              );
+                            },
+                            padding: const EdgeInsets.all(DesignTokens.space4),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: premium.champagneGold
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(
+                                      DesignTokens.radiusSm,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.person_outline_rounded,
+                                    color: premium.champagneGold,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: DesignTokens.space3),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: TextStyle(
+                                          color: ext.textPrimary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        '$days gün sessiz',
+                                        style: TextStyle(
+                                          color: ext.textSecondary,
+                                          fontSize: DesignTokens.fontSizeSm,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 20,
+                                  color: premium.champagneGoldMuted,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
+                  loading: () => Center(
+                    child: CircularProgressIndicator(
+                      color: premium.champagneGold,
+                    ),
+                  ),
+                  error: (e, _) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            size: 48,
+                            color: ext.danger,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Liste yüklenemedi.',
+                            style: TextStyle(color: ext.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          FilledButton.icon(
+                            onPressed: () =>
+                                ref.invalidate(resurrectionQueueProvider),
+                            icon: const Icon(Icons.refresh_rounded, size: 20),
+                            label: const Text('Tekrar dene'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: premium.champagneGold,
+                              foregroundColor: ext.onBrand,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              );
-            },
-          );
-        },
-        loading: () => Center(
-          child: CircularProgressIndicator(
-              color: AppThemeExtension.of(context).accent),
-        ),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 48,
-                  color: AppThemeExtension.of(context).danger,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Liste yüklenemedi.',
-                  style: TextStyle(color: textSecondary),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                FilledButton.icon(
-                  onPressed: () => ref.invalidate(resurrectionQueueProvider),
-                  icon: const Icon(Icons.refresh_rounded, size: 20),
-                  label: const Text('Tekrar dene'),
-                  style: FilledButton.styleFrom(
-                      backgroundColor: AppThemeExtension.of(context).accent),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

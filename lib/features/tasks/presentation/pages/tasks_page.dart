@@ -9,7 +9,9 @@ import 'package:emlakmaster_mobile/core/navigation/sheet_back_behavior.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -44,8 +46,10 @@ class _TasksPageState extends ConsumerState<TasksPage> {
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
-    return Scaffold(
-      backgroundColor: AppThemeExtension.of(context).background,
+    final premium = PremiumThemeExtension.of(context);
+    return PremiumShellBackdrop(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: uid.isEmpty
           ? Center(
               child: Text(
@@ -77,10 +81,10 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                               padding: const EdgeInsets.only(
                                 right: DesignTokens.space2,
                               ),
-                              child: FilterChip(
-                                label: Text(_tasksFilterLabel(f)),
+                              child: PremiumFilterChip(
+                                label: _tasksFilterLabel(f),
                                 selected: _listFilter == f,
-                                onSelected: (_) =>
+                                onTap: () =>
                                     setState(() => _listFilter = f),
                               ),
                             ),
@@ -101,7 +105,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 if (tasksAsync.isLoading && !tasksAsync.hasValue) {
                   return Center(
                     child: CircularProgressIndicator(
-                      color: AppThemeExtension.of(context).accent,
+                      color: premium.champagneGold,
                       strokeWidth: 2,
                     ),
                   );
@@ -263,6 +267,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                 ],
               ),
             ),
+      ),
     );
   }
 

@@ -27,6 +27,8 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import '../widgets/customer_card.dart';
 
 /// Liste altı — dock bar + büyük metin ölçeği için güvenli boşluk (SE / erişilebilirlik).
@@ -170,8 +172,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     return ShellTabBackBinding(
       onExitSearch: _handleExitSearch,
       onClearSelection: _handleClearSelection,
-      child: Scaffold(
-      backgroundColor: ext.background,
+      child: PremiumShellBackdrop(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
@@ -339,6 +342,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
               ),
           ],
         ),
+      ),
       ),
       ),
     );
@@ -895,12 +899,13 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: ext.surfaceElevated,
+        color: premium.glassSurface.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
-        border: Border.all(color: ext.border.withValues(alpha: 0.62)),
+        border: Border.all(color: premium.glassBorder.withValues(alpha: 0.35)),
       ),
       child: TextField(
         controller: controller,
@@ -908,8 +913,8 @@ class _SearchBar extends StatelessWidget {
           hintText: AppLocalizations.of(context).t('search_customers'),
           hintStyle: TextStyle(
               color: ext.textPassive, fontSize: DesignTokens.fontSizeBase),
-          prefixIcon:
-              Icon(Icons.search_rounded, color: ext.textPassive, size: 22),
+          prefixIcon: Icon(Icons.search_rounded,
+              color: premium.champagneGoldMuted, size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
               horizontal: DesignTokens.space4, vertical: 12),
