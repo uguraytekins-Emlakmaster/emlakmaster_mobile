@@ -1,0 +1,165 @@
+section,tr_name,en_name,route,file,role,status,features,related_subscreens,redesign_required,priority
+route,Tanıtım,OnboardingPage,/onboarding,lib/features/onboarding/presentation/pages/onboarding_page.dart,Guest,production ready,Kod mockup slaytları; skip → login,—,Evet,P2
+route,Giriş,LoginPage,/login,lib/features/auth/presentation/pages/login_page.dart,Guest,production ready,Email/şifre; Google; Facebook; persona seçici; login attempt guard,Forgot Password Sheet,Evet,P0
+route,Kayıt,RegisterPage,/register,lib/features/auth/presentation/pages/register_page.dart,Guest,production ready,Hesap oluşturma formu,—,Evet,P0
+route,Çalışma Alanı Kurulumu,WorkspaceSetupPage,/workspace-setup,lib/features/workspace/presentation/pages/workspace_setup_page.dart,Auth,production ready,Ofis oluştur/katıl niyeti,Office Gate,Evet,P0
+route,Rol Seçimi,RoleSelectionPage,/role-selection,lib/features/auth/presentation/pages/role_selection_page.dart,Auth,production ready,Yönetici vs danışman yolu,—,Evet,P0
+route,Ofis Kapısı,OfficeGatePage,/office,lib/features/office/presentation/pages/office_gate_page.dart,Auth,production ready,Oluştur veya davet ile katıl,CreateOffice; JoinOffice,Evet,P0
+route,Ofis Oluştur,CreateOfficePage,/office/create,lib/features/office/presentation/pages/create_office_page.dart,Auth; Broker,production ready,Yeni ofis formu,—,Evet,P0
+route,Ofise Katıl,JoinOfficePage,/office/join,lib/features/office/presentation/pages/join_office_page.dart,Auth; Consultant,production ready,Davet kodu girişi,—,Evet,P0
+route,Davet Oluştur,CreateOfficeInvitePage,/office/invite/create,lib/features/office/presentation/pages/create_office_invite_page.dart,Broker; Admin,production ready,Davet link/kod üretimi,Share sheet,Evet,P1
+route,Ofis Kurtarma,OfficeRecoveryPage,/office/recovery,lib/features/office/presentation/pages/office_recovery_page.dart,Auth,production ready,Üyelik tutarsızlığı kurtarma,—,Evet,P1
+route,Ofis Yönetimi,OfficeAdminPage,/office/admin,lib/features/office/presentation/pages/office_admin_page.dart,Broker; Admin,partial,Üye/davet/platform durumu (Phase 1.3),CreateOfficeInvite,Evet,P1
+route,Mesaj Merkezi,MessageCenterPage,/messages,lib/features/messages/presentation/pages/message_center_page.dart,Consultant; Admin; Broker,partial,Firestore ekip kanalları; DM; harici platform → Coming Soon,TeamThreadPage; Coming Soon sheet,Evet,P0
+route,Ekip Sohbeti,TeamThreadPage,/messages/thread,lib/features/messages/presentation/pages/team_thread_page.dart,Consultant; Admin; Broker,production ready,Gerçek zamanlı thread (extra: officeId channelId),—,Evet,P0
+route,Ana Kabuk,RoleBasedShellSelector,/,lib/screens/role_based_shell.dart,Auth,production ready,RBAC shell seçimi; bootstrap skeleton; recovery,AdminShell; ConsultantShell; ClientShell,Evet,P0
+route,Arama Ekranı,CallScreen,/call,lib/features/calls/call_screen.dart,Consultant; Admin,production ready,Dialer; GSM handoff; AiSalesAssistantPanel; agent status Firestore,QuickCapture; IdentitySheet; DialerMore,Evet,P0
+route,Çağrı Özeti Sihirbazı,PostCallWizardScreen,/call/summary,lib/features/calls/post_call_wizard.dart,Consultant,production ready,3-step PageView; duygu; AI enrichment; CRM kayıt; Voice PTT; transcript merge,SaveContact; UpgradeSheet,Evet,P0
+route,Danışman Çağrıları,ConsultantCallsPage,/consultant/calls,lib/features/calls/presentation/pages/consultant_calls_page.dart,Consultant,production ready,KPI; grid/list; pagination; Android log sync; CSV; WhatsApp bulk dialog,KpiDetail; IdentitySheet; Dialer,Evet,P0
+route,Geri Kazanım,ConsultantResurrectionPage,/resurrection,lib/screens/consultant_resurrection_page.dart,Consultant; Admin,production ready,7/14/30+ gün sessiz lead kuyruğu,ResurrectionLeadTopicSheet,Evet,P0
+route,Komuta Merkezi,CommandCenterPage,/command-center,lib/features/manager_command_center/presentation/pages/command_center_page.dart,Broker,production ready,Tüm ofis çağrıları; filtreler; KPI; CSV export; CRM tiles,KpiDetail; IdentitySheet,Evet,P0
+route,Savaş Odası,WarRoomPage,/war-room,lib/features/war_room/presentation/pages/war_room_page.dart,Admin; Broker,production ready,WarRoomCommandCenter; resurrection strip; flag warRoom && !lean,ResurrectionLeadTopicSheet,Evet,P1
+route,Broker Komuta,BrokerCommandPage,/broker-command,lib/features/broker_command/presentation/pages/broker_command_page.dart,Broker; Admin,production ready,Intelligence panelleri; analytics; market pulse; hot leads,RegionInsight,Evet,P1
+route,Müşteri Detay,CustomerDetailPage,/customer/:id,lib/features/crm_customers/presentation/pages/customer_detail_page.dart,Consultant; Admin,production ready,3 tab Özet/Görüşmeler/Akış; heat; NBA; portfolio match; timeline CRUD,NoteSheet; OfferSheet; VisitSheet; EditSheet,Evet,P0
+route,İlan Detay,ListingDetailPage,/listing/:id,lib/screens/listing_detail_page.dart,Consultant; Admin; Client,production ready,İlan detay; matched customers; paylaşım,—,Evet,P0
+route,Fırsat Hattı,PipelineKanbanPage,/pipeline,lib/features/pipeline/presentation/pages/pipeline_kanban_page.dart,Broker; Consultant,production ready,Kanban drag; stage picker; müşteri ekleme,AddToPipeline; StagePicker,Evet,P0
+route,Bildirim Merkezi,NotificationsCenterPage,/notifications,lib/features/notifications/presentation/pages/notifications_center_page.dart,Consultant; Admin,production ready,In-app inbox,FCM deep links,Evet,P1
+route,Toplu Kampanya,BulkCampaignPage,/campaigns/bulk,lib/features/campaigns/presentation/pages/bulk_campaign_page.dart,Consultant; Admin,production ready,SMS/WhatsApp toplu; AI mesaj composer,—,Evet,P1
+route,Rainbow Analitik,RainbowAnalyticsCenterPage,/rainbow-analytics,lib/features/analytics/presentation/pages/rainbow_analytics_center_page.dart,Consultant; Admin,production ready,Intel analiz; PDF akışı; ?listingId= query,IntelPreviewSheet; IntelHistory,Evet,P1
+route,Intel Geçmişi,IntelReportHistoryPage,/rainbow-intel-history,lib/features/analytics/presentation/pages/intel_report_history_page.dart,Consultant; Admin,production ready,Geçmiş raporlar; önizleme/yazdır,IntelPreviewSheet,Evet,P1
+route,Bölge İçgörüsü,RegionInsightPage,/region-insight/:regionId,lib/features/region_demand_map/presentation/pages/region_insight_page.dart,Consultant; Admin,production ready,Market pulse bölge detayı; deep link,—,Evet,P2
+route,Bağlı Platformlar,ConnectedPlatformsPage,/settings/connected-accounts,lib/features/external_integrations/presentation/pages/connected_platforms_page.dart,Broker,mock,Açık metin OAuth yok; ConnectedPlatformsMock; kurulum kaydı merge,PlatformSetupWizard,Evet (öncelikli),P1
+route,Platform Kurulum,PlatformSetupWizardPage,/settings/platform-setup-wizard,lib/features/external_integrations/presentation/pages/platform_setup_wizard_page.dart,Broker,partial,Kurulum adımları; sahte OAuth yok,ConnectedPlatforms,Evet,P1
+route,Harici İlanlarım,MyExternalListingsPage,/listings/my-external,lib/features/external_integrations/presentation/pages/my_external_listings_page.dart,Consultant; Broker,partial,Senkron ilan kabuğu; entegrasyon durumuna bağlı,ListingDetail,Evet,P1
+route,İçe Aktarma Merkezi,ImportHubPage,/settings/import-engine,lib/features/listing_import/presentation/pages/import_hub_page.dart,Broker,partial,Dosya/URL/manuel; MockListingImportEngine; in-memory store,ManualSheet; MappingDialog; ConfirmDialog,Evet (öncelikli),P1
+route,Aktarım Geçmişi,ImportHistoryPage,/settings/import-history,lib/features/listing_import/presentation/pages/import_history_page.dart,Broker,production ready,Task geçmişi; ilerleme,ImportHub,Evet,P1
+route,İçe Aktarılan İlanlar,MyListingsPage,/listings/my-imported,lib/features/listing_import/presentation/pages/my_listings_page.dart,Consultant; Broker,production ready,Import sonuç listesi; not düzenleme dialog,ListingDetail,Evet,P1
+route,Danışman Kadrosu,AdminConsultantsPage,/admin/consultants,lib/features/admin_consultants/presentation/pages/admin_consultants_page.dart,Admin; Broker,production ready,Liste; filtre; rol düzenleme,AddConsultantDialog; EditConsultantDialog,Evet,P1
+route,Ekipler,AdminTeamsPage,/admin/teams,lib/features/admin_teams/presentation/pages/admin_teams_page.dart,Admin; Broker,production ready,Ekip listesi; oluştur,CreateTeamDialog,Evet,P1
+route,Ekip Detay,AdminTeamDetailPage,/admin/teams/:teamId,lib/features/admin_teams/presentation/pages/admin_team_detail_page.dart,Admin; Broker,production ready,Üye ekle/çıkar; yönetici,AddMemberDialog; RemoveConfirm,Evet,P1
+route,Router Hata,_ErrorFallbackScreen,(error),lib/core/router/app_router.dart,All,production ready,404/permission/network mesajları; ana sayfaya dön,—,Evet,P2
+route,Yetkisiz,UnauthorizedScreen,(embedded),lib/shared/widgets/unauthorized_screen.dart,All,production ready,RBAC red mesajı,—,Evet,P2
+shell_consultant,Günüm,ConsultantDashboardPage,(tab 0),lib/screens/consultant_dashboard_page.dart,Consultant,production ready,Hero; KPI; revenue strip; execution reminders; priority signals; sync delayed; weekly goal; lean=false → discovery/ticker/academy,ObjectionCoachingSheet,Evet,P0
+shell_consultant,Çağrılarım,ConsultantCallsPage,(tab 2),lib/features/calls/presentation/pages/consultant_calls_page.dart,Consultant,production ready,(route duplicate),KpiDetail; IdentitySheet,Evet,P0
+shell_consultant,Müşterilerim,CustomerListPage,(tab 3),lib/features/crm_customers/presentation/pages/customer_list_page.dart,Consultant,production ready,Firestore stream; sayfalama 40; arama; bulk; save contact,SaveContactSheet,Evet,P0
+shell_consultant,Görevlerim,TasksPage,(tab 6),lib/features/tasks/presentation/pages/tasks_page.dart,Consultant,production ready,Filtre All/Today/Overdue/Open; CRUD; recurring; due notifications,AddTask; TaskDetail; Recurring; DeleteConfirm,Evet,P0
+shell_consultant,Daha Fazla,ConsultantMoreSheet,(menu),lib/screens/consultant_more_sheet.dart,Consultant,production ready,Mesajlar; İlanlar; Takip; Ayarlar kısayolları,—,Evet,P0
+shell_consultant,Mesajlar,MessageCenterPage,(tab 1 hidden),lib/features/messages/presentation/pages/message_center_page.dart,Consultant,partial,(route duplicate),TeamThread,Evet,P0
+shell_consultant,İlanlar,ListingsPage,(tab 4 hidden),lib/screens/listings_screen.dart,Consultant,production ready,Sahip olunan ilanlar; market segment flag ile,ListingDetail,Evet,P0
+shell_consultant,Takip,ConsultantResurrectionPage,(tab 5 hidden),lib/screens/consultant_resurrection_page.dart,Consultant,production ready,(route duplicate),LeadTopicSheet,Evet,P0
+shell_consultant,Ayarlar,SettingsPage,(tab 7 hidden),lib/features/settings/presentation/pages/settings_page.dart,Consultant,production ready,(settings hub),AvatarCrop; Language; Theme,Evet,P0
+shell_admin,Yönetici Ana Sayfa,DashboardPage,(tab dashboard),lib/screens/dashboard_screen.dart,Broker; Admin,production ready,(embedded panels A3),TopAppBar; all dashboard cards,Evet,P0
+shell_admin,Mesaj Merkezi,MessageCenterPage,(tab messages),lib/features/messages/presentation/pages/message_center_page.dart,Broker; Admin,partial,(route duplicate),TeamThread,Evet,P0
+shell_admin,Savaş Odası,WarRoomPage,(tab warRoom),lib/features/war_room/presentation/pages/war_room_page.dart,Broker; Admin,production ready,featureWarRoom && !lean,ResurrectionStrip,Evet,P1
+shell_admin,Çağrı Merkezi,CommandCenterPage,(tab commandCenter),lib/features/manager_command_center/presentation/pages/command_center_page.dart,Broker,production ready,canViewAllCalls only,KpiDetail,Evet,P0
+shell_admin,Ekonomi,AdminEconomyPage,(tab economy),lib/screens/admin_pages.dart,Broker; Admin,production ready,MasterTicker; FinanceBar; MarketPulsePanel,!lean only,Evet,P2
+shell_admin,Raporlar,AdminReportsPage,(tab reports),lib/screens/admin_pages.dart,Broker; Admin,partial,Hub links; Coming Soon performance; Coming Soon audit; teams empty card,CommandCenter; AdminConsultants; Pipeline,Evet,P1
+shell_admin,Ayarlar,SettingsPage,(tab settings),lib/features/settings/presentation/pages/settings_page.dart,Broker; Admin,production ready,(settings hub),—,Evet,P0
+shell_client,Keşfet,ClientSearchPage,(tab search),lib/screens/client_pages.dart,Client,mock,Form; backend submit yok; lokal onay sheet,SearchConfirmSheet,Evet (öncelikli),P0
+shell_client,Favoriler,ClientFavoritesPage,(tab favorites),lib/screens/client_pages.dart,Client,mock,Statik örnek ilanlar,SampleDetailDialog,Evet (öncelikli),P0
+shell_client,Mesajlar,ClientMessagesPage,(tab messages),lib/screens/client_pages.dart,Client,partial,WhatsApp/tel/mail launcher; gerçek inbox yok,—,Evet,P1
+shell_client,Sanal Tur,ClientVirtualTourPage,(tab virtual_tour),lib/screens/client_pages.dart,Client,mock,Örnek YouTube 360 linkleri,—,Evet,P2
+shell_client,Profil,ClientProfilePage,(tab profile),lib/screens/client_pages.dart,Client,partial,KVKK dialog; çıkış; minimal hesap,PrivacyDialog,Evet,P1
+embedded,Üst Bar,DashboardTopAppBar,(embedded),lib/widgets/top_app_bar.dart,Broker; Admin,production ready,Bell; avatar; notifications sheet entry,DashboardNotificationsSheet,Evet,P0
+embedded,Broker Özet,BrokerDashboardIntelligenceSummaryCard,(embedded),lib/features/dashboard/presentation/widgets/broker_dashboard_intelligence_summary_card.dart,Broker; Admin,production ready,Ofis intelligence özet KPI,—,Evet,P0
+embedded,AI Kullanım,AiUsageIndicator,(embedded),lib/features/monetization/presentation/widgets/ai_usage_indicator.dart,Consultant; Admin,production ready,Pro/Temel kullanım göstergesi,UpgradeBottomSheet,Evet,P1
+embedded,Gelir Özeti,ManagerRevenueSummaryCard,(embedded),lib/features/revenue_engine/presentation/widgets/manager_revenue_summary_card.dart,Broker; Admin,production ready,Ofis gelir strip,—,Evet,P0
+embedded,Eskalasyonlar,ManagerEscalationsCard,(embedded),lib/features/dashboard/presentation/widgets/manager_escalations_card.dart,Broker; Admin,production ready,Acil ofis maddeleri,—,Evet,P1
+embedded,Post-Call Hatırlatma,PostCallCaptureDashboardReminder,(embedded),lib/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart,Consultant; Admin,production ready,Kayıt edilmemiş çağrı hatırlatması,QuickCaptureSheet,Evet,P0
+embedded,Uyarılar,BrokerDashboardAlertsCard,(embedded),lib/features/dashboard/presentation/widgets/broker_dashboard_alerts_card.dart,Broker; Admin,production ready,Alert feed,—,Evet,P1
+embedded,Akıllı Görev Önerileri,SmartTaskSuggestionsCard,(embedded),lib/features/dashboard/presentation/widgets/smart_task_suggestions_card.dart,Broker; Admin,production ready,AI task önerileri,TasksPage,Evet,P1
+embedded,Yürütme Hatırlatıcıları,ExecutionRemindersCard,(embedded),lib/features/dashboard/presentation/widgets/execution_reminders_card.dart,Consultant; Admin,production ready,Due follow-ups; broker/consultant surface,CustomerDetail,Evet,P0
+embedded,Ofis KPI,DashboardKpiSection,(embedded),lib/features/dashboard/presentation/widgets/dashboard_kpi_section.dart,Broker; Admin,production ready,featureKpiBar,—,Evet,P0
+embedded,Öncelikli Çağrı Sinyalleri,PriorityCallSignalsCard,(embedded),lib/features/dashboard/presentation/widgets/priority_call_signals_card.dart,Consultant; Admin,production ready,Post-call CRM signals ranked,CustomerDetail,Evet,P0
+embedded,Rainbow Kart,RainbowAnalyticsCenterCard,(embedded),lib/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart,Broker; Admin,production ready,featureAnalytics launcher,RainbowAnalyticsCenter,Evet,P1
+embedded,Platform Özeti,ManagerPlatformConnectionsSummaryCard,(embedded),lib/features/dashboard/presentation/widgets/manager_platform_connections_summary_card.dart,Broker; Admin,partial,mock truth chips,ConnectedPlatforms,Evet,P1
+embedded,Lean Odak,LeanAdminTodayFocusCard,(embedded),lib/features/dashboard/presentation/widgets/lean_admin_dashboard_balance_cards.dart,Broker; Admin,production ready,v1LeanProduct only,—,Evet,P1
+embedded,Lean Nabız,LeanAdminOfficePulseCard,(embedded),lib/features/dashboard/presentation/widgets/lean_admin_dashboard_balance_cards.dart,Broker; Admin,production ready,v1LeanProduct only,—,Evet,P1
+embedded,Sıcak Lead Radar,HotLeadRadarPanel,(embedded),lib/features/hot_lead_radar/presentation/widgets/hot_lead_radar_panel.dart,Broker; Admin,production ready,!lean only,CustomerDetail,Evet,P1
+embedded,Kaçırılan Fırsatlar,MissedOpportunitiesPanel,(embedded),lib/features/missed_opportunities/presentation/widgets/missed_opportunities_panel.dart,Broker; Admin,production ready,!lean only,—,Evet,P1
+embedded,Günlük Özet,DailyBriefPanel,(embedded),lib/features/daily_brief/presentation/widgets/daily_brief_panel.dart,Broker; Admin,production ready,featureDailyBrief && !lean,—,Evet,P2
+embedded,Keşif,DiscoveryPanel,(embedded),lib/features/deal_discovery/presentation/widgets/discovery_panel.dart,Consultant; Admin,production ready,!lean only,—,Evet,P2
+embedded,Piyasa Nabzı,MarketPulsePanel,(embedded),lib/features/market_heatmap/presentation/widgets/market_pulse_panel.dart,Consultant; Admin,production ready,featureMarketPulse && !lean,RegionInsight,Evet,P2
+embedded,Ticker,MasterTicker,(embedded),lib/widgets/master_ticker.dart,Consultant; Admin,production ready,!lean only,—,Evet,P2
+embedded,Fırsat Radarı,OpportunityRadarWidget,(embedded),lib/features/opportunity_radar/presentation/widgets/opportunity_radar_widget.dart,Broker; Admin,production ready,!lean only,ResurrectionLeadTopicSheet,Evet,P2
+embedded,Bölge Haritası,RegionDemandMapPanel,(embedded),lib/features/region_demand_map/presentation/widgets/region_demand_map_panel.dart,Broker; Admin,production ready,!lean only,RegionInsight,Evet,P2
+embedded,Bento Analitik,BentoPowerAnalytics,(embedded),lib/widgets/bento_analytics.dart,Broker; Admin,production ready,!lean only,—,Evet,P2
+embedded,Saha Radarı,BentoSahaRadar,(embedded),lib/widgets/bento_saha_radar.dart,Broker; Admin,production ready,!lean only,—,Evet,P2
+embedded,AI Haber,BentoAiNews,(embedded),lib/widgets/bento_ai_news.dart,Broker; Admin,production ready,!lean only; read more sheet,ReadMoreSheet,Evet,P2
+embedded,Danışman Performans Strip,ConsultantPerformanceStrip,(embedded),lib/features/revenue_engine/presentation/widgets/consultant_performance_strip.dart,Consultant,production ready,Gelir/KPI strip,—,Evet,P0
+embedded,Gelir Motoru Bölümü,RevenueIntelligenceDashboardSection,(embedded),lib/features/revenue_engine/presentation/widgets/revenue_intelligence_dashboard_section.dart,Consultant,production ready,Fırsat ve gelir motoru,—,Evet,P0
+embedded,Senkron Gecikmeli Müşteriler,SyncDelayedCustomersDashboardCard,(embedded),lib/features/crm_customers/presentation/widgets/sync_delayed_customers_dashboard_card.dart,Consultant,production ready,Sync gecikmesi uyarısı,CustomerList,Evet,P1
+embedded,Haftalık Hedef,_WeeklyGoalCard,(embedded),lib/screens/consultant_dashboard_page.dart,Consultant,production ready,Haftalık hedef kartı,—,Evet,P2
+embedded,Pipeline Şampiyonu,_PipelineChampionCard,(embedded),lib/screens/consultant_dashboard_page.dart,Consultant,production ready,!lean only gamification,Pipeline,Evet,P2
+embedded,Danışman Akademisi,_ConsultantAcademyCard,(embedded),lib/screens/consultant_dashboard_page.dart,Consultant,production ready,!lean only micro-training,ObjectionCoachingSheet,Evet,P2
+embedded,Satış Asistanı Paneli,AiSalesAssistantPanel,(embedded),lib/features/ai_sales_assistant/presentation/widgets/ai_sales_assistant_panel.dart,Consultant,partial,In-call AI panel only; no full screen route,—,Evet,P0
+embedded,Sesli CRM PTT,PushToTalkButton,(embedded),lib/features/voice_crm/presentation/widgets/push_to_talk_button.dart,Consultant,production ready,featureVoiceCrm; STT → wizard,PostCallWizard,Evet,P0
+embedded,Portfolio Eşleşme,_PortfolioMatchSection,(embedded),lib/features/crm_customers/presentation/pages/customer_detail_page.dart,Consultant,production ready,featurePortfolioMatch top listings,ListingDetail,Evet,P0
+chrome,Shell Senkron Banner,SyncStatusBanner,(chrome),lib/shared/widgets/sync_status_banner.dart,All staff; Client,production ready,Offline banner; last sync toast; compact mode,—,Evet,P0
+chrome,Çağrı Dönüş Prompt,CallReturnPromptHost,(chrome),lib/features/calls/presentation/widgets/call_return_prompt_host.dart,Consultant; Admin,production ready,App resume save-to-CRM dialog,QuickCaptureSheet,Evet,P0
+chrome,Post-Call Draft Kurtarma,PostCallDraftRecoveryCard,(chrome),lib/features/calls/presentation/widgets/post_call_draft_recovery_card.dart,Consultant; Admin,production ready,Taslak çağrı özeti kurtarma,PostCallWizard,Evet,P0
+chrome,Post-Call Capture Strip,PostCallCaptureShellStrip,(chrome),lib/features/calls/presentation/widgets/post_call_capture_strip.dart,Consultant; Admin,production ready,Hızlı kayıt strip,QuickCaptureSheet,Evet,P0
+chrome,Bootstrap Skeleton,ShellBootstrapSkeleton,(chrome),lib/core/performance/shell_bootstrap_skeleton.dart,Auth,production ready,Rol yüklenirken,StartupRecoveryScaffold,Evet,P2
+chrome,Güvenli Mod Kurtarma,StartupRecoveryScaffold,(chrome),lib/core/widgets/startup_recovery_scaffold.dart,Auth,production ready,8s timeout recovery; retry/sign out,—,Evet,P2
+modal,Premium Sheet Altyapısı,showPremiumModalBottomSheet,(infra),lib/widgets/premium_bottom_sheet_shell.dart,All,production ready,Modal/draggable/scrollable sheet shell,—,Evet (DS),P0
+modal,Hesap Menüsü,AccountSessionSheet,(modal),lib/widgets/account_session_sheet.dart,All staff,production ready,Profil; bildirimler; panel switch; çıkış,PanelPickSheet,Evet,P0
+modal,Panel Değiştir,PanelPickSheet,(modal),lib/widgets/account_session_sheet.dart,Broker; Admin,production ready,Manager ↔ Consultant toggle,—,Evet,P1
+modal,Bildirim Önizleme,DashboardNotificationsSheet,(modal),lib/widgets/dashboard_notifications_sheet.dart,All staff,production ready,Bell preview → full center,NotificationsCenter,Evet,P1
+modal,Hızlı Erişim,CommandPalette,(modal),lib/core/widgets/command_palette.dart,All staff,production ready,Cmd+K; routes; customer search,—,Evet,P0
+modal,Şifremi Unuttum,ForgotPasswordSheet,(modal),lib/features/auth/presentation/pages/login_page.dart,Guest,production ready,Password reset email,—,Evet,P0
+modal,Pro Yükselt,UpgradeBottomSheet,(modal),lib/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart,Consultant,production ready,Pro upsell gates,—,Evet,P1
+modal,Post-Call Hızlı Kayıt,PostCallQuickCaptureSheet,(modal),lib/features/calls/presentation/widgets/post_call_quick_capture_sheet.dart,Consultant,production ready,Hızlı CRM capture; callback; → wizard,CallbackEnqueue; Wizard,Evet,P0
+modal,Kimlik Hızlı Aksiyon,CallIdentityQuickActionsSheet,(modal),lib/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart,Consultant,production ready,Call/SMS/WhatsApp/save/callback,CallbackEnqueue; SaveContact,Evet,P0
+modal,KPI Detay,CallKpiDetailSheet,(modal),lib/features/calls/presentation/widgets/call_kpi_detail_sheet.dart,Consultant; Broker,production ready,Period KPI breakdown,—,Evet,P1
+modal,Geri Arama Planla,CallbackEnqueueSheet,(modal),lib/features/calls/presentation/widgets/callback_enqueue_sheet.dart,Consultant,production ready,Schedule callback queue,—,Evet,P1
+modal,Rehber Seç,pickDialerContactPhone,(modal),lib/features/calls/presentation/utils/dialer_contact_picker.dart,Consultant,production ready,Contact picker from dialer,—,Evet,P1
+modal,Kişi Kaydet,SaveContactSheet,(modal),lib/features/contact_save/presentation/widgets/save_contact_sheet.dart,Consultant,production ready,Device + CRM save voice/manual,PermissionDialog,Evet,P0
+modal,Müşteri Düzenle,CustomerEditSheet,(modal),lib/features/crm_customers/presentation/widgets/customer_edit_sheet.dart,Consultant,production ready,Name/phone/email edit,—,Evet,P0
+modal,Not Ekle,AddNoteSheet,(modal),lib/features/crm_customers/presentation/pages/customer_detail_page.dart,Consultant,production ready,CRM note; error preview sheet,NoteErrorSheet,Evet,P0
+modal,Teklif Ekle,AddOfferSheet,(modal),lib/features/crm_customers/presentation/pages/customer_detail_page.dart,Consultant,production ready,Offer amount,—,Evet,P0
+modal,Ziyaret Ekle,AddVisitSheet,(modal),lib/features/crm_customers/presentation/pages/customer_detail_page.dart,Consultant,production ready,Visit schedule + date picker,—,Evet,P0
+modal,Görev Ekle/Düzenle,TaskSheets,(modal),lib/features/tasks/presentation/pages/tasks_page.dart,Consultant,production ready,Add; detail; recurring; delete confirm,DatePicker,Evet,P0
+modal,Pipeline Ekle/Stage,PipelineSheets,(modal),lib/features/pipeline/presentation/pages/pipeline_kanban_page.dart,Broker; Consultant,production ready,Add customer; stage picker,—,Evet,P0
+modal,Intel Önizleme,IntelReportPreviewSheet,(modal),lib/features/analytics/presentation/widgets/intel_report_preview_sheet.dart,Broker; Admin,production ready,PDF preview,—,Evet,P1
+modal,Geri Kazanım Mesaj,ResurrectionLeadTopicSheet,(modal),lib/features/resurrection_engine/presentation/widgets/resurrection_lead_topic_sheet.dart,Consultant; Admin,production ready,Message template + actions,—,Evet,P1
+modal,Import Manual/Mapping,ImportHubSheets,(modal),lib/features/listing_import/presentation/pages/import_hub_page.dart,Broker,partial,Manual entry; CSV mapping; confirm,—,Evet,P1
+modal,Yakında,showPremiumComingSoon,(modal),lib/widgets/premium/premium_action_feedback.dart,All,partial,Stub UX for unfinished features,—,Evet,P1
+modal,Avatar Kırp,ProfileAvatarCropScreen,(fullscreen),lib/features/profile/presentation/widgets/profile_avatar_crop_screen.dart,Consultant,production ready,1:1 crop before upload,—,Evet,P2
+modal,Çıkış Onayı,AppExitConfirmation,(dialog),lib/core/navigation/app_exit_confirm.dart,All,production ready,Android back exit,—,Evet,P2
+modal,Değişiklikleri At,DiscardChangesDialog,(dialog),lib/core/navigation/discard_changes_dialog.dart,All,production ready,Unsaved changes guard,—,Evet,P2
+settings,Bölüm: Hesap,SettingsAccountSection,(settings),lib/features/settings/presentation/pages/settings_page.dart,All staff,production ready,Avatar; name; email; panel switch; sign out,AvatarCrop; AccountSheet,Evet,P0
+settings,Bölüm: Plan,SettingsPlanSection,(settings),lib/features/settings/presentation/pages/settings_page.dart,All staff,production ready,Pro/Temel; AI usage; upgrade,UpgradeBottomSheet,Evet,P1
+settings,Bölüm: Çağrılar,SettingsCallsSection,(settings),lib/features/settings/presentation/pages/settings_page.dart,All staff,production ready,Link /consultant/calls,ConsultantCalls,Evet,P1
+settings,Bölüm: Bildirimler,NotificationsSection,(settings),lib/features/settings/presentation/widgets/notifications_settings_section.dart,All staff,production ready,Push/local prefs; feature flags,—,Evet,P1
+settings,Bölüm: Görünüm,SettingsAppearanceSection,(settings),lib/features/settings/presentation/pages/settings_page.dart,All staff,production ready,Compact dashboard; power saver,—,Evet,P2
+settings,Bölüm: Dil,SettingsLanguageSection,(settings),lib/features/settings/presentation/pages/settings_page.dart,All staff,production ready,Language picker sheet,LanguageSheet,Evet,P2
+settings,Bölüm: İlan Görünümü,ListingDisplaySettingsSection,(settings),lib/features/listing_display/presentation/widgets/listing_display_settings_section.dart,All staff,production ready,Branding; city/district; logo,CityPicker; DistrictPicker,Evet,P2
+settings,Bölüm: Entegrasyonlar,SettingsIntegrationsSection,(settings),lib/features/settings/presentation/pages/settings_page.dart,Broker,partial,Manager-only links to mock integrations,ConnectedPlatforms; ImportHub,Evet,P1
+settings,Bölüm: Geliştirici,SettingsDevFlags,(settings),lib/features/settings/presentation/pages/settings_page.dart,Dev,dev-only,22 feature flag toggles,TestRoleSwitch,Evet,Hayır
+missing,İlan Oluştur/Düzenle,ListingCreateEditWizard,(missing),—,Consultant,missing,Tam CRUD wizard yok,PhotoUpload; MapPin,Evet (öncelikli),P0
+missing,Çağrı Detay,CallDetailPage,(missing),—,Consultant,missing,CallRecordDetailNavigation: kayıt oynatma yok,Recording; Transcript,Evet (öncelikli),P0
+missing,Fırsat Detay,DealDetailPage,(missing),—,Broker,missing,Pipeline card drill-down yok,StageHistory; Docs,Evet (öncelikli),P0
+missing,Performans Raporu,PerformanceReportPage,(missing),—,Broker,missing,admin_pages Coming Soon card,DateRange; Export,Evet (öncelikli),P0
+missing,İşlem Kaydı,AuditLogPage,(missing),—,Admin,missing,admin_pages Coming Soon card,Filter; Export,Evet (öncelikli),P0
+missing,E-posta Doğrulama,EmailVerificationFlow,(missing),—,Guest,missing,Register sonrası flow yok,Resend; ChangeEmail,Evet,P0
+missing,Tam Ekran AI Asistan,AIAssistantPage,(missing),—,Consultant,missing,Sadece in-call panel var,VoiceInput,Evet,P1
+missing,Harici Gelen Kutusu,UnifiedExternalInbox,(missing),—,Consultant,missing,Message center Coming Soon,ThreadView,Evet,P1
+missing,Takvim/Ajanda,CalendarAgendaPage,(missing),—,Consultant,missing,Tasks list only,DayWeekView,Evet,P1
+missing,Randevu Planlayıcı,AppointmentScheduler,(missing),—,Consultant,missing,Visit sheet manual only,AvailabilityPicker,Evet,P1
+missing,Kampanya Analitiği,CampaignAnalyticsPage,(missing),—,Broker,missing,Bulk send without metrics,DeliveryRates,Evet,P1
+missing,Danışman Performans Detay,ConsultantPerformanceDetail,(missing),—,Broker,missing,Admin list without drill-down,ComparePeriod,Evet,P1
+missing,Müşteri Doküman Kasası,CustomerDocumentsVault,(missing),—,Consultant,missing,property_vault entity only,Upload; Preview,Evet,P1
+missing,Komisyon/Kapanış,CommissionClosingFlow,(missing),—,Broker,missing,Not in pipeline,ApprovalFlow,Evet,P1
+missing,Otomasyon Kuralları,AutomationRulesBuilder,(missing),—,Broker,missing,automation_rules_engine empty,RuleEditor,Evet,P1
+missing,Abonelik/Fatura,BillingSubscriptionPage,(missing),—,Broker,missing,Upgrade sheet only,PaymentMethod,Evet,P1
+missing,Güvenlik/MFA,SecuritySettingsPage,(missing),—,All staff,missing,Not in settings,MFASetup,Evet,P1
+missing,Toplu Müşteri Import,BulkCustomerImport,(missing),—,Broker,missing,Listing import only,ColumnMapping,Evet,P1
+missing,Akıllı Listeler,SmartListsSavedFilters,(missing),—,Consultant,missing,Text search only,FilterBuilder,Evet,P1
+missing,Client Gerçek Backend,ClientPortalBackend,(missing),—,Client,missing,3/5 tabs mock,RealSearch; RealFavorites,Evet (öncelikli),P0
+module_stub,ai_call_brain,(no UI),—,lib/features/ai_call_brain/,—,missing,Empty directory,—,Hayır,P2
+module_stub,automation_rules_engine,(no UI),—,lib/features/automation_rules_engine/,—,missing,Empty directory,—,Hayır,P2
+module_stub,ar_vr,(no UI),—,lib/features/ar_vr/,—,missing,Empty directory,—,Hayır,P2
+module_stub,deal_health_engine,(no UI),—,lib/features/deal_health_engine/,—,missing,Empty directory,—,Hayır,P2
+module_stub,investment_radar,(no UI),—,lib/features/investment_radar/,—,missing,Empty directory,—,Hayır,P2
+module_stub,barter_swap_engine,(no UI),—,lib/features/barter_swap_engine/,—,missing,Domain entity only,—,Hayır,P2
+module_stub,property_vault,(no UI),—,lib/features/property_vault/,—,missing,Domain entity only,—,Hayır,P2
