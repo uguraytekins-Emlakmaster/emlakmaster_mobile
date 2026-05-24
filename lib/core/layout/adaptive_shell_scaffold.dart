@@ -17,7 +17,10 @@ import '../performance/shell_tab_prefetch.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
 import '../theme/app_theme_extension.dart';
 import '../theme/design_tokens.dart';
+import '../theme/premium/premium_theme_extension.dart';
 import '../../widgets/premium/premium_bottom_nav_dock.dart';
+import '../../widgets/premium/v2/premium_navigation_rail.dart';
+import '../../widgets/premium/v2/premium_shell_chrome.dart';
 
 /// Nav item for [AdaptiveShellScaffold].
 class AdaptiveNavItem {
@@ -210,8 +213,9 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
 
   Widget _inactiveSlotPlaceholder(BuildContext context, int tabIndex) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return ColoredBox(
-      color: ext.background,
+      color: Colors.transparent,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.space5),
@@ -223,7 +227,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
                 height: 26,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.2,
-                  color: ext.accent.withValues(alpha: 0.85),
+                  color: premium.champagneGold.withValues(alpha: 0.85),
                 ),
               ),
               const SizedBox(height: DesignTokens.space3),
@@ -498,11 +502,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     final isWide = AdaptiveShellScaffold.isWide(context);
     final theme = Theme.of(context);
     final ext = AppThemeExtension.of(context);
-    final surface = ext.surface;
-    final primary = theme.colorScheme.primary;
-    final navUnselectedColor = theme.brightness == Brightness.dark
-        ? ext.textSecondary
-        : ext.textPassive;
+    final premium = PremiumThemeExtension.of(context);
 
     if (widget.pages.isEmpty || widget.navItems.isEmpty) {
       _shellLog('build: empty pages — showing fallback scaffold');
@@ -559,7 +559,8 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       });
     }
     _maybeLogActivePage(safeIndex);
-    final body = Column(
+    final body = PremiumShellBackdrop(
+      child: Column(
       children: [
         if (widget.title != null && isWide)
           Padding(
@@ -611,35 +612,25 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
           ),
         ),
       ],
+    ),
     );
 
     Widget shell = isWide
         ? Scaffold(
-        backgroundColor: ext.background,
+        backgroundColor: premium.heroGradient.colors.last,
         body: Row(
           children: [
-            NavigationRail(
+            PremiumNavigationRail(
+              items: widget.navItems,
               selectedIndex: selectedNavIndex,
               onDestinationSelected: _onNavTap,
-              backgroundColor: surface,
-              selectedIconTheme: IconThemeData(color: primary, size: 24),
-              unselectedIconTheme:
-                  IconThemeData(color: navUnselectedColor, size: 22),
-              labelType: NavigationRailLabelType.all,
-              destinations: widget.navItems
-                  .map((e) => NavigationRailDestination(
-                        icon: Icon(e.icon),
-                        selectedIcon: Icon(e.icon),
-                        label: Text(e.label),
-                      ))
-                  .toList(),
             ),
             Expanded(child: body),
           ],
         ),
       )
         : Scaffold(
-      backgroundColor: ext.background,
+      backgroundColor: premium.heroGradient.colors.last,
       body: body,
       floatingActionButton: widget.fab,
       floatingActionButtonLocation:

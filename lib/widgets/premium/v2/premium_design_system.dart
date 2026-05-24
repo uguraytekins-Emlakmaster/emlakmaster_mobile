@@ -9,4 +9,6 @@ export '../../../core/theme/premium/premium_theme_extension.dart';
 export 'premium_app_bar.dart';
 export 'premium_button.dart';
 export 'premium_card.dart';
+export 'premium_navigation_rail.dart';
+export 'premium_shell_chrome.dart';
 export 'premium_state_views.dart';

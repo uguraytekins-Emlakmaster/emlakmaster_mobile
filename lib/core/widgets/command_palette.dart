@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -66,6 +67,7 @@ class _CommandPaletteContentState
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
     final filteredActions = _filteredActionsFor(role, _query);
 
@@ -106,7 +108,7 @@ class _CommandPaletteContentState
                 Icon(
                   Icons.bolt_outlined,
                   size: DesignTokens.iconLg,
-                  color: ext.accent.withValues(alpha: 0.5),
+                  color: premium.champagneGold,
                 ),
                 const SizedBox(width: DesignTokens.space3),
                 const Expanded(
@@ -139,14 +141,29 @@ class _CommandPaletteContentState
                     .copyWith(color: ext.foregroundMuted),
                 prefixIcon: Icon(
                   Icons.search_rounded,
-                  color: ext.textSecondary,
+                  color: premium.champagneGoldMuted,
                   size: DesignTokens.iconMd,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  borderSide: BorderSide(
+                    color: premium.glassBorder.withValues(alpha: 0.35),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  borderSide: BorderSide(
+                    color: premium.glassBorder.withValues(alpha: 0.28),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  borderSide: BorderSide(
+                    color: premium.champagneGold.withValues(alpha: 0.55),
+                  ),
                 ),
                 filled: true,
-                fillColor: ext.inputBackground,
+                fillColor: premium.glassSurface.withValues(alpha: 0.65),
               ),
               style: AppTypography.bodyStrong(context)
                   .copyWith(color: ext.inputForeground),
@@ -188,7 +205,7 @@ class _CommandPaletteContentState
                               width: 24,
                               height: 24,
                               child:
-                                  CircularProgressIndicator(color: ext.accent),
+                                  CircularProgressIndicator(color: premium.champagneGold),
                             ),
                           ),
                         );
@@ -396,23 +413,50 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.space2,
-        vertical: DesignTokens.space1,
+    final premium = PremiumThemeExtension.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.space2,
+            vertical: DesignTokens.space1,
+          ),
+          child: Row(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: premium.champagneGold.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    icon,
+                    color: premium.champagneGoldMuted,
+                    size: DesignTokens.iconMd,
+                  ),
+                ),
+              ),
+              const SizedBox(width: DesignTokens.space3),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTypography.bodyStrong(context)
+                      .copyWith(color: ext.textPrimary),
+                ),
+              ),
+              Icon(
+                Icons.north_west_rounded,
+                size: 16,
+                color: ext.textTertiary.withValues(alpha: 0.55),
+              ),
+            ],
+          ),
+        ),
       ),
-      minLeadingWidth: 40,
-      leading: Icon(
-        icon,
-        color: ext.textSecondary,
-        size: DesignTokens.iconMd,
-      ),
-      title: Text(
-        label,
-        style:
-            AppTypography.bodyStrong(context).copyWith(color: ext.textPrimary),
-      ),
-      onTap: onTap,
     );
   }
 }

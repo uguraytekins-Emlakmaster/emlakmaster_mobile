@@ -109,7 +109,7 @@
 - [x] v2: `PremiumStateViews` (loading/empty/error/offline/skeleton)
 - [x] v2: `PremiumSheetHandle`, `PremiumDialogShell`
 - [x] Unit test: `test/core/theme/premium_design_system_test.dart`
-- [ ] Phase 2: wire v2 into shells (next PR)
+- [x] Phase 2: wire v2 into shells (navigation chrome)
 
 ---
 

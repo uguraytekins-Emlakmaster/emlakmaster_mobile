@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
 
@@ -129,6 +130,7 @@ class _MoreTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -144,15 +146,15 @@ class _MoreTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: ext.accent.withValues(alpha: 0.1),
+                  color: premium.champagneGold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                   border: Border.all(
-                    color: ext.accent.withValues(alpha: 0.22),
+                    color: premium.champagneGold.withValues(alpha: 0.28),
                   ),
                 ),
                 child: Icon(
                   destination.icon,
-                  color: ext.accent,
+                  color: premium.champagneGold,
                   size: 22,
                 ),
               ),
@@ -181,7 +183,7 @@ class _MoreTile extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: ext.textTertiary,
+                color: premium.champagneGoldMuted,
                 size: 22,
               ),
             ],

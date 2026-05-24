@@ -1,6 +1,11 @@
+import 'dart:ui';
+
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_glass_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_shadow_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:flutter/material.dart';
 
 /// Sheet içinde metin ölçeği üst sınırı — yüksek erişilebilirlik ayarında taşmayı azaltır.
@@ -141,27 +146,28 @@ Future<T?> showPremiumScrollableBottomSheet<T>({
 
 Widget _premiumSheetDecor(BuildContext context, {required Widget child}) {
   final ext = AppThemeExtension.of(context);
+  final premium = PremiumThemeExtension.of(context);
   const r = BorderRadius.vertical(
     top: Radius.circular(DesignTokens.radiusSheet),
   );
   return ClipRRect(
     borderRadius: r,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        color: ext.surface,
-        borderRadius: r,
-        border: Border(
-          top: BorderSide(color: ext.border.withValues(alpha: 0.45)),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: ext.shadowColor.withValues(alpha: 0.4),
-            blurRadius: 24,
-            offset: const Offset(0, -4),
-          ),
-        ],
+    child: BackdropFilter(
+      filter: ImageFilter.blur(
+        sigmaX: premium.glassBlur * 0.85,
+        sigmaY: premium.glassBlur * 0.85,
       ),
-      child: child,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: premium.glassSurface.withValues(alpha: 0.94),
+          borderRadius: r,
+          border: Border(
+            top: BorderSide(color: premium.glassBorder.withValues(alpha: 0.4)),
+          ),
+          boxShadow: PremiumShadowTokens.sheet(shadowColor: ext.shadowColor),
+        ),
+        child: child,
+      ),
     ),
   );
 }
@@ -284,7 +290,7 @@ class PremiumBottomSheetHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.only(
         top: DesignTokens.space3,
@@ -295,8 +301,14 @@ class PremiumBottomSheetHandle extends StatelessWidget {
           width: 40,
           height: 4,
           decoration: BoxDecoration(
-            color: ext.textTertiary.withValues(alpha: 0.45),
+            gradient: PremiumGlassTokens.goldAccentGradient(),
             borderRadius: BorderRadius.circular(2),
+            boxShadow: [
+              BoxShadow(
+                color: premium.champagneGold.withValues(alpha: 0.25),
+                blurRadius: 6,
+              ),
+            ],
           ),
         ),
       ),

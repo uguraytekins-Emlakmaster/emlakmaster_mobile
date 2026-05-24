@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -230,7 +231,7 @@ class _AccountSessionSheet extends ConsumerWidget {
 }
 
 void _showPanelPickSheet(BuildContext context, WidgetRef ref) {
-  final ext = AppThemeExtension.of(context);
+  final premium = PremiumThemeExtension.of(context);
   final prefer = ref.read(preferredConsultantPanelProvider);
   showPremiumScrollableBottomSheet<void>(
     context: context,
@@ -244,7 +245,7 @@ void _showPanelPickSheet(BuildContext context, WidgetRef ref) {
               icon: Icons.dashboard_rounded,
               label: ProductLabels.managerWorkspace,
               trailing: prefer != true
-                  ? Icon(Icons.check_rounded, color: ext.accent, size: 20)
+                  ? Icon(Icons.check_rounded, color: premium.champagneGold, size: 20)
                   : null,
               onTap: () {
                 ref.read(preferredConsultantPanelProvider.notifier).state =
@@ -257,7 +258,7 @@ void _showPanelPickSheet(BuildContext context, WidgetRef ref) {
               icon: Icons.person_rounded,
               label: ProductLabels.consultantWorkspace,
               trailing: prefer == true
-                  ? Icon(Icons.check_rounded, color: ext.accent, size: 20)
+                  ? Icon(Icons.check_rounded, color: premium.champagneGold, size: 20)
                   : null,
               onTap: () {
                 ref.read(preferredConsultantPanelProvider.notifier).state =
@@ -291,20 +292,39 @@ class _SheetAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final fg = danger ? ext.danger : ext.textPrimary;
-    final iconColor = danger ? ext.danger : ext.accent;
+    final iconColor = danger ? ext.danger : premium.champagneGold;
     return Material(
-      color: ext.surfaceElevated.withValues(alpha: 0.55),
+      color: premium.glassSurface.withValues(alpha: 0.55),
       borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        child: Padding(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+            border: Border.all(
+              color: danger
+                  ? ext.danger.withValues(alpha: 0.25)
+                  : premium.glassBorder.withValues(alpha: 0.22),
+            ),
+          ),
+          child: Padding(
           padding: const EdgeInsets.symmetric(
               horizontal: DesignTokens.space4, vertical: DesignTokens.space3),
           child: Row(
             children: [
-              Icon(icon, color: iconColor, size: 22),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+              ),
               const SizedBox(width: DesignTokens.space3),
               Expanded(
                 child: Column(
@@ -337,9 +357,10 @@ class _SheetAction extends StatelessWidget {
               if (trailing != null) trailing!,
               if (trailing == null)
                 Icon(Icons.chevron_right_rounded,
-                    color: ext.textTertiary.withValues(alpha: 0.65), size: 22),
+                    color: premium.champagneGoldMuted, size: 22),
             ],
           ),
+        ),
         ),
       ),
     );
