@@ -4,130 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/services/campaign_ai_service.dart';
-import '../../../../core/services/firestore_service.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../core/utils/sms_launcher.dart';
 import '../../../../core/utils/whatsapp_launcher.dart';
 import '../../../../core/widgets/app_toaster.dart';
-import '../../../../features/crm_customers/data/customer_mapper.dart';
-import '../../../../shared/models/customer_models.dart';
-class BulkCampaignFilters {
-  const BulkCampaignFilters({
-    required this.minBudgetMillions,
-    required this.maxBudgetMillions,
-    required this.minLeadTemperature,
-    required this.requireRecentInteraction,
-    required this.requireNoRecentInteraction,
-    required this.regionQuery,
-  });
-
-  final double minBudgetMillions;
-  final double maxBudgetMillions;
-  final double minLeadTemperature;
-  final bool requireRecentInteraction;
-  final bool requireNoRecentInteraction;
-  final String regionQuery;
-}
-
-final bulkCampaignFiltersProvider =
-    StateProvider<BulkCampaignFilters>((ref) {
-  return const BulkCampaignFilters(
-    minBudgetMillions: 1,
-    maxBudgetMillions: 10,
-    minLeadTemperature: 0.4,
-    requireRecentInteraction: true,
-    requireNoRecentInteraction: false,
-    regionQuery: '',
-  );
-});
-
-/// Filtre + Firestore sonucundan üretilmiş müşteri segmenti.
-final bulkCampaignSegmentProvider =
-    StreamProvider.autoDispose<BulkCampaignSegment>((ref) {
-  final filters = ref.watch(bulkCampaignFiltersProvider);
-  return FirestoreService.customersStream().map((snap) {
-    final customers = snap.docs
-        .map((d) => CustomerMapper.fromDoc(d))
-        .whereType<CustomerEntity>()
-        .toList();
-
-    final now = DateTime.now();
-    final minBudget = filters.minBudgetMillions * 1000000;
-    final maxBudget = filters.maxBudgetMillions * 1000000;
-
-    final List<CustomerEntity> filtered = customers.where((c) {
-      // Telefonu olmayanları kampanya dışında bırak.
-      final phone = (c.primaryPhone ?? '').trim();
-      if (phone.isEmpty) return false;
-
-      // Lead sıcaklığı
-      final temp = c.leadTemperature ?? 0;
-      if (temp < filters.minLeadTemperature) return false;
-
-      final last = c.lastInteractionAt ?? c.updatedAt;
-      final diffDays = now.difference(last).inDays;
-
-      // Son 30 günde temas şartı
-      if (filters.requireRecentInteraction && diffDays > 30) {
-        return false;
-      }
-
-      // Son 45 gündür temas olmama şartı
-      if (filters.requireNoRecentInteraction && diffDays <= 45) {
-        return false;
-      }
-
-      // Bölge filtresi
-      if (filters.regionQuery.trim().isNotEmpty) {
-        final q = filters.regionQuery.trim().toLowerCase();
-        final regions =
-            c.regionPreferences.map((e) => e.toLowerCase()).toList();
-        final matchRegion =
-            regions.any((r) => r.contains(q));
-        if (!matchRegion) return false;
-      }
-
-      // Bütçe (M TL slider'ına yaklaşık eşleme)
-      final bMin = c.budgetMin;
-      final bMax = c.budgetMax;
-      if (bMin != null || bMax != null) {
-        final low = bMin ?? bMax ?? 0;
-        final high = bMax ?? bMin ?? low;
-        if (high < minBudget) return false;
-        if (low > maxBudget) return false;
-      }
-
-      return true;
-    }).toList();
-
-    return BulkCampaignSegment(
-      name: 'Filtrelenmiş CRM segmenti',
-      customers: filtered,
-    );
-  });
-});
-
-final bulkCampaignMessageProvider = StateProvider<String>((ref) {
-  return 'Merhaba, portföyümüzde bütçenize ve tercih ettiğiniz bölgeye uygun yeni ilanlar oluştu. '
-      'İsterseniz bugün kısa bir telefonla üzerinden birlikte geçebiliriz.';
-});
-
-class BulkCampaignSegment {
-  const BulkCampaignSegment({
-    required this.name,
-    required this.customers,
-  });
-
-  final String name;
-  final List<CustomerEntity> customers;
-
-  int get activePhonesCount =>
-      customers.where((c) => (c.primaryPhone ?? '').trim().isNotEmpty).length;
-
-  List<String> get phones =>
-      customers.map((e) => e.primaryPhone).whereType<String>().where((p) => p.trim().isNotEmpty).toList();
-}
+import '../providers/bulk_campaign_providers.dart';
 
 /// Toplu kampanya / filtre ekranı – müşteri segmentasyonu + AI metin önerisi iskeleti.
 class BulkCampaignPage extends ConsumerWidget {
@@ -138,8 +20,10 @@ class BulkCampaignPage extends ConsumerWidget {
     final segmentAsync = ref.watch(bulkCampaignSegmentProvider);
     final message = ref.watch(bulkCampaignMessageProvider);
 
-    final segment = segmentAsync.valueOrNull;
-    final count = segment?.activePhonesCount ?? 0;
+    final count = segmentAsync.maybeWhen(
+      data: (s) => s.activePhonesCount,
+      orElse: () => 0,
+    );
 
     return Scaffold(
       backgroundColor: AppThemeExtension.of(context).background,
@@ -166,17 +50,36 @@ class BulkCampaignPage extends ConsumerWidget {
               const _AiMessageHeader(),
               const SizedBox(height: DesignTokens.space3),
               _AiMessageComposer(initialValue: message),
+              if (segmentAsync.isLoading) ...[
+                const SizedBox(height: DesignTokens.space4),
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(DesignTokens.space4),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              ],
+              if (segmentAsync.hasError) ...[
+                const SizedBox(height: DesignTokens.space4),
+                Text(
+                  'Segment yüklenemedi. Bağlantıyı kontrol edip tekrar deneyin.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppThemeExtension.of(context).danger,
+                      ),
+                ),
+              ],
             ],
           ),
         ),
       ),
-      bottomNavigationBar: segment == null
-          ? null
-          : _BottomActionBar(
-              enabled: count > 0 && message.trim().isNotEmpty,
-              segment: segment,
-              message: message,
-            ),
+      bottomNavigationBar: segmentAsync.maybeWhen(
+        data: (segment) => _BottomActionBar(
+          enabled: count > 0 && message.trim().isNotEmpty,
+          segment: segment,
+          message: message,
+        ),
+        orElse: () => null,
+      ),
     );
   }
 }
@@ -242,19 +145,32 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
   @override
   void initState() {
     super.initState();
-    _pushFilters();
+    final initial = ref.read(bulkCampaignFiltersProvider);
+    _budgetRange = RangeValues(
+      initial.minBudgetMillions,
+      initial.maxBudgetMillions,
+    );
+    _minTemperature = initial.minLeadTemperature;
+    _activeCalls = initial.requireRecentInteraction;
+    _noInteractionRecently = initial.requireNoRecentInteraction;
+    _regionText = initial.regionQuery;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _pushFilters();
+    });
   }
 
   void _pushFilters() {
-    ref.read(bulkCampaignFiltersProvider.notifier).state =
-        BulkCampaignFilters(
-      minBudgetMillions: _budgetRange.start,
-      maxBudgetMillions: _budgetRange.end,
-      minLeadTemperature: _minTemperature,
-      requireRecentInteraction: _activeCalls,
-      requireNoRecentInteraction: _noInteractionRecently,
-      regionQuery: _regionText,
-    );
+    if (!mounted) return;
+    ref.read(bulkCampaignFiltersProvider.notifier).apply(
+          BulkCampaignFilters(
+            minBudgetMillions: _budgetRange.start,
+            maxBudgetMillions: _budgetRange.end,
+            minLeadTemperature: _minTemperature,
+            requireRecentInteraction: _activeCalls,
+            requireNoRecentInteraction: _noInteractionRecently,
+            regionQuery: _regionText,
+          ),
+        );
   }
 
   @override
@@ -531,10 +447,11 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
         );
       });
       if (mounted) {
-        // Provider state de güncellensin.
-        final ref = ProviderScope.containerOf(context, listen: false);
-        ref.read(bulkCampaignMessageProvider.notifier).state = suggestion;
-        AppToaster.success(context, AppLocalizations.of(context).t('ai_suggest_ready'));
+        ref.read(bulkCampaignMessageProvider.notifier).setMessage(suggestion);
+        AppToaster.success(
+          context,
+          AppLocalizations.of(context).t('ai_suggest_ready'),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -619,8 +536,9 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
                   controller: _controller,
                   maxLines: 6,
                   minLines: 4,
-                  onChanged: (value) =>
-                      ref.read(bulkCampaignMessageProvider.notifier).state = value,
+                  onChanged: (value) => ref
+                      .read(bulkCampaignMessageProvider.notifier)
+                      .setMessage(value),
                   decoration: InputDecoration(
                     isCollapsed: true,
                     border: InputBorder.none,
@@ -680,10 +598,20 @@ class _BottomActionBar extends StatelessWidget {
                 onPressed: !enabled
                     ? null
                     : () async {
-                        // Şimdilik: ilk müşterinin numarasına WhatsApp aç.
-                        final phone = segment.phones.isNotEmpty ? segment.phones.first : null;
+                        final phone =
+                            segment.phones.isNotEmpty ? segment.phones.first : null;
                         if (phone == null) return;
-                        await WhatsAppLauncher.openChat(phone, message: message);
+                        final ok = await WhatsAppLauncher.openChat(
+                          phone,
+                          message: message,
+                        );
+                        if (!context.mounted) return;
+                        if (!ok) {
+                          AppToaster.warning(
+                            context,
+                            'WhatsApp açılamadı.',
+                          );
+                        }
                       },
                 icon: const Icon(Icons.chat_rounded, size: 18),
                 label: Text(AppLocalizations.of(context).t('whatsapp')),
@@ -695,8 +623,17 @@ class _BottomActionBar extends StatelessWidget {
                 onPressed: !enabled
                     ? null
                     : () async {
-                        // Şimdilik: tüm telefonlar için sms: URI ile toplu SMS ekranını aç.
-                        await SmsLauncher.openBulkSms(segment.phones, body: message);
+                        final ok = await SmsLauncher.openBulkSms(
+                          segment.phones,
+                          body: message,
+                        );
+                        if (!context.mounted) return;
+                        if (!ok) {
+                          AppToaster.warning(
+                            context,
+                            'Mesaj uygulaması açılamadı.',
+                          );
+                        }
                       },
                 icon: const Icon(Icons.sms_rounded, size: 18),
                 label: Text(AppLocalizations.of(context).t('sms')),

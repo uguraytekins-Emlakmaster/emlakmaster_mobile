@@ -221,7 +221,7 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final premium = PremiumThemeExtension.of(context);
-    final size = ConsultantCustomersTokens.rowAvatarSize;
+    const size = ConsultantCustomersTokens.rowAvatarSize;
     return Container(
       width: size,
       height: size,

@@ -39,7 +39,6 @@ class PremiumCallCenterPageHeader extends StatelessWidget {
         tight ? ConsultantCallsTokens.headerBottomGap : ConsultantCallsTokens.chromeGap,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (!tight)
             const Padding(
@@ -511,7 +510,7 @@ class PremiumCallSearchRow extends StatelessWidget {
       ),
       child: ConsultantDashboardExecutiveSurface(
         ambientStrength: 0.75,
-        padding: EdgeInsets.fromLTRB(
+        padding: const EdgeInsets.fromLTRB(
           ConsultantCallsTokens.searchSurfacePaddingH,
           ConsultantCallsTokens.searchSurfacePaddingV,
           ConsultantCallsTokens.searchSurfacePaddingH,

@@ -606,7 +606,8 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
                   right: 0,
                   child: ConnectivityBanner(),
                 ),
-                if (!kReleaseMode && isDevMode) const DevModeBadge(),
+                if (!kReleaseMode && isDevMode && showDevUiOverlays)
+                  const DevModeBadge(),
               ],
             ),
           ),

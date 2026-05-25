@@ -14,7 +14,6 @@ import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/crm_customers/presentation/consultant_customers_layout.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_list_heat_filter.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/consultant_customers_chrome.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/consultant_customers_tokens.dart';
@@ -35,7 +34,6 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
-import 'package:flutter/foundation.dart';
 import '../widgets/customer_card.dart';
 
 /// Liste altı — dock bar + büyük metin ölçeği için güvenli boşluk (SE / erişilebilirlik).
@@ -67,12 +65,6 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   @override
   void initState() {
     super.initState();
-    if (kDebugMode) {
-      debugPrint(
-        'ConsultantCustomers layout=${ConsultantCustomersLayout.layoutVersion} '
-        '${ConsultantCustomersLayout.fingerprint}',
-      );
-    }
     _debouncedSearch = DebouncedSearchController(
       onQueryChanged: (q) {
         if (!mounted) return;
@@ -242,6 +234,18 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     }
   }
 
+  void _openBulkCampaign(BuildContext context) {
+    if (!context.mounted) return;
+    AppFeedback.lightImpact();
+    context.push(AppRouter.routeBulkCampaign);
+  }
+
+  void _openAddCustomerSheet(BuildContext context, {String? source}) {
+    if (!context.mounted) return;
+    AppFeedback.lightImpact();
+    showSaveContactSheet(context, source: source ?? 'crm_list');
+  }
+
   Future<void> _startRowWhatsApp(BuildContext context, CustomerEntity entity) async {
     final phone = _callablePhone(entity);
     if (phone == null) {
@@ -399,8 +403,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                                 const SizedBox(width: DesignTokens.space2),
                                 Flexible(
                                   child: FilledButton.icon(
-                                    onPressed: () => context
-                                        .push(AppRouter.routeBulkCampaign),
+                                    onPressed: () =>
+                                        _openBulkCampaign(context),
                                     icon: const Icon(Icons.campaign_rounded,
                                         size: 18),
                                     label: Text(
@@ -460,10 +464,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             ),
             if (showAddDock)
               _CustomerAddDockBar(
-                onPressed: () {
-                  AppFeedback.lightImpact();
-                  showSaveContactSheet(context, source: 'crm_list');
-                },
+                onPressed: () => _openAddCustomerSheet(context),
               ),
           ],
         ),

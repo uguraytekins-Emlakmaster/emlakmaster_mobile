@@ -15,7 +15,7 @@ class DevDebugPanel {
   DevDebugPanel._();
 
   static Future<void> show(BuildContext context) async {
-    const show = !kReleaseMode && isDevMode;
+    const show = !kReleaseMode && isDevMode && showDevUiOverlays;
     if (!show || !context.mounted) return;
 
     final mq = MediaQuery.of(context);

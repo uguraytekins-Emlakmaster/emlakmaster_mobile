@@ -15,6 +15,7 @@ class DevModeBadge extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef _) {
     if (kReleaseMode) return const SizedBox.shrink();
     if (!isDevMode) return const SizedBox.shrink();
+    if (!showDevUiOverlays) return const SizedBox.shrink();
 
     final pad = MediaQuery.paddingOf(context);
     final textDir = Directionality.of(context);

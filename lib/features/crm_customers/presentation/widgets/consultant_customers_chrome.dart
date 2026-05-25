@@ -37,7 +37,6 @@ class PremiumCustomersPageHeader extends StatelessWidget {
             : ConsultantCustomersTokens.chromeGap,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (!tight)
             const Padding(
@@ -114,7 +113,7 @@ class PremiumCustomerSearchRow extends StatelessWidget {
       ),
       child: ConsultantDashboardExecutiveSurface(
         ambientStrength: 0.75,
-        padding: EdgeInsets.fromLTRB(
+        padding: const EdgeInsets.fromLTRB(
           ConsultantCustomersTokens.searchSurfacePaddingH,
           ConsultantCustomersTokens.searchSurfacePaddingV,
           ConsultantCustomersTokens.searchSurfacePaddingH,
@@ -125,7 +124,6 @@ class PremiumCustomerSearchRow extends StatelessWidget {
           child: PremiumSearchBar(
             controller: controller,
             hintText: hintText,
-            showMic: false,
             compact: true,
           ),
         ),
