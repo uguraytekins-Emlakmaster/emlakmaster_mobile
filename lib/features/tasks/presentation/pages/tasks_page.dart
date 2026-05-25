@@ -11,11 +11,14 @@ import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
-import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_insight_provider.dart';
+import 'package:emlakmaster_mobile/features/tasks/presentation/consultant_tasks_tokens.dart';
+import 'package:emlakmaster_mobile/features/tasks/presentation/models/task_list_row_snapshot.dart';
+import 'package:emlakmaster_mobile/features/tasks/presentation/utils/task_list_filter.dart';
+import 'package:emlakmaster_mobile/features/tasks/presentation/widgets/consultant_tasks_chrome.dart';
+import 'package:emlakmaster_mobile/features/tasks/presentation/widgets/task_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,13 +36,19 @@ class TasksPage extends ConsumerStatefulWidget {
   ConsumerState<TasksPage> createState() => _TasksPageState();
 }
 
-enum _TasksListFilter { all, today, overdue, open }
-
 class _TasksPageState extends ConsumerState<TasksPage> {
   final _readyTracker = ShellScreenReadyTracker('tasks');
   int _tasksRetryKey = 0;
   final Set<String> _deletingIds = <String>{};
-  _TasksListFilter _listFilter = _TasksListFilter.all;
+  TaskListFilter _listFilter = TaskListFilter.all;
+
+  double _tasksDockBottomReserve(BuildContext context) {
+    final ts = MediaQuery.textScalerOf(context);
+    final ratio =
+        ts.scale(DesignTokens.fontSizeBase) / DesignTokens.fontSizeBase;
+    final clamped = ratio.clamp(1.0, 1.38);
+    return 120 * clamped;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,251 +61,328 @@ class _TasksPageState extends ConsumerState<TasksPage> {
         }
       });
     }
-    final bottomPad = DashboardLayoutTokens.shellScrollBottomPadding(context);
-    final premium = PremiumThemeExtension.of(context);
+    final dockReserve = _tasksDockBottomReserve(context);
+
     return PremiumShellBackdrop(
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: uid.isEmpty
-          ? Center(
-              child: Text(
-                'Oturum açık değil.',
-                style: AppTypography.body(context),
-              ),
-            )
-          : SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const PremiumPageHeader(
-                    title: ProductLabels.myTasks,
-                    subtitle: 'Tüm görevlerini tek yerde yönet.',
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      DesignTokens.space5,
-                      0,
-                      DesignTokens.space5,
-                      DesignTokens.space3,
-                    ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (final f in _TasksListFilter.values)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                right: DesignTokens.space2,
-                              ),
-                              child: PremiumFilterChip(
-                                label: _tasksFilterLabel(f),
-                                selected: _listFilter == f,
-                                onTap: () =>
-                                    setState(() => _listFilter = f),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Builder(
-              key: ValueKey(_tasksRetryKey),
-              builder: (context) {
-                final tasksAsync = ref.watch(advisorTasksDisplayProvider(uid));
-                if (tasksAsync.isLoading && !tasksAsync.hasValue) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: premium.champagneGold,
-                      strokeWidth: 2,
-                    ),
-                  );
-                }
-                if (tasksAsync.hasError && !tasksAsync.hasValue) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(DesignTokens.space6),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.error_outline_rounded,
-                            size: 48,
-                            color: AppThemeExtension.of(context).textSecondary,
-                          ),
-                          const SizedBox(height: DesignTokens.space4),
-                          Text(
-                            'Görev akışı yüklenemedi.',
-                            style: AppTypography.cardHeading(context),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: DesignTokens.space4),
-                          TextButton(
-                            onPressed: () {
-                              ref.invalidate(advisorTasksStreamProvider(uid));
-                              ref.invalidate(advisorTasksStaleCacheProvider(uid));
-                              setState(() => _tasksRetryKey++);
-                            },
-                            child: const Text('Tekrar dene'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                final now = DateTime.now();
-                final today = DateTime(now.year, now.month, now.day);
-                final docs = (tasksAsync.valueOrNull ?? [])
-                    .where((d) => !_deletingIds.contains(d.id))
-                    .where((d) => _matchesTasksFilter(d, today))
-                    .toList();
-                if (docs.isEmpty) {
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      DesignTokens.space5,
-                      0,
-                      DesignTokens.space5,
-                      bottomPad,
-                    ),
-                    child: Column(
-                      children: [
-                        PremiumEmptyState(
-                          icon: Icons.task_alt_rounded,
-                          title: AppLocalizations.of(context).t('empty_tasks'),
-                          subtitle:
-                              AppLocalizations.of(context).t('empty_tasks_sub'),
-                          actionLabel:
-                              AppLocalizations.of(context).t('empty_tasks_cta'),
-                          onAction: () => _showAddTaskDialog(context, ref, uid),
-                        ),
-                        const SizedBox(height: DesignTokens.space6),
-                        const PremiumSectionHeader(
-                          label: 'Hızlı işlemler',
-                          icon: Icons.bolt_rounded,
-                        ),
-                        _TasksQuickActionsRow(
-                          onAddTask: () => _showAddTaskDialog(context, ref, uid),
-                          onRecurring: () =>
-                              _showRecurringTasksSheet(context, ref, uid),
-                        ),
-                        const SizedBox(height: DesignTokens.space6),
-                        const _TasksWeeklyStatsStrip(),
-                      ],
-                    ),
-                  );
-                }
-                final lowDensity = docs.isNotEmpty && docs.length <= 4;
-                final headerCount = lowDensity ? 1 : 0;
-                return Stack(
-                  clipBehavior: Clip.none,
+        backgroundColor: Colors.transparent,
+        body: uid.isEmpty
+            ? Center(
+                child: Text(
+                  'Oturum açık değil.',
+                  style: AppTypography.body(context),
+                ),
+              )
+            : SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    ListView.builder(
-                      padding: EdgeInsets.fromLTRB(
-                        DesignTokens.space6,
-                        DesignTokens.space4,
-                        DesignTokens.space6,
-                        bottomPad + 72,
-                      ),
-                      itemCount: docs.length + headerCount,
-                      cacheExtent: 300,
-                      itemBuilder: (context, index) {
-                        if (lowDensity && index == 0) {
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                                bottom: DesignTokens.space3),
-                            child: Text(
-                              'Yakın ajandanız',
-                              style:
-                                  AppTypography.cardHeading(context).copyWith(
-                                color:
-                                    AppThemeExtension.of(context).textSecondary,
-                                fontSize: DesignTokens.fontSizeLg,
+                    Expanded(
+                      child: Builder(
+                        key: ValueKey(_tasksRetryKey),
+                        builder: (context) {
+                          final tasksAsync =
+                              ref.watch(advisorTasksDisplayProvider(uid));
+                          if (tasksAsync.isLoading && !tasksAsync.hasValue) {
+                            return const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            );
+                          }
+                          if (tasksAsync.hasError && !tasksAsync.hasValue) {
+                            return _TasksErrorState(
+                              onRetry: () {
+                                ref.invalidate(advisorTasksStreamProvider(uid));
+                                ref.invalidate(
+                                    advisorTasksStaleCacheProvider(uid));
+                                setState(() => _tasksRetryKey++);
+                              },
+                            );
+                          }
+
+                          final now = DateTime.now();
+                          final today =
+                              DateTime(now.year, now.month, now.day);
+                          final allDocs = (tasksAsync.valueOrNull ?? [])
+                              .where((d) => !_deletingIds.contains(d.id))
+                              .toList();
+                          final summary =
+                              computeTaskListSummary(allDocs, today);
+                          final filtered = allDocs
+                              .where((d) =>
+                                  matchesTaskListFilter(d, _listFilter, today))
+                              .toList();
+                          final showDock = allDocs.isNotEmpty;
+
+                          return CustomScrollView(
+                            cacheExtent: 320,
+                            slivers: [
+                              SliverToBoxAdapter(
+                                child: PremiumTasksPageHeader(
+                                  title: ProductLabels.myTasks,
+                                  subtitle:
+                                      'Ajanda, takip ve hatırlatmalar — tek ekran.',
+                                ),
                               ),
-                            ),
+                              SliverToBoxAdapter(
+                                child: PremiumTasksSummaryStrip(
+                                  summary: summary,
+                                ),
+                              ),
+                              SliverToBoxAdapter(
+                                child: PremiumTaskFilterStrip(
+                                  selected: _listFilter,
+                                  onSelected: (f) =>
+                                      setState(() => _listFilter = f),
+                                ),
+                              ),
+                              if (filtered.isEmpty)
+                                SliverFillRemaining(
+                                  hasScrollBody: false,
+                                  child: Padding(
+                                    padding: EdgeInsets.fromLTRB(
+                                      ConsultantTasksTokens.horizontal,
+                                      0,
+                                      ConsultantTasksTokens.horizontal,
+                                      dockReserve,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Expanded(
+                                          child: PremiumEmptyState(
+                                            icon: Icons.task_alt_rounded,
+                                            title: AppLocalizations.of(context)
+                                                .t('empty_tasks'),
+                                            subtitle: AppLocalizations.of(
+                                                    context)
+                                                .t('empty_tasks_sub'),
+                                            actionLabel: AppLocalizations.of(
+                                                    context)
+                                                .t('empty_tasks_cta'),
+                                            onAction: () => _showAddTaskDialog(
+                                                context, ref, uid),
+                                          ),
+                                        ),
+                                        const PremiumSectionHeader(
+                                          label: 'Hızlı işlemler',
+                                          icon: Icons.bolt_rounded,
+                                        ),
+                                        _TasksQuickActionsRow(
+                                          onAddTask: () => _showAddTaskDialog(
+                                              context, ref, uid),
+                                          onRecurring: () =>
+                                              _showRecurringTasksSheet(
+                                                  context, ref, uid),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                SliverPadding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    ConsultantTasksTokens.horizontal,
+                                    0,
+                                    ConsultantTasksTokens.horizontal,
+                                    showDock ? dockReserve : dockReserve / 2,
+                                  ),
+                                  sliver: SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) {
+                                        final doc = filtered[index];
+                                        final d = doc.data();
+                                        final id = doc.id;
+                                        final title =
+                                            d['title'] as String? ?? 'Görev';
+                                        final done = taskDocIsDone(d);
+                                        final customerId =
+                                            d['customerId'] as String?;
+                                        final row =
+                                            TaskListRowSnapshot.fromTaskData(
+                                          d,
+                                          today: today,
+                                        );
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 6),
+                                          child: RepaintBoundary(
+                                            child: TaskCard(
+                                              taskId: id,
+                                              title: title,
+                                              done: done,
+                                              row: row,
+                                              customerId: customerId,
+                                              isDeleting:
+                                                  _deletingIds.contains(id),
+                                              onTap: () => _showTaskDetailSheet(
+                                                context,
+                                                ref: ref,
+                                                uid: uid,
+                                                id: id,
+                                                data: d,
+                                                onToggleDone: () =>
+                                                    _toggleDone(id, d, !done),
+                                                onDelete: () =>
+                                                    _confirmDeleteTask(
+                                                        id, title),
+                                              ),
+                                              onComplete: () =>
+                                                  _toggleDone(id, d, !done),
+                                              onPostpone: done
+                                                  ? null
+                                                  : () => _postponeTask(
+                                                        context,
+                                                        id: id,
+                                                        data: d,
+                                                      ),
+                                              onOpenCustomer: customerId !=
+                                                          null &&
+                                                      customerId.isNotEmpty
+                                                  ? () => context.push(
+                                                        AppRouter
+                                                            .routeCustomerDetail
+                                                            .replaceFirst(
+                                                          ':id',
+                                                          customerId,
+                                                        ),
+                                                      )
+                                                  : null,
+                                              onEdit: () => _showTaskDetailSheet(
+                                                context,
+                                                ref: ref,
+                                                uid: uid,
+                                                id: id,
+                                                data: d,
+                                                onToggleDone: () =>
+                                                    _toggleDone(id, d, !done),
+                                                onDelete: () =>
+                                                    _confirmDeleteTask(
+                                                        id, title),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      childCount: filtered.length,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           );
-                        }
-                        final docIndex = index - headerCount;
-                        final doc = docs[docIndex];
-                        final d = doc.data();
-                        final id = doc.id;
-                        final title = d['title'] as String? ?? 'Görev';
-                        final dueAt = (d['dueAt'] as Timestamp?)?.toDate();
-                        final done = d['done'] == true;
-                        final customerId = d['customerId'] as String?;
-                        return RepaintBoundary(
-                          child: _TaskTile(
-                            id: id,
-                            title: title,
-                            dueAt: dueAt,
-                            done: done,
-                            customerId: customerId,
-                            isDeleting: _deletingIds.contains(id),
-                            isOverdue: dueAt != null &&
-                                dueAt.isBefore(today) &&
-                                !done,
-                            onToggleDone: () => _toggleDone(id, d, !done),
-                            onDelete: () => _confirmDeleteTask(id, title),
-                            onTap: () => _showTaskDetailSheet(
-                              context,
-                              ref: ref,
-                              uid: uid,
-                              id: id,
-                              data: d,
-                              onToggleDone: () => _toggleDone(id, d, !done),
-                              onDelete: () => _confirmDeleteTask(id, title),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: SafeArea(
-                        top: false,
-                        child: _TasksDockedAddBar(
-                          onPressed: () =>
-                              _showAddTaskDialog(context, ref, uid),
-                        ),
+                        },
                       ),
                     ),
+                    if (uid.isNotEmpty)
+                      Builder(
+                        builder: (context) {
+                          final tasksAsync =
+                              ref.watch(advisorTasksDisplayProvider(uid));
+                          final hasTasks = tasksAsync.valueOrNull
+                                  ?.where((d) => !_deletingIds.contains(d.id))
+                                  .isNotEmpty ??
+                              false;
+                          if (!hasTasks) return const SizedBox.shrink();
+                          return _TasksAddDockBar(
+                            onPressed: () =>
+                                _showAddTaskDialog(context, ref, uid),
+                          );
+                        },
+                      ),
                   ],
-                );
-              },
-            ),
-                  ),
-                ],
+                ),
               ),
-            ),
       ),
     );
   }
 
-  String _tasksFilterLabel(_TasksListFilter f) => switch (f) {
-        _TasksListFilter.all => 'Tümü',
-        _TasksListFilter.today => 'Bugün',
-        _TasksListFilter.overdue => 'Gecikmiş',
-        _TasksListFilter.open => 'Açık',
-      };
+  Future<void> _postponeTask(
+    BuildContext context, {
+    required String id,
+    required Map<String, dynamic> data,
+  }) async {
+    AppFeedback.lightImpact();
+    final currentDue = taskDocDueAt(data) ?? DateTime.now();
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) {
+        final ext = AppThemeExtension.of(ctx);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.wb_sunny_outlined, color: ext.accent),
+                title: const Text('Yarına ertele'),
+                onTap: () => Navigator.pop(ctx, 'tomorrow'),
+              ),
+              ListTile(
+                leading: Icon(Icons.date_range_outlined, color: ext.accent),
+                title: const Text('3 gün sonra'),
+                onTap: () => Navigator.pop(ctx, 'three_days'),
+              ),
+              ListTile(
+                leading: Icon(Icons.calendar_today_outlined, color: ext.accent),
+                title: const Text('Tarih seç'),
+                onTap: () => Navigator.pop(ctx, 'pick'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted || choice == null) return;
 
-  bool _matchesTasksFilter(
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-    DateTime today,
-  ) {
-    final d = doc.data();
-    final done = d['done'] == true;
-    final dueAt = (d['dueAt'] as Timestamp?)?.toDate();
-    return switch (_listFilter) {
-      _TasksListFilter.all => true,
-      _TasksListFilter.open => !done,
-      _TasksListFilter.today =>
-        !done && dueAt != null && DateTime(dueAt.year, dueAt.month, dueAt.day) == today,
-      _TasksListFilter.overdue =>
-        !done &&
-            dueAt != null &&
-            DateTime(dueAt.year, dueAt.month, dueAt.day).isBefore(today),
-    };
+    DateTime? newDue;
+    switch (choice) {
+      case 'tomorrow':
+        newDue = currentDue.add(const Duration(days: 1));
+      case 'three_days':
+        newDue = currentDue.add(const Duration(days: 3));
+      case 'pick':
+        if (!context.mounted) return;
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: currentDue.add(const Duration(days: 1)),
+          firstDate: DateTime.now().subtract(const Duration(days: 1)),
+          lastDate: DateTime.now().add(const Duration(days: 730)),
+        );
+        if (picked == null) return;
+        newDue = picked;
+    }
+    if (newDue == null) return;
+
+    try {
+      await FirestoreService.setTask({
+        ...data,
+        'id': id,
+        'dueAt': Timestamp.fromDate(newDue),
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Görev ${newDue.day}.${newDue.month}.${newDue.year} tarihine ertelendi.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erteleme başarısız: ${e.message ?? e.code}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on StateError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _toggleDone(
@@ -1046,56 +1132,71 @@ class _TasksPageState extends ConsumerState<TasksPage> {
   }
 }
 
-class _TasksDockedAddBar extends StatelessWidget {
-  const _TasksDockedAddBar({required this.onPressed});
+class _TasksAddDockBar extends StatelessWidget {
+  const _TasksAddDockBar({required this.onPressed});
 
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return Material(
-      color: ext.surfaceElevated,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: ext.border.withValues(alpha: 0.5)),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: ext.shadowColor.withValues(alpha: 0.35),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+    return Semantics(
+      container: true,
+      label: 'Yeni görev ekle',
+      child: Material(
+        color: ext.surfaceElevated,
+        elevation: 10,
+        shadowColor: ext.shadowColor.withValues(alpha: 0.28),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: ext.border.withValues(alpha: 0.55)),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space6,
-            DesignTokens.space3,
-            DesignTokens.space6,
-            DesignTokens.space3,
           ),
-          child: FilledButton.icon(
-            onPressed: () {
-              AppFeedback.mediumImpact();
-              onPressed();
-            },
-            icon: Icon(Icons.add_rounded, color: ext.onBrand, size: 22),
-            label: Text(
-              'Yeni görev',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: ext.onBrand,
-                    fontWeight: FontWeight.w700,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              ConsultantTasksTokens.horizontal,
+              DesignTokens.space3,
+              ConsultantTasksTokens.horizontal,
+              DesignTokens.space4,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Ajandaya ekle',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.meta(context).copyWith(
+                    color: ext.textTertiary.withValues(alpha: 0.95),
+                    fontWeight: FontWeight.w600,
                   ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: ext.accent,
-              foregroundColor: ext.onBrand,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
-              ),
+                ),
+                const SizedBox(height: DesignTokens.space2),
+                FilledButton.icon(
+                  onPressed: () {
+                    AppFeedback.mediumImpact();
+                    onPressed();
+                  },
+                  icon: Icon(Icons.add_rounded, color: ext.onBrand, size: 20),
+                  label: Text(
+                    'Yeni görev',
+                    style: AppTypography.bodyStrong(context).copyWith(
+                      color: ext.onBrand,
+                      fontSize: DesignTokens.fontSizeMd,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ext.accent,
+                    foregroundColor: ext.onBrand,
+                    minimumSize: const Size(double.infinity, 46),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.radiusControl),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1104,149 +1205,40 @@ class _TasksDockedAddBar extends StatelessWidget {
   }
 }
 
-class _TaskTile extends StatelessWidget {
-  const _TaskTile({
-    required this.id,
-    required this.title,
-    this.dueAt,
-    required this.done,
-    this.customerId,
-    required this.isDeleting,
-    required this.isOverdue,
-    required this.onToggleDone,
-    required this.onDelete,
-    required this.onTap,
-  });
+class _TasksErrorState extends StatelessWidget {
+  const _TasksErrorState({required this.onRetry});
 
-  final String id;
-  final String title;
-  final DateTime? dueAt;
-  final bool done;
-  final String? customerId;
-  final bool isDeleting;
-  final bool isOverdue;
-  final VoidCallback onToggleDone;
-  final VoidCallback onDelete;
-  final VoidCallback onTap;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: DesignTokens.space3),
-      color: ext.surfaceElevated,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-        side: BorderSide(
-          color: isOverdue
-              ? ext.danger.withValues(alpha: 0.42)
-              : ext.border.withValues(alpha: 0.55),
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space4,
-            vertical: DesignTokens.space3,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Checkbox(
-                value: done,
-                onChanged: isDeleting ? null : (_) => onToggleDone(),
-                activeColor: ext.accent,
-                side: BorderSide(color: ext.border.withValues(alpha: 0.8)),
-                fillColor: WidgetStateProperty.resolveWith((_) {
-                  return done ? ext.accent : Colors.transparent;
-                }),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.cardHeading(context).copyWith(
-                        color: done
-                            ? ext.textSecondary.withValues(alpha: 0.72)
-                            : ext.textPrimary,
-                        fontSize: DesignTokens.fontSizeMd,
-                        fontWeight: done ? FontWeight.w500 : FontWeight.w700,
-                        fontStyle: done ? FontStyle.italic : FontStyle.normal,
-                        height: 1.25,
-                      ),
-                    ),
-                    if (dueAt != null) ...[
-                      const SizedBox(height: DesignTokens.space1),
-                      Text(
-                        _formatDue(dueAt!, isOverdue),
-                        style: AppTypography.meta(context).copyWith(
-                          color: isOverdue ? ext.danger : ext.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                    if (customerId != null && customerId!.isNotEmpty) ...[
-                      const SizedBox(height: DesignTokens.space2),
-                      InkWell(
-                        onTap: () => context.push(
-                          AppRouter.routeCustomerDetail.replaceFirst(
-                            ':id',
-                            customerId!,
-                          ),
-                        ),
-                        child: Text(
-                          'Müşteriye git →',
-                          style:
-                              Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    color: ext.accent,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                tooltip: 'Görevi sil',
-                onPressed: isDeleting ? null : onDelete,
-                icon: isDeleting
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: ext.danger,
-                        ),
-                      )
-                    : Icon(
-                        Icons.delete_outline_rounded,
-                        color: ext.danger,
-                      ),
-              ),
-            ],
-          ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.space6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: ext.textSecondary,
+            ),
+            const SizedBox(height: DesignTokens.space4),
+            Text(
+              'Görev akışı yüklenemedi.',
+              style: AppTypography.cardHeading(context),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: DesignTokens.space4),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text('Tekrar dene'),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  String _formatDue(DateTime due, bool isOverdue) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final dueDay = DateTime(due.year, due.month, due.day);
-    final diff = dueDay.difference(today).inDays;
-    if (diff == 0) return 'Bugün';
-    if (diff == 1) return 'Yarın';
-    if (diff == -1) return 'Dün (geçti)';
-    if (diff < -1) return '${-diff} gün önce (geçti)';
-    return '${due.day}.${due.month}.${due.year}';
   }
 }
 
@@ -1365,60 +1357,6 @@ class _TasksQuickActionCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TasksWeeklyStatsStrip extends StatelessWidget {
-  const _TasksWeeklyStatsStrip();
-
-  @override
-  Widget build(BuildContext context) {
-    const stats = [
-      ('0', 'Tamamlanan'),
-      ('0', 'Devam eden'),
-      ('0', 'Hatırlatma'),
-      ('0%', 'Tamamlama'),
-    ];
-    return PremiumSurfaceCard(
-      padding: const EdgeInsets.symmetric(
-        vertical: DesignTokens.space4,
-        horizontal: DesignTokens.space3,
-      ),
-      child: Row(
-        children: [
-          for (var i = 0; i < stats.length; i++) ...[
-            if (i > 0)
-              Container(
-                width: 1,
-                height: 36,
-                color: AppThemeExtension.of(context)
-                    .border
-                    .withValues(alpha: 0.35),
-              ),
-            Expanded(
-              child: Column(
-                children: [
-                  Text(
-                    stats[i].$1,
-                    style: AppTypography.metricValue(context).copyWith(
-                      fontSize: DesignTokens.fontSizeLg,
-                    ),
-                  ),
-                  Text(
-                    stats[i].$2,
-                    style: TextStyle(
-                      color: AppThemeExtension.of(context).textTertiary,
-                      fontSize: 9,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
