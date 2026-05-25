@@ -61,11 +61,11 @@
 	<key>NSContactsUsageDescription</key>
 	<string>Arama sonrası veya arama yaparken kişiyi rehbere kaydetmek için rehber erişimi gerekir.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Sesli not ve hands-free CRM için mikrofon erişimi gerekir.</string>
+	<string>Emlak Master, sesli arama, sesli not ve görüşme destek özellikleri için mikrofona erişim isteyebilir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Ofis logosu seçmek için galeri erişimi gerekir.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Sesinizi metne çevirmek (teklif, hatırlatma, not) için konuşma tanıma gerekir.</string>
+	<string>Emlak Master, sesli arama ve sesli müşteri notu özelliklerini kullanabilmeniz için konuşma tanıma iznine ihtiyaç duyar.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

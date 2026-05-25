@@ -7,6 +7,7 @@ import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/ai/ai_gate.dart';
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/voice/voice_input_platform.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -207,6 +208,12 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   String? _lastSttLocaleId;
   String _voiceStatus = '';
   String? _voiceReviewHint;
+
+  bool get _postCallVoiceEnabled {
+    if (!voiceInputPlatformSupported) return false;
+    final flags = ref.watch(featureFlagsProvider).valueOrNull;
+    return flags?[AppConstants.keyFeatureVoiceCrm] ?? true;
+  }
 
   late AnimationController _progressController;
   late final PageController _wizardPageController;
@@ -670,15 +677,16 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
             ),
           ),
           const SizedBox(height: DesignTokens.space3),
-          _PostCallVoiceRow(
-            voiceStatus: _voiceStatus,
-            onSpeechResult: _onPostCallSpeechResult,
-            onPhaseChanged: (phase) {
-              if (mounted) {
-                setState(() => _voiceStatus = phase);
-              }
-            },
-          ),
+          if (_postCallVoiceEnabled)
+            _PostCallVoiceRow(
+              voiceStatus: _voiceStatus,
+              onSpeechResult: _onPostCallSpeechResult,
+              onPhaseChanged: (phase) {
+                if (mounted) {
+                  setState(() => _voiceStatus = phase);
+                }
+              },
+            ),
           if (_voiceReviewHint != null) ...[
             const SizedBox(height: 10),
             Container(
