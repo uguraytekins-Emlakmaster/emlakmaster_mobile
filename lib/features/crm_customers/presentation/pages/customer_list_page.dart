@@ -7,8 +7,17 @@ import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/utils/sms_launcher.dart';
+import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
+import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
+import 'package:emlakmaster_mobile/features/calls/application/start_crm_outbound_call.dart';
+import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/consultant_customers_layout.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_list_heat_filter.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/consultant_customers_chrome.dart';
+import 'package:emlakmaster_mobile/features/crm_customers/presentation/consultant_customers_tokens.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_filtered_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_row_snapshots_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/utils/customer_crm_refresh.dart';
@@ -25,9 +34,8 @@ import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/empty_state.dart';
-import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
-import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:flutter/foundation.dart';
 import '../widgets/customer_card.dart';
 
 /// Liste altı — dock bar + büyük metin ölçeği için güvenli boşluk (SE / erişilebilirlik).
@@ -50,6 +58,7 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   final _readyTracker = ShellScreenReadyTracker('customer_list');
   late final DebouncedSearchController _debouncedSearch;
   String _searchQuery = '';
+  CustomerListHeatFilter _heatFilter = CustomerListHeatFilter.all;
   bool _selectionMode = false;
   final Set<String> _selectedIds = {};
 
@@ -58,6 +67,12 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
   @override
   void initState() {
     super.initState();
+    if (kDebugMode) {
+      debugPrint(
+        'ConsultantCustomers layout=${ConsultantCustomersLayout.layoutVersion} '
+        '${ConsultantCustomersLayout.fingerprint}',
+      );
+    }
     _debouncedSearch = DebouncedSearchController(
       onQueryChanged: (q) {
         if (!mounted) return;
@@ -146,6 +161,110 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
     return true;
   }
 
+  bool _isDemoCustomer(String id) => id.startsWith('__dev_demo_');
+
+  String? _callablePhone(CustomerEntity entity) {
+    if (_isDemoCustomer(entity.id)) return null;
+    final phone = entity.primaryPhone?.trim() ?? '';
+    if (phone.isEmpty || !OutboundPhoneDial.isLikelyCallablePhone(phone)) {
+      return null;
+    }
+    return phone;
+  }
+
+  void _openCustomerDetail(
+    BuildContext context,
+    WidgetRef ref,
+    String customerId,
+  ) {
+    if (_isDemoCustomer(customerId)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Demo kayıt — gerçek müşteri için arama veya müşteri oluşturun.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    context
+        .push(
+          AppRouter.routeCustomerDetail.replaceFirst(':id', customerId),
+        )
+        .then((_) {
+      if (context.mounted) {
+        invalidateCustomerCrmCascade(ref, customerId);
+      }
+    });
+  }
+
+  void _startRowCall(BuildContext context, CustomerEntity entity) {
+    final phone = _callablePhone(entity);
+    if (phone == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aranabilir telefon numarası yok.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    AppFeedback.mediumImpact();
+    startCrmOutboundCall(
+      context,
+      phone: phone,
+      customerId: entity.id,
+      startedFromScreen: 'consultant_customers_list',
+    );
+  }
+
+  Future<void> _startRowMessage(BuildContext context, CustomerEntity entity) async {
+    final phone = _callablePhone(entity);
+    if (phone == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mesaj için telefon numarası yok.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    AppFeedback.lightImpact();
+    final ok = await SmsLauncher.openBulkSms([phone]);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mesaj uygulaması açılamadı.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _startRowWhatsApp(BuildContext context, CustomerEntity entity) async {
+    final phone = _callablePhone(entity);
+    if (phone == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('WhatsApp için telefon numarası yok.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    AppFeedback.lightImpact();
+    final ok = await WhatsAppLauncher.openChat(phone);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('WhatsApp açılamadı.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
@@ -183,20 +302,20 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                 slivers: [
                   if (!_selectionMode)
                     SliverToBoxAdapter(
-                      child: PremiumPageHeader(
+                      child: PremiumCustomersPageHeader(
                         title: AppLocalizations.of(context)
                             .t('title_customers'),
                         subtitle:
-                            'İlişki portföyün — arama, sıcaklık ve hızlı aksiyon tek yerde.',
+                            'İlişki portföyü — arama, sıcaklık ve hızlı aksiyon.',
                       ),
                     ),
                   if (_selectionMode)
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(
-                          DesignTokens.space6,
+                          ConsultantCustomersTokens.horizontal,
                           DesignTokens.space3,
-                          DesignTokens.space6,
+                          ConsultantCustomersTokens.horizontal,
                           DesignTokens.space3,
                         ),
                         child: Row(
@@ -217,9 +336,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        DesignTokens.space6,
+                        ConsultantCustomersTokens.horizontal,
                         0,
-                        DesignTokens.space6,
+                        ConsultantCustomersTokens.horizontal,
                         DesignTokens.space3,
                       ),
                       child: Row(
@@ -312,14 +431,21 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                     ),
                   ),
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: DesignTokens.space5),
-                      child: _SearchBar(controller: _searchController),
+                    child: PremiumCustomerSearchRow(
+                      controller: _searchController,
+                      hintText:
+                          AppLocalizations.of(context).t('search_customers'),
                     ),
                   ),
+                  if (!_selectionMode)
+                    SliverToBoxAdapter(
+                      child: PremiumCustomerHeatFilterStrip(
+                        selected: _heatFilter,
+                        onSelected: (f) => setState(() => _heatFilter = f),
+                      ),
+                    ),
                   const SliverPadding(
-                      padding: EdgeInsets.only(top: DesignTokens.space3)),
+                      padding: EdgeInsets.only(top: DesignTokens.space2)),
                   ..._customerListBodySlivers(
                     context: context,
                     ref: ref,
@@ -388,10 +514,15 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         ),
       ],
       data: (page) {
-        final filtered =
+        final searchFiltered =
             ref.watch(customerListFilteredProvider(_searchQuery));
         final rowSnapshots =
             ref.watch(customerListRowSnapshotsProvider(_searchQuery));
+        final filtered = applyCustomerHeatFilter(
+          entities: searchFiltered,
+          snapshots: rowSnapshots,
+          filter: _heatFilter,
+        );
         final listBottom = showAddDock
             ? _customerListDockBottomReserve(context)
             : DesignTokens.space4;
@@ -403,6 +534,10 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
           final noCustomers = page.entities.isEmpty &&
               (extraPage?.extraEntities.isEmpty ?? true);
           final noSearchHits = !noCustomers && _searchQuery.isNotEmpty;
+          final noHeatHits = !noCustomers &&
+              !noSearchHits &&
+              searchFiltered.isNotEmpty &&
+              filtered.isEmpty;
           if (noCustomers) {
             return [
               SliverFillRemaining(
@@ -462,13 +597,17 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   icon: Icons.people_rounded,
                   title: noSearchHits
                       ? l10n.t('empty_search_title')
-                      : l10n.t('empty_customers_title'),
+                      : noHeatHits
+                          ? 'Bu sıcaklıkta müşteri yok'
+                          : l10n.t('empty_customers_title'),
                   subtitle: noSearchHits
                       ? l10n.tArgs(
                           'empty_search_subtitle',
                           [_searchController.text.trim()],
                         )
-                      : l10n.t('empty_customers_subtitle'),
+                      : noHeatHits
+                          ? '${_heatFilter.labelTr} filtresine uyan kayıt bulunamadı.'
+                          : l10n.t('empty_customers_subtitle'),
                 ),
               ),
             ),
@@ -478,9 +617,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
         return [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
-              DesignTokens.space5,
+              ConsultantCustomersTokens.horizontal,
               0,
-              DesignTokens.space5,
+              ConsultantCustomersTokens.horizontal,
               listBottom,
             ),
             sliver: SliverList(
@@ -493,7 +632,8 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                   return RepaintBoundary(
                     child: Padding(
                       padding: const EdgeInsets.only(
-                          bottom: DesignTokens.space3),
+                        bottom: ConsultantCustomersTokens.chromeGap + 2,
+                      ),
                       child: CustomerCard(
                         customer: entity,
                         row: row,
@@ -507,30 +647,21 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
                               }
                             });
                           } else {
-                            if (entity.id.startsWith('__dev_demo_')) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Demo kayıt — gerçek müşteri için arama veya müşteri oluşturun.',
-                                  ),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                              return;
-                            }
-                            final customerId = entity.id;
-                            context
-                                .push(
-                                  AppRouter.routeCustomerDetail
-                                      .replaceFirst(':id', customerId),
-                                )
-                                .then((_) {
-                              if (context.mounted) {
-                                invalidateCustomerCrmCascade(ref, customerId);
-                              }
-                            });
+                            _openCustomerDetail(context, ref, entity.id);
                           }
                         },
+                        onCall: _selectionMode
+                            ? null
+                            : () => _startRowCall(context, entity),
+                        onMessage: _selectionMode
+                            ? null
+                            : () => _startRowMessage(context, entity),
+                        onWhatsApp: _selectionMode
+                            ? null
+                            : () => _startRowWhatsApp(context, entity),
+                        onOpenDetail: _selectionMode
+                            ? null
+                            : () => _openCustomerDetail(context, ref, entity.id),
                         selectionMode: _selectionMode,
                         isSelected: isSelected,
                       ),
@@ -545,9 +676,9 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  DesignTokens.space5,
+                  ConsultantCustomersTokens.horizontal,
                   DesignTokens.space2,
-                  DesignTokens.space5,
+                  ConsultantCustomersTokens.horizontal,
                   listBottom,
                 ),
                 child: Center(
@@ -891,35 +1022,3 @@ class _ConsultantCustomersEmptyLaunchpad extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.controller});
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    final premium = PremiumThemeExtension.of(context);
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: premium.glassSurface.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
-        border: Border.all(color: premium.glassBorder.withValues(alpha: 0.35)),
-      ),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          hintText: AppLocalizations.of(context).t('search_customers'),
-          hintStyle: TextStyle(
-              color: ext.textPassive, fontSize: DesignTokens.fontSizeBase),
-          prefixIcon: Icon(Icons.search_rounded,
-              color: premium.champagneGoldMuted, size: 22),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.space4, vertical: 12),
-        ),
-        style: TextStyle(color: ext.textPrimary),
-      ),
-    );
-  }
-}
