@@ -2,10 +2,9 @@
 abstract final class ConsultantDashboardLayout {
   ConsultantDashboardLayout._();
 
-  /// Bump when composition changes materially (debug logs + badge detail).
-  static const String layoutVersion = 'phase_a_v2';
+  /// Internal fingerprint only — never shown in UI.
+  static const String layoutVersion = 'production_lock';
 
-  /// Human-readable proof string for device QA.
   static const String fingerprint =
-      'hero_card+gold_rail+kpi_bento+quick_nav_2x2+action_anchor';
+      'luxury_depth+executive_kpi_sparkline+ops_shells+premium_dock';
 }

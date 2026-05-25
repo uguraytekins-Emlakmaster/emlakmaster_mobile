@@ -75,7 +75,6 @@ class _PipelineKanbanPageState extends ConsumerState<PipelineKanbanPage> {
     final uid =
         ref.watch(currentUserProvider.select((v) => v.valueOrNull?.uid ?? ''));
     return PremiumShellBackdrop(
-      debugScreenName: 'pipeline_kanban',
       child: Scaffold(
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
@@ -715,7 +714,6 @@ class _PipelineCard extends ConsumerWidget {
     return GestureDetector(
       onLongPress: onMoveStage,
       child: PremiumCard(
-      goldBorder: false,
       padding: const EdgeInsets.all(DesignTokens.space4),
       onTap: onTap,
       child: Column(

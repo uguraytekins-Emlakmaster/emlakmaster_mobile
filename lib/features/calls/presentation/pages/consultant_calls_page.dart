@@ -898,7 +898,6 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         queue != null && queue.isNotEmpty && _whatsappIndex < queue.length;
 
     return PremiumShellBackdrop(
-      debugScreenName: 'consultant_calls',
       child: Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(

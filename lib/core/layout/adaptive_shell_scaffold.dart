@@ -570,8 +570,6 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     }
     _maybeLogActivePage(safeIndex);
     final body = PremiumShellBackdrop(
-      debugScreenName: 'shell',
-      debugDetail: widget.title,
       child: Column(
       children: [
         if (widget.title != null && isWide)

@@ -22,11 +22,13 @@ import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consulta
 import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_kpi_bento.dart';
 import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_operational_feed.dart';
 import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_quick_nav.dart';
+import 'package:emlakmaster_mobile/screens/consultant_dashboard/consultant_dashboard_tokens.dart';
+import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_section_header.dart';
+import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_surface.dart';
 import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_support_cards.dart';
 import 'package:emlakmaster_mobile/screens/providers/consultant_dashboard_kpi_providers.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
-import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -34,7 +36,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Danışman paneli — günlük operasyon kokpiti: Hero → KPI → hızlı erişim → CTA → operasyon.
+/// Danışman paneli — executive cockpit (production lock).
 class ConsultantDashboardPage extends ConsumerWidget {
   const ConsultantDashboardPage({super.key});
 
@@ -82,20 +84,13 @@ class ConsultantDashboardPage extends ConsumerWidget {
       );
 
       if (kDebugMode) {
-        logUiV2Active(
-          'consultant_dashboard',
-          detail:
-              'layout=${ConsultantDashboardLayout.layoutVersion} widget=ConsultantDashboardPage fingerprint=${ConsultantDashboardLayout.fingerprint}',
-        );
+        logUiV2Active('consultant_dashboard');
         AppLogger.state(
-          '[ConsultantDashboard] mounted layout=${ConsultantDashboardLayout.layoutVersion} '
-          'hero=ConsultantDashboardHeroCard kpi=ConsultantDashboardKpiBento quickNav=ConsultantDashboardQuickNavGrid',
+          '[ConsultantDashboard] ready fingerprint=${ConsultantDashboardLayout.fingerprint}',
         );
       }
 
       return PremiumShellBackdrop(
-        debugScreenName: 'consultant_dashboard',
-        debugDetail: ConsultantDashboardLayout.layoutVersion,
         child: Material(
           color: Colors.transparent,
           child: SafeArea(
@@ -113,27 +108,24 @@ class ConsultantDashboardPage extends ConsumerWidget {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(
-                          DashboardLayoutTokens.horizontalPadding,
-                          DashboardLayoutTokens.pageTopInset,
-                          DashboardLayoutTokens.horizontalPadding,
-                          DashboardLayoutTokens.pageBottomInset,
+                          ConsultantDashboardTokens.horizontal,
+                          ConsultantDashboardTokens.topInset,
+                          ConsultantDashboardTokens.horizontal,
+                          0,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            ConsultantDashboardHeroCard(greeting: greeting),
-                            const SizedBox(height: DesignTokens.space4),
-                            PremiumSearchBar(
-                              hintText: 'Müşteri, ilan veya görev ara…',
-                              showMic: true,
-                              onSubmitted: (_) {
+                            ConsultantDashboardHeroCard(
+                              greeting: greeting,
+                              onSearchSubmitted: (_) {
                                 ref
                                     .read(mainShellShortcutProvider.notifier)
                                     .enqueue(
                                         MainShellShortcut.openCustomersTab);
                                 context.go(AppRouter.routeHome);
                               },
-                              trailing: Material(
+                              searchTrailing: Material(
                                 color: premium.champagneGold
                                     .withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(
@@ -150,20 +142,22 @@ class ConsultantDashboardPage extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(
                                       DesignTokens.radiusMd),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(10),
+                                    padding: const EdgeInsets.all(8),
                                     child: Icon(Icons.auto_awesome_rounded,
-                                        color: premium.champagneGold, size: 22),
+                                        color: premium.champagneGold, size: 18),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: DesignTokens.space5),
+                            const SizedBox(
+                                height: ConsultantDashboardTokens.sectionGap),
                             DeferredMountSection.dashboardPrimary(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  const PremiumSectionHeader(
+                                  const ConsultantDashboardSectionHeader(
                                     label: 'Günün özeti',
+                                    subtitle: 'Canlı KPI ve haftalık tempo',
                                     icon: Icons.insights_rounded,
                                   ),
                                   ShellScreenReadyListener(
@@ -174,10 +168,13 @@ class ConsultantDashboardPage extends ConsumerWidget {
                                           CrossAxisAlignment.stretch,
                                       children: [
                                         ConsultantDashboardKpiBento(),
-                                        SizedBox(height: DesignTokens.space5),
-                                        PremiumSectionHeader(
+                                        SizedBox(
+                                            height: ConsultantDashboardTokens
+                                                .sectionGap),
+                                        ConsultantDashboardSectionHeader(
                                           label: 'Hızlı erişim',
-                                          icon: Icons.grid_view_rounded,
+                                          subtitle: 'Tek dokunuşla geçiş',
+                                          icon: Icons.bolt_rounded,
                                         ),
                                         ConsultantDashboardQuickNavGrid(),
                                       ],
@@ -186,20 +183,24 @@ class ConsultantDashboardPage extends ConsumerWidget {
                                 ],
                               ),
                             ),
+                            const SizedBox(
+                                height: ConsultantDashboardTokens.blockGap),
                             const DeferredMountSection.dashboardOperational(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  PostCallCaptureDashboardReminder(),
+                                  ConsultantDashboardOpsShell(
+                                    child: PostCallCaptureDashboardReminder(),
+                                  ),
                                   SizedBox(
-                                      height: DashboardLayoutTokens
-                                          .gapOperationalTight),
+                                      height: ConsultantDashboardTokens
+                                          .blockGap),
                                   ConsultantDashboardActionAnchor(),
                                 ],
                               ),
                             ),
                             const SizedBox(
-                                height: DashboardLayoutTokens.gapOperational),
+                                height: ConsultantDashboardTokens.sectionGap),
                             const ConsultantDashboardDeferredOperationalFeed(),
                           ],
                         ),

@@ -1,7 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/core/theme/premium/premium_glass_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_card.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';

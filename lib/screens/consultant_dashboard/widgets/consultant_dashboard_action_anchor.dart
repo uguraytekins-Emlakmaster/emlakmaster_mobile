@@ -7,7 +7,8 @@ import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
-import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
+import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_surface.dart';
+import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,9 +22,10 @@ class ConsultantDashboardActionAnchor extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final premium = PremiumThemeExtension.of(context);
-    return PremiumSurfaceCard(
+    return ConsultantDashboardExecutiveSurface(
       goldBorder: true,
-      padding: const EdgeInsets.all(DesignTokens.space4),
+      goldRail: true,
+      padding: const EdgeInsets.all(DesignTokens.space3),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final narrow = constraints.maxWidth < narrowActionBreakpoint;
@@ -102,21 +104,13 @@ class ConsultantDashboardActionAnchor extends StatelessWidget {
               ),
             ),
           ];
-          final header = Column(
+          const header = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const PremiumSectionHeader(
+              ConsultantDashboardSectionHeader(
                 label: 'Bugünün birinci adımı',
+                subtitle: 'Tek görüşme günü açar; özet ve görevler akışa düşer',
                 icon: Icons.call_rounded,
-              ),
-              Text(
-                narrow
-                    ? 'Bir görüşme günü açar; özet ve görevler ardından akışa düşer.'
-                    : 'Tek bir görüşme günü açar; özet ve görevler hemen ardından akışa düşer.',
-                style: AppTypography.meta(context).copyWith(
-                  color: ext.textTertiary,
-                  height: 1.35,
-                ),
               ),
             ],
           );

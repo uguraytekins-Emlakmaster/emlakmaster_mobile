@@ -24,7 +24,6 @@ import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/design_tokens.dart';
-import '../../../../shared/models/customer_models.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
@@ -173,7 +172,6 @@ class _CustomerListPageState extends ConsumerState<CustomerListPage> {
       onExitSearch: _handleExitSearch,
       onClearSelection: _handleClearSelection,
       child: PremiumShellBackdrop(
-        debugScreenName: 'customer_list',
         child: Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
