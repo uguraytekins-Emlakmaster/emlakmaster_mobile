@@ -2,11 +2,14 @@ import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_color_tokens.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/consultant_calls_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_kpi_trend_chart.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_source.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_surface.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
 
@@ -27,24 +30,27 @@ class PremiumCallCenterPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final tight = compact;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        DesignTokens.screenEdgePadding,
-        compact ? DesignTokens.space2 : DesignTokens.space3,
-        DesignTokens.screenEdgePadding,
-        compact ? DesignTokens.space2 : DesignTokens.space3,
+        ConsultantCallsTokens.horizontal,
+        tight ? ConsultantCallsTokens.topInset + 4 : DesignTokens.space3,
+        ConsultantCallsTokens.horizontal,
+        tight ? ConsultantCallsTokens.headerBottomGap : ConsultantCallsTokens.chromeGap,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(right: DesignTokens.space2),
-            child: PremiumNavLeading(),
-          ),
+          if (!tight)
+            const Padding(
+              padding: EdgeInsets.only(right: DesignTokens.space2),
+              child: PremiumNavLeading(),
+            ),
           BrandEmblem(
             variant: BrandEmblemVariant.mini,
-            size: compact ? 34 : 40,
+            size: tight ? ConsultantCallsTokens.headerEmblemSize : 40,
           ),
-          const SizedBox(width: DesignTokens.space2 + 2),
+          SizedBox(width: tight ? 8 : DesignTokens.space2 + 2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,22 +59,26 @@ class PremiumCallCenterPageHeader extends StatelessWidget {
                 Text(
                   title,
                   style: AppTypography.pageHeading(context).copyWith(
-                    fontSize: compact
-                        ? DesignTokens.fontSizeXl
+                    fontSize: tight
+                        ? ConsultantCallsTokens.headerTitleSize
                         : DesignTokens.fontSize2xl,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.35,
+                    letterSpacing: -0.3,
+                    height: 1.05,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                SizedBox(height: tight ? 2 : 4),
                 Text(
                   subtitle,
                   style: AppTypography.meta(context).copyWith(
-                    color: ext.textSecondary,
-                    fontSize: compact
-                        ? DesignTokens.fontSizeSm
+                    color: ext.textSecondary.withValues(alpha: 0.88),
+                    fontSize: tight
+                        ? ConsultantCallsTokens.headerSubtitleSize
                         : DesignTokens.fontSizeMd,
+                    fontWeight: FontWeight.w500,
+                    height: 1.1,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -110,19 +120,19 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
     final stats = snapshot.current;
     final prev = snapshot.previous;
     final chartPrimary = listViewMode == CallListViewMode.chart;
+    final compactWidth = MediaQuery.sizeOf(context).width < 340;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        DesignTokens.screenEdgePadding,
-        DesignTokens.space1,
-        DesignTokens.screenEdgePadding,
-        DesignTokens.space1,
+        ConsultantCallsTokens.horizontal,
+        ConsultantCallsTokens.chromeGap,
+        ConsultantCallsTokens.horizontal,
+        ConsultantCallsTokens.chromeGap,
       ),
-      child: PremiumSurfaceCard(
+      child: ConsultantDashboardExecutiveSurface(
         goldBorder: true,
-        padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.space3 + 2,
-          vertical: DesignTokens.space3,
-        ),
+        goldRail: true,
+        padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -137,30 +147,31 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: ext.surface,
+                      color: premium.champagneGold.withValues(alpha: 0.1),
                       borderRadius:
                           BorderRadius.circular(DesignTokens.radiusPill),
-                      border:
-                          Border.all(color: ext.border.withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: premium.champagneGold.withValues(alpha: 0.35),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.calendar_today_outlined,
-                            size: 13, color: ext.textSecondary),
+                            size: 12, color: premium.champagneGold),
                         const SizedBox(width: 5),
                         Text(
                           snapshot.period.labelTr,
                           style: TextStyle(
                             color: ext.textSecondary,
-                            fontSize: DesignTokens.fontSizeXs + 1,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         if (onPeriodTap != null) ...[
                           const SizedBox(width: 2),
                           Icon(Icons.expand_more_rounded,
-                              size: 16, color: ext.textSecondary),
+                              size: 15, color: premium.champagneGold),
                         ],
                       ],
                     ),
@@ -168,134 +179,167 @@ class PremiumCallRecordsKpiCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 if (onDetailTap != null)
-                  TextButton(
-                    onPressed: onDetailTap,
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'Detaylı özet >',
-                      style: TextStyle(
-                        color: premium.champagneGold,
-                        fontSize: DesignTokens.fontSizeSm,
-                        fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: onDetailTap,
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Detay >',
+                            style: TextStyle(
+                              color: premium.champagneGold,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 if (onToggleExpanded != null)
-                  TextButton.icon(
+                  IconButton(
                     onPressed: onToggleExpanded,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     icon: Icon(
                       expanded
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.keyboard_arrow_down_rounded,
-                      size: 18,
-                      color: ext.textSecondary,
+                      size: 20,
+                      color: premium.champagneGold,
                     ),
-                    label: Text(
-                      expanded
-                          ? 'İstatistikleri gizle'
-                          : 'İstatistikleri göster',
-                      style: TextStyle(
-                        color: ext.textSecondary,
-                        fontSize: DesignTokens.fontSizeSm,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
+                    tooltip: expanded
+                        ? 'İstatistikleri gizle'
+                        : 'İstatistikleri göster',
                   ),
               ],
             ),
             if (showHeroTotal) ...[
-              const SizedBox(height: DesignTokens.space3),
-              Text(
-                '${stats.total}',
-                style: TextStyle(
-                  color: ext.accent,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 40,
-                  height: 1,
-                  letterSpacing: -1,
-                ),
-              ),
-              Text(
-                'Toplam çağrı',
-                style: TextStyle(
-                  color: ext.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: DesignTokens.fontSizeSm,
-                ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [
+                        PremiumColorTokens.champagneGoldLight,
+                        premium.champagneGold,
+                      ],
+                    ).createShader(bounds),
+                    child: Text(
+                      '${stats.total}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: compactWidth ? 32 : 36,
+                        height: 1,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        'Toplam çağrı · ${stats.answered} cevap · ${stats.missed} cevapsız',
+                        style: TextStyle(
+                          color: ext.textTertiary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
             if (expanded) ...[
-              SizedBox(height: showHeroTotal ? DesignTokens.space3 : DesignTokens.space2),
+              SizedBox(
+                  height: showHeroTotal
+                      ? ConsultantCallsTokens.sectionGap
+                      : ConsultantCallsTokens.chromeGap),
               if (chartPrimary)
                 CallKpiTrendChart(snapshot: snapshot)
               else
-                Row(
-                  children: [
-                    Expanded(
-                      child: _KpiMini(
-                        icon: Icons.call_received_rounded,
-                        label: 'Gelen',
-                        value: '${stats.incoming}',
-                        color: ext.accent,
-                        delta: snapshot.percentDelta(
-                          stats.incoming,
-                          prev.incoming,
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _KpiMini(
+                          icon: Icons.call_received_rounded,
+                          label: 'Gelen',
+                          value: '${stats.incoming}',
+                          color: ext.accent,
+                          delta: snapshot.percentDelta(
+                            stats.incoming,
+                            prev.incoming,
+                          ),
+                          showDelta:
+                              snapshot.period == CallKpiPeriod.thisMonth,
                         ),
-                        showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                       ),
-                    ),
-                    Expanded(
-                      child: _KpiMini(
-                        icon: Icons.call_made_rounded,
-                        label: 'Giden',
-                        value: '${stats.outgoing}',
-                        color: ext.success,
-                        delta: snapshot.percentDelta(
-                          stats.outgoing,
-                          prev.outgoing,
+                      _KpiStripDivider(premium: premium),
+                      Expanded(
+                        child: _KpiMini(
+                          icon: Icons.call_made_rounded,
+                          label: 'Giden',
+                          value: '${stats.outgoing}',
+                          color: ext.success,
+                          delta: snapshot.percentDelta(
+                            stats.outgoing,
+                            prev.outgoing,
+                          ),
+                          showDelta:
+                              snapshot.period == CallKpiPeriod.thisMonth,
                         ),
-                        showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                       ),
-                    ),
-                    Expanded(
-                      child: _KpiMini(
-                        icon: Icons.check_circle_outline_rounded,
-                        label: 'Cevaplanan',
-                        value: '${stats.answered}',
-                        color: ext.accent,
-                        delta: snapshot.percentDelta(
-                          stats.answered,
-                          prev.answered,
+                      _KpiStripDivider(premium: premium),
+                      Expanded(
+                        child: _KpiMini(
+                          icon: Icons.check_circle_outline_rounded,
+                          label: 'Cevap',
+                          value: '${stats.answered}',
+                          color: ext.accent,
+                          delta: snapshot.percentDelta(
+                            stats.answered,
+                            prev.answered,
+                          ),
+                          showDelta:
+                              snapshot.period == CallKpiPeriod.thisMonth,
                         ),
-                        showDelta: snapshot.period == CallKpiPeriod.thisMonth,
                       ),
-                    ),
-                    Expanded(
-                      child: _KpiMini(
-                        icon: Icons.phone_missed_rounded,
-                        label: 'Cevapsız',
-                        value: '${stats.missed}',
-                        color: ext.danger,
-                        delta: snapshot.percentDelta(
-                          stats.missed,
-                          prev.missed,
+                      _KpiStripDivider(premium: premium),
+                      Expanded(
+                        child: _KpiMini(
+                          icon: Icons.phone_missed_rounded,
+                          label: 'Cevapsız',
+                          value: '${stats.missed}',
+                          color: ext.danger,
+                          delta: snapshot.percentDelta(
+                            stats.missed,
+                            prev.missed,
+                          ),
+                          showDelta:
+                              snapshot.period == CallKpiPeriod.thisMonth,
+                          invertDeltaColors: true,
                         ),
-                        showDelta: snapshot.period == CallKpiPeriod.thisMonth,
-                        invertDeltaColors: true,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
             ],
           ],
@@ -342,28 +386,53 @@ class _KpiMini extends StatelessWidget {
         ),
       );
     }
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            color: ext.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: DesignTokens.fontSizeMd,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: ext.textPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                height: 1,
+              ),
+            ),
           ),
-        ),
-        if (deltaChip != null) deltaChip,
-        Text(
-          label,
-          style: TextStyle(
-            color: ext.textTertiary,
-            fontSize: DesignTokens.fontSizeXs,
+          if (deltaChip != null) deltaChip,
+          Text(
+            label,
+            style: TextStyle(
+              color: ext.textTertiary,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+}
+
+class _KpiStripDivider extends StatelessWidget {
+  const _KpiStripDivider({required this.premium});
+
+  final PremiumThemeExtension premium;
+
+  @override
+  Widget build(BuildContext context) {
+    return VerticalDivider(
+      width: 1,
+      thickness: 1,
+      color: premium.champagneGold.withValues(alpha: 0.2),
     );
   }
 }
@@ -383,22 +452,30 @@ class PremiumCallQuickFilterStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ConsultantCallsTokens.horizontal,
+        vertical: ConsultantCallsTokens.chromeGap / 2,
+      ),
+      child: ConsultantDashboardExecutiveSurface(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: SizedBox(
+      height: ConsultantCallsTokens.quickFilterHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.screenEdgePadding,
-        ),
+        padding: EdgeInsets.zero,
         itemCount: labels.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
         itemBuilder: (context, i) {
           return PremiumFilterChip(
             label: labels[i],
             selected: selectedIndex == i,
             onTap: () => onSelected(i),
+            dense: true,
           );
         },
+      ),
+        ),
       ),
     );
   }
@@ -425,51 +502,31 @@ class PremiumCallSearchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        DesignTokens.screenEdgePadding,
-        DesignTokens.space2,
-        DesignTokens.screenEdgePadding,
-        DesignTokens.space2,
+        ConsultantCallsTokens.horizontal,
+        ConsultantCallsTokens.chromeGap,
+        ConsultantCallsTokens.horizontal,
+        ConsultantCallsTokens.chromeGap,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: PremiumSearchBar(
-              controller: controller,
-              focusNode: focusNode,
-              hintText: hintText,
-              showMic: showMic,
-            ),
+      child: ConsultantDashboardExecutiveSurface(
+        ambientStrength: 0.75,
+        padding: EdgeInsets.fromLTRB(
+          ConsultantCallsTokens.searchSurfacePaddingH,
+          ConsultantCallsTokens.searchSurfacePaddingV,
+          ConsultantCallsTokens.searchSurfacePaddingH,
+          ConsultantCallsTokens.searchSurfacePaddingV,
+        ),
+        child: SizedBox(
+          height: ConsultantCallsTokens.searchBarHeight,
+          child: PremiumSearchBar(
+            controller: controller,
+            focusNode: focusNode,
+            hintText: hintText,
+            showMic: showMic,
+            compact: true,
           ),
-          const SizedBox(width: DesignTokens.space2),
-          Material(
-            color: ext.accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            child: InkWell(
-              onTap: onSearchTap,
-              borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Row(
-                  children: [
-                    Icon(Icons.search_rounded, color: ext.accent, size: 20),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Ara',
-                      style: TextStyle(
-                        color: ext.accent,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -497,68 +554,72 @@ class PremiumCallListToolbar extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        DesignTokens.screenEdgePadding,
-        DesignTokens.space1,
-        DesignTokens.screenEdgePadding,
-        DesignTokens.space1,
+        ConsultantCallsTokens.horizontal,
+        ConsultantCallsTokens.chromeGap / 2,
+        ConsultantCallsTokens.horizontal,
+        ConsultantCallsTokens.chromeGap / 2,
       ),
-      child: Row(
+      child: ConsultantDashboardExecutiveSurface(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
         children: [
-          PopupMenuButton<CallListSortMode>(
-            initialValue: sortMode,
-            onSelected: onSortChanged,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.sort_rounded, size: 18, color: ext.textSecondary),
-                const SizedBox(width: 6),
-                Text(
-                  'Sırala: ${sortMode.labelTr}',
-                  style: TextStyle(
-                    color: ext.textSecondary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: DesignTokens.fontSizeSm,
-                  ),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: PopupMenuButton<CallListSortMode>(
+                initialValue: sortMode,
+                onSelected: onSortChanged,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sort_rounded, size: 16, color: ext.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Sırala: ${sortMode.labelTr}',
+                      style: TextStyle(
+                        color: ext.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                    Icon(Icons.expand_more_rounded,
+                        size: 16, color: ext.textSecondary),
+                  ],
                 ),
-                Icon(Icons.expand_more_rounded,
-                    size: 18, color: ext.textSecondary),
-              ],
+                itemBuilder: (context) => CallListSortMode.values
+                    .map(
+                      (m) => PopupMenuItem(
+                        value: m,
+                        child: Text(m.labelTr),
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
-            itemBuilder: (context) => CallListSortMode.values
-                .map(
-                  (m) => PopupMenuItem(
-                    value: m,
-                    child: Text(m.labelTr),
-                  ),
-                )
-                .toList(),
           ),
-          const Spacer(),
+          const SizedBox(width: 2),
           _ViewModeIcon(
             mode: CallListViewMode.list,
             selected: viewMode,
             icon: Icons.view_list_rounded,
             onTap: onViewModeChanged,
           ),
-          const SizedBox(width: DesignTokens.space2),
           _ViewModeIcon(
             mode: CallListViewMode.grid,
             selected: viewMode,
             icon: Icons.grid_view_rounded,
             onTap: onViewModeChanged,
           ),
-          const SizedBox(width: DesignTokens.space2),
           _ViewModeIcon(
             mode: CallListViewMode.chart,
             selected: viewMode,
             icon: Icons.bar_chart_rounded,
             onTap: onViewModeChanged,
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: DesignTokens.space2),
-            trailing!,
-          ],
+          if (trailing != null) trailing!,
         ],
+        ),
       ),
     );
   }
@@ -580,9 +641,10 @@ class _ViewModeIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final active = mode == selected;
     final color = active
-        ? ext.accent
+        ? premium.champagneGold
         : ext.textTertiary.withValues(alpha: onTap == null ? 0.35 : 0.55);
     return Tooltip(
       message: mode.labelTr,
@@ -593,7 +655,7 @@ class _ViewModeIcon extends StatelessWidget {
                 if (!active) onTap!(mode);
               },
         borderRadius: BorderRadius.circular(8),
-        child: Icon(icon, color: color, size: 22),
+        child: Icon(icon, color: color, size: 20),
       ),
     );
   }
@@ -612,23 +674,31 @@ class PremiumCallSourceFilterStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 34,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ConsultantCallsTokens.horizontal,
+        vertical: ConsultantCallsTokens.chromeGap / 2,
+      ),
+      child: ConsultantDashboardExecutiveSurface(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: SizedBox(
+      height: ConsultantCallsTokens.filterStripHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.screenEdgePadding,
-        ),
+        padding: EdgeInsets.zero,
         itemCount: CallListSource.values.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
         itemBuilder: (context, i) {
           final src = CallListSource.values[i];
           return PremiumFilterChip(
             label: src.labelTr,
             selected: selected == src,
             onTap: () => onSelected(src),
+            dense: true,
           );
         },
+      ),
+        ),
       ),
     );
   }
@@ -645,10 +715,10 @@ class PremiumCallsPlatformHint extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        DesignTokens.screenEdgePadding,
+        ConsultantCallsTokens.horizontal,
         0,
-        DesignTokens.screenEdgePadding,
-        DesignTokens.space1,
+        ConsultantCallsTokens.horizontal,
+        ConsultantCallsTokens.chromeGap,
       ),
       child: Text(
         message,

@@ -393,12 +393,14 @@ class PremiumFilterChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.count,
+    this.dense = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
   final int? count;
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -411,17 +413,20 @@ class PremiumFilterChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
         child: AnimatedContainer(
           duration: DesignTokens.durationFast,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: dense ? 10 : 14,
+            vertical: dense ? 5 : 8,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(DesignTokens.radiusPill),
             border: Border.all(
               color: selected
-                  ? premium.champagneGold.withValues(alpha: 0.65)
-                  : ext.border.withValues(alpha: 0.45),
+                  ? premium.champagneGold.withValues(alpha: dense ? 0.52 : 0.65)
+                  : ext.border.withValues(alpha: dense ? 0.38 : 0.45),
             ),
             color: selected
-                ? premium.champagneGold.withValues(alpha: 0.1)
-                : premium.glassSurface.withValues(alpha: 0.45),
+                ? premium.champagneGold.withValues(alpha: dense ? 0.08 : 0.1)
+                : premium.glassSurface.withValues(alpha: dense ? 0.32 : 0.45),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -430,8 +435,10 @@ class PremiumFilterChip extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: selected ? premium.champagneGold : ext.textSecondary,
-                  fontSize: DesignTokens.fontSizeSm,
+                  fontSize: dense ? 10.5 : DesignTokens.fontSizeSm,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: dense ? 0.1 : 0,
+                  height: 1,
                 ),
               ),
               if (count != null) ...[
@@ -474,6 +481,7 @@ class PremiumSearchBar extends StatelessWidget {
     this.trailing,
     this.showMic = false,
     this.onMicTap,
+    this.compact = false,
   });
 
   final TextEditingController? controller;
@@ -484,6 +492,7 @@ class PremiumSearchBar extends StatelessWidget {
   final Widget? trailing;
   final bool showMic;
   final VoidCallback? onMicTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -505,23 +514,42 @@ class PremiumSearchBar extends StatelessWidget {
               focusNode: focusNode,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
-              style: TextStyle(color: ext.textPrimary),
+              style: TextStyle(
+                color: ext.textPrimary,
+                fontSize: compact ? 13 : DesignTokens.fontSizeMd,
+                height: 1.2,
+              ),
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: TextStyle(color: ext.textTertiary),
+                hintStyle: TextStyle(
+                  color: ext.textTertiary,
+                  fontSize: compact ? 12.5 : null,
+                ),
                 prefixIcon: Icon(
                   Icons.search_rounded,
-                  color: premium.champagneGoldMuted,
+                  color: premium.champagneGoldMuted.withValues(
+                    alpha: compact ? 0.85 : 1,
+                  ),
+                  size: compact ? 18 : 22,
+                ),
+                prefixIconConstraints: BoxConstraints(
+                  minWidth: compact ? 34 : 48,
+                  minHeight: compact ? 32 : 48,
                 ),
                 suffixIcon: showMic
                     ? IconButton(
                         onPressed: onMicTap,
                         icon: Icon(Icons.mic_none_rounded,
-                            color: ext.textSecondary),
+                            color: ext.textSecondary, size: compact ? 18 : 22),
+                        visualDensity: VisualDensity.compact,
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: compact ? 7 : 12,
+                  horizontal: compact ? 0 : 4,
+                ),
+                isDense: compact,
               ),
             ),
           ),

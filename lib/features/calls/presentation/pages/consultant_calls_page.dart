@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/debug/ui_v2_debug.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
     if (dart.library.io) 'dart:io' as io;
@@ -51,6 +52,8 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_reco
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_identity_quick_actions_sheet.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_date_sections.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/consultant_calls_layout.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/consultant_calls_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_quick_filter.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/calls_surface_ack.dart';
@@ -669,6 +672,7 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         child: PremiumCallSearchRow(
           controller: _searchController,
           focusNode: _searchFocusNode,
+          showMic: false,
           onSearchTap: () {
             if (_searchQuery.isEmpty) _searchFocusNode.requestFocus();
           },
@@ -733,9 +737,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            DesignTokens.space4,
-            DesignTokens.space1,
-            DesignTokens.space4,
+            ConsultantCallsTokens.horizontal,
+            ConsultantCallsTokens.chromeGap,
+            ConsultantCallsTokens.horizontal,
             0,
           ),
           child: Row(
@@ -890,6 +894,12 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
         '[consultant_calls] error',
         callsAsync.error,
         callsAsync.stackTrace,
+      );
+    }
+    if (kDebugMode) {
+      logUiV2Active(
+        'consultant_calls',
+        detail: ConsultantCallsLayout.fingerprint,
       );
     }
 
@@ -1247,9 +1257,9 @@ class _ConsultantCallsPageState extends ConsumerState<ConsultantCallsPage> {
               else
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(
-                  DesignTokens.space4,
-                  DesignTokens.space1,
-                  DesignTokens.space4,
+                  0,
+                  ConsultantCallsTokens.chromeGap,
+                  0,
                   listBottomInset,
                 ),
                 sliver: SliverList(
