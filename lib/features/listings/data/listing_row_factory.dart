@@ -36,6 +36,8 @@ ListingRowView listingRowFromInternalDoc(DocumentSnapshot<Map<String, dynamic>> 
     surface: ListingSurface.owned,
     rowKind: isInternalOnly ? ListingRowKind.officePortfolio : ListingRowKind.connectedPlatform,
     detailListingId: doc.id,
+    listingType: d['listingType'] as String? ?? d['propertyType'] as String?,
+    platformStatus: d['status'] as String?,
   );
 }
 
@@ -68,6 +70,8 @@ ListingRowView listingRowFromIntegration(IntegrationSyncedListingEntity e) {
     openInBrowserUrl: e.sourceUrl.isNotEmpty ? e.sourceUrl : null,
     detailListingId: e.internalListingId,
     integrationDocId: e.id,
+    listingType: e.listingType,
+    platformStatus: e.status,
   );
 }
 
@@ -92,6 +96,7 @@ ListingRowView listingRowFromMarketFeed(ExternalListingEntity e) {
     surface: ListingSurface.marketFeed,
     rowKind: ListingRowKind.market,
     openInBrowserUrl: e.link,
+    listingType: e.propertyType,
   );
 }
 
