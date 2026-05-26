@@ -201,8 +201,8 @@ void main() {
     await _pumpFrame(
       tester,
       captureKey: key,
-      size: const Size(520, 844),
-      height: 272,
+      size: _phoneSize,
+      height: 268,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -220,10 +220,16 @@ void main() {
       ),
     );
     await _savePng(tester, key, '01_header_summary_filters.png');
-    for (final f in TaskListFilter.values) {
-      expect(find.text(f.label), findsWidgets);
-    }
+    expect(find.byKey(const Key('task_filter_strip_scroll')), findsOneWidget);
     expect(find.byType(PremiumTaskFilterStrip), findsOneWidget);
+
+    await tester.drag(
+      find.byKey(const Key('task_filter_strip_scroll')),
+      const Offset(-220, 0),
+    );
+    await tester.pumpAndSettle();
+    final rectAfter = tester.getRect(find.text('Tamamlanan'));
+    expect(rectAfter.right, lessThanOrEqualTo(_phoneSize.width));
     expect(find.text('Görevlerim'), findsOneWidget);
     expect(find.text('DEV'), findsNothing);
     expect(summary.open, greaterThan(0));

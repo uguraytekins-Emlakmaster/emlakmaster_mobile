@@ -187,20 +187,38 @@ class PremiumTaskFilterStrip extends StatelessWidget {
         ConsultantTasksTokens.horizontal,
         ConsultantTasksTokens.sectionGap,
       ),
-      child: SizedBox(
-        height: ConsultantTasksTokens.filterStripHeight,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: TaskListFilter.values.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 6),
-          itemBuilder: (context, index) {
-            final filter = TaskListFilter.values[index];
-            return PremiumFilterChip(
-              label: filter.label,
-              selected: selected == filter,
-              onTap: () => onSelected(filter),
-            );
-          },
+      child: ConsultantDashboardExecutiveSurface(
+        ambientStrength: 0.72,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: SizedBox(
+          height: ConsultantTasksTokens.filterStripHeight,
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              scrollbars: false,
+              overscroll: false,
+            ),
+            child: ListView.separated(
+              key: const Key('task_filter_strip_scroll'),
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(
+                parent: ClampingScrollPhysics(),
+              ),
+              clipBehavior: Clip.none,
+              cacheExtent: 280,
+              padding: const EdgeInsets.only(right: 4),
+              itemCount: TaskListFilter.values.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemBuilder: (context, index) {
+                final filter = TaskListFilter.values[index];
+                return PremiumFilterChip(
+                  label: filter.label,
+                  selected: selected == filter,
+                  onTap: () => onSelected(filter),
+                  dense: true,
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
