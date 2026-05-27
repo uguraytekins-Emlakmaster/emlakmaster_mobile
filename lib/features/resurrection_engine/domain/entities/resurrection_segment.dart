@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
 import 'package:equatable/equatable.dart';
 
 /// Sessiz kalma segmenti (Silent Lead Resurrection kuralları).
@@ -22,6 +23,11 @@ class ResurrectionQueueItem with EquatableMixin {
     this.daysSilent,
     this.suggestedMessagePlaceholder,
     this.suggestedListingIds = const [],
+    this.lastInteractionAt,
+    this.nextSuggestedAction,
+    this.lastCallSummary,
+    this.heatLevel,
+    this.heatScore,
   });
 
   final String customerId;
@@ -29,9 +35,17 @@ class ResurrectionQueueItem with EquatableMixin {
   final String? primaryPhone;
   final ResurrectionSegment? segment;
   final int? daysSilent;
-  /// Magic Follow-Up: tek tıkla mesaj taslağı için placeholder (örn. "Size özel yeni bir portföyümüz var").
+  /// Şablon mesaj — AI üretimi değil.
   final String? suggestedMessagePlaceholder;
   final List<String> suggestedListingIds;
+  final DateTime? lastInteractionAt;
+  final String? nextSuggestedAction;
+  final String? lastCallSummary;
+  final CustomerHeatLevel? heatLevel;
+  final int? heatScore;
+
+  bool get hasCallablePhone =>
+      primaryPhone != null && primaryPhone!.trim().isNotEmpty;
 
   @override
   List<Object?> get props => [customerId, segment, daysSilent];
