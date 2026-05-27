@@ -144,6 +144,9 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
     final reportsPageIndex = tabIds.indexOf(_AdminShellTab.reports);
     final economyPageIndex = tabIds.indexOf(_AdminShellTab.economy);
 
+    final tabKeys = tabIds.map((id) => id.name).toList(growable: false);
+    int tabIndexForKey(String key) => tabKeys.indexOf(key);
+
     final shortcutMap = <MainShellShortcut, int>{
       MainShellShortcut.openHomeTab: 0,
       MainShellShortcut.openMessageCenterTab: messagesIndex,
@@ -195,6 +198,7 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
         Expanded(
           child: AdminShellNav(
             goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
+            tabIndexFor: tabIndexForKey,
             child: AdaptiveShellScaffold(
               key: _shellKey,
               navItems: navItems,
