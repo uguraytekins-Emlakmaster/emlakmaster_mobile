@@ -12,50 +12,54 @@ class ListingListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  final ext = AppThemeExtension.of(context);
-    return ListView.separated(
+    final ext = AppThemeExtension.of(context);
+    return Padding(
       padding: const EdgeInsets.fromLTRB(
         ConsultantListingsTokens.horizontal,
         0,
         ConsultantListingsTokens.horizontal,
         ConsultantListingsTokens.sectionGap,
       ),
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: itemCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 6),
-      itemBuilder: (_, __) => Container(
-        height: 72,
-        decoration: BoxDecoration(
-          color: ext.card.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-          border: Border.all(color: ext.border.withValues(alpha: 0.25)),
-        ),
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          children: [
-            const ShimmerPlaceholder(width: 52, height: 52),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
+        children: [
+          for (var i = 0; i < itemCount; i++) ...[
+            Container(
+              height: 72,
+              decoration: BoxDecoration(
+                color: ext.card.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                border: Border.all(color: ext.border.withValues(alpha: 0.25)),
+              ),
+              padding: const EdgeInsets.all(10),
+              child: Row(
                 children: [
-                  ShimmerPlaceholder(
-                    width: double.infinity,
-                    height: 12,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  const SizedBox(height: 6),
-                  ShimmerPlaceholder(
-                    width: 120,
-                    height: 10,
-                    borderRadius: BorderRadius.circular(4),
+                  const ShimmerPlaceholder(width: 52, height: 52),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShimmerPlaceholder(
+                          width: double.infinity,
+                          height: 12,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        const SizedBox(height: 6),
+                        ShimmerPlaceholder(
+                          width: 120,
+                          height: 10,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
+            if (i < itemCount - 1) const SizedBox(height: 6),
           ],
-        ),
+        ],
       ),
     );
   }
