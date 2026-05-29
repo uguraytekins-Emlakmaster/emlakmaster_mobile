@@ -50,16 +50,26 @@ final primaryMembershipProvider =
   if (user == null) {
     return Stream<OfficeMembership?>.value(null);
   }
-  return UserRepository.userDocStream(user.uid).asyncExpand((doc) {
-    if (DevOfficeFallback.isActive) {
-      return Stream<OfficeMembership?>.value(
-        DevOfficeFallback.syntheticMembership(user.uid),
-      );
-    }
-    final oid = doc?.officeId;
-    return OfficeMembershipRepository.watchPrimaryMembershipForUser(
-        user.uid, oid);
-  });
+  if (isDevMode && DevOfficeFallback.isActive) {
+    return Stream<OfficeMembership?>.value(
+      DevOfficeFallback.syntheticMembership(user.uid),
+    );
+  }
+  final docAsync = ref.watch(userDocStreamProvider(user.uid));
+  if (docAsync.isLoading) {
+    return const Stream<OfficeMembership?>.empty();
+  }
+  if (docAsync.hasError) {
+    return Stream<OfficeMembership?>.error(
+      docAsync.error!,
+      docAsync.stackTrace ?? StackTrace.current,
+    );
+  }
+  final oid = docAsync.valueOrNull?.officeId;
+  return OfficeMembershipRepository.watchPrimaryMembershipForUser(
+    user.uid,
+    oid,
+  );
 });
 
 /// Ofis erişim durumu (routing / shell).

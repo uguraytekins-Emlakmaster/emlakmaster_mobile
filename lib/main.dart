@@ -16,6 +16,7 @@ import 'package:emlakmaster_mobile/core/services/push_notification_service.dart'
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/core/services/login_entry_store.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
+import 'package:emlakmaster_mobile/core/services/startup_role_cache.dart';
 import 'package:emlakmaster_mobile/core/cache/app_cache_service.dart';
 import 'package:emlakmaster_mobile/core/services/call_record_sync_orchestrator.dart';
 import 'package:emlakmaster_mobile/core/services/sync_manager.dart';
@@ -79,43 +80,36 @@ Future<void> main() async {
     };
 
     try {
-      // Firebase + yerel onboarding bayrakları paralel; takılırsa kısa sürede runApp ile devam.
-      await Future.wait<void>([
-        _initFirebaseIfNeeded().timeout(
-          const Duration(seconds: 4),
-          onTimeout: () {
-            if (kDebugMode) {
-              debugPrint(
-                'Firebase: 4s içinde hazır değil; arayüz açılıyor, init arka planda sürebilir.',
-              );
-            }
-          },
-        ),
-        () async {
-          try {
-            await Future.wait([
-              OnboardingStore.instance.warmUp(),
-              LoginEntryStore.instance.warmUp(),
-            ]).timeout(
-              const Duration(milliseconds: 900),
-              onTimeout: () {
-                if (kDebugMode) {
-                  debugPrint(
-                    'OnboardingStore/LoginEntryStore: warmUp zaman aşımı; redirect varsayılanları kullanılacak.',
-                  );
-                }
-                return <void>[];
-              },
+      // Yerel bayraklar hızlı; Firebase UI'yi bloklamaz — arka planda başlar.
+      await Future.wait([
+        OnboardingStore.instance.warmUp(),
+        LoginEntryStore.instance.warmUp(),
+        StartupRoleCache.instance.warmUp(),
+      ]).timeout(
+        const Duration(milliseconds: 350),
+        onTimeout: () {
+          if (kDebugMode) {
+            debugPrint(
+              'Startup prefs warmUp: 350ms zaman aşımı; varsayılanlar kullanılacak.',
             );
-          } catch (e, st) {
-            AppLogger.e('OnboardingStore warmUp (bootstrap)', e, st);
           }
-        }(),
-      ]);
-      AppLogger.state('[startup] bootstrap parallel init done');
+          return <void>[];
+        },
+      );
+      unawaited(
+        _initFirebaseIfNeeded().catchError((Object e, StackTrace st) {
+          AppLogger.e('Firebase init (background)', e, st);
+        }),
+      );
+      AppLogger.state('[startup] bootstrap prefs done; firebase background');
       StartupPerfMarkers.once('bootstrap_parallel_done');
     } catch (e, st) {
-      AppLogger.e('Bootstrap paralel init', e, st);
+      AppLogger.e('Bootstrap prefs init', e, st);
+      unawaited(
+        _initFirebaseIfNeeded().catchError((Object e, StackTrace st) {
+          AppLogger.e('Firebase init (background)', e, st);
+        }),
+      );
     }
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
@@ -494,8 +488,10 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     }
     try {
       if (!_isFlutterTest) {
-        CallRecordSyncOrchestrator.instance.start();
-        AppLogger.state('[startup] CallRecordSyncOrchestrator.start done');
+        Future<void>.delayed(const Duration(seconds: 4), () {
+          CallRecordSyncOrchestrator.instance.start();
+          AppLogger.state('[startup] CallRecordSyncOrchestrator.start (deferred)');
+        });
       }
     } catch (e, st) {
       AppLogger.e('CallRecordSyncOrchestrator start error', e, st);

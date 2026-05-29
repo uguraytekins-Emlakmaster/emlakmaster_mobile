@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_color_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_glass_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_shadow_tokens.dart';
@@ -36,6 +38,7 @@ class PremiumBottomNavMetrics {
     final scale = mq.textScaler.scale(1.0).clamp(1.0, 1.35);
     final width = mq.size.width;
     final compact = width < 360 || scale > 1.12;
+    final phone = width < DesignTokens.breakpointWide;
 
     final baseContent = compact ? 56.0 : 60.0;
     final contentHeight = (baseContent * scale).clamp(56.0, 68.0);
@@ -48,7 +51,10 @@ class PremiumBottomNavMetrics {
       labelSizeSelected: compact ? 9 : 9.5,
       itemVerticalPadding: compact ? 3 : 4,
       labelGap: compact ? 2 : 3,
-      blurSigma: compact ? 22 : 28,
+      // BackdropFilter on scroll is very expensive on phones — blur only on wide layouts.
+      blurSigma: phone || AppLifecyclePowerService.shouldReduceMotion
+          ? 0
+          : (compact ? 14 : 18),
     );
   }
 
@@ -97,90 +103,106 @@ class PremiumBottomNavDock extends StatelessWidget {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final hasCenter = centerItemIndex != null && onCenterTap != null;
 
+    final useBlur = metrics.blurSigma > 0;
+    final dockDecoration = BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: useBlur
+            ? [
+                premium.navDockSurface.withValues(alpha: 0.96),
+                premium.navDockSurface.withValues(alpha: 0.78),
+              ]
+            : [
+                premium.navDockSurface.withValues(alpha: 0.98),
+                premium.navDockSurface.withValues(alpha: 0.94),
+              ],
+      ),
+      borderRadius: BorderRadius.circular(26),
+      border: Border.all(
+        width: 1.15,
+        color: premium.champagneGold.withValues(alpha: useBlur ? 0.42 : 0.32),
+      ),
+    );
+
+    Widget dockBody = DecoratedBox(
+      decoration: dockDecoration,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 1,
+            margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  premium.champagneGold.withValues(alpha: 0.7),
+                  Colors.transparent,
+                ],
+              ),
+              boxShadow: useBlur ? PremiumShadowTokens.goldGlow() : null,
+            ),
+          ),
+          SizedBox(
+            height: metrics.contentHeight,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < items.length; i++) ...[
+                  if (hasCenter && i == centerItemIndex)
+                    _CenterNavSlot(
+                      icon: centerIcon,
+                      label: centerLabel,
+                      onTap: onCenterTap!,
+                      ext: ext,
+                      premium: premium,
+                      metrics: metrics,
+                    )
+                  else
+                    Expanded(
+                      child: _DockNavItem(
+                        item: items[i],
+                        selected: selectedIndex == i,
+                        onTap: () => onTap(i),
+                        ext: ext,
+                        premium: premium,
+                        metrics: metrics,
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (useBlur) {
+      dockBody = BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: metrics.blurSigma,
+          sigmaY: metrics.blurSigma,
+        ),
+        child: dockBody,
+      );
+    }
+
     return Padding(
       padding: EdgeInsets.fromLTRB(12, 0, 12, bottom + 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
-          boxShadow: [
-            ...PremiumShadowTokens.dockLuxury(shadowColor: ext.shadowColor),
-            ...PremiumShadowTokens.ambientGlow(color: premium.champagneGold),
-          ],
+          boxShadow: useBlur
+              ? [
+                  ...PremiumShadowTokens.dockLuxury(shadowColor: ext.shadowColor),
+                  ...PremiumShadowTokens.ambientGlow(color: premium.champagneGold),
+                ]
+              : PremiumShadowTokens.dockLuxury(shadowColor: ext.shadowColor),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(26),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: metrics.blurSigma,
-              sigmaY: metrics.blurSigma,
-            ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    premium.navDockSurface.withValues(alpha: 0.96),
-                    premium.navDockSurface.withValues(alpha: 0.78),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(
-                  width: 1.15,
-                  color: premium.champagneGold.withValues(alpha: 0.42),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 1,
-                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          premium.champagneGold.withValues(alpha: 0.7),
-                          Colors.transparent,
-                        ],
-                      ),
-                      boxShadow: PremiumShadowTokens.goldGlow(),
-                    ),
-                  ),
-                  SizedBox(
-                    height: metrics.contentHeight,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (var i = 0; i < items.length; i++) ...[
-                          if (hasCenter && i == centerItemIndex)
-                            _CenterNavSlot(
-                              icon: centerIcon,
-                              label: centerLabel,
-                              onTap: onCenterTap!,
-                              ext: ext,
-                              premium: premium,
-                              metrics: metrics,
-                            )
-                          else
-                            Expanded(
-                              child: _DockNavItem(
-                                item: items[i],
-                                selected: selectedIndex == i,
-                                onTap: () => onTap(i),
-                                ext: ext,
-                                premium: premium,
-                                metrics: metrics,
-                              ),
-                            ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          child: dockBody,
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -54,7 +56,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _loadPersona();
+    _persona = LoginEntryStore.instance.personaSync;
+    _personaReady = true;
+    if (_persona == null) {
+      unawaited(_loadPersona());
+    }
   }
 
   Future<void> _loadPersona() async {

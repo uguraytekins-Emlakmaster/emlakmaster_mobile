@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import 'facebook_auth_service.dart';
 import 'google_auth_service.dart';
+import 'startup_role_cache.dart';
 import 'user_bootstrap_orchestrator.dart';
 import '../logging/app_logger.dart';
 
@@ -86,6 +89,7 @@ class AuthService {
   /// Çıkış: Firebase + sosyal oturumlar (sonraki girişte hesap seçici açılır).
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
+    unawaited(StartupRoleCache.instance.clear());
     try {
       await GoogleAuthService.instance.signOut();
     } catch (_) {/* Google oturumu yoksa veya ağ yoksa yine de çıkış tamam */}

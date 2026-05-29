@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
@@ -33,6 +34,9 @@ class SyncStatusBanner extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    final useBlur = !AppLifecyclePowerService.shouldReduceMotion &&
+        MediaQuery.sizeOf(context).width >= DesignTokens.breakpointWide;
+
     void showDetails() {
       AppFeedback.selectionClick();
       AppToaster.show(
@@ -51,51 +55,55 @@ class SyncStatusBanner extends ConsumerWidget {
       );
     }
 
+    final banner = Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: DesignTokens.space3,
+        vertical: compact ? DesignTokens.space1 : DesignTokens.space2,
+      ),
+      decoration: BoxDecoration(
+        color: premium.glassSurface.withValues(alpha: useBlur ? 0.72 : 0.92),
+        border: Border(
+          bottom: BorderSide(
+            color: premium.glassBorder.withValues(alpha: 0.28),
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.cloud_done_rounded,
+            size: compact ? 14 : 16,
+            color: premium.champagneGoldMuted,
+          ),
+          SizedBox(width: compact ? DesignTokens.space2 : DesignTokens.space2),
+          Text(
+            status.shortLabel,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: ext.textSecondary,
+              fontWeight: FontWeight.w500,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: showDetails,
         child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: premium.glassBlur * 0.5,
-              sigmaY: premium.glassBlur * 0.5,
-            ),
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                horizontal: DesignTokens.space3,
-                vertical: compact ? DesignTokens.space1 : DesignTokens.space2,
-              ),
-              decoration: BoxDecoration(
-                color: premium.glassSurface.withValues(alpha: 0.72),
-                border: Border(
-                  bottom: BorderSide(
-                    color: premium.glassBorder.withValues(alpha: 0.28),
+          child: useBlur
+              ? BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: premium.glassBlur * 0.5,
+                    sigmaY: premium.glassBlur * 0.5,
                   ),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.cloud_done_rounded,
-                    size: compact ? 14 : 16,
-                    color: premium.champagneGoldMuted,
-                  ),
-                  SizedBox(width: compact ? DesignTokens.space2 : DesignTokens.space2),
-                  Text(
-                    status.shortLabel,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: ext.textSecondary,
-                      fontWeight: FontWeight.w500,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                  child: banner,
+                )
+              : banner,
         ),
       ),
     );

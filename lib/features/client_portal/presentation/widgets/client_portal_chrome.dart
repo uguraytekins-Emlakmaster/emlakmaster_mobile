@@ -3,7 +3,6 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/features/client_portal/presentation/client_portal_tokens.dart';
 import 'package:emlakmaster_mobile/features/client_portal/presentation/utils/client_portal_filter.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_surface.dart';
 import 'package:flutter/material.dart';
 
 class PremiumClientPortalHeader extends StatelessWidget {
@@ -137,8 +136,7 @@ class PremiumClientSummaryStrip extends StatelessWidget {
         ClientPortalTokens.horizontal,
         ClientPortalTokens.chromeGap,
       ),
-      child: ConsultantDashboardExecutiveSurface(
-        ambientStrength: 0.68,
+      child: _ClientPortalSummarySurface(
         child: SizedBox(
           height: ClientPortalTokens.summaryStripHeight,
           child: Row(
@@ -344,6 +342,26 @@ class PremiumClientSectionLabel extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Lightweight summary strip surface — no executive glow/shadow stack (mobile FPS).
+class _ClientPortalSummarySurface extends StatelessWidget {
+  const _ClientPortalSummarySurface({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: ext.surface.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ext.border.withValues(alpha: 0.32)),
+      ),
+      child: child,
     );
   }
 }

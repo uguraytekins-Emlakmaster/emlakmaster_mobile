@@ -6,6 +6,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_bootstrap_skeleton.dart';
 import 'package:emlakmaster_mobile/core/performance/startup_perf_markers.dart';
 import 'package:emlakmaster_mobile/core/widgets/startup_recovery_scaffold.dart';
+import 'package:emlakmaster_mobile/core/services/startup_role_cache.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -35,10 +36,24 @@ class _RoleBasedShellSelectorState
   Timer? _recoveryTimer;
   String? _loadingReason;
   bool _showRecovery = false;
+  ProviderSubscription<AsyncValue<AppRole>>? _roleCacheSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _roleCacheSub = ref.listenManual(displayRoleProvider, (prev, next) {
+      next.whenData((role) {
+        final uid = ref.read(currentUserProvider).valueOrNull?.uid;
+        if (uid == null || uid.isEmpty) return;
+        unawaited(StartupRoleCache.instance.persist(uid, role));
+      });
+    });
+  }
 
   @override
   void dispose() {
     _recoveryTimer?.cancel();
+    _roleCacheSub?.close();
     super.dispose();
   }
 
@@ -111,11 +126,22 @@ class _RoleBasedShellSelectorState
       return const _ShellRouterGatePending();
     }
     if (ref.watch(userDocBootstrapPendingProvider)) {
-      return const ShellBootstrapSkeleton();
+      final cached = StartupRoleCache.instance.roleForUser(uid);
+      if (cached == null) {
+        return const ShellBootstrapSkeleton();
+      }
     }
     final roleAsync = ref.watch(displayRoleProvider);
+    final cachedRole = StartupRoleCache.instance.roleForUser(uid);
+
+    if (roleAsync.isLoading && cachedRole != null) {
+      return _buildForRole(context, ref, cachedRole);
+    }
+
     return roleAsync.when(
-      loading: () => const ShellBootstrapSkeleton(),
+      loading: () => cachedRole != null
+          ? _buildForRole(context, ref, cachedRole)
+          : const ShellBootstrapSkeleton(),
       error: (e, st) {
         _clearLoadingReason();
         AppLogger.e('[startup][RoleShell] displayRoleProvider error', e, st);
