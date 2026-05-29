@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 const _profiles = <({String name, Size size, double textScale})>[
   (name: 'iPhone SE', size: Size(320, 568), textScale: 1.0),
   (name: 'iPhone 14', size: Size(390, 844), textScale: 1.0),
+  (name: 'iPhone 15 Plus', size: Size(430, 932), textScale: 1.0),
   (name: 'Android compact', size: Size(360, 640), textScale: 1.0),
   (name: 'Android normal', size: Size(412, 915), textScale: 1.0),
   (name: 'macOS windowed', size: Size(1280, 800), textScale: 1.0),
@@ -60,7 +61,10 @@ Future<void> _pumpChrome(WidgetTester tester, Size size, double textScale) async
                 children: [
                   const PremiumAdminCommandHeader(
                     title: 'Komuta Merkezi',
-                    subtitle: 'Ofis sağlığı · kontrol',
+                    subtitle: 'Ofis sağlığı · ekip aktivitesi · operasyon kontrolü',
+                    actions: [
+                      Icon(Icons.notifications_outlined, size: 24),
+                    ],
                   ),
                   const PremiumAdminHealthStrip(summary: _summary),
                   const PremiumAdminIntelLines(

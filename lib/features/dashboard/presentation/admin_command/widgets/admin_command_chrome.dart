@@ -26,74 +26,69 @@ class PremiumAdminCommandHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final today = DateFormat('d MMM').format(DateTime.now());
+    final m = AdminCommandTokens.headerMetrics(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AdminCommandTokens.horizontal,
-        AdminCommandTokens.topInset + 4,
-        AdminCommandTokens.horizontal,
-        AdminCommandTokens.headerBottomGap,
+      padding: EdgeInsets.fromLTRB(
+        m.horizontal,
+        m.topInset,
+        m.horizontal,
+        m.bottomGap,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const BrandEmblem(
-                variant: BrandEmblemVariant.mini,
-                size: AdminCommandTokens.headerEmblemSize,
-              ),
-              const SizedBox(width: 8),
+              _AdminHeaderEmblemAnchor(size: m.emblemSize, pad: m.emblemPad),
+              SizedBox(width: m.titleGap),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.pageHeading(context).copyWith(
-                        fontSize: AdminCommandTokens.headerTitleSize,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
-                        height: 1.05,
+                child: Padding(
+                  padding: EdgeInsets.only(top: m.emblemPad * 0.15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.pageHeading(context).copyWith(
+                          fontSize: m.titleSize,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.35,
+                          height: 1.04,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: AppTypography.meta(context).copyWith(
-                        color: ext.textSecondary.withValues(alpha: 0.88),
-                        fontSize: AdminCommandTokens.headerSubtitleSize,
-                        fontWeight: FontWeight.w500,
-                        height: 1.1,
+                      SizedBox(height: m.titleToSubtitleGap),
+                      Text(
+                        subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.meta(context).copyWith(
+                          color: ext.textSecondary.withValues(alpha: 0.92),
+                          fontSize: m.subtitleSize,
+                          fontWeight: FontWeight.w600,
+                          height: 1.18,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: ext.surfaceElevated.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: ext.border.withValues(alpha: 0.35)),
-                ),
-                child: Text(
-                  today,
-                  style: TextStyle(
-                    color: ext.textSecondary,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w700,
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(width: 4),
-              ...actions,
+              SizedBox(width: m.titleGap - 2),
+              _AdminHeaderControlRail(
+                metrics: m,
+                dateLabel: today,
+                actions: actions,
+              ),
             ],
           ),
           if (showHonestyNote) ...[
-            const SizedBox(height: 6),
+            SizedBox(height: m.honestyTopGap),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
                 color: ext.info.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
@@ -103,15 +98,102 @@ class PremiumAdminCommandHeader extends StatelessWidget {
                 'Doğrulama notu: yalnızca gerçek ofis verisi gösterilir; tahmin veya sahte KPI yok.',
                 style: TextStyle(
                   color: ext.textSecondary,
-                  fontSize: 9.5,
+                  fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  height: 1.1,
+                  height: 1.15,
                 ),
               ),
             ),
           ],
         ],
       ),
+    );
+  }
+}
+
+class _AdminHeaderEmblemAnchor extends StatelessWidget {
+  const _AdminHeaderEmblemAnchor({
+    required this.size,
+    required this.pad,
+  });
+
+  final double size;
+  final double pad;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Container(
+      padding: EdgeInsets.all(pad),
+      decoration: BoxDecoration(
+        color: ext.surfaceElevated.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ext.accent.withValues(alpha: 0.22)),
+        boxShadow: [
+          BoxShadow(
+            color: ext.shadowColor.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: BrandEmblem(
+        variant: BrandEmblemVariant.mini,
+        size: size,
+      ),
+    );
+  }
+}
+
+class _AdminHeaderControlRail extends StatelessWidget {
+  const _AdminHeaderControlRail({
+    required this.metrics,
+    required this.dateLabel,
+    required this.actions,
+  });
+
+  final AdminCommandHeaderMetrics metrics;
+  final String dateLabel;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: ext.surfaceElevated.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: ext.border.withValues(alpha: 0.38)),
+          ),
+          child: Text(
+            dateLabel,
+            style: TextStyle(
+              color: ext.textSecondary,
+              fontSize: metrics.dateFontSize,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.1,
+              height: 1,
+            ),
+          ),
+        ),
+        if (actions.isNotEmpty) ...[
+          SizedBox(height: metrics.controlRailGap),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < actions.length; i++) ...[
+                if (i > 0) const SizedBox(width: 2),
+                actions[i],
+              ],
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

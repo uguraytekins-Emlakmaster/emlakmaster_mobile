@@ -14,16 +14,19 @@ class AdminCommandSkeleton extends StatelessWidget {
       delegate: SliverChildListDelegate([
         const SizedBox(height: AdminCommandTokens.topInset),
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AdminCommandTokens.horizontal,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const ShimmerPlaceholder(width: 180, height: 18),
-              const SizedBox(height: 6),
-              const ShimmerPlaceholder(width: 240, height: 12),
-              const SizedBox(height: 10),
+        padding: EdgeInsets.fromLTRB(
+          AdminCommandTokens.horizontal,
+          AdminCommandTokens.topInset,
+          AdminCommandTokens.horizontal,
+          AdminCommandTokens.sectionGap,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ShimmerPlaceholder(width: 200, height: 22),
+            const SizedBox(height: 8),
+            ShimmerPlaceholder(width: 260, height: 14),
+            const SizedBox(height: 10),
               ShimmerPlaceholder(
                 width: double.infinity,
                 height: AdminCommandTokens.summaryStripHeight,

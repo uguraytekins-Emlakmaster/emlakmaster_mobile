@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/admin_command_tokens.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/providers/admin_office_health_provider.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/widgets/admin_command_chrome.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/widgets/admin_command_quick_routes.dart';
@@ -93,17 +94,18 @@ class DashboardPage extends ConsumerWidget {
     final snapshotAsync = ref.watch(adminCommandSnapshotProvider);
 
     final headerActions = [
-      const Padding(
-        padding: EdgeInsets.only(right: 2),
-        child: SessionAvatarButton(),
-      ),
+      SessionAvatarButton(size: AdminCommandTokens.headerAvatarSize),
       IconButton(
         tooltip: 'Bildirimler',
-        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        padding: EdgeInsets.zero,
+        constraints: BoxConstraints(
+          minWidth: AdminCommandTokens.headerActionTap,
+          minHeight: AdminCommandTokens.headerActionTap,
+        ),
         icon: Icon(
           Icons.notifications_outlined,
           color: AppThemeExtension.of(context).textSecondary,
-          size: 22,
+          size: AdminCommandTokens.headerActionIconSize,
         ),
         onPressed: uid.isEmpty
             ? null
