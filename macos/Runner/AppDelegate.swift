@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import GoogleSignIn
 
 @main
 class AppDelegate: FlutterAppDelegate {
@@ -14,8 +15,21 @@ class AppDelegate: FlutterAppDelegate {
     return false
   }
 
-  /// Google Sign-In OAuth geri çağrısı (macOS).
+  override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+    return true
+  }
+
+  /// Google OAuth redirect — tek işleyici (çift handle oturumu bozar).
   override func application(_ application: NSApplication, open urls: [URL]) {
-    super.application(application, open: urls)
+    var googleHandled = false
+    for url in urls {
+      if GIDSignIn.sharedInstance.handle(url) {
+        googleHandled = true
+      }
+    }
+    if !googleHandled {
+      super.application(application, open: urls)
+    }
+    NSApp.activate(ignoringOtherApps: true)
   }
 }

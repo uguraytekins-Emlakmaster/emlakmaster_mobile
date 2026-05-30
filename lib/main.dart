@@ -37,7 +37,7 @@ import 'package:emlakmaster_mobile/features/messages/data/team_chat_inbox_listen
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_local_notifications.dart';
 import 'package:emlakmaster_mobile/core/notifications/crm_push_navigation.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_access_state.dart';
-import 'package:emlakmaster_mobile/firebase_options.dart';
+import 'package:emlakmaster_mobile/core/services/firebase_core_bootstrap.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -46,9 +46,7 @@ import 'package:flutter/foundation.dart'
         debugPrint,
         kDebugMode,
         kIsWeb,
-        kReleaseMode,
-        defaultTargetPlatform,
-        TargetPlatform;
+        kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -96,20 +94,12 @@ Future<void> main() async {
           return <void>[];
         },
       );
-      unawaited(
-        _initFirebaseIfNeeded().catchError((Object e, StackTrace st) {
-          AppLogger.e('Firebase init (background)', e, st);
-        }),
-      );
+      FirebaseCoreBootstrap.instance.scheduleBackgroundInit();
       AppLogger.state('[startup] bootstrap prefs done; firebase background');
       StartupPerfMarkers.once('bootstrap_parallel_done');
     } catch (e, st) {
       AppLogger.e('Bootstrap prefs init', e, st);
-      unawaited(
-        _initFirebaseIfNeeded().catchError((Object e, StackTrace st) {
-          AppLogger.e('Firebase init (background)', e, st);
-        }),
-      );
+      FirebaseCoreBootstrap.instance.scheduleBackgroundInit();
     }
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
@@ -133,88 +123,6 @@ Future<void> main() async {
       } catch (_) {}
     }
   });
-}
-
-Future<void> _initializeFirebaseWithRetry(
-  Future<FirebaseApp> Function() initCall,
-) async {
-  const int maxAttempts = 5;
-  for (int i = 0; i < maxAttempts; i++) {
-    try {
-      await initCall();
-      return;
-    } on FirebaseException catch (e) {
-      final isDuplicate = e.code == 'duplicate-app';
-      final isNotInitialized = e.code == 'not-initialized';
-      if (isDuplicate) return;
-      if (!isNotInitialized || i == maxAttempts - 1) rethrow;
-      await Future<void>.delayed(Duration(milliseconds: 100 * (i + 1)));
-    }
-  }
-}
-
-/// [runApp] öncesi: Firebase yoksa kur; ağ takılırsa üst katman [timeout] ile sınırlanır.
-Future<void> _initFirebaseIfNeeded() async {
-  if (Firebase.apps.isNotEmpty) return;
-
-  final isAppleNative = !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS);
-
-  if (isAppleNative) {
-    try {
-      await _initializeFirebaseWithRetry(() => Firebase.initializeApp());
-    } catch (e, st) {
-      AppLogger.e('Firebase init error (plist first)', e, st);
-    }
-
-    if (Firebase.apps.isEmpty) {
-      try {
-        await _initializeFirebaseWithRetry(
-          () => Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          ),
-        );
-      } on FirebaseException catch (e) {
-        if (e.code == 'duplicate-app') {
-          if (kDebugMode) {
-            debugPrint('Firebase: [DEFAULT] zaten mevcut, devam ediliyor.');
-          }
-        } else {
-          AppLogger.e(
-              'Firebase init error (options after plist)', e, e.stackTrace);
-        }
-      } catch (e, st) {
-        AppLogger.e('Firebase init error (options after plist)', e, st);
-      }
-    }
-  } else {
-    try {
-      await _initializeFirebaseWithRetry(
-        () => Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        ),
-      );
-    } on FirebaseException catch (e) {
-      if (e.code == 'duplicate-app') {
-        if (kDebugMode) {
-          debugPrint('Firebase: [DEFAULT] zaten mevcut, devam ediliyor.');
-        }
-      } else {
-        AppLogger.e('Firebase init error (options)', e, e.stackTrace);
-      }
-    } catch (e, st) {
-      AppLogger.e('Firebase init error (options)', e, st);
-    }
-
-    if (Firebase.apps.isEmpty) {
-      try {
-        await _initializeFirebaseWithRetry(() => Firebase.initializeApp());
-      } catch (e, st) {
-        AppLogger.e('Firebase init error (default fallback)', e, st);
-      }
-    }
-  }
 }
 
 Future<void> _runApp() async {

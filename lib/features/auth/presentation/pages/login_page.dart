@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,17 +11,20 @@ import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/services/firebase_core_bootstrap.dart';
 import '../../../../core/services/login_attempt_guard.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/facebook_auth_service.dart';
 import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../domain/auth_result.dart';
+import '../providers/auth_provider.dart';
 import '../utils/auth_result_ui.dart';
 import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../utils/auth_error_messages.dart';
 import '../../../../core/services/login_entry_store.dart';
+import '../../../../core/services/onboarding_store.dart';
 import '../../domain/login_entry_persona.dart';
 import '../widgets/auth_entry_hero.dart';
 import '../widgets/auth_entry_persona_selector.dart';
@@ -52,6 +56,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// Gerçek hata kodu (Firebase vb.); kullanıcı "bilgiler doğru" dediğinde teşhis için gösterilir.
   String? _errorDetail;
+  String? _googleStatusHint;
 
   @override
   void initState() {
@@ -61,6 +66,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (_persona == null) {
       unawaited(_loadPersona());
     }
+    unawaited(
+      FirebaseCoreBootstrap.instance.ensureReady().catchError((_) {}),
+    );
   }
 
   Future<void> _loadPersona() async {
@@ -170,9 +178,67 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (r is AuthSuccess) {
       LoginAttemptGuard.clear();
       await AnalyticsService.instance.logLogin(method: analyticsMethod);
+      if (mounted) {
+        await _navigateAfterAuthSuccess(r.credential);
+      }
     } else if (r.shouldRecordLoginFailure) {
       LoginAttemptGuard.recordFailure();
     }
+  }
+
+  Future<void> _navigateAfterAuthSuccess(UserCredential cred) async {
+    if (cred.user == null && FirebaseAuth.instance.currentUser == null) return;
+    await _navigateAfterAuthSession();
+  }
+
+  Future<void> _navigateAfterAuthSession() async {
+    if (Firebase.apps.isEmpty) {
+      try {
+        await FirebaseCoreBootstrap.instance.ensureReady();
+      } catch (_) {
+        return;
+      }
+    }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || !mounted) return;
+
+    for (var i = 0; i < 30; i++) {
+      if (ref.read(currentUserProvider).valueOrNull != null) break;
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      if (!mounted) return;
+    }
+
+    if (!mounted) return;
+    ref.read(AppRouter.goRouterProvider).refresh();
+
+    final path = GoRouter.of(context).state.uri.path;
+    if (path != AppRouter.routeLogin &&
+        path != AppRouter.routeRegister &&
+        path != AppRouter.routeOnboarding) {
+      return;
+    }
+
+    final needsRole = ref.read(needsRoleSelectionProvider);
+    final needsOffice = ref.read(needsOfficeSetupProvider);
+    final needsRecovery = ref.read(needsOfficeRecoveryProvider);
+
+    if (needsRole) {
+      if (!OnboardingStore.instance.workspaceSetupCompletedSync) {
+        context.go(AppRouter.routeWorkspaceSetup);
+      } else {
+        context.go(AppRouter.routeRoleSelection);
+      }
+      return;
+    }
+    if (needsOffice) {
+      context.go(AppRouter.routeOfficeGate);
+      return;
+    }
+    if (needsRecovery) {
+      context.go(AppRouter.routeOfficeRecovery);
+      return;
+    }
+    context.go(AppRouter.routeHome);
   }
 
   Future<void> _googleIleGiris() async {
@@ -190,18 +256,40 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() {
       _errorMessage = null;
       _errorDetail = null;
+      _googleStatusHint = 'Google hesabı hazırlanıyor…';
       _busy = _BusyKind.google;
     });
+    unawaited(
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        if (!mounted || _busy != _BusyKind.google) return;
+        setState(() => _googleStatusHint = 'Google penceresi açılıyor…');
+      }),
+    );
     try {
       final r = await GoogleAuthService.instance.signInWithGoogleTyped();
       if (!mounted) return;
       await _applyTypedAuthResult(r, analyticsMethod: 'google');
       setState(() {
-        _errorMessage = r.loginBannerMessage;
-        _errorDetail = r is AuthFailure ? r.debugDetail : null;
+        _errorMessage = r.loginBannerMessage ??
+            (r is AuthCancelled
+                ? 'Google girişi tamamlanamadı. Tekrar deneyin.'
+                : null);
+        _errorDetail = switch (r) {
+          AuthFailure(:final debugDetail) => debugDetail,
+          AuthCancelled() => 'cancelled',
+          _ => null,
+        };
+        _googleStatusHint = null;
       });
     } finally {
-      if (mounted) setState(() => _busy = _BusyKind.none);
+      if (mounted) {
+        setState(() {
+          _busy = _BusyKind.none;
+          if (_googleStatusHint != null && _errorMessage == null) {
+            _googleStatusHint = null;
+          }
+        });
+      }
     }
   }
 
@@ -470,6 +558,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
               ),
             ),
+            if (_busy == _BusyKind.google && _googleStatusHint != null) ...[
+              const SizedBox(height: DesignTokens.space2),
+              Text(
+                _googleStatusHint!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ext.textSecondary,
+                  fontSize: DesignTokens.fontSizeSm,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space1),
+              Text(
+                'Tarayıcı açılmazsa Dock’ta Safari veya Chrome penceresine bakın.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ext.textSecondary.withValues(alpha: 0.85),
+                  fontSize: DesignTokens.fontSizeSm - 1,
+                ),
+              ),
+            ],
             if (AppConstants.showFacebookLogin) ...[
               const SizedBox(height: DesignTokens.space3),
               OutlinedButton.icon(

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import 'facebook_auth_service.dart';
+import 'firebase_core_bootstrap.dart';
 import 'google_auth_service.dart';
 import 'startup_role_cache.dart';
 import 'user_bootstrap_orchestrator.dart';
@@ -26,6 +27,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    await FirebaseCoreBootstrap.instance.ensureReady();
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
@@ -45,6 +47,7 @@ class AuthService {
     required String password,
     String? displayName,
   }) async {
+    await FirebaseCoreBootstrap.instance.ensureReady();
     final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: email.trim(),
       password: password,
@@ -70,6 +73,7 @@ class AuthService {
   Future<void> sendPasswordResetEmail({required String email}) async {
     final trimmed = email.trim();
     try {
+      await FirebaseCoreBootstrap.instance.ensureReady();
       await FirebaseAuth.instance.sendPasswordResetEmail(email: trimmed);
       if (kDebugMode) {
         AppLogger.d('AuthService: password reset email sent to $trimmed');

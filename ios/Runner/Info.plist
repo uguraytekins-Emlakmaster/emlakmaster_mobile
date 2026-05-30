@@ -47,6 +47,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GIDClientID</key>
 	<string>572835725773-8s71g3li2ful895gppeb6bvlbck09hkd.apps.googleusercontent.com</string>
+	<key>GIDServerClientID</key>
+	<string>572835725773-m7hqe81ad42nnk5dv6k7gq0oup7pksj1.apps.googleusercontent.com</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>

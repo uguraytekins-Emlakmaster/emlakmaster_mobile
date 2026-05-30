@@ -170,7 +170,7 @@ class AppRouter {
       observers: [_AnalyticsRouteObserver()],
       redirect: (context, state) {
         try {
-          final user = ref.read(currentUserProvider).valueOrNull;
+          final user = readRouterAuthUser(ref);
           final path = state.uri.path;
           final needsRole = ref.read(needsRoleSelectionProvider);
           final needsOffice = ref.read(needsOfficeSetupProvider);

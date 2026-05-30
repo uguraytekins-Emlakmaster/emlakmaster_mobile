@@ -1,6 +1,8 @@
 import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
 import 'package:emlakmaster_mobile/core/dev/dev_office_fallback.dart';
+import 'package:emlakmaster_mobile/core/services/firebase_core_bootstrap.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/auth_service.dart';
@@ -16,9 +18,24 @@ import '../../data/user_repository.dart';
 import '../../domain/entities/app_role.dart';
 
 /// Mevcut Firebase Auth kullanıcısı. null = çıkış yapılmış.
+///
+/// [FirebaseCoreBootstrap.ensureReady] tamamlanana kadar stream başlamaz — [core/no-app] önlenir.
 final currentUserProvider = StreamProvider<User?>((ref) {
-  return AuthService.instance.authStateChanges;
+  return _authStateChangesAfterBootstrap();
 });
+
+Stream<User?> _authStateChangesAfterBootstrap() async* {
+  await FirebaseCoreBootstrap.instance.ensureReady();
+  yield* AuthService.instance.authStateChanges;
+}
+
+/// GoRouter redirect — stream gecikmesinde canlı oturum; Firebase hazır değilse null.
+User? readRouterAuthUser(Ref ref) {
+  final fromStream = ref.read(currentUserProvider).valueOrNull;
+  if (fromStream != null) return fromStream;
+  if (Firebase.apps.isEmpty) return null;
+  return FirebaseAuth.instance.currentUser;
+}
 
 /// users/{uid} stream. Rol değişikliklerini canlı dinler.
 final userDocStreamProvider =
