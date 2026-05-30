@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
+import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_bootstrap_skeleton.dart';
 import 'package:emlakmaster_mobile/core/performance/startup_perf_markers.dart';
@@ -10,6 +11,7 @@ import 'package:emlakmaster_mobile/core/services/startup_role_cache.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -181,11 +183,13 @@ class _ShellRoleErrorScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
+    final safeDetail = userFacingErrorMessage(error, context: 'role_shell');
+    AppLogger.e('[startup][RoleShell] displayRoleProvider error (user-facing: $safeDetail)', error);
     return StartupRecoveryScaffold(
       title: 'Rol bilgisi yüklenemedi',
       message:
-          'Bağlantı ya da sunucu yanıtı alınırken bir aksama oldu. Yeniden deneyebilir ya da oturumu tazeleyebilirsiniz.',
-      detail: error.toString(),
+          'Oturum açıldı ancak rol profiliniz henüz yüklenemedi. Bağlantınızı kontrol edip yeniden deneyebilir ya da oturumu tazeleyebilirsiniz.',
+      detail: kDebugMode ? error.toString() : safeDetail,
       onPrimary: uid == null
           ? null
           : () {

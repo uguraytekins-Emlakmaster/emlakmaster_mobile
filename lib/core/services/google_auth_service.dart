@@ -46,6 +46,11 @@ class GoogleAuthService {
     _client = null;
   }
 
+  /// Çıkış sonrası Google oturum kalıntısı / takılı client'ı bırakma.
+  void resetAfterLogout() {
+    _resetClient();
+  }
+
   /// Önce [signInSilently] (hızlı); idToken yoksa veya hesap yoksa tam akış.
   Future<UserCredential> signInWithGoogleForFirebase() async {
     await FirebaseCoreBootstrap.instance.ensureReady();

@@ -320,6 +320,9 @@ final displayRoleOrNullProvider = Provider<AppRole?>((ref) {
   return ref.watch(displayRoleProvider).valueOrNull;
 });
 
+/// Çıkış sonrası login ekranını taze state ile yeniden kurmak için artan sayaç.
+final authPresentationEpochProvider = StateProvider<int>((ref) => 0);
+
 /// Firestore rolüne göre; platform bağlantısı / içe aktarma motoru yönetimi (override ile büyütülmez).
 final canManagePlatformIntegrationsProvider = Provider<bool>((ref) {
   final role = ref.watch(currentRoleOrNullProvider) ?? AppRole.guest;

@@ -310,11 +310,14 @@ class AppRouter {
         ),
         GoRoute(
           path: routeLogin,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            name: state.matchedLocation,
-            child: const LoginPage(),
-          ),
+          pageBuilder: (context, state) {
+            final epoch = ref.read(authPresentationEpochProvider);
+            return NoTransitionPage(
+              key: ValueKey('login-route-$epoch'),
+              name: state.matchedLocation,
+              child: LoginPage(key: ValueKey('login-page-$epoch')),
+            );
+          },
         ),
         GoRoute(
           path: routeRegister,

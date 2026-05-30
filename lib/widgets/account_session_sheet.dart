@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
@@ -190,9 +188,12 @@ class _AccountSessionSheet extends ConsumerWidget {
               icon: Icons.logout_rounded,
               label: 'Çıkış yap',
               danger: true,
-              onTap: () {
+              onTap: () async {
                 Navigator.of(context).pop();
-                unawaited(AuthLogoutCoordinator.signOut(ref));
+                await AuthLogoutCoordinator.signOut(
+                  ref,
+                  dismissOverlayFirst: true,
+                );
               },
             ),
             const SizedBox(height: DesignTokens.space6),
