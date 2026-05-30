@@ -29,12 +29,29 @@ Stream<User?> _authStateChangesAfterBootstrap() async* {
   yield* AuthService.instance.authStateChanges;
 }
 
+/// GoRouter redirect — çıkışta stream gecikirken canlı Firebase oturumu esas alınır.
+User? resolveRouterAuthUser({
+  required User? streamUser,
+  required User? liveFirebaseUser,
+  required bool firebaseReady,
+}) {
+  if (firebaseReady) {
+    if (liveFirebaseUser != null) return liveFirebaseUser;
+    // Çıkış yapıldı: stream henüz null emit etmemiş olsa bile korumalı rotaya izin verme.
+    return null;
+  }
+  return streamUser;
+}
+
 /// GoRouter redirect — stream gecikmesinde canlı oturum; Firebase hazır değilse null.
 User? readRouterAuthUser(Ref ref) {
-  final fromStream = ref.read(currentUserProvider).valueOrNull;
-  if (fromStream != null) return fromStream;
-  if (Firebase.apps.isEmpty) return null;
-  return FirebaseAuth.instance.currentUser;
+  final firebaseReady = Firebase.apps.isNotEmpty;
+  return resolveRouterAuthUser(
+    streamUser: ref.read(currentUserProvider).valueOrNull,
+    liveFirebaseUser:
+        firebaseReady ? FirebaseAuth.instance.currentUser : null,
+    firebaseReady: firebaseReady,
+  );
 }
 
 /// users/{uid} stream. Rol değişikliklerini canlı dinler.

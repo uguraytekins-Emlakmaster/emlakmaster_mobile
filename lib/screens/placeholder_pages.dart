@@ -5,7 +5,7 @@ import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
-import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/widgets/notifications_settings_section.dart';
@@ -259,7 +259,7 @@ class SettingsPlaceholderPage extends ConsumerWidget {
                   color: AppThemeExtension.of(context).danger),
               title: Text('Çıkış yap', style: TextStyle(color: onSurface)),
               onTap: () async {
-                await AuthService.instance.signOut();
+                await AuthLogoutCoordinator.signOut(ref);
               },
             ),
           ],

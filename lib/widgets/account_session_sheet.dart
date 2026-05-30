@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
@@ -190,7 +192,7 @@ class _AccountSessionSheet extends ConsumerWidget {
               danger: true,
               onTap: () {
                 Navigator.of(context).pop();
-                AuthService.instance.signOut();
+                unawaited(AuthLogoutCoordinator.signOut(ref));
               },
             ),
             const SizedBox(height: DesignTokens.space6),

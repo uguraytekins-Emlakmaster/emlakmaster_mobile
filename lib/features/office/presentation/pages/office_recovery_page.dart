@@ -1,5 +1,5 @@
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -40,8 +40,7 @@ class OfficeRecoveryPage extends ConsumerWidget {
                   }
                 },
                 onSignOut: () async {
-                  await AuthService.instance.signOut();
-                  if (context.mounted) context.go(AppRouter.routeLogin);
+                  await AuthLogoutCoordinator.signOut(ref);
                 },
               ),
             ),
@@ -60,8 +59,7 @@ class OfficeRecoveryPage extends ConsumerWidget {
                     }
                   },
                   onSignOut: () async {
-                    await AuthService.instance.signOut();
-                    if (context.mounted) context.go(AppRouter.routeLogin);
+                    await AuthLogoutCoordinator.signOut(ref);
                   },
                   extra: state == OfficeAccessState.membershipMissing ||
                           state == OfficeAccessState.inconsistentPointer

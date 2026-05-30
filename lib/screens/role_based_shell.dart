@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
-import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_bootstrap_skeleton.dart';
 import 'package:emlakmaster_mobile/core/performance/startup_perf_markers.dart';
@@ -106,7 +106,7 @@ class _RoleBasedShellSelectorState
         detail: 'Bekleyen asama: $reason',
         onPrimary: _retryBootstrap,
         secondaryLabel: 'Çıkış yap',
-        onSecondary: () => AuthService.instance.signOut(),
+        onSecondary: () => AuthLogoutCoordinator.signOut(ref),
       );
     }
     return const ShellBootstrapSkeleton();
@@ -116,7 +116,9 @@ class _RoleBasedShellSelectorState
   Widget build(BuildContext context) {
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
     if (uid == null || uid.isEmpty) {
-      return _loadingOrRecovery('no uid');
+      _clearLoadingReason();
+      // Çıkış sonrası router /login'e yönlendirir; skeleton donmasını önle.
+      return const SizedBox.shrink();
     }
     // Router ile aynı kaynak: currentRoleProvider (+ isteğe bağlı override) → displayRoleProvider.
     // users/{uid}.role tek başına ofis üyeliği rolüyle çakışmasın diye doc bootstrap / gate’lerde bekle.
@@ -128,7 +130,7 @@ class _RoleBasedShellSelectorState
     if (ref.watch(userDocBootstrapPendingProvider)) {
       final cached = StartupRoleCache.instance.roleForUser(uid);
       if (cached == null) {
-        return const ShellBootstrapSkeleton();
+        return _loadingOrRecovery('user doc bootstrap');
       }
     }
     final roleAsync = ref.watch(displayRoleProvider);
@@ -141,7 +143,7 @@ class _RoleBasedShellSelectorState
     return roleAsync.when(
       loading: () => cachedRole != null
           ? _buildForRole(context, ref, cachedRole)
-          : const ShellBootstrapSkeleton(),
+          : _loadingOrRecovery('display role'),
       error: (e, st) {
         _clearLoadingReason();
         AppLogger.e('[startup][RoleShell] displayRoleProvider error', e, st);
@@ -192,7 +194,7 @@ class _ShellRoleErrorScreen extends ConsumerWidget {
               ref.invalidate(displayRoleProvider);
             },
       secondaryLabel: 'Çıkış yap',
-      onSecondary: () => AuthService.instance.signOut(),
+      onSecondary: () => AuthLogoutCoordinator.signOut(ref),
     );
   }
 }

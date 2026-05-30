@@ -1,7 +1,7 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
-import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/client_portal/presentation/client_portal_tokens.dart';
@@ -253,7 +253,7 @@ class ClientPortalProfilePage extends ConsumerWidget {
                       ? OutlinedButton.icon(
                           onPressed: () async {
                             AppFeedback.mediumImpact();
-                            await AuthService.instance.signOut();
+                            await AuthLogoutCoordinator.signOut(ref);
                           },
                           icon: const Icon(Icons.logout_rounded),
                           label: const Text('Çıkış yap'),

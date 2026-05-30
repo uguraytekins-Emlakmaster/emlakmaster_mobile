@@ -90,17 +90,30 @@ class AuthService {
     }
   }
 
+  bool _signOutInProgress = false;
+
   /// Çıkış: Firebase + sosyal oturumlar (sonraki girişte hesap seçici açılır).
   Future<void> signOut() async {
-    await FirebaseAuth.instance.signOut();
-    unawaited(StartupRoleCache.instance.clear());
+    if (_signOutInProgress) return;
+    _signOutInProgress = true;
+    try {
+      await FirebaseCoreBootstrap.instance.ensureReady();
+      await FirebaseAuth.instance.signOut();
+      unawaited(StartupRoleCache.instance.clear());
+      unawaited(_signOutSocialSessions());
+      if (kDebugMode) AppLogger.d('AuthService: signOut');
+    } finally {
+      _signOutInProgress = false;
+    }
+  }
+
+  Future<void> _signOutSocialSessions() async {
     try {
       await GoogleAuthService.instance.signOut();
     } catch (_) {/* Google oturumu yoksa veya ağ yoksa yine de çıkış tamam */}
     try {
       await FacebookAuthService.instance.signOut();
     } catch (_) {/* Facebook oturumu yoksa veya ağ yoksa yine de çıkış tamam */}
-    if (kDebugMode) AppLogger.d('AuthService: signOut');
   }
 
   /// Session restore: authStateChanges stream ile otomatik; ek işlem gerekmez.

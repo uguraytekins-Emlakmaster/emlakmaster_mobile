@@ -1,18 +1,19 @@
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 /// Ofis yokken: oluştur veya katıl seçimi (merkezi yönlendirme).
-class OfficeGatePage extends StatelessWidget {
+class OfficeGatePage extends ConsumerWidget {
   const OfficeGatePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
     return Scaffold(
       backgroundColor: ext.background,
@@ -51,8 +52,7 @@ class OfficeGatePage extends StatelessWidget {
               TextButton(
                 onPressed: () async {
                   AppFeedback.lightImpact();
-                  await AuthService.instance.signOut();
-                  if (context.mounted) context.go(AppRouter.routeLogin);
+                  await AuthLogoutCoordinator.signOut(ref);
                 },
                 child: Text(
                   'Çıkış yap',

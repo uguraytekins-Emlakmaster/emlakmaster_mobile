@@ -229,20 +229,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     // build() içinde ref.listen kullanmak her yeniden çizimde ek yük / çift dinleyici riski taşır.
     _authUserSub = ref.listenManual(currentUserProvider, (prev, next) {
       try {
-        final prevUid = prev?.valueOrNull?.uid;
         final uid = next.valueOrNull?.uid;
-        if (prevUid != null &&
-            prevUid.isNotEmpty &&
-            (uid == null || uid.isEmpty)) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            final router = ref.read(AppRouter.goRouterProvider);
-            router.refresh();
-            if (router.state.uri.path != AppRouter.routeLogin) {
-              router.go(AppRouter.routeLogin);
-            }
-          });
-        }
         if (AppLogger.verboseDiagnosticsEnabled) {
           AppLogger.state(
             '[startup] currentUserProvider ${_describeAsync(next)} uid=${uid ?? "-"}',
