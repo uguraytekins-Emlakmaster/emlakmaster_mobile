@@ -44,7 +44,7 @@ class ClientPortalProfilePage extends ConsumerWidget {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(AppConstants.appName),
+        title: const Text(AppConstants.appName),
         content: Text(
           'Sürüm $version\n\n'
           'Müşteri portalı — portföy keşfi, iletişim ve hesap yönetimi.',
@@ -227,7 +227,7 @@ class ClientPortalProfilePage extends ConsumerWidget {
                   },
                 ),
               ),
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: PremiumClientSectionLabel(
                   label: 'Uygulama',
                   secondary: AppConstants.appName,

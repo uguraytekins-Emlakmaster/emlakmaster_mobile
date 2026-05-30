@@ -116,7 +116,7 @@ class _TasksPageState extends ConsumerState<TasksPage> {
                           return CustomScrollView(
                             cacheExtent: 320,
                             slivers: [
-                              SliverToBoxAdapter(
+                              const SliverToBoxAdapter(
                                 child: PremiumTasksPageHeader(
                                   title: ProductLabels.myTasks,
                                   subtitle:

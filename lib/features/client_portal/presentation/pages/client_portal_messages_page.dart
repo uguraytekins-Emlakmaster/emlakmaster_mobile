@@ -28,14 +28,14 @@ class ClientPortalMessagesPage extends StatelessWidget {
                       'Uygulama içi mesaj geçmişi henüz aktif değil; kanallar doğrudan danışmanınıza ulaştırır.',
                 ),
               ),
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(
+                  padding: EdgeInsets.only(
                     top: ClientPortalTokens.chromeGap,
                     bottom: ClientPortalTokens.chromeGap,
                   ),
                   child: ClientCompactInfoStrip(
-                    cells: const [
+                    cells: [
                       ('WhatsApp', 'En hızlı'),
                       ('Doğrudan', 'Kanal'),
                       ('—', 'Geçmiş'),
@@ -49,18 +49,18 @@ class ClientPortalMessagesPage extends StatelessWidget {
                   secondary: 'Aşağıdaki kanallardan birini seçin',
                 ),
               ),
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: ClientContactChannelTile(
                   icon: Icons.chat_rounded,
                   title: 'WhatsApp ile yazın',
                   subtitle:
                       'Hızlı mesaj için WhatsApp açılır · yanıt süresi danışmanınıza bağlıdır',
                   highlightLabel: 'En hızlı kanal',
-                  accent: const Color(0xFF25D366),
+                  accent: Color(0xFF25D366),
                   onTap: ClientPortalContactActions.openWhatsApp,
                 ),
               ),
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: ClientContactChannelTile(
                   icon: Icons.phone_rounded,
                   title: 'Telefon',
@@ -68,7 +68,7 @@ class ClientPortalMessagesPage extends StatelessWidget {
                   onTap: ClientPortalContactActions.openPhone,
                 ),
               ),
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: ClientContactChannelTile(
                   icon: Icons.email_rounded,
                   title: 'E-posta',

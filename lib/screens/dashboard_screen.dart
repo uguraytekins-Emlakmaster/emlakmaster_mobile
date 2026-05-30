@@ -94,11 +94,11 @@ class DashboardPage extends ConsumerWidget {
     final snapshotAsync = ref.watch(adminCommandSnapshotProvider);
 
     final headerActions = [
-      SessionAvatarButton(size: AdminCommandTokens.headerAvatarSize),
+      const SessionAvatarButton(size: AdminCommandTokens.headerAvatarSize),
       IconButton(
         tooltip: 'Bildirimler',
         padding: EdgeInsets.zero,
-        constraints: BoxConstraints(
+        constraints: const BoxConstraints(
           minWidth: AdminCommandTokens.headerActionTap,
           minHeight: AdminCommandTokens.headerActionTap,
         ),

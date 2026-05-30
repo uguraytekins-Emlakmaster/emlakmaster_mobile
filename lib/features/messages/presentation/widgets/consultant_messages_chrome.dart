@@ -25,7 +25,7 @@ class PremiumMessagesPageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Padding(
-      padding: EdgeInsets.fromLTRB(
+      padding: const EdgeInsets.fromLTRB(
         ConsultantMessagesTokens.horizontal,
         ConsultantMessagesTokens.topInset + 4,
         ConsultantMessagesTokens.horizontal,

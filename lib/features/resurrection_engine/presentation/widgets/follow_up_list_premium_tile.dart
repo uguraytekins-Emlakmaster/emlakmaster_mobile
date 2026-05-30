@@ -156,7 +156,6 @@ class FollowUpListPremiumTile extends StatelessWidget {
               canOpenCustomer: snapshot.canOpenCustomer,
               canCreateTask: snapshot.canCreateTask,
               canSnooze: snapshot.canSnooze,
-              canDetail: true,
             ),
           ],
         ),

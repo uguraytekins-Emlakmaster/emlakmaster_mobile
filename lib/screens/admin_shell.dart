@@ -67,12 +67,16 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
   Widget build(BuildContext context) {
     final flags = ref.watch(featureFlagsProvider).valueOrNull;
     final lean = flags?[AppConstants.keyV1LeanProduct] ?? true;
-    final warRoom = (flags?[AppConstants.keyFeatureWarRoom] ?? true) && !lean;
+    final roleAsync = ref.watch(displayRoleProvider);
+    final showWarRoom = (flags?[AppConstants.keyFeatureWarRoom] ?? true) &&
+        roleAsync.maybeWhen(
+          data: (r) => FeaturePermission.canViewWarRoom(r),
+          orElse: () => false,
+        );
     final commandCenterFlag =
         flags?[AppConstants.keyFeatureCommandCenter] ?? true;
 
     /// [CommandCenterPage] ile aynı kural: yalnızca global çağrı görünümü (broker_owner / super_admin).
-    final roleAsync = ref.watch(displayRoleProvider);
     final showCommandCenter = commandCenterFlag &&
         roleAsync.maybeWhen(
           data: (r) => FeaturePermission.canViewAllCalls(r),
@@ -94,7 +98,7 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
         ),
         page: MessageCenterPage(),
       ),
-      if (warRoom)
+      if (showWarRoom)
         const _AdminShellTabEntry(
           id: _AdminShellTab.warRoom,
           navItem: AdaptiveNavItem(
@@ -166,7 +170,7 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
     );
     if (kDebugMode) {
       AppLogger.state(
-        '[startup][AdminShell] tabs=${navItems.length} lean=$lean warRoom=$warRoom '
+        '[startup][AdminShell] tabs=${navItems.length} lean=$lean warRoom=$showWarRoom '
         'commandCenter=$showCommandCenter economy=$showEconomyTab ids=$tabIds',
       );
     }

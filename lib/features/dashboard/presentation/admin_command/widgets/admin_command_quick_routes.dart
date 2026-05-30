@@ -35,9 +35,8 @@ class PremiumAdminQuickRoutes extends ConsumerWidget {
     final ext = AppThemeExtension.of(context);
     final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
     final flags = ref.watch(featureFlagsProvider).valueOrNull;
-    final lean = flags?[AppConstants.keyV1LeanProduct] ?? true;
-    final warRoom =
-        (flags?[AppConstants.keyFeatureWarRoom] ?? true) && !lean;
+    final warRoom = (flags?[AppConstants.keyFeatureWarRoom] ?? true) &&
+        FeaturePermission.canViewWarRoom(role);
     final commandCenter =
         (flags?[AppConstants.keyFeatureCommandCenter] ?? true) &&
             FeaturePermission.canViewAllCalls(role);
@@ -53,7 +52,7 @@ class PremiumAdminQuickRoutes extends ConsumerWidget {
             context.push(AppRouter.routeCommandCenter);
           },
         ),
-      if (warRoom && FeaturePermission.canViewWarRoom(role))
+      if (warRoom)
         AdminCommandRouteTile(
           icon: Icons.military_tech_rounded,
           title: ProductLabels.warRoom,

@@ -32,7 +32,6 @@ class GetResurrectionQueue {
         segment: segment,
         daysSilent: days,
         suggestedMessagePlaceholder: suggestedMessagePlaceholder,
-        suggestedListingIds: const [],
         lastInteractionAt: last,
         nextSuggestedAction: c.nextSuggestedAction,
         lastCallSummary: c.lastCallSummary,

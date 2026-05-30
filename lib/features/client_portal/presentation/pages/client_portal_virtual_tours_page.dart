@@ -68,14 +68,14 @@ class ClientPortalVirtualToursPage extends StatelessWidget {
                       'Bağlantılar harici sitede örnek içerik açar; kayıtlı tur ve izleme geçmişi yakında.',
                 ),
               ),
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(
+                  padding: EdgeInsets.only(
                     top: ClientPortalTokens.chromeGap,
                     bottom: ClientPortalTokens.chromeGap,
                   ),
                   child: ClientCompactInfoStrip(
-                    cells: const [
+                    cells: [
                       ('Harici', 'Açılış'),
                       ('Örnek', 'İçerik'),
                       ('Yakında', 'Kayıt'),

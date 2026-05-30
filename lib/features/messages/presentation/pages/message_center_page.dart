@@ -98,7 +98,7 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
                         ConsultantMessagesTokens.horizontal,
                         dockReserve,
                       ),
-                      child: EmptyState(
+                      child: const EmptyState(
                         premiumVisual: true,
                         grouped: true,
                         icon: Icons.domain_outlined,
@@ -484,8 +484,8 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Sohbet açılamadı. Lütfen tekrar deneyin.'),
+          const SnackBar(
+            content: Text('Sohbet açılamadı. Lütfen tekrar deneyin.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
