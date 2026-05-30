@@ -9,7 +9,7 @@ abstract final class WarRoomTokens {
   static const double sectionGap = AdminCommandTokens.sectionGap;
   static const double chromeGap = AdminCommandTokens.chromeGap;
 
-  static const double crisisStripHeight = 52;
+  static const double crisisStripHeight = AdminCommandTokens.summaryStripHeight;
   static const double laneHeight = 64;
   static const double interventionRowHeight = 58;
   static const double routeTileHeight = AdminCommandTokens.routeTileHeight;

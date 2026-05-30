@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/admin_command_tokens.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/widgets/admin_command_chrome.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/utils/admin_office_health_summary.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/domain/entities/resurrection_segment.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/utils/follow_up_list_actions.dart';
@@ -212,9 +213,9 @@ class PremiumWarRoomHeader extends StatelessWidget {
                 'Doğrulama: yalnızca gerçek ofis sinyalleri; sahte alarm veya tahmin yok.',
                 style: TextStyle(
                   color: ext.textSecondary,
-                  fontSize: 10,
+                  fontSize: AdminCommandTokens.honestyNoteSize,
                   fontWeight: FontWeight.w600,
-                  height: 1.15,
+                  height: 1.18,
                 ),
               ),
             ),
@@ -233,6 +234,7 @@ class WarRoomCrisisStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final strip = AdminCommandTokens.stripTypography(context);
     final cells = <(String, String, Color)>[
       if (summary.criticalEscalations > 0)
         (
@@ -273,7 +275,7 @@ class WarRoomCrisisStrip extends StatelessWidget {
                 'Kritik sinyal yok · ofis akışı izleniyor',
                 style: AppTypography.meta(context).copyWith(
                   color: ext.textSecondary,
-                  fontSize: 10.5,
+                  fontSize: AdminCommandTokens.intelLineSize,
                 ),
               ),
             ),
@@ -299,11 +301,11 @@ class WarRoomCrisisStrip extends StatelessWidget {
                 if (i > 0)
                   Container(
                     width: 1,
-                    height: 28,
+                    height: strip.dividerHeight,
                     color: ext.border.withValues(alpha: 0.28),
                   ),
                 Expanded(
-                  child: _CrisisCell(
+                  child: ExecutiveMetricStripCell(
                     value: cells[i].$1,
                     label: cells[i].$2,
                     color: cells[i].$3,
@@ -314,49 +316,6 @@ class WarRoomCrisisStrip extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CrisisCell extends StatelessWidget {
-  const _CrisisCell({
-    required this.value,
-    required this.label,
-    required this.color,
-  });
-
-  final String value;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            height: 1,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: ext.textTertiary,
-            fontSize: 8.5,
-            fontWeight: FontWeight.w600,
-            height: 1,
-          ),
-        ),
-      ],
     );
   }
 }
