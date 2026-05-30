@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import 'facebook_auth_service.dart';
 import 'firebase_core_bootstrap.dart';
 import 'google_auth_service.dart';
-import 'startup_role_cache.dart';
+import 'logout_flow_tracer.dart';
 import 'user_bootstrap_orchestrator.dart';
 import '../logging/app_logger.dart';
 
@@ -97,9 +98,19 @@ class AuthService {
     if (_signOutInProgress) return;
     _signOutInProgress = true;
     try {
-      await FirebaseCoreBootstrap.instance.ensureReady();
-      await FirebaseAuth.instance.signOut();
-      unawaited(StartupRoleCache.instance.clear());
+      LogoutFlowTracer.step('LOGOUT_FLOW', 'FirebaseCoreBootstrap.ensureReady');
+      if (Firebase.apps.isEmpty) {
+        await LogoutFlowTracer.watch(
+          'firebase_bootstrap',
+          FirebaseCoreBootstrap.instance.ensureReady(),
+        );
+      }
+      LogoutFlowTracer.step('LOGOUT_FLOW', 'FirebaseAuth.signOut start');
+      await LogoutFlowTracer.watch(
+        'firebase_auth_sign_out',
+        FirebaseAuth.instance.signOut(),
+      );
+      LogoutFlowTracer.step('LOGOUT_FLOW', 'FirebaseAuth.signOut end');
       unawaited(_signOutSocialSessions());
       if (kDebugMode) AppLogger.d('AuthService: signOut');
     } finally {
@@ -108,12 +119,21 @@ class AuthService {
   }
 
   Future<void> _signOutSocialSessions() async {
+    LogoutFlowTracer.step('LOGOUT_FLOW', 'social signOut start');
     try {
-      await GoogleAuthService.instance.signOut();
-    } catch (_) {/* Google oturumu yoksa veya ağ yoksa yine de çıkış tamam */}
+      await GoogleAuthService.instance.signOut().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {
+          LogoutFlowTracer.step('LOGOUT_FLOW', 'Google signOut timeout');
+        },
+      );
+    } catch (_) {}
     try {
-      await FacebookAuthService.instance.signOut();
-    } catch (_) {/* Facebook oturumu yoksa veya ağ yoksa yine de çıkış tamam */}
+      await FacebookAuthService.instance.signOut().timeout(
+        const Duration(seconds: 1),
+      );
+    } catch (_) {}
+    LogoutFlowTracer.step('LOGOUT_FLOW', 'social signOut end');
   }
 
   /// Session restore: authStateChanges stream ile otomatik; ek işlem gerekmez.

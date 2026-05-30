@@ -39,10 +39,15 @@ class StartupRoleCache {
     await prefs.setString(_keyRole, role.id);
   }
 
-  Future<void> clear() async {
+  /// Çıkış anında bellek içi rolü hemen sıfırla (async clear beklemeden).
+  void clearInMemory() {
     _uid = null;
     _role = null;
     _loaded = true;
+  }
+
+  Future<void> clear() async {
+    clearInMemory();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyUid);
     await prefs.remove(_keyRole);

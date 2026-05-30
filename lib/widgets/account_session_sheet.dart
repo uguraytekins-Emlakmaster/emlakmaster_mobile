@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
+import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
@@ -188,11 +191,15 @@ class _AccountSessionSheet extends ConsumerWidget {
               icon: Icons.logout_rounded,
               label: 'Çıkış yap',
               danger: true,
-              onTap: () async {
+              onTap: () {
+                LogoutFlowTracer.step('LOGOUT_FLOW', 'tap account_sheet');
                 Navigator.of(context).pop();
-                await AuthLogoutCoordinator.signOut(
-                  ref,
-                  dismissOverlayFirst: true,
+                unawaited(
+                  AuthLogoutCoordinator.signOut(
+                    ref,
+                    dismissOverlayFirst: true,
+                    source: 'account_sheet',
+                  ),
                 );
               },
             ),

@@ -26,4 +26,22 @@ void main() {
     await StartupRoleCache.instance.warmUp();
     expect(StartupRoleCache.instance.roleForUser('uid-1'), isNull);
   });
+
+  test('clearInMemory immediately blocks cross-user role reuse', () async {
+    await StartupRoleCache.instance.persist('admin-uid', AppRole.superAdmin);
+    expect(
+      StartupRoleCache.instance.roleForUser('admin-uid'),
+      AppRole.superAdmin,
+    );
+
+    StartupRoleCache.instance.clearInMemory();
+
+    expect(StartupRoleCache.instance.roleForUser('admin-uid'), isNull);
+    expect(StartupRoleCache.instance.roleForUser('consultant-uid'), isNull);
+  });
+
+  test('different uid never receives previous user cached role', () async {
+    await StartupRoleCache.instance.persist('user-a', AppRole.agent);
+    expect(StartupRoleCache.instance.roleForUser('user-b'), isNull);
+  });
 }

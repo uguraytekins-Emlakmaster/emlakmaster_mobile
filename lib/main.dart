@@ -38,6 +38,7 @@ import 'package:emlakmaster_mobile/features/messages/data/team_chat_local_notifi
 import 'package:emlakmaster_mobile/core/notifications/crm_push_navigation.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_access_state.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_core_bootstrap.dart';
+import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -229,7 +230,14 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     // build() içinde ref.listen kullanmak her yeniden çizimde ek yük / çift dinleyici riski taşır.
     _authUserSub = ref.listenManual(currentUserProvider, (prev, next) {
       try {
+        final prevUid = prev?.valueOrNull?.uid;
         final uid = next.valueOrNull?.uid;
+        if (LogoutFlowTracer.isActive) {
+          LogoutFlowTracer.step(
+            'AUTH_STATE',
+            'currentUserProvider ${prevUid ?? "-"} -> ${uid ?? "-"}',
+          );
+        }
         if (AppLogger.verboseDiagnosticsEnabled) {
           AppLogger.state(
             '[startup] currentUserProvider ${_describeAsync(next)} uid=${uid ?? "-"}',
@@ -451,7 +459,17 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
           AppLogger.state(
             '[startup] router child ${content != null ? "mounted" : "null"}',
           );
+          if (LogoutFlowTracer.isActive) {
+            LogoutFlowTracer.step(
+              'ROUTER_REDIRECT',
+              'materialApp child=${content != null ? "set" : "null"}',
+            );
+          }
         }
+
+        final signedOut = !kIsWeb &&
+            Firebase.apps.isNotEmpty &&
+            FirebaseAuth.instance.currentUser == null;
 
         final shell = Shortcuts(
           shortcuts: const <ShortcutActivator, Intent>{
@@ -482,6 +500,9 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
                 ColoredBox(color: ext.background),
                 if (content != null)
                   content
+                else if (signedOut)
+                  // Çıkış sonrası redirect fırtınasında tam ekran spinner donmayı önle.
+                  const SizedBox.shrink()
                 else
                   Center(
                     child: Column(

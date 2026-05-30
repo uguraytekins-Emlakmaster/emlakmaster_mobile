@@ -12,7 +12,9 @@ import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/auth_firestore_gate.dart';
+import '../../../../core/services/auth_session_coordinator.dart';
 import '../../../../core/services/firebase_core_bootstrap.dart';
+import '../../../../core/services/logout_flow_tracer.dart';
 import '../../../../core/services/login_attempt_guard.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/facebook_auth_service.dart';
@@ -62,6 +64,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   void initState() {
     super.initState();
+    LogoutFlowTracer.step('LOGIN_RECOVERY', 'LoginPage.initState');
     _persona = LoginEntryStore.instance.personaSync;
     _personaReady = true;
     if (_persona == null) {
@@ -204,11 +207,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (user == null || !mounted) return;
 
     await AuthFirestoreGate.ensureReadableUid(user.uid, forceRefresh: true);
-    ref.invalidate(userDocStreamProvider(user.uid));
-    ref.invalidate(primaryMembershipProvider);
-    ref.invalidate(officeAccessStateProvider);
-    ref.invalidate(currentRoleProvider);
-    ref.invalidate(displayRoleProvider);
+    AuthSessionCoordinator.prepareForLogin(ref, user.uid);
 
     for (var i = 0; i < 30; i++) {
       if (ref.read(currentUserProvider).valueOrNull != null) break;
@@ -383,6 +382,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
     if (!mounted) return;
+    LogoutFlowTracer.step(
+      'LOGIN_RECOVERY',
+      'reset busy=$_busy errors=${_errorMessage != null}',
+    );
     setState(() {
       _busy = _BusyKind.none;
       _errorMessage = null;
@@ -413,6 +416,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
     final ext = AppThemeExtension.of(context);
     if (!_personaReady) {
+      if (LogoutFlowTracer.isActive) {
+        LogoutFlowTracer.step('LOGIN_RECOVERY', 'LoginPage waiting persona');
+      }
       return AuthPageShell(
         child: Center(
           child: Padding(
@@ -421,6 +427,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         ),
       );
+    }
+    if (LogoutFlowTracer.isActive) {
+      LogoutFlowTracer.step('LOGIN_RECOVERY', 'LoginPage interactive busy=$_busy');
     }
     return AuthPageShell(
       persona: _persona,

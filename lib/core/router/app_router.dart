@@ -1,5 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'dart:async' show unawaited;
+import 'dart:async' show Timer, unawaited;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +12,7 @@ import '../deep_linking/pending_deep_link_store.dart';
 import '../router/fast_page_transitions.dart';
 import '../services/analytics_service.dart';
 import '../services/onboarding_store.dart';
+import '../services/logout_flow_tracer.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/role_selection_page.dart';
@@ -172,6 +173,12 @@ class AppRouter {
         try {
           final user = readRouterAuthUser(ref);
           final path = state.uri.path;
+          if (LogoutFlowTracer.isActive) {
+            LogoutFlowTracer.step(
+              'ROUTER_REDIRECT',
+              'eval path=$path user=${user?.uid ?? "null"}',
+            );
+          }
           final needsRole = ref.read(needsRoleSelectionProvider);
           final needsOffice = ref.read(needsOfficeSetupProvider);
           final needsOfficeRecovery = ref.read(needsOfficeRecoveryProvider);
@@ -669,15 +676,29 @@ class AppRouter {
 
   static final goRouterProvider = Provider<GoRouter>((ref) {
     final refresh = ValueNotifier(0);
-    // Redirect kararları currentUser + role/doc durumuna bağlı.
-    // Role yüklenirken (users/{uid} doc yokken) `needsRoleSelectionProvider` değişir;
-    // bu değişim için refresh tetiklenmezse yanlış route'ta kalınabiliyor.
-    ref.listen(currentUserProvider, (_, __) => refresh.value++);
-    ref.listen(needsRoleSelectionProvider, (_, __) => refresh.value++);
-    ref.listen(needsOfficeSetupProvider, (_, __) => refresh.value++);
-    ref.listen(needsOfficeRecoveryProvider, (_, __) => refresh.value++);
-    ref.listen(primaryMembershipProvider, (_, __) => refresh.value++);
-    ref.listen(officeAccessStateProvider, (_, __) => refresh.value++);
+    Timer? refreshDebounce;
+
+    void scheduleRouterRefresh(String reason) {
+      refreshDebounce?.cancel();
+      refreshDebounce = Timer(const Duration(milliseconds: 24), () {
+        refresh.value++;
+        if (LogoutFlowTracer.isActive) {
+          LogoutFlowTracer.step(
+            'ROUTER_REDIRECT',
+            'refresh reason=$reason tick=${refresh.value}',
+          );
+        }
+      });
+    }
+
+    ref.onDispose(() => refreshDebounce?.cancel());
+
+    ref.listen(currentUserProvider, (_, __) => scheduleRouterRefresh('currentUser'));
+    ref.listen(needsRoleSelectionProvider, (_, __) => scheduleRouterRefresh('needsRole'));
+    ref.listen(needsOfficeSetupProvider, (_, __) => scheduleRouterRefresh('needsOffice'));
+    ref.listen(needsOfficeRecoveryProvider, (_, __) => scheduleRouterRefresh('needsRecovery'));
+    ref.listen(primaryMembershipProvider, (_, __) => scheduleRouterRefresh('membership'));
+    ref.listen(officeAccessStateProvider, (_, __) => scheduleRouterRefresh('officeAccess'));
     return AppRouter.create(ref, refresh);
   });
 }

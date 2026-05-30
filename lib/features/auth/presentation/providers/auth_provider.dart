@@ -57,8 +57,19 @@ User? readRouterAuthUser(Ref ref) {
 /// users/{uid} stream. Rol değişikliklerini canlı dinler.
 final userDocStreamProvider =
     StreamProvider.autoDispose.family<UserDoc?, String>((ref, uid) {
+  ref.watch(authSessionEpochProvider);
+  if (!_userDocStreamUidAllowed(uid)) {
+    return Stream<UserDoc?>.value(null);
+  }
   return UserRepository.userDocStreamHydrated(uid);
 });
+
+bool _userDocStreamUidAllowed(String uid) {
+  if (uid.isEmpty || Firebase.apps.isEmpty) return true;
+  final live = FirebaseAuth.instance.currentUser?.uid;
+  if (live == null) return false;
+  return live == uid;
+}
 
 /// İlk girişte users doc yoksa rol seçim ekranı gösterilir; doc burada oluşturulur (ensureUserDoc artık otomatik çağrılmaz).
 final ensureUserDocProvider =
@@ -80,6 +91,7 @@ final ensureUserDocProvider =
 /// Durum [deriveOfficeAccessState] ile birleştirilir; rol için [currentRoleProvider].
 final primaryMembershipProvider =
     StreamProvider.autoDispose<OfficeMembership?>((ref) {
+  ref.watch(authSessionEpochProvider);
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) {
     return Stream<OfficeMembership?>.value(null);
@@ -145,6 +157,7 @@ final officeAccessStateProvider =
 /// Phase 1.3: `officeId` + geçerli iş akışı için [OfficeMembership.role] tek doğruluk kaynağıdır.
 /// `users.role` yalnızca ofis öncesi veya üyelik yüklenirken legacy fallback’tür.
 final currentRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
+  ref.watch(authSessionEpochProvider);
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) return const AsyncValue.data(AppRole.guest);
   final docAsync = ref.watch(userDocStreamProvider(user.uid));
@@ -322,6 +335,9 @@ final displayRoleOrNullProvider = Provider<AppRole?>((ref) {
 
 /// Çıkış sonrası login ekranını taze state ile yeniden kurmak için artan sayaç.
 final authPresentationEpochProvider = StateProvider<int>((ref) => 0);
+
+/// Oturum değişiminde (çıkış / farklı hesap girişi) rol stream'lerini yeniden kurar.
+final authSessionEpochProvider = StateProvider<int>((ref) => 0);
 
 /// Firestore rolüne göre; platform bağlantısı / içe aktarma motoru yönetimi (override ile büyütülmez).
 final canManagePlatformIntegrationsProvider = Provider<bool>((ref) {

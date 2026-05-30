@@ -46,6 +46,10 @@ class MainShellShortcutQueueNotifier
     ];
   }
 
+  void clear() {
+    state = [];
+  }
+
   MainShellShortcutCommand? takeFirstMatching(
     bool Function(MainShellShortcut shortcut) predicate,
   ) {

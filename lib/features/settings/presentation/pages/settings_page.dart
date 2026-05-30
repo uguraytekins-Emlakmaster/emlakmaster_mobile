@@ -12,6 +12,7 @@ import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
+import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/providers/investment_opportunity_providers.dart';
@@ -223,7 +224,15 @@ class SettingsPage extends ConsumerWidget {
                         color: AppThemeExtension.of(context).danger),
                     title: Text('Çıkış yap',
                         style: TextStyle(color: theme.colorScheme.onSurface)),
-                    onTap: () => unawaited(AuthLogoutCoordinator.signOut(ref)),
+                    onTap: () {
+                      LogoutFlowTracer.step('LOGOUT_FLOW', 'tap settings');
+                      unawaited(
+                        AuthLogoutCoordinator.signOut(
+                          ref,
+                          source: 'settings',
+                        ),
+                      );
+                    },
                   ),
                 ],
               ],

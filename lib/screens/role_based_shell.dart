@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
+import 'package:emlakmaster_mobile/core/services/auth_session_coordinator.dart';
+import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_bootstrap_skeleton.dart';
@@ -11,6 +13,7 @@ import 'package:emlakmaster_mobile/core/services/startup_role_cache.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +42,7 @@ class _RoleBasedShellSelectorState
   String? _loadingReason;
   bool _showRecovery = false;
   ProviderSubscription<AsyncValue<AppRole>>? _roleCacheSub;
+  ProviderSubscription<AsyncValue<User?>>? _uidChangeSub;
 
   @override
   void initState() {
@@ -50,12 +54,23 @@ class _RoleBasedShellSelectorState
         unawaited(StartupRoleCache.instance.persist(uid, role));
       });
     });
+    _uidChangeSub = ref.listenManual(currentUserProvider, (prev, next) {
+      final prevUid = prev?.valueOrNull?.uid;
+      final nextUid = next.valueOrNull?.uid;
+      if (prevUid != null && prevUid != nextUid) {
+        AuthSessionCoordinator.invalidateRoleGraph(ref, uid: prevUid);
+      }
+      if (nextUid != null && prevUid != nextUid) {
+        AuthSessionCoordinator.invalidateRoleGraph(ref, uid: nextUid);
+      }
+    });
   }
 
   @override
   void dispose() {
     _recoveryTimer?.cancel();
     _roleCacheSub?.close();
+    _uidChangeSub?.close();
     super.dispose();
   }
 
@@ -118,6 +133,9 @@ class _RoleBasedShellSelectorState
   Widget build(BuildContext context) {
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
     if (uid == null || uid.isEmpty) {
+      if (LogoutFlowTracer.isActive) {
+        LogoutFlowTracer.step('LOGOUT_FLOW', 'RoleShell uid=null shrink');
+      }
       _clearLoadingReason();
       // Çıkış sonrası router /login'e yönlendirir; skeleton donmasını önle.
       return const SizedBox.shrink();
@@ -147,9 +165,13 @@ class _RoleBasedShellSelectorState
           ? _buildForRole(context, ref, cachedRole)
           : _loadingOrRecovery('display role'),
       error: (e, st) {
+        final liveUid = FirebaseAuth.instance.currentUser?.uid;
+        if (liveUid == null || liveUid != uid) {
+          return _loadingOrRecovery('role uid mismatch recovery');
+        }
         _clearLoadingReason();
         AppLogger.e('[startup][RoleShell] displayRoleProvider error', e, st);
-        return _ShellRoleErrorScreen(error: e);
+        return _ShellRoleErrorScreen(error: e, uid: uid);
       },
       data: (role) {
         _clearLoadingReason();
@@ -176,13 +198,17 @@ class _RoleBasedShellSelectorState
 
 /// Rol stream’i hata verince boş/siyah gövde yerine görünür kurtarma.
 class _ShellRoleErrorScreen extends ConsumerWidget {
-  const _ShellRoleErrorScreen({required this.error});
+  const _ShellRoleErrorScreen({required this.error, required this.uid});
 
   final Object error;
+  final String uid;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
+    final liveUid = FirebaseAuth.instance.currentUser?.uid;
+    if (liveUid == null || liveUid != uid) {
+      return const ShellBootstrapSkeleton();
+    }
     final safeDetail = userFacingErrorMessage(error, context: 'role_shell');
     AppLogger.e('[startup][RoleShell] displayRoleProvider error (user-facing: $safeDetail)', error);
     return StartupRecoveryScaffold(
@@ -190,13 +216,9 @@ class _ShellRoleErrorScreen extends ConsumerWidget {
       message:
           'Oturum açıldı ancak rol profiliniz henüz yüklenemedi. Bağlantınızı kontrol edip yeniden deneyebilir ya da oturumu tazeleyebilirsiniz.',
       detail: kDebugMode ? error.toString() : safeDetail,
-      onPrimary: uid == null
-          ? null
-          : () {
-              ref.invalidate(userDocStreamProvider(uid));
-              ref.invalidate(currentRoleProvider);
-              ref.invalidate(displayRoleProvider);
-            },
+      onPrimary: () {
+        AuthSessionCoordinator.invalidateRoleGraph(ref, uid: uid);
+      },
       secondaryLabel: 'Çıkış yap',
       onSecondary: () => AuthLogoutCoordinator.signOut(ref),
     );
