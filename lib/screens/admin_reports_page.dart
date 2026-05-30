@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/screens/admin_shell_nav.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
@@ -74,7 +75,7 @@ class AdminReportsPage extends ConsumerWidget {
                         icon: Icons.phone_callback_rounded,
                         title: ProductLabels.callCenter,
                         subtitle: 'Danışman, müşteri ve kayıt görünümleri tek yerde.',
-                        onTap: () => context.push(AppRouter.routeCommandCenter),
+                        onTap: () => AdminShellNav.goToCommandCenterTab(context),
                       ),
                     ),
                   ),
@@ -113,7 +114,7 @@ class AdminReportsPage extends ConsumerWidget {
                         title: 'İşlem kaydı',
                         subtitle: 'Sistem hareketleri için ayrıntılı görünüm yakında',
                         onExplore: () {
-                          context.push(AppRouter.routeCommandCenter);
+                          AdminShellNav.goToCommandCenterTab(context);
                           showPremiumActionFeedback(
                             context,
                             title: 'Çağrı kayıtları açık',
@@ -148,7 +149,8 @@ class AdminReportsPage extends ConsumerWidget {
                   padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPad),
                   sliver: SliverToBoxAdapter(
                     child: _AdminReportsFooterCta(
-                      onOpenReports: () => context.push(AppRouter.routeCommandCenter),
+                      onOpenReports: () =>
+                          AdminShellNav.goToCommandCenterTab(context),
                     ),
                   ),
                 ),

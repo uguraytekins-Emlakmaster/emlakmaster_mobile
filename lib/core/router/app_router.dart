@@ -52,6 +52,7 @@ import '../../features/office/presentation/pages/office_recovery_page.dart';
 import '../../features/admin_consultants/presentation/pages/admin_consultants_page.dart';
 import '../../features/admin_teams/presentation/pages/admin_team_detail_page.dart';
 import '../../features/admin_teams/presentation/pages/admin_teams_page.dart';
+import '../../screens/command_center_shell_entry_page.dart';
 import '../intelligence/region_heatmap_defaults.dart';
 
 /// go_router ile merkezi routing. Login router içinde; beyaz ekran önlenir.
@@ -486,7 +487,7 @@ class AppRouter {
           pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
-            child: const LazyCommandCenterPage(),
+            child: const CommandCenterShellEntryPage(),
           ),
         ),
         GoRoute(

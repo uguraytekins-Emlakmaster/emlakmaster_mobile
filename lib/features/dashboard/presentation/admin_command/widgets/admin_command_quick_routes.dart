@@ -49,7 +49,7 @@ class PremiumAdminQuickRoutes extends ConsumerWidget {
           subtitle: 'Ofis çağrı akışı ve kayıtlar',
           onTap: () {
             AppFeedback.selectionClick();
-            context.push(AppRouter.routeCommandCenter);
+            AdminShellNav.goToCommandCenterTab(context);
           },
         ),
       if (warRoom)

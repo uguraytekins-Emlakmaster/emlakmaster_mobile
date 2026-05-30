@@ -55,24 +55,43 @@ class AdminShellNav extends InheritedWidget {
   static void goToMessagesTab(BuildContext context) =>
       goToTabKey(context, 'messages');
 
+  /// Kabuk dışı rota mı — bu rotalardan sekme geçişi önce ana kabuğa dönmeli.
+  static bool isOffShellRoute(String path) {
+    if (path == AppRouter.routeHome) return false;
+    if (path.startsWith('/admin/')) return true;
+    if (path == AppRouter.routeCommandCenter) return true;
+    if (path == AppRouter.routeWarRoom) return true;
+    return false;
+  }
+
   /// İç içe admin rotalarından (ör. /admin/teams) kabuk sekmesine güvenli geçiş.
   static void _goToShellTabOrHome(
     BuildContext context, {
     required String tabKey,
     required MainShellShortcut shortcut,
   }) {
-    final nav = maybeOf(context);
-    if (nav != null) {
-      final idx = nav.tabIndexFor?.call(tabKey) ?? -1;
-      if (idx >= 0) {
-        nav.goToTab(idx);
-        return;
+    final path = GoRouter.of(context).state.uri.path;
+    final onHomeShell = path == AppRouter.routeHome;
+
+    // Yalnızca zaten ana kabuktayken doğrudan sekme atlayabilir.
+    if (onHomeShell) {
+      final nav = maybeOf(context);
+      if (nav != null) {
+        final idx = nav.tabIndexFor?.call(tabKey) ?? -1;
+        if (idx >= 0) {
+          nav.goToTab(idx);
+          return;
+        }
       }
     }
+
     ProviderScope.containerOf(context, listen: false)
         .read(mainShellShortcutProvider.notifier)
         .enqueue(shortcut);
-    context.go(AppRouter.routeHome);
+
+    if (!onHomeShell) {
+      context.go(AppRouter.routeHome);
+    }
   }
 
   @override

@@ -111,7 +111,7 @@ class _UrgentBlock extends StatelessWidget {
       case AdminUrgentKind.escalation:
       case AdminUrgentKind.alert:
       case AdminUrgentKind.missedCalls:
-        context.push(AppRouter.routeCommandCenter);
+        AdminShellNav.goToCommandCenterTab(context);
       case AdminUrgentKind.sync:
         context.push(AppRouter.routeConnectedAccounts);
       case AdminUrgentKind.integration:

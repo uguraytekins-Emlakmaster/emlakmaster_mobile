@@ -479,7 +479,12 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
       );
       return;
     }
-    if (pageIndex == _currentIndex) return;
+    if (pageIndex == _currentIndex) {
+      if (!_materialized.contains(pageIndex)) {
+        setState(() => _materialized.add(pageIndex));
+      }
+      return;
+    }
     _shellLog('jumpToTab page=$pageIndex (was $_currentIndex)');
     _applyTabSelection(
       pageIndex,
