@@ -11,11 +11,15 @@ class PremiumClientPortalHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.actions = const [],
+    this.verificationNote =
+        'Doğrulama notu: önizleme portföy gösterilir; favori, mesaj ve randevu durumları gerçek backend ile eşleşir.',
   });
 
   final String title;
   final String subtitle;
   final List<Widget> actions;
+  /// Null ise doğrulama şeridi gösterilmez.
+  final String? verificationNote;
 
   @override
   Widget build(BuildContext context) {
@@ -75,24 +79,26 @@ class PremiumClientPortalHeader extends StatelessWidget {
               if (actions.isNotEmpty) ...actions,
             ],
           ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(
-              color: ext.info.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: ext.info.withValues(alpha: 0.28)),
-            ),
-            child: Text(
-              'Doğrulama notu: önizleme portföy gösterilir; favori, mesaj ve randevu durumları gerçek backend ile eşleşir.',
-              style: TextStyle(
-                color: ext.textSecondary,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                height: 1.15,
+          if (verificationNote != null) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: ext.info.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ext.info.withValues(alpha: 0.28)),
+              ),
+              child: Text(
+                verificationNote!,
+                style: TextStyle(
+                  color: ext.textSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  height: 1.15,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

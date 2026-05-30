@@ -28,6 +28,8 @@ class ClientPortalFavoritesPage extends ConsumerWidget {
                 child: PremiumClientPortalHeader(
                   title: 'Favorilerim',
                   subtitle: 'Kaydettiğiniz ilanlar · kişisel portföy',
+                  verificationNote:
+                      'Favori kaydı henüz aktif değil; liste yalnızca gerçek kayıtlarınızı gösterecek.',
                   actions: signedIn
                       ? const [
                           Padding(
