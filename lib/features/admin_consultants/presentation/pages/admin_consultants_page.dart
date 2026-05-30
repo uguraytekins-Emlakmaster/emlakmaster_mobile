@@ -241,6 +241,13 @@ class AdminConsultantsPage extends ConsumerWidget {
     );
   }
 
+  static Future<void> showEditConsultantDialog(
+    BuildContext context,
+    WidgetRef ref,
+    UserDoc u,
+  ) =>
+      _showEditConsultantDialog(context, ref, u);
+
   static Future<void> _showEditConsultantDialog(
     BuildContext context,
     WidgetRef ref,

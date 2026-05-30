@@ -1,18 +1,22 @@
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
-import 'package:emlakmaster_mobile/core/models/team_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/features/admin_consultants/presentation/pages/admin_consultants_page.dart';
+import 'package:emlakmaster_mobile/features/admin_consultants/presentation/providers/admin_consultants_providers.dart';
+import 'package:emlakmaster_mobile/features/admin_ekip_detay/presentation/admin_ekip_detay_tokens.dart';
+import 'package:emlakmaster_mobile/features/admin_ekip_detay/presentation/providers/ekip_detay_snapshot_provider.dart';
+import 'package:emlakmaster_mobile/features/admin_ekip_detay/presentation/widgets/ekip_detay_command_surface.dart';
+import 'package:emlakmaster_mobile/features/admin_teams/presentation/providers/admin_teams_providers.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
-import 'package:emlakmaster_mobile/features/admin_teams/presentation/providers/admin_teams_providers.dart';
-import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Ekip detay: ad, manager seçimi, üye listesi, üye ekle / ekipten çıkar.
+/// Admin → Ekip detay: tek ekip operasyon yüzeyi (Screen 14).
 class AdminTeamDetailPage extends ConsumerStatefulWidget {
   const AdminTeamDetailPage({super.key, required this.teamId});
 
@@ -28,61 +32,68 @@ class _AdminTeamDetailPageState extends ConsumerState<AdminTeamDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentRole = ref.watch(currentRoleOrNullProvider) ?? AppRole.guest;
+    if (!FeaturePermission.canManageTeams(currentRole)) {
+      return PremiumShellBackdrop(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                AppLocalizations.of(context).t('access_denied'),
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).textSecondary,
+                  fontSize: DesignTokens.fontSizeSm,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final l10n = AppLocalizations.of(context);
-    final premium = PremiumThemeExtension.of(context);
+    final canManage = FeaturePermission.canManageTeams(currentRole);
 
     return PremiumShellBackdrop(
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: emlakAppBar(
-        context,
         backgroundColor: Colors.transparent,
-        foregroundColor: AppThemeExtension.of(context).textPrimary,
-        title: Text(l10n.t('title_team_detail')),
-      ),
-      body: ref.watch(adminTeamDocProvider(widget.teamId)).when(
-        loading: () => Center(
-          child: CircularProgressIndicator(
-            color: premium.champagneGold,
-          ),
-        ),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (team) {
-          if (team == null) {
-            return Center(
-              child: Text(
-                l10n.t('team_not_found'),
-                style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
+        body: EkipDetayCommandSurface(
+          teamId: widget.teamId,
+          selectedManagerId: _selectedManagerId ?? '',
+          onManagerChanged: (id) => setState(() => _selectedManagerId = id),
+          onSaveManager: () => _saveManager(context),
+          onEditConsultant: (ctx, user) =>
+              AdminConsultantsPage.showEditConsultantDialog(ctx, ref, user),
+          onAddMember: () => _showAddMemberDialog(context),
+          onRemoveMember: (ctx, user) => _confirmRemoveMember(ctx, user),
+          headerActions: [
+            if (canManage)
+              IconButton(
+                icon: const Icon(Icons.person_add_rounded),
+                iconSize: AdminEkipDetayTokens.rowTitleSize + 8,
+                tooltip: l10n.t('action_add_member'),
+                onPressed: () => _showAddMemberDialog(context),
               ),
-            );
-          }
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(DesignTokens.space4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _TeamInfoCard(
-                  team: team,
-                  selectedManagerId: _selectedManagerId ?? team.managerId,
-                  onManagerChanged: (id) => setState(() => _selectedManagerId = id),
-                  onSaveManager: () => _saveManager(team),
-                ),
-                const SizedBox(height: DesignTokens.space5),
-                _MembersCard(teamId: team.id, memberIds: team.memberIds),
-              ],
-            ),
-          );
-        },
+          ],
+        ),
       ),
-    ),
     );
   }
 
-  Future<void> _saveManager(TeamDoc team) async {
+  Future<void> _saveManager(BuildContext context) async {
+    final teamAsync = ref.read(adminTeamDocProvider(widget.teamId));
+    final team = teamAsync.valueOrNull;
+    if (team == null) return;
+
     final managerId = _selectedManagerId ?? team.managerId;
     if (managerId.isEmpty) return;
+
     try {
       await FirestoreService.updateTeamManager(team.id, managerId);
+      ref.invalidate(ekipDetaySnapshotProvider(widget.teamId));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -94,166 +105,27 @@ class _AdminTeamDetailPageState extends ConsumerState<AdminTeamDetailPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context).t('error_generic')} $e')),
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context).t('error_generic')} $e',
+            ),
+          ),
         );
       }
     }
   }
-}
 
-class _TeamInfoCard extends ConsumerWidget {
-  const _TeamInfoCard({
-    required this.team,
-    required this.selectedManagerId,
-    required this.onManagerChanged,
-    required this.onSaveManager,
-  });
-
-  final TeamDoc team;
-  final String selectedManagerId;
-  final ValueChanged<String?> onManagerChanged;
-  final VoidCallback onSaveManager;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Future<void> _showAddMemberDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    final managersAsync = ref.watch(adminTeamManagersProvider);
+    final consultants = await ref.read(adminConsultantsListProvider.future);
+    final team = await ref.read(adminTeamDocProvider(widget.teamId).future);
+    if (!context.mounted || team == null) return;
 
-    return Card(
-      color: AppThemeExtension.of(context).surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusLg)),
-      child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.space5),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              team.name,
-              style: TextStyle(
-                color: AppThemeExtension.of(context).textPrimary,
-                fontSize: DesignTokens.fontSizeLg,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.space4),
-            managersAsync.when(
-              loading: () => const LinearProgressIndicator(),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (consultants) {
-                final managers = consultants
-                    .where(
-                      (u) => AppRole.fromFirestoreRole(u.role).isManagerTier,
-                    )
-                    .toList();
-                return DropdownButtonFormField<String>(
-                  initialValue:
-                      selectedManagerId.isEmpty ? null : selectedManagerId,
-                  decoration: InputDecoration(
-                    labelText: l10n.t('label_manager'),
-                    border: const OutlineInputBorder(),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: AppThemeExtension.of(context).border,
-                      ),
-                    ),
-                  ),
-                  dropdownColor: AppThemeExtension.of(context).surface,
-                  items: managers
-                      .map(
-                        (u) => DropdownMenuItem(
-                          value: u.uid,
-                          child: Text(
-                            u.name ?? u.email ?? u.uid,
-                            style: TextStyle(
-                              color: AppThemeExtension.of(context).textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: onManagerChanged,
-                );
-              },
-            ),
-            const SizedBox(height: DesignTokens.space3),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: onSaveManager,
-                style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
-                child: Text(l10n.t('save')),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+    final currentMemberIds = team.memberIds;
+    final available = consultants
+        .where((u) => !currentMemberIds.contains(u.uid))
+        .toList();
 
-class _MembersCard extends StatelessWidget {
-  const _MembersCard({required this.teamId, required this.memberIds});
-
-  final String teamId;
-  final List<String> memberIds;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return Card(
-      color: AppThemeExtension.of(context).surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusLg)),
-      child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.space5),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.t('label_members'),
-                  style: TextStyle(
-                    color: AppThemeExtension.of(context).textPrimary,
-                    fontSize: DesignTokens.fontSizeMd,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () => _showAddMemberDialog(context, teamId),
-                  icon: Icon(Icons.person_add_rounded, size: 18, color: AppThemeExtension.of(context).accent),
-                  label: Text(l10n.t('action_add_member'), style: TextStyle(color: AppThemeExtension.of(context).accent)),
-                ),
-              ],
-            ),
-            if (memberIds.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: DesignTokens.space4),
-                child: Text(
-                  l10n.t('empty_team_members'),
-                  style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
-                ),
-              )
-            else
-              ...memberIds.map((uid) => _MemberTile(teamId: teamId, uid: uid)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Future<void> _showAddMemberDialog(BuildContext context, String teamId) async {
-    final l10n = AppLocalizations.of(context);
-    final consultants = await FirestoreService.consultantsStream().first;
-    final teamList = await FirestoreService.teamsStream().first;
-    final currentTeam = teamList.where((t) => t.id == teamId).toList();
-    final currentTeamDoc = currentTeam.isNotEmpty ? currentTeam.first : null;
-    final currentMemberIds = currentTeamDoc?.memberIds ?? [];
-    final available = consultants.where((u) => !currentMemberIds.contains(u.uid)).toList();
-
-    if (!context.mounted) return;
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.t('no_consultants_to_add'))),
@@ -269,7 +141,12 @@ class _MembersCard extends StatelessWidget {
           builder: (ctx, setState) {
             return AlertDialog(
               backgroundColor: AppThemeExtension.of(context).surface,
-              title: Text(l10n.t('action_add_member'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
+              title: Text(
+                l10n.t('action_add_member'),
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).textPrimary,
+                ),
+              ),
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView.builder(
@@ -282,12 +159,17 @@ class _MembersCard extends StatelessWidget {
                       value: isSelected,
                       title: Text(
                         u.name ?? u.email ?? u.uid,
-                        style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
+                        style: TextStyle(
+                          color: AppThemeExtension.of(context).textPrimary,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       subtitle: Text(
                         u.email ?? u.role,
-                        style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
+                        style: TextStyle(
+                          color: AppThemeExtension.of(context).textSecondary,
+                          fontSize: 12,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       activeColor: AppThemeExtension.of(context).accent,
@@ -307,16 +189,27 @@ class _MembersCard extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary)),
+                  child: Text(
+                    l10n.t('cancel'),
+                    style: TextStyle(
+                      color: AppThemeExtension.of(context).textSecondary,
+                    ),
+                  ),
                 ),
                 FilledButton(
                   onPressed: () async {
                     for (final uid in selected) {
-                      await FirestoreService.assignAgentToTeam(uid, teamId);
+                      await FirestoreService.assignAgentToTeam(
+                        uid,
+                        widget.teamId,
+                      );
                     }
+                    ref.invalidate(ekipDetaySnapshotProvider(widget.teamId));
                     if (ctx.mounted) Navigator.of(ctx).pop();
                   },
-                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppThemeExtension.of(context).accent,
+                  ),
                   child: Text(l10n.t('save')),
                 ),
               ],
@@ -326,84 +219,60 @@ class _MembersCard extends StatelessWidget {
       },
     );
   }
-}
 
-class _MemberTile extends StatelessWidget {
-  const _MemberTile({required this.teamId, required this.uid});
-
-  final String teamId;
-  final String uid;
-
-  @override
-  Widget build(BuildContext context) {
+  Future<void> _confirmRemoveMember(BuildContext context, UserDoc user) async {
     final l10n = AppLocalizations.of(context);
-
-    return FutureBuilder<UserDoc?>(
-      future: UserRepository.getUserDoc(uid),
-      builder: (context, snap) {
-        final user = snap.data;
-        final name = user?.name ?? user?.email ?? uid;
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: CircleAvatar(
-            backgroundColor: AppThemeExtension.of(context).accent.withValues(alpha: 0.2),
-            child: Icon(Icons.person_rounded, color: AppThemeExtension.of(context).accent, size: 20),
-          ),
-          title: Text(
-            name,
-            style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: DesignTokens.fontSizeSm),
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: user?.email != null
-              ? Text(
-                  user!.email!,
-                  style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
-                )
-              : null,
-          trailing: TextButton(
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  backgroundColor: AppThemeExtension.of(context).surface,
-                  title: Text(l10n.t('action_remove_from_team'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
-                  content: Text(
-                    l10n.t('confirm_remove_from_team'),
-                    style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary)),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).danger),
-                      child: Text(l10n.t('action_remove_from_team')),
-                    ),
-                  ],
-                ),
-              );
-              if (confirm == true) {
-                await FirestoreService.removeAgentFromTeam(uid, teamId);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.t('member_removed')),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppThemeExtension.of(context).surface,
+        title: Text(
+          l10n.t('action_remove_from_team'),
+          style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
+        ),
+        content: Text(
+          l10n.t('confirm_remove_from_team'),
+          style: TextStyle(color: AppThemeExtension.of(context).textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              l10n.t('action_remove_from_team'),
-              style: TextStyle(color: AppThemeExtension.of(context).danger, fontSize: DesignTokens.fontSizeSm),
+              l10n.t('cancel'),
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textSecondary,
+              ),
             ),
           ),
-        );
-      },
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppThemeExtension.of(context).danger,
+            ),
+            child: Text(l10n.t('action_remove_from_team')),
+          ),
+        ],
+      ),
     );
+    if (confirm != true) return;
+
+    try {
+      await FirestoreService.removeAgentFromTeam(user.uid, widget.teamId);
+      ref.invalidate(ekipDetaySnapshotProvider(widget.teamId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.t('member_removed')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.t('error_generic'))),
+        );
+      }
+    }
   }
 }
