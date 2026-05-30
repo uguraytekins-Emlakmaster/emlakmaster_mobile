@@ -90,17 +90,17 @@ class PremiumAdminCommandHeader extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
-                color: ext.info.withValues(alpha: 0.1),
+                color: ext.info.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: ext.info.withValues(alpha: 0.3)),
+                border: Border.all(color: ext.info.withValues(alpha: 0.36)),
               ),
               child: Text(
                 'Doğrulama notu: yalnızca gerçek ofis verisi gösterilir; tahmin veya sahte KPI yok.',
                 style: TextStyle(
-                  color: ext.textSecondary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  height: 1.15,
+                  color: ext.textSecondary.withValues(alpha: 0.94),
+                  fontSize: AdminCommandTokens.honestyNoteSize,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
                 ),
               ),
             ),
@@ -206,6 +206,7 @@ class PremiumAdminHealthStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final strip = AdminCommandTokens.adminStripTypography(context);
     final cells = <(String, String, Color)>[
       (summary.activeAdvisors.toString(), 'Aktif ekip', ext.accent),
       (summary.openTasks.toString(), 'Açık iş', ext.warning),
@@ -233,14 +234,15 @@ class PremiumAdminHealthStrip extends StatelessWidget {
                 if (i > 0)
                   Container(
                     width: 1,
-                    height: 28,
+                    height: strip.dividerHeight,
                     color: ext.border.withValues(alpha: 0.28),
                   ),
                 Expanded(
-                  child: _HealthCell(
+                  child: ExecutiveMetricStripCell(
                     value: cells[i].$1,
                     label: cells[i].$2,
                     color: cells[i].$3,
+                    adminLabelEmphasis: true,
                   ),
                 ),
               ],
@@ -252,20 +254,30 @@ class PremiumAdminHealthStrip extends StatelessWidget {
   }
 }
 
-class _HealthCell extends StatelessWidget {
-  const _HealthCell({
+/// Admin + War Room üst şerit hücresi — tek tipografi kaynağı.
+class ExecutiveMetricStripCell extends StatelessWidget {
+  const ExecutiveMetricStripCell({
+    super.key,
     required this.value,
     required this.label,
     required this.color,
+    this.adminLabelEmphasis = false,
   });
 
   final String value;
   final String label;
   final Color color;
+  final bool adminLabelEmphasis;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final strip = adminLabelEmphasis
+        ? AdminCommandTokens.adminStripTypography(context)
+        : AdminCommandTokens.stripTypography(context);
+    final labelColor = adminLabelEmphasis
+        ? ext.textSecondary.withValues(alpha: 0.88)
+        : ext.textTertiary;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -273,9 +285,10 @@ class _HealthCell extends StatelessWidget {
           value,
           style: TextStyle(
             color: color,
-            fontSize: 13,
+            fontSize: strip.valueSize,
             fontWeight: FontWeight.w800,
             height: 1,
+            letterSpacing: -0.2,
           ),
         ),
         const SizedBox(height: 2),
@@ -283,11 +296,13 @@ class _HealthCell extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
           style: TextStyle(
-            color: ext.textTertiary,
-            fontSize: 8.5,
-            fontWeight: FontWeight.w600,
-            height: 1,
+            color: labelColor,
+            fontSize: strip.labelSize,
+            fontWeight: FontWeight.w700,
+            height: adminLabelEmphasis ? 1.08 : 1.05,
+            letterSpacing: adminLabelEmphasis ? 0.05 : 0,
           ),
         ),
       ],
@@ -335,7 +350,7 @@ class PremiumAdminSectionLabel extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.meta(context).copyWith(
                   color: ext.textTertiary.withValues(alpha: 0.85),
-                  fontSize: 10,
+                  fontSize: AdminCommandTokens.sectionSecondarySize,
                 ),
               ),
             ),
@@ -371,7 +386,10 @@ class PremiumAdminIntelLines extends StatelessWidget {
         AdminCommandTokens.chromeGap,
       ),
       child: PremiumSurfaceCard(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AdminCommandTokens.intelCardPaddingH,
+          vertical: AdminCommandTokens.intelCardPaddingV,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -379,21 +397,21 @@ class PremiumAdminIntelLines extends StatelessWidget {
               Text(
                 recentLine!,
                 style: AppTypography.meta(context).copyWith(
-                  color: ext.textSecondary,
-                  fontSize: 10.5,
-                  height: 1.25,
+                  color: ext.textSecondary.withValues(alpha: 0.94),
+                  fontSize: AdminCommandTokens.intelLineSize,
+                  height: AdminCommandTokens.intelLineHeight,
                 ),
               ),
             if (criticalLine != null && criticalLine!.trim().isNotEmpty) ...[
               if (recentLine != null && recentLine!.trim().isNotEmpty)
-                const SizedBox(height: 4),
+                const SizedBox(height: AdminCommandTokens.intelLineGap),
               Text(
                 criticalLine!,
                 style: AppTypography.meta(context).copyWith(
-                  color: ext.warning,
-                  fontSize: 10.5,
+                  color: ext.warning.withValues(alpha: 0.96),
+                  fontSize: AdminCommandTokens.intelLineSize,
                   fontWeight: FontWeight.w600,
-                  height: 1.25,
+                  height: AdminCommandTokens.intelCriticalLineHeight,
                 ),
               ),
             ],
