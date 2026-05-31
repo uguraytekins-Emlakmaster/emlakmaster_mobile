@@ -30,6 +30,8 @@ class AdminReportsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(displayRoleProvider).valueOrNull ?? AppRole.guest;
     final canManageTeams = FeaturePermission.canManageTeams(role);
+    final canManageMemberships = FeaturePermission.canInviteAgents(role) ||
+        FeaturePermission.canManageTeams(role);
     final canViewPipeline = FeaturePermission.canViewPipeline(role);
     final showAuditComingSoon = FeaturePermission.canViewAuditLog(role);
     final canViewCallCenter = FeaturePermission.canViewAllCalls(role);
@@ -102,6 +104,20 @@ class AdminReportsPage extends ConsumerWidget {
                         title: 'Ekipler',
                         subtitle: 'Kurulum, lider ataması ve ekip yapısı',
                         onTap: () => context.push(AppRouter.routeAdminTeams),
+                      ),
+                    ),
+                  ),
+                if (canManageMemberships)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: PremiumIconTile(
+                        icon: Icons.badge_outlined,
+                        title: 'Üyelikler / Davetler',
+                        subtitle:
+                            'Davet, onboarding ve katılım takibi tek yüzeyde',
+                        onTap: () =>
+                            context.push(AppRouter.routeAdminMemberships),
                       ),
                     ),
                   ),
