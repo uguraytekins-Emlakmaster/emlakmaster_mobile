@@ -52,6 +52,7 @@ import '../../features/office/presentation/pages/office_recovery_page.dart';
 import '../../features/admin_consultants/presentation/pages/admin_consultants_page.dart';
 import '../../features/admin_teams/presentation/pages/admin_team_detail_page.dart';
 import '../../features/admin_teams/presentation/pages/admin_teams_page.dart';
+import '../../features/admin_islem_kayitlari/presentation/pages/admin_audit_page.dart';
 import '../../screens/command_center_shell_entry_page.dart';
 import '../intelligence/region_heatmap_defaults.dart';
 
@@ -149,6 +150,7 @@ class AppRouter {
   static const String routeAdminConsultants = '/admin/consultants';
   static const String routeAdminTeams = '/admin/teams';
   static const String routeAdminTeamDetail = '/admin/teams/:teamId';
+  static const String routeAdminAudit = '/admin/audit';
 
   static String adminTeamDetailPath(String teamId) =>
       '/admin/teams/${Uri.encodeComponent(teamId)}';
@@ -670,6 +672,14 @@ class AppRouter {
               child: AdminTeamDetailPage(teamId: teamId),
             );
           },
+        ),
+        GoRoute(
+          path: routeAdminAudit,
+          pageBuilder: (context, state) => fastFadePage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const AdminAuditPage(),
+          ),
         ),
       ],
     );

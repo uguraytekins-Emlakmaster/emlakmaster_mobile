@@ -109,20 +109,12 @@ class AdminReportsPage extends ConsumerWidget {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: _ComingSoonReportCard(
+                      child: PremiumIconTile(
                         icon: Icons.history_rounded,
                         title: 'İşlem kaydı',
-                        subtitle: 'Sistem hareketleri için ayrıntılı görünüm yakında',
-                        onExplore: () {
-                          AdminShellNav.goToCommandCenterTab(context);
-                          showPremiumActionFeedback(
-                            context,
-                            title: 'Çağrı kayıtları açık',
-                            message:
-                                'Tam denetim günlüğü hazırlanıyor. Şimdilik Komuta Merkezi çağrı kayıtlarından ekip hareketlerini izleyebilirsiniz.',
-                            useSheet: false,
-                          );
-                        },
+                        subtitle:
+                            'Operasyon geçmişi, davet ve audit kayıtları',
+                        onTap: () => context.push(AppRouter.routeAdminAudit),
                       ),
                     ),
                   ),
