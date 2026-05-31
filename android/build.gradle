@@ -3,7 +3,7 @@ gradle.beforeProject { proj ->
     if (proj.path != ":app" && proj != rootProject && !proj.hasProperty("flutter")) {
         proj.ext.set("flutter", [
             compileSdkVersion: 36,
-            ndkVersion: "25.1.8937393",
+            ndkVersion: "28.2.13676358",
             targetSdkVersion: 36
         ])
     }
