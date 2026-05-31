@@ -178,7 +178,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.dark(),
-          home: ProviderScope(child: page),
+          home: ProviderScope(
+            overrides: [
+              currentUserProvider.overrideWith((ref) => Stream.value(null)),
+            ],
+            child: page,
+          ),
         ),
       );
       await tester.pump();

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -203,8 +205,9 @@ void main() {
       child: const ClientPortalFavoritesPage(),
     );
     await _savePng(tester, key, '04_empty_or_preview_state.png');
-    expect(find.text('Henüz favori ilan yok'), findsOneWidget);
-    expect(find.text('Keşfet sekmesine git'), findsOneWidget);
+    // Favoriler tab'ı artık İlgi & Etkileşim yüzeyini (Screen 20) barındırır.
+    expect(find.text('İlgi & Etkileşim'), findsWidgets);
+    expect(find.textContaining('sunucuda'), findsWidgets);
   });
 
   testWidgets('05 — bottom nav safe area proof', (tester) async {
