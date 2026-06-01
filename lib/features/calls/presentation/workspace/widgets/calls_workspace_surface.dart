@@ -261,7 +261,6 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
         final attentionFiltered = filterCallsWorkspaceRows(
           snapshot.attentionRows,
           query: _query,
-          filter: CallsWorkspaceFilter.all,
         );
         final laneRows = attentionFiltered.take(3).toList(growable: false);
         final laneKeys = laneRows.map((r) => r.recordKey).toSet();

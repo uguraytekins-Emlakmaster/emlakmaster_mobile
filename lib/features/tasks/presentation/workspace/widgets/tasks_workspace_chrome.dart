@@ -287,7 +287,6 @@ class TasksWorkspaceSearchRow extends StatelessWidget {
             controller: controller,
             focusNode: focusNode,
             hintText: hintText,
-            showMic: false,
             compact: true,
           ),
         ),

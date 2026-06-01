@@ -47,7 +47,7 @@ class CustomerWorkspaceHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              BrandEmblem(
+              const BrandEmblem(
                 variant: BrandEmblemVariant.mini,
                 size: ConsultantCustomersTokens.headerEmblemSize,
               ),

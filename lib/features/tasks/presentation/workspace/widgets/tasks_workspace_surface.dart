@@ -252,7 +252,6 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
         final overdueFiltered = filterTasksWorkspaceRows(
           snapshot.overdueRows.where((r) => !_deletingIds.contains(r.id)).toList(),
           query: _query,
-          filter: TasksWorkspaceFilter.all,
         );
         final lane = overdueFiltered.take(3).toList();
         laneKeys.addAll(lane.map((r) => r.id));
@@ -280,7 +279,6 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
               .where((r) => !_deletingIds.contains(r.id))
               .toList(),
           query: _query,
-          filter: TasksWorkspaceFilter.all,
         );
         final lane = quickFiltered
             .where((r) => !laneKeys.contains(r.id))
