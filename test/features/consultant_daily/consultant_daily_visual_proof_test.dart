@@ -13,9 +13,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '_daily_test_fixtures.dart';
 
-const _proofDir = 'build/screenshots/screen21_wow_restore';
+const _proofDir = 'build/screenshots/screen31_consultant_dashboard_final';
 const _phone = Size(390, 844);
-const _boundary = Key('daily_wow_proof');
+const _boundary = Key('daily_final_proof');
 
 Future<void> _savePng(WidgetTester tester, String name) async {
   final boundary =
@@ -70,14 +70,14 @@ void main() {
 
   testWidgets('02 summary filters proof', (tester) async {
     await _pump(tester, snapshot: dailyFixtureSnapshot());
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -80));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -120));
     await tester.pump();
     await _savePng(tester, '02_summary_filters.png');
   });
 
   testWidgets('03 priority rows proof', (tester) async {
     await _pump(tester, snapshot: dailyFixtureSnapshot());
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -280));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -320));
     await tester.pump();
     await _savePng(tester, '03_priority_rows.png');
   });
@@ -89,7 +89,7 @@ void main() {
 
   testWidgets('05 bottom safe area proof', (tester) async {
     await _pump(tester, snapshot: dailyFixtureSnapshot());
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -1400));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -1500));
     await tester.pump();
     await _savePng(tester, '05_bottom_safe_area.png');
   });

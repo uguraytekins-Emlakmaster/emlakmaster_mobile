@@ -121,13 +121,11 @@ class _ConsultantDailySurfaceState
       cacheExtent: 380,
       slivers: [
         SliverToBoxAdapter(
-          child: PremiumConsultantDailyHeader(
+          child: ConsultantDailyCommandDeck(
             subtitle: subtitle,
             coverageNote: snapshot.coverageNote,
+            summary: snapshot.summary,
           ),
-        ),
-        SliverToBoxAdapter(
-          child: ConsultantDailySummaryStripView(summary: snapshot.summary),
         ),
         SliverToBoxAdapter(
           child: ConsultantDailyControlsPanel(

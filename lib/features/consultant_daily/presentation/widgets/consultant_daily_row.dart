@@ -88,13 +88,19 @@ class ConsultantDailyRow extends StatelessWidget {
               width: ConsultantDailyTokens.rowIconSize,
               height: ConsultantDailyTokens.rowIconSize,
               decoration: BoxDecoration(
-                color: tone.withValues(alpha: emphasized ? 0.18 : 0.13),
+                color: tone.withValues(alpha: emphasized ? 0.2 : 0.14),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: tone.withValues(alpha: emphasized ? 0.45 : 0.3),
+                  color: tone.withValues(alpha: emphasized ? 0.5 : 0.32),
+                  width: emphasized ? 1.2 : 1,
                 ),
               ),
-              child: Icon(_kindIcon(entry.kind), size: 18, color: tone),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(_kindIcon(entry.kind), size: 17, color: tone),
+                ],
+              ),
             ),
             const SizedBox(width: 11),
             Expanded(
@@ -125,7 +131,19 @@ class ConsultantDailyRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    '${entry.typeLabel}  ·  ${entry.timeLabel}',
+                    entry.typeLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: tone.withValues(alpha: 0.95),
+                      fontSize: ConsultantDailyTokens.rowChipSize + 0.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    entry.timeLabel,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -152,12 +170,15 @@ class ConsultantDailyRow extends StatelessWidget {
                         flex: 3,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
+                            horizontal: 7,
+                            vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: ext.accent.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(7),
+                            color: ext.accent.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: ext.accent.withValues(alpha: 0.38),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -232,7 +253,8 @@ class ConsultantDailyRow extends StatelessWidget {
                 ),
               )
             : ConsultantDashboardExecutiveSurface(
-                ambientStrength: 0.72,
+                goldBorder: entry.isPartial,
+                ambientStrength: entry.isPartial ? 0.78 : 0.7,
                 child: Material(
                   color: Colors.transparent,
                   child: content,

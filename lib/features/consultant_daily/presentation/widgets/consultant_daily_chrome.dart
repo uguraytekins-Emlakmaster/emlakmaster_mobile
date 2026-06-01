@@ -31,6 +31,201 @@ String turkishDailySectionUpper(String label) {
       .toUpperCase();
 }
 
+/// Unified opening command deck — hero + grounded summary in one executive surface.
+class ConsultantDailyCommandDeck extends StatelessWidget {
+  const ConsultantDailyCommandDeck({
+    super.key,
+    required this.subtitle,
+    required this.coverageNote,
+    required this.summary,
+  });
+
+  final String subtitle;
+  final String coverageNote;
+  final ConsultantDailySummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
+    final today = DateFormat('d MMM').format(DateTime.now());
+    final m = AdminCommandTokens.headerMetrics(context);
+    final narrow = MediaQuery.sizeOf(context).width < 360;
+
+    final cells = _summaryCells(ext, summary);
+    final emphasizeOverdue = summary.overdue > 0;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        m.horizontal,
+        m.topInset,
+        m.horizontal,
+        ConsultantDailyTokens.moduleGap,
+      ),
+      child: ConsultantDashboardExecutiveSurface(
+        goldRail: true,
+        goldBorder: true,
+        ambientStrength: 1.02,
+        padding: EdgeInsets.all(
+          narrow ? 11 : ConsultantDailyTokens.commandPanelPadding,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'DANIŞMAN KOMUTA YÜZEYİ',
+              style: TextStyle(
+                color: premium.champagneGold.withValues(alpha: 0.82),
+                fontSize: ConsultantDailyTokens.commandEyebrowSize,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.1,
+                height: 1,
+              ),
+            ),
+            SizedBox(height: narrow ? 8 : 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _DailyHeaderEmblem(size: m.emblemSize, pad: m.emblemPad),
+                SizedBox(width: m.titleGap),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: m.emblemPad * 0.1),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Benim Günüm',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.pageHeading(context).copyWith(
+                            fontSize: m.titleSize + 1,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.45,
+                            height: 1,
+                          ),
+                        ),
+                        SizedBox(height: m.titleToSubtitleGap + 2),
+                        Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.meta(context).copyWith(
+                            color: ext.textSecondary.withValues(alpha: 0.88),
+                            fontSize: m.subtitleSize,
+                            fontWeight: FontWeight.w600,
+                            height: 1.22,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _DailyDateChip(
+                  label: today,
+                  metrics: m,
+                  compact: narrow,
+                ),
+              ],
+            ),
+            SizedBox(height: m.honestyTopGap + 2),
+            _DailyHonestyNote(
+              message: coverageNote.isNotEmpty
+                  ? coverageNote
+                  : 'Liste yalnızca size atanmış görev ve müşterilerden türetilir.',
+              accent: premium.champagneGold,
+            ),
+            const SizedBox(height: ConsultantDailyTokens.commandDeckDividerGap),
+            _DailyDeckDivider(accent: premium.champagneGold),
+            const SizedBox(height: ConsultantDailyTokens.commandDeckDividerGap),
+            if (cells.isEmpty)
+              SizedBox(
+                height: ConsultantDailyTokens.summaryStripHeight - 8,
+                child: Center(
+                  child: Text(
+                    'Özet metrik için canlı veri bekleniyor',
+                    style: TextStyle(
+                      color: ext.textSecondary,
+                      fontSize: ConsultantDailyTokens.summaryCellLabelSize,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: ConsultantDailyTokens.summaryStripHeight - 8,
+                child: Row(
+                  children: [
+                    for (var i = 0; i < cells.length; i++) ...[
+                      if (i > 0)
+                        SizedBox(width: narrow ? 4 : 7),
+                      Expanded(
+                        child: _DailySummaryCell(
+                          value: cells[i].$1,
+                          label: cells[i].$2,
+                          color: cells[i].$3,
+                          compact: narrow,
+                          emphasized: emphasizeOverdue &&
+                              cells[i].$2 == 'Geciken',
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<(String, String, Color)> _summaryCells(
+    AppThemeExtension ext,
+    ConsultantDailySummary summary,
+  ) {
+    final candidates = <(String, String, Color)>[
+      if (summary.activeTasks > 0)
+        (summary.activeTasks.toString(), 'Görev', ext.accent),
+      if (summary.overdue > 0)
+        (summary.overdue.toString(), 'Geciken', ext.danger),
+      if (summary.hotCustomers > 0)
+        (summary.hotCustomers.toString(), 'Sıcak', ext.warning),
+      if (summary.todayContacts > 0)
+        (summary.todayContacts.toString(), 'Bugün temas', ext.success),
+      if (summary.customers > 0)
+        (summary.customers.toString(), 'Müşteri', ext.info),
+    ];
+    return candidates.take(5).toList(growable: false);
+  }
+}
+
+class _DailyDeckDivider extends StatelessWidget {
+  const _DailyDeckDivider({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Container(
+      height: 1,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            accent.withValues(alpha: 0.45),
+            ext.border.withValues(alpha: 0.35),
+            Colors.transparent,
+          ],
+          stops: const [0, 0.35, 0.65, 1],
+        ),
+      ),
+    );
+  }
+}
+
 class PremiumConsultantDailyHeader extends StatelessWidget {
   const PremiumConsultantDailyHeader({
     super.key,
@@ -317,32 +512,48 @@ class _DailySummaryCell extends StatelessWidget {
     required this.label,
     required this.color,
     this.compact = false,
+    this.emphasized = false,
   });
 
   final String value;
   final String label;
   final Color color;
   final bool compact;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     return Container(
       padding: EdgeInsets.symmetric(
-        vertical: 6,
-        horizontal: compact ? 2 : 4,
+        vertical: compact ? 5 : 7,
+        horizontal: compact ? 2 : 5,
       ),
       decoration: BoxDecoration(
-        color: ext.surface.withValues(alpha: 0.38),
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: ext.border.withValues(alpha: 0.22)),
+        color: ext.surface.withValues(alpha: emphasized ? 0.52 : 0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: emphasized
+              ? color.withValues(alpha: 0.55)
+              : ext.border.withValues(alpha: 0.24),
+          width: emphasized ? 1.2 : 1,
+        ),
       ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: compact ? 18 : 22,
+            height: ConsultantDailyTokens.summaryCellAccentBar,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          SizedBox(height: compact ? 4 : 5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
               value,
               maxLines: 1,
               style: TextStyle(
@@ -352,15 +563,18 @@ class _DailySummaryCell extends StatelessWidget {
                     : ConsultantDailyTokens.summaryCellValueSize,
                 fontWeight: FontWeight.w800,
                 height: 1,
-                letterSpacing: -0.25,
+                letterSpacing: -0.3,
               ),
             ),
-            const SizedBox(height: 3),
-            Text(
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
               label,
               maxLines: 1,
               style: TextStyle(
-                color: ext.textSecondary.withValues(alpha: 0.88),
+                color: ext.textSecondary.withValues(alpha: 0.9),
                 fontSize: compact
                     ? ConsultantDailyTokens.summaryCellLabelSize - 0.5
                     : ConsultantDailyTokens.summaryCellLabelSize,
@@ -368,8 +582,8 @@ class _DailySummaryCell extends StatelessWidget {
                 height: 1.05,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -400,11 +614,22 @@ class ConsultantDailyControlsPanel extends StatelessWidget {
         ConsultantDailyTokens.moduleGap,
       ),
       child: ConsultantDashboardExecutiveSurface(
-        ambientStrength: 0.62,
+        goldBorder: true,
+        ambientStrength: 0.72,
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Text(
+              'Filtrele & ara',
+              style: TextStyle(
+                color: AppThemeExtension.of(context).textTertiary,
+                fontSize: ConsultantDailyTokens.commandEyebrowSize + 0.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(height: 8),
             ConsultantDailyCompactSearch(
               controller: searchController,
               hintText: searchHint,
@@ -560,21 +785,22 @@ class _FilterChipItem extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     return Material(
       color: active
-          ? accent.withValues(alpha: 0.2)
-          : ext.surfaceElevated.withValues(alpha: 0.55),
+          ? accent.withValues(alpha: 0.24)
+          : ext.surfaceElevated.withValues(alpha: 0.58),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: active
-                  ? accent.withValues(alpha: 0.62)
-                  : ext.border.withValues(alpha: 0.28),
+                  ? accent.withValues(alpha: 0.72)
+                  : ext.border.withValues(alpha: 0.26),
+              width: active ? 1.2 : 1,
             ),
           ),
           child: Text(
@@ -583,6 +809,7 @@ class _FilterChipItem extends StatelessWidget {
               color: active ? accent : ext.textSecondary,
               fontSize: 11.5,
               fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+              letterSpacing: active ? 0.15 : 0,
             ),
           ),
         ),
@@ -628,45 +855,59 @@ class ConsultantDailySectionHeader extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      premium.champagneGold.withValues(alpha: 0.85),
-                      premium.champagneGold.withValues(alpha: 0.15),
+                      premium.champagneGold.withValues(alpha: 0.9),
+                      premium.champagneGold.withValues(alpha: 0.12),
                     ],
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                turkishDailySectionUpper(title),
-                style: TextStyle(
-                  color: ext.textSecondary,
-                  fontSize: ConsultantDailyTokens.rowChipSize + 1.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.75,
+              Expanded(
+                child: Text(
+                  turkishDailySectionUpper(title),
+                  style: TextStyle(
+                    color: ext.textSecondary,
+                    fontSize: ConsultantDailyTokens.rowChipSize + 2,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.85,
+                  ),
                 ),
               ),
-              if (count != null) ...[
-                const SizedBox(width: 7),
+              if (count != null)
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: ext.accent.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(8),
+                    color: ext.accent.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(9),
                     border: Border.all(
-                      color: ext.accent.withValues(alpha: 0.32),
+                      color: premium.champagneGold.withValues(alpha: 0.38),
                     ),
                   ),
                   child: Text(
                     count.toString(),
                     style: TextStyle(
                       color: ext.accent,
-                      fontSize: ConsultantDailyTokens.rowChipSize,
+                      fontSize: ConsultantDailyTokens.rowChipSize + 0.5,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-              ],
             ],
+          ),
+          const SizedBox(height: 7),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.only(left: 11),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  premium.champagneGold.withValues(alpha: 0.35),
+                  ext.border.withValues(alpha: 0.2),
+                  Colors.transparent,
+                ],
+              ),
+            ),
           ),
           if (note != null && note!.isNotEmpty) ...[
             const SizedBox(height: 5),
@@ -710,20 +951,29 @@ class ConsultantDailyInlineNote extends StatelessWidget {
         ConsultantDailyTokens.moduleGap,
       ),
       child: ConsultantDashboardExecutiveSurface(
-        ambientStrength: 0.55,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        goldBorder: true,
+        ambientStrength: 0.62,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 16, color: ext.textTertiary),
-            const SizedBox(width: 9),
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: ext.surfaceElevated.withValues(alpha: 0.55),
+                shape: BoxShape.circle,
+                border: Border.all(color: ext.border.withValues(alpha: 0.28)),
+              ),
+              child: Icon(icon, size: 15, color: ext.textTertiary),
+            ),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 message,
                 style: TextStyle(
                   color: ext.textSecondary,
                   fontSize: ConsultantDailyTokens.rowMetaSize + 0.5,
-                  height: 1.32,
+                  height: 1.34,
                   fontWeight: FontWeight.w500,
                 ),
               ),

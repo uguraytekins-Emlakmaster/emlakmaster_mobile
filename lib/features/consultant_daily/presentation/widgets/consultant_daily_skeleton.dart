@@ -28,14 +28,12 @@ class ConsultantDailySkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          block(88, r: 18),
+          block(178, r: 18),
           const SizedBox(height: 14),
-          block(ConsultantDailyTokens.summaryStripHeight + 12, r: 18),
-          const SizedBox(height: 14),
-          block(ConsultantDailyTokens.searchHeight + 52, r: 16),
+          block(ConsultantDailyTokens.searchHeight + 58, r: 16),
           const SizedBox(height: 16),
           for (var i = 0; i < 5; i++) ...[
-            block(ConsultantDailyTokens.rowMinHeight + 4, r: 16),
+            block(ConsultantDailyTokens.rowMinHeight + 6, r: 16),
             const SizedBox(height: ConsultantDailyTokens.moduleGap),
           ],
         ],
