@@ -13,6 +13,7 @@ abstract final class ConsultantTasksTokens {
   static const double headerSubtitleSize = 10.5;
 
   static const double summaryStripHeight = 52;
+  static const double searchBarHeight = 38;
   static const double filterStripHeight = 30;
 
   static const double rowPaddingH = 10;
