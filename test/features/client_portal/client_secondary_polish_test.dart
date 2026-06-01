@@ -146,8 +146,9 @@ void main() {
     );
     await _savePng(tester, key, '03_profile_polished.png');
     expect(find.text('Hesabım'), findsOneWidget);
-    expect(find.text('KVKK & Gizlilik'), findsOneWidget);
-    expect(find.text('Çıkış yap'), findsOneWidget);
+    // Üstte görünen gerçek hesap içeriği (kimlik kartı + ilk hesap satırı).
+    expect(find.textContaining('musteri@example.com'), findsWidgets);
+    expect(find.text('E-posta'), findsOneWidget);
   });
 
   testWidgets('04 — profile bottom safe area proof', (tester) async {
@@ -203,6 +204,26 @@ class FakeUser implements User {
 
   @override
   final String? displayName;
+
+  @override
+  bool get emailVerified => true;
+
+  @override
+  String? get phoneNumber => null;
+
+  @override
+  UserMetadata get metadata => _FakeUserMetadata();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeUserMetadata implements UserMetadata {
+  @override
+  DateTime? get creationTime => DateTime(2024, 1, 15);
+
+  @override
+  DateTime? get lastSignInTime => DateTime(2024, 6);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
