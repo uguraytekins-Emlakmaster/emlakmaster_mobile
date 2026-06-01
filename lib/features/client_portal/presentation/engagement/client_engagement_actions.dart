@@ -1,5 +1,5 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
-import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
+import 'package:emlakmaster_mobile/core/navigation/shell_navigator.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/client_portal/presentation/engagement/client_engagement_types.dart';
 import 'package:flutter/material.dart';
@@ -11,10 +11,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 abstract final class ClientEngagementActions {
   ClientEngagementActions._();
 
-  /// Kanalı aç — daima gerçek bir kabuk sekmesine yönlendirir.
-  static void open(WidgetRef ref, ClientEngagementEntry entry) {
+  /// Kanalı aç — daima gerçek bir kabuk sekmesine yönlendirir. Merkezi
+  /// [ShellNavigator] kabuk dışından çağrılsa da ana kabuğa güvenli döner
+  /// (yalnızca enqueue ile sessiz no-op riskini önler).
+  static void open(
+    BuildContext context,
+    WidgetRef ref,
+    ClientEngagementEntry entry,
+  ) {
     AppFeedback.selectionClick();
-    ref.read(mainShellShortcutProvider.notifier).enqueue(entry.shortcut);
+    ShellNavigator.goToShortcut(context, entry.shortcut);
   }
 
   /// Auth/canlı durumu tazele (retry).
@@ -70,7 +76,7 @@ abstract final class ClientEngagementActions {
                   child: TextButton.icon(
                     onPressed: () {
                       Navigator.of(ctx).pop();
-                      open(ref, entry);
+                      open(context, ref, entry);
                     },
                     icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                     label: Text(entry.actionLabel),

@@ -1,5 +1,5 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
-import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
+import 'package:emlakmaster_mobile/core/navigation/app_destinations.dart';
+import 'package:emlakmaster_mobile/core/navigation/shell_navigator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -69,26 +69,12 @@ class _CommandPaletteContentState
     final ext = AppThemeExtension.of(context);
     final premium = PremiumThemeExtension.of(context);
     final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
-    final filteredActions = _filteredActionsFor(role, _query);
+    final filteredActions =
+        filterDestinations(appDestinationsFor(role), _query);
 
-    void goHomeWithShortcut(MainShellShortcut shortcut) {
-      ref.read(mainShellShortcutProvider.notifier).enqueue(shortcut);
-      context.go(AppRouter.routeHome);
+    void onActionTap(AppDestination destination) {
+      ShellNavigator.openDestination(context, destination);
       widget.onClose();
-    }
-
-    void onActionTap(_PaletteAction action) {
-      switch (action.kind) {
-        case _PaletteActionKind.route:
-          final route = action.route;
-          if (route != null) context.push(route);
-          widget.onClose();
-        case _PaletteActionKind.homeShortcut:
-          final shortcut = action.shortcut;
-          if (shortcut != null) {
-            goHomeWithShortcut(shortcut);
-          }
-      }
     }
 
     return SafeArea(
@@ -273,134 +259,6 @@ class _CommandPaletteContentState
       ),
     );
   }
-}
-
-enum _PaletteActionKind { route, homeShortcut }
-
-String _paletteHomeShortcutLabel(AppRole role) {
-  if (FeaturePermission.seesClientPanel(role)) return 'Keşfet';
-  if (FeaturePermission.seesAdminPanel(role)) {
-    return ProductLabels.managerHome;
-  }
-  return ProductLabels.consultantHome;
-}
-
-class _PaletteAction {
-  const _PaletteAction.route({
-    required this.label,
-    required this.icon,
-    required this.route,
-  })  : kind = _PaletteActionKind.route,
-        shortcut = null;
-
-  const _PaletteAction.shortcut({
-    required this.label,
-    required this.icon,
-    required this.shortcut,
-  })  : kind = _PaletteActionKind.homeShortcut,
-        route = null;
-
-  final String label;
-  final IconData icon;
-  final _PaletteActionKind kind;
-  final String? route;
-  final MainShellShortcut? shortcut;
-}
-
-List<_PaletteAction> _filteredActionsFor(AppRole role, String query) {
-  final all = <_PaletteAction>[
-    _PaletteAction.shortcut(
-      label: _paletteHomeShortcutLabel(role),
-      icon: Icons.dashboard_rounded,
-      shortcut: MainShellShortcut.openHomeTab,
-    ),
-    if (FeaturePermission.seesClientPanel(role)) ...[
-      const _PaletteAction.shortcut(
-        label: 'Favoriler',
-        icon: Icons.favorite_rounded,
-        shortcut: MainShellShortcut.openFavoritesTab,
-      ),
-      const _PaletteAction.shortcut(
-        label: 'Mesajlar',
-        icon: Icons.chat_rounded,
-        shortcut: MainShellShortcut.openMessagesTab,
-      ),
-      const _PaletteAction.shortcut(
-        label: 'Sanal Tur',
-        icon: Icons.video_camera_back_rounded,
-        shortcut: MainShellShortcut.openVirtualTourTab,
-      ),
-    ] else ...[
-      if (!FeaturePermission.seesAdminPanel(role)) ...[
-        const _PaletteAction.shortcut(
-          label: ProductLabels.myCalls,
-          icon: Icons.call_rounded,
-          shortcut: MainShellShortcut.openCallsTab,
-        ),
-        const _PaletteAction.shortcut(
-          label: ProductLabels.myCustomers,
-          icon: Icons.people_rounded,
-          shortcut: MainShellShortcut.openCustomersTab,
-        ),
-        const _PaletteAction.shortcut(
-          label: ProductLabels.listings,
-          icon: Icons.home_work_rounded,
-          shortcut: MainShellShortcut.openListingsTab,
-        ),
-        const _PaletteAction.shortcut(
-          label: ProductLabels.followUp,
-          icon: Icons.replay_rounded,
-          shortcut: MainShellShortcut.openFollowUpTab,
-        ),
-        const _PaletteAction.shortcut(
-          label: ProductLabels.myTasks,
-          icon: Icons.task_alt_rounded,
-          shortcut: MainShellShortcut.openTasksTab,
-        ),
-      ],
-      if (FeaturePermission.seesAdminPanel(role)) ...[
-        const _PaletteAction.route(
-          label: ProductLabels.officeDesk,
-          icon: Icons.groups_rounded,
-          route: AppRouter.routeOfficeAdmin,
-        ),
-        const _PaletteAction.route(
-          label: ProductLabels.officeInvite,
-          icon: Icons.vpn_key_outlined,
-          route: AppRouter.routeOfficeInviteCreate,
-        ),
-        if (FeaturePermission.canViewAllCalls(role))
-          const _PaletteAction.route(
-            label: ProductLabels.callCenter,
-            icon: Icons.call_rounded,
-            route: AppRouter.routeCommandCenter,
-          ),
-        const _PaletteAction.route(
-          label: ProductLabels.warRoom,
-          icon: Icons.military_tech_rounded,
-          route: AppRouter.routeWarRoom,
-        ),
-        const _PaletteAction.route(
-          label: ProductLabels.operationsDeck,
-          icon: Icons.business_center_rounded,
-          route: AppRouter.routeBrokerCommand,
-        ),
-      ],
-    ],
-    if (!FeaturePermission.seesClientPanel(role))
-      const _PaletteAction.shortcut(
-        label: ProductLabels.messageCenter,
-        icon: Icons.forum_rounded,
-        shortcut: MainShellShortcut.openMessageCenterTab,
-      ),
-    const _PaletteAction.shortcut(
-      label: ProductLabels.settings,
-      icon: Icons.settings_rounded,
-      shortcut: MainShellShortcut.openAccountTab,
-    ),
-  ];
-  if (query.isEmpty) return all;
-  return all.where((a) => a.label.toLowerCase().contains(query)).toList();
 }
 
 class _ActionTile extends StatelessWidget {

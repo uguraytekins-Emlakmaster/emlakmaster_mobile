@@ -1,6 +1,6 @@
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
+import 'package:emlakmaster_mobile/core/navigation/shell_navigator.dart';
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
-import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/utils/whatsapp_launcher.dart';
@@ -56,8 +56,8 @@ abstract final class ConsultantDailyActions {
     BuildContext context,
     MainShellShortcut shortcut,
   ) {
-    ref.read(mainShellShortcutProvider.notifier).enqueue(shortcut);
-    context.go(AppRouter.routeHome);
+    // Merkezi kabuk-farkındalıklı geçiş — dağınık enqueue+go kopyası yok.
+    ShellNavigator.goToShortcut(context, shortcut);
   }
 
   static Future<void> call(BuildContext context, ConsultantDailyEntry e) async {

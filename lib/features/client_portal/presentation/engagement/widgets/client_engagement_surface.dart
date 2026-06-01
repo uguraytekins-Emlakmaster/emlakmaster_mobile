@@ -164,7 +164,8 @@ class _ClientEngagementSurfaceState
             itemCount: filtered.length,
             itemBuilder: (context, index) => ClientEngagementRow(
               entry: filtered[index],
-              onTap: () => ClientEngagementActions.open(ref, filtered[index]),
+              onTap: () =>
+                  ClientEngagementActions.open(context, ref, filtered[index]),
               onDetail: () => ClientEngagementActions.showDetailSheet(
                 context,
                 ref,
