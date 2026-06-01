@@ -13,9 +13,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '_daily_test_fixtures.dart';
 
-const _proofDir = 'build/screenshots/screen21_consultant_review';
+const _proofDir = 'build/screenshots/screen21_wow_restore';
 const _phone = Size(390, 844);
-const _boundary = Key('daily_proof');
+const _boundary = Key('daily_wow_proof');
 
 Future<void> _savePng(WidgetTester tester, String name) async {
   final boundary =
@@ -63,28 +63,28 @@ Future<void> _pump(
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('01 header summary filters proof', (tester) async {
+  testWidgets('01 header hero proof', (tester) async {
     await _pump(tester, snapshot: dailyFixtureSnapshot());
-    await _savePng(tester, '01_header_summary_filters.png');
+    await _savePng(tester, '01_header_hero.png');
   });
 
-  testWidgets('02 priority rows proof', (tester) async {
+  testWidgets('02 summary filters proof', (tester) async {
     await _pump(tester, snapshot: dailyFixtureSnapshot());
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -240));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -80));
     await tester.pump();
-    await _savePng(tester, '02_priority_rows.png');
+    await _savePng(tester, '02_summary_filters.png');
   });
 
-  testWidgets('03 actions proof', (tester) async {
+  testWidgets('03 priority rows proof', (tester) async {
     await _pump(tester, snapshot: dailyFixtureSnapshot());
-    await tester.tap(find.byIcon(Icons.more_vert_rounded).first);
-    await tester.pumpAndSettle();
-    await _savePng(tester, '03_actions.png');
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -280));
+    await tester.pump();
+    await _savePng(tester, '03_priority_rows.png');
   });
 
-  testWidgets('04 empty or partial state proof', (tester) async {
+  testWidgets('04 low pressure or empty proof', (tester) async {
     await _pump(tester, snapshot: dailyEmptySnapshot());
-    await _savePng(tester, '04_empty_or_partial_state.png');
+    await _savePng(tester, '04_low_pressure_or_empty.png');
   });
 
   testWidgets('05 bottom safe area proof', (tester) async {

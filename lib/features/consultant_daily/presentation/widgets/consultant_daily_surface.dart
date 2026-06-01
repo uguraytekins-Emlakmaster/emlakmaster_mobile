@@ -130,15 +130,11 @@ class _ConsultantDailySurfaceState
           child: ConsultantDailySummaryStripView(summary: snapshot.summary),
         ),
         SliverToBoxAdapter(
-          child: ConsultantDailyCompactSearch(
-            controller: _debouncedSearch.controller,
-            hintText: 'Görev, müşteri veya durum ara',
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: ConsultantDailyFilterStrip(
-            selected: _filter,
-            onSelected: (f) {
+          child: ConsultantDailyControlsPanel(
+            searchController: _debouncedSearch.controller,
+            searchHint: 'Görev, müşteri veya durum ara',
+            selectedFilter: _filter,
+            onFilterSelected: (f) {
               AppFeedback.selectionClick();
               setState(() => _filter = f);
             },

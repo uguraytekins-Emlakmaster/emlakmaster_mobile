@@ -28,33 +28,18 @@ class ConsultantDailySkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          block(56, r: 16),
+          block(88, r: 18),
           const SizedBox(height: 14),
-          block(AdminStripHeight.value, r: 18),
+          block(ConsultantDailyTokens.summaryStripHeight + 12, r: 18),
           const SizedBox(height: 14),
-          block(ConsultantDailyTokens.searchHeight),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              block(ConsultantDailyTokens.filterChipHeight, w: 64),
-              const SizedBox(width: 6),
-              block(ConsultantDailyTokens.filterChipHeight, w: 64),
-              const SizedBox(width: 6),
-              block(ConsultantDailyTokens.filterChipHeight, w: 64),
-            ],
-          ),
+          block(ConsultantDailyTokens.searchHeight + 52, r: 16),
           const SizedBox(height: 16),
           for (var i = 0; i < 5; i++) ...[
-            block(ConsultantDailyTokens.rowMinHeight, r: 16),
+            block(ConsultantDailyTokens.rowMinHeight + 4, r: 16),
             const SizedBox(height: ConsultantDailyTokens.moduleGap),
           ],
         ],
       ),
     );
   }
-}
-
-/// Strip yüksekliği için sabit (skeleton'da context'siz kullanım).
-abstract final class AdminStripHeight {
-  static const double value = 64;
 }
