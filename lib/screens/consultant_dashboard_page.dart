@@ -1,280 +1,37 @@
-import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
-import 'package:emlakmaster_mobile/core/debug/ui_v2_debug.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
-import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
-import 'package:emlakmaster_mobile/core/performance/deferred_mount_section.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
-import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
-import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
-import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_dashboard_kpi_providers.dart';
-import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
-import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
-import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
-import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/consultant_dashboard_layout.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_action_anchor.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_hero_card.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_kpi_bento.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_operational_feed.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_quick_nav.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/consultant_dashboard_tokens.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_section_header.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_surface.dart';
-import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_support_cards.dart';
-import 'package:emlakmaster_mobile/screens/providers/consultant_dashboard_kpi_providers.dart';
-import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
-import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
+import 'package:emlakmaster_mobile/features/consultant_daily/presentation/providers/consultant_daily_provider.dart';
+import 'package:emlakmaster_mobile/features/consultant_daily/presentation/utils/consultant_daily_types.dart';
+import 'package:emlakmaster_mobile/features/consultant_daily/presentation/widgets/consultant_daily_surface.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-/// Danışman paneli — executive cockpit (production lock).
+/// Danışman paneli — Benim Günüm günlük operasyon yüzeyi (Screen 21).
+/// Tab kimliği korunur (consultant shell index 0 · 'summary' · "Günüm").
+/// Yalnızca gerçek, danışmana scoped sinyaller: görev (vade türetilir), atanmış
+/// müşteri (lifecycle + deterministik heat) ve bugünkü temas. Uydurma performans
+/// skoru / AI koçluk / verimlilik trendi yok.
 class ConsultantDashboardPage extends ConsumerWidget {
   const ConsultantDashboardPage({super.key});
-
-  static String _greetingFromUser(User? user) {
-    final hour = DateTime.now().hour;
-    final salutation =
-        hour < 12 ? 'Günaydın' : (hour < 18 ? 'İyi günler' : 'İyi akşamlar');
-    final String firstName;
-    final dn = user?.displayName?.trim();
-    if (dn != null && dn.isNotEmpty) {
-      firstName = dn.split(RegExp(r'\s+')).first;
-    } else if (user?.email != null) {
-      firstName = user!.email!.split('@').first;
-    } else {
-      firstName = 'Danışman';
-    }
-    return '$salutation, $firstName';
-  }
-
-  Future<void> _onRefresh(WidgetRef ref) async {
-    final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
-    ref.invalidate(todayCallsCountProvider);
-    if (uid.isNotEmpty) {
-      ref.invalidate(advisorOpenTasksCountProvider(uid));
-      ref.invalidate(advisorPipelineCountProvider(uid));
-      ref.invalidate(agentWeeklyCallCountProvider(uid));
-    }
-    ref.invalidate(resurrectionQueueProvider);
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     try {
-      final premium = PremiumThemeExtension.of(context);
-      final lean = ref.watch(
-        featureFlagsProvider.select(
-          (a) => a.valueOrNull?[AppConstants.keyV1LeanProduct] ?? true,
-        ),
-      );
-      final summaryBottomPad =
-          DashboardLayoutTokens.shellScrollBottomPadding(context);
-      final greeting = ref.watch(
-        currentUserProvider.select((v) => _greetingFromUser(v.valueOrNull)),
-      );
-
-      if (kDebugMode) {
-        logUiV2Active('consultant_dashboard');
-        AppLogger.state(
-          '[ConsultantDashboard] ready fingerprint=${ConsultantDashboardLayout.fingerprint}',
-        );
-      }
-
       return PremiumShellBackdrop(
-        child: Material(
-          color: Colors.transparent,
-          child: SafeArea(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
             child: RepaintBoundary(
-              child: RefreshIndicator(
-                onRefresh: () => _onRefresh(ref),
-                color: premium.champagneGold,
-                backgroundColor: premium.glassSurface,
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  cacheExtent: 380,
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          ConsultantDashboardTokens.horizontal,
-                          ConsultantDashboardTokens.topInset,
-                          ConsultantDashboardTokens.horizontal,
-                          0,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ConsultantDashboardHeroCard(
-                              greeting: greeting,
-                              onSearchSubmitted: (_) {
-                                ref
-                                    .read(mainShellShortcutProvider.notifier)
-                                    .enqueue(
-                                        MainShellShortcut.openCustomersTab);
-                                context.go(AppRouter.routeHome);
-                              },
-                              searchTrailing: Material(
-                                color: premium.champagneGold
-                                    .withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(
-                                    DesignTokens.radiusMd),
-                                child: InkWell(
-                                  onTap: () {
-                                    ref
-                                        .read(
-                                            mainShellShortcutProvider.notifier)
-                                        .enqueue(MainShellShortcut
-                                            .openCustomersTab);
-                                    context.go(AppRouter.routeHome);
-                                  },
-                                  borderRadius: BorderRadius.circular(
-                                      DesignTokens.radiusMd),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: Icon(Icons.auto_awesome_rounded,
-                                        color: premium.champagneGold, size: 18),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(
-                                height: ConsultantDashboardTokens.sectionGap),
-                            DeferredMountSection.dashboardPrimary(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  const ConsultantDashboardSectionHeader(
-                                    label: 'Günün özeti',
-                                    subtitle: 'Canlı KPI ve haftalık tempo',
-                                    icon: Icons.insights_rounded,
-                                  ),
-                                  ShellScreenReadyListener(
-                                    screenName: 'consultant_dashboard',
-                                    provider: todayCallsCountProvider,
-                                    child: const Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        ConsultantDashboardKpiBento(),
-                                        SizedBox(
-                                            height: ConsultantDashboardTokens
-                                                .sectionGap),
-                                        ConsultantDashboardSectionHeader(
-                                          label: 'Hızlı erişim',
-                                          subtitle: 'Tek dokunuşla geçiş',
-                                          icon: Icons.bolt_rounded,
-                                        ),
-                                        ConsultantDashboardQuickNavGrid(),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                                height: ConsultantDashboardTokens.blockGap),
-                            const DeferredMountSection.dashboardOperational(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  ConsultantDashboardOpsShell(
-                                    child: PostCallCaptureDashboardReminder(),
-                                  ),
-                                  SizedBox(
-                                      height: ConsultantDashboardTokens
-                                          .blockGap),
-                                  ConsultantDashboardActionAnchor(),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                                height: ConsultantDashboardTokens.sectionGap),
-                            const ConsultantDashboardDeferredOperationalFeed(),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (!lean) ...[
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                            height: DashboardLayoutTokens.gapInsightSection),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: DashboardLayoutTokens.horizontalPadding,
-                          ),
-                          child: ConsultantDashboardInsightFeed(),
-                        ),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                            height: DashboardLayoutTokens.gapInsightSection),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: DashboardLayoutTokens.horizontalPadding,
-                          ),
-                          child: DiscoveryPanel(),
-                        ),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                            height: DashboardLayoutTokens.gapInsightSection),
-                      ),
-                      const SliverToBoxAdapter(child: MasterTicker()),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                            height: DashboardLayoutTokens.gapInsightSection),
-                      ),
-                      const SliverToBoxAdapter(child: FinanceBar()),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                            height: DashboardLayoutTokens.gapInsightSection),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: DashboardLayoutTokens.horizontalPadding,
-                          ),
-                          child: MarketPulsePanel(),
-                        ),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(
-                            height: DashboardLayoutTokens.gapInsightSection),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: DeferredMountSection.dashboardInsight(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal:
-                                  DashboardLayoutTokens.horizontalPadding,
-                            ),
-                            child: ConsultantDashboardAcademyCard(),
-                          ),
-                        ),
-                      ),
-                    ],
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                          height: summaryBottomPad + DesignTokens.space3),
-                    ),
-                  ],
-                ),
+              child: ShellScreenReadyListener(
+                screenName: 'consultant_dashboard',
+                provider: consultantDailySnapshotProvider,
+                itemCount: (value) => value is ConsultantDailySnapshot
+                    ? value.entries.length
+                    : null,
+                child: const ConsultantDailySurface(),
               ),
             ),
           ),
@@ -296,7 +53,7 @@ class ConsultantDashboardPage extends ConsumerWidget {
                       color: ext.accent, size: 48),
                   const SizedBox(height: 16),
                   Text(
-                    'Danisman paneli hazirlanamadi',
+                    'Danışman paneli hazırlanamadı',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: ext.textPrimary,
@@ -306,7 +63,8 @@ class ConsultantDashboardPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Ekran yuklenirken bir sorun olustu. Uygulama kabugu aktif; ana sekmeler kullanilmaya devam edebilir.',
+                    'Ekran yüklenirken bir sorun oluştu. Uygulama kabuğu aktif; '
+                    'ana sekmeler kullanılmaya devam edebilir.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: ext.textSecondary,
