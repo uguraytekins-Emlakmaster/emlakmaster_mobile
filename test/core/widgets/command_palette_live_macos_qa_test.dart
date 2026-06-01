@@ -157,7 +157,7 @@ void main() {
     await _openPalette(tester, captureKey: key, role: AppRole.client);
 
     expect(find.text(ProductLabels.favorites), findsOneWidget);
-    expect(find.text(ProductLabels.virtualTour), findsOneWidget);
+    expect(find.text(ProductLabels.requestCenter), findsOneWidget);
     expect(find.text(ProductLabels.officeDesk), findsNothing);
     expect(find.text(ProductLabels.messageCenter), findsNothing);
     expect(tester.takeException(), isNull);

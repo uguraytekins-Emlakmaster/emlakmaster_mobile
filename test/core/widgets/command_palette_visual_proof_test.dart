@@ -101,7 +101,7 @@ void main() {
   testWidgets('03 rol farkındalığı — müşteri', (tester) async {
     await _openPalette(tester, role: AppRole.client);
     expect(find.text(ProductLabels.favorites), findsOneWidget);
-    expect(find.text(ProductLabels.virtualTour), findsOneWidget);
+    expect(find.text(ProductLabels.requestCenter), findsOneWidget);
     // Staff alanları yok.
     expect(find.text(ProductLabels.officeDesk), findsNothing);
     expect(find.text(ProductLabels.messageCenter), findsNothing);

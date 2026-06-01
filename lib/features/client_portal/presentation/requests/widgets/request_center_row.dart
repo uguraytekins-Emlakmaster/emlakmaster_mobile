@@ -1,25 +1,25 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/client_portal/presentation/client_portal_tokens.dart';
-import 'package:emlakmaster_mobile/features/client_portal/presentation/engagement/client_engagement_types.dart';
-import 'package:emlakmaster_mobile/features/client_portal/presentation/engagement/widgets/client_engagement_chrome.dart';
+import 'package:emlakmaster_mobile/features/client_portal/presentation/requests/request_center_types.dart';
+import 'package:emlakmaster_mobile/features/client_portal/presentation/requests/widgets/request_center_chrome.dart';
 import 'package:flutter/material.dart';
 
-class ClientEngagementRow extends StatelessWidget {
-  const ClientEngagementRow({
+class RequestCenterRow extends StatelessWidget {
+  const RequestCenterRow({
     super.key,
     required this.entry,
     required this.onTap,
     required this.onDetail,
   });
 
-  final ClientEngagementEntry entry;
+  final RequestCenterEntry entry;
   final VoidCallback onTap;
   final VoidCallback onDetail;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final tone = engagementToneColor(ext, entry.tone);
+    final tone = requestToneColor(ext, entry.tone);
 
     return RepaintBoundary(
       child: Material(
@@ -75,7 +75,7 @@ class ClientEngagementRow extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${entry.actionType} · ${entry.detail}',
+                        '${entry.typeLabel} · ${entry.detail}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -136,19 +136,16 @@ class ClientEngagementRow extends StatelessWidget {
 class _KindIcon extends StatelessWidget {
   const _KindIcon({required this.kind, required this.tone});
 
-  final EngagementKind kind;
+  final RequestKind kind;
   final Color tone;
 
   @override
   Widget build(BuildContext context) {
     final icon = switch (kind) {
-      EngagementKind.discovery => Icons.explore_rounded,
-      EngagementKind.favorites => Icons.favorite_rounded,
-      EngagementKind.message => Icons.forum_rounded,
-      EngagementKind.request => Icons.event_available_rounded,
-      EngagementKind.tour => Icons.video_camera_back_rounded,
-      EngagementKind.requestCenter => Icons.assignment_outlined,
-      EngagementKind.profile => Icons.person_rounded,
+      RequestKind.create => Icons.note_add_rounded,
+      RequestKind.explore => Icons.explore_rounded,
+      RequestKind.advisor => Icons.forum_rounded,
+      RequestKind.preferences => Icons.tune_rounded,
     };
     return Container(
       width: 38,

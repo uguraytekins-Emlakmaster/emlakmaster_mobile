@@ -90,10 +90,10 @@ List<AppDestination> appDestinationsFor(AppRole role) {
         shortcut: MainShellShortcut.openMessagesTab,
       ),
       AppDestination.shortcut(
-        id: 'virtual_tour',
-        label: 'Sanal Tur',
-        icon: Icons.video_camera_back_rounded,
-        shortcut: MainShellShortcut.openVirtualTourTab,
+        id: 'requests',
+        label: ProductLabels.requestCenter,
+        icon: Icons.assignment_outlined,
+        shortcut: MainShellShortcut.openRequestsTab,
       ),
     ]);
   } else if (isAdmin) {

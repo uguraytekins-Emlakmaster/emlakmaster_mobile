@@ -12,6 +12,7 @@ enum MainShellShortcut {
   openFavoritesTab,
   openMessagesTab,
   openVirtualTourTab,
+  openRequestsTab,
   openAccountTab,
 }
 

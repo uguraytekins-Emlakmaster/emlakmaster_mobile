@@ -23,7 +23,7 @@ void main() {
         'home',
         'favorites',
         'messages',
-        'virtual_tour',
+        'requests',
         'settings',
       }));
       // Dürüst omission: admin/danışman alanları YOK.

@@ -21,7 +21,7 @@ class _ClientShellPageState extends State<ClientShellPage> {
     AdaptiveNavItem(Icons.search_rounded, 'Keşfet'),
     AdaptiveNavItem(Icons.favorite_rounded, ProductLabels.favorites),
     AdaptiveNavItem(Icons.chat_rounded, ProductLabels.messages),
-    AdaptiveNavItem(Icons.video_camera_back_rounded, ProductLabels.virtualTour),
+    AdaptiveNavItem(Icons.assignment_outlined, ProductLabels.requestCenter),
     AdaptiveNavItem(Icons.person_rounded, ProductLabels.profile),
   ];
 
@@ -29,7 +29,7 @@ class _ClientShellPageState extends State<ClientShellPage> {
     ClientSearchPage(),
     ClientFavoritesPage(),
     ClientMessagesPage(),
-    ClientVirtualTourPage(),
+    ClientRequestCenterPage(),
     ClientProfilePage(),
   ];
 
@@ -37,7 +37,7 @@ class _ClientShellPageState extends State<ClientShellPage> {
     'search',
     'favorites',
     'messages',
-    'virtual_tour',
+    'requests',
     'profile',
   ];
 
@@ -59,7 +59,7 @@ class _ClientShellPageState extends State<ClientShellPage> {
               MainShellShortcut.openHomeTab: 0,
               MainShellShortcut.openFavoritesTab: 1,
               MainShellShortcut.openMessagesTab: 2,
-              MainShellShortcut.openVirtualTourTab: 3,
+              MainShellShortcut.openRequestsTab: 3,
               MainShellShortcut.openAccountTab: 4,
             },
           ),

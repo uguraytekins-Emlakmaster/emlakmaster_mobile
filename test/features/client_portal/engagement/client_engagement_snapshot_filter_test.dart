@@ -15,7 +15,7 @@ void main() {
       expect(snap.signedIn, isTrue);
       expect(snap.greetingName, 'Ada');
       expect(snap.summary.previewPortfolio, 8);
-      // discovery + message + tour + profile = 4 ready
+      // discovery + message + request_center + profile = 4 ready
       expect(snap.summary.activeChannels, 4);
       expect(snap.summary.profileReady, isTrue);
       // Dürüstlük: favori sunucuda tutulmuyor → 0

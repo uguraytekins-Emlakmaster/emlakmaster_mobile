@@ -32,7 +32,15 @@ extension EngagementFilterLabel on EngagementFilter {
 }
 
 /// Kanal türü (ikon + filtre eşlemesi).
-enum EngagementKind { discovery, favorites, message, request, tour, profile }
+enum EngagementKind {
+  discovery,
+  favorites,
+  message,
+  request,
+  tour,
+  requestCenter,
+  profile,
+}
 
 /// Renk tonu — widget katmanında tema rengine eşlenir.
 enum EngagementTone { accent, info, success, warning, neutral }
