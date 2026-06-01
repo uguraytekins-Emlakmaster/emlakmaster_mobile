@@ -20,6 +20,22 @@ Color dailyToneColor(AppThemeExtension ext, DailyTone tone) {
   }
 }
 
+/// Executive urgency — visible but not alarm-panel red stacking.
+Color dailyExecutiveTone(AppThemeExtension ext, DailyTone tone) {
+  switch (tone) {
+    case DailyTone.danger:
+      return Color.lerp(ext.warning, ext.danger, 0.42)!;
+    case DailyTone.warning:
+      return ext.warning.withValues(alpha: 0.88);
+    case DailyTone.info:
+      return ext.info.withValues(alpha: 0.9);
+    case DailyTone.success:
+      return ext.success.withValues(alpha: 0.9);
+    case DailyTone.neutral:
+      return ext.textSecondary.withValues(alpha: 0.82);
+  }
+}
+
 IconData _kindIcon(DailyKind kind) {
   switch (kind) {
     case DailyKind.task:
@@ -51,8 +67,10 @@ class ConsultantDailyRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final premium = PremiumThemeExtension.of(context);
-    final tone = dailyToneColor(ext, entry.tone);
     final emphasized = entry.needsAttention;
+    final tone = emphasized
+        ? dailyExecutiveTone(ext, entry.tone)
+        : dailyToneColor(ext, entry.tone);
     final narrow = MediaQuery.sizeOf(context).width < 360;
     final showRail = emphasized && !narrow;
 
@@ -69,30 +87,22 @@ class ConsultantDailyRow extends StatelessWidget {
           children: [
             if (showRail)
               Container(
-                width: 3,
-                height: ConsultantDailyTokens.rowIconSize + 4,
-                margin: const EdgeInsets.only(right: 10, top: 1),
+                width: 2,
+                height: ConsultantDailyTokens.rowIconSize + 2,
+                margin: const EdgeInsets.only(right: 10, top: 2),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      tone.withValues(alpha: 0.95),
-                      premium.champagneGold.withValues(alpha: 0.35),
-                    ],
-                  ),
+                  borderRadius: BorderRadius.circular(1),
+                  color: tone.withValues(alpha: 0.62),
                 ),
               ),
             Container(
               width: ConsultantDailyTokens.rowIconSize,
               height: ConsultantDailyTokens.rowIconSize,
               decoration: BoxDecoration(
-                color: tone.withValues(alpha: emphasized ? 0.2 : 0.14),
+                color: tone.withValues(alpha: emphasized ? 0.14 : 0.12),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: tone.withValues(alpha: emphasized ? 0.5 : 0.32),
-                  width: emphasized ? 1.2 : 1,
+                  color: tone.withValues(alpha: emphasized ? 0.32 : 0.24),
                 ),
               ),
               child: Column(
@@ -125,7 +135,11 @@ class ConsultantDailyRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Flexible(
-                        child: _StatusChip(label: entry.statusLabel, color: tone),
+                        child: _StatusChip(
+                          label: entry.statusLabel,
+                          color: tone,
+                          soft: emphasized,
+                        ),
                       ),
                     ],
                   ),
@@ -135,7 +149,7 @@ class ConsultantDailyRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: tone.withValues(alpha: 0.95),
+                      color: tone.withValues(alpha: emphasized ? 0.88 : 0.95),
                       fontSize: ConsultantDailyTokens.rowChipSize + 0.5,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.2,
@@ -174,10 +188,14 @@ class ConsultantDailyRow extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: ext.accent.withValues(alpha: 0.14),
+                            color: premium.champagneGold.withValues(
+                              alpha: emphasized ? 0.08 : 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: ext.accent.withValues(alpha: 0.38),
+                              color: premium.champagneGold.withValues(
+                                alpha: emphasized ? 0.22 : 0.28,
+                              ),
                             ),
                           ),
                           child: Row(
@@ -186,7 +204,9 @@ class ConsultantDailyRow extends StatelessWidget {
                               Icon(
                                 Icons.chevron_right_rounded,
                                 size: 14,
-                                color: ext.accent,
+                                color: premium.champagneGold.withValues(
+                                  alpha: emphasized ? 0.78 : 0.88,
+                                ),
                               ),
                               Flexible(
                                 child: Text(
@@ -194,7 +214,9 @@ class ConsultantDailyRow extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: ext.accent,
+                                    color: premium.champagneGold.withValues(
+                                      alpha: emphasized ? 0.78 : 0.88,
+                                    ),
                                     fontSize:
                                         ConsultantDailyTokens.rowChipSize + 1,
                                     fontWeight: FontWeight.w800,
@@ -245,16 +267,17 @@ class ConsultantDailyRow extends StatelessWidget {
           ConsultantDailyTokens.moduleGap,
         ),
         child: emphasized
-            ? ConsultantDashboardOpsShell(
-                emphasized: true,
+            ? ConsultantDashboardExecutiveSurface(
+                ambientStrength: 0.78,
+                radius: ConsultantDailyTokens.surfaceRadius,
                 child: Material(
                   color: Colors.transparent,
                   child: content,
                 ),
               )
             : ConsultantDashboardExecutiveSurface(
-                goldBorder: entry.isPartial,
-                ambientStrength: entry.isPartial ? 0.78 : 0.7,
+                ambientStrength: entry.isPartial ? 0.62 : 0.55,
+                radius: ConsultantDailyTokens.surfaceRadius,
                 child: Material(
                   color: Colors.transparent,
                   child: content,
@@ -266,19 +289,26 @@ class ConsultantDailyRow extends StatelessWidget {
 }
 
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.label, required this.color});
+  const _StatusChip({
+    required this.label,
+    required this.color,
+    this.soft = false,
+  });
 
   final String label;
   final Color color;
+  final bool soft;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
+        color: color.withValues(alpha: soft ? 0.1 : 0.14),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.42)),
+        border: Border.all(
+          color: color.withValues(alpha: soft ? 0.28 : 0.36),
+        ),
       ),
       child: Text(
         label,

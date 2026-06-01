@@ -10,14 +10,16 @@ abstract final class ConsultantDailyTokens {
   static const double sectionGap = AdminCommandTokens.sectionGap;
   static const double moduleGap = AdminCommandTokens.moduleGap;
 
+  static const double surfaceRadius = 16;
   static const double commandPanelPadding = 15;
   static const double commandEyebrowSize = 9;
-  static const double commandDeckDividerGap = 11;
+  static const double commandDeckDividerGap = 10;
+  static const double heroAvatarSize = 44;
+  static const double bentoCellHeight = 96;
 
-  static const double summaryStripHeight = 72;
-  static const double summaryCellAccentBar = 2.5;
-  static const double summaryCellValueSize = 17;
-  static const double summaryCellLabelSize = 9.5;
+  static const double bentoValueSize = 22;
+  static const double bentoValueSizeCompact = 17;
+  static const double summaryCellLabelSize = 9;
 
   static const double searchHeight = 40;
   static const double filterChipHeight = 34;
@@ -29,6 +31,6 @@ abstract final class ConsultantDailyTokens {
   static const double rowMetaSize = 10.5;
   static const double rowChipSize = 9.5;
 
-  static const double sectionAccentWidth = 3;
-  static const double sectionAccentHeight = 16;
+  static const double sectionAccentWidth = 2;
+  static const double sectionAccentHeight = 14;
 }

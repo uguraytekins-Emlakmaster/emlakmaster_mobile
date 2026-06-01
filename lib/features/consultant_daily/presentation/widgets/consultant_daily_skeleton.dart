@@ -28,12 +28,12 @@ class ConsultantDailySkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          block(178, r: 18),
+          block(228, r: ConsultantDailyTokens.surfaceRadius),
           const SizedBox(height: 14),
-          block(ConsultantDailyTokens.searchHeight + 58, r: 16),
+          block(ConsultantDailyTokens.searchHeight + 52, r: ConsultantDailyTokens.surfaceRadius),
           const SizedBox(height: 16),
           for (var i = 0; i < 5; i++) ...[
-            block(ConsultantDailyTokens.rowMinHeight + 6, r: 16),
+            block(ConsultantDailyTokens.rowMinHeight + 8, r: ConsultantDailyTokens.surfaceRadius),
             const SizedBox(height: ConsultantDailyTokens.moduleGap),
           ],
         ],
