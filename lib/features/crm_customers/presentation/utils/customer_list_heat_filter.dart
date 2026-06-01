@@ -36,6 +36,21 @@ bool customerMatchesHeatFilter(
   };
 }
 
+/// Tek kaynak: revenue band → leadTemperature → kural tabanlı crmHeat sırasıyla
+/// çözülen sıcaklık bandı. Yeni Müşterilerim workspace yüzeyi de bunu kullanır;
+/// böylece liste filtresi ile satır rozeti her zaman tutarlıdır.
+CustomerHeatLevel resolveCustomerHeatBand(
+  CustomerEntity entity,
+  CustomerListRowSnapshot row,
+) {
+  return switch (_resolvedBand(entity, row)) {
+    _HeatBand.hot => CustomerHeatLevel.hot,
+    _HeatBand.warm => CustomerHeatLevel.warm,
+    _HeatBand.cool => CustomerHeatLevel.cool,
+    _HeatBand.cold => CustomerHeatLevel.cold,
+  };
+}
+
 enum _HeatBand { hot, warm, cool, cold }
 
 _HeatBand _resolvedBand(CustomerEntity entity, CustomerListRowSnapshot row) {

@@ -24,9 +24,12 @@ class ShellTabBackBinding extends StatefulWidget {
 }
 
 class ShellTabBackBindingState extends State<ShellTabBackBinding> {
+  ShellTabBackHostState? _host;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _host = ShellTabBackHost.maybeOf(context);
     _publish();
   }
 
@@ -38,7 +41,7 @@ class ShellTabBackBindingState extends State<ShellTabBackBinding> {
 
   @override
   void dispose() {
-    ShellTabBackHost.maybeOf(context)?.detachBinding(this);
+    _host?.detachBinding(this);
     super.dispose();
   }
 
