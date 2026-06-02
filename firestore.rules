@@ -79,6 +79,13 @@ service cloud.firestore {
         : r == 'consultant' ? 'agent'
         : '';
     }
+    /// Ofis var VE başkası tarafından oluşturulmuş mu? (owner self-claim'i engellemek için).
+    /// Ofis yoksa (aynı batch'te yeni oluşturuluyorsa) get() null döner → false.
+    function officeExistsCreatedByOther(officeId) {
+      let o = get(/databases/$(database)/documents/offices/$(officeId));
+      return o != null && o.data != null
+        && o.data.get('createdBy', '') != request.auth.uid;
+    }
     function isActiveOfficeMember(officeId) {
       let m = officeMembershipDoc(request.auth.uid, officeId);
       return m != null && m.data != null
@@ -388,7 +395,13 @@ service cloud.firestore {
         && membershipId == officeMembershipId(request.resource.data.userId, request.resource.data.officeId)
         && request.resource.data.keys().hasAll(['userId', 'officeId', 'role', 'status'])
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.role in ['owner', 'admin', 'manager', 'consultant'];
+        && request.resource.data.role in ['owner', 'admin', 'manager', 'consultant']
+        // owner üyeliği yalnızca kendi oluşturduğun (veya aynı batch'te yeni) ofise eklenebilir;
+        // başkasının ofisine owner olarak girip yetki yükseltmeyi engeller.
+        && (
+          request.resource.data.role != 'owner'
+          || !officeExistsCreatedByOther(request.resource.data.officeId)
+        );
       allow update: if isManager()
         || (canManageOfficeMembers(resource.data.officeId)
             && request.resource.data.userId == resource.data.userId
