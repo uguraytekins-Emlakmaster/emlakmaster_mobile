@@ -47,6 +47,7 @@ class FollowUpWorkspaceHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const PremiumHeaderNavBar(),
           Row(
             children: [
               const BrandEmblem(

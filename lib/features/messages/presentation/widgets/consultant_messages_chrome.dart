@@ -31,7 +31,11 @@ class PremiumMessagesPageHeader extends StatelessWidget {
         ConsultantMessagesTokens.horizontal,
         ConsultantMessagesTokens.headerBottomGap,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const PremiumHeaderNavBar(),
+          Row(
         children: [
           const BrandEmblem(
             variant: BrandEmblemVariant.mini,
@@ -78,6 +82,8 @@ class PremiumMessagesPageHeader extends StatelessWidget {
             ),
           ],
           ...actions,
+            ],
+          ),
         ],
       ),
     );

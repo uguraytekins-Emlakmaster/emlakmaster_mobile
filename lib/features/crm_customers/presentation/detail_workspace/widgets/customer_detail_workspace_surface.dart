@@ -59,11 +59,10 @@ class _CustomerDetailWorkspaceSurfaceState
       ),
       error: (_, __) => CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: CustomerDetailWorkspaceHeader(
               title: 'Müşteri',
               subtitle: 'müşteri durumu ve sonraki adımlar',
-              onBack: () => context.pop(),
             ),
           ),
           SliverFillRemaining(
@@ -105,7 +104,6 @@ class _CustomerDetailWorkspaceSurfaceState
             child: CustomerDetailWorkspaceHeader(
               title: snapshot.displayName,
               subtitle: 'müşteri durumu ve sonraki adımlar',
-              onBack: () => context.pop(),
               coverageNote: snapshot.coverageNote,
             ),
           ),
@@ -136,7 +134,6 @@ class _CustomerDetailWorkspaceSurfaceState
               : 'müşteri durumu ve sonraki adımlar',
           dateChipLabel: snapshot.dateChipLabel,
           coverageNote: snapshot.coverageNote,
-          onBack: () => context.pop(),
           actions: [
             IconButton(
               tooltip: 'Yenile',

@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/consultant_customers_tokens.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/detail_workspace/customer_detail_workspace_types.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
 
 class CustomerDetailWorkspaceHeader extends StatelessWidget {
@@ -11,7 +12,6 @@ class CustomerDetailWorkspaceHeader extends StatelessWidget {
     required this.subtitle,
     this.dateChipLabel,
     this.coverageNote,
-    this.onBack,
     this.actions = const [],
   });
 
@@ -19,7 +19,6 @@ class CustomerDetailWorkspaceHeader extends StatelessWidget {
   final String subtitle;
   final String? dateChipLabel;
   final String? coverageNote;
-  final VoidCallback? onBack;
   final List<Widget> actions;
 
   @override
@@ -35,15 +34,9 @@ class CustomerDetailWorkspaceHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const PremiumHeaderNavBar(),
           Row(
             children: [
-              if (onBack != null)
-                IconButton(
-                  tooltip: 'Geri',
-                  onPressed: onBack,
-                  icon: Icon(Icons.arrow_back_rounded, color: ext.textPrimary),
-                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                ),
               const BrandEmblem(
                 variant: BrandEmblemVariant.mini,
                 size: ConsultantCustomersTokens.headerEmblemSize,

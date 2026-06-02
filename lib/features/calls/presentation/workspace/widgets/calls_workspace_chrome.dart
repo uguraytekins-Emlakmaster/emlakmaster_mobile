@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/consultant_calls_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/workspace/calls_workspace_types.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
 
 Color callToneColor(AppThemeExtension ext, CallTone tone) {
@@ -46,6 +47,7 @@ class CallsWorkspaceHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const PremiumHeaderNavBar(),
           Row(
             children: [
               const BrandEmblem(

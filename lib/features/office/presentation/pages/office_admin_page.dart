@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/features/admin_ofis_masasi/presentation/widge
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/office/domain/membership_status.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
+import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +33,7 @@ class OfficeAdminPage extends ConsumerWidget {
       return PremiumShellBackdrop(
         child: Scaffold(
           backgroundColor: Colors.transparent,
+          appBar: emlakAppBar(context, title: const Text('Ofis Masası')),
           body: SafeArea(
             child: OfisMasasiEmptyState(
               icon: Icons.apartment_outlined,
@@ -47,10 +49,11 @@ class OfficeAdminPage extends ConsumerWidget {
     }
 
     if (!canAdmin) {
-      return const PremiumShellBackdrop(
+      return PremiumShellBackdrop(
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          body: SafeArea(
+          appBar: emlakAppBar(context, title: const Text('Ofis Masası')),
+          body: const SafeArea(
             child: OfisMasasiEmptyState(
               icon: Icons.lock_outline_rounded,
               title: 'Bu alan için yetki gerekiyor',
