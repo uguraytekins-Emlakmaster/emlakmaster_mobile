@@ -19,7 +19,6 @@ import 'package:emlakmaster_mobile/features/analytics/presentation/providers/inv
 import 'package:emlakmaster_mobile/features/market_settings/domain/entities/market_settings_entity.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
@@ -58,8 +57,6 @@ class SettingsPage extends ConsumerWidget {
     final override = ref.watch(overrideRoleProvider);
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
     final isAdmin = FeaturePermission.seesAdminPanel(realRole);
-    final canBecomeAdmin = user != null &&
-        (realRole == AppRole.agent || realRole == AppRole.guest);
     final canManagePlatformIntegrations =
         ref.watch(canManagePlatformIntegrationsProvider);
     final flagsAsync = ref.watch(featureFlagsProvider);
@@ -125,56 +122,6 @@ class SettingsPage extends ConsumerWidget {
                       height: 1,
                       color: theme.dividerColor.withValues(alpha: 0.5)),
                   _AvatarSettingsRow(userId: user.uid),
-                ],
-                if (canBecomeAdmin) ...[
-                  Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.5)),
-                  ListTile(
-                    leading: Icon(Icons.admin_panel_settings_rounded,
-                        color: AppThemeExtension.of(context).accent),
-                    title: Text('Yönetim yetkisini aç',
-                        style: TextStyle(color: theme.colorScheme.onSurface)),
-                    subtitle: Text(
-                      'Rolünüz yönetim alanını açacak şekilde güncellenir.',
-                      style: TextStyle(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.7),
-                          fontSize: 11),
-                    ),
-                    onTap: () async {
-                      try {
-                        await UserRepository.setUserDoc(
-                          uid: user.uid,
-                          role: 'broker_owner',
-                          name: user.displayName,
-                          email: user.email,
-                        );
-                        ref.invalidate(userDocStreamProvider(user.uid));
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                  'Yönetim yetkisi açıldı. Alan yenileniyor...'),
-                              backgroundColor:
-                                  AppThemeExtension.of(context).accent,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(userFacingErrorMessage(e,
-                                  context: 'settings_admin_role')),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
                 ],
                 if (isAdmin) ...[
                   Divider(

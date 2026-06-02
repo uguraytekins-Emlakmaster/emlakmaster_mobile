@@ -40,7 +40,9 @@ class CommandCenterPage extends ConsumerStatefulWidget {
 class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
   @override
   Widget build(BuildContext context) {
-    final roleAsync = ref.watch(displayRoleProvider);
+    // Gerçek rol (override DEĞİL) ile yetki kontrolü: agent override ile
+    // çağrı merkezine giremez.
+    final roleAsync = ref.watch(currentRoleProvider);
     final premium = PremiumThemeExtension.of(context);
     return roleAsync.when(
       loading: () => PremiumShellBackdrop(

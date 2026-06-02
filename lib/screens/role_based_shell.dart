@@ -22,6 +22,26 @@ import 'admin_shell.dart';
 import 'client_shell.dart';
 import 'consultant_shell.dart';
 
+/// Çözülen kabuk türü (saf karar; widget'tan bağımsız test edilebilir).
+enum ResolvedShellKind { client, admin, consultant }
+
+/// Rol + panel tercihi → kabuk türü. SAF fonksiyon (yan etkisiz, test edilebilir).
+///
+/// Kurallar:
+/// - Yalnızca gerçek yönetici (seesAdminPanel) admin kabuğunu açabilir.
+/// - Yönetici, panel tercihi danışman ise danışman kabuğunu görebilir.
+/// - Yönetici OLMAYAN her rol, [preferConsultant] değerinden BAĞIMSIZ olarak
+///   daima danışman kabuğuna düşer (consultant → manager sızıntısı engellenir).
+ResolvedShellKind resolveShellKind(AppRole role, bool? preferConsultant) {
+  if (FeaturePermission.seesClientPanel(role)) return ResolvedShellKind.client;
+  if (FeaturePermission.seesAdminPanel(role)) {
+    return preferConsultant == true
+        ? ResolvedShellKind.consultant
+        : ResolvedShellKind.admin;
+  }
+  return ResolvedShellKind.consultant;
+}
+
 /// RBAC: Giriş sonrası rolüne göre Admin, Consultant veya Client paneli.
 /// - ADMIN: Komuta Merkezi, Komuta Odası, Çağrı Merkezi, raporlar, ekonomi, ayarlar.
 /// - CONSULTANT: Günüm, Müşterilerim, ilanlar, Akıllı Görüşme, takip, ayarlar.
@@ -184,15 +204,14 @@ class _RoleBasedShellSelectorState
     AppLogger.state('[startup][RoleShell] resolved shell for role=$role');
     StartupPerfMarkers.once('role_shell_resolved');
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
-    if (FeaturePermission.seesClientPanel(role)) return const ClientShellPage();
-    final forceConsultant = preferConsultant == true;
-    final forceAdmin = preferConsultant == false;
-    if (FeaturePermission.seesAdminPanel(role)) {
-      if (forceConsultant) return const ConsultantShellPage();
-      return const AdminShellPage();
+    switch (resolveShellKind(role, preferConsultant)) {
+      case ResolvedShellKind.client:
+        return const ClientShellPage();
+      case ResolvedShellKind.admin:
+        return const AdminShellPage();
+      case ResolvedShellKind.consultant:
+        return const ConsultantShellPage();
     }
-    if (forceAdmin) return const AdminShellPage();
-    return const ConsultantShellPage();
   }
 }
 

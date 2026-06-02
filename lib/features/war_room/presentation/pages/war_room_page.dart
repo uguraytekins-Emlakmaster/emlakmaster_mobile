@@ -17,7 +17,9 @@ class WarRoomPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roleAsync = ref.watch(displayRoleProvider);
+    // Gerçek rol (override DEĞİL): danışman görünümüne geçen yönetici hâlâ
+    // yetkilidir; ancak rol override'ı bir agent'ı buraya yükseltemez.
+    final roleAsync = ref.watch(currentRoleProvider);
     return roleAsync.when(
       loading: () {
         final premium = PremiumThemeExtension.of(context);

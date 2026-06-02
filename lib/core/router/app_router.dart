@@ -17,6 +17,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/role_selection_page.dart';
 import '../../screens/onboarding_page.dart';
+import '../../features/auth/domain/entities/app_role.dart';
 import '../../features/auth/domain/permissions/feature_permission.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/calls/call_screen.dart';
@@ -95,6 +96,25 @@ class AppRouter {
         path == routeNotifications ||
         path.startsWith('/customer/') ||
         path.startsWith('/admin/');
+  }
+
+  /// Yalnızca yönetici (isManagerTier) erişebilen yönetim panelleri ve /admin/*
+  /// rotaları. Router seviyesinde derinlemesine savunma — sayfa içi guard'larla
+  /// aynı tier yüklemini kullanır; danışman/agent bu alanlara giremez.
+  static bool isManagerOnlyPath(String path) {
+    return path == routeCommandCenter ||
+        path == routeWarRoom ||
+        path == routeBrokerCommand ||
+        path.startsWith('/admin/');
+  }
+
+  /// Yönetici-yalnız rota guard'ı (SAF, test edilebilir). [role] yönetici tier
+  /// değilse ve [path] yönetici-yalnız bir rota ise [routeHome] döndürür; aksi
+  /// halde null (yönlendirme yok). Gerçek rol (override DEĞİL) geçilmelidir.
+  static String? managerOnlyGuard(AppRole? role, String path) {
+    if (role == null) return null;
+    if (isManagerOnlyPath(path) && !role.isManagerTier) return routeHome;
+    return null;
   }
 
   static String _userFriendlyErrorMessage(Object? error) {
@@ -259,6 +279,11 @@ class AppRouter {
                   !FeaturePermission.canManagePlatformIntegrations(role)) {
                 return routeHome;
               }
+              // Yönetici paneli rotaları (Komuta Merkezi / War Room / Broker
+              // Command / /admin/*) yalnızca isManagerTier içindir. Gerçek rol
+              // (override DEĞİL) esas alınır; agent buradan home'a döner.
+              final managerGuard = managerOnlyGuard(role, path);
+              if (managerGuard != null) return managerGuard;
             }
           }
           if (user != null &&
