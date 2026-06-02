@@ -63,11 +63,13 @@ class ConsultantDailyCommandDeck extends StatelessWidget {
     final narrow = MediaQuery.sizeOf(context).width < 360;
     final metrics = _cockpitMetrics(ext, summary);
     final pressure = _pressureRatio(summary);
-    final urgent = summary.overdue + summary.hotCustomers;
+    // Üstteki sinyal göstergesi, alttaki "ÖNCELİKLİ" bölümüyle birebir
+    // tutarlı olsun diye doğrudan öncelikli (needsAttention) sayısını kullanır.
+    final urgent = urgentSignals;
     final statusChip = narrow
         ? (urgent > 0 ? '$urgent acil' : 'Sakin')
         : (urgent > 0
-            ? '$urgent acil sinyal · $urgentSignals öncelikli'
+            ? '$urgent öncelikli sinyal'
             : 'Operasyon sakin · düşük baskı');
 
     return Padding(
@@ -80,7 +82,6 @@ class ConsultantDailyCommandDeck extends StatelessWidget {
       child: ConsultantDashboardExecutiveSurface(
         goldRail: true,
         ambientStrength: 0.86,
-        radius: ConsultantDailyTokens.surfaceRadius,
         padding: EdgeInsets.all(
           narrow ? 11 : ConsultantDailyTokens.commandPanelPadding,
         ),
@@ -325,7 +326,7 @@ class ConsultantDailyCommandDeck extends StatelessWidget {
         _CockpitMetricSpec(
           value: '${s.activeTasks}',
           label: 'Görev',
-          story: s.overdue > 0 ? '${s.overdue} geciken görev' : 'Açık görevler',
+          story: 'Açık görev kuyruğu',
           icon: Icons.checklist_rounded,
           accent: ext.accent,
         ),
@@ -804,7 +805,6 @@ class ConsultantDailyControlsPanel extends StatelessWidget {
       ),
       child: ConsultantDashboardExecutiveSurface(
         ambientStrength: 0.52,
-        radius: ConsultantDailyTokens.surfaceRadius,
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1163,7 +1163,6 @@ class ConsultantDailyInlineNote extends StatelessWidget {
       ),
       child: ConsultantDashboardExecutiveSurface(
         ambientStrength: 0.48,
-        radius: ConsultantDailyTokens.surfaceRadius,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1220,7 +1219,6 @@ class ConsultantDailyEmptyState extends StatelessWidget {
         child: ConsultantDashboardExecutiveSurface(
           goldRail: true,
           ambientStrength: 0.72,
-          radius: ConsultantDailyTokens.surfaceRadius,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,

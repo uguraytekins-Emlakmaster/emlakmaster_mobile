@@ -269,7 +269,6 @@ class ConsultantDailyRow extends StatelessWidget {
         child: emphasized
             ? ConsultantDashboardExecutiveSurface(
                 ambientStrength: 0.78,
-                radius: ConsultantDailyTokens.surfaceRadius,
                 child: Material(
                   color: Colors.transparent,
                   child: content,
@@ -277,7 +276,6 @@ class ConsultantDailyRow extends StatelessWidget {
               )
             : ConsultantDashboardExecutiveSurface(
                 ambientStrength: entry.isPartial ? 0.62 : 0.55,
-                radius: ConsultantDailyTokens.surfaceRadius,
                 child: Material(
                   color: Colors.transparent,
                   child: content,

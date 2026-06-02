@@ -10,6 +10,7 @@ import 'package:emlakmaster_mobile/features/consultant_daily/presentation/utils/
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/widgets/consultant_daily_chrome.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/widgets/consultant_daily_row.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/widgets/consultant_daily_skeleton.dart';
+import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_quick_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -125,6 +126,7 @@ class _ConsultantDailySurfaceState
             subtitle: subtitle,
             coverageNote: snapshot.coverageNote,
             summary: snapshot.summary,
+            urgentSignals: priority.length,
           ),
         ),
         SliverToBoxAdapter(
@@ -205,6 +207,27 @@ class _ConsultantDailySurfaceState
               itemCount: filtered.length,
               itemBuilder: (context, i) => _row(filtered[i]),
             ),
+        ],
+
+        // ——— Hızlı erişim (dürüst navigasyon kısayolları) ———
+        if (showLanes) ...[
+          const SliverToBoxAdapter(
+            child: ConsultantDailySectionHeader(
+              title: 'Hızlı erişim',
+              note: 'Tek dokunuşla müşteri, görev, ilan ve mesaj akışına geç',
+            ),
+          ),
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                ConsultantDailyTokens.horizontal,
+                0,
+                ConsultantDailyTokens.horizontal,
+                ConsultantDailyTokens.moduleGap,
+              ),
+              child: ConsultantDashboardQuickNavGrid(),
+            ),
+          ),
         ],
 
         // ——— Dürüst kapsam notu ———

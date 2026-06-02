@@ -102,13 +102,17 @@ CallsWorkspaceSnapshot computeCallsWorkspaceSnapshot(
     );
   }
 
-  rows.sort((a, b) {
-    final r = a.sortRank.compareTo(b.sortRank);
-    if (r != 0) return r;
-    return b.createdAtMs.compareTo(a.createdAtMs);
-  });
+  // Ana "Son aramalar" listesi kesin kronolojik — en yeni çağrı en üstte.
+  rows.sort((a, b) => b.createdAtMs.compareTo(a.createdAtMs));
 
-  final attentionRows = rows.where((r) => r.needsCallback).toList(growable: false);
+  // "Geri dönülmesi gerekenler" şeridi aciliyet önceliğini korur
+  // (callback+cevapsız önce), eşit aciliyette en yeni üstte.
+  final attentionRows = rows.where((r) => r.needsCallback).toList()
+    ..sort((a, b) {
+      final r = a.sortRank.compareTo(b.sortRank);
+      if (r != 0) return r;
+      return b.createdAtMs.compareTo(a.createdAtMs);
+    });
 
   final summary = CallsWorkspaceSummary(
     today: rows.where((r) => r.isToday).length,

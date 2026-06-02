@@ -125,19 +125,51 @@ void main() {
       expect(snap.attentionRows.first.recordKey, 'cb');
     });
 
-    test('dikkat-önce sıralama — callback üstte', () {
+    test('tarih sıralaması — en yeni çağrı üstte', () {
       final snap = computeCallsWorkspaceSnapshot(
         [
-          _input(recordKey: 'old_done', outcomeCode: 'reached'),
           _input(
-            recordKey: 'cb',
-            outcomeCode: 'callback_scheduled',
-            outcomeLabel: 'Tekrar aranacak',
+            recordKey: 'older',
+            createdAt: _now.subtract(const Duration(days: 3)),
+          ),
+          _input(recordKey: 'newest', createdAt: _now),
+          _input(
+            recordKey: 'mid',
+            createdAt: _now.subtract(const Duration(days: 1)),
           ),
         ],
         now: _now,
       );
-      expect(snap.rows.first.recordKey, 'cb');
+      expect(
+        snap.rows.map((r) => r.recordKey).toList(),
+        ['newest', 'mid', 'older'],
+      );
+    });
+
+    test('callback şeridi aciliyet önceliğini korur', () {
+      final snap = computeCallsWorkspaceSnapshot(
+        [
+          _input(recordKey: 'recent_reached', createdAt: _now),
+          _input(
+            recordKey: 'old_cb',
+            createdAt: _now.subtract(const Duration(days: 2)),
+            outcomeCode: 'callback_scheduled',
+            outcomeLabel: 'Tekrar aranacak',
+          ),
+          _input(
+            recordKey: 'old_miss_cb',
+            createdAt: _now.subtract(const Duration(days: 3)),
+            outcomeCode: 'missed',
+            outcomeLabel: 'Cevapsız',
+            hasCaptureCompleted: false,
+          ),
+        ],
+        now: _now,
+      );
+      // Ana liste kronolojik: en yeni çağrı üstte.
+      expect(snap.rows.first.recordKey, 'recent_reached');
+      // Şerit aciliyet sırası: callback + cevapsız (rank 0) en üstte.
+      expect(snap.attentionRows.first.recordKey, 'old_miss_cb');
     });
 
     test('dateChip bugün kayıt varsa gösterilir', () {
