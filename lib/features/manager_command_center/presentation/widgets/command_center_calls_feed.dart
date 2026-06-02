@@ -11,6 +11,7 @@ import 'package:emlakmaster_mobile/features/manager_command_center/presentation/
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_feed_filters.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_calls_display_provider.dart';
+import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_calls_extra_page_provider.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_stream_providers.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_kpi_period.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_list_sort.dart';
@@ -237,10 +238,47 @@ class _CommandCenterCallsFeedState extends ConsumerState<CommandCenterCallsFeed>
           slivers: [
             ...chrome,
             ...scopeSliversBuilder(context, feedData, listBottomInset),
+            if (ref.watch(commandCenterCallsCanLoadMoreProvider(callsScope)))
+              SliverToBoxAdapter(
+                child: _CommandCenterLoadMore(scope: callsScope),
+              ),
           ],
           ),
         );
       },
+    );
+  }
+}
+
+/// "Daha fazla yükle" — canlı pencere üstündeki eski çağrı sayfalarını getirir.
+class _CommandCenterLoadMore extends ConsumerWidget {
+  const _CommandCenterLoadMore({required this.scope});
+
+  final CommandCenterCallsScope scope;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final extra = ref.watch(commandCenterCallsExtraPageProvider(scope));
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: Center(
+        child: extra.loading
+            ? const Padding(
+                padding: EdgeInsets.all(8),
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.4),
+                ),
+              )
+            : OutlinedButton.icon(
+                onPressed: () => ref
+                    .read(commandCenterCallsExtraPageProvider(scope).notifier)
+                    .loadMore(),
+                icon: const Icon(Icons.expand_more_rounded, size: 18),
+                label: const Text('Daha fazla çağrı yükle'),
+              ),
+      ),
     );
   }
 }

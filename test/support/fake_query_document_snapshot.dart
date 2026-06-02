@@ -8,6 +8,28 @@ QueryDocumentSnapshot<Map<String, dynamic>> fakeQueryDocumentSnapshot(
 ) =>
     _FakeQueryDocumentSnapshot(id, data);
 
+/// Test double — yalnızca [docs] gereken senaryolar için sahte QuerySnapshot.
+QuerySnapshot<Map<String, dynamic>> fakeQuerySnapshot(
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+) =>
+    _FakeQuerySnapshot(docs);
+
+class _FakeQuerySnapshot implements QuerySnapshot<Map<String, dynamic>> {
+  _FakeQuerySnapshot(this.docs);
+
+  @override
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
+
+  @override
+  List<DocumentChange<Map<String, dynamic>>> get docChanges => const [];
+
+  @override
+  SnapshotMetadata get metadata => throw UnimplementedError();
+
+  @override
+  int get size => docs.length;
+}
+
 class _FakeQueryDocumentSnapshot
     implements QueryDocumentSnapshot<Map<String, dynamic>> {
   _FakeQueryDocumentSnapshot(this.id, this._data);

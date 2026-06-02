@@ -16,6 +16,7 @@ import 'package:emlakmaster_mobile/features/manager_command_center/presentation/
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_feed_filters.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_scope_config.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/models/command_center_view_scope.dart';
+import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/super_admin_gate_provider.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/widgets/command_center_calls_feed.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/widgets/command_center_list_slivers.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
@@ -55,7 +56,10 @@ class _CommandCenterPageState extends ConsumerState<CommandCenterPage> {
         message: 'Yetki bilgisi alınamadı. Oturumu yenileyip yeniden deneyin.',
       ),
       data: (role) {
-        if (!FeaturePermission.canViewAllCalls(role)) {
+        // Yönetici tier (broker_owner, general_manager, office_manager, team_lead,
+        // super_admin) komuta merkezini açar; ofis yöneticileri yalnızca KENDİ
+        // ofislerinin çağrılarını görür (sorgu officeId'ye göre kısıtlı).
+        if (!role.isManagerTier && !FeaturePermission.canViewAllCalls(role)) {
           return const UnauthorizedScreen(
             message:
                 'Bu alan yalnızca yönetim ve operasyon ekiplerine açıktır.',
@@ -154,6 +158,82 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
     }
     setState(() => _searchController.clear());
     return true;
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  /// Gizli süper admin kapısı (başlığa uzun bas). Gerçek yetki Firestore
+  /// kurallarındadır; kod yalnızca UX kapısıdır.
+  Future<void> _openSuperAdminGate() async {
+    if (ref.read(superAdminAllOfficesGateProvider)) {
+      ref.read(superAdminAllOfficesGateProvider.notifier).state = false;
+      _snack('Ofis görünümüne dönüldü.');
+      return;
+    }
+    final isSuper = ref.read(isSuperAdminProvider);
+    final hasCode = isSuper ? await SuperAdminGateService.hasCode() : false;
+    if (!mounted) return;
+    if (isSuper && !hasCode) {
+      final code = await _codeDialog(
+        title: 'Süper admin kodu belirle',
+        hint: 'Yeni erişim kodu',
+        confirmLabel: 'Kaydet',
+      );
+      if (code == null || code.trim().isEmpty || !mounted) return;
+      await SuperAdminGateService.setCode(code);
+      if (!mounted) return;
+      ref.read(superAdminAllOfficesGateProvider.notifier).state = true;
+      _snack('Kod kaydedildi · Tüm ofisler görünümü açıldı.');
+      return;
+    }
+    final code = await _codeDialog(
+      title: 'Tüm ofisler erişim kodu',
+      hint: 'Erişim kodu',
+      confirmLabel: 'Aç',
+    );
+    if (code == null || !mounted) return;
+    final ok = await SuperAdminGateService.verify(code);
+    if (!mounted) return;
+    if (ok && isSuper) {
+      ref.read(superAdminAllOfficesGateProvider.notifier).state = true;
+      _snack('Tüm ofisler görünümü açıldı (süper admin).');
+    } else {
+      _snack('Kod doğrulanamadı veya hesabınızın süper admin yetkisi yok.');
+    }
+  }
+
+  Future<String?> _codeDialog({
+    required String title,
+    required String hint,
+    required String confirmLabel,
+  }) {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          obscureText: true,
+          decoration: InputDecoration(hintText: hint),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
   }
 
   bool _handleCloseFilters() {
@@ -294,10 +374,15 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
           bottom: false,
           child: Column(
             children: [
-              PremiumCallCenterPageHeader(
+              GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onLongPress: _openSuperAdminGate,
+                child: PremiumCallCenterPageHeader(
                 compact: true,
                 title: ProductLabels.callRecords,
-                subtitle: 'CRM çağrı merkezi',
+                subtitle: ref.watch(superAdminAllOfficesGateProvider)
+                    ? 'Tüm ofisler · süper admin'
+                    : 'CRM çağrı merkezi',
                 actions: [
                   PopupMenuButton<String>(
                     icon: Icon(Icons.more_horiz_rounded, color: premium.champagneGold),
@@ -357,6 +442,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                     ],
                   ),
                 ],
+              ),
               ),
               Expanded(
                 child: CommandCenterCallsFeed(

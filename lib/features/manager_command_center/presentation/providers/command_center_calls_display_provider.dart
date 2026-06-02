@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/utils/consultant_calls_doc_merge.dart';
+import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_calls_extra_page_provider.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/command_center_stream_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,13 +30,20 @@ final commandCenterCallsDisplayProvider = Provider.autoDispose.family<
     CommandCenterCallsScope>((ref, scope) {
   final streamAsync = ref.watch(commandCenterCallsStreamProvider(scope));
   final stale = ref.watch(commandCenterCallsStaleCacheProvider(scope));
+  final extra = ref.watch(commandCenterCallsExtraPageProvider(scope));
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> merge(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> base,
+  ) =>
+      mergeConsultantCallDocs(base, extra.extraDocs);
+
   return streamAsync.when(
-    data: (snap) => AsyncData(snap.docs),
+    data: (snap) => AsyncData(merge(snap.docs)),
     loading: () => stale != null && stale.isNotEmpty
-        ? AsyncData(stale)
+        ? AsyncData(merge(stale))
         : const AsyncLoading(),
     error: (e, st) => stale != null && stale.isNotEmpty
-        ? AsyncData(stale)
+        ? AsyncData(merge(stale))
         : AsyncError(e, st),
   );
 });

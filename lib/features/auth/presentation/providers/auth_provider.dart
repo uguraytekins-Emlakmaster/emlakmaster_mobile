@@ -318,6 +318,18 @@ final currentRoleOrNullProvider = Provider<AppRole?>((ref) {
   return asyncRole.valueOrNull;
 });
 
+/// Gerçek (global) super_admin tespiti — `users.role` esas alınır, ofis üyelik
+/// rolü veya override DEĞİL. "Tüm ofisler" kapısı ve güvenlik kararları için.
+final isSuperAdminProvider = Provider.autoDispose<bool>((ref) {
+  final uid =
+      ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid)) ?? '';
+  if (uid.isEmpty) return false;
+  final role = ref.watch(
+    userDocStreamProvider(uid).select((a) => a.valueOrNull?.role),
+  );
+  return AppRole.fromFirestoreRole(role) == AppRole.superAdmin;
+});
+
 /// Yönetici modu: superAdmin/broker test için geçici rol değiştirme. null = gerçek rol kullan.
 final overrideRoleProvider = StateProvider<AppRole?>((ref) => null);
 

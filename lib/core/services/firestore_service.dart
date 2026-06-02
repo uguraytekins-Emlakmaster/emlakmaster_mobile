@@ -403,6 +403,42 @@ class FirestoreService {
   /// Danışman çağrı geçmişi — advisorId + agentId stream başına limit.
   static const int callsListPageSize = 60;
 
+  /// Komuta merkezi canlı çağrı penceresi (ofis veya tüm ofisler). Bu limitin
+  /// üstündeki eski kayıtlar "Daha fazla yükle" sayfalamasıyla getirilir.
+  static const int callsLiveStreamLimit = 500;
+
+  /// Komuta merkezi sayfa boyutu ("Daha fazla yükle" başına).
+  static const int callsCommandPageSize = 200;
+
+  /// advisorId → officeId çözümü için hafif önbellek (çağrı yazımında tek okuma).
+  static final Map<String, String> _advisorOfficeIdCache = {};
+
+  /// Çağrı dokümanına yazılacak `officeId`'yi çözer.
+  ///
+  /// [provided] doluysa onu kullanır; aksi halde danışmanın `users/{advisorId}.officeId`
+  /// alanını okur (önbellekli). Çözülemezse `''` döner — çağrı oluşturma asla bloklanmaz.
+  static Future<String> _officeIdForAdvisor(
+    String advisorId, [
+    String provided = '',
+  ]) async {
+    final trimmed = provided.trim();
+    if (trimmed.isNotEmpty) return trimmed;
+    if (advisorId.isEmpty) return '';
+    final cached = _advisorOfficeIdCache[advisorId];
+    if (cached != null) return cached;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(advisorId)
+          .get();
+      final oid = (snap.data()?['officeId'] as String? ?? '').trim();
+      if (oid.isNotEmpty) _advisorOfficeIdCache[advisorId] = oid;
+      return oid;
+    } catch (_) {
+      return '';
+    }
+  }
+
   /// Danışmana atanan müşteriler, en yeni kayıt önce. Üretim CRM listesi bunu kullanır.
   static Stream<QuerySnapshot<Map<String, dynamic>>>
       customersByAssignedAgentStream(
@@ -649,7 +685,8 @@ class FirestoreService {
     return ref.id;
   }
 
-  /// calls koleksiyonu (liste için); yönetici paneli vb. En yeni önce.
+  /// calls koleksiyonu (liste için); SADECE super_admin "tüm ofisler" görünümü.
+  /// Filtresiz olduğu için kurallar yalnızca super_admin'e izin verir. En yeni önce.
   static Stream<QuerySnapshot<Map<String, dynamic>>> callsStream() async* {
     await ensureInitialized();
     if (!_initialized) {
@@ -659,8 +696,107 @@ class FirestoreService {
     yield* FirebaseFirestore.instance
         .collection('calls')
         .orderBy('createdAt', descending: true)
-        .limit(500)
+        .limit(callsLiveStreamLimit)
         .snapshots();
+  }
+
+  /// Ofise göre çağrı akışı (yönetici komuta merkezi — kendi ofisi). En yeni önce.
+  ///
+  /// Composite index: `calls`: officeId ASC, createdAt DESC.
+  /// Kurallar: ofis yöneticisi `resource.data.officeId == users.officeId` ise okuyabilir.
+  static Stream<QuerySnapshot<Map<String, dynamic>>> callsByOfficeStream(
+    String officeId,
+  ) async* {
+    await ensureInitialized();
+    if (!_initialized || officeId.isEmpty) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection('calls')
+        .where('officeId', isEqualTo: officeId)
+        .orderBy('createdAt', descending: true)
+        .limit(callsLiveStreamLimit)
+        .snapshots();
+  }
+
+  /// Süper admin "tüm ofisler": filtresiz eski sayfa (Daha fazla yükle).
+  static Future<QuerySnapshot<Map<String, dynamic>>> fetchAllCallsPage({
+    required DocumentSnapshot<Map<String, dynamic>> startAfter,
+  }) async {
+    await ensureInitialized();
+    if (!_initialized) {
+      return FirebaseFirestore.instance.collection('calls').limit(0).get();
+    }
+    return FirebaseFirestore.instance
+        .collection('calls')
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(startAfter)
+        .limit(callsCommandPageSize)
+        .get();
+  }
+
+  /// Ofis görünümü: eski sayfa (Daha fazla yükle).
+  static Future<QuerySnapshot<Map<String, dynamic>>> fetchCallsByOfficePage(
+    String officeId, {
+    required DocumentSnapshot<Map<String, dynamic>> startAfter,
+  }) async {
+    await ensureInitialized();
+    if (!_initialized || officeId.isEmpty) {
+      return FirebaseFirestore.instance.collection('calls').limit(0).get();
+    }
+    return FirebaseFirestore.instance
+        .collection('calls')
+        .where('officeId', isEqualTo: officeId)
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(startAfter)
+        .limit(callsCommandPageSize)
+        .get();
+  }
+
+  /// Ofise göre `handoff_pending` — sistem telefonuna devredildi, sonuç girilmedi.
+  ///
+  /// Composite index: `calls`: officeId ASC, outcome ASC, createdAt DESC.
+  static Stream<QuerySnapshot<Map<String, dynamic>>>
+      callsHandoffPendingByOfficeStream(String officeId) async* {
+    await ensureInitialized();
+    if (!_initialized || officeId.isEmpty) {
+      yield* const Stream.empty();
+      return;
+    }
+    yield* FirebaseFirestore.instance
+        .collection(AppConstants.colCalls)
+        .where('officeId', isEqualTo: officeId)
+        .where('outcome', isEqualTo: 'handoff_pending')
+        .orderBy('createdAt', descending: true)
+        .limit(200)
+        .snapshots();
+  }
+
+  /// `app_config/superAdminGate.codeSha256` — süper admin "tüm ofisler" kapı kodu (hash).
+  /// Kurallar: yalnızca super_admin okuyabilir/yazabilir. Yoksa null döner.
+  static Future<String?> fetchSuperAdminGateHash() async {
+    await ensureInitialized();
+    if (!_initialized) return null;
+    final snap = await FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('superAdminGate')
+        .get();
+    final v = snap.data()?['codeSha256'];
+    return v is String && v.isNotEmpty ? v : null;
+  }
+
+  /// Süper admin kapı kodu hash'ini yazar (yalnızca super_admin — kurallarla korunur).
+  static Future<void> setSuperAdminGateHash(String codeSha256) async {
+    await ensureInitialized();
+    _requireFirestoreReady();
+    await FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('superAdminGate')
+        .set({
+      'codeSha256': codeSha256,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   /// `handoff_pending` — sistem telefonuna devredildi, danışman henüz sonuç girmedi.
@@ -750,8 +886,9 @@ class FirestoreService {
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
     final dt = DateTime.fromMillisecondsSinceEpoch(timestampMillis);
     final ts = Timestamp.fromDate(dt);
+    final resolvedOfficeId = await _officeIdForAdvisor(advisorId);
     await col.doc(documentId).set({
-      'officeId': '',
+      'officeId': resolvedOfficeId,
       'advisorId': advisorId,
       'agentId': advisorId,
       'direction': direction,
@@ -780,8 +917,9 @@ class FirestoreService {
     _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
     final now = FieldValue.serverTimestamp();
+    final resolvedOfficeId = await _officeIdForAdvisor(advisorId, officeId);
     final doc = await col.add({
-      'officeId': officeId,
+      'officeId': resolvedOfficeId,
       'advisorId': advisorId,
       'agentId': advisorId,
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
@@ -943,8 +1081,9 @@ class FirestoreService {
     }
     final now = FieldValue.serverTimestamp();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final resolvedOfficeId = await _officeIdForAdvisor(advisorId);
     final doc = await col.add({
-      'officeId': '',
+      'officeId': resolvedOfficeId,
       'advisorId': advisorId,
       'agentId': advisorId,
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
@@ -989,8 +1128,9 @@ class FirestoreService {
     _requireFirestoreReady();
     final now = FieldValue.serverTimestamp();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final resolvedOfficeId = await _officeIdForAdvisor(advisorId);
     await col.doc(documentId).set({
-      'officeId': '',
+      'officeId': resolvedOfficeId,
       'advisorId': advisorId,
       'agentId': advisorId,
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
@@ -1071,8 +1211,9 @@ class FirestoreService {
     _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
     final now = FieldValue.serverTimestamp();
+    final resolvedOfficeId = await _officeIdForAdvisor(advisorId, officeId);
     await col.add({
-      'officeId': officeId,
+      'officeId': resolvedOfficeId,
       'advisorId': advisorId,
       'agentId': advisorId,
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,

@@ -257,6 +257,16 @@ service cloud.firestore {
         || canAccessAgentDocOfficeWide(agentId)
         || isSuperAdminUser();
     }
+    /// Çağrı dokümanı ofis-geneli okuma: çağrının officeId'si okuyucunun ofisiyle
+    /// aynı VE okuyucu ofis yöneticisi (users.role veya aktif üyelik). Çok-ofiste
+    /// `where('officeId'==oid)` sorgusu bu dalla güvenli `list` olur.
+    function canReadCallOfficeWide(callOfficeId) {
+      let oid = userOfficeId(request.auth.uid);
+      return callOfficeId is string && callOfficeId.size() > 0
+        && oid is string && oid.size() > 0
+        && callOfficeId == oid
+        && isOfficeManagerForIntelligence(oid);
+    }
     function advisorIdFieldMatchesOnCreate(advisorId) {
       return advisorId == request.auth.uid
         || canAccessAgentDocOfficeWide(advisorId)
@@ -464,9 +474,19 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     // calls: danışman sadece kendi agentId'li çağrıları görür; yönetici hepsini
     // -------------------------------------------------------------------------
+    // Uygulama yapılandırması: yalnızca super_admin (örn. süper admin "tüm ofisler"
+    // kapı kodu hash'i). İstemcideki kod yalnızca UX kapısıdır; asıl yetki burada.
+    match /app_config/{docId} {
+      allow read: if isSignedIn() && isSuperAdminUser();
+      allow write: if isSignedIn() && isSuperAdminUser();
+    }
+
     match /calls/{docId} {
       allow read: if isSignedIn()
-        && canAccessAgentOwnedDoc(resource.data.agentId);
+        && (
+          canAccessAgentOwnedDoc(resource.data.agentId)
+          || canReadCallOfficeWide(resource.data.get('officeId', ''))
+        );
       allow create: if isSignedIn()
         && canCreateAgentOwnedDoc(request.resource.data.agentId);
       allow update: if isSignedIn()
