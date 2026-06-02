@@ -584,17 +584,19 @@ abstract final class ConsultantTaskFlows {
     showPremiumModalBottomSheet<void>(
       context: context,
       builder: (ctx) {
+        // Klavye boşluğu (viewInsets.bottom) shell tarafından zaten eklenir
+        // (showPremiumScrollableBottomSheet). Burada tekrar eklemek çift sayım
+        // → taşma yaratır; bu yüzden yalnızca sabit alt boşluk bırakılır.
         final viewInsets = MediaQuery.viewInsetsOf(ctx);
-        final bottomPad = viewInsets.bottom + DesignTokens.space6;
-        return AnimatedPadding(
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.only(bottom: bottomPad),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
-              child: Column(
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              DesignTokens.space5,
+              0,
+              DesignTokens.space5,
+              DesignTokens.space6,
+            ),
+            child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -851,8 +853,7 @@ abstract final class ConsultantTaskFlows {
                 ],
               ),
             ),
-          ),
-        );
+          );
       },
     );
   }

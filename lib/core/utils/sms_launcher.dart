@@ -30,17 +30,26 @@ class SmsLauncher {
   }
 
   /// Toplu SMS açar. Seçili numaralara mesaj gönderilir. Başarısızsa false.
+  ///
+  /// `canLaunchUrl` ile ön-kontrol yapılmaz: iOS'ta `sms` şeması
+  /// `LSApplicationQueriesSchemes`'te değilse `canLaunchUrl` `false` döner ve
+  /// hiç denenmeden başarısız olur. Bunun yerine doğrudan `launchUrl` denenir,
+  /// başarısızlıkta `platformDefault` ile yedeklenir.
   static Future<bool> openBulkSms(List<String> numbers, {String body = ''}) async {
     final uriStr = uriForNumbers(numbers, body: body);
     if (uriStr.isEmpty) return false;
+    final uri = Uri.parse(uriStr);
     try {
-      final uri = Uri.parse(uriStr);
-      if (await canLaunchUrl(uri)) {
-        return await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        return true;
       }
-      return false;
     } catch (e, st) {
-      if (kDebugMode) debugPrint('SmsLauncher: $e $st');
+      if (kDebugMode) debugPrint('SmsLauncher.external: $e $st');
+    }
+    try {
+      return await launchUrl(uri);
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('SmsLauncher.platformDefault: $e $st');
       return false;
     }
   }

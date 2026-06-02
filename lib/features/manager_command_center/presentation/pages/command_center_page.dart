@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
+import 'package:emlakmaster_mobile/core/utils/csv_share.dart';
 import 'package:flutter/services.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -300,7 +301,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                 actions: [
                   PopupMenuButton<String>(
                     icon: Icon(Icons.more_horiz_rounded, color: premium.champagneGold),
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       if (value == 'csv') {
                         final docs = _lastFilteredDocs;
                         if (docs == null || docs.isEmpty) {
@@ -311,11 +312,27 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                           return;
                         }
                         final csv = callsToCsv(docs);
-                        Clipboard.setData(ClipboardData(text: csv));
-                        showCallsSurfaceAck(
-                          context,
-                          'CSV panoya hazır · ${docs.length} satır',
+                        final count = docs.length;
+                        final ok = await shareCsvAsFile(
+                          csv: csv,
+                          fileName: timestampedCsvName('gorusme_kayitlari'),
+                          subject: 'Görüşme kayıtları · $count satır',
                         );
+                        if (!context.mounted) return;
+                        if (ok) {
+                          showCallsSurfaceAck(
+                            context,
+                            'CSV dosyası paylaşıma hazır · $count satır',
+                          );
+                        } else {
+                          // Paylaşım sayfası açılamazsa metni panoya kopyala.
+                          await Clipboard.setData(ClipboardData(text: csv));
+                          if (!context.mounted) return;
+                          showCallsSurfaceAck(
+                            context,
+                            'Dosya paylaşılamadı; CSV panoya kopyalandı · $count satır',
+                          );
+                        }
                       } else if (value == 'search') {
                         _searchFocusNode.requestFocus();
                       }

@@ -97,6 +97,14 @@ class _PostCallQuickCaptureBodyState
   }
 
   Future<void> _save() async {
+    // Çift kayıt önleme: kayıt sürerken veya bu capture zaten kaydedildiyse
+    // ikinci bir çağrı dökümanı oluşturma (sheet kapanmadıysa buton "Kapat"a döner).
+    if (_saving || _saved) {
+      AppLogger.forensic(
+        'quick_capture_sheet: EARLY_RETURN already saved/saving — çift kayıt önlendi',
+      );
+      return;
+    }
     final code = _outcomeCode;
     AppLogger.forensic(
       'quick_capture_sheet: _save entered saving=$_saving outcome=${code ?? '-'}',
@@ -264,6 +272,15 @@ class _PostCallQuickCaptureBodyState
     );
   }
 
+  void _closeAfterSaved() {
+    final root = Navigator.of(context, rootNavigator: true);
+    if (root.canPop()) {
+      root.pop();
+    } else if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+  }
+
   bool get _captureDirty =>
       !_saved &&
       !_saving &&
@@ -276,7 +293,11 @@ class _PostCallQuickCaptureBodyState
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final saveOnPressed = _saving ? null : _onSavePressed;
+    // Kayıt sürerken pasif; kayıt tamamlanıp sheet açık kaldıysa buton "Kapat" olur
+    // (yeniden kaydet → çift çağrı kaydı engellenir).
+    final saveOnPressed = _saving
+        ? null
+        : (_saved ? _closeAfterSaved : _onSavePressed);
     final buttonLogKey = [
       saveOnPressed == null ? 'disabled' : 'enabled',
       'saving=$_saving',
@@ -374,9 +395,11 @@ class _PostCallQuickCaptureBodyState
                             ),
                           )
                         : Text(
-                            _outcomeCode == null
-                                ? 'Kaydet'
-                                : 'Sonucu kaydet',
+                            _saved
+                                ? 'Kapat'
+                                : (_outcomeCode == null
+                                    ? 'Kaydet'
+                                    : 'Sonucu kaydet'),
                             style: AppTypography.primaryButton(context),
                           ),
                   ),
