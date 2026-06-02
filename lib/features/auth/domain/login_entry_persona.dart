@@ -1,5 +1,22 @@
 import 'entities/app_role.dart';
 
+/// Self-service kayıtta manuel **seçilebilir** roller (ofis-öncesi başlangıç rolü).
+///
+/// GÜVENLİK: Yönetici/admin kademesi (broker_owner, general_manager,
+/// office_manager, team_lead) self-service ile ATANAMAZ. Yönetici olmak için:
+/// - kendi ofisini OLUŞTUR (→ broker_owner), ya da
+/// - bir ofis DAVETİNİ kabul et (→ manager/admin/consultant).
+/// Bu akışlar yetkiyi sunucu tarafında doğrular.
+///
+/// Tek istisna: sistemde hiç kullanıcı yoksa ([isFoundingUser]) kurucu, ilk
+/// sahibi/super_admin'i bootstrap edebilir.
+List<AppRole> selfServiceSelectableRoles({required bool isFoundingUser}) {
+  if (isFoundingUser) {
+    return AppRole.values.where((r) => r != AppRole.guest).toList();
+  }
+  return const [AppRole.agent];
+}
+
 /// İlk giriş / giriş ekranında kullanıcının seçtiği operasyon yolu.
 enum LoginEntryPersona {
   manager,

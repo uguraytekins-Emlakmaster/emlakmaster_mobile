@@ -101,13 +101,10 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
     }
   }
 
-  static List<AppRole> _selectableRoles(bool includeSuperAdmin) {
-    final list = AppRole.values
-        .where((r) => r != AppRole.guest)
-        .toList();
-    if (includeSuperAdmin) return list;
-    return list.where((r) => r != AppRole.superAdmin).toList();
-  }
+  // includeSuperAdmin == sistemde hiç kullanıcı yok (kurucu). Self-service kullanıcı
+  // yönetici/admin rolünü kendi atayamaz; yönetici statüsü ofis oluşturma/davetle gelir.
+  static List<AppRole> _selectableRoles(bool includeSuperAdmin) =>
+      selfServiceSelectableRoles(isFoundingUser: includeSuperAdmin);
 
   void _applyPanelPreferenceForRole(AppRole role) {
     ref.read(preferredConsultantPanelProvider.notifier).state =
@@ -348,6 +345,12 @@ class _RoleListBody extends StatelessWidget {
         ? ext.brandPrimary
         : Color.lerp(ext.brandPrimary, ext.info, 0.45)!;
 
+    // Yönetici persona ama yalnızca `agent` self-service ile alınabiliyor (non-founder):
+    // yöneticilik ofis oluşturma/davetle gelir. Onları dürüstçe ofis kurmaya yönlendir.
+    final managerViaOffice = persona == LoginEntryPersona.manager &&
+        roles.length == 1 &&
+        roles.first == AppRole.agent;
+
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
@@ -400,7 +403,9 @@ class _RoleListBody extends StatelessWidget {
                 ),
                 const SizedBox(height: DesignTokens.space2),
                 Text(
-                  'Size en yakın rolü seçin. Panel ve yetkiler buna göre açılır.',
+                  managerViaOffice
+                      ? 'Yöneticilik için kendi ofisinizi oluşturun ya da bir ofis davetini kullanın. Aşağıdan başlayın; sonraki adımda ofisinizi kurarak ofis sahibi (broker) olursunuz.'
+                      : 'Size en yakın rolü seçin. Panel ve yetkiler buna göre açılır.',
                   style: TextStyle(
                     color: ext.textSecondary,
                     fontSize: DesignTokens.fontSizeSm,
@@ -420,9 +425,15 @@ class _RoleListBody extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _RoleCard(
-                    label: role.label,
-                    subtitle: subtitleForRole(role),
-                    icon: iconForRole(role),
+                    label: managerViaOffice
+                        ? 'Başla ve ofisini oluştur'
+                        : role.label,
+                    subtitle: managerViaOffice
+                        ? 'Sonraki adımda ofisinizi kurun; ofis sahibi (broker) olursunuz.'
+                        : subtitleForRole(role),
+                    icon: managerViaOffice
+                        ? Icons.add_business_rounded
+                        : iconForRole(role),
                     accent: accent,
                     onTap: submitting ? null : () => onRoleSelected(role),
                   ),
