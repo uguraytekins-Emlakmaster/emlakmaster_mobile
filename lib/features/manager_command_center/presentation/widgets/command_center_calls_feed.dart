@@ -176,7 +176,8 @@ class _CommandCenterCallsFeedState extends ConsumerState<CommandCenterCallsFeed>
             slivers: [
               ...chrome,
               SliverFillRemaining(
-                hasScrollBody: false,
+                // EmptyState kendi SingleChildScrollView'ını taşır; varsayılan
+                // hasScrollBody:true LayoutBuilder intrinsic ölçüm çökmesini önler.
                 child: hasAnyDocs
                     ? EmptyState(
                         compact: true,

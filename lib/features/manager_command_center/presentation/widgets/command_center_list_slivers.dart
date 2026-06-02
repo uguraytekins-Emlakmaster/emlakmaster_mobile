@@ -304,7 +304,8 @@ abstract final class CommandCenterListSlivers {
     if (entries.isEmpty) {
       return [
         SliverFillRemaining(
-          hasScrollBody: false,
+          // EmptyState kendi SingleChildScrollView'ını taşır; varsayılan
+          // hasScrollBody:true LayoutBuilder intrinsic ölçüm çökmesini önler.
           child: EmptyState(
             compact: true,
             anchorAboveCenter: true,
@@ -408,7 +409,8 @@ abstract final class CommandCenterListSlivers {
     if (entries.isEmpty) {
       return [
         SliverFillRemaining(
-          hasScrollBody: false,
+          // EmptyState kendi SingleChildScrollView'ını taşır; varsayılan
+          // hasScrollBody:true LayoutBuilder intrinsic ölçüm çökmesini önler.
           child: EmptyState(
             compact: true,
             anchorAboveCenter: true,
