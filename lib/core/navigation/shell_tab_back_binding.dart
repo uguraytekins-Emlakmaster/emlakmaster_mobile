@@ -64,13 +64,18 @@ class ShellTabBackBindingState extends State<ShellTabBackBinding> {
     return false;
   }
 
+  /// Yalnızca gerçek bir [EditableText] (klavye) odaktayken true.
+  ///
+  /// `primaryFocus.hasFocus`, metin alanı olmasa bile rotanın FocusScope'u
+  /// odakta olduğu için neredeyse her zaman true döner; sadece `hasFocus`
+  /// kontrolü geri basışını sessizce yutar. Bu yüzden odağın bir
+  /// [EditableText] olup olmadığını doğrularız.
   bool _dismissKeyboard() {
     final focus = FocusManager.instance.primaryFocus;
-    if (focus != null && focus.hasFocus) {
-      focus.unfocus();
-      return true;
-    }
-    return false;
+    if (focus == null || !focus.hasFocus) return false;
+    if (focus.context?.widget is! EditableText) return false;
+    focus.unfocus();
+    return true;
   }
 
   @override
