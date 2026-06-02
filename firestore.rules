@@ -72,6 +72,10 @@ service cloud.firestore {
     function officeMembershipDoc(uid, officeId) {
       return get(/databases/$(database)/documents/office_memberships/$(officeMembershipId(uid, officeId)));
     }
+    /// Commit SONRASI üyelik (aynı batch/transaction'da oluşturulan üyeliği de görür).
+    function officeMembershipDocAfter(uid, officeId) {
+      return getAfter(/databases/$(database)/documents/office_memberships/$(officeMembershipId(uid, officeId)));
+    }
     function officeRoleToUserRole(r) {
       return r == 'owner' ? 'broker_owner'
         : r == 'admin' ? 'office_manager'
@@ -79,12 +83,38 @@ service cloud.firestore {
         : r == 'consultant' ? 'agent'
         : '';
     }
-    /// Ofis var VE başkası tarafından oluşturulmuş mu? (owner self-claim'i engellemek için).
-    /// Ofis yoksa (aynı batch'te yeni oluşturuluyorsa) get() null döner → false.
-    function officeExistsCreatedByOther(officeId) {
-      let o = get(/databases/$(database)/documents/offices/$(officeId));
+    /// Ofis (commit SONRASI durum) bu kullanıcı tarafından mı oluşturulmuş?
+    /// getAfter() aynı batch'te oluşturulan ofisi de görür → createOfficeAsOwner çalışır;
+    /// başkasının (mevcut) ofisine owner üyeliği eklemeye çalışınca createdBy != uid → reddedilir.
+    function officeCreatedBySelfAfter(officeId) {
+      let o = getAfter(/databases/$(database)/documents/offices/$(officeId));
       return o != null && o.data != null
-        && o.data.get('createdBy', '') != request.auth.uid;
+        && o.data.get('createdBy', '') == request.auth.uid;
+    }
+    /// Non-owner üyelik (admin/manager/consultant) yalnızca GEÇERLİ bir ofis davetiyle
+    /// (office_invites) oluşturulabilir. Üyelik dokümanı `inviteId` ile daveti referanslar;
+    /// davet aktif olmalı, aynı ofise ait olmalı, rol eşleşmeli ve limit dolmamalı olmalı.
+    function validOfficeInviteForMembership() {
+      let invId = request.resource.data.get('inviteId', '');
+      let inv = invId == '' ? null
+        : get(/databases/$(database)/documents/office_invites/$(invId));
+      return invId is string && invId.size() > 0
+        && inv != null && inv.data != null
+        && inv.data.get('isActive', false) == true
+        && inv.data.get('officeId', '') == request.resource.data.officeId
+        && inv.data.get('roleToAssign', '') == request.resource.data.role
+        && inv.data.get('usedCount', 0) < inv.data.get('maxUses', 0);
+    }
+    /// users.create sırasında ayrıcalıklı rol yalnızca bu kullanıcının e-postasına ait
+    /// bekleyen bir yönetici daveti (invites/{email}) varsa atanabilir. Davet dokümanı
+    /// e-posta ile anahtarlanır; oluşturma `isManager()` ile korunur (yetki yükseltme önlenir).
+    function pendingEmailInviteGrants(role) {
+      let email = request.auth.token.get('email', '');
+      let inv = email == '' ? null
+        : get(/databases/$(database)/documents/invites/$(email));
+      return email != '' && inv != null && inv.data != null
+        && inv.data.get('email', '') == email
+        && inv.data.get('role', '') == role;
     }
     function isActiveOfficeMember(officeId) {
       let m = officeMembershipDoc(request.auth.uid, officeId);
@@ -147,7 +177,10 @@ service cloud.firestore {
     function userOfficeJoinAllowed() {
       let oid = request.resource.data.officeId;
       let old = resource.data.get('officeId', '');
-      let m = officeMembershipDoc(request.auth.uid, oid);
+      // getAfter: createOfficeAsOwner / joinOfficeWithInviteCode aynı batch'te üyeliği
+      // oluşturur; rol senkronu o üyeliğe bağlanır. Üyelik create kuralı (owner = ofis
+      // sahipliği, non-owner = geçerli davet) zaten yetki yükseltmeyi engeller.
+      let m = officeMembershipDocAfter(request.auth.uid, oid);
       return isOwner(request.auth.uid)
         && (old == '' || old == null)
         && oid is string && oid.size() > 0
@@ -299,9 +332,16 @@ service cloud.firestore {
         || isManager()
         || canReadColleagueUserForOfficeIntelligence(userId)
       );
+      // Self-create yalnızca güvenli rol (agent/guest) ile; ayrıcalıklı rol ancak
+      // e-postaya ait bekleyen yönetici daveti (invites/{email}) ile atanabilir.
+      // Yeni bir kurulumda ilk super_admin Konsol/Admin SDK ile çekirdeklenir.
       allow create: if isOwner(userId)
         && request.resource.data.uid == userId
-        && request.resource.data.keys().hasAll(['uid', 'role']);
+        && request.resource.data.keys().hasAll(['uid', 'role'])
+        && (
+          request.resource.data.role in ['agent', 'guest']
+          || pendingEmailInviteGrants(request.resource.data.role)
+        );
       allow update: if isManager()
         || (isOwner(userId) && userOwnerUpdatePreservesPrivileges() && userPreservesOfficeId())
         || (isOwner(userId) && userOfficeJoinAllowed())
@@ -396,11 +436,13 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['userId', 'officeId', 'role', 'status'])
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.role in ['owner', 'admin', 'manager', 'consultant']
-        // owner üyeliği yalnızca kendi oluşturduğun (veya aynı batch'te yeni) ofise eklenebilir;
-        // başkasının ofisine owner olarak girip yetki yükseltmeyi engeller.
+        // Yetki yükseltmeye karşı: owner üyeliği yalnızca KENDİ oluşturduğun ofise
+        // (createOfficeAsOwner), non-owner üyelik ise yalnızca GEÇERLİ bir ofis davetiyle
+        // (joinOfficeWithInviteCode) eklenebilir. Davetsiz manager/admin/consultant reddedilir.
         && (
-          request.resource.data.role != 'owner'
-          || !officeExistsCreatedByOther(request.resource.data.officeId)
+          request.resource.data.role == 'owner'
+            ? officeCreatedBySelfAfter(request.resource.data.officeId)
+            : validOfficeInviteForMembership()
         );
       allow update: if isManager()
         || (canManageOfficeMembers(resource.data.officeId)

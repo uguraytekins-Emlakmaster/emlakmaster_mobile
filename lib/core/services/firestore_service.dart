@@ -277,11 +277,14 @@ class FirestoreService {
   }) async {
     await ensureInitialized();
     if (!_initialized) throw StateError('Firestore not initialized');
+    final normalizedEmail = email.trim().toLowerCase();
     final col = FirebaseFirestore.instance.collection(AppConstants.colInvites);
-    final ref = col.doc();
+    // Doküman, e-posta ile anahtarlanır; Firestore kuralları users.create sırasında
+    // ayrıcalıklı rolü `invites/{email}` üzerinden doğrulayabilir (yetki yükseltme önlenir).
+    final ref = col.doc(normalizedEmail);
     final now = FieldValue.serverTimestamp();
     await ref.set({
-      'email': email.trim().toLowerCase(),
+      'email': normalizedEmail,
       'role': role,
       'createdBy': createdBy,
       if (teamId != null && teamId.isNotEmpty) 'teamId': teamId,
@@ -297,13 +300,13 @@ class FirestoreService {
     await ensureInitialized();
     if (!_initialized || email.trim().isEmpty) return null;
     final normalized = email.trim().toLowerCase();
-    final snap = await FirebaseFirestore.instance
+    // E-posta ile anahtarlanmış doküman (kural-doğrulanabilir). Eski rastgele-id
+    // davetler bu şemada bulunmaz; yöneticinin daveti yeniden oluşturması gerekir.
+    final doc = await FirebaseFirestore.instance
         .collection(AppConstants.colInvites)
-        .where('email', isEqualTo: normalized)
-        .limit(1)
+        .doc(normalized)
         .get();
-    if (snap.docs.isEmpty) return null;
-    final doc = snap.docs.first;
+    if (!doc.exists) return null;
     return InviteDoc.fromFirestore(doc.id, doc.data());
   }
 

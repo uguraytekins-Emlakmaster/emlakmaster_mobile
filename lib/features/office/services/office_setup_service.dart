@@ -174,6 +174,7 @@ class OfficeSetupService {
         userId: uid,
         role: invite.roleToAssign,
         status: MembershipStatus.active,
+        inviteId: prelim.id,
       );
       // Davetle yeniden katılım: removed / invited önceki kayıtlar üzerine yazılır.
       tx.set(

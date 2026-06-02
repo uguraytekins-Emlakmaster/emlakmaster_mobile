@@ -1,0 +1,17 @@
+{
+  "name": "emlakmaster-rules-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Firestore security rules unit tests (escalation-proofing).",
+  "type": "module",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project emlak-master \"node run.js\""
+  },
+  "dependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.0.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.35.1"
+  }
+}
