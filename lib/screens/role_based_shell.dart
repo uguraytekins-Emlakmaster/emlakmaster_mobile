@@ -19,11 +19,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'admin_shell.dart';
-import 'client_shell.dart';
 import 'consultant_shell.dart';
 
 /// Çözülen kabuk türü (saf karar; widget'tan bağımsız test edilebilir).
-enum ResolvedShellKind { client, admin, consultant }
+enum ResolvedShellKind { admin, consultant }
 
 /// Rol + panel tercihi → kabuk türü. SAF fonksiyon (yan etkisiz, test edilebilir).
 ///
@@ -33,7 +32,6 @@ enum ResolvedShellKind { client, admin, consultant }
 /// - Yönetici OLMAYAN her rol, [preferConsultant] değerinden BAĞIMSIZ olarak
 ///   daima danışman kabuğuna düşer (consultant → manager sızıntısı engellenir).
 ResolvedShellKind resolveShellKind(AppRole role, bool? preferConsultant) {
-  if (FeaturePermission.seesClientPanel(role)) return ResolvedShellKind.client;
   if (FeaturePermission.seesAdminPanel(role)) {
     return preferConsultant == true
         ? ResolvedShellKind.consultant
@@ -205,8 +203,6 @@ class _RoleBasedShellSelectorState
     StartupPerfMarkers.once('role_shell_resolved');
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
     switch (resolveShellKind(role, preferConsultant)) {
-      case ResolvedShellKind.client:
-        return const ClientShellPage();
       case ResolvedShellKind.admin:
         return const AdminShellPage();
       case ResolvedShellKind.consultant:

@@ -35,9 +35,6 @@ class _AccountSessionSheet extends ConsumerWidget {
   const _AccountSessionSheet();
 
   static String _activePanelLabel(WidgetRef ref, AppRole role) {
-    if (FeaturePermission.seesClientPanel(role)) {
-      return ProductLabels.clientWorkspace;
-    }
     if (!FeaturePermission.seesAdminPanel(role)) {
       return ProductLabels.consultantWorkspace;
     }
@@ -67,7 +64,6 @@ class _AccountSessionSheet extends ConsumerWidget {
         : ref.watch(
             userDocStreamProvider(uid).select((a) => a.valueOrNull?.avatarUrl));
     final isAdmin = FeaturePermission.seesAdminPanel(role);
-    final isClient = FeaturePermission.seesClientPanel(role);
     final versionLabel = AppConstants.appVersion.split('+').first;
 
     return PremiumScrollableBottomSheetShell(
@@ -157,14 +153,12 @@ class _AccountSessionSheet extends ConsumerWidget {
               label: 'Profili aç',
               onTap: () => _goAccountTab(context, ref),
             ),
-            if (!isClient) ...[
-              const SizedBox(height: DesignTokens.space2),
-              _SheetAction(
-                icon: Icons.settings_outlined,
-                label: 'Ayarlar',
-                onTap: () => _goAccountTab(context, ref),
-              ),
-            ],
+            const SizedBox(height: DesignTokens.space2),
+            _SheetAction(
+              icon: Icons.settings_outlined,
+              label: 'Ayarlar',
+              onTap: () => _goAccountTab(context, ref),
+            ),
             if (isAdmin) ...[
               const SizedBox(height: DesignTokens.space2),
               _SheetAction(

@@ -174,7 +174,7 @@ class _CommandPaletteContentState
                   const SizedBox(height: DesignTokens.space4),
                 ],
                 if (_query.length >= 2 &&
-                    !FeaturePermission.seesClientPanel(role)) ...[
+                    FeaturePermission.canViewAllCustomers(role)) ...[
                   Text('Müşteriler',
                       style: AppTypography.sectionLabel(context)
                           .copyWith(color: ext.foregroundMuted)),

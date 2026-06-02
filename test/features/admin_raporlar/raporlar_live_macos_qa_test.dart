@@ -77,7 +77,7 @@ RaporlarSnapshot _qaSnapshot() => computeRaporlarSnapshot(
     );
 
 RaporlarSnapshot _emptySnapshot() =>
-    computeRaporlarSnapshot(role: AppRole.client);
+    computeRaporlarSnapshot(role: AppRole.guest);
 
 Future<void> _savePng(WidgetTester tester, Key key, String name) async {
   final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(key));

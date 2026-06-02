@@ -8,10 +8,6 @@ enum AppRole {
   officeManager('office_manager', 'Ofis Müdürü'),
   teamLead('team_lead', 'Team Lead'),
   agent('agent', 'Danışman'),
-  operations('operations', 'Operasyon Personeli'),
-  financeInvestor('finance_investor', 'Finans / Yatırım'),
-  investorPortal('investor_portal', 'Yatırımcı Portal'),
-  client('client', 'Müşteri'),
   guest('guest', 'Demo Kullanıcı');
 
   const AppRole(this.id, this.label);
@@ -26,7 +22,11 @@ enum AppRole {
     );
   }
 
-  /// Firestore users.role değerinden AppRole. (broker→broker_owner, investor→investor_portal)
+  /// Firestore users.role değerinden AppRole.
+  ///
+  /// Güvenlik: kaldırılmış eski roller (operations, finance_investor,
+  /// investor_portal, client) ve bilinmeyen değerler en düşük yetkili
+  /// [AppRole.guest]'e düşürülür — eski bir kayıt asla yetki yükseltemez.
   static AppRole fromFirestoreRole(String? role) {
     if (role == null || role.isEmpty) return AppRole.guest;
     final n = role.trim().toLowerCase();
@@ -48,17 +48,15 @@ enum AppRole {
         return AppRole.teamLead;
       case 'agent':
         return AppRole.agent;
+      // Kaldırılan eski roller → guest (yetki yükseltme imkânsız).
       case 'operations':
-        return AppRole.operations;
       case 'finance_investor':
       case 'financeinvestor':
-        return AppRole.financeInvestor;
       case 'investor_portal':
       case 'investor':
-        return AppRole.investorPortal;
       case 'client':
       case 'müşteri':
-        return AppRole.client;
+        return AppRole.guest;
       default:
         return AppRole.values.firstWhere(
           (r) => r.id == n || r.id.replaceAll('_', '') == n.replaceAll('_', ''),
@@ -71,19 +69,14 @@ enum AppRole {
       this == superAdmin || this == brokerOwner || this == generalManager;
   bool get isManagerTier =>
       isAdminTier || this == officeManager || this == teamLead;
+
   /// Tüm çağrıları görebilme (Call Center, global call logs).
   /// İş gereği: sadece brokerOwner ve superAdmin seviyeleri.
   bool get canViewAllCalls => this == superAdmin || this == brokerOwner;
-  bool get canViewInvestorIntelligence =>
-      isAdminTier || this == financeInvestor || this == investorPortal;
 
-  /// Müşteri portalı: arama, favoriler, mesajlar, sanal tur.
-  bool get isClientTier => this == AppRole.client;
+  /// Yatırımcı istihbarat paneli — yalnızca yönetici kademesi.
+  bool get canViewInvestorIntelligence => isAdminTier;
 
-  /// Danışman veya danışman-benzeri (agent, guest, investor vb.).
-  bool get isConsultantTier =>
-      this == agent ||
-      this == guest ||
-      this == financeInvestor ||
-      this == investorPortal;
+  /// Danışman veya danışman-benzeri (agent, guest).
+  bool get isConsultantTier => this == agent || this == guest;
 }

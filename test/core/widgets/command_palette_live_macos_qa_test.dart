@@ -148,19 +148,17 @@ void main() {
     await _savePng(tester, key, '02_consultant_shortcuts_live.png');
   });
 
-  testWidgets('live macOS QA — müşteri rol farkındalığı gerçek metin',
+  testWidgets('live macOS QA — danışman rol farkındalığı gerçek metin',
       (tester) async {
     if (!Platform.isMacOS && defaultTargetPlatform != TargetPlatform.macOS) {
       return;
     }
-    const key = Key('palette_client_live');
-    await _openPalette(tester, captureKey: key, role: AppRole.client);
+    const key = Key('palette_agent_live');
+    await _openPalette(tester, captureKey: key, role: AppRole.agent);
 
-    expect(find.text(ProductLabels.favorites), findsOneWidget);
-    expect(find.text(ProductLabels.requestCenter), findsOneWidget);
+    expect(find.text(ProductLabels.messageCenter), findsOneWidget);
     expect(find.text(ProductLabels.officeDesk), findsNothing);
-    expect(find.text(ProductLabels.messageCenter), findsNothing);
     expect(tester.takeException(), isNull);
-    await _savePng(tester, key, '03_client_role_live.png');
+    await _savePng(tester, key, '03_agent_role_live.png');
   });
 }

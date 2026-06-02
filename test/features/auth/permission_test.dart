@@ -20,12 +20,6 @@ void main() {
       test('guest cannot view all calls', () {
         expect(FeaturePermission.canViewAllCalls(AppRole.guest), isFalse);
       });
-      test('investorPortal cannot view all calls', () {
-        expect(FeaturePermission.canViewAllCalls(AppRole.investorPortal), isFalse);
-      });
-      test('operations cannot view all calls (sadece broker)', () {
-        expect(FeaturePermission.canViewAllCalls(AppRole.operations), isFalse);
-      });
     });
 
     group('canManageSettings', () {
@@ -52,9 +46,6 @@ void main() {
       });
       test('agent cannot manage consultants', () {
         expect(FeaturePermission.canManageConsultants(AppRole.agent), isFalse);
-      });
-      test('operations can manage consultants', () {
-        expect(FeaturePermission.canManageConsultants(AppRole.operations), isTrue);
       });
     });
 
@@ -90,9 +81,6 @@ void main() {
     test('broker maps to brokerOwner', () {
       expect(AppRole.fromFirestoreRole('broker'), AppRole.brokerOwner);
     });
-    test('investor maps to investorPortal', () {
-      expect(AppRole.fromFirestoreRole('investor'), AppRole.investorPortal);
-    });
     test('super_admin maps to superAdmin', () {
       expect(AppRole.fromFirestoreRole('super_admin'), AppRole.superAdmin);
     });
@@ -101,6 +89,27 @@ void main() {
     });
     test('null returns guest', () {
       expect(AppRole.fromFirestoreRole(null), AppRole.guest);
+    });
+
+    // Güvenlik regresyonu: kaldırılan eski roller ASLA yetki yükseltemez;
+    // hepsi en düşük yetkili guest'e düşmeli.
+    test('kaldırılan eski roller guest\'e düşer (escalation-proof)', () {
+      const legacy = <String>[
+        'operations',
+        'finance_investor',
+        'financeinvestor',
+        'investor_portal',
+        'investor',
+        'client',
+        'müşteri',
+      ];
+      for (final raw in legacy) {
+        expect(AppRole.fromFirestoreRole(raw), AppRole.guest,
+            reason: '$raw guest\'e map\'lenmeli');
+      }
+    });
+    test('bilinmeyen rol guest\'e düşer', () {
+      expect(AppRole.fromFirestoreRole('cto_supreme'), AppRole.guest);
     });
   });
 }

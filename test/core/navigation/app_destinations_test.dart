@@ -17,23 +17,6 @@ const _knownRoutes = <String>{
 
 void main() {
   group('appDestinationsFor — rol farkındalığı', () {
-    test('müşteri (client) yalnızca müşteri yüzeylerini görür', () {
-      final ids = _ids(appDestinationsFor(AppRole.client));
-      expect(ids, containsAll(<String>{
-        'home',
-        'favorites',
-        'messages',
-        'requests',
-        'settings',
-      }));
-      // Dürüst omission: admin/danışman alanları YOK.
-      expect(ids, isNot(contains('office_admin')));
-      expect(ids, isNot(contains('command_center')));
-      expect(ids, isNot(contains('war_room')));
-      expect(ids, isNot(contains('message_center')));
-      expect(ids, isNot(contains('my_customers')));
-    });
-
     test('danışman (agent) kendi kabuk sekmelerini görür', () {
       final ids = _ids(appDestinationsFor(AppRole.agent));
       expect(ids, containsAll(<String>{
@@ -79,13 +62,6 @@ void main() {
       // isManagerTier → war_room var.
       expect(ids, contains('war_room'));
       expect(ids, contains('office_admin'));
-    });
-
-    test('operations admin paneli görür, çağrı merkezi görmez', () {
-      final ids = _ids(appDestinationsFor(AppRole.operations));
-      expect(ids, contains('office_admin'));
-      expect(ids, isNot(contains('command_center')));
-      expect(ids, contains('war_room'));
     });
   });
 
@@ -133,7 +109,7 @@ void main() {
     });
 
     test('eşleşmeyen sorgu boş döner', () {
-      final all = appDestinationsFor(AppRole.client);
+      final all = appDestinationsFor(AppRole.agent);
       expect(filterDestinations(all, 'zzzz_no_match_qq'), isEmpty);
     });
   });

@@ -21,7 +21,7 @@ void main() {
   });
 
   test('clear removes cached role', () async {
-    await StartupRoleCache.instance.persist('uid-1', AppRole.client);
+    await StartupRoleCache.instance.persist('uid-1', AppRole.agent);
     await StartupRoleCache.instance.clear();
     await StartupRoleCache.instance.warmUp();
     expect(StartupRoleCache.instance.roleForUser('uid-1'), isNull);

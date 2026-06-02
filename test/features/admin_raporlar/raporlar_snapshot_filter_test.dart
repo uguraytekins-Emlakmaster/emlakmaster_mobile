@@ -32,8 +32,8 @@ void main() {
       expect(snap.isEmpty, isFalse);
     });
 
-    test('client için hiçbir yönetici rapor yüzeyi yok', () {
-      final snap = computeRaporlarSnapshot(role: AppRole.client);
+    test('guest için hiçbir yönetici rapor yüzeyi yok', () {
+      final snap = computeRaporlarSnapshot(role: AppRole.guest);
       expect(snap.entries, isEmpty);
       expect(snap.isEmpty, isTrue);
     });

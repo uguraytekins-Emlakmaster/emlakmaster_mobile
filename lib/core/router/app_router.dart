@@ -85,19 +85,6 @@ class AppRouter {
   static const String routeMessageCenter = '/messages';
   static const String routeMessageThread = '/messages/thread';
 
-  static bool _isStaffOnlyPath(String path) {
-    return path == routeCall ||
-        path.startsWith('$routeCall/') ||
-        path == routeCommandCenter ||
-        path == routeWarRoom ||
-        path == routeBrokerCommand ||
-        path == routePipeline ||
-        path == routeResurrection ||
-        path == routeNotifications ||
-        path.startsWith('/customer/') ||
-        path.startsWith('/admin/');
-  }
-
   /// Yalnızca yönetici (isManagerTier) erişebilen yönetim panelleri ve /admin/*
   /// rotaları. Router seviyesinde derinlemesine savunma — sayfa içi guard'larla
   /// aynı tier yüklemini kullanır; danışman/agent bu alanlara giremez.
@@ -319,13 +306,6 @@ class AppRouter {
               unawaited(PendingDeepLinkStore.save(path));
             }
             return routeLogin;
-          }
-          final role = ref.read(displayRoleOrNullProvider);
-          if (user != null &&
-              role != null &&
-              role.isClientTier &&
-              _isStaffOnlyPath(path)) {
-            return routeHome;
           }
           return null;
         } catch (e, st) {

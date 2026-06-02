@@ -183,39 +183,6 @@ void main() {
     expect(find.text('Ofis yönetimi'), findsNothing);
   });
 
-  testWidgets('Command palette shows client actions without staff tabs', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          displayRoleOrNullProvider.overrideWith((ref) => AppRole.client),
-        ],
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => Center(
-                child: ElevatedButton(
-                  onPressed: () => CommandPalette.show(context),
-                  child: const Text('Open'),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Favoriler'), findsOneWidget);
-    expect(find.text('Mesajlar'), findsOneWidget);
-    expect(find.text('Müşteriler'), findsNothing);
-    expect(find.text('Ofis yönetimi'), findsNothing);
-  });
 }
 
 class _DynamicShellHarness extends StatefulWidget {

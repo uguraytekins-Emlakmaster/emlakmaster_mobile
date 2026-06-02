@@ -39,22 +39,11 @@ abstract final class RolePermissionRegistry {
           PermissionId.manageOwnIntegrations,
         };
       case AppRole.agent:
-      case AppRole.operations:
         return {
           PermissionId.manageOwnListings,
           PermissionId.manageOwnIntegrations,
           PermissionId.viewMessages,
           PermissionId.runManualSync,
-        };
-      case AppRole.financeInvestor:
-        return {
-          PermissionId.viewAdminDiagnostics,
-          PermissionId.manageOwnListings,
-        };
-      case AppRole.investorPortal:
-      case AppRole.client:
-        return {
-          PermissionId.viewMessages,
         };
       case AppRole.guest:
         return {};

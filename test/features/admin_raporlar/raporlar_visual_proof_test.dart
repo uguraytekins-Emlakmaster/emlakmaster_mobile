@@ -98,7 +98,7 @@ void main() {
   testWidgets('04 empty or partial state proof', (tester) async {
     await _pump(
       tester,
-      snapshot: computeRaporlarSnapshot(role: AppRole.client),
+      snapshot: computeRaporlarSnapshot(role: AppRole.guest),
     );
     await _savePng(tester, '04_empty_or_partial_state.png');
   });

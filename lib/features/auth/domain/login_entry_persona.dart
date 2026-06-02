@@ -26,7 +26,6 @@ enum LoginEntryPersona {
     AppRole.generalManager,
     AppRole.officeManager,
     AppRole.teamLead,
-    AppRole.operations,
   };
 
   bool matchesRole(AppRole role) {

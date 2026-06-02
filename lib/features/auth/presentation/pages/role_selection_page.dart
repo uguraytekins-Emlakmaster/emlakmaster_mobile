@@ -103,7 +103,7 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
 
   static List<AppRole> _selectableRoles(bool includeSuperAdmin) {
     final list = AppRole.values
-        .where((r) => r != AppRole.client && r != AppRole.guest)
+        .where((r) => r != AppRole.guest)
         .toList();
     if (includeSuperAdmin) return list;
     return list.where((r) => r != AppRole.superAdmin).toList();
@@ -157,12 +157,6 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
         return 'Ekip liderliği ve koordinasyon';
       case AppRole.agent:
         return 'Müşteri, ilan ve görüşme operasyonu';
-      case AppRole.operations:
-        return 'Çağrı merkezi ve operasyon';
-      case AppRole.financeInvestor:
-        return 'Yatırım ve portföy takibi';
-      case AppRole.investorPortal:
-        return 'Yatırımcı portal erişimi';
       default:
         return role.label;
     }
@@ -182,12 +176,6 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
         return Icons.groups_rounded;
       case AppRole.agent:
         return Icons.real_estate_agent_rounded;
-      case AppRole.operations:
-        return Icons.headset_mic_rounded;
-      case AppRole.financeInvestor:
-        return Icons.trending_up_rounded;
-      case AppRole.investorPortal:
-        return Icons.savings_rounded;
       default:
         return Icons.person_rounded;
     }

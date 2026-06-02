@@ -63,7 +63,6 @@ class AppDestination {
 
 /// [role] için ulaşılabilir hedefler — yalnızca gerçek + yetki dahilindekiler.
 List<AppDestination> appDestinationsFor(AppRole role) {
-  final isClient = FeaturePermission.seesClientPanel(role);
   final isAdmin = FeaturePermission.seesAdminPanel(role);
 
   final out = <AppDestination>[
@@ -75,28 +74,7 @@ List<AppDestination> appDestinationsFor(AppRole role) {
     ),
   ];
 
-  if (isClient) {
-    out.addAll(const [
-      AppDestination.shortcut(
-        id: 'favorites',
-        label: 'Favoriler',
-        icon: Icons.favorite_rounded,
-        shortcut: MainShellShortcut.openFavoritesTab,
-      ),
-      AppDestination.shortcut(
-        id: 'messages',
-        label: 'Mesajlar',
-        icon: Icons.chat_rounded,
-        shortcut: MainShellShortcut.openMessagesTab,
-      ),
-      AppDestination.shortcut(
-        id: 'requests',
-        label: ProductLabels.requestCenter,
-        icon: Icons.assignment_outlined,
-        shortcut: MainShellShortcut.openRequestsTab,
-      ),
-    ]);
-  } else if (isAdmin) {
+  if (isAdmin) {
     out.addAll(const [
       AppDestination.route(
         id: 'office_admin',
@@ -171,14 +149,12 @@ List<AppDestination> appDestinationsFor(AppRole role) {
     ]);
   }
 
-  if (!isClient) {
-    out.add(const AppDestination.shortcut(
-      id: 'message_center',
-      label: ProductLabels.messageCenter,
-      icon: Icons.forum_rounded,
-      shortcut: MainShellShortcut.openMessageCenterTab,
-    ));
-  }
+  out.add(const AppDestination.shortcut(
+    id: 'message_center',
+    label: ProductLabels.messageCenter,
+    icon: Icons.forum_rounded,
+    shortcut: MainShellShortcut.openMessageCenterTab,
+  ));
 
   out.add(const AppDestination.shortcut(
     id: 'settings',
@@ -203,7 +179,6 @@ List<AppDestination> filterDestinations(
 }
 
 String _homeLabel(AppRole role) {
-  if (FeaturePermission.seesClientPanel(role)) return 'Keşfet';
   if (FeaturePermission.seesAdminPanel(role)) return ProductLabels.managerHome;
   return ProductLabels.consultantHome;
 }
