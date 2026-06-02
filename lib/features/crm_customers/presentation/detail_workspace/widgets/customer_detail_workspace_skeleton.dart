@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/consultant_customers_tokens.dart';
+import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
 
 class CustomerDetailWorkspaceSkeleton extends StatelessWidget {
@@ -28,6 +29,9 @@ class CustomerDetailWorkspaceSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Yükleme sırasında da geri/ana sayfa erişilebilir kalsın (kabuk
+          // kökünde kendini gizler); kullanıcı veri beklerken mahsur kalmaz.
+          const PremiumHeaderNavBar(),
           bar(18, 160),
           bar(11, 220),
           const SizedBox(height: 10),

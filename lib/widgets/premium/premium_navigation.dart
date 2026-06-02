@@ -1,14 +1,22 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/navigation/app_back_dispatcher.dart';
+import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/screens/admin_shell_nav.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/shared/widgets/app_back_button.dart';
 import 'package:emlakmaster_mobile/shared/widgets/premium_nav_glyph.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// Kabuk içi Günüm / Komuta Merkezi veya [AppRouter.routeHome].
+///
+/// Push edilen detay/araç sayfasından çağrıldığında SADECE `context.go('/')`
+/// yetmez: canlı kabuk öğesi yeniden kullanıldığı için aktif sekme (ör.
+/// Müşterilerim) korunur ve "ana sayfa" basışı "geri" gibi görünür. Bu yüzden
+/// kabuğa dönmeden önce ana sekme kısayolunu kuyruğa alırız; kabuk bir sonraki
+/// karede kısayolu tüketip Günüm/Komuta Merkezi köküne sıfırlar.
 void navigateToAppHome(BuildContext context) {
   AppFeedback.lightImpact();
   if (ConsultantShellNav.maybeOf(context) != null) {
@@ -19,9 +27,11 @@ void navigateToAppHome(BuildContext context) {
     AdminShellNav.goToHomeTab(context);
     return;
   }
-  if (context.mounted) {
-    context.go(AppRouter.routeHome);
-  }
+  if (!context.mounted) return;
+  ProviderScope.containerOf(context, listen: false)
+      .read(mainShellShortcutProvider.notifier)
+      .enqueue(MainShellShortcut.openHomeTab);
+  context.go(AppRouter.routeHome);
 }
 
 /// Ana sayfaya — sade, keskin altın ikon (paylaşılan nav görsel dili).
