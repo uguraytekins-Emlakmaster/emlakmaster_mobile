@@ -39,10 +39,10 @@ class SettingsService {
     return _prefs!;
   }
 
-  /// Tema modu: 0=system, 1=light, 2=dark. Varsayılan 2 (koyu).
+  /// Tema modu: 0=system, 1=light, 2=dark. Varsayılan 0 (Sistem — OS'u takip eder).
   Future<int> getThemeModeIndex() async {
     final prefs = await _storage;
-    return prefs.getInt(AppConstants.keyThemeMode) ?? 2;
+    return prefs.getInt(AppConstants.keyThemeMode) ?? 0;
   }
 
   Future<void> setThemeModeIndex(int index) async {

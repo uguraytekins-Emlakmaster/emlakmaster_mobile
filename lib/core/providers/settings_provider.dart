@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/settings_service.dart';
 
 /// Başlangıçta main() içinde yüklenen tema indeksi (flash önlemek için).
-final initialThemeModeIndexProvider = Provider<int>((ref) => 2);
+/// Varsayılan 0 = Sistem (OS görünümünü takip eder).
+final initialThemeModeIndexProvider = Provider<int>((ref) => 0);
 
 /// Başlangıçta yüklenen dil kodu (tr/en).
 final initialLocaleProvider = FutureProvider<Locale>((ref) async {
@@ -59,7 +60,8 @@ class ThemeModeIndexNotifier extends StateNotifier<int> {
   }
 }
 
-/// [MaterialApp.themeMode] ile uyum için; şu an her zaman koyu.
+/// [MaterialApp.themeMode] kaynağı. Ayarlar → Görünüm → Tema'dan
+/// (sistem/açık/koyu) değiştirilir ve diske kaydedilir; varsayılan Sistem.
 final themeModeProvider = Provider<ThemeMode>((ref) {
   final index = ref.watch(themeModeIndexProvider);
   return themeModeFromIndex(index);
