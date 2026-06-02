@@ -73,7 +73,11 @@ class ShellTabBackBindingState extends State<ShellTabBackBinding> {
   bool _dismissKeyboard() {
     final focus = FocusManager.instance.primaryFocus;
     if (focus == null || !focus.hasFocus) return false;
-    if (focus.context?.widget is! EditableText) return false;
+    final ctx = focus.context;
+    if (ctx == null ||
+        ctx.findAncestorWidgetOfExactType<EditableText>() == null) {
+      return false;
+    }
     focus.unfocus();
     return true;
   }
