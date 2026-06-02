@@ -5,7 +5,8 @@
   "description": "Firestore security rules unit tests (escalation-proofing).",
   "type": "module",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project emlak-master \"node run.js\""
+    "test": "firebase emulators:exec --only firestore --project emlak-master \"node run.js\"",
+    "test:storage": "firebase emulators:exec --only firestore,storage --project emlak-master \"node run_storage.js\""
   },
   "dependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",
