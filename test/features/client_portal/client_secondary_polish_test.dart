@@ -106,9 +106,9 @@ void main() {
       child: const ClientPortalMessagesPage(),
     );
     await _savePng(tester, key, '01_messages_polished.png');
-    expect(find.text('İletişim'), findsOneWidget);
+    expect(find.text('Mesajlar'), findsOneWidget);
     expect(find.text('WhatsApp ile yazın'), findsOneWidget);
-    expect(find.text('En hızlı kanal'), findsOneWidget);
+    expect(find.text('Önerilen'), findsOneWidget);
   });
 
   testWidgets('02 — virtual tours polished proof', (tester) async {
