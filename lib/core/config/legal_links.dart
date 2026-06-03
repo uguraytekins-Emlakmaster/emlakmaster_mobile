@@ -15,8 +15,12 @@ abstract final class LegalLinks {
       String.fromEnvironment('EM_TERMS_URL');
 
   /// Destek / yardım e-postası (mailto için, yalnızca adres — "mailto:" eklemeyin).
-  static const String supportEmail =
-      String.fromEnvironment('EM_SUPPORT_EMAIL');
+  /// Varsayılan gerçek adrestir; istenirse build'de `--dart-define=EM_SUPPORT_EMAIL=...`
+  /// ile geçersiz kılınabilir.
+  static const String supportEmail = String.fromEnvironment(
+    'EM_SUPPORT_EMAIL',
+    defaultValue: 'uguraytekin@protonmail.com',
+  );
 
   /// Opsiyonel: web sitesi / yardım merkezi URL'si.
   static const String supportWebsiteUrl =

@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/config/legal_links.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
@@ -125,13 +126,23 @@ class _UpgradeBottomSheet extends StatelessWidget {
   Future<void> _contactSales(BuildContext context, String feature) async {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
+    // Hesap bilgisi: satış ekibinin kimi PRO'ya yükselteceğini bilmesi için
+    // (PRO, ilgili ofisin planType alanı 'pro' yapılarak verilir).
+    final user = AuthService.instance.currentUser;
+    final email = user?.email ?? '';
+    final accountLine = email.isNotEmpty ? 'Hesap e-postası: $email\n' : '';
+    final uidLine = (user?.uid.isNotEmpty ?? false)
+        ? 'Hesap kimliği: ${user!.uid}\n'
+        : '';
     final uri = Uri(
       scheme: 'mailto',
       path: LegalLinks.supportEmail,
       queryParameters: {
-        'subject': 'Emlak Master PRO yükseltme talebi',
-        'body': 'Merhaba, PRO planı ile ilgileniyorum.\n'
-            '(İlgi alanı: $feature)\n\nDetay için bana dönebilir misiniz?',
+        'subject': 'EmlakMaster PRO yükseltme talebi',
+        'body': 'Merhaba, PRO planı ile ilgileniyorum.\n\n'
+            '$accountLine$uidLine'
+            'İlgi alanı: $feature\n\n'
+            'PRO\'ya geçiş için bilgi rica ederim.',
       },
     );
     var launched = false;
