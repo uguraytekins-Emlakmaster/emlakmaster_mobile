@@ -11,11 +11,32 @@ service cloud.firestore {
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
-    // Yönetici: users.role belirtilen rollerden biri ise tüm veriyi görebilir.
+    // Yönetici (legacy/açık): users.role belirtilen rollerden biri.
     // Doküman yoksa veya role yoksa u.data/role null olur; null in [...] false döner, hata vermez.
-    function isManager() {
+    function isManagerByUserRole() {
       let u = get(/databases/$(database)/documents/users/$(request.auth.uid));
       return u != null && u.data != null && u.data.role in ['super_admin', 'broker_owner', 'broker', 'general_manager', 'office_manager', 'team_lead', 'manager', 'admin', 'owner'];
+    }
+    // Yönetici (üyelik tabanlı — tek yetki kaynağı): role_source_of_truth.dart'a göre
+    // ofis + AKTİF üyelik varken yetki kaynağı `office_memberships.role`'dir; `users.role`
+    // legacy/gecikmeli olabilir. Bu yüzden kullanıcı KENDİ ofisinde aktif manager-tier
+    // (owner/admin/manager — danışman HARİÇ) üyeliğe sahipse yönetici kabul edilir.
+    // Self-escalation riski yok: üyelik dokümanı create/update kurallarıyla korunur
+    // (owner yalnızca kendi oluşturduğu ofiste; admin/manager yalnızca geçerli davetle;
+    // self-update owner'a yükseltemez). Bu helper yalnızca mevcut üyeliği OKUR.
+    function isManagerBySelfMembership() {
+      let oid = userOfficeId(request.auth.uid);
+      let m = officeMembershipDoc(request.auth.uid, oid);
+      return oid is string && oid.size() > 0
+        && m != null && m.data != null
+        && m.data.status == 'active'
+        && m.data.role in ['owner', 'admin', 'manager'];
+    }
+    // Merkezi yönetici kontrolü: users.role manager-tier VEYA kendi ofisinde aktif
+    // manager-tier üyelik. isManager() kullanan TÜM koleksiyonlar tutarlı şekilde,
+    // users.role stale 'agent' kalsa bile gerçek owner/admin/manager'ı tanır.
+    function isManager() {
+      return isManagerByUserRole() || isManagerBySelfMembership();
     }
     // Veri izolasyonu: danışman sadece kendi atanmış müşteri/çağrılarını görür; yönetici hepsini.
     function isOwnAgentData(agentIdField) {
@@ -241,18 +262,6 @@ service cloud.firestore {
     }
     function isOfficeManagerForIntelligence(oid) {
       return isOfficeManagerTierRole() || isActiveOfficeManagerMembership(oid);
-    }
-    /// Rol kaynağı politikası (role_source_of_truth.dart): ofis + aktif üyelik
-    /// varken yetki `office_memberships.role`'dan gelir; `users.role` gecikmeli/legacy
-    /// olabilir. Bu nedenle isManager() (users.role) tek başına owner'ı doğrulamaz.
-    /// Kullanıcının KENDİ ofisinde aktif owner/admin üyeliği var mı?
-    function isOfficeOwnerOrAdminBySelfMembership() {
-      let oid = userOfficeId(request.auth.uid);
-      let m = officeMembershipDoc(request.auth.uid, oid);
-      return oid is string && oid.size() > 0
-        && m != null && m.data != null
-        && m.data.status == 'active'
-        && m.data.role in ['owner', 'admin'];
     }
     /// customers kurallarında get(users/assignedAgentId) için: aynı ofisteki danışman profiline yönetici okuması.
     function canReadColleagueUserForOfficeIntelligence(userId) {
@@ -603,11 +612,10 @@ service cloud.firestore {
     match /app_settings/{docId} {
       allow read: if isSignedIn();
       // Uygulama ayarları yalnızca yönetici tarafından güncellenebilir.
-      // isManager() users.role'a bakar; ofis sahibi/ admin'inin users.role'u legacy
-      // 'agent' kalmış olabilir (rol kaynağı = office_memberships). Bu yüzden aktif
-      // owner/admin üyeliği de kabul edilir — danışman/team_lead yine reddedilir.
-      allow write: if isSignedIn()
-        && (isManager() || isOfficeOwnerOrAdminBySelfMembership());
+      // isManager() artık membership-farkında: users.role legacy 'agent' kalsa bile
+      // kendi ofisinde aktif owner/admin/manager üyeliği olan yönetici kabul edilir
+      // (rol kaynağı = office_memberships). Danışman/üyeliksiz agent yine reddedilir.
+      allow write: if isSignedIn() && isManager();
     }
     match /external_listings/{docId} {
       allow read: if isSignedIn();

@@ -112,6 +112,17 @@ async function seed() {
       membershipDoc("legacy_admin_uid", OFFICE_A, "admin"));
     await setDoc(doc(db, "users", "legacy_admin_uid"),
       userDoc("legacy_admin_uid", "agent", { officeId: OFFICE_A }));
+    // Manager-tier membership ('manager' -> team_lead users.role) with STALE users.role.
+    await setDoc(doc(db, "office_memberships", mid("legacy_manager_uid", OFFICE_A)),
+      membershipDoc("legacy_manager_uid", OFFICE_A, "manager"));
+    await setDoc(doc(db, "users", "legacy_manager_uid"),
+      userDoc("legacy_manager_uid", "agent", { officeId: OFFICE_A }));
+    // Escalation guard: an owner membership that is NOT active (removed) must NOT
+    // grant manager — status gating is enforced by isManagerBySelfMembership.
+    await setDoc(doc(db, "office_memberships", mid("removed_owner_uid", OFFICE_A)),
+      membershipDoc("removed_owner_uid", OFFICE_A, "owner", "removed"));
+    await setDoc(doc(db, "users", "removed_owner_uid"),
+      userDoc("removed_owner_uid", "agent", { officeId: OFFICE_A }));
     // Consultant (and an office-less plain agent) must NOT be able to write settings.
     await setDoc(doc(db, "office_memberships", mid("consultant2_uid", OFFICE_A)),
       membershipDoc("consultant2_uid", OFFICE_A, "consultant"));
@@ -255,6 +266,81 @@ async function run() {
   await check("S7 any signed-in user can READ listing display settings", "PASS", () => {
     const db = authed("plain_agent_uid", "plain_agent_uid@t.co");
     return getDoc(doc(db, "app_settings", "listing_display_settings"));
+  });
+
+  // ---------- MEMBERSHIP-AWARE isManager() across representative collections ----------
+  // Proves the central helper is consistent for EVERY isManager()-gated collection:
+  // (a) stale users.role='agent' + active owner/admin/manager membership => manager ops OK;
+  // (b) consultant membership / office-less agent => denied;
+  // (c) legacy users.role manager + global broker_owner regress clean;
+  // plus escalation guard: non-active (removed) owner membership must NOT grant manager.
+  console.log("\nMEMBERSHIP-AWARE MANAGER (listings / teams / users-read / invites):");
+  await env.clearFirestore(); await seed();
+
+  const listingDoc = () => ({ title: "Daire", officeId: OFFICE_A, createdAt: serverTimestamp() });
+  const teamDoc = () => ({ name: "Team A", officeId: OFFICE_A, createdAt: serverTimestamp() });
+
+  // listings: create/update gated by isManager() only.
+  await check("M1 stale-agent OWNER membership creates listing", "PASS", () => {
+    const db = authed("legacy_owner_uid", "legacy_owner_uid@t.co");
+    return setDoc(doc(db, "listings", "l_owner"), listingDoc());
+  });
+  await check("M2 stale-agent ADMIN membership creates listing", "PASS", () => {
+    const db = authed("legacy_admin_uid", "legacy_admin_uid@t.co");
+    return setDoc(doc(db, "listings", "l_admin"), listingDoc());
+  });
+  await check("M3 stale-agent MANAGER membership creates listing", "PASS", () => {
+    const db = authed("legacy_manager_uid", "legacy_manager_uid@t.co");
+    return setDoc(doc(db, "listings", "l_manager"), listingDoc());
+  });
+  await check("M4 consultant membership CANNOT create listing", "FAIL", () => {
+    const db = authed("consultant2_uid", "consultant2_uid@t.co");
+    return setDoc(doc(db, "listings", "l_consultant"), listingDoc());
+  });
+  await check("M5 office-less plain agent CANNOT create listing", "FAIL", () => {
+    const db = authed("plain_agent_uid", "plain_agent_uid@t.co");
+    return setDoc(doc(db, "listings", "l_agent"), listingDoc());
+  });
+  await check("M6 REGRESSION: broker_owner (users.role) creates listing", "PASS", () => {
+    const db = authed(OWNER, `${OWNER}@t.co`);
+    return setDoc(doc(db, "listings", "l_legacy_mgr"), listingDoc());
+  });
+  await check("M7 ESCALATION GUARD: removed owner membership CANNOT create listing", "FAIL", () => {
+    const db = authed("removed_owner_uid", "removed_owner_uid@t.co");
+    return setDoc(doc(db, "listings", "l_removed"), listingDoc());
+  });
+
+  // teams: read+write gated by isManager().
+  await check("M8 stale-agent OWNER membership writes team", "PASS", () => {
+    const db = authed("legacy_owner_uid", "legacy_owner_uid@t.co");
+    return setDoc(doc(db, "teams", "t_owner"), teamDoc());
+  });
+  await check("M9 consultant membership CANNOT write team", "FAIL", () => {
+    const db = authed("consultant2_uid", "consultant2_uid@t.co");
+    return setDoc(doc(db, "teams", "t_consultant"), teamDoc());
+  });
+
+  // analytics_monthly: write gated by isManager().
+  const monthlyDoc = () => ({ officeId: OFFICE_A, total: 1, updatedAt: serverTimestamp() });
+  await check("M10 stale-agent ADMIN membership writes analytics_monthly", "PASS", () => {
+    const db = authed("legacy_admin_uid", "legacy_admin_uid@t.co");
+    return setDoc(doc(db, "analytics_monthly", "2026-06"), monthlyDoc());
+  });
+  await check("M11 office-less plain agent CANNOT write analytics_monthly", "FAIL", () => {
+    const db = authed("plain_agent_uid", "plain_agent_uid@t.co");
+    return setDoc(doc(db, "analytics_monthly", "2026-07"), monthlyDoc());
+  });
+
+  // invites: create gated by isManager().
+  await check("M12 stale-agent OWNER membership creates email invite", "PASS", () => {
+    const db = authed("legacy_owner_uid", "legacy_owner_uid@t.co");
+    return setDoc(doc(db, "invites", "new_hire@t.co"),
+      emailInviteDoc("new_hire@t.co", "office_manager", "legacy_owner_uid"));
+  });
+  await check("M13 consultant membership CANNOT create email invite", "FAIL", () => {
+    const db = authed("consultant2_uid", "consultant2_uid@t.co");
+    return setDoc(doc(db, "invites", "evil@t.co"),
+      emailInviteDoc("evil@t.co", "office_manager", "consultant2_uid"));
   });
 
   await env.cleanup();
