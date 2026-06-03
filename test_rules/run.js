@@ -20,6 +20,12 @@ import {
   updateDoc,
   writeBatch,
   serverTimestamp,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
 } from "firebase/firestore";
 
 const PROJECT_ID = "emlak-master";
@@ -342,6 +348,176 @@ async function run() {
     return setDoc(doc(db, "invites", "evil@t.co"),
       emailInviteDoc("evil@t.co", "office_manager", "consultant2_uid"));
   });
+
+  // ===========================================================================
+  // READ ISOLATION — replicates the app's ACTUAL list/get/count query shapes
+  // across TWO offices and every role. Validates that flipping the root catch-all
+  // to DENY (1) closes cross-office reads on the now-active isolated collections
+  // and (2) does NOT break the legit query shapes the app issues (incl. the CRM
+  // transactional collections that remain intentionally signed-in-readable).
+  // ===========================================================================
+  console.log("\nREAD ISOLATION (multi-office, real query shapes):");
+
+  const A = "iso_office_a", B = "iso_office_b";
+  const MGRA = "iso_mgr_a";              // office_manager of A (users.role)
+  const AG_A1 = "iso_agent_a1", AG_A2 = "iso_agent_a2"; // agents in A
+  const AG_B1 = "iso_agent_b1";          // agent in B
+  const SUPER = "iso_super";             // super_admin (all offices)
+
+  await env.clearFirestore();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    const u = (uid, role, oid) => setDoc(doc(db, "users", uid),
+      { uid, role, name: uid, email: `${uid}@t.co`, isActive: true, officeId: oid,
+        managerId: role === "agent" ? MGRA : null });
+    const mem = (uid, oid, role) => setDoc(doc(db, "office_memberships", `${uid}_${oid}`),
+      membershipDoc(uid, oid, role));
+    await Promise.all([
+      u(MGRA, "office_manager", A), u(AG_A1, "agent", A), u(AG_A2, "agent", A),
+      u(AG_B1, "agent", B), u(SUPER, "super_admin", ""),
+      setDoc(doc(db, "offices", A), officeDoc(MGRA, "Office A")),
+      setDoc(doc(db, "offices", B), officeDoc(AG_B1, "Office B")),
+      mem(MGRA, A, "manager"), mem(AG_A1, A, "consultant"), mem(AG_A2, A, "consultant"),
+      mem(AG_B1, B, "consultant"),
+      // CRM transactional docs (assignedAgentId / agentId+advisorId / customerId / officeId)
+      setDoc(doc(db, "customers", "cust_a1"), { assignedAgentId: AG_A1, fullName: "A1", createdAt: serverTimestamp(), updatedAt: serverTimestamp() }),
+      setDoc(doc(db, "customers", "cust_a2"), { assignedAgentId: AG_A2, fullName: "A2", createdAt: serverTimestamp(), updatedAt: serverTimestamp() }),
+      setDoc(doc(db, "customers", "cust_b1"), { assignedAgentId: AG_B1, fullName: "B1", createdAt: serverTimestamp(), updatedAt: serverTimestamp() }),
+      setDoc(doc(db, "calls", "call_a1"), { agentId: AG_A1, advisorId: AG_A1, officeId: A, customerId: "cust_a1", outcome: "handoff_pending", done: false, createdAt: serverTimestamp() }),
+      setDoc(doc(db, "calls", "call_b1"), { agentId: AG_B1, advisorId: AG_B1, officeId: B, customerId: "cust_b1", outcome: "connected", createdAt: serverTimestamp() }),
+      setDoc(doc(db, "notes", "note_a1"), { advisorId: AG_A1, customerId: "cust_a1", content: "x", createdAt: serverTimestamp() }),
+      setDoc(doc(db, "visits", "visit_a1"), { advisorId: AG_A1, customerId: "cust_a1", scheduledAt: serverTimestamp(), createdAt: serverTimestamp() }),
+      setDoc(doc(db, "offers", "offer_a1"), { advisorId: AG_A1, customerId: "cust_a1", amount: 1, createdAt: serverTimestamp() }),
+      setDoc(doc(db, "deals", "deal_a1"), { agentId: AG_A1, createdAt: serverTimestamp() }),
+      setDoc(doc(db, "call_summaries", "cs_a1"), { agentId: AG_A1, assignedAgentId: AG_A1, callId: "call_a1", customerId: "cust_a1", createdAt: serverTimestamp() }),
+      setDoc(doc(db, "tasks", "task_a1"), { advisorId: AG_A1, customerId: "cust_a1", done: false, dueAt: serverTimestamp(), createdAt: serverTimestamp() }),
+      // isolation-target docs
+      setDoc(doc(db, "pipeline_items", "pi_a1"), { advisorId: AG_A1, stage: "new", updatedAt: serverTimestamp() }),
+      setDoc(doc(db, "pipeline_items", "pi_b1"), { advisorId: AG_B1, stage: "new", updatedAt: serverTimestamp() }),
+      setDoc(doc(db, "notifications", "ntf_a1"), { userId: AG_A1, createdAt: serverTimestamp() }),
+      setDoc(doc(db, "notifications", "ntf_b1"), { userId: AG_B1, createdAt: serverTimestamp() }),
+      setDoc(doc(db, "integration_listings", "il_a1"), { ownerUserId: AG_A1, title: "L" }),
+      setDoc(doc(db, "integration_listings", "il_b1"), { ownerUserId: AG_B1, title: "L" }),
+      setDoc(doc(db, "external_connections", "ec_a1"), { userId: AG_A1 }),
+      setDoc(doc(db, "external_connections", "ec_b1"), { userId: AG_B1 }),
+      setDoc(doc(db, "audit_logs", "al_1"), { action: "x", createdAt: serverTimestamp() }),
+      setDoc(doc(db, "app_config", "superAdminGate"), { codeSha256: "deadbeef" }),
+      setDoc(doc(db, "listing_metrics", "lm_a1"), { momentum: 1 }),
+      setDoc(doc(db, "teams", "team_a1"), { name: "T", managerId: MGRA, memberIds: [AG_A1], officeId: A, createdAt: serverTimestamp() }),
+      setDoc(doc(db, "app_settings", "listing_display_settings"), listingDisplayDoc("Co")),
+    ]);
+  });
+
+  const dbOf = (uid) => env.authenticatedContext(uid).firestore();
+
+  // --- users: agent cross-office read CLOSED; same-office colleague OPEN; self OPEN ---
+  await check("users: agent A1 reads OWN doc", "PASS", () =>
+    getDoc(doc(dbOf(AG_A1), "users", AG_A1)));
+  await check("users: agent A1 reads same-office MANAGER doc (colleague branch)", "PASS", () =>
+    getDoc(doc(dbOf(AG_A1), "users", MGRA)));
+  await check("users: agent A1 reads same-office colleague A2", "PASS", () =>
+    getDoc(doc(dbOf(AG_A1), "users", AG_A2)));
+  await check("users: agent A1 reads CROSS-OFFICE agent B1 -> DENY", "FAIL", () =>
+    getDoc(doc(dbOf(AG_A1), "users", AG_B1)));
+  await check("users: agent B1 reads CROSS-OFFICE manager A -> DENY", "FAIL", () =>
+    getDoc(doc(dbOf(AG_B1), "users", MGRA)));
+  await check("users: super reads cross-office B1", "PASS", () =>
+    getDoc(doc(dbOf(SUPER), "users", AG_B1)));
+
+  // --- office_memberships: member office-scoped query OK; cross-office DENY ---
+  await check("office_memberships: agent A1 query where officeId==A", "PASS", () =>
+    getDocs(query(collection(dbOf(AG_A1), "office_memberships"), where("officeId", "==", A))));
+  await check("office_memberships: agent A1 query where officeId==B -> DENY", "FAIL", () =>
+    getDocs(query(collection(dbOf(AG_A1), "office_memberships"), where("officeId", "==", B))));
+  await check("office_memberships: agent A1 reads OWN membership doc", "PASS", () =>
+    getDoc(doc(dbOf(AG_A1), "office_memberships", `${AG_A1}_${A}`)));
+  await check("office_memberships: manager A query where officeId==A", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "office_memberships"), where("officeId", "==", A))));
+
+  // --- offices: member get OK; cross-office DENY ---
+  await check("offices: agent A1 reads office A", "PASS", () =>
+    getDoc(doc(dbOf(AG_A1), "offices", A)));
+  await check("offices: agent A1 reads CROSS office B -> DENY", "FAIL", () =>
+    getDoc(doc(dbOf(AG_A1), "offices", B)));
+
+  // --- pipeline_items: own OK; cross-agent DENY ---
+  await check("pipeline_items: agent A1 where advisorId==self", "PASS", () =>
+    getDocs(query(collection(dbOf(AG_A1), "pipeline_items"), where("advisorId", "==", AG_A1), orderBy("updatedAt", "desc"), limit(100))));
+  await check("pipeline_items: agent A1 where advisorId==B1 -> DENY", "FAIL", () =>
+    getDocs(query(collection(dbOf(AG_A1), "pipeline_items"), where("advisorId", "==", AG_B1))));
+
+  // --- notifications: own OK; other-user DENY ---
+  await check("notifications: agent A1 where userId==self", "PASS", () =>
+    getDocs(query(collection(dbOf(AG_A1), "notifications"), where("userId", "==", AG_A1), orderBy("createdAt", "desc"), limit(50))));
+  await check("notifications: agent A1 where userId==B1 -> DENY", "FAIL", () =>
+    getDocs(query(collection(dbOf(AG_A1), "notifications"), where("userId", "==", AG_B1))));
+
+  // --- integration_listings / external_connections: owner OK; cross-owner DENY ---
+  await check("integration_listings: agent A1 where ownerUserId==self", "PASS", () =>
+    getDocs(query(collection(dbOf(AG_A1), "integration_listings"), where("ownerUserId", "==", AG_A1))));
+  await check("integration_listings: agent A1 where ownerUserId==B1 -> DENY", "FAIL", () =>
+    getDocs(query(collection(dbOf(AG_A1), "integration_listings"), where("ownerUserId", "==", AG_B1))));
+  await check("external_connections: agent A1 where userId==self", "PASS", () =>
+    getDocs(query(collection(dbOf(AG_A1), "external_connections"), where("userId", "==", AG_A1))));
+  await check("external_connections: agent A1 where userId==B1 -> DENY", "FAIL", () =>
+    getDocs(query(collection(dbOf(AG_A1), "external_connections"), where("userId", "==", AG_B1))));
+
+  // --- audit_logs: manager OK; agent DENY ---
+  await check("audit_logs: manager reads", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "audit_logs"), limit(10))));
+  await check("audit_logs: agent reads -> DENY", "FAIL", () =>
+    getDocs(query(collection(dbOf(AG_A1), "audit_logs"), limit(10))));
+
+  // --- app_config: super OK; agent/manager DENY ---
+  await check("app_config: super reads superAdminGate", "PASS", () =>
+    getDoc(doc(dbOf(SUPER), "app_config", "superAdminGate")));
+  await check("app_config: agent reads superAdminGate -> DENY", "FAIL", () =>
+    getDoc(doc(dbOf(AG_A1), "app_config", "superAdminGate")));
+  await check("app_config: manager reads superAdminGate -> DENY", "FAIL", () =>
+    getDoc(doc(dbOf(MGRA), "app_config", "superAdminGate")));
+
+  // --- listing_metrics: signed-in get OK (derived from public listings) ---
+  await check("listing_metrics: agent reads single metric doc", "PASS", () =>
+    getDoc(doc(dbOf(AG_A1), "listing_metrics", "lm_a1")));
+
+  // --- undefined collection: locked by deny catch-all ---
+  await check("undefined collection: any read -> DENY (catch-all deny)", "FAIL", () =>
+    getDoc(doc(dbOf(MGRA), "totally_unknown_collection", "x")));
+
+  // --- CRM transactional (intentionally signed-in-readable): legit shapes must NOT break ---
+  console.log("\nREAD ISOLATION — CRM permissive (must NOT break app flows):");
+  await check("customers: agent A1 where assignedAgentId==self", "PASS", () =>
+    getDocs(query(collection(dbOf(AG_A1), "customers"), where("assignedAgentId", "==", AG_A1), orderBy("createdAt", "desc"), limit(40))));
+  await check("customers: manager UNFILTERED (customersStream)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "customers"), limit(200))));
+  await check("customers: manager office whereIn [a1,a2] (officeWideCustomersStream)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "customers"), where("assignedAgentId", "in", [AG_A1, AG_A2]))));
+  await check("customers: manager recentLeads orderBy updatedAt", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "customers"), orderBy("updatedAt", "desc"), limit(25))));
+  await check("calls: consultant A1 where advisorId==self (consultant stream)", "PASS", () =>
+    getDocs(query(collection(dbOf(AG_A1), "calls"), where("advisorId", "==", AG_A1), orderBy("createdAt", "desc"), limit(60))));
+  await check("calls: manager where officeId==A (Cagri Merkezi)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "calls"), where("officeId", "==", A), orderBy("createdAt", "desc"), limit(500))));
+  await check("calls: manager UNFILTERED (War Room live count)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "calls"), orderBy("createdAt", "desc"), limit(500))));
+  await check("calls: manager where customerId (customer detail)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "calls"), where("customerId", "==", "cust_a1"), orderBy("createdAt", "desc"), limit(25))));
+  await check("notes: where customerId (customer timeline)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "notes"), where("customerId", "==", "cust_a1"), orderBy("createdAt", "desc"), limit(50))));
+  await check("visits: where customerId", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "visits"), where("customerId", "==", "cust_a1"), orderBy("scheduledAt", "desc"), limit(50))));
+  await check("offers: where customerId", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "offers"), where("customerId", "==", "cust_a1"), orderBy("createdAt", "desc"), limit(50))));
+  await check("call_summaries: where customerId", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "call_summaries"), where("customerId", "==", "cust_a1"), orderBy("createdAt", "desc"), limit(50))));
+  await check("deals: manager UNFILTERED count (dealsCountStream)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "deals"), limit(500))));
+  await check("tasks: manager where done==false (openTasksCountStream)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "tasks"), where("done", "==", false), limit(100))));
+  await check("teams: manager UNFILTERED list (teamsStream)", "PASS", () =>
+    getDocs(query(collection(dbOf(MGRA), "teams"), limit(100))));
+  await check("teams: agent reads single team (onboarding teamDocStream)", "PASS", () =>
+    getDoc(doc(dbOf(AG_A1), "teams", "team_a1")));
 
   await env.cleanup();
 
