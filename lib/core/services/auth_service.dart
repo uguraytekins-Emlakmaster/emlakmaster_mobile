@@ -118,6 +118,73 @@ class AuthService {
     }
   }
 
+  /// Geçerli oturumun sağlayıcı kimlikleri (ör. 'password', 'google.com').
+  List<String> get providerIds =>
+      currentUser?.providerData.map((p) => p.providerId).toList() ??
+      const <String>[];
+
+  /// E-posta/şifre ile açılmış bir hesap mı (şifre değiştirme bunu gerektirir).
+  bool get isPasswordProvider => providerIds.contains('password');
+
+  /// Hassas işlemler (şifre/e-posta değiştirme, hesap silme) öncesi yeniden
+  /// kimlik doğrulama. Firebase, son girişten uzun süre geçtiyse bunu ister.
+  Future<void> reauthenticateWithPassword(String currentPassword) async {
+    final user = currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'no-current-user',
+        message: 'Oturum bulunamadı.',
+      );
+    }
+    final cred =
+        EmailAuthProvider.credential(email: email, password: currentPassword);
+    await user.reauthenticateWithCredential(cred);
+  }
+
+  /// Yeni şifre belirler. Çağrıdan önce [reauthenticateWithPassword] gerekebilir.
+  Future<void> updatePassword(String newPassword) async {
+    final user = currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+          code: 'no-current-user', message: 'Oturum bulunamadı.');
+    }
+    await user.updatePassword(newPassword);
+  }
+
+  /// Yeni e-postaya doğrulama bağlantısı gönderir; kullanıcı onaylayınca e-posta
+  /// güncellenir (Firebase `verifyBeforeUpdateEmail`). Reauth gerekebilir.
+  Future<void> sendEmailUpdateVerification(String newEmail) async {
+    final user = currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+          code: 'no-current-user', message: 'Oturum bulunamadı.');
+    }
+    await user.verifyBeforeUpdateEmail(newEmail.trim());
+  }
+
+  /// Mevcut kullanıcı için şifre sıfırlama e-postası gönderir.
+  Future<void> sendPasswordResetForCurrentUser() async {
+    final email = currentUser?.email;
+    if (email == null || email.isEmpty) {
+      throw FirebaseAuthException(
+          code: 'no-email', message: 'Hesaba bağlı e-posta yok.');
+    }
+    await sendPasswordResetEmail(email: email);
+  }
+
+  /// Firebase Auth hesabını siler. Reauth gerekebilir (`requires-recent-login`).
+  /// Firestore kullanıcı verisi temizliği çağıran tarafça yapılır.
+  Future<void> deleteCurrentUser() async {
+    final user = currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+          code: 'no-current-user', message: 'Oturum bulunamadı.');
+    }
+    await user.delete();
+    if (kDebugMode) AppLogger.d('AuthService: account deleted');
+  }
+
   Future<void> _signOutSocialSessions() async {
     LogoutFlowTracer.step('LOGOUT_FLOW', 'social signOut start');
     try {

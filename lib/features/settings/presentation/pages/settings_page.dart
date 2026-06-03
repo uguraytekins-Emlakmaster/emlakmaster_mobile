@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/config/legal_links.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/widgets/account_security_actions.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
@@ -12,6 +15,7 @@ import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
 import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
+import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
@@ -171,7 +175,32 @@ class SettingsPage extends ConsumerWidget {
                         color: AppThemeExtension.of(context).danger),
                     title: Text('Çıkış yap',
                         style: TextStyle(color: theme.colorScheme.onSurface)),
-                    onTap: () {
+                    onTap: () async {
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) {
+                          final dExt = AppThemeExtension.of(ctx);
+                          return AlertDialog(
+                            backgroundColor: dExt.surfaceElevated,
+                            title: const Text('Çıkış yap'),
+                            content: const Text(
+                                'Oturumunuzu kapatmak istediğinize emin misiniz?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Vazgeç'),
+                              ),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                    backgroundColor: dExt.danger),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Çıkış yap'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (ok != true) return;
                       LogoutFlowTracer.step('LOGOUT_FLOW', 'tap settings');
                       unawaited(
                         AuthLogoutCoordinator.signOut(
@@ -184,6 +213,82 @@ class SettingsPage extends ConsumerWidget {
                 ],
               ],
             ),
+            if (user != null) ...[
+              const SizedBox(height: DesignTokens.space6),
+              const _SectionHeader(
+                title: 'Hesap Güvenliği',
+                icon: Icons.shield_rounded,
+              ),
+              _sectionCard(
+                context,
+                children: [
+                  if (AuthService.instance.isPasswordProvider) ...[
+                    ListTile(
+                      leading: Icon(Icons.lock_reset_rounded,
+                          color: AppThemeExtension.of(context).accent),
+                      title: Text('Şifre değiştir',
+                          style:
+                              TextStyle(color: theme.colorScheme.onSurface)),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () =>
+                          AccountSecurityActions.showChangePassword(context),
+                    ),
+                    Divider(
+                        height: 1,
+                        color: theme.dividerColor.withValues(alpha: 0.5)),
+                    ListTile(
+                      leading: Icon(Icons.alternate_email_rounded,
+                          color: AppThemeExtension.of(context).accent),
+                      title: Text('E-posta değiştir',
+                          style:
+                              TextStyle(color: theme.colorScheme.onSurface)),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () =>
+                          AccountSecurityActions.showChangeEmail(context),
+                    ),
+                    Divider(
+                        height: 1,
+                        color: theme.dividerColor.withValues(alpha: 0.5)),
+                    ListTile(
+                      leading: Icon(Icons.mark_email_read_rounded,
+                          color: AppThemeExtension.of(context).accent),
+                      title: Text('Şifre sıfırlama bağlantısı gönder',
+                          style:
+                              TextStyle(color: theme.colorScheme.onSurface)),
+                      subtitle: Text(
+                        'Hesap e-postanıza güvenli sıfırlama bağlantısı yollar.',
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.65),
+                            fontSize: 11),
+                      ),
+                      onTap: () =>
+                          AccountSecurityActions.sendPasswordReset(context),
+                    ),
+                    Divider(
+                        height: 1,
+                        color: theme.dividerColor.withValues(alpha: 0.5)),
+                  ],
+                  ListTile(
+                    leading: Icon(Icons.delete_forever_rounded,
+                        color: AppThemeExtension.of(context).danger),
+                    title: Text('Hesabı kalıcı olarak sil',
+                        style: TextStyle(
+                            color: AppThemeExtension.of(context).danger,
+                            fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      'Hesabınızı ve erişiminizi geri alınamaz şekilde kaldırır.',
+                      style: TextStyle(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.65),
+                          fontSize: 11),
+                    ),
+                    onTap: () =>
+                        AccountSecurityActions.showDeleteAccount(context),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(
               title: 'Plan & Üyelik',
@@ -356,6 +461,10 @@ class SettingsPage extends ConsumerWidget {
                         .read(featureFlagsProvider.notifier)
                         .setFlag(AppConstants.keyPowerSaver, v),
                   ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.45)),
+                  const _TextScaleControl(),
                 ],
               ),
               loading: () => _sectionCard(
@@ -569,6 +678,90 @@ class SettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: DesignTokens.space6),
             const _SectionHeader(
+                title: 'Yasal & Destek', icon: Icons.gavel_rounded),
+            _sectionCard(
+              context,
+              children: [
+                if (LegalLinks.hasPrivacyPolicy) ...[
+                  ListTile(
+                    leading: Icon(Icons.privacy_tip_outlined,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text('Gizlilik Politikası',
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                    onTap: () => _launchExternalUrl(
+                        context, LegalLinks.privacyPolicyUrl),
+                  ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.5)),
+                ],
+                if (LegalLinks.hasTermsOfService) ...[
+                  ListTile(
+                    leading: Icon(Icons.description_outlined,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text('Kullanım Şartları',
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                    onTap: () => _launchExternalUrl(
+                        context, LegalLinks.termsOfServiceUrl),
+                  ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.5)),
+                ],
+                if (LegalLinks.hasSupportEmail) ...[
+                  ListTile(
+                    leading: Icon(Icons.support_agent_rounded,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text('Destek ile iletişim',
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    subtitle: Text(
+                      LegalLinks.supportEmail,
+                      style: TextStyle(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.65),
+                          fontSize: 11),
+                    ),
+                    trailing: const Icon(Icons.mail_outline_rounded, size: 18),
+                    onTap: () =>
+                        _launchSupportEmail(context, LegalLinks.supportEmail),
+                  ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.5)),
+                ],
+                if (LegalLinks.hasSupportWebsite) ...[
+                  ListTile(
+                    leading: Icon(Icons.help_outline_rounded,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text('Yardım merkezi',
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                    onTap: () => _launchExternalUrl(
+                        context, LegalLinks.supportWebsiteUrl),
+                  ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.5)),
+                ],
+                ListTile(
+                  leading: Icon(Icons.workspaces_outline,
+                      color: AppThemeExtension.of(context).accent),
+                  title: Text('Açık kaynak lisansları',
+                      style: TextStyle(color: theme.colorScheme.onSurface)),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => showLicensePage(
+                    context: context,
+                    applicationName: AppConstants.appName,
+                    applicationVersion:
+                        'Sürüm ${AppConstants.appVersion.split('+').first}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.space6),
+            const _SectionHeader(
                 title: 'Hakkında', icon: Icons.info_outline_rounded),
             _sectionCard(
               context,
@@ -756,6 +949,27 @@ class SettingsPage extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _launchExternalUrl(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      AppToaster.error(context, 'Bağlantı açılamadı.');
+    }
+  }
+
+  Future<void> _launchSupportEmail(BuildContext context, String email) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: email.trim(),
+      query: 'subject=${Uri.encodeComponent('${AppConstants.appName} Destek')}',
+    );
+    final ok = await launchUrl(uri);
+    if (!ok && context.mounted) {
+      AppToaster.error(context, 'E-posta uygulaması açılamadı.');
+    }
   }
 
   void _showRoleSwitcher(
@@ -979,6 +1193,51 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.35)),
+                  ListTile(
+                    leading:
+                        Icon(Icons.restart_alt_rounded, color: ext.accent),
+                    title: Text('Varsayılanlara sıfırla',
+                        style: AppTypography.bodyStrong(context)),
+                    subtitle: Text(
+                      'Tüm gelişmiş özellik anahtarlarını fabrika ayarına döndürür.',
+                      style: AppTypography.meta(context),
+                    ),
+                    onTap: () async {
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (dctx) {
+                          final dExt = AppThemeExtension.of(dctx);
+                          return AlertDialog(
+                            backgroundColor: dExt.surfaceElevated,
+                            title: const Text('Varsayılanlara sıfırla'),
+                            content: const Text(
+                                'Tüm gelişmiş özellik anahtarları varsayılan değerlerine dönecek. Devam edilsin mi?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(dctx, false),
+                                child: const Text('Vazgeç'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(dctx, true),
+                                child: const Text('Sıfırla'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (ok != true) return;
+                      await ref
+                          .read(featureFlagsProvider.notifier)
+                          .resetToDefaults();
+                      if (context.mounted) {
+                        AppToaster.success(context,
+                            'Gelişmiş ayarlar varsayılana döndürüldü.');
+                      }
+                    },
+                  ),
             ],
           ),
         ),
@@ -1031,11 +1290,12 @@ class _FavoriteInvestRegionTileState
     extends ConsumerState<_FavoriteInvestRegionTile> {
   String? _value;
 
-  static const _options = <MapEntry<String, String>>[
-    MapEntry(MarketSettingsEntity.regionKayapinar, 'Kayapınar'),
-    MapEntry(MarketSettingsEntity.regionBaglar, 'Bağlar'),
-    MapEntry(MarketSettingsEntity.regionYenisehir, 'Yenişehir'),
-  ];
+  /// Seçenekler veri modelinden türetilir (tek kaynak): baz m² fiyat verisi olan
+  /// bölgeler. Model yeni bölge kazandığında bu liste otomatik güncellenir.
+  static List<MapEntry<String, String>> get _options =>
+      MarketSettingsEntity.defaultDiyarbakirRegions
+          .map((r) => MapEntry(r.regionId, r.regionName))
+          .toList();
 
   @override
   void initState() {
@@ -1064,7 +1324,7 @@ class _FavoriteInvestRegionTileState
             color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
-        'Komuta Merkezi içindeki yatırım iştahı özeti bu ilçeye göre hesaplanır.',
+        'Diyarbakır ilçeleri için: Komuta Merkezi yatırım iştahı özeti bu ilçeye göre hesaplanır.',
         style: TextStyle(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
           fontSize: 11,
@@ -1338,6 +1598,50 @@ class _SettingSwitch extends StatelessWidget {
       value: value,
       activeThumbColor: AppThemeExtension.of(context).accent,
       onChanged: (v) => onChanged(v),
+    );
+  }
+}
+
+/// Erişilebilirlik: uygulama geneli metin ölçeği (0.85–1.30).
+class _TextScaleControl extends ConsumerWidget {
+  const _TextScaleControl();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
+    final scale = ref.watch(textScaleProvider);
+    final pct = (scale * 100).round();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.format_size_rounded, color: ext.accent, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child:
+                    Text('Yazı boyutu', style: AppTypography.bodyStrong(context)),
+              ),
+              Text('%$pct', style: AppTypography.meta(context)),
+            ],
+          ),
+          Slider(
+            value: scale,
+            min: AppConstants.minTextScale,
+            max: AppConstants.maxTextScale,
+            divisions: 9,
+            activeColor: ext.accent,
+            label: '%$pct',
+            onChanged: (v) => ref.read(textScaleProvider.notifier).setScale(v),
+          ),
+          Text(
+            'Uygulama genelinde metin boyutunu ayarlar.',
+            style: AppTypography.meta(context),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_card.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
@@ -26,7 +25,6 @@ class PostCallWizardContextStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
-    final premium = PremiumThemeExtension.of(context);
     final linked = linkedCustomerId != null && linkedCustomerId!.trim().isNotEmpty;
     final rawPhone = phoneNumber?.trim() ?? '';
     final formatted = rawPhone.isNotEmpty

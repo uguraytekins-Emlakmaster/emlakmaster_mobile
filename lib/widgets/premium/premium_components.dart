@@ -577,7 +577,6 @@ class PremiumStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
     final premium = PremiumThemeExtension.of(context);
     final c = color ?? premium.champagneGold;
     return Container(
@@ -988,7 +987,6 @@ class _PremiumIconContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
     final premium = PremiumThemeExtension.of(context);
     final c = color ?? premium.champagneGold;
     final box = Container(

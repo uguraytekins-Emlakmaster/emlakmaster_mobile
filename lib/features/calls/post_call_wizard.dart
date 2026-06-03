@@ -956,7 +956,6 @@ class _PostCallWizardScreenState extends ConsumerState<PostCallWizardScreen>
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
-    final premium = PremiumThemeExtension.of(context);
 
     return PremiumShellBackdrop(
       child: Scaffold(

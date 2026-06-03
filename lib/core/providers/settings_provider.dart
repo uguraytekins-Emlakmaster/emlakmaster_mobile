@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../constants/app_constants.dart';
 import '../services/settings_service.dart';
 
 /// Başlangıçta main() içinde yüklenen tema indeksi (flash önlemek için).
@@ -66,6 +67,33 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
   final index = ref.watch(themeModeIndexProvider);
   return themeModeFromIndex(index);
 });
+
+/// Erişilebilirlik metin ölçeği (0.85–1.30). MaterialApp builder'ında uygulanır.
+final textScaleProvider =
+    StateNotifierProvider<TextScaleNotifier, double>((ref) {
+  return TextScaleNotifier();
+});
+
+class TextScaleNotifier extends StateNotifier<double> {
+  TextScaleNotifier() : super(AppConstants.defaultTextScale) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      state = await SettingsService.instance.getTextScale();
+    } catch (_) {
+      state = AppConstants.defaultTextScale;
+    }
+  }
+
+  Future<void> setScale(double value) async {
+    final clamped =
+        value.clamp(AppConstants.minTextScale, AppConstants.maxTextScale);
+    await SettingsService.instance.setTextScale(clamped);
+    state = clamped;
+  }
+}
 
 /// Bildirimler açık mı. İlk yüklemede Storage'dan okunur.
 final notificationsEnabledProvider =

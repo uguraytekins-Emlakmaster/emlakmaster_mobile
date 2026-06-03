@@ -70,8 +70,9 @@ class TaskDueNotificationBridge {
       return;
     }
 
-    final enabled = await SettingsService.instance.getNotificationsEnabled();
-    if (!enabled) return;
+    final allowed =
+        await SettingsService.instance.isNotificationAllowed('tasks');
+    if (!allowed) return;
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

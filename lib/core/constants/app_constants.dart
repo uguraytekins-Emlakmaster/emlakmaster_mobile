@@ -126,6 +126,25 @@ abstract final class AppConstants {
   /// Batarya tasarrufu: animasyonları azaltır, arka planda iş yükünü düşürür.
   static const String keyPowerSaver = 'power_saver';
 
+  /// Metin ölçeği (erişilebilirlik): 0.85–1.30 arası kullanıcı tercihi. Varsayılan 1.0.
+  static const String keyTextScale = 'text_scale';
+  static const double defaultTextScale = 1.0;
+  static const double minTextScale = 0.85;
+  static const double maxTextScale = 1.30;
+
+  /// Kategori bazlı bildirim tercihleri (ana bildirim açıkken geçerli).
+  static const String keyNotifCategoryTasks = 'notif_cat_tasks';
+  static const String keyNotifCategoryCalls = 'notif_cat_calls';
+  static const String keyNotifCategoryMessages = 'notif_cat_messages';
+  static const String keyNotifCategoryMarketing = 'notif_cat_marketing';
+
+  /// Sessiz saatler: aralık içindeyken yerel bildirim/uyarı bastırılır.
+  static const String keyQuietHoursEnabled = 'quiet_hours_enabled';
+  static const String keyQuietHoursStartMin = 'quiet_hours_start_min';
+  static const String keyQuietHoursEndMin = 'quiet_hours_end_min';
+  static const int defaultQuietHoursStartMin = 22 * 60; // 22:00
+  static const int defaultQuietHoursEndMin = 8 * 60; // 08:00
+
   /// Harici platform hesapları (Connected Accounts) — Phase 1 UI.
   static const String keyFeatureExternalIntegrations =
       'feature_external_integrations';

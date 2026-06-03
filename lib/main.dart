@@ -431,6 +431,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     final router = ref.watch(AppRouter.goRouterProvider);
     final locale = ref.watch(localeProvider).valueOrNull ?? const Locale('tr');
     final themeMode = ref.watch(themeModeProvider);
+    final userTextScale = ref.watch(textScaleProvider);
     return MaterialApp.router(
       title: 'EmlakMaster',
       debugShowCheckedModeBanner: false,
@@ -541,7 +542,19 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
         // [child] = router/Navigator subtree (içinde [Overlay]). Bu builder içindeki
         // [Stack] kardeşleri (ör. [DevModeBadge]) Navigator dışında kalır; [Tooltip]
         // veya kök [Overlay] ekleme — "No Overlay widget found" / RawTooltip kırılır.
-        return shell;
+        //
+        // Erişilebilirlik: kullanıcı metin ölçeğini sistem ölçeğiyle birleştir,
+        // taşmayı önlemek için 0.85–1.30 arasına sıkıştır (bkz. AppConstants).
+        final media = MediaQuery.of(context);
+        final systemFactor = media.textScaler.scale(1.0);
+        final effectiveFactor =
+            (systemFactor * userTextScale).clamp(0.85, 1.30);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: TextScaler.linear(effectiveFactor),
+          ),
+          child: shell,
+        );
       },
     );
   }

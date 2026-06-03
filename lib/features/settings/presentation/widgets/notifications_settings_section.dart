@@ -25,10 +25,21 @@ class _NotificationsSettingsSectionState
   String? _soundStyleId;
   bool _styleLoading = true;
 
+  // Kategori tercihleri + sessiz saatler.
+  bool _prefsLoading = true;
+  bool _catTasks = true;
+  bool _catCalls = true;
+  bool _catMessages = true;
+  bool _catMarketing = false;
+  bool _quietEnabled = false;
+  int _quietStartMin = AppConstants.defaultQuietHoursStartMin;
+  int _quietEndMin = AppConstants.defaultQuietHoursEndMin;
+
   @override
   void initState() {
     super.initState();
     _loadSoundStyle();
+    _loadPrefs();
   }
 
   Future<void> _loadSoundStyle() async {
@@ -39,6 +50,94 @@ class _NotificationsSettingsSectionState
         _styleLoading = false;
       });
     }
+  }
+
+  Future<void> _loadPrefs() async {
+    final s = SettingsService.instance;
+    final tasks = await s.getNotifCategoryTasks();
+    final calls = await s.getNotifCategoryCalls();
+    final messages = await s.getNotifCategoryMessages();
+    final marketing = await s.getNotifCategoryMarketing();
+    final quietOn = await s.getQuietHoursEnabled();
+    final quietStart = await s.getQuietHoursStartMin();
+    final quietEnd = await s.getQuietHoursEndMin();
+    if (!mounted) return;
+    setState(() {
+      _catTasks = tasks;
+      _catCalls = calls;
+      _catMessages = messages;
+      _catMarketing = marketing;
+      _quietEnabled = quietOn;
+      _quietStartMin = quietStart;
+      _quietEndMin = quietEnd;
+      _prefsLoading = false;
+    });
+  }
+
+  String _fmtMin(int minuteOfDay) {
+    final h = (minuteOfDay ~/ 60).toString().padLeft(2, '0');
+    final m = (minuteOfDay % 60).toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  Future<void> _pickQuietTime({required bool isStart}) async {
+    final initialMin = isStart ? _quietStartMin : _quietEndMin;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: initialMin ~/ 60, minute: initialMin % 60),
+    );
+    if (picked == null) return;
+    final value = picked.hour * 60 + picked.minute;
+    if (isStart) {
+      await SettingsService.instance.setQuietHoursStartMin(value);
+      if (mounted) setState(() => _quietStartMin = value);
+    } else {
+      await SettingsService.instance.setQuietHoursEndMin(value);
+      if (mounted) setState(() => _quietEndMin = value);
+    }
+  }
+
+  Widget _catTile({
+    required IconData icon,
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final ext = AppThemeExtension.of(context);
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return SwitchListTile(
+      secondary: Icon(icon, color: ext.accent),
+      title: Text(title, style: TextStyle(color: onSurface)),
+      value: value,
+      activeThumbColor: ext.accent,
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _timeChip(String label, String value, VoidCallback onTap) {
+    final ext = AppThemeExtension.of(context);
+    final theme = Theme.of(context);
+    return OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: theme.dividerColor),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      ),
+      child: Column(
+        children: [
+          Text(label,
+              style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontSize: 11)),
+          const SizedBox(height: 2),
+          Text(value,
+              style: TextStyle(
+                  color: ext.accent,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15)),
+        ],
+      ),
+    );
   }
 
   @override
@@ -52,6 +151,7 @@ class _NotificationsSettingsSectionState
     final hapticOn = flags?[AppConstants.keyHapticFeedback] ?? true;
     final soundOn = flags?[AppConstants.keySoundEffects] ?? false;
     final asyncEnabled = ref.watch(notificationsEnabledProvider);
+    final mainEnabled = asyncEnabled.valueOrNull ?? false;
 
     final children = <Widget>[
       asyncEnabled.when(
@@ -181,6 +281,88 @@ class _NotificationsSettingsSectionState
               },
             );
           }),
+      ],
+      if (mainEnabled && !_prefsLoading) ...[
+        Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.45)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text(
+            'Bildirim türleri',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: ext.textTertiary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.35,
+            ),
+          ),
+        ),
+        _catTile(
+          icon: Icons.task_alt_rounded,
+          title: 'Görevler & hatırlatmalar',
+          value: _catTasks,
+          onChanged: (v) async {
+            await SettingsService.instance.setNotifCategoryTasks(v);
+            if (mounted) setState(() => _catTasks = v);
+          },
+        ),
+        _catTile(
+          icon: Icons.call_rounded,
+          title: 'Çağrılar',
+          value: _catCalls,
+          onChanged: (v) async {
+            await SettingsService.instance.setNotifCategoryCalls(v);
+            if (mounted) setState(() => _catCalls = v);
+          },
+        ),
+        _catTile(
+          icon: Icons.chat_bubble_rounded,
+          title: 'Mesajlar',
+          value: _catMessages,
+          onChanged: (v) async {
+            await SettingsService.instance.setNotifCategoryMessages(v);
+            if (mounted) setState(() => _catMessages = v);
+          },
+        ),
+        _catTile(
+          icon: Icons.campaign_rounded,
+          title: 'Kampanya & duyurular',
+          value: _catMarketing,
+          onChanged: (v) async {
+            await SettingsService.instance.setNotifCategoryMarketing(v);
+            if (mounted) setState(() => _catMarketing = v);
+          },
+        ),
+        Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.45)),
+        SwitchListTile(
+          secondary: Icon(Icons.bedtime_rounded, color: ext.accent),
+          title: Text('Sessiz saatler', style: TextStyle(color: onSurface)),
+          subtitle: Text(
+            'Bu aralıkta uygulama içi bildirim/uyarı susturulur.',
+            style: TextStyle(color: onSurfaceVariant, fontSize: 12),
+          ),
+          value: _quietEnabled,
+          activeThumbColor: ext.accent,
+          onChanged: (v) async {
+            await SettingsService.instance.setQuietHoursEnabled(v);
+            if (mounted) setState(() => _quietEnabled = v);
+          },
+        ),
+        if (_quietEnabled)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _timeChip('Başlangıç', _fmtMin(_quietStartMin),
+                      () => _pickQuietTime(isStart: true)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _timeChip('Bitiş', _fmtMin(_quietEndMin),
+                      () => _pickQuietTime(isStart: false)),
+                ),
+              ],
+            ),
+          ),
       ],
     ];
 

@@ -79,8 +79,9 @@ class ExecutionReminderNotificationBridge {
       return;
     }
 
-    final enabled = await SettingsService.instance.getNotificationsEnabled();
-    if (!enabled) return;
+    final allowed =
+        await SettingsService.instance.isNotificationAllowed('tasks');
+    if (!allowed) return;
 
     for (final r in items) {
       if (_deliveredKeys.contains(r.dedupeKey)) continue;
