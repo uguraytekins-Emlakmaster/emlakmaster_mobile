@@ -1,27 +1,33 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:flutter/material.dart';
 
-/// Tek bir tur adımı — gerçek bir arayüz öğesine [targetKey] ile bağlanır.
+/// Tek bir tur adımı — kararlı bir arayüz hedefine [targetId] ile bağlanır.
+/// [tabIndex] verilirse, adım gösterilmeden önce ilgili sekmeye geçilir.
 class CoachMarkStep {
   const CoachMarkStep({
-    required this.targetKey,
+    required this.targetId,
     required this.icon,
     required this.title,
     required this.body,
+    this.tabIndex,
   });
 
-  final GlobalKey targetKey;
+  final TourTargetId targetId;
   final IconData icon;
   final String title;
   final String body;
+
+  /// Danışman kabuğu `pages` indeksi (null = sekme değiştirme).
+  final int? tabIndex;
 }
 
-/// Coach-mark / spotlight turunu Navigator alt ağacındaki [Overlay] üzerinde
-/// gösterir (kök Overlay'e dokunmaz; bkz. main.dart uyarısı). Atlanabilir ve
-/// tamamlandığında/atlandığında [onCompleted] bir kez çağrılır.
+/// Kapsamlı, atlanabilir coach-mark turu. Sekmeler arası otomatik gezinir,
+/// her hedefi [TourRegistry] üzerinden çözer ve overlay'i Navigator alt
+/// ağacındaki [Overlay]'e yerleştirir (kök Overlay'e dokunmaz).
 class CoachMarkTour {
   CoachMarkTour._();
 
@@ -29,20 +35,18 @@ class CoachMarkTour {
 
   static bool get isShowing => _entry != null;
 
-  /// Turu başlatır. [steps] içinde o an ekranda bulunmayan hedefler atlanır.
-  /// Görünür hedef yoksa tur açılmaz ve [onCompleted] hemen çağrılır.
+  /// Turu başlatır. Hedefi o an çözülemeyen adımlar zarifçe atlanır; hiçbir
+  /// adım gösterilemezse tur açılmaz ve [onCompleted] yine de çağrılır.
   static void show(
     BuildContext context, {
     required List<CoachMarkStep> steps,
+    required void Function(int pageIndex) goToTab,
     required VoidCallback onCompleted,
   }) {
     if (_entry != null) return;
     final overlay = Overlay.maybeOf(context);
     if (overlay == null) return;
-
-    final visible =
-        steps.where((s) => s.targetKey.currentContext != null).toList();
-    if (visible.isEmpty) {
+    if (steps.isEmpty) {
       onCompleted();
       return;
     }
@@ -50,9 +54,10 @@ class CoachMarkTour {
     late final OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _CoachMarkOverlay(
-        steps: visible,
+        steps: steps,
+        goToTab: goToTab,
         onClose: () {
-          if (_entry == entry) _entry = null;
+          if (identical(_entry, entry)) _entry = null;
           if (entry.mounted) entry.remove();
           onCompleted();
         },
@@ -62,7 +67,7 @@ class CoachMarkTour {
     overlay.insert(entry);
   }
 
-  /// Açık turu temizler (ör. ekran kapanırken).
+  /// Açık turu temizler (ör. kabuk kapanırken).
   static void dismiss() {
     final entry = _entry;
     _entry = null;
@@ -73,10 +78,12 @@ class CoachMarkTour {
 class _CoachMarkOverlay extends StatefulWidget {
   const _CoachMarkOverlay({
     required this.steps,
+    required this.goToTab,
     required this.onClose,
   });
 
   final List<CoachMarkStep> steps;
+  final void Function(int pageIndex) goToTab;
   final VoidCallback onClose;
 
   @override
@@ -85,32 +92,77 @@ class _CoachMarkOverlay extends StatefulWidget {
 
 class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
   int _index = 0;
+  int _shownCount = 0; // gösterilen (atlanmayan) adım sayısı — sayaç için
   Rect? _targetRect;
+  bool _closed = false;
 
   static const double _spotlightPad = 8;
   static const double _spotlightRadius = 18;
+  static const int _maxResolveAttempts = 16;
+  static const Duration _attemptGap = Duration(milliseconds: 70);
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _prepareCurrent());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prepareFrom(0));
   }
 
-  Future<void> _prepareCurrent() async {
-    final step = widget.steps[_index];
-    final ctx = step.targetKey.currentContext;
-    if (ctx != null) {
-      await Scrollable.ensureVisible(
-        ctx,
-        alignment: 0.5,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
-      );
+  /// [start] adımından itibaren çözülebilen ilk adımı hazırlar; çözülemeyenleri
+  /// atlar. Çözülebilir adım kalmazsa turu kapatır.
+  Future<void> _prepareFrom(int start) async {
+    var i = start;
+    if (mounted) {
+      setState(() => _targetRect = null);
     }
-    if (!mounted) return;
-    await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
-    setState(() => _targetRect = _computeRect(step.targetKey));
+    while (i < widget.steps.length) {
+      final step = widget.steps[i];
+      if (step.tabIndex != null) {
+        widget.goToTab(step.tabIndex!);
+      }
+      final key = await _resolveTarget(step);
+      if (!mounted || _closed) return;
+      if (key != null) {
+        await Scrollable.ensureVisible(
+          key.currentContext!,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+        if (!mounted || _closed) return;
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted || _closed) return;
+        final rect = _computeRect(key);
+        if (rect != null) {
+          setState(() {
+            _index = i;
+            _targetRect = rect;
+            _shownCount++;
+          });
+          return;
+        }
+      }
+      i++; // hedef yok → bu adımı atla
+    }
+    _finish();
+  }
+
+  Future<GlobalKey?> _resolveTarget(CoachMarkStep step) async {
+    for (var attempt = 0; attempt < _maxResolveAttempts; attempt++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted || _closed) return null;
+      final key = TourRegistry.instance.keyFor(step.targetId);
+      final ro = key?.currentContext?.findRenderObject();
+      if (key != null &&
+          ro is RenderBox &&
+          ro.attached &&
+          ro.hasSize &&
+          ro.size.shortestSide > 1) {
+        return key;
+      }
+      await Future<void>.delayed(_attemptGap);
+      if (!mounted || _closed) return null;
+    }
+    return null;
   }
 
   Rect? _computeRect(GlobalKey key) {
@@ -125,20 +177,19 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
     return topLeft & box.size;
   }
 
+  bool get _isLastShowable {
+    // Geçerli adımdan sonra başka adım yoksa "Bitir".
+    return _index >= widget.steps.length - 1;
+  }
+
   void _next() {
-    if (_index >= widget.steps.length - 1) {
-      _finish();
-      return;
-    }
     AppFeedback.selectionClick();
-    setState(() {
-      _index++;
-      _targetRect = null;
-    });
-    _prepareCurrent();
+    _prepareFrom(_index + 1);
   }
 
   void _finish() {
+    if (_closed) return;
+    _closed = true;
     AppFeedback.lightImpact();
     widget.onClose();
   }
@@ -169,8 +220,38 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
               ),
             ),
           ),
-          if (spotlight != null)
-            _buildCard(context, spotlight, size, accent),
+          // Her durumda erişilebilir "Atla" — geçiş anında bile kapana kıstırmaz.
+          Positioned(
+            top: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8, top: 4),
+                child: Semantics(
+                  button: true,
+                  label: 'Turu atla',
+                  child: TextButton.icon(
+                    onPressed: _finish,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.black.withValues(alpha: 0.32),
+                      minimumSize: const Size(64, 44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusPill),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    label: const Text(
+                      'Atla',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (spotlight != null) _buildCard(context, spotlight, size, accent),
         ],
       ),
     );
@@ -184,7 +265,8 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
   ) {
     final ext = AppThemeExtension.of(context);
     final step = widget.steps[_index];
-    final isLast = _index == widget.steps.length - 1;
+    final isLast = _isLastShowable;
+    final stepNo = _shownCount > 0 ? _shownCount : 1;
 
     final spaceBelow = size.height - spotlight.bottom;
     final placeBelow = spaceBelow > 240;
@@ -211,7 +293,7 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'ADIM ${_index + 1} / ${widget.steps.length}',
+              'TUR · ADIM $stepNo',
               style: TextStyle(
                 color: accent.withValues(alpha: 0.9),
                 fontSize: 11,
@@ -279,7 +361,7 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
                   button: true,
                   label: isLast ? 'Turu bitir' : 'Sonraki adım',
                   child: FilledButton(
-                    onPressed: _next,
+                    onPressed: isLast ? _finish : _next,
                     style: FilledButton.styleFrom(
                       backgroundColor: accent,
                       foregroundColor: ext.onBrand,
@@ -346,18 +428,18 @@ class _SpotlightPainter extends CustomPainter {
     );
     canvas.drawPath(scrimPath, scrim);
 
-    final border = Paint()
-      ..color = borderColor.withValues(alpha: 0.9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawRRect(rrect, border);
-
     final glow = Paint()
       ..color = borderColor.withValues(alpha: 0.28)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
     canvas.drawRRect(rrect, glow);
+
+    final border = Paint()
+      ..color = borderColor.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawRRect(rrect, border);
   }
 
   @override

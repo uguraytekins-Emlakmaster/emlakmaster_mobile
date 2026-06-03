@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
@@ -129,23 +130,26 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
     final reserve = _dockBottomReserve(context);
 
     final header = SliverToBoxAdapter(
-      child: CallsWorkspaceHeader(
-        title: 'Çağrılarım',
-        subtitle: 'Son aramalar ve geri dönüş aksiyonları',
-        dateChipLabel: snapshot.dateChipLabel,
-        coverageNote: snapshot.coverageNote,
-        actions: [
-          IconButton(
-            tooltip: 'Yenile',
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            onPressed: () => CallsWorkspaceActions.refresh(ref),
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: AppThemeExtension.of(context).accent,
-              size: 22,
+      child: TourTarget(
+        id: TourTargetId.callsHeader,
+        child: CallsWorkspaceHeader(
+          title: 'Çağrılarım',
+          subtitle: 'Son aramalar ve geri dönüş aksiyonları',
+          dateChipLabel: snapshot.dateChipLabel,
+          coverageNote: snapshot.coverageNote,
+          actions: [
+            IconButton(
+              tooltip: 'Yenile',
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              onPressed: () => CallsWorkspaceActions.refresh(ref),
+              icon: Icon(
+                Icons.refresh_rounded,
+                color: AppThemeExtension.of(context).accent,
+                size: 22,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 

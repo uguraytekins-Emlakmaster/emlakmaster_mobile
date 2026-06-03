@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -128,7 +129,8 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
           ),
           if (snapshotAsync.valueOrNull?.isEmpty == false)
             _AddTaskDock(
-              onPressed: () => TasksWorkspaceActions.showAddTask(context, ref, uid),
+              onPressed: () =>
+                  TasksWorkspaceActions.showAddTask(context, ref, uid),
             ),
         ],
       ),
@@ -146,23 +148,26 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
         .toList(growable: false);
 
     final header = SliverToBoxAdapter(
-      child: TasksWorkspaceHeader(
-        title: 'Görevlerim',
-        subtitle: 'Görev durumu ve sonraki adımlar',
-        dateChipLabel: snapshot.dateChipLabel,
-        coverageNote: snapshot.coverageNote,
-        actions: [
-          IconButton(
-            tooltip: 'Yenile',
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            onPressed: () => TasksWorkspaceActions.refresh(ref, uid),
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: AppThemeExtension.of(context).accent,
-              size: 22,
+      child: TourTarget(
+        id: TourTargetId.tasksHeader,
+        child: TasksWorkspaceHeader(
+          title: 'Görevlerim',
+          subtitle: 'Görev durumu ve sonraki adımlar',
+          dateChipLabel: snapshot.dateChipLabel,
+          coverageNote: snapshot.coverageNote,
+          actions: [
+            IconButton(
+              tooltip: 'Yenile',
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              onPressed: () => TasksWorkspaceActions.refresh(ref, uid),
+              icon: Icon(
+                Icons.refresh_rounded,
+                color: AppThemeExtension.of(context).accent,
+                size: 22,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 
@@ -185,7 +190,8 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
                     icon: Icons.task_alt_rounded,
                     title: AppLocalizations.of(context).t('empty_tasks'),
                     subtitle: AppLocalizations.of(context).t('empty_tasks_sub'),
-                    actionLabel: AppLocalizations.of(context).t('empty_tasks_cta'),
+                    actionLabel:
+                        AppLocalizations.of(context).t('empty_tasks_cta'),
                     onAction: () =>
                         TasksWorkspaceActions.showAddTask(context, ref, uid),
                   ),
@@ -250,7 +256,9 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
 
       if (showOverdueLane) {
         final overdueFiltered = filterTasksWorkspaceRows(
-          snapshot.overdueRows.where((r) => !_deletingIds.contains(r.id)).toList(),
+          snapshot.overdueRows
+              .where((r) => !_deletingIds.contains(r.id))
+              .toList(),
           query: _query,
         );
         final lane = overdueFiltered.take(3).toList();
@@ -303,8 +311,7 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
         }
       }
 
-      final mainRows =
-          filtered.where((r) => !laneKeys.contains(r.id)).toList();
+      final mainRows = filtered.where((r) => !laneKeys.contains(r.id)).toList();
 
       slivers.add(
         SliverToBoxAdapter(

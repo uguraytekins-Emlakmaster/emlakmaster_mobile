@@ -24,7 +24,7 @@ import 'package:emlakmaster_mobile/features/analytics/presentation/providers/inv
 import 'package:emlakmaster_mobile/features/market_settings/domain/entities/market_settings_entity.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_providers.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
@@ -85,9 +85,12 @@ class SettingsPage extends ConsumerWidget {
             DesignTokens.space8,
           ),
           children: [
-            PremiumPageHeader(
-              title: l10n.t('title_settings'),
-              subtitle: 'Sisteminizi dilediğiniz gibi yönetin.',
+            TourTarget(
+              id: TourTargetId.settingsHeader,
+              child: PremiumPageHeader(
+                title: l10n.t('title_settings'),
+                subtitle: 'Sisteminizi dilediğiniz gibi yönetin.',
+              ),
             ),
             const PremiumSectionHeader(
               label: 'Hesap Alanı',
@@ -230,8 +233,7 @@ class SettingsPage extends ConsumerWidget {
                       leading: Icon(Icons.lock_reset_rounded,
                           color: AppThemeExtension.of(context).accent),
                       title: Text('Şifre değiştir',
-                          style:
-                              TextStyle(color: theme.colorScheme.onSurface)),
+                          style: TextStyle(color: theme.colorScheme.onSurface)),
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () =>
                           AccountSecurityActions.showChangePassword(context),
@@ -243,8 +245,7 @@ class SettingsPage extends ConsumerWidget {
                       leading: Icon(Icons.alternate_email_rounded,
                           color: AppThemeExtension.of(context).accent),
                       title: Text('E-posta değiştir',
-                          style:
-                              TextStyle(color: theme.colorScheme.onSurface)),
+                          style: TextStyle(color: theme.colorScheme.onSurface)),
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () =>
                           AccountSecurityActions.showChangeEmail(context),
@@ -256,8 +257,7 @@ class SettingsPage extends ConsumerWidget {
                       leading: Icon(Icons.mark_email_read_rounded,
                           color: AppThemeExtension.of(context).accent),
                       title: Text('Şifre sıfırlama bağlantısı gönder',
-                          style:
-                              TextStyle(color: theme.colorScheme.onSurface)),
+                          style: TextStyle(color: theme.colorScheme.onSurface)),
                       subtitle: Text(
                         'Hesap e-postanıza güvenli sıfırlama bağlantısı yollar.',
                         style: TextStyle(
@@ -397,8 +397,7 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Çağrılar', icon: Icons.call_rounded),
+            const _SectionHeader(title: 'Çağrılar', icon: Icons.call_rounded),
             _sectionCard(
               context,
               children: [
@@ -687,24 +686,19 @@ class SettingsPage extends ConsumerWidget {
                     title: Text('Turu tekrar göster',
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text(
-                      '"Benim Günüm" tanıtım turunu yeniden başlatır.',
+                      'Tüm ana ekranları gezen tanıtım turunu yeniden başlatır.',
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.65),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.65),
                         fontSize: 11,
                       ),
                     ),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () {
-                      ref
-                          .read(mainShellShortcutProvider.notifier)
-                          .enqueue(MainShellShortcut.openHomeTab);
-                      ref
-                          .read(consultantTourReplayProvider.notifier)
-                          .state++;
+                      ref.read(consultantTourReplayProvider.notifier).state++;
                       AppToaster.info(
                         context,
-                        'Tur "Benim Günüm" ekranında yeniden başlatıldı.',
+                        'Tanıtım turu yeniden başlatıldı.',
                       );
                     },
                   ),
@@ -713,7 +707,8 @@ class SettingsPage extends ConsumerWidget {
             ],
             const SizedBox(height: DesignTokens.space6),
             _SettingsAdvancedSection(
-              sectionCard: (children) => _sectionCard(context, children: children),
+              sectionCard: (children) =>
+                  _sectionCard(context, children: children),
               l10n: l10n,
             ),
             const SizedBox(height: DesignTokens.space6),
@@ -737,8 +732,8 @@ class SettingsPage extends ConsumerWidget {
                       _launchExternalUrl(context, LegalLinks.privacyPolicyUrl);
                     } else {
                       Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const LegalDocumentPage(
-                            kind: LegalDocKind.privacy),
+                        builder: (_) =>
+                            const LegalDocumentPage(kind: LegalDocKind.privacy),
                       ));
                     }
                   },
@@ -761,8 +756,8 @@ class SettingsPage extends ConsumerWidget {
                       _launchExternalUrl(context, LegalLinks.termsOfServiceUrl);
                     } else {
                       Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const LegalDocumentPage(
-                            kind: LegalDocKind.terms),
+                        builder: (_) =>
+                            const LegalDocumentPage(kind: LegalDocKind.terms),
                       ));
                     }
                   },
@@ -1088,216 +1083,211 @@ class _SettingsAdvancedSection extends ConsumerWidget {
               l10n.t('settings_advanced_title'),
               style: AppTypography.bodyStrong(context),
             ),
+            subtitle: Text(
+              l10n.t('settings_advanced_sub'),
+              style: AppTypography.meta(context),
+            ),
+            children: [
+              _AdvancedFlagGroup(
+                label: 'Ürün görünümü',
+                children: [
+                  _SettingSwitch(
+                    title: 'Odaklı V1 (önerilen)',
+                    subtitle:
+                        'Komuta Odası ve Ekonomi sekmeleri gizlenir; çekirdek akış kalır.',
+                    icon: Icons.bolt_outlined,
+                    value: flags[AppConstants.keyV1LeanProduct] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyV1LeanProduct, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'KPI çubuğu',
+                    subtitle: 'Özet ekranın üstündeki hızlı göstergeler',
+                    icon: Icons.bar_chart_rounded,
+                    value: flags[AppConstants.keyFeatureKpiBar] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureKpiBar, v),
+                  ),
+                  _SettingSwitch(
+                    title: ProductLabels.warRoom,
+                    subtitle: 'Ofis ritmi, hedefler ve öncelikli alanlar',
+                    icon: Icons.military_tech_rounded,
+                    value: flags[AppConstants.keyFeatureWarRoom] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureWarRoom, v),
+                  ),
+                  _SettingSwitch(
+                    title: ProductLabels.callCenter,
+                    subtitle: 'Tüm çağrılar ve operasyon görünümü',
+                    icon: Icons.call_merge_rounded,
+                    value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureCommandCenter, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Günlük özet',
+                    subtitle: 'Günün özeti paneli',
+                    icon: Icons.today_rounded,
+                    value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureDailyBrief, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Pipeline',
+                    subtitle: 'Kanban ve aşama takibi',
+                    icon: Icons.account_tree_rounded,
+                    value: flags[AppConstants.keyFeaturePipeline] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeaturePipeline, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Yatırımcı istihbaratı',
+                    subtitle: 'Fırsat radarı ve yatırım panelleri',
+                    icon: Icons.savings_rounded,
+                    value: flags[AppConstants.keyFeatureInvestorIntelligence] ??
+                        true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(
+                            AppConstants.keyFeatureInvestorIntelligence, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Görevler',
+                    subtitle: 'Takip ve hatırlatmalar',
+                    icon: Icons.task_alt_rounded,
+                    value: flags[AppConstants.keyFeatureTasks] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureTasks, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Bildirim merkezi',
+                    subtitle: 'Tüm bildirimler tek ekranda',
+                    icon: Icons.notifications_rounded,
+                    value: flags[AppConstants.keyFeatureNotificationsCenter] ??
+                        true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureNotificationsCenter, v),
+                  ),
+                ],
+              ),
+              _AdvancedFlagGroup(
+                label: 'Çağrı & kayıt',
+                children: [
+                  _SettingSwitch(
+                    title: 'Sesli müşteri akışı',
+                    subtitle: 'Eller serbest kullanım ve sesli yönlendirme',
+                    icon: Icons.mic_rounded,
+                    value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureVoiceCrm, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Çağrı özeti',
+                    subtitle: 'Arama sonrası akıllı özet',
+                    icon: Icons.summarize_rounded,
+                    value: flags[AppConstants.keyFeatureCallSummary] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureCallSummary, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Rehbere / uygulamaya kaydet',
+                    subtitle: 'Arama sonrası rehber ve müşteri kaydı',
+                    icon: Icons.contact_phone_rounded,
+                    value: flags[AppConstants.keyFeatureContactSave] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureContactSave, v),
+                  ),
+                ],
+              ),
+              _AdvancedFlagGroup(
+                label: 'Entegrasyon & piyasa',
+                children: [
+                  _SettingSwitch(
+                    title: 'Market Pulse',
+                    subtitle: 'Son ilanlar ve harici kaynaklar',
+                    icon: Icons.trending_up_rounded,
+                    value: flags[AppConstants.keyFeatureMarketPulse] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureMarketPulse, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Portföy eşleştirme',
+                    subtitle: 'Müşteri–ilan eşleşme önerisi',
+                    icon: Icons.auto_awesome_rounded,
+                    value: flags[AppConstants.keyFeaturePortfolioMatch] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeaturePortfolioMatch, v),
+                  ),
+                  _SettingSwitch(
+                    title: 'Harici platform entegrasyonları',
+                    subtitle:
+                        'Sahibinden / Hepsiemlak / Emlakjet bağlı hesaplar',
+                    icon: Icons.hub_rounded,
+                    value: flags[AppConstants.keyFeatureExternalIntegrations] ??
+                        true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(
+                            AppConstants.keyFeatureExternalIntegrations, v),
+                  ),
+                ],
+              ),
+              Divider(
+                  height: 1, color: theme.dividerColor.withValues(alpha: 0.35)),
+              ListTile(
+                leading: Icon(Icons.restart_alt_rounded, color: ext.accent),
+                title: Text('Varsayılanlara sıfırla',
+                    style: AppTypography.bodyStrong(context)),
                 subtitle: Text(
-                  l10n.t('settings_advanced_sub'),
+                  'Tüm gelişmiş özellik anahtarlarını fabrika ayarına döndürür.',
                   style: AppTypography.meta(context),
                 ),
-                children: [
-                  _AdvancedFlagGroup(
-                    label: 'Ürün görünümü',
-                    children: [
-                      _SettingSwitch(
-                        title: 'Odaklı V1 (önerilen)',
-                        subtitle:
-                            'Komuta Odası ve Ekonomi sekmeleri gizlenir; çekirdek akış kalır.',
-                        icon: Icons.bolt_outlined,
-                        value: flags[AppConstants.keyV1LeanProduct] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyV1LeanProduct, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'KPI çubuğu',
-                        subtitle: 'Özet ekranın üstündeki hızlı göstergeler',
-                        icon: Icons.bar_chart_rounded,
-                        value: flags[AppConstants.keyFeatureKpiBar] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureKpiBar, v),
-                      ),
-                      _SettingSwitch(
-                        title: ProductLabels.warRoom,
-                        subtitle: 'Ofis ritmi, hedefler ve öncelikli alanlar',
-                        icon: Icons.military_tech_rounded,
-                        value: flags[AppConstants.keyFeatureWarRoom] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureWarRoom, v),
-                      ),
-                      _SettingSwitch(
-                        title: ProductLabels.callCenter,
-                        subtitle: 'Tüm çağrılar ve operasyon görünümü',
-                        icon: Icons.call_merge_rounded,
-                        value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureCommandCenter, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Günlük özet',
-                        subtitle: 'Günün özeti paneli',
-                        icon: Icons.today_rounded,
-                        value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureDailyBrief, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Pipeline',
-                        subtitle: 'Kanban ve aşama takibi',
-                        icon: Icons.account_tree_rounded,
-                        value: flags[AppConstants.keyFeaturePipeline] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeaturePipeline, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Yatırımcı istihbaratı',
-                        subtitle: 'Fırsat radarı ve yatırım panelleri',
-                        icon: Icons.savings_rounded,
-                        value: flags[AppConstants.keyFeatureInvestorIntelligence] ??
-                            true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(
-                                AppConstants.keyFeatureInvestorIntelligence, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Görevler',
-                        subtitle: 'Takip ve hatırlatmalar',
-                        icon: Icons.task_alt_rounded,
-                        value: flags[AppConstants.keyFeatureTasks] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureTasks, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Bildirim merkezi',
-                        subtitle: 'Tüm bildirimler tek ekranda',
-                        icon: Icons.notifications_rounded,
-                        value:
-                            flags[AppConstants.keyFeatureNotificationsCenter] ??
-                                true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(
-                                AppConstants.keyFeatureNotificationsCenter, v),
-                      ),
-                    ],
-                  ),
-                  _AdvancedFlagGroup(
-                    label: 'Çağrı & kayıt',
-                    children: [
-                      _SettingSwitch(
-                        title: 'Sesli müşteri akışı',
-                        subtitle: 'Eller serbest kullanım ve sesli yönlendirme',
-                        icon: Icons.mic_rounded,
-                        value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureVoiceCrm, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Çağrı özeti',
-                        subtitle: 'Arama sonrası akıllı özet',
-                        icon: Icons.summarize_rounded,
-                        value: flags[AppConstants.keyFeatureCallSummary] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureCallSummary, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Rehbere / uygulamaya kaydet',
-                        subtitle: 'Arama sonrası rehber ve müşteri kaydı',
-                        icon: Icons.contact_phone_rounded,
-                        value: flags[AppConstants.keyFeatureContactSave] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureContactSave, v),
-                      ),
-                    ],
-                  ),
-                  _AdvancedFlagGroup(
-                    label: 'Entegrasyon & piyasa',
-                    children: [
-                      _SettingSwitch(
-                        title: 'Market Pulse',
-                        subtitle: 'Son ilanlar ve harici kaynaklar',
-                        icon: Icons.trending_up_rounded,
-                        value: flags[AppConstants.keyFeatureMarketPulse] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureMarketPulse, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Portföy eşleştirme',
-                        subtitle: 'Müşteri–ilan eşleşme önerisi',
-                        icon: Icons.auto_awesome_rounded,
-                        value:
-                            flags[AppConstants.keyFeaturePortfolioMatch] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeaturePortfolioMatch, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Harici platform entegrasyonları',
-                        subtitle:
-                            'Sahibinden / Hepsiemlak / Emlakjet bağlı hesaplar',
-                        icon: Icons.hub_rounded,
-                        value: flags[AppConstants.keyFeatureExternalIntegrations] ??
-                            true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(
-                                AppConstants.keyFeatureExternalIntegrations, v),
-                      ),
-                    ],
-                  ),
-                  Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.35)),
-                  ListTile(
-                    leading:
-                        Icon(Icons.restart_alt_rounded, color: ext.accent),
-                    title: Text('Varsayılanlara sıfırla',
-                        style: AppTypography.bodyStrong(context)),
-                    subtitle: Text(
-                      'Tüm gelişmiş özellik anahtarlarını fabrika ayarına döndürür.',
-                      style: AppTypography.meta(context),
-                    ),
-                    onTap: () async {
-                      final ok = await showDialog<bool>(
-                        context: context,
-                        builder: (dctx) {
-                          final dExt = AppThemeExtension.of(dctx);
-                          return AlertDialog(
-                            backgroundColor: dExt.surfaceElevated,
-                            title: const Text('Varsayılanlara sıfırla'),
-                            content: const Text(
-                                'Tüm gelişmiş özellik anahtarları varsayılan değerlerine dönecek. Devam edilsin mi?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(dctx, false),
-                                child: const Text('Vazgeç'),
-                              ),
-                              FilledButton(
-                                onPressed: () => Navigator.pop(dctx, true),
-                                child: const Text('Sıfırla'),
-                              ),
-                            ],
-                          );
-                        },
+                onTap: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (dctx) {
+                      final dExt = AppThemeExtension.of(dctx);
+                      return AlertDialog(
+                        backgroundColor: dExt.surfaceElevated,
+                        title: const Text('Varsayılanlara sıfırla'),
+                        content: const Text(
+                            'Tüm gelişmiş özellik anahtarları varsayılan değerlerine dönecek. Devam edilsin mi?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dctx, false),
+                            child: const Text('Vazgeç'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(dctx, true),
+                            child: const Text('Sıfırla'),
+                          ),
+                        ],
                       );
-                      if (ok != true) return;
-                      await ref
-                          .read(featureFlagsProvider.notifier)
-                          .resetToDefaults();
-                      if (context.mounted) {
-                        AppToaster.success(context,
-                            'Gelişmiş ayarlar varsayılana döndürüldü.');
-                      }
                     },
-                  ),
+                  );
+                  if (ok != true) return;
+                  await ref
+                      .read(featureFlagsProvider.notifier)
+                      .resetToDefaults();
+                  if (context.mounted) {
+                    AppToaster.success(
+                        context, 'Gelişmiş ayarlar varsayılana döndürüldü.');
+                  }
+                },
+              ),
             ],
           ),
         ),
@@ -1681,8 +1671,8 @@ class _TextScaleControl extends ConsumerWidget {
               Icon(Icons.format_size_rounded, color: ext.accent, size: 22),
               const SizedBox(width: 12),
               Expanded(
-                child:
-                    Text('Yazı boyutu', style: AppTypography.bodyStrong(context)),
+                child: Text('Yazı boyutu',
+                    style: AppTypography.bodyStrong(context)),
               ),
               Text('%$pct', style: AppTypography.meta(context)),
             ],

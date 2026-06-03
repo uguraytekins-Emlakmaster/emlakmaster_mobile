@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -228,8 +229,9 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
                               actionLabel: _searchQuery.isNotEmpty
                                   ? 'Filtreyi sıfırla'
                                   : null,
-                              onAction:
-                                  _searchQuery.isNotEmpty ? _resetFilters : null,
+                              onAction: _searchQuery.isNotEmpty
+                                  ? _resetFilters
+                                  : null,
                               outlinedActionLabel:
                                   _searchQuery.isEmpty ? 'Çağrılarım' : null,
                               onOutlinedAction: _searchQuery.isEmpty
@@ -317,24 +319,27 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
   }) {
     return [
       SliverToBoxAdapter(
-        child: PremiumMessagesPageHeader(
-          title: 'Mesaj Merkezi',
-          subtitle: 'Çok kanallı iletişim · müşteri mesajları',
-          actions: [
-            if (canManage)
-              IconButton(
-                tooltip: 'Kanal ayarları',
-                onPressed: () {
-                  AppFeedback.lightImpact();
-                  context.push(AppRouter.routeConnectedAccounts);
-                },
-                icon: Icon(
-                  Icons.hub_outlined,
-                  color: premium.champagneGold,
-                  size: 22,
+        child: TourTarget(
+          id: TourTargetId.messagesHeader,
+          child: PremiumMessagesPageHeader(
+            title: 'Mesaj Merkezi',
+            subtitle: 'Çok kanallı iletişim · müşteri mesajları',
+            actions: [
+              if (canManage)
+                IconButton(
+                  tooltip: 'Kanal ayarları',
+                  onPressed: () {
+                    AppFeedback.lightImpact();
+                    context.push(AppRouter.routeConnectedAccounts);
+                  },
+                  icon: Icon(
+                    Icons.hub_outlined,
+                    color: premium.champagneGold,
+                    size: 22,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
       if (showTeamBanner)

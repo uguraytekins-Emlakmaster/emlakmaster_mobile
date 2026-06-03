@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -114,23 +115,26 @@ class _CustomerWorkspaceSurfaceState
     final reserve = _dockBottomReserve(context);
 
     final header = SliverToBoxAdapter(
-      child: CustomerWorkspaceHeader(
-        title: 'Müşterilerim',
-        subtitle: 'Müşteri durumu ve sonraki adımlar',
-        coverageNote: snapshot.coverageNote,
-        actions: [
-          IconButton(
-            tooltip: 'Müşteri ekle',
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-            onPressed: () =>
-                CustomerWorkspaceActions.addCustomer(context, source: 'crm_header'),
-            icon: Icon(
-              Icons.person_add_alt_1_rounded,
-              color: AppThemeExtension.of(context).accent,
-              size: 22,
+      child: TourTarget(
+        id: TourTargetId.customersHeader,
+        child: CustomerWorkspaceHeader(
+          title: 'Müşterilerim',
+          subtitle: 'Müşteri durumu ve sonraki adımlar',
+          coverageNote: snapshot.coverageNote,
+          actions: [
+            IconButton(
+              tooltip: 'Müşteri ekle',
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              onPressed: () => CustomerWorkspaceActions.addCustomer(context,
+                  source: 'crm_header'),
+              icon: Icon(
+                Icons.person_add_alt_1_rounded,
+                color: AppThemeExtension.of(context).accent,
+                size: 22,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
 

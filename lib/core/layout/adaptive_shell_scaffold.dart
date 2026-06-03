@@ -13,6 +13,7 @@ import '../navigation/back_navigation_scope.dart';
 import '../navigation/shell_navigation_host.dart';
 import '../navigation/shell_tab_back_host.dart';
 import '../navigation/tab_history_controller.dart';
+import '../onboarding/tour_target.dart';
 import '../performance/shell_lazy_tab.dart';
 import '../performance/shell_tab_prefetch.dart';
 import '../navigation/main_shell_shortcut_provider.dart';
@@ -59,6 +60,7 @@ class AdaptiveShellScaffold extends ConsumerStatefulWidget {
 
   final List<AdaptiveNavItem> navItems;
   final List<Widget> pages;
+
   /// Alt menü / rail öğesi → [pages] indeksi. [kShellNavMoreMenu] menü açar.
   /// Verilmezse her nav öğesi kendi indeksine gider (nav.length == pages.length).
   final List<int>? navPageIndices;
@@ -125,8 +127,7 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     return index;
   }
 
-  bool _isValidPageIndex(int idx) =>
-      idx >= 0 && idx < widget.pages.length;
+  bool _isValidPageIndex(int idx) => idx >= 0 && idx < widget.pages.length;
 
   int? _resolveShortcutIndex(MainShellShortcut shortcut) {
     final navLen = widget.navItems.length;
@@ -183,9 +184,10 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
   }
 
   void _replayNextQueuedShortcut() {
-    final command = ref.read(mainShellShortcutProvider.notifier).takeFirstMatching(
-      (shortcut) => _resolveShortcutIndex(shortcut) != null,
-    );
+    final command =
+        ref.read(mainShellShortcutProvider.notifier).takeFirstMatching(
+              (shortcut) => _resolveShortcutIndex(shortcut) != null,
+            );
     if (command == null) return;
     final idx = _resolveShortcutIndex(command.shortcut);
     if (idx == null) {
@@ -576,89 +578,95 @@ class AdaptiveShellScaffoldState extends ConsumerState<AdaptiveShellScaffold> {
     _maybeLogActivePage(safeIndex);
     final body = PremiumShellBackdrop(
       child: Column(
-      children: [
-        if (widget.title != null && isWide)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(DesignTokens.space4,
-                DesignTokens.space4, DesignTokens.space4, DesignTokens.space2),
-            child: Row(
-              children: [
-                Text(
-                  widget.title!,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: ext.textPrimary,
-                    fontWeight: FontWeight.w600,
+        children: [
+          if (widget.title != null && isWide)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.space4,
+                  DesignTokens.space4,
+                  DesignTokens.space4,
+                  DesignTokens.space2),
+              child: Row(
+                children: [
+                  Text(
+                    widget.title!,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: ext.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                if (widget.actions != null) ...[
-                  const Spacer(),
-                  ...widget.actions!,
+                  if (widget.actions != null) ...[
+                    const Spacer(),
+                    ...widget.actions!,
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        Expanded(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              for (var i = 0; i < widget.pages.length; i++)
-                if (_materialized.contains(i))
-                  Positioned.fill(
-                    key: ValueKey(_tabIdentityFor(widget, i)),
-                    child: IgnorePointer(
-                      ignoring: i != safeIndex,
-                      child: TickerMode(
-                        enabled: i == safeIndex,
-                        child: ShellTabBackHost(
-                          pageIndex: i,
-                          child: ShellLazyTab(
-                            isActive: i == safeIndex,
-                            child: widget.pages[i],
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                for (var i = 0; i < widget.pages.length; i++)
+                  if (_materialized.contains(i))
+                    Positioned.fill(
+                      key: ValueKey(_tabIdentityFor(widget, i)),
+                      child: IgnorePointer(
+                        ignoring: i != safeIndex,
+                        child: TickerMode(
+                          enabled: i == safeIndex,
+                          child: ShellTabBackHost(
+                            pageIndex: i,
+                            child: ShellLazyTab(
+                              isActive: i == safeIndex,
+                              child: widget.pages[i],
+                            ),
                           ),
                         ),
                       ),
+                    )
+                  else if (i == safeIndex)
+                    Positioned.fill(
+                      child: _inactiveSlotPlaceholder(context, i),
                     ),
-                  )
-                else if (i == safeIndex)
-                  Positioned.fill(
-                    child: _inactiveSlotPlaceholder(context, i),
-                  ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
 
     Widget shell = isWide
         ? Scaffold(
-        backgroundColor: premium.heroGradient.colors.last,
-        body: Row(
-          children: [
-            PremiumNavigationRail(
-              items: widget.navItems,
-              selectedIndex: selectedNavIndex,
-              onDestinationSelected: _onNavTap,
+            backgroundColor: premium.heroGradient.colors.last,
+            body: Row(
+              children: [
+                PremiumNavigationRail(
+                  items: widget.navItems,
+                  selectedIndex: selectedNavIndex,
+                  onDestinationSelected: _onNavTap,
+                ),
+                Expanded(child: body),
+              ],
             ),
-            Expanded(child: body),
-          ],
-        ),
-      )
+          )
         : Scaffold(
-      backgroundColor: premium.heroGradient.colors.last,
-      body: body,
-      floatingActionButton: widget.fab,
-      floatingActionButtonLocation:
-          widget.fabLocation ?? FloatingActionButtonLocation.centerFloat,
-      bottomNavigationBar: ColoredBox(
-        color: Colors.transparent,
-        child: PremiumBottomNavDock(
-          items: widget.navItems,
-          selectedIndex: selectedNavIndex,
-          onTap: _onNavTap,
-        ),
-      ),
-    );
+            backgroundColor: premium.heroGradient.colors.last,
+            body: body,
+            floatingActionButton: widget.fab,
+            floatingActionButtonLocation:
+                widget.fabLocation ?? FloatingActionButtonLocation.centerFloat,
+            bottomNavigationBar: ColoredBox(
+              color: Colors.transparent,
+              child: TourTarget(
+                id: TourTargetId.shellBottomNav,
+                child: PremiumBottomNavDock(
+                  items: widget.navItems,
+                  selectedIndex: selectedNavIndex,
+                  onTap: _onNavTap,
+                ),
+              ),
+            ),
+          );
 
     shell = PopScope(
       canPop: false,

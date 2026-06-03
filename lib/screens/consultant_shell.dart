@@ -15,6 +15,7 @@ import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/pages/tasks_page.dart';
 import 'package:emlakmaster_mobile/screens/listings_screen.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
+import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_host.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 
@@ -28,7 +29,8 @@ class ConsultantShellPage extends StatefulWidget {
 
   /// Alt menüde görünen 5 öğe.
   static const List<AdaptiveNavItem> _navItems = [
-    AdaptiveNavItem(Icons.space_dashboard_rounded, ProductLabels.consultantHome),
+    AdaptiveNavItem(
+        Icons.space_dashboard_rounded, ProductLabels.consultantHome),
     AdaptiveNavItem(Icons.call_rounded, ProductLabels.myCalls),
     AdaptiveNavItem(Icons.people_rounded, ProductLabels.myCustomers),
     AdaptiveNavItem(Icons.task_alt_rounded, ProductLabels.myTasks),
@@ -81,8 +83,7 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
   void _openMoreSheet() {
     showConsultantMoreSheet(
       context,
-      onSelectPage: (pageIndex) =>
-          _shellKey.currentState?.jumpToTab(pageIndex),
+      onSelectPage: (pageIndex) => _shellKey.currentState?.jumpToTab(pageIndex),
     );
   }
 
@@ -90,52 +91,54 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
   Widget build(BuildContext context) {
     return ConsultantShellNav(
       goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
-      child: Column(
-        children: [
-          StartupShellChrome(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SyncStatusBanner(compact: true),
-                const CallReturnPromptHost(),
-                const PostCallDraftRecoveryCard(),
-                ValueListenableBuilder<int>(
-                  valueListenable: _shellPageIndex,
-                  builder: (context, pageIndex, _) {
-                    if (pageIndex == 2) return const SizedBox.shrink();
-                    return const PostCallCaptureShellStrip();
-                  },
-                ),
-              ],
+      child: ConsultantTourHost(
+        child: Column(
+          children: [
+            StartupShellChrome(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SyncStatusBanner(compact: true),
+                  const CallReturnPromptHost(),
+                  const PostCallDraftRecoveryCard(),
+                  ValueListenableBuilder<int>(
+                    valueListenable: _shellPageIndex,
+                    builder: (context, pageIndex, _) {
+                      if (pageIndex == 2) return const SizedBox.shrink();
+                      return const PostCallCaptureShellStrip();
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: AdaptiveShellScaffold(
-              key: _shellKey,
-              navItems: ConsultantShellPage._navItems,
-              pages: ConsultantShellPage._pages,
-              navPageIndices: ConsultantShellPage._navPageIndices,
-              onIndexChanged: (i) {
-                if (_shellPageIndex.value != i) {
-                  _shellPageIndex.value = i;
-                }
-              },
-              onMoreNavTap: _openMoreSheet,
-              tabIds: ConsultantShellPage._tabIds,
-              title: ProductLabels.consultantWorkspace,
-              shortcutMap: const {
-                MainShellShortcut.openHomeTab: 0,
-                MainShellShortcut.openMessageCenterTab: 1,
-                MainShellShortcut.openCallsTab: 2,
-                MainShellShortcut.openCustomersTab: 3,
-                MainShellShortcut.openListingsTab: 4,
-                MainShellShortcut.openFollowUpTab: 5,
-                MainShellShortcut.openTasksTab: 6,
-                MainShellShortcut.openAccountTab: 7,
-              },
+            Expanded(
+              child: AdaptiveShellScaffold(
+                key: _shellKey,
+                navItems: ConsultantShellPage._navItems,
+                pages: ConsultantShellPage._pages,
+                navPageIndices: ConsultantShellPage._navPageIndices,
+                onIndexChanged: (i) {
+                  if (_shellPageIndex.value != i) {
+                    _shellPageIndex.value = i;
+                  }
+                },
+                onMoreNavTap: _openMoreSheet,
+                tabIds: ConsultantShellPage._tabIds,
+                title: ProductLabels.consultantWorkspace,
+                shortcutMap: const {
+                  MainShellShortcut.openHomeTab: 0,
+                  MainShellShortcut.openMessageCenterTab: 1,
+                  MainShellShortcut.openCallsTab: 2,
+                  MainShellShortcut.openCustomersTab: 3,
+                  MainShellShortcut.openListingsTab: 4,
+                  MainShellShortcut.openFollowUpTab: 5,
+                  MainShellShortcut.openTasksTab: 6,
+                  MainShellShortcut.openAccountTab: 7,
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
