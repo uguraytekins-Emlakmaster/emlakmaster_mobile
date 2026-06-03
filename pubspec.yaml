@@ -124,6 +124,9 @@ flutter:
     - assets/branding/emlak_master_app_icon_MASTER.png
     - assets/branding/emlak_master_app_icon_IOS_STORE_OPAQUE.png
     - assets/sounds/
+    # Tanıtım ekran görüntüleri (tema duyarlı: *_light.png / *_dark.png).
+    # PNG yokken OnboardingSlideVisual güvenli şekilde kod mockup'a düşer.
+    - assets/onboarding/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
