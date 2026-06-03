@@ -222,7 +222,7 @@ class _WelcomeScene extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'EmlakMaster',
+          'Portivo CRM',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: ext.textPrimary,

@@ -1,9 +1,9 @@
-/// Rainbow CRM / EmlakMaster – uygulama sabitleri. Magic string kullanmayın.
+/// Portivo CRM – uygulama sabitleri. Magic string kullanmayın.
 abstract final class AppConstants {
   AppConstants._();
 
-  static const String appName = 'EmlakMaster';
-  static const String appShortName = 'EmlakMaster';
+  static const String appName = 'Portivo CRM';
+  static const String appShortName = 'Portivo';
 
   /// Uygulama sürümü (pubspec ile senkron tutulur)
   static const String appVersion = '1.0.1+2';

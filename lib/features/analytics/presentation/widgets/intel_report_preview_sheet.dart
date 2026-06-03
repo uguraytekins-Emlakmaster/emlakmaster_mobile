@@ -127,7 +127,7 @@ Future<void> showIntelReportPreviewSheet({
                   OutlinedButton.icon(
                     onPressed: () async {
                       final t =
-                          'EmlakMaster Yatırım İçgörüsü — ${report.propertyTitle}. Puan: ${report.rainbowScore.toStringAsFixed(0)}/100. ${report.listingUrl}';
+                          'Portivo CRM Yatırım İçgörüsü — ${report.propertyTitle}. Puan: ${report.rainbowScore.toStringAsFixed(0)}/100. ${report.listingUrl}';
                       final uri = Uri.parse(
                         'https://wa.me/?text=${Uri.encodeComponent(t)}',
                       );

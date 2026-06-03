@@ -83,7 +83,7 @@ void main() {
           startedFromScreen: 'consultant_calls',
           outcome: QuickCallOutcome.reached,
         ),
-        CallConfidenceKind.emlakMasterOriginated,
+        CallConfidenceKind.portivoOriginated,
       );
     });
 

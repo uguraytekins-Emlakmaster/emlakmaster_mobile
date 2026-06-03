@@ -121,8 +121,7 @@ flutter:
 
   # Yalnızca runtime / launcher kaynakları (tasarım varyantları: assets/archive/branding/)
   assets:
-    - assets/branding/emlak_master_app_icon_MASTER.png
-    - assets/branding/emlak_master_app_icon_IOS_STORE_OPAQUE.png
+    - assets/branding/portivo_icon_master.png
     - assets/sounds/
     # Tanıtım ekran görüntüleri (tema duyarlı: *_light.png / *_dark.png).
     # PNG yokken OnboardingSlideVisual güvenli şekilde kod mockup'a düşer.
@@ -154,30 +153,30 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-# Ana ekran / mağaza ikonları — kaynak: 4096×4096 MASTER (aşağı örnekleme en net)
+# Ana ekran / mağaza ikonları — kaynak: 1024×1024 Portivo CRM master (opak, alfasız)
 flutter_launcher_icons:
   android: true
   ios: true
-  # iOS App Store: alfasız ikon (dart run tool/compose_ios_store_opaque_icon.dart ile üretilir).
-  image_path_ios: assets/branding/emlak_master_app_icon_IOS_STORE_OPAQUE.png
+  # iOS App Store: alfasız ikon (kaynak zaten opak RGB).
+  image_path_ios: assets/branding/portivo_icon_master.png
   remove_alpha_ios: true
-  background_color_ios: "#050508"
+  background_color_ios: "#0B1530"
   web:
     generate: true
-    image_path: assets/branding/emlak_master_app_icon_MASTER.png
-    background_color: "#050508"
-    theme_color: "#050508"
+    image_path: assets/branding/portivo_icon_master.png
+    background_color: "#0B1530"
+    theme_color: "#0B1530"
   windows:
     generate: true
-    image_path: assets/branding/emlak_master_app_icon_MASTER.png
+    image_path: assets/branding/portivo_icon_master.png
     icon_size: 256
   macos:
     generate: true
-    image_path: assets/branding/emlak_master_app_icon_MASTER.png
-  image_path: assets/branding/emlak_master_app_icon_MASTER.png
+    image_path: assets/branding/portivo_icon_master.png
+  image_path: assets/branding/portivo_icon_master.png
   min_sdk_android: 21
   # Android adaptive arka katman (ön plan PNG şeffaf bölgelerde görünür).
-  adaptive_icon_background: "#050508"
-  adaptive_icon_foreground: assets/branding/emlak_master_app_icon_MASTER.png
+  adaptive_icon_background: "#0B1530"
+  adaptive_icon_foreground: assets/branding/portivo_icon_master.png
   # Düşük inset = ön plan maskede büyük; %8 güvenli köşe payı (telefonda boşluk minimum)
   adaptive_icon_foreground_inset: 8

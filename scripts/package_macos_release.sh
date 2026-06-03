@@ -45,7 +45,7 @@ fi
 
 rm -f "$DMG_PATH"
 hdiutil create \
-  -volname "Emlak Master" \
+  -volname "Portivo CRM" \
   -srcfolder "$STAGING" \
   -ov \
   -format UDZO \

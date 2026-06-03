@@ -25,7 +25,7 @@ void main() {
   testWidgets('App smoke test: launches and shows shell', (WidgetTester tester) async {
     await tester.pumpWidget(
       const ProviderScope(
-        child: EmlakMasterApp(),
+        child: PortivoApp(),
       ),
     );
     await tester.pumpAndSettle(const Duration(seconds: 5));

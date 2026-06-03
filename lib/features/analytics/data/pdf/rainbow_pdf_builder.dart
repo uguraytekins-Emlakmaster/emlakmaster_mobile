@@ -10,7 +10,7 @@ import 'package:printing/printing.dart';
 
 import '../../domain/models/rainbow_intel_models.dart';
 
-/// EmlakMaster — ücretsiz [pdf] motoru (HTML/React Native yok).
+/// Portivo CRM — ücretsiz [pdf] motoru (HTML/React Native yok).
 /// Siyah–altın, kurumsal düzen, canlı rapor verisi, QR, filigran.
 abstract final class RainbowPdfBuilder {
   RainbowPdfBuilder._();
@@ -20,7 +20,7 @@ abstract final class RainbowPdfBuilder {
   static PdfColor get _ink => PdfColors.black;
 
   static const String _legalDisclaimer =
-      'Bu belge EmlakMaster Yatırım İçgörü Merkezi tarafından otomatik üretilmiştir; '
+      'Bu belge Portivo CRM Yatırım İçgörü Merkezi tarafından otomatik üretilmiştir; '
       'yatırım tavsiyesi değildir. Veriler tahmini ve piyasa koşullarına göre değişebilir. '
       'Hukuki ve mali kararlar için uzman görüşü alınız.';
 
@@ -85,7 +85,7 @@ abstract final class RainbowPdfBuilder {
                   child: pw.Opacity(
                     opacity: 0.06,
                     child: pw.Text(
-                      'EmlakMaster — Yatırım İçgörü',
+                      'Portivo CRM — Yatırım İçgörü',
                       style: pw.TextStyle(
                         fontSize: 42,
                         fontWeight: pw.FontWeight.bold,
@@ -261,7 +261,7 @@ abstract final class RainbowPdfBuilder {
                               ),
                             ),
                             pw.Text(
-                              'EmlakMaster',
+                              'Portivo CRM',
                               style: const pw.TextStyle(fontSize: 9),
                             ),
                           ],
@@ -338,7 +338,7 @@ abstract final class RainbowPdfBuilder {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        'EmlakMaster — Yatırım İçgörü',
+                        'Portivo CRM — Yatırım İçgörü',
                         style: pw.TextStyle(
                           fontSize: 11,
                           letterSpacing: 0.6,
@@ -365,7 +365,7 @@ abstract final class RainbowPdfBuilder {
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
               pw.Text(
-                'EmlakMaster',
+                'Portivo CRM',
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,

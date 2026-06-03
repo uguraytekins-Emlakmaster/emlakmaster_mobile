@@ -855,7 +855,7 @@ class SettingsPage extends ConsumerWidget {
             _sectionCard(
               context,
               children: const [
-                EmlakMasterProductIdentityCard(),
+                PortivoProductIdentityCard(),
               ],
             ),
             if (canSwitchRole || kDebugMode) ...[

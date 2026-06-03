@@ -70,7 +70,7 @@ Future<void> showCallIdentityQuickActionsSheet(
               ),
               const SizedBox(height: DesignTokens.space2),
               const CallConfidenceBadge(
-                kind: CallConfidenceKind.emlakMasterOriginated,
+                kind: CallConfidenceKind.portivoOriginated,
               ),
             ] else
               Text(

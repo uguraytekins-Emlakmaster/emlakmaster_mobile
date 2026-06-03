@@ -138,7 +138,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
       scheme: 'mailto',
       path: LegalLinks.supportEmail,
       queryParameters: {
-        'subject': 'EmlakMaster PRO yükseltme talebi',
+        'subject': 'Portivo CRM PRO yükseltme talebi',
         'body': 'Merhaba, PRO planı ile ilgileniyorum.\n\n'
             '$accountLine$uidLine'
             'İlgi alanı: $feature\n\n'

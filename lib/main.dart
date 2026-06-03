@@ -164,19 +164,19 @@ Future<void> _runApp() async {
   runApp(
     ProviderScope(
       observers: kDebugMode ? [DebugRiverpodObserver()] : null,
-      child: const EmlakMasterApp(),
+      child: const PortivoApp(),
     ),
   );
 }
 
-class EmlakMasterApp extends ConsumerStatefulWidget {
-  const EmlakMasterApp({super.key});
+class PortivoApp extends ConsumerStatefulWidget {
+  const PortivoApp({super.key});
 
   @override
-  ConsumerState<EmlakMasterApp> createState() => _EmlakMasterAppState();
+  ConsumerState<PortivoApp> createState() => _PortivoAppState();
 }
 
-class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
+class _PortivoAppState extends ConsumerState<PortivoApp> {
   static bool _deferredInitDone = false;
   ProviderSubscription<AsyncValue<User?>>? _authUserSub;
   ProviderSubscription<AsyncValue<UserDoc?>>? _userDocSub;
@@ -190,7 +190,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   @override
   void initState() {
     super.initState();
-    AppLogger.state('[startup] EmlakMasterApp.initState');
+    AppLogger.state('[startup] PortivoApp.initState');
     AppLifecyclePowerService.instance.ensureObserved();
     _bindStartupLogging();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -265,7 +265,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
 
   @override
   void dispose() {
-    AppLogger.state('[startup] EmlakMasterApp.dispose');
+    AppLogger.state('[startup] PortivoApp.dispose');
     _authUserSub?.close();
     _userDocSub?.close();
     _roleSub?.close();
@@ -433,7 +433,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     final themeMode = ref.watch(themeModeProvider);
     final userTextScale = ref.watch(textScaleProvider);
     return MaterialApp.router(
-      title: 'EmlakMaster',
+      title: 'Portivo CRM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

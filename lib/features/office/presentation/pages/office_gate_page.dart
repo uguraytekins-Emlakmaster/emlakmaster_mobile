@@ -26,7 +26,7 @@ class OfficeGatePage extends ConsumerWidget {
               const PremiumPageHeader(
                 title: 'Ofisinize bağlanın',
                 subtitle:
-                    'EmlakMaster çok ofisli çalışır. Yeni ofis kurun veya davet koduyla katılın.',
+                    'Portivo CRM çok ofisli çalışır. Yeni ofis kurun veya davet koduyla katılın.',
               ),
               const SizedBox(height: 32),
               _Tile(

@@ -24,7 +24,7 @@ class AuthEntryHero extends StatelessWidget {
             ? ext.brandPrimary
             : Color.lerp(ext.brandPrimary, ext.info, 0.45)!;
 
-    final title = persona?.loginTitle ?? 'EmlakMaster';
+    final title = persona?.loginTitle ?? 'Portivo CRM';
     final subtitle = persona?.loginSubtitle ??
         'Gayrimenkul operasyonunu tek akışta yönetin';
 

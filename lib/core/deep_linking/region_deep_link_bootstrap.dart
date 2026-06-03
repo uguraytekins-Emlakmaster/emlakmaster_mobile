@@ -56,7 +56,7 @@ class RegionDeepLinkBootstrap {
     router.go(path);
   }
 
-  /// Giriş tamamlanınca [EmlakMasterApp] içinden çağırın.
+  /// Giriş tamamlanınca [PortivoApp] içinden çağırın.
   static Future<void> consumePendingAfterAuth(WidgetRef ref) async {
     final pending = await PendingDeepLinkStore.consume();
     if (pending == null || pending.isEmpty) return;

@@ -11,7 +11,7 @@ CSR="$OUT/developer_id.csr"
 if [[ ! -f "$KEY" ]]; then
   openssl genrsa -out "$KEY" 2048 2>/dev/null
 fi
-openssl req -new -key "$KEY" -out "$CSR" -subj "/emailAddress=aytekinugi@gmail.com/CN=Emlak Master/C=TR" 2>/dev/null
+openssl req -new -key "$KEY" -out "$CSR" -subj "/emailAddress=aytekinugi@gmail.com/CN=Portivo CRM/C=TR" 2>/dev/null
 
 echo "CSR: $CSR"
 echo "Key: $KEY (gizli tutun, yedekleyin)"
