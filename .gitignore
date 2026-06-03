@@ -69,3 +69,4 @@ scripts/facebook_credentials.txt
 # macOS dağıtım (CSR private key, DMG)
 dist/
 dist/
+.firebase/

@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -115,10 +116,13 @@ class DashboardPage extends ConsumerWidget {
 
     return [
       SliverToBoxAdapter(
-        child: PremiumAdminCommandHeader(
-          title: ProductLabels.managerHome,
-          subtitle: 'Ofis sağlığı · ekip aktivitesi · operasyon kontrolü',
-          actions: headerActions,
+        child: TourTarget(
+          id: TourTargetId.managerCommandDeck,
+          child: PremiumAdminCommandHeader(
+            title: ProductLabels.managerHome,
+            subtitle: 'Ofis sağlığı · ekip aktivitesi · operasyon kontrolü',
+            actions: headerActions,
+          ),
         ),
       ),
       const SliverToBoxAdapter(child: RevenueLeakTracker()),
@@ -234,9 +238,13 @@ class DashboardPage extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const PremiumAdminSectionLabel(
-                                label: 'Operasyonel müdahale',
-                                secondary: 'Gerçek kuyruklar ve ekip sinyalleri',
+                              const TourTarget(
+                                id: TourTargetId.managerOperations,
+                                child: PremiumAdminSectionLabel(
+                                  label: 'Operasyonel müdahale',
+                                  secondary:
+                                      'Gerçek kuyruklar ve ekip sinyalleri',
+                                ),
                               ),
                               px(
                                 Column(
@@ -261,8 +269,19 @@ class DashboardPage extends ConsumerWidget {
                                 ),
                               ),
                               if (kpiBar) ...[
-                                const PremiumAdminSectionLabel(label: 'Ofis momentumu'),
-                                px(const DashboardKpiSection()),
+                                TourTarget(
+                                  id: TourTargetId.managerOfficeMomentum,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      const PremiumAdminSectionLabel(
+                                        label: 'Ofis momentumu',
+                                      ),
+                                      px(const DashboardKpiSection()),
+                                    ],
+                                  ),
+                                ),
                                 SizedBox(height: gapOp * 0.75),
                               ],
                               const PremiumAdminSectionLabel(label: 'Çağrı sinyalleri'),

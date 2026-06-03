@@ -15,6 +15,7 @@ import 'package:emlakmaster_mobile/core/performance/startup_shell_chrome.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
+import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/manager_tour_host.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:emlakmaster_mobile/screens/admin_pages.dart';
 import 'package:emlakmaster_mobile/screens/admin_shell_nav.dart';
@@ -203,18 +204,20 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
           child: AdminShellNav(
             goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
             tabIndexFor: tabIndexForKey,
-            child: AdaptiveShellScaffold(
-              key: _shellKey,
-              navItems: navItems,
-              pages: pages,
-              tabIds: tabIds,
-              title: ProductLabels.managerWorkspace,
-              onIndexChanged: (i) {
-                if (_shellPageIndex.value != i) {
-                  _shellPageIndex.value = i;
-                }
-              },
-              shortcutMap: shortcutMap,
+            child: ManagerTourHost(
+              child: AdaptiveShellScaffold(
+                key: _shellKey,
+                navItems: navItems,
+                pages: pages,
+                tabIds: tabIds,
+                title: ProductLabels.managerWorkspace,
+                onIndexChanged: (i) {
+                  if (_shellPageIndex.value != i) {
+                    _shellPageIndex.value = i;
+                  }
+                },
+                shortcutMap: shortcutMap,
+              ),
             ),
           ),
         ),

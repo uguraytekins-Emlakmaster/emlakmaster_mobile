@@ -12,6 +12,13 @@ enum TourTargetId {
   messagesHeader,
   shellBottomNav,
   settingsHeader,
+  // Yönetici / admin kabuğu turu hedefleri.
+  managerCommandDeck,
+  managerOfficeMomentum,
+  managerOperations,
+  managerWarRoom,
+  managerCommandCenter,
+  managerReports,
 }
 
 /// Hedef [GlobalKey]'lerini id bazında tutan hafif kayıt defteri (singleton).

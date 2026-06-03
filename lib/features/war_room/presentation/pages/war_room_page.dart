@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -59,12 +60,15 @@ class _WarRoomBody extends ConsumerWidget {
           child: Column(
             children: [
               Expanded(
-                child: ShellScreenReadyListener(
-                  screenName: 'war_room',
-                  provider: warRoomInterventionSnapshotProvider,
-                  itemCount: (v) =>
-                      (v as WarRoomInterventionSnapshot).interventions.length,
-                  child: const WarRoomCommandCenter(),
+                child: TourTarget(
+                  id: TourTargetId.managerWarRoom,
+                  child: ShellScreenReadyListener(
+                    screenName: 'war_room',
+                    provider: warRoomInterventionSnapshotProvider,
+                    itemCount: (v) =>
+                        (v as WarRoomInterventionSnapshot).interventions.length,
+                    child: const WarRoomCommandCenter(),
+                  ),
                 ),
               ),
               const WarRoomResurrectionStrip(),

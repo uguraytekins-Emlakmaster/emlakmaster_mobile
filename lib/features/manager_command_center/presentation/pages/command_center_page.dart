@@ -1,5 +1,6 @@
 
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/utils/csv_export.dart';
@@ -379,7 +380,9 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
               GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 onLongPress: _openSuperAdminGate,
-                child: PremiumCallCenterPageHeader(
+                child: TourTarget(
+                  id: TourTargetId.managerCommandCenter,
+                  child: PremiumCallCenterPageHeader(
                 compact: true,
                 title: ProductLabels.callRecords,
                 subtitle: ref.watch(superAdminAllOfficesGateProvider)
@@ -445,6 +448,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                   ),
                 ],
               ),
+                ),
               ),
               Expanded(
                 child: CommandCenterCallsFeed(

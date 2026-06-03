@@ -26,6 +26,7 @@ import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_providers.dart';
+import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/manager_tour_providers.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
@@ -696,6 +697,39 @@ class SettingsPage extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () {
                       ref.read(consultantTourReplayProvider.notifier).state++;
+                      AppToaster.info(
+                        context,
+                        'Tanıtım turu yeniden başlatıldı.',
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+            if (isAdmin && preferConsultant != true) ...[
+              const SizedBox(height: DesignTokens.space6),
+              const _SectionHeader(
+                  title: 'Yardım & Tur', icon: Icons.school_rounded),
+              _sectionCard(
+                context,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.replay_rounded,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text('Turu tekrar göster',
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    subtitle: Text(
+                      'Yönetici panelinin tüm ana ekranlarını gezen tanıtım '
+                      'turunu yeniden başlatır.',
+                      style: TextStyle(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                        fontSize: 11,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      ref.read(managerTourReplayProvider.notifier).state++;
                       AppToaster.info(
                         context,
                         'Tanıtım turu yeniden başlatıldı.',

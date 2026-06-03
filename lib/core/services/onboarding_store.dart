@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const String _keyOnboardingCompleted = 'onboarding_completed';
 const String _keyWorkspaceSetupCompleted = 'workspace_setup_completed';
 const String _keyConsultantTourCompleted = 'consultant_tour_completed';
+const String _keyManagerTourCompleted = 'manager_tour_completed';
 
 /// İlk açılış onboarding ekranının gösterilip gösterilmediğini tutar.
 /// Uygulama başında [warmUp] çağrılmalı; redirect'te [completedSync] senkron okunur.
@@ -15,6 +16,7 @@ class OnboardingStore {
   bool? _completed;
   bool? _workspaceSetupCompleted;
   bool? _consultantTourCompleted;
+  bool? _managerTourCompleted;
   bool _prefsLoaded = false;
 
   /// Uygulama başında bir kez çağrın; böylece [completedSync] doğru döner.
@@ -27,6 +29,8 @@ class OnboardingStore {
         prefs.getBool(_keyWorkspaceSetupCompleted) ?? false;
     _consultantTourCompleted ??=
         prefs.getBool(_keyConsultantTourCompleted) ?? false;
+    _managerTourCompleted ??=
+        prefs.getBool(_keyManagerTourCompleted) ?? false;
     _prefsLoaded = true;
   }
 
@@ -64,6 +68,25 @@ class OnboardingStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyConsultantTourCompleted, false);
     _consultantTourCompleted = false;
+    _prefsLoaded = true;
+  }
+
+  /// İlk yönetici girişinde "Yönetici Paneli" eğitim turu gösterildi mi?
+  /// Tur yalnızca bir kez (bayrak false iken) otomatik tetiklenir.
+  bool get managerTourCompletedSync => _managerTourCompleted ?? false;
+
+  Future<void> setManagerTourCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyManagerTourCompleted, true);
+    _managerTourCompleted = true;
+  }
+
+  /// Yönetici turunu tekrar göstermek için bayrağı sıfırlar
+  /// (Ayarlar → "Turu tekrar göster").
+  Future<void> resetManagerTour() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyManagerTourCompleted, false);
+    _managerTourCompleted = false;
     _prefsLoaded = true;
   }
 

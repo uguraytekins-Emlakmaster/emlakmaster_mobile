@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/admin_raporlar/presentation/widgets/raporlar_command_surface.dart';
 import 'package:emlakmaster_mobile/screens/providers/admin_reports_perf_provider.dart';
@@ -15,11 +16,14 @@ class AdminReportsPage extends ConsumerWidget {
     return PremiumShellBackdrop(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: ShellScreenReadyListener(
-          screenName: 'admin_reports',
-          provider: adminReportsPerfProvider,
-          child: const SafeArea(
-            child: RaporlarCommandSurface(),
+        body: TourTarget(
+          id: TourTargetId.managerReports,
+          child: ShellScreenReadyListener(
+            screenName: 'admin_reports',
+            provider: adminReportsPerfProvider,
+            child: const SafeArea(
+              child: RaporlarCommandSurface(),
+            ),
           ),
         ),
       ),
