@@ -1,9 +1,11 @@
 import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
+import 'package:emlakmaster_mobile/core/config/legal_links.dart';
 import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Future<void> showUpgradeBottomSheet(
   BuildContext context, {
@@ -71,32 +73,79 @@ class _UpgradeBottomSheet extends StatelessWidget {
           const SizedBox(height: DesignTokens.space4),
           const _PlanComparisonSurface(),
           const SizedBox(height: DesignTokens.space5),
-          FilledButton(
-            onPressed: () {
-              AnalyticsService.instance.logEvent(
-                AnalyticsEvents.upgradeClicked,
-                {AnalyticsEvents.paramFeature: feature},
-              );
-              Navigator.of(context).pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: ext.accent,
-              foregroundColor: ext.onBrand,
-              minimumSize: const Size.fromHeight(48),
+          // Dürüstlük: uygulama içi satın alma (IAP) henüz yok. Bu yüzden burada
+          // sahte "satın al/aktive et" yapılmaz. PRO geçişi satış ekibi tarafından
+          // yapıldığından, CTA gerçek bir eyleme (iletişim) bağlanır; iletişim
+          // adresi tanımlı değilse yalnızca bilgilendirme gösterilir.
+          if (LegalLinks.hasSupportEmail) ...[
+            FilledButton(
+              onPressed: () {
+                AnalyticsService.instance.logEvent(
+                  AnalyticsEvents.upgradeClicked,
+                  {AnalyticsEvents.paramFeature: feature},
+                );
+                _contactSales(context, feature);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: ext.accent,
+                foregroundColor: ext.onBrand,
+                minimumSize: const Size.fromHeight(48),
+              ),
+              child: const Text('PRO için iletişime geç'),
             ),
-            child: const Text('PRO\'yu Aç'),
-          ),
-          const SizedBox(height: DesignTokens.space2),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Şimdilik sonra',
-              style: TextStyle(color: ext.textSecondary),
+            const SizedBox(height: DesignTokens.space2),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Şimdilik sonra',
+                style: TextStyle(color: ext.textSecondary),
+              ),
             ),
-          ),
+          ] else
+            FilledButton(
+              onPressed: () {
+                AnalyticsService.instance.logEvent(
+                  AnalyticsEvents.upgradeClicked,
+                  {AnalyticsEvents.paramFeature: feature},
+                );
+                Navigator.of(context).pop();
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: ext.accent,
+                foregroundColor: ext.onBrand,
+                minimumSize: const Size.fromHeight(48),
+              ),
+              child: const Text('Anladım'),
+            ),
         ],
       ),
     );
+  }
+
+  Future<void> _contactSales(BuildContext context, String feature) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final uri = Uri(
+      scheme: 'mailto',
+      path: LegalLinks.supportEmail,
+      queryParameters: {
+        'subject': 'Emlak Master PRO yükseltme talebi',
+        'body': 'Merhaba, PRO planı ile ilgileniyorum.\n'
+            '(İlgi alanı: $feature)\n\nDetay için bana dönebilir misiniz?',
+      },
+    );
+    var launched = false;
+    try {
+      launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      launched = false;
+    }
+    navigator.pop();
+    if (!launched) {
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Destek: ${LegalLinks.supportEmail}')),
+      );
+    }
   }
 
   static String _title(String feature) {

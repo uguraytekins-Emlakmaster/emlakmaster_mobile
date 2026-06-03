@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/config/legal_links.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/pages/legal_document_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/widgets/account_security_actions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
@@ -682,34 +683,54 @@ class SettingsPage extends ConsumerWidget {
             _sectionCard(
               context,
               children: [
-                if (LegalLinks.hasPrivacyPolicy) ...[
-                  ListTile(
-                    leading: Icon(Icons.privacy_tip_outlined,
-                        color: AppThemeExtension.of(context).accent),
-                    title: Text('Gizlilik Politikası',
-                        style: TextStyle(color: theme.colorScheme.onSurface)),
-                    trailing: const Icon(Icons.open_in_new_rounded, size: 18),
-                    onTap: () => _launchExternalUrl(
-                        context, LegalLinks.privacyPolicyUrl),
-                  ),
-                  Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.5)),
-                ],
-                if (LegalLinks.hasTermsOfService) ...[
-                  ListTile(
-                    leading: Icon(Icons.description_outlined,
-                        color: AppThemeExtension.of(context).accent),
-                    title: Text('Kullanım Şartları',
-                        style: TextStyle(color: theme.colorScheme.onSurface)),
-                    trailing: const Icon(Icons.open_in_new_rounded, size: 18),
-                    onTap: () => _launchExternalUrl(
-                        context, LegalLinks.termsOfServiceUrl),
-                  ),
-                  Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.5)),
-                ],
+                ListTile(
+                  leading: Icon(Icons.privacy_tip_outlined,
+                      color: AppThemeExtension.of(context).accent),
+                  title: Text('Gizlilik Politikası',
+                      style: TextStyle(color: theme.colorScheme.onSurface)),
+                  trailing: Icon(
+                      LegalLinks.hasPrivacyPolicy
+                          ? Icons.open_in_new_rounded
+                          : Icons.chevron_right_rounded,
+                      size: 18),
+                  onTap: () {
+                    if (LegalLinks.hasPrivacyPolicy) {
+                      _launchExternalUrl(context, LegalLinks.privacyPolicyUrl);
+                    } else {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const LegalDocumentPage(
+                            kind: LegalDocKind.privacy),
+                      ));
+                    }
+                  },
+                ),
+                Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.5)),
+                ListTile(
+                  leading: Icon(Icons.description_outlined,
+                      color: AppThemeExtension.of(context).accent),
+                  title: Text('Kullanım Şartları',
+                      style: TextStyle(color: theme.colorScheme.onSurface)),
+                  trailing: Icon(
+                      LegalLinks.hasTermsOfService
+                          ? Icons.open_in_new_rounded
+                          : Icons.chevron_right_rounded,
+                      size: 18),
+                  onTap: () {
+                    if (LegalLinks.hasTermsOfService) {
+                      _launchExternalUrl(context, LegalLinks.termsOfServiceUrl);
+                    } else {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const LegalDocumentPage(
+                            kind: LegalDocKind.terms),
+                      ));
+                    }
+                  },
+                ),
+                Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.5)),
                 if (LegalLinks.hasSupportEmail) ...[
                   ListTile(
                     leading: Icon(Icons.support_agent_rounded,
