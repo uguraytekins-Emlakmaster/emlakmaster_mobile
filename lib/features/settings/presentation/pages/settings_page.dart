@@ -24,6 +24,8 @@ import 'package:emlakmaster_mobile/features/analytics/presentation/providers/inv
 import 'package:emlakmaster_mobile/features/market_settings/domain/entities/market_settings_entity.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
+import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_providers.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
@@ -672,6 +674,43 @@ class SettingsPage extends ConsumerWidget {
                 _FavoriteInvestRegionTile(),
               ],
             ),
+            if (!isAdmin || preferConsultant == true) ...[
+              const SizedBox(height: DesignTokens.space6),
+              const _SectionHeader(
+                  title: 'Yardım & Tur', icon: Icons.school_rounded),
+              _sectionCard(
+                context,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.replay_rounded,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text('Turu tekrar göster',
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    subtitle: Text(
+                      '"Benim Günüm" tanıtım turunu yeniden başlatır.',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface
+                            .withValues(alpha: 0.65),
+                        fontSize: 11,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      ref
+                          .read(mainShellShortcutProvider.notifier)
+                          .enqueue(MainShellShortcut.openHomeTab);
+                      ref
+                          .read(consultantTourReplayProvider.notifier)
+                          .state++;
+                      AppToaster.info(
+                        context,
+                        'Tur "Benim Günüm" ekranında yeniden başlatıldı.',
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: DesignTokens.space6),
             _SettingsAdvancedSection(
               sectionCard: (children) => _sectionCard(context, children: children),
