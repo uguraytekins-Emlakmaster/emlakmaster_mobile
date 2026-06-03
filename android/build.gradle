@@ -32,6 +32,10 @@ subprojects { subproject ->
                     if (namespace == null || namespace.isEmpty()) {
                         namespace = 'sk.fourq.calllog'
                     }
+                    // call_log hardcodes an older compileSdk that lacks
+                    // android:attr/lStar (API 31+); force a modern compileSdk
+                    // so release resource linking succeeds.
+                    compileSdkVersion 36
                 }
             }
         }
