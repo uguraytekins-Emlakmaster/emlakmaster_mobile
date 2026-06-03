@@ -129,6 +129,38 @@ async function seed() {
     await setDoc(doc(db, "users", "consultant2_uid"),
       userDoc("consultant2_uid", "agent", { officeId: OFFICE_A }));
     await setDoc(doc(db, "users", "plain_agent_uid"), userDoc("plain_agent_uid", "agent"));
+
+    // ---- READ INVENTORY fixtures (multi-tenant read-isolation tests) ----
+    // OFFICE_X side (cross-tenant attackers): an owner + a consultant.
+    await setDoc(doc(db, "users", OTHER), userDoc(OTHER, "broker_owner", { officeId: OFFICE_X }));
+    await setDoc(doc(db, "office_memberships", mid(OTHER, OFFICE_X)), membershipDoc(OTHER, OFFICE_X, "owner"));
+    await setDoc(doc(db, "users", "agent_x_uid"), userDoc("agent_x_uid", "agent", { officeId: OFFICE_X }));
+    await setDoc(doc(db, "office_memberships", mid("agent_x_uid", OFFICE_X)), membershipDoc("agent_x_uid", OFFICE_X, "consultant"));
+    // Second consultant in OFFICE_A (a colleague, NOT a manager).
+    await setDoc(doc(db, "users", "agent_a2_uid"), userDoc("agent_a2_uid", "agent", { officeId: OFFICE_A }));
+    await setDoc(doc(db, "office_memberships", mid("agent_a2_uid", OFFICE_A)), membershipDoc("agent_a2_uid", OFFICE_A, "consultant"));
+    // Super admin (global cross-office support, narrow role).
+    await setDoc(doc(db, "users", "super_uid"), userDoc("super_uid", "super_admin"));
+
+    // Agent-owned business docs in OFFICE_A, owned by consultant2_uid (an OFFICE_A agent).
+    const A = "consultant2_uid";
+    await setDoc(doc(db, "customers", "cust_a"), { assignedAgentId: A, name: "Müşteri A", officeId: OFFICE_A, createdAt: serverTimestamp() });
+    await setDoc(doc(db, "calls", "call_a"), { agentId: A, officeId: OFFICE_A, phone: "5550000", createdAt: serverTimestamp() });
+    await setDoc(doc(db, "deals", "deal_a"), { agentId: A, amount: 1, createdAt: serverTimestamp() });
+    await setDoc(doc(db, "call_summaries", "cs_a"), { agentId: A, summary: "x", createdAt: serverTimestamp() });
+    await setDoc(doc(db, "notes", "note_a"), { advisorId: A, body: "n", createdAt: serverTimestamp() });
+    await setDoc(doc(db, "tasks", "task_a"), { advisorId: A, title: "t", createdAt: serverTimestamp() });
+    await setDoc(doc(db, "visits", "visit_a"), { advisorId: A, createdAt: serverTimestamp() });
+    await setDoc(doc(db, "offers", "offer_a"), { advisorId: A, createdAt: serverTimestamp() });
+    await setDoc(doc(db, "pipeline_items", "pi_a"), { advisorId: A, createdAt: serverTimestamp() });
+    await setDoc(doc(db, "notifications", "notif_a"), { userId: A, title: "b", createdAt: serverTimestamp() });
+    // Customer owned in OFFICE_X (for super_admin global-read regression).
+    await setDoc(doc(db, "customers", "cust_x"), { assignedAgentId: "agent_x_uid", name: "Müşteri X", officeId: OFFICE_X, createdAt: serverTimestamp() });
+    // Global-read derived/intel docs (not tenant-specific).
+    await setDoc(doc(db, "listing_metrics", "lm_1"), { listingId: "lm_1", momentumScore: 0.5, computedAt: serverTimestamp() });
+    await setDoc(doc(db, "analytics_daily", "discovery_2026-06-03"), { date: "2026-06-03", items: [], computedAt: serverTimestamp() });
+    // Undefined/unlisted collection: must be DENIED after catch-all read removal.
+    await setDoc(doc(db, "property_vault", "pv_1"), { secret: "leak-me", officeId: OFFICE_A });
   });
 }
 
@@ -341,6 +373,124 @@ async function run() {
     const db = authed("consultant2_uid", "consultant2_uid@t.co");
     return setDoc(doc(db, "invites", "evil@t.co"),
       emailInviteDoc("evil@t.co", "office_manager", "consultant2_uid"));
+  });
+
+  // ---------- READ INVENTORY: multi-tenant read isolation ----------
+  // Proves the lib/ read inventory: every legit read path works for the right
+  // role; cross-office / cross-user reads are denied; unauthenticated denied;
+  // and the removed root catch-all no longer grants blanket signed-in reads.
+  console.log("\nREAD INVENTORY (tenant isolation):");
+  await env.clearFirestore(); await seed();
+
+  const A = "consultant2_uid";                 // OFFICE_A agent (owns the docs)
+  const unauth = () => env.unauthenticatedContext().firestore();
+
+  // --- LEGIT READS (must PASS) ---
+  await check("R1 agent reads OWN customer (assignedAgentId == uid)", "PASS", () => {
+    const db = authed(A, `${A}@t.co`);
+    return getDoc(doc(db, "customers", "cust_a"));
+  });
+  await check("R2 office owner (membership) reads office customer (office-wide)", "PASS", () => {
+    const db = authed("legacy_owner_uid", "legacy_owner_uid@t.co");
+    return getDoc(doc(db, "customers", "cust_a"));
+  });
+  await check("R3 agent reads OWN call (agentId == uid)", "PASS", () => {
+    const db = authed(A, `${A}@t.co`);
+    return getDoc(doc(db, "calls", "call_a"));
+  });
+  await check("R4 office owner reads office call (canReadCallOfficeWide)", "PASS", () => {
+    const db = authed("legacy_owner_uid", "legacy_owner_uid@t.co");
+    return getDoc(doc(db, "calls", "call_a"));
+  });
+  await check("R5 agent reads OWN deal", "PASS", () => {
+    const db = authed(A, `${A}@t.co`);
+    return getDoc(doc(db, "deals", "deal_a"));
+  });
+  await check("R6 agent reads OWN call_summary", "PASS", () => {
+    const db = authed(A, `${A}@t.co`);
+    return getDoc(doc(db, "call_summaries", "cs_a"));
+  });
+  await check("R7 agent reads OWN note", "PASS", () => {
+    const db = authed(A, `${A}@t.co`);
+    return getDoc(doc(db, "notes", "note_a"));
+  });
+  await check("R8 agent reads OWN task", "PASS", () => {
+    const db = authed(A, `${A}@t.co`);
+    return getDoc(doc(db, "tasks", "task_a"));
+  });
+  await check("R9 agent reads OWN visit / offer / pipeline_item", "PASS", async () => {
+    const db = authed(A, `${A}@t.co`);
+    await getDoc(doc(db, "visits", "visit_a"));
+    await getDoc(doc(db, "offers", "offer_a"));
+    return getDoc(doc(db, "pipeline_items", "pi_a"));
+  });
+  await check("R10 user reads OWN notification (userId == uid)", "PASS", () => {
+    const db = authed(A, `${A}@t.co`);
+    return getDoc(doc(db, "notifications", "notif_a"));
+  });
+  await check("R11 any signed-in reads listing_metrics (global intel, matches listings)", "PASS", () => {
+    const db = authed("plain_agent_uid", "plain_agent_uid@t.co");
+    return getDoc(doc(db, "listing_metrics", "lm_1"));
+  });
+  await check("R12 any signed-in reads analytics_daily rollup", "PASS", () => {
+    const db = authed("plain_agent_uid", "plain_agent_uid@t.co");
+    return getDoc(doc(db, "analytics_daily", "discovery_2026-06-03"));
+  });
+  await check("R13 super_admin reads cross-office customers (A and X)", "PASS", async () => {
+    const db = authed("super_uid", "super_uid@t.co");
+    await getDoc(doc(db, "customers", "cust_a"));
+    return getDoc(doc(db, "customers", "cust_x"));
+  });
+
+  // --- CROSS-TENANT / CROSS-USER READS (must FAIL) ---
+  await check("R14 OFFICE_X owner CANNOT read OFFICE_A customer", "FAIL", () => {
+    const db = authed(OTHER, `${OTHER}@t.co`);
+    return getDoc(doc(db, "customers", "cust_a"));
+  });
+  await check("R15 OFFICE_X agent CANNOT read OFFICE_A customer", "FAIL", () => {
+    const db = authed("agent_x_uid", "agent_x_uid@t.co");
+    return getDoc(doc(db, "customers", "cust_a"));
+  });
+  await check("R16 same-office NON-manager colleague CANNOT read other agent's customer", "FAIL", () => {
+    const db = authed("agent_a2_uid", "agent_a2_uid@t.co");
+    return getDoc(doc(db, "customers", "cust_a"));
+  });
+  await check("R17 OFFICE_X owner CANNOT read OFFICE_A call", "FAIL", () => {
+    const db = authed(OTHER, `${OTHER}@t.co`);
+    return getDoc(doc(db, "calls", "call_a"));
+  });
+  await check("R18 OFFICE_X agent CANNOT read OFFICE_A note", "FAIL", () => {
+    const db = authed("agent_x_uid", "agent_x_uid@t.co");
+    return getDoc(doc(db, "notes", "note_a"));
+  });
+  await check("R19 OFFICE_X agent CANNOT read OFFICE_A deal", "FAIL", () => {
+    const db = authed("agent_x_uid", "agent_x_uid@t.co");
+    return getDoc(doc(db, "deals", "deal_a"));
+  });
+  await check("R20 non-manager from other office CANNOT read OFFICE_A notification", "FAIL", () => {
+    const db = authed("agent_x_uid", "agent_x_uid@t.co");
+    return getDoc(doc(db, "notifications", "notif_a"));
+  });
+
+  // --- UNAUTHENTICATED (must FAIL) ---
+  await check("R21 unauthenticated CANNOT read customer", "FAIL", () => {
+    return getDoc(doc(unauth(), "customers", "cust_a"));
+  });
+  await check("R22 unauthenticated CANNOT read listing_metrics", "FAIL", () => {
+    return getDoc(doc(unauth(), "listing_metrics", "lm_1"));
+  });
+  await check("R23 unauthenticated CANNOT read analytics_daily", "FAIL", () => {
+    return getDoc(doc(unauth(), "analytics_daily", "discovery_2026-06-03"));
+  });
+
+  // --- CATCH-ALL REMOVAL (must FAIL): unlisted collection denied even when signed-in ---
+  await check("R24 signed-in user CANNOT read UNLISTED collection (catch-all removed)", "FAIL", () => {
+    const db = authed("plain_agent_uid", "plain_agent_uid@t.co");
+    return getDoc(doc(db, "property_vault", "pv_1"));
+  });
+  await check("R25 office owner CANNOT read UNLISTED collection (no blanket manager read)", "FAIL", () => {
+    const db = authed("legacy_owner_uid", "legacy_owner_uid@t.co");
+    return getDoc(doc(db, "property_vault", "pv_1"));
   });
 
   await env.cleanup();

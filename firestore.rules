@@ -609,6 +609,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // listing_metrics/{listingId}: ilan istihbarat skorları (momentum / fiyat pozisyonu).
+    // Türetilmiş veri kaynağı `listings`'tir ve listings global okunabilir; bu yüzden
+    // okuma da giriş yapmış kullanıcıya açıktır (ilan detayında IntelligenceFirestore
+    // .listingScoresStream tek-doküman okur). Müşteri/çağrı gibi kiracı-özel veri DEĞİL.
+    // Yazma yalnız backend/Admin SDK (istemci compute yolu çağrılmıyor) — kapalı.
+    // [GÖZDEN GEÇİR]: listings ileride ofis-scope olursa burayı da ofis-scope yapın.
+    match /listing_metrics/{listingId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
     match /app_settings/{docId} {
       allow read: if isSignedIn();
       // Uygulama ayarları yalnızca yönetici tarafından güncellenebilir.
@@ -786,10 +797,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Diğer koleksiyonlar: sadece giriş zorunlu; yazma varsayılan kapalı (yukarıda tanımlanmayanlar)
+    // GÜVENLİK: Kök CATCH-ALL artık VARSAYILAN-RED (deny-by-default).
+    // Eskiden burada `allow read: if isSignedIn();` vardı; bu, oturum açmış HERKESE
+    // açıkça tanımlanmamış HER koleksiyonu/dokümanı okutuyordu → çok-kiracılı (multi-tenant)
+    // CRM için çapraz-ofis veri sızıntısı riski. lib/ okuma envanteri çıkarıldı ve
+    // uygulamanın okuduğu TÜM koleksiyonlar yukarıda az-yetki + ofis-izolasyonlu açık
+    // read kurallarıyla tanımlandı (catch-all'a yalnız `listing_metrics` bağlıydı; o da
+    // artık açıkça tanımlı). Bu yüzden tanımsız her yol fail-closed olur: yeni bir
+    // koleksiyon eklendiğinde bilinçli olarak kendi açık kuralı yazılmalıdır.
     match /{document=**} {
-      allow read: if isSignedIn();
-      allow write: if false;
+      allow read, write: if false;
     }
   }
 }
