@@ -15,6 +15,7 @@ import {
 } from "@firebase/rules-unit-testing";
 import {
   doc,
+  getDoc,
   setDoc,
   updateDoc,
   writeBatch,
@@ -58,6 +59,11 @@ function userDoc(uid, role, extra = {}) {
   return { uid, role, name: "X", email: `${uid}@t.co`, isActive: true,
     updatedAt: serverTimestamp(), createdAt: serverTimestamp(), ...extra };
 }
+// Mirrors ListingDisplaySettingsRepository.set (app_settings/listing_display_settings).
+function listingDisplayDoc(companyName = "Rainbow Emlak") {
+  return { cityCode: "21", cityName: "Diyarbakır", districtCode: null,
+    districtName: null, companyName, logoUrl: null, updatedAt: serverTimestamp() };
+}
 
 const results = [];
 async function check(name, kind, fn) {
@@ -94,6 +100,24 @@ async function seed() {
     await setDoc(doc(db, "users", ATTACKER), userDoc(ATTACKER, "agent"));
     // NEWBIE pre-existing agent doc (for office-creation update path).
     await setDoc(doc(db, "users", NEWBIE), userDoc(NEWBIE, "agent"));
+
+    // app_settings authority: owner/admin whose users.role is STALE 'agent'
+    // (legacy / unsynced) but who hold an active membership. Authority must come
+    // from office_memberships (role_source_of_truth), not users.role.
+    await setDoc(doc(db, "office_memberships", mid("legacy_owner_uid", OFFICE_A)),
+      membershipDoc("legacy_owner_uid", OFFICE_A, "owner"));
+    await setDoc(doc(db, "users", "legacy_owner_uid"),
+      userDoc("legacy_owner_uid", "agent", { officeId: OFFICE_A }));
+    await setDoc(doc(db, "office_memberships", mid("legacy_admin_uid", OFFICE_A)),
+      membershipDoc("legacy_admin_uid", OFFICE_A, "admin"));
+    await setDoc(doc(db, "users", "legacy_admin_uid"),
+      userDoc("legacy_admin_uid", "agent", { officeId: OFFICE_A }));
+    // Consultant (and an office-less plain agent) must NOT be able to write settings.
+    await setDoc(doc(db, "office_memberships", mid("consultant2_uid", OFFICE_A)),
+      membershipDoc("consultant2_uid", OFFICE_A, "consultant"));
+    await setDoc(doc(db, "users", "consultant2_uid"),
+      userDoc("consultant2_uid", "agent", { officeId: OFFICE_A }));
+    await setDoc(doc(db, "users", "plain_agent_uid"), userDoc("plain_agent_uid", "agent"));
   });
 }
 
@@ -186,6 +210,51 @@ async function run() {
   await check("E4 self-update own users.role agent->broker_owner", "FAIL", () => {
     const db = authed(ATTACKER, `${ATTACKER}@t.co`);
     return updateDoc(doc(db, "users", ATTACKER), { role: "broker_owner", updatedAt: serverTimestamp() });
+  });
+
+  // ---------- APP SETTINGS: listing display (owner can save, others cannot) ----------
+  console.log("\nAPP SETTINGS (listing_display_settings):");
+  await env.clearFirestore(); await seed();
+
+  await check("S1 broker_owner (users.role) saves listing display settings", "PASS", () => {
+    const db = authed(OWNER, `${OWNER}@t.co`);
+    return setDoc(doc(db, "app_settings", "listing_display_settings"),
+      listingDisplayDoc("Owner Co"), { merge: true });
+  });
+
+  await check("S2 office_manager (users.role) saves listing display settings", "PASS", () => {
+    const db = authed("mgr_uid", "mgr_uid@t.co");
+    return setDoc(doc(db, "app_settings", "listing_display_settings"),
+      listingDisplayDoc("Mgr Co"), { merge: true });
+  });
+
+  await check("S3 owner with STALE users.role=agent (membership owner) saves settings", "PASS", () => {
+    const db = authed("legacy_owner_uid", "legacy_owner_uid@t.co");
+    return setDoc(doc(db, "app_settings", "listing_display_settings"),
+      listingDisplayDoc("Legacy Owner Co"), { merge: true });
+  });
+
+  await check("S4 admin with STALE users.role=agent (membership admin) saves settings", "PASS", () => {
+    const db = authed("legacy_admin_uid", "legacy_admin_uid@t.co");
+    return setDoc(doc(db, "app_settings", "listing_display_settings"),
+      listingDisplayDoc("Legacy Admin Co"), { merge: true });
+  });
+
+  await check("S5 consultant membership CANNOT save listing display settings", "FAIL", () => {
+    const db = authed("consultant2_uid", "consultant2_uid@t.co");
+    return setDoc(doc(db, "app_settings", "listing_display_settings"),
+      listingDisplayDoc("Hacker Co"), { merge: true });
+  });
+
+  await check("S6 plain agent (no office) CANNOT save listing display settings", "FAIL", () => {
+    const db = authed("plain_agent_uid", "plain_agent_uid@t.co");
+    return setDoc(doc(db, "app_settings", "listing_display_settings"),
+      listingDisplayDoc("Nope Co"), { merge: true });
+  });
+
+  await check("S7 any signed-in user can READ listing display settings", "PASS", () => {
+    const db = authed("plain_agent_uid", "plain_agent_uid@t.co");
+    return getDoc(doc(db, "app_settings", "listing_display_settings"));
   });
 
   await env.cleanup();

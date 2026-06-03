@@ -242,6 +242,18 @@ service cloud.firestore {
     function isOfficeManagerForIntelligence(oid) {
       return isOfficeManagerTierRole() || isActiveOfficeManagerMembership(oid);
     }
+    /// Rol kaynağı politikası (role_source_of_truth.dart): ofis + aktif üyelik
+    /// varken yetki `office_memberships.role`'dan gelir; `users.role` gecikmeli/legacy
+    /// olabilir. Bu nedenle isManager() (users.role) tek başına owner'ı doğrulamaz.
+    /// Kullanıcının KENDİ ofisinde aktif owner/admin üyeliği var mı?
+    function isOfficeOwnerOrAdminBySelfMembership() {
+      let oid = userOfficeId(request.auth.uid);
+      let m = officeMembershipDoc(request.auth.uid, oid);
+      return oid is string && oid.size() > 0
+        && m != null && m.data != null
+        && m.data.status == 'active'
+        && m.data.role in ['owner', 'admin'];
+    }
     /// customers kurallarında get(users/assignedAgentId) için: aynı ofisteki danışman profiline yönetici okuması.
     function canReadColleagueUserForOfficeIntelligence(userId) {
       let oid = userOfficeId(request.auth.uid);
@@ -590,8 +602,12 @@ service cloud.firestore {
 
     match /app_settings/{docId} {
       allow read: if isSignedIn();
-      // Uygulama ayarları sadece yönetici tarafından güncellenebilir.
-      allow write: if isSignedIn() && isManager();
+      // Uygulama ayarları yalnızca yönetici tarafından güncellenebilir.
+      // isManager() users.role'a bakar; ofis sahibi/ admin'inin users.role'u legacy
+      // 'agent' kalmış olabilir (rol kaynağı = office_memberships). Bu yüzden aktif
+      // owner/admin üyeliği de kabul edilir — danışman/team_lead yine reddedilir.
+      allow write: if isSignedIn()
+        && (isManager() || isOfficeOwnerOrAdminBySelfMembership());
     }
     match /external_listings/{docId} {
       allow read: if isSignedIn();
