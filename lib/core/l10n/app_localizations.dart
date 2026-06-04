@@ -614,9 +614,10 @@ class AppLocalizations {
 // German
 const Map<String, String> _de = {
   'app_title': 'Axion CRM',
+  'brand_tagline': 'Jeden Lead in Aktion verwandeln.',
   'widget_error': 'Widget-Fehler',
   'loading': 'Laden...',
-  'error_generic': 'Ein Fehler ist aufgetreten.',
+  'error_generic': 'Etwas ist schiefgelaufen.',
   'back': 'Zurück',
   'cancel': 'Abbrechen',
   'save': 'Speichern',
@@ -627,6 +628,21 @@ const Map<String, String> _de = {
   'section_account': 'Konto & Anmeldung',
   'section_appearance': 'Darstellung',
   'section_notifications': 'Benachrichtigungen',
+  'notifications_main': 'Benachrichtigungen',
+  'notifications_main_sub': 'Push- und In-App-Hinweise',
+  'haptic_feedback': 'Haptisches Feedback',
+  'haptic_feedback_sub': 'Haptische Rückmeldung bei Tasten und Gesten',
+  'sound_effects': 'Soundeffekte',
+  'sound_effects_sub': 'Benachrichtigungs- und Bestätigungstöne',
+  'notification_sound_style': 'Benachrichtigungston',
+  'notification_sound_chime': 'Sanftes Glockenspiel',
+  'notification_sound_chime_sub': 'Weiches Zwei-Ton-Glockenspiel',
+  'notification_sound_sparkle': 'Funkeln',
+  'notification_sound_sparkle_sub': 'Aufsteigendes Arpeggio – hell und modern',
+  'notification_sound_bell': 'Büroklingel',
+  'notification_sound_bell_sub': 'Ruhige, professionelle Klingel',
+  'sound_preview': 'Vorhören',
+  'load_failed': 'Laden fehlgeschlagen',
   'section_language': 'Sprache',
   'language_turkish': 'Türkisch',
   'language_english': 'Englisch',
@@ -639,9 +655,12 @@ const Map<String, String> _de = {
   'language_dutch': 'Niederländisch',
   'language_portuguese': 'Portugiesisch',
   'compact_dashboard': 'Kompaktes Dashboard',
-  'compact_dashboard_sub': 'KPI und Panels kompakter',
+  'compact_dashboard_sub': 'Kompaktere KPIs und Panels',
   'power_saver': 'Energiesparmodus',
-  'power_saver_sub': 'Weniger Animationen, schont den Akku',
+  'power_saver_sub': 'Reduziert aufwändige Animationen',
+  'settings_advanced_title': 'Erweiterte Funktionen',
+  'settings_advanced_sub':
+      'Bildschirme, Anruffluss und Integrationen verwalten',
   'push_notifications': 'Push-Benachrichtigungen',
   'push_notifications_sub': 'Sofortige Benachrichtigungen per FCM',
   'nav_dashboard': 'Übersicht',
@@ -654,13 +673,16 @@ const Map<String, String> _de = {
   'bulk_campaign': 'Massenkampagne',
   'add_to_follow_up': 'Zur Nachverfolgung',
   'search_customers': 'Suchen (Name, Telefon, E-Mail)',
-  'empty_customers_title': 'Kundenliste',
+  'empty_customers_title': 'Noch keine Kunden',
   'empty_customers_subtitle':
-      'Noch keine Kunden. Sie erscheinen hier, wenn Sie Anrufzusammenfassungen speichern.',
+      'Fügen Sie einen Kunden hinzu oder speichern Sie eine Anrufzusammenfassung – Ihr Kundenstamm wächst hier.',
+  'empty_customers_cta': 'Ersten Kunden hinzufügen',
   'empty_search_title': 'Keine Ergebnisse',
   'empty_search_subtitle': 'Keine Kunden passen zu „{0}".',
   'customer_list_load_error': 'Kundenliste konnte nicht geladen werden.',
   'add_customer': 'Kunde hinzufügen',
+  'empty_state_empower':
+      'Fügen Sie Ihren ersten Eintrag hinzu und starten Sie das System',
   'title_bulk_campaign': 'Massenkampagne',
   'segment_header': 'Kundensegment',
   'segment_count': '{0} Personen ausgewählt',
@@ -671,14 +693,17 @@ const Map<String, String> _de = {
   'ai_suggesting': 'Vorschlag wird erstellt...',
   'ai_suggest_ready': 'KI-Vorschlag fertig.',
   'ai_suggest_error': 'Vorschlag fehlgeschlagen: {0}',
-  'message_hint': 'Kampagnentext eingeben oder KI um Vorschlag bitten.',
+  'message_hint':
+      'Schreiben Sie Ihre Kampagnennachricht oder bitten Sie die KI um einen Vorschlag.',
   'whatsapp': 'WhatsApp',
   'sms': 'SMS',
   'title_listings': 'Anzeigen-Portfolio',
   'listing': 'Anzeige',
-  'empty_listings': 'Noch keine Anzeigen',
+  'empty_listings': 'Ihr Portfolio ist leer',
   'empty_listings_sub':
-      'Büro- (listings) und externe Anzeigen (external_listings) sind leer. Daten in Firestore hinzufügen.',
+      'Anzeigen importieren oder von verbundenen Plattformen synchronisieren.',
+  'empty_listings_cta_import': 'Anzeigen importieren',
+  'empty_listings_cta_accounts': 'Verknüpfte Konten verwalten',
   'listings_load_error': 'Anzeigen konnten nicht geladen werden.',
   'listing_external_badge': 'Extern',
   'listing_external_no_link': 'Kein Quelllink für diese Anzeige.',
@@ -686,22 +711,74 @@ const Map<String, String> _de = {
   'listing_not_found': 'Anzeige nicht gefunden.',
   'listing_load_error': 'Anzeige konnte nicht geladen werden.',
   'listings_tab_portfolio': 'Portfolio',
-  'listings_tab_my_external': 'Meine Inserate',
-  'my_external_listings_title': 'Externe Inserate',
+  'listings_tab_owned': 'Meine Anzeigen',
+  'listings_tab_market': 'Markt-Feed',
+  'listings_subtitle_owned':
+      'Büro-Portfolio und offizielle Plattform-Synchronisierung',
+  'listings_subtitle_market': 'Nur geprüfte / offizielle Feed-Daten',
+  'listings_section_office': 'Büro-Portfolio',
+  'listings_section_connected': 'Verbundene Plattformen',
+  'listings_badge_owned': 'Büro',
+  'listings_badge_market': 'Markt-Feed',
+  'listings_badge_not_inventory':
+      'Kein eigener Bestand; allgemeine Marktdaten.',
+  'listings_sync_line': '{0} · {1}',
+  'listings_market_disabled_title': 'Markt-Feed deaktiviert',
+  'listings_market_disabled_sub':
+      'Erscheint, sobald eine offizielle Marktdatenquelle aktiviert ist. Inoffizielle oder gescrapte Daten werden nicht angezeigt.',
+  'listings_empty_market': 'Keine Einträge im Markt-Feed',
+  'listings_empty_market_sub':
+      'Anzeigen erscheinen, wenn offizielle Importe oder Feeds aktualisiert werden.',
+  'listings_tab_my_external': 'Meine Anzeigen',
+  'my_external_listings_title': 'Meine externen Anzeigen',
   'my_external_listings_hero_sub':
-      'Inserate von verknüpften Konten. Tippen Sie auf eine Karte, um die Quelle zu öffnen.',
-  'my_external_listings_empty_title': 'Keine synchronisierten Inserate',
+      'Von verknüpften Konten synchronisierte Anzeigen. Tippen Sie auf eine Karte, um die Quelle zu öffnen.',
+  'my_external_listings_empty_title': 'Keine synchronisierten Anzeigen',
   'my_external_listings_empty_sub':
-      'Inserate erscheinen hier. Verbindung unter Einstellungen → Verknüpfte Konten hinzufügen.',
+      'Anzeigen verknüpfter Konten erscheinen hier. Verbindung unter Einstellungen → Verknüpfte Konten hinzufügen.',
   'my_external_listings_connect_cta': 'Verknüpfte Konten verwalten',
   'my_external_listings_load_error':
-      'Externe Inserate konnten nicht geladen werden.',
+      'Externe Anzeigen konnten nicht geladen werden.',
   'my_external_listings_settings_sub':
-      'Synchronisierte Inserate anzeigen und filtern',
+      'Synchronisierte Anzeigen anzeigen und filtern',
+  'integration_connections_read_only_notice':
+      'Plattformverbindungen werden von Ihrem Büroadministrator verwaltet.',
+  'settings_section_platform_integrations_manager':
+      'Anzeigen- & Plattformverbindungen',
+  'settings_platform_connections_tile': 'Plattformverbindungen (Admin)',
+  'settings_platform_connections_tile_sub':
+      'Sahibinden, Emlakjet, Hepsiemlak – verbinden, synchronisieren, importieren',
   'integration_filter_all': 'Alle',
   'title_tasks': 'Aufgaben',
   'task': 'Aufgabe',
   'empty_tasks': 'Noch keine Aufgaben',
+  'empty_tasks_sub':
+      'Fügen Sie Nachverfolgungen und Erinnerungen hinzu, damit nichts verloren geht.',
+  'empty_tasks_cta': 'Neue Aufgabe',
+  'empty_calls_title': 'Noch keine Anrufe protokolliert',
+  'empty_calls_sub':
+      'Telefon- und In-App-Anrufe erscheinen hier. Starten Sie einen Anruf für den ersten Eintrag.',
+  'empty_calls_cta': 'Anrufen und protokollieren',
+  'empty_followup_title': 'Keine Leads zum Reaktivieren',
+  'empty_followup_sub':
+      'Wenn Kunden inaktiv werden, werden sie hier priorisiert.',
+  'empty_followup_cta': 'Anruf starten',
+  'empty_my_listings_title': 'Keine importierten Anzeigen',
+  'empty_my_listings_sub':
+      'Importieren Sie einen Shop-Export (CSV/JSON/Excel) oder öffnen Sie den Manager-Importbildschirm.',
+  'empty_my_listings_cta_import': 'Shop-Massenimport',
+  'empty_my_listings_cta_accounts': 'Verknüpfte Konten',
+  'empty_reports_title': 'Berichte werden geladen',
+  'empty_reports_sub':
+      'Kennzahlen erscheinen, sobald Anrufzusammenfassungen und Abschlüsse vorliegen.',
+  'empty_reports_cta': 'Berater öffnen',
+  'empty_import_history_title': 'Kein Importverlauf',
+  'empty_import_history_sub':
+      'Wenn Sie Massen- oder Dateijobs starten, werden sie hier verfolgt.',
+  'empty_import_history_cta': 'Shop-Import',
+  'empty_intel_reports_title': 'Keine Berichte im Archiv',
+  'empty_intel_reports_sub':
+      'PDFs aus der Axion-Analyse werden hier aufgelistet, sobald sie erstellt sind.',
   'title_notifications': 'Benachrichtigungen',
   'empty_notifications_title': 'Noch keine Benachrichtigungen',
   'empty_notifications_subtitle':
@@ -715,7 +792,7 @@ const Map<String, String> _de = {
   'notifications': 'Benachrichtigungen',
   'title_admin_consultants': 'Berater',
   'admin_consultants_placeholder':
-      'Beraterliste und Teamzuweisungen erscheinen hier.',
+      'Beraterliste und Teamzuweisungen erscheinen hier. In der ersten Version können Sie Rollen und Teams für bestehende Benutzer verwalten.',
   'search_consultants': 'Berater suchen (Name, E-Mail)',
   'title_admin_teams': 'Teams',
   'action_add_team': 'Neues Team',
@@ -731,13 +808,13 @@ const Map<String, String> _de = {
   'empty_team_members': 'Diesem Team sind noch keine Mitglieder zugewiesen.',
   'action_remove_from_team': 'Aus Team entfernen',
   'confirm_remove_from_team':
-      'Dieses Mitglied wirklich aus dem Team entfernen?',
+      'Möchten Sie dieses Mitglied wirklich aus dem Team entfernen?',
   'member_removed': 'Mitglied aus Team entfernt.',
   'no_consultants_to_add': 'Keine weiteren Berater zum Hinzufügen.',
   'access_denied': 'Sie haben keinen Zugriff auf diese Seite.',
   'filter_all_teams': 'Alle Teams',
   'consultant_invite_info':
-      'Diese Person meldet sich mit dieser E-Mail an und wählt die Berater-Rolle.',
+      'Diese Person meldet sich mit dieser E-Mail an und tritt dem System bei, indem sie die Berater-Rolle wählt.',
   'action_add_consultant': 'Neuer Berater',
   'label_role': 'Rolle',
   'empty_consultants': 'Keine Berater gefunden.',
@@ -745,14 +822,54 @@ const Map<String, String> _de = {
   'filter_team_all': 'Alle Teams',
   'edit_consultant': 'Berater bearbeiten',
   'password_reset_info':
-      'Passwort zurücksetzen über Firebase Console oder E-Mail-Link.',
+      'Passwort über Firebase Console oder den per E-Mail gesendeten Link zurücksetzen.',
   'full_name': 'Vollständiger Name',
   'is_active': 'Aktiv',
   'label_email': 'E-Mail',
   'saved_success': 'Gespeichert.',
   'consultant_invite_saved':
-      'Einladung gespeichert; Rolle und Team werden bei Anmeldung zugewiesen.',
+      'Einladung gespeichert; Rolle und Team werden bei der Anmeldung mit dieser E-Mail zugewiesen.',
   'manager_updated': 'Manager aktualisiert.',
+  'onboarding_skip': 'Überspringen',
+  'onboarding_next': 'Weiter',
+  'onboarding_finish': 'Zur Anmeldung',
+  'onboarding_persona_required':
+      'Wählen Sie Manager oder Berater, um fortzufahren.',
+  'onboarding_page_of': '{0} / {1}',
+  'onboarding_welcome_title': 'Willkommen bei Axion CRM',
+  'onboarding_welcome_subtitle':
+      'Ihr Immobiliengeschäft auf einer Plattform: Manager-Kommandozentrale und Berater-Außendienstpanel im selben Ökosystem.',
+  'onboarding_welcome_highlights':
+      'Manager-Panel|Berater-Panel|Ein Konto',
+  'onboarding_platform_title': 'Dasselbe Konto auf jedem Gerät',
+  'onboarding_platform_subtitle':
+      'Eine Sitzung auf iPhone, iPad und Mac – Desktop im Büro, mobil im Außendienst.',
+  'onboarding_platform_highlights': 'iOS|macOS|Synchronisierung',
+  'onboarding_manager_title': 'Manager: Steuerung und Überblick',
+  'onboarding_manager_subtitle':
+      'Verfolgen Sie Ihr Team mit Kommandozentrale, War Room, Call Center und Berichten.',
+  'onboarding_manager_highlights':
+      'Kommandozentrale|War Room|Call Center|Berichte',
+  'onboarding_consultant_title': 'Berater: Mein Tag und Außendienst',
+  'onboarding_consultant_subtitle':
+      'Starten Sie den Tag mit „Mein Tag"; Kunden, Anzeigen, Nachverfolgungen und Aufgaben an einem Ort.',
+  'onboarding_consultant_highlights':
+      'Mein Tag|Meine Kunden|Anzeigen|Nachverfolgung|Meine Aufgaben',
+  'onboarding_calls_title': 'Intelligente Anrufe und Termine',
+  'onboarding_calls_subtitle':
+      'Meine Anrufe und Gesprächszusammenfassungen; Call Center für Manager.',
+  'onboarding_calls_highlights':
+      'Intelligentes Gespräch|Meine Anrufe|Gesprächszusammenfassung|Call Center',
+  'onboarding_market_title': 'Markt, Anzeigen und Insights',
+  'onboarding_market_subtitle':
+      'Anzeigen-Portfolio, regionale Insights und Analyseberichte.',
+  'onboarding_market_highlights':
+      'Anzeigen|Regionale Insights|Analytik|Import',
+  'onboarding_office_title': 'Büro, Nachrichten und fertig',
+  'onboarding_office_subtitle':
+      'Büro erstellen oder beitreten; Teamabstimmung über das Nachrichtenzentrum. Wählen Sie Ihre Anmeldeart.',
+  'onboarding_office_highlights':
+      'Bürotisch|Nachrichtenzentrum|Synchronisierung|Anmeldeart',
   'data_updating': 'Daten werden aktualisiert…',
   'retry': 'Erneut versuchen',
   'go_home': 'Zur Startseite',
@@ -761,6 +878,7 @@ const Map<String, String> _de = {
 // French
 const Map<String, String> _fr = {
   'app_title': 'Axion CRM',
+  'brand_tagline': 'Transformez chaque lead en action.',
   'widget_error': 'Erreur widget',
   'loading': 'Chargement...',
   'error_generic': 'Une erreur s\'est produite.',
@@ -774,6 +892,21 @@ const Map<String, String> _fr = {
   'section_account': 'Compte et connexion',
   'section_appearance': 'Apparence',
   'section_notifications': 'Notifications',
+  'notifications_main': 'Notifications',
+  'notifications_main_sub': 'Alertes push et dans l\'application',
+  'haptic_feedback': 'Retour haptique',
+  'haptic_feedback_sub': 'Retour tactile sur les boutons et les gestes',
+  'sound_effects': 'Effets sonores',
+  'sound_effects_sub': 'Sons de notification et de confirmation',
+  'notification_sound_style': 'Son de notification',
+  'notification_sound_chime': 'Carillon doux',
+  'notification_sound_chime_sub': 'Carillon doux à deux tons',
+  'notification_sound_sparkle': 'Étincelle',
+  'notification_sound_sparkle_sub': 'Arpège ascendant — clair et moderne',
+  'notification_sound_bell': 'Cloche de bureau',
+  'notification_sound_bell_sub': 'Cloche calme et professionnelle',
+  'sound_preview': 'Aperçu',
+  'load_failed': 'Échec du chargement',
   'section_language': 'Langue',
   'language_turkish': 'Turc',
   'language_english': 'Anglais',
@@ -786,9 +919,12 @@ const Map<String, String> _fr = {
   'language_dutch': 'Néerlandais',
   'language_portuguese': 'Portugais',
   'compact_dashboard': 'Tableau de bord compact',
-  'compact_dashboard_sub': 'KPI et panneaux plus serrés',
+  'compact_dashboard_sub': 'KPI et panneaux plus compacts',
   'power_saver': 'Économie d\'énergie',
-  'power_saver_sub': 'Réduit les animations, économise la batterie',
+  'power_saver_sub': 'Réduit les animations lourdes',
+  'settings_advanced_title': 'Fonctions avancées',
+  'settings_advanced_sub':
+      'Gérer les écrans, le flux d\'appels et les intégrations',
   'push_notifications': 'Notifications push',
   'push_notifications_sub': 'Notifications instantanées via FCM',
   'nav_dashboard': 'Résumé',
@@ -801,13 +937,16 @@ const Map<String, String> _fr = {
   'bulk_campaign': 'Campagne groupée',
   'add_to_follow_up': 'Ajouter au suivi',
   'search_customers': 'Rechercher (nom, téléphone, e-mail)',
-  'empty_customers_title': 'Liste des clients',
+  'empty_customers_title': 'Aucun client pour l\'instant',
   'empty_customers_subtitle':
-      'Aucun client pour l\'instant. Ils apparaîtront lorsque vous enregistrerez des résumés d\'appels.',
+      'Ajoutez un client ou enregistrez un résumé d\'appel — votre portefeuille grandit ici.',
+  'empty_customers_cta': 'Ajouter votre premier client',
   'empty_search_title': 'Aucun résultat',
   'empty_search_subtitle': 'Aucun client ne correspond à « {0} ».',
   'customer_list_load_error': 'Impossible de charger la liste des clients.',
   'add_customer': 'Ajouter un client',
+  'empty_state_empower':
+      'Ajoutez votre premier enregistrement et lancez le système',
   'title_bulk_campaign': 'Campagne groupée',
   'segment_header': 'Segment clients',
   'segment_count': '{0} personnes ciblées',
@@ -824,9 +963,11 @@ const Map<String, String> _fr = {
   'sms': 'SMS',
   'title_listings': 'Portefeuille d\'annonces',
   'listing': 'Annonce',
-  'empty_listings': 'Aucune annonce pour l\'instant',
+  'empty_listings': 'Votre portefeuille est vide',
   'empty_listings_sub':
-      'Annonces bureau (listings) et externes (external_listings) vides. Ajoutez des données dans Firestore.',
+      'Importez des annonces ou synchronisez depuis les plateformes connectées.',
+  'empty_listings_cta_import': 'Importer des annonces',
+  'empty_listings_cta_accounts': 'Gérer les comptes connectés',
   'listings_load_error': 'Impossible de charger les annonces.',
   'listing_external_badge': 'Externe',
   'listing_external_no_link': 'Aucun lien source pour cette annonce.',
@@ -834,22 +975,74 @@ const Map<String, String> _fr = {
   'listing_not_found': 'Annonce introuvable.',
   'listing_load_error': 'Impossible de charger l\'annonce.',
   'listings_tab_portfolio': 'Portefeuille',
+  'listings_tab_owned': 'Mes annonces',
+  'listings_tab_market': 'Flux du marché',
+  'listings_subtitle_owned':
+      'Portefeuille du bureau et synchronisation officielle des plateformes',
+  'listings_subtitle_market': 'Données de flux approuvées / officielles uniquement',
+  'listings_section_office': 'Portefeuille du bureau',
+  'listings_section_connected': 'Plateformes connectées',
+  'listings_badge_owned': 'Bureau',
+  'listings_badge_market': 'Flux du marché',
+  'listings_badge_not_inventory':
+      'Pas un inventaire propre ; données générales du marché.',
+  'listings_sync_line': '{0} · {1}',
+  'listings_market_disabled_title': 'Flux du marché désactivé',
+  'listings_market_disabled_sub':
+      'Apparaît lorsqu\'une source de données de marché officielle est activée. Les données non officielles ou extraites ne sont pas affichées.',
+  'listings_empty_market': 'Aucun élément dans le flux du marché',
+  'listings_empty_market_sub':
+      'Les annonces apparaissent lors de la mise à jour des imports ou flux officiels.',
   'listings_tab_my_external': 'Mes annonces',
-  'my_external_listings_title': 'Annonces externes',
+  'my_external_listings_title': 'Mes annonces externes',
   'my_external_listings_hero_sub':
       'Annonces synchronisées depuis les comptes connectés. Touchez une carte pour ouvrir la source.',
   'my_external_listings_empty_title': 'Aucune annonce synchronisée',
   'my_external_listings_empty_sub':
-      'Les annonces des comptes connectés apparaissent ici. Ajoutez une connexion dans Réglages.',
+      'Les annonces des comptes connectés apparaissent ici. Ajoutez une connexion dans Réglages → Comptes connectés.',
   'my_external_listings_connect_cta': 'Gérer les comptes connectés',
   'my_external_listings_load_error':
       'Impossible de charger les annonces externes.',
   'my_external_listings_settings_sub':
       'Voir et filtrer les annonces synchronisées',
+  'integration_connections_read_only_notice':
+      'Les connexions aux plateformes sont gérées par l\'administrateur du bureau.',
+  'settings_section_platform_integrations_manager':
+      'Annonces et connexions aux plateformes',
+  'settings_platform_connections_tile': 'Connexions aux plateformes (admin)',
+  'settings_platform_connections_tile_sub':
+      'Sahibinden, Emlakjet, Hepsiemlak — connecter, synchroniser, importer',
   'integration_filter_all': 'Tous',
   'title_tasks': 'Tâches',
   'task': 'Tâche',
   'empty_tasks': 'Aucune tâche pour l\'instant',
+  'empty_tasks_sub':
+      'Ajoutez des suivis et des rappels pour que rien ne passe entre les mailles du filet.',
+  'empty_tasks_cta': 'Nouvelle tâche',
+  'empty_calls_title': 'Aucun appel enregistré',
+  'empty_calls_sub':
+      'Les appels téléphoniques et dans l\'application s\'affichent ici. Lancez un appel pour créer votre première entrée.',
+  'empty_calls_cta': 'Appeler et enregistrer',
+  'empty_followup_title': 'Aucun lead à relancer',
+  'empty_followup_sub':
+      'Lorsque les clients deviennent inactifs, ils sont priorisés ici.',
+  'empty_followup_cta': 'Lancer un appel',
+  'empty_my_listings_title': 'Aucune annonce importée',
+  'empty_my_listings_sub':
+      'Importez en masse un export de magasin (CSV/JSON/Excel) ou ouvrez l\'écran d\'import du manager.',
+  'empty_my_listings_cta_import': 'Import en masse du magasin',
+  'empty_my_listings_cta_accounts': 'Comptes connectés',
+  'empty_reports_title': 'Chargement des rapports',
+  'empty_reports_sub':
+      'Les indicateurs apparaîtront une fois les résumés d\'appels et les affaires disponibles.',
+  'empty_reports_cta': 'Ouvrir les conseillers',
+  'empty_import_history_title': 'Aucun historique d\'import',
+  'empty_import_history_sub':
+      'Lorsque vous lancez des tâches groupées ou de fichiers, elles sont suivies ici.',
+  'empty_import_history_cta': 'Import du magasin',
+  'empty_intel_reports_title': 'Aucun rapport dans l\'archive',
+  'empty_intel_reports_sub':
+      'Les PDF issus de l\'analyse Axion seront listés ici une fois générés.',
   'title_notifications': 'Notifications',
   'empty_notifications_title': 'Aucune notification',
   'empty_notifications_subtitle':
@@ -863,7 +1056,7 @@ const Map<String, String> _fr = {
   'notifications': 'Notifications',
   'title_admin_consultants': 'Conseillers',
   'admin_consultants_placeholder':
-      'Liste des conseillers et affectations d\'équipe ici.',
+      'La liste des conseillers et les affectations d\'équipe apparaîtront ici. Dans la première version, vous pouvez gérer les rôles et équipes des utilisateurs existants.',
   'search_consultants': 'Rechercher des conseillers (nom, e-mail)',
   'title_admin_teams': 'Équipes',
   'action_add_team': 'Nouvelle équipe',
@@ -878,13 +1071,14 @@ const Map<String, String> _fr = {
   'action_add_member': 'Ajouter un membre',
   'empty_team_members': 'Aucun membre dans cette équipe.',
   'action_remove_from_team': 'Retirer de l\'équipe',
-  'confirm_remove_from_team': 'Retirer ce membre de l\'équipe ?',
+  'confirm_remove_from_team':
+      'Êtes-vous sûr de vouloir retirer ce membre de l\'équipe ?',
   'member_removed': 'Membre retiré de l\'équipe.',
   'no_consultants_to_add': 'Aucun conseiller à ajouter.',
   'access_denied': 'Vous n\'avez pas accès à cette page.',
   'filter_all_teams': 'Toutes les équipes',
   'consultant_invite_info':
-      'Cette personne se connectera avec cet e-mail et sélectionnera le rôle Conseiller.',
+      'Cette personne se connectera avec cet e-mail et rejoindra le système en sélectionnant le rôle Conseiller.',
   'action_add_consultant': 'Nouveau conseiller',
   'label_role': 'Rôle',
   'empty_consultants': 'Aucun conseiller trouvé.',
@@ -898,8 +1092,48 @@ const Map<String, String> _fr = {
   'label_email': 'E-mail',
   'saved_success': 'Enregistré.',
   'consultant_invite_saved':
-      'Invitation enregistrée ; rôle et équipe assignés à la connexion.',
+      'Invitation enregistrée ; rôle et équipe seront assignés à la connexion avec cet e-mail.',
   'manager_updated': 'Manager mis à jour.',
+  'onboarding_skip': 'Passer',
+  'onboarding_next': 'Suivant',
+  'onboarding_finish': 'Aller à la connexion',
+  'onboarding_persona_required':
+      'Sélectionnez Manager ou Conseiller pour continuer.',
+  'onboarding_page_of': '{0} / {1}',
+  'onboarding_welcome_title': 'Bienvenue sur Axion CRM',
+  'onboarding_welcome_subtitle':
+      'Vos opérations immobilières sur une seule plateforme : centre de commande du manager et panneau terrain du conseiller dans le même écosystème.',
+  'onboarding_welcome_highlights':
+      'Panneau manager|Panneau conseiller|Un seul compte',
+  'onboarding_platform_title': 'Le même compte sur chaque appareil',
+  'onboarding_platform_subtitle':
+      'Une session sur iPhone, iPad et Mac — bureau au siège, mobile sur le terrain.',
+  'onboarding_platform_highlights': 'iOS|macOS|Synchronisation',
+  'onboarding_manager_title': 'Manager : commande et visibilité',
+  'onboarding_manager_subtitle':
+      'Suivez votre équipe avec le Centre de commande, la War Room, le Centre d\'appels et les Rapports.',
+  'onboarding_manager_highlights':
+      'Centre de commande|War Room|Centre d\'appels|Rapports',
+  'onboarding_consultant_title': 'Conseiller : Ma journée et flux terrain',
+  'onboarding_consultant_subtitle':
+      'Commencez la journée avec Ma journée ; clients, annonces, suivis et tâches au même endroit.',
+  'onboarding_consultant_highlights':
+      'Ma journée|Mes clients|Annonces|Suivi|Mes tâches',
+  'onboarding_calls_title': 'Appels et rendez-vous intelligents',
+  'onboarding_calls_subtitle':
+      'Mes appels et résumés de rendez-vous ; Centre d\'appels pour les managers.',
+  'onboarding_calls_highlights':
+      'Rendez-vous intelligent|Mes appels|Résumé de rendez-vous|Centre d\'appels',
+  'onboarding_market_title': 'Marché, annonces et analyses',
+  'onboarding_market_subtitle':
+      'Portefeuille d\'annonces, analyses régionales et rapports analytiques.',
+  'onboarding_market_highlights':
+      'Annonces|Analyse régionale|Analytique|Import',
+  'onboarding_office_title': 'Bureau, messages et c\'est prêt',
+  'onboarding_office_subtitle':
+      'Créez ou rejoignez un bureau ; alignement de l\'équipe via le Centre de messages. Choisissez votre type de connexion.',
+  'onboarding_office_highlights':
+      'Bureau|Centre de messages|Synchronisation|Type de connexion',
   'data_updating': 'Mise à jour des données…',
   'retry': 'Réessayer',
   'go_home': 'Accueil',
@@ -908,6 +1142,7 @@ const Map<String, String> _fr = {
 // Spanish
 const Map<String, String> _es = {
   'app_title': 'Axion CRM',
+  'brand_tagline': 'Convierte cada lead en acción.',
   'widget_error': 'Error del widget',
   'loading': 'Cargando...',
   'error_generic': 'Algo salió mal.',
@@ -921,6 +1156,21 @@ const Map<String, String> _es = {
   'section_account': 'Cuenta e inicio de sesión',
   'section_appearance': 'Apariencia',
   'section_notifications': 'Notificaciones',
+  'notifications_main': 'Notificaciones',
+  'notifications_main_sub': 'Alertas push y en la app',
+  'haptic_feedback': 'Respuesta háptica',
+  'haptic_feedback_sub': 'Respuesta táctil en botones y gestos',
+  'sound_effects': 'Efectos de sonido',
+  'sound_effects_sub': 'Sonidos de notificación y confirmación',
+  'notification_sound_style': 'Sonido de notificación',
+  'notification_sound_chime': 'Campanilla suave',
+  'notification_sound_chime_sub': 'Campanilla suave de dos tonos',
+  'notification_sound_sparkle': 'Destello',
+  'notification_sound_sparkle_sub': 'Arpegio ascendente — brillante y moderno',
+  'notification_sound_bell': 'Campana de oficina',
+  'notification_sound_bell_sub': 'Campana tranquila y profesional',
+  'sound_preview': 'Vista previa',
+  'load_failed': 'No se pudo cargar',
   'section_language': 'Idioma',
   'language_turkish': 'Turco',
   'language_english': 'Inglés',
@@ -935,7 +1185,10 @@ const Map<String, String> _es = {
   'compact_dashboard': 'Panel compacto',
   'compact_dashboard_sub': 'KPI y paneles más compactos',
   'power_saver': 'Ahorro de energía',
-  'power_saver_sub': 'Reduce animaciones, ahorra batería',
+  'power_saver_sub': 'Reduce animaciones pesadas',
+  'settings_advanced_title': 'Funciones avanzadas',
+  'settings_advanced_sub':
+      'Gestionar pantallas, flujo de llamadas e integraciones',
   'push_notifications': 'Notificaciones push',
   'push_notifications_sub': 'Notificaciones instantáneas por FCM',
   'nav_dashboard': 'Resumen',
@@ -948,13 +1201,15 @@ const Map<String, String> _es = {
   'bulk_campaign': 'Campaña masiva',
   'add_to_follow_up': 'Añadir al seguimiento',
   'search_customers': 'Buscar (nombre, teléfono, correo)',
-  'empty_customers_title': 'Lista de clientes',
+  'empty_customers_title': 'Aún no hay clientes',
   'empty_customers_subtitle':
-      'Aún no hay clientes. Aparecerán al guardar resúmenes de llamadas.',
+      'Añade un cliente o guarda un resumen de llamada: tu cartera crece aquí.',
+  'empty_customers_cta': 'Añade tu primer cliente',
   'empty_search_title': 'Sin resultados',
   'empty_search_subtitle': 'Ningún cliente coincide con «{0}».',
   'customer_list_load_error': 'No se pudo cargar la lista de clientes.',
   'add_customer': 'Añadir cliente',
+  'empty_state_empower': 'Añade tu primer registro e inicia el sistema',
   'title_bulk_campaign': 'Campaña masiva',
   'segment_header': 'Segmento de clientes',
   'segment_count': '{0} personas objetivo',
@@ -971,9 +1226,11 @@ const Map<String, String> _es = {
   'sms': 'SMS',
   'title_listings': 'Portafolio de anuncios',
   'listing': 'Anuncio',
-  'empty_listings': 'Aún no hay anuncios',
+  'empty_listings': 'Tu portafolio está vacío',
   'empty_listings_sub':
-      'Listados de oficina (listings) y externos (external_listings) vacíos. Añada datos en Firestore.',
+      'Importa anuncios o sincroniza desde plataformas conectadas.',
+  'empty_listings_cta_import': 'Importar anuncios',
+  'empty_listings_cta_accounts': 'Gestionar cuentas conectadas',
   'listings_load_error': 'No se pudieron cargar los anuncios.',
   'listing_external_badge': 'Externo',
   'listing_external_no_link': 'No hay enlace de origen para este anuncio.',
@@ -981,21 +1238,73 @@ const Map<String, String> _es = {
   'listing_not_found': 'Anuncio no encontrado.',
   'listing_load_error': 'No se pudo cargar el anuncio.',
   'listings_tab_portfolio': 'Cartera',
+  'listings_tab_owned': 'Mis anuncios',
+  'listings_tab_market': 'Feed de mercado',
+  'listings_subtitle_owned':
+      'Portafolio de oficina y sincronización oficial de plataformas',
+  'listings_subtitle_market': 'Solo datos de feed aprobados / oficiales',
+  'listings_section_office': 'Portafolio de oficina',
+  'listings_section_connected': 'Plataformas conectadas',
+  'listings_badge_owned': 'Oficina',
+  'listings_badge_market': 'Feed de mercado',
+  'listings_badge_not_inventory':
+      'No es inventario propio; datos generales del mercado.',
+  'listings_sync_line': '{0} · {1}',
+  'listings_market_disabled_title': 'Feed de mercado desactivado',
+  'listings_market_disabled_sub':
+      'Aparece cuando se activa una fuente de datos de mercado oficial. No se muestran datos no oficiales ni extraídos.',
+  'listings_empty_market': 'Sin elementos en el feed de mercado',
+  'listings_empty_market_sub':
+      'Los anuncios aparecen cuando se actualizan los ingresos o feeds oficiales.',
   'listings_tab_my_external': 'Mis anuncios',
-  'my_external_listings_title': 'Anuncios externos',
+  'my_external_listings_title': 'Mis anuncios externos',
   'my_external_listings_hero_sub':
       'Anuncios sincronizados desde cuentas conectadas. Toca una tarjeta para abrir la fuente.',
   'my_external_listings_empty_title': 'Sin anuncios sincronizados',
   'my_external_listings_empty_sub':
-      'Los anuncios de cuentas conectadas aparecen aquí. Añade una conexión en Ajustes.',
+      'Los anuncios de cuentas conectadas aparecen aquí. Añade una conexión en Ajustes → Cuentas conectadas.',
   'my_external_listings_connect_cta': 'Gestionar cuentas conectadas',
   'my_external_listings_load_error':
       'No se pudieron cargar los anuncios externos.',
   'my_external_listings_settings_sub': 'Ver y filtrar anuncios sincronizados',
+  'integration_connections_read_only_notice':
+      'Las conexiones de plataforma las gestiona el administrador de tu oficina.',
+  'settings_section_platform_integrations_manager':
+      'Anuncios y conexiones de plataforma',
+  'settings_platform_connections_tile': 'Conexiones de plataforma (admin)',
+  'settings_platform_connections_tile_sub':
+      'Sahibinden, Emlakjet, Hepsiemlak — conectar, sincronizar, importar',
   'integration_filter_all': 'Todos',
   'title_tasks': 'Tareas',
   'task': 'Tarea',
   'empty_tasks': 'Aún no hay tareas',
+  'empty_tasks_sub':
+      'Añade seguimientos y recordatorios para que nada se quede atrás.',
+  'empty_tasks_cta': 'Nueva tarea',
+  'empty_calls_title': 'Aún no hay llamadas registradas',
+  'empty_calls_sub':
+      'Las llamadas telefónicas y dentro de la app aparecen aquí. Inicia una llamada para crear tu primer registro.',
+  'empty_calls_cta': 'Llamar y registrar',
+  'empty_followup_title': 'No hay leads para reactivar',
+  'empty_followup_sub':
+      'Cuando los clientes se quedan en silencio, se priorizan aquí.',
+  'empty_followup_cta': 'Iniciar una llamada',
+  'empty_my_listings_title': 'Sin anuncios importados',
+  'empty_my_listings_sub':
+      'Importa en masa una exportación de tienda (CSV/JSON/Excel) o abre la pantalla de importación del manager.',
+  'empty_my_listings_cta_import': 'Importación masiva de tienda',
+  'empty_my_listings_cta_accounts': 'Cuentas conectadas',
+  'empty_reports_title': 'Cargando informes',
+  'empty_reports_sub':
+      'Las métricas aparecerán cuando existan resúmenes de llamadas y operaciones.',
+  'empty_reports_cta': 'Abrir asesores',
+  'empty_import_history_title': 'Sin historial de importación',
+  'empty_import_history_sub':
+      'Cuando inicies trabajos masivos o de archivo, se registran aquí.',
+  'empty_import_history_cta': 'Importación de tienda',
+  'empty_intel_reports_title': 'Sin informes en el archivo',
+  'empty_intel_reports_sub':
+      'Los PDF del análisis de Axion se listarán aquí cuando se generen.',
   'title_notifications': 'Notificaciones',
   'empty_notifications_title': 'Aún no hay notificaciones',
   'empty_notifications_subtitle':
@@ -1009,7 +1318,7 @@ const Map<String, String> _es = {
   'notifications': 'Notificaciones',
   'title_admin_consultants': 'Asesores',
   'admin_consultants_placeholder':
-      'Lista de asesores y asignaciones de equipo aquí.',
+      'La lista de asesores y las asignaciones de equipo aparecerán aquí. En la primera versión, puedes gestionar roles y equipos de los usuarios existentes.',
   'search_consultants': 'Buscar asesores (nombre, correo)',
   'title_admin_teams': 'Equipos',
   'action_add_team': 'Nuevo equipo',
@@ -1024,13 +1333,14 @@ const Map<String, String> _es = {
   'action_add_member': 'Añadir miembro',
   'empty_team_members': 'Aún no hay miembros en este equipo.',
   'action_remove_from_team': 'Quitar del equipo',
-  'confirm_remove_from_team': '¿Quitar a este miembro del equipo?',
+  'confirm_remove_from_team':
+      '¿Seguro que quieres quitar a este miembro del equipo?',
   'member_removed': 'Miembro quitado del equipo.',
   'no_consultants_to_add': 'No quedan asesores por añadir.',
   'access_denied': 'No tiene acceso a esta página.',
   'filter_all_teams': 'Todos los equipos',
   'consultant_invite_info':
-      'Esta persona iniciará sesión con este correo y seleccionará el rol Asesor.',
+      'Esta persona iniciará sesión con este correo y se unirá al sistema seleccionando el rol Asesor.',
   'action_add_consultant': 'Nuevo asesor',
   'label_role': 'Rol',
   'empty_consultants': 'No se encontraron asesores.',
@@ -1044,8 +1354,48 @@ const Map<String, String> _es = {
   'label_email': 'Correo',
   'saved_success': 'Guardado.',
   'consultant_invite_saved':
-      'Invitación guardada; rol y equipo se asignan al iniciar sesión.',
+      'Invitación guardada; rol y equipo se asignan al iniciar sesión con este correo.',
   'manager_updated': 'Manager actualizado.',
+  'onboarding_skip': 'Omitir',
+  'onboarding_next': 'Siguiente',
+  'onboarding_finish': 'Ir al inicio de sesión',
+  'onboarding_persona_required':
+      'Selecciona Manager o Asesor para continuar.',
+  'onboarding_page_of': '{0} / {1}',
+  'onboarding_welcome_title': 'Bienvenido a Axion CRM',
+  'onboarding_welcome_subtitle':
+      'Tus operaciones inmobiliarias en una sola plataforma: centro de mando del manager y panel de campo del asesor en el mismo ecosistema.',
+  'onboarding_welcome_highlights':
+      'Panel de manager|Panel de asesor|Una sola cuenta',
+  'onboarding_platform_title': 'La misma cuenta en cada dispositivo',
+  'onboarding_platform_subtitle':
+      'Una sesión en iPhone, iPad y Mac: escritorio en la oficina, móvil en el campo.',
+  'onboarding_platform_highlights': 'iOS|macOS|Sincronización',
+  'onboarding_manager_title': 'Manager: mando y visibilidad',
+  'onboarding_manager_subtitle':
+      'Sigue a tu equipo con Centro de mando, War Room, Centro de llamadas e Informes.',
+  'onboarding_manager_highlights':
+      'Centro de mando|War Room|Centro de llamadas|Informes',
+  'onboarding_consultant_title': 'Asesor: Mi día y flujo de campo',
+  'onboarding_consultant_subtitle':
+      'Comienza el día con Mi día; clientes, anuncios, seguimientos y tareas en un solo lugar.',
+  'onboarding_consultant_highlights':
+      'Mi día|Mis clientes|Anuncios|Seguimiento|Mis tareas',
+  'onboarding_calls_title': 'Llamadas y reuniones inteligentes',
+  'onboarding_calls_subtitle':
+      'Mis llamadas y resúmenes de reuniones; Centro de llamadas para managers.',
+  'onboarding_calls_highlights':
+      'Reunión inteligente|Mis llamadas|Resumen de reunión|Centro de llamadas',
+  'onboarding_market_title': 'Mercado, anuncios y análisis',
+  'onboarding_market_subtitle':
+      'Portafolio de anuncios, análisis regional e informes analíticos.',
+  'onboarding_market_highlights':
+      'Anuncios|Análisis regional|Analítica|Importación',
+  'onboarding_office_title': 'Oficina, mensajes y listo',
+  'onboarding_office_subtitle':
+      'Crea o únete a una oficina; alineación del equipo vía Centro de mensajes. Elige cómo iniciar sesión.',
+  'onboarding_office_highlights':
+      'Mesa de oficina|Centro de mensajes|Sincronización|Tipo de inicio de sesión',
   'data_updating': 'Actualizando datos…',
   'retry': 'Reintentar',
   'go_home': 'Inicio',
@@ -1054,6 +1404,7 @@ const Map<String, String> _es = {
 // Arabic
 const Map<String, String> _ar = {
   'app_title': 'Axion CRM',
+  'brand_tagline': 'حوّل كل عميل محتمل إلى إجراء.',
   'widget_error': 'خطأ في العنصر',
   'loading': 'جاري التحميل...',
   'error_generic': 'حدث خطأ ما.',
@@ -1067,6 +1418,21 @@ const Map<String, String> _ar = {
   'section_account': 'الحساب وتسجيل الدخول',
   'section_appearance': 'المظهر',
   'section_notifications': 'الإشعارات',
+  'notifications_main': 'الإشعارات',
+  'notifications_main_sub': 'تنبيهات فورية وداخل التطبيق',
+  'haptic_feedback': 'الاهتزاز اللمسي',
+  'haptic_feedback_sub': 'استجابة لمسية على الأزرار والإيماءات',
+  'sound_effects': 'المؤثرات الصوتية',
+  'sound_effects_sub': 'أصوات الإشعارات والتأكيد',
+  'notification_sound_style': 'صوت الإشعار',
+  'notification_sound_chime': 'رنين لطيف',
+  'notification_sound_chime_sub': 'رنين ناعم بنغمتين',
+  'notification_sound_sparkle': 'بريق',
+  'notification_sound_sparkle_sub': 'نغمة صاعدة — مشرقة وعصرية',
+  'notification_sound_bell': 'جرس المكتب',
+  'notification_sound_bell_sub': 'جرس هادئ واحترافي',
+  'sound_preview': 'معاينة',
+  'load_failed': 'تعذر التحميل',
   'section_language': 'اللغة',
   'language_turkish': 'التركية',
   'language_english': 'الإنجليزية',
@@ -1081,9 +1447,11 @@ const Map<String, String> _ar = {
   'compact_dashboard': 'لوحة مضغوطة',
   'compact_dashboard_sub': 'مؤشرات ولوحات أوضح',
   'power_saver': 'توفير الطاقة',
-  'power_saver_sub': 'يقلل الحركات ويوفر البطارية',
-  'push_notifications': 'إشعارات فورية',
-  'push_notifications_sub': 'إشعارات عبر FCM',
+  'power_saver_sub': 'يقلل الرسوم المتحركة الثقيلة',
+  'settings_advanced_title': 'الميزات المتقدمة',
+  'settings_advanced_sub': 'إدارة الشاشات وتدفق المكالمات والتكاملات',
+  'push_notifications': 'الإشعارات الفورية',
+  'push_notifications_sub': 'إشعارات فورية عبر FCM',
   'nav_dashboard': 'الملخص',
   'nav_customers': 'العملاء',
   'nav_listings': 'الإعلانات',
@@ -1094,12 +1462,15 @@ const Map<String, String> _ar = {
   'bulk_campaign': 'حملة جماعية',
   'add_to_follow_up': 'إضافة للمتابعة',
   'search_customers': 'بحث (اسم، هاتف، بريد)',
-  'empty_customers_title': 'قائمة العملاء',
-  'empty_customers_subtitle': 'لا عملاء بعد. سيظهرون عند حفظ ملخصات المكالمات.',
+  'empty_customers_title': 'لا عملاء بعد',
+  'empty_customers_subtitle':
+      'أضف عميلاً أو احفظ ملخص مكالمة — قاعدة عملائك تنمو هنا.',
+  'empty_customers_cta': 'أضف أول عميل',
   'empty_search_title': 'لا نتائج',
   'empty_search_subtitle': 'لا عميل يطابق «{0}».',
   'customer_list_load_error': 'تعذر تحميل قائمة العملاء.',
   'add_customer': 'إضافة عميل',
+  'empty_state_empower': 'أضف أول سجل لك وابدأ تشغيل النظام',
   'title_bulk_campaign': 'حملة جماعية',
   'segment_header': 'شريحة العملاء',
   'segment_count': '{0} شخص مستهدف',
@@ -1115,9 +1486,10 @@ const Map<String, String> _ar = {
   'sms': 'رسالة قصيرة',
   'title_listings': 'محفظة الإعلانات',
   'listing': 'إعلان',
-  'empty_listings': 'لا إعلانات بعد',
-  'empty_listings_sub':
-      'إعلانات المكتب (listings) والخارجية (external_listings) فارغة. أضف بيانات في Firestore.',
+  'empty_listings': 'محفظتك فارغة',
+  'empty_listings_sub': 'استورد إعلانات أو زامنها من المنصات المرتبطة.',
+  'empty_listings_cta_import': 'استيراد إعلانات',
+  'empty_listings_cta_accounts': 'إدارة الحسابات المرتبطة',
   'listings_load_error': 'تعذر تحميل الإعلانات.',
   'listing_external_badge': 'خارجي',
   'listing_external_no_link': 'لا يوجد رابط مصدر لهذا الإعلان.',
@@ -1125,20 +1497,66 @@ const Map<String, String> _ar = {
   'listing_not_found': 'لم يتم العثور على الإعلان.',
   'listing_load_error': 'تعذر تحميل الإعلان.',
   'listings_tab_portfolio': 'المحفظة',
+  'listings_tab_owned': 'إعلاناتي',
+  'listings_tab_market': 'تغذية السوق',
+  'listings_subtitle_owned': 'محفظة المكتب ومزامنة المنصات الرسمية',
+  'listings_subtitle_market': 'بيانات تغذية معتمدة / رسمية فقط',
+  'listings_section_office': 'محفظة المكتب',
+  'listings_section_connected': 'المنصات المرتبطة',
+  'listings_badge_owned': 'المكتب',
+  'listings_badge_market': 'تغذية السوق',
+  'listings_badge_not_inventory': 'ليست مخزوناً خاصاً؛ بيانات سوق عامة.',
+  'listings_sync_line': '{0} · {1}',
+  'listings_market_disabled_title': 'تغذية السوق معطلة',
+  'listings_market_disabled_sub':
+      'تظهر عند تفعيل مصدر بيانات سوق رسمي. لا تُعرض البيانات غير الرسمية أو المستخرَجة.',
+  'listings_empty_market': 'لا عناصر في تغذية السوق',
+  'listings_empty_market_sub':
+      'تظهر الإعلانات عند تحديث عمليات الاستيراد أو التغذيات الرسمية.',
   'listings_tab_my_external': 'إعلاناتي',
-  'my_external_listings_title': 'إعلانات خارجية',
+  'my_external_listings_title': 'إعلاناتي الخارجية',
   'my_external_listings_hero_sub':
       'إعلانات متزامنة من الحسابات المرتبطة. انقر على البطاقة لفتح المصدر.',
   'my_external_listings_empty_title': 'لا توجد إعلانات متزامنة',
   'my_external_listings_empty_sub':
-      'تظهر إعلانات الحسابات المرتبطة هنا. أضف اتصالاً من الإعدادات.',
+      'تظهر إعلانات الحسابات المرتبطة هنا. أضف اتصالاً من الإعدادات ← الحسابات المرتبطة.',
   'my_external_listings_connect_cta': 'إدارة الحسابات المرتبطة',
   'my_external_listings_load_error': 'تعذر تحميل الإعلانات الخارجية.',
   'my_external_listings_settings_sub': 'عرض وتصفية الإعلانات المتزامنة',
+  'integration_connections_read_only_notice':
+      'تُدار اتصالات المنصات من قبل مسؤول مكتبك.',
+  'settings_section_platform_integrations_manager':
+      'الإعلانات واتصالات المنصات',
+  'settings_platform_connections_tile': 'اتصالات المنصات (مسؤول)',
+  'settings_platform_connections_tile_sub':
+      'Sahibinden وEmlakjet وHepsiemlak — اربط، زامن، استورد',
   'integration_filter_all': 'الكل',
   'title_tasks': 'المهام',
   'task': 'مهمة',
   'empty_tasks': 'لا مهام بعد',
+  'empty_tasks_sub': 'أضف متابعات وتذكيرات حتى لا يفوتك شيء.',
+  'empty_tasks_cta': 'مهمة جديدة',
+  'empty_calls_title': 'لا مكالمات مسجلة بعد',
+  'empty_calls_sub':
+      'تظهر المكالمات الهاتفية وداخل التطبيق هنا. ابدأ مكالمة لإنشاء أول سجل لك.',
+  'empty_calls_cta': 'اتصل وسجّل',
+  'empty_followup_title': 'لا عملاء محتملون لإعادة التنشيط',
+  'empty_followup_sub': 'عندما يصمت العملاء، تُعطى لهم الأولوية هنا.',
+  'empty_followup_cta': 'ابدأ مكالمة',
+  'empty_my_listings_title': 'لا إعلانات مستوردة',
+  'empty_my_listings_sub':
+      'استورد دفعةً ملف تصدير متجر (CSV/JSON/Excel) أو افتح شاشة الاستيراد للمدير.',
+  'empty_my_listings_cta_import': 'استيراد جماعي للمتجر',
+  'empty_my_listings_cta_accounts': 'الحسابات المرتبطة',
+  'empty_reports_title': 'جاري تحميل التقارير',
+  'empty_reports_sub': 'ستظهر المؤشرات عند توفر ملخصات المكالمات والصفقات.',
+  'empty_reports_cta': 'فتح المستشارين',
+  'empty_import_history_title': 'لا سجل استيراد',
+  'empty_import_history_sub': 'عند بدء مهام جماعية أو مهام ملفات، تُتابَع هنا.',
+  'empty_import_history_cta': 'استيراد المتجر',
+  'empty_intel_reports_title': 'لا تقارير في الأرشيف',
+  'empty_intel_reports_sub':
+      'ستُدرج ملفات PDF من تحليل Axion هنا عند إنشائها.',
   'title_notifications': 'الإشعارات',
   'empty_notifications_title': 'لا إشعارات بعد',
   'empty_notifications_subtitle':
@@ -1151,7 +1569,8 @@ const Map<String, String> _ar = {
   'today_brief': 'إجراءات مقترحة في القائمة',
   'notifications': 'الإشعارات',
   'title_admin_consultants': 'المستشارون',
-  'admin_consultants_placeholder': 'قائمة المستشارين وتعيينات الفرق هنا.',
+  'admin_consultants_placeholder':
+      'ستظهر قائمة المستشارين وتعيينات الفرق هنا. في الإصدار الأول، يمكنك إدارة الأدوار والفرق للمستخدمين الحاليين.',
   'search_consultants': 'بحث المستشارين (اسم، بريد)',
   'title_admin_teams': 'الفرق',
   'action_add_team': 'فريق جديد',
@@ -1188,6 +1607,41 @@ const Map<String, String> _ar = {
   'consultant_invite_saved':
       'تم حفظ الدعوة؛ سيُعيَّن الدور والفريق عند تسجيل الدخول.',
   'manager_updated': 'تم تحديث المدير.',
+  'onboarding_skip': 'تخطي',
+  'onboarding_next': 'التالي',
+  'onboarding_finish': 'الانتقال لتسجيل الدخول',
+  'onboarding_persona_required': 'اختر مدير أو مستشار للمتابعة.',
+  'onboarding_page_of': '{0} / {1}',
+  'onboarding_welcome_title': 'مرحباً بك في Axion CRM',
+  'onboarding_welcome_subtitle':
+      'عمليات العقارات لديك في منصة واحدة: مركز قيادة المدير ولوحة المستشار الميدانية في النظام نفسه.',
+  'onboarding_welcome_highlights': 'لوحة المدير|لوحة المستشار|حساب واحد',
+  'onboarding_platform_title': 'الحساب نفسه على كل جهاز',
+  'onboarding_platform_subtitle':
+      'جلسة واحدة على iPhone وiPad وMac — سطح المكتب في المكتب، الجوال في الميدان.',
+  'onboarding_platform_highlights': 'iOS|macOS|المزامنة',
+  'onboarding_manager_title': 'المدير: القيادة والرؤية',
+  'onboarding_manager_subtitle':
+      'تابع فريقك عبر مركز القيادة وغرفة العمليات ومركز الاتصال والتقارير.',
+  'onboarding_manager_highlights':
+      'مركز القيادة|غرفة العمليات|مركز الاتصال|التقارير',
+  'onboarding_consultant_title': 'المستشار: يومي والتدفق الميداني',
+  'onboarding_consultant_subtitle':
+      'ابدأ يومك مع «يومي»؛ العملاء والإعلانات والمتابعات والمهام في مكان واحد.',
+  'onboarding_consultant_highlights': 'يومي|عملائي|الإعلانات|المتابعة|مهامي',
+  'onboarding_calls_title': 'مكالمات ولقاءات ذكية',
+  'onboarding_calls_subtitle':
+      'مكالماتي وملخصات اللقاءات؛ مركز الاتصال للمديرين.',
+  'onboarding_calls_highlights': 'لقاء ذكي|مكالماتي|ملخص اللقاء|مركز الاتصال',
+  'onboarding_market_title': 'السوق والإعلانات والرؤى',
+  'onboarding_market_subtitle':
+      'محفظة الإعلانات والرؤى الإقليمية وتقارير التحليلات.',
+  'onboarding_market_highlights': 'الإعلانات|رؤى إقليمية|التحليلات|الاستيراد',
+  'onboarding_office_title': 'المكتب والرسائل وأنت جاهز',
+  'onboarding_office_subtitle':
+      'أنشئ مكتباً أو انضم إليه؛ مواءمة الفريق عبر مركز الرسائل. اختر طريقة تسجيل الدخول.',
+  'onboarding_office_highlights':
+      'مكتب العمل|مركز الرسائل|المزامنة|نوع تسجيل الدخول',
   'data_updating': 'جاري تحديث البيانات…',
   'retry': 'إعادة المحاولة',
   'go_home': 'الرئيسية',
@@ -1196,6 +1650,7 @@ const Map<String, String> _ar = {
 // Russian
 const Map<String, String> _ru = {
   'app_title': 'Axion CRM',
+  'brand_tagline': 'Превращайте каждого лида в действие.',
   'widget_error': 'Ошибка виджета',
   'loading': 'Загрузка...',
   'error_generic': 'Произошла ошибка.',
@@ -1209,6 +1664,21 @@ const Map<String, String> _ru = {
   'section_account': 'Аккаунт и вход',
   'section_appearance': 'Внешний вид',
   'section_notifications': 'Уведомления',
+  'notifications_main': 'Уведомления',
+  'notifications_main_sub': 'Push- и внутренние оповещения',
+  'haptic_feedback': 'Тактильная отдача',
+  'haptic_feedback_sub': 'Тактильный отклик на кнопках и жестах',
+  'sound_effects': 'Звуковые эффекты',
+  'sound_effects_sub': 'Звуки уведомлений и подтверждений',
+  'notification_sound_style': 'Звук уведомления',
+  'notification_sound_chime': 'Мягкий перезвон',
+  'notification_sound_chime_sub': 'Мягкий двухтоновый перезвон',
+  'notification_sound_sparkle': 'Искра',
+  'notification_sound_sparkle_sub': 'Восходящее арпеджио — яркое и современное',
+  'notification_sound_bell': 'Офисный колокольчик',
+  'notification_sound_bell_sub': 'Спокойный, профессиональный звонок',
+  'sound_preview': 'Прослушать',
+  'load_failed': 'Не удалось загрузить',
   'section_language': 'Язык',
   'language_turkish': 'Турецкий',
   'language_english': 'Английский',
@@ -1223,7 +1693,10 @@ const Map<String, String> _ru = {
   'compact_dashboard': 'Компактная панель',
   'compact_dashboard_sub': 'Более плотные KPI и панели',
   'power_saver': 'Экономия заряда',
-  'power_saver_sub': 'Меньше анимаций, экономия батареи',
+  'power_saver_sub': 'Снижает тяжёлые анимации',
+  'settings_advanced_title': 'Расширенные функции',
+  'settings_advanced_sub':
+      'Управление экранами, потоком звонков и интеграциями',
   'push_notifications': 'Push-уведомления',
   'push_notifications_sub': 'Мгновенные уведомления через FCM',
   'nav_dashboard': 'Сводка',
@@ -1236,13 +1709,15 @@ const Map<String, String> _ru = {
   'bulk_campaign': 'Массовая кампания',
   'add_to_follow_up': 'В сопровождение',
   'search_customers': 'Поиск (имя, телефон, email)',
-  'empty_customers_title': 'Список клиентов',
+  'empty_customers_title': 'Пока нет клиентов',
   'empty_customers_subtitle':
-      'Пока нет клиентов. Они появятся при сохранении итогов звонков.',
+      'Добавьте клиента или сохраните итог звонка — ваша база растёт здесь.',
+  'empty_customers_cta': 'Добавить первого клиента',
   'empty_search_title': 'Нет результатов',
   'empty_search_subtitle': 'Нет клиентов по запросу «{0}».',
   'customer_list_load_error': 'Не удалось загрузить список клиентов.',
   'add_customer': 'Добавить клиента',
+  'empty_state_empower': 'Добавьте первую запись и запустите систему',
   'title_bulk_campaign': 'Массовая кампания',
   'segment_header': 'Сегмент клиентов',
   'segment_count': '{0} человек в выборке',
@@ -1258,9 +1733,11 @@ const Map<String, String> _ru = {
   'sms': 'SMS',
   'title_listings': 'Портфель объявлений',
   'listing': 'Объявление',
-  'empty_listings': 'Пока нет объявлений',
+  'empty_listings': 'Ваш портфель пуст',
   'empty_listings_sub':
-      'Офисные (listings) и внешние (external_listings) объявления пусты. Добавьте данные в Firestore.',
+      'Импортируйте объявления или синхронизируйте с подключённых платформ.',
+  'empty_listings_cta_import': 'Импортировать объявления',
+  'empty_listings_cta_accounts': 'Управление подключёнными аккаунтами',
   'listings_load_error': 'Не удалось загрузить объявления.',
   'listing_external_badge': 'Внешн.',
   'listing_external_no_link': 'Нет ссылки на источник для этого объявления.',
@@ -1268,21 +1745,72 @@ const Map<String, String> _ru = {
   'listing_not_found': 'Объявление не найдено.',
   'listing_load_error': 'Не удалось загрузить объявление.',
   'listings_tab_portfolio': 'Портфель',
+  'listings_tab_owned': 'Мои объявления',
+  'listings_tab_market': 'Лента рынка',
+  'listings_subtitle_owned':
+      'Портфель офиса и официальная синхронизация платформ',
+  'listings_subtitle_market': 'Только проверенные / официальные данные ленты',
+  'listings_section_office': 'Портфель офиса',
+  'listings_section_connected': 'Подключённые платформы',
+  'listings_badge_owned': 'Офис',
+  'listings_badge_market': 'Лента рынка',
+  'listings_badge_not_inventory':
+      'Не собственный инвентарь; общие рыночные данные.',
+  'listings_sync_line': '{0} · {1}',
+  'listings_market_disabled_title': 'Лента рынка отключена',
+  'listings_market_disabled_sub':
+      'Появляется при включении официального источника рыночных данных. Неофициальные или собранные данные не отображаются.',
+  'listings_empty_market': 'Нет элементов в ленте рынка',
+  'listings_empty_market_sub':
+      'Объявления появляются при обновлении официального импорта или лент.',
   'listings_tab_my_external': 'Мои объявления',
-  'my_external_listings_title': 'Внешние объявления',
+  'my_external_listings_title': 'Мои внешние объявления',
   'my_external_listings_hero_sub':
       'Объявления с подключённых аккаунтов. Нажмите карточку, чтобы открыть источник.',
   'my_external_listings_empty_title': 'Нет синхронизированных объявлений',
   'my_external_listings_empty_sub':
-      'Объявления с подключённых аккаунтов отображаются здесь. Добавьте подключение в настройках.',
+      'Объявления с подключённых аккаунтов отображаются здесь. Добавьте подключение в Настройках → Подключённые аккаунты.',
   'my_external_listings_connect_cta': 'Управление подключёнными аккаунтами',
   'my_external_listings_load_error': 'Не удалось загрузить внешние объявления.',
   'my_external_listings_settings_sub':
       'Просмотр и фильтрация синхронизированных объявлений',
+  'integration_connections_read_only_notice':
+      'Подключения платформ управляются администратором вашего офиса.',
+  'settings_section_platform_integrations_manager':
+      'Объявления и подключения платформ',
+  'settings_platform_connections_tile': 'Подключения платформ (админ)',
+  'settings_platform_connections_tile_sub':
+      'Sahibinden, Emlakjet, Hepsiemlak — подключить, синхронизировать, импортировать',
   'integration_filter_all': 'Все',
   'title_tasks': 'Задачи',
   'task': 'Задача',
   'empty_tasks': 'Пока нет задач',
+  'empty_tasks_sub':
+      'Добавляйте сопровождения и напоминания, чтобы ничего не упустить.',
+  'empty_tasks_cta': 'Новая задача',
+  'empty_calls_title': 'Звонки пока не записаны',
+  'empty_calls_sub':
+      'Телефонные звонки и звонки в приложении отображаются здесь. Начните звонок, чтобы создать первую запись.',
+  'empty_calls_cta': 'Позвонить и записать',
+  'empty_followup_title': 'Нет лидов для возобновления',
+  'empty_followup_sub': 'Когда клиенты затихают, они приоритизируются здесь.',
+  'empty_followup_cta': 'Начать звонок',
+  'empty_my_listings_title': 'Нет импортированных объявлений',
+  'empty_my_listings_sub':
+      'Импортируйте пакетом экспорт магазина (CSV/JSON/Excel) или откройте экран импорта менеджера.',
+  'empty_my_listings_cta_import': 'Массовый импорт магазина',
+  'empty_my_listings_cta_accounts': 'Подключённые аккаунты',
+  'empty_reports_title': 'Загрузка отчётов',
+  'empty_reports_sub':
+      'Метрики появятся, когда будут итоги звонков и сделки.',
+  'empty_reports_cta': 'Открыть консультантов',
+  'empty_import_history_title': 'Нет истории импорта',
+  'empty_import_history_sub':
+      'Когда вы запускаете пакетные или файловые задачи, они отслеживаются здесь.',
+  'empty_import_history_cta': 'Импорт магазина',
+  'empty_intel_reports_title': 'Нет отчётов в архиве',
+  'empty_intel_reports_sub':
+      'PDF из анализа Axion будут перечислены здесь после создания.',
   'title_notifications': 'Уведомления',
   'empty_notifications_title': 'Пока нет уведомлений',
   'empty_notifications_subtitle':
@@ -1296,7 +1824,7 @@ const Map<String, String> _ru = {
   'notifications': 'Уведомления',
   'title_admin_consultants': 'Консультанты',
   'admin_consultants_placeholder':
-      'Список консультантов и назначения команд здесь.',
+      'Список консультантов и назначения команд появятся здесь. В первой версии вы можете управлять ролями и командами существующих пользователей.',
   'search_consultants': 'Поиск консультантов (имя, email)',
   'title_admin_teams': 'Команды',
   'action_add_team': 'Новая команда',
@@ -1311,13 +1839,14 @@ const Map<String, String> _ru = {
   'action_add_member': 'Добавить участника',
   'empty_team_members': 'В этой команде пока нет участников.',
   'action_remove_from_team': 'Удалить из команды',
-  'confirm_remove_from_team': 'Удалить этого участника из команды?',
+  'confirm_remove_from_team':
+      'Вы уверены, что хотите удалить этого участника из команды?',
   'member_removed': 'Участник удалён из команды.',
   'no_consultants_to_add': 'Нет консультантов для добавления.',
   'access_denied': 'У вас нет доступа к этой странице.',
   'filter_all_teams': 'Все команды',
   'consultant_invite_info':
-      'Этот пользователь войдёт по этому email и выберет роль консультанта.',
+      'Этот пользователь войдёт по этому email и присоединится к системе, выбрав роль консультанта.',
   'action_add_consultant': 'Новый консультант',
   'label_role': 'Роль',
   'empty_consultants': 'Консультанты не найдены.',
@@ -1331,8 +1860,48 @@ const Map<String, String> _ru = {
   'label_email': 'Email',
   'saved_success': 'Сохранено.',
   'consultant_invite_saved':
-      'Приглашение сохранено; роль и команда будут назначены при входе.',
+      'Приглашение сохранено; роль и команда будут назначены при входе по этому email.',
   'manager_updated': 'Менеджер обновлён.',
+  'onboarding_skip': 'Пропустить',
+  'onboarding_next': 'Далее',
+  'onboarding_finish': 'Перейти ко входу',
+  'onboarding_persona_required':
+      'Выберите Менеджер или Консультант, чтобы продолжить.',
+  'onboarding_page_of': '{0} / {1}',
+  'onboarding_welcome_title': 'Добро пожаловать в Axion CRM',
+  'onboarding_welcome_subtitle':
+      'Ваши операции с недвижимостью на одной платформе: командный центр менеджера и полевая панель консультанта в одной экосистеме.',
+  'onboarding_welcome_highlights':
+      'Панель менеджера|Панель консультанта|Один аккаунт',
+  'onboarding_platform_title': 'Один аккаунт на каждом устройстве',
+  'onboarding_platform_subtitle':
+      'Одна сессия на iPhone, iPad и Mac — десктоп в офисе, мобильный в поле.',
+  'onboarding_platform_highlights': 'iOS|macOS|Синхронизация',
+  'onboarding_manager_title': 'Менеджер: управление и обзор',
+  'onboarding_manager_subtitle':
+      'Следите за командой с помощью Командного центра, War Room, Колл-центра и Отчётов.',
+  'onboarding_manager_highlights':
+      'Командный центр|War Room|Колл-центр|Отчёты',
+  'onboarding_consultant_title': 'Консультант: Мой день и полевой поток',
+  'onboarding_consultant_subtitle':
+      'Начните день с «Моего дня»; клиенты, объявления, сопровождения и задачи в одном месте.',
+  'onboarding_consultant_highlights':
+      'Мой день|Мои клиенты|Объявления|Сопровождение|Мои задачи',
+  'onboarding_calls_title': 'Умные звонки и встречи',
+  'onboarding_calls_subtitle':
+      'Мои звонки и итоги встреч; Колл-центр для менеджеров.',
+  'onboarding_calls_highlights':
+      'Умная встреча|Мои звонки|Итог встречи|Колл-центр',
+  'onboarding_market_title': 'Рынок, объявления и аналитика',
+  'onboarding_market_subtitle':
+      'Портфель объявлений, региональная аналитика и отчёты.',
+  'onboarding_market_highlights':
+      'Объявления|Региональная аналитика|Аналитика|Импорт',
+  'onboarding_office_title': 'Офис, сообщения — и всё готово',
+  'onboarding_office_subtitle':
+      'Создайте офис или присоединитесь к нему; согласование команды через Центр сообщений. Выберите способ входа.',
+  'onboarding_office_highlights':
+      'Стол офиса|Центр сообщений|Синхронизация|Тип входа',
   'data_updating': 'Обновление данных…',
   'retry': 'Повторить',
   'go_home': 'На главную',
@@ -1341,6 +1910,7 @@ const Map<String, String> _ru = {
 // Azerbaijani
 const Map<String, String> _az = {
   'app_title': 'Axion CRM',
+  'brand_tagline': 'Hər potensial müştərini aksiyona çevir.',
   'widget_error': 'Vidjet xətası',
   'loading': 'Yüklənir...',
   'error_generic': 'Xəta baş verdi.',
@@ -1354,6 +1924,21 @@ const Map<String, String> _az = {
   'section_account': 'Hesab və daxil olma',
   'section_appearance': 'Görünüş',
   'section_notifications': 'Bildirişlər',
+  'notifications_main': 'Bildirişlər',
+  'notifications_main_sub': 'Push və tətbiqdaxili xəbərdarlıqlar',
+  'haptic_feedback': 'Haptik geri bildiriş',
+  'haptic_feedback_sub': 'Düymə və jestlərdə toxunma geri bildirişi',
+  'sound_effects': 'Səs effektləri',
+  'sound_effects_sub': 'Bildiriş və təsdiq səsləri',
+  'notification_sound_style': 'Bildiriş səsi',
+  'notification_sound_chime': 'Zərif zəng',
+  'notification_sound_chime_sub': 'Yumşaq iki tonlu zəng',
+  'notification_sound_sparkle': 'Parıltı',
+  'notification_sound_sparkle_sub': 'Yüksələn arpecio — canlı və müasir',
+  'notification_sound_bell': 'Ofis zəngi',
+  'notification_sound_bell_sub': 'Sakit, peşəkar zəng',
+  'sound_preview': 'Önizləmə',
+  'load_failed': 'Yüklənə bilmədi',
   'section_language': 'Dil',
   'language_turkish': 'Türk',
   'language_english': 'İngilis',
@@ -1368,7 +1953,10 @@ const Map<String, String> _az = {
   'compact_dashboard': 'Yığcam panel',
   'compact_dashboard_sub': 'Daha sıx KPI və panellər',
   'power_saver': 'Enerji qənaəti',
-  'power_saver_sub': 'Animasiyaları azaldır, batareyanı qoruyur',
+  'power_saver_sub': 'Ağır animasiyaları azaldır',
+  'settings_advanced_title': 'Qabaqcıl funksiyalar',
+  'settings_advanced_sub':
+      'Ekranları, zəng axınını və inteqrasiyaları idarə edin',
   'push_notifications': 'Push bildirişlər',
   'push_notifications_sub': 'FCM ilə ani bildirişlər',
   'nav_dashboard': 'Xülasə',
@@ -1381,13 +1969,15 @@ const Map<String, String> _az = {
   'bulk_campaign': 'Toplu kampaniya',
   'add_to_follow_up': 'İzləməyə əlavə et',
   'search_customers': 'Axtarış (ad, telefon, e-poçt)',
-  'empty_customers_title': 'Müştəri siyahısı',
+  'empty_customers_title': 'Hələ müştəri yoxdur',
   'empty_customers_subtitle':
-      'Hələ müştəri yoxdur. Zəng xülasələrini saxladıqda burada görünəcək.',
+      'Müştəri əlavə edin və ya zəng xülasəsi saxlayın — müştəri bazanız burada böyüyür.',
+  'empty_customers_cta': 'İlk müştərini əlavə et',
   'empty_search_title': 'Nəticə yoxdur',
   'empty_search_subtitle': '«{0}» axtarışına uyğun müştəri tapılmadı.',
   'customer_list_load_error': 'Müştəri siyahısı yüklənə bilmədi.',
   'add_customer': 'Müştəri əlavə et',
+  'empty_state_empower': 'İlk qeydinizi əlavə edin və sistemi başladın',
   'title_bulk_campaign': 'Toplu kampaniya',
   'segment_header': 'Müştəri seqmenti',
   'segment_count': '{0} nəfər hədəfdə',
@@ -1403,9 +1993,11 @@ const Map<String, String> _az = {
   'sms': 'SMS',
   'title_listings': 'Elan portfeli',
   'listing': 'Elan',
-  'empty_listings': 'Hələ elan yoxdur',
+  'empty_listings': 'Portfeliniz boşdur',
   'empty_listings_sub':
-      'Ofis (listings) və xarici (external_listings) elanlar boşdur. Firestore-a məlumat əlavə edin.',
+      'Elanları idxal edin və ya bağlı platformalardan sinxronlaşdırın.',
+  'empty_listings_cta_import': 'Elanları idxal et',
+  'empty_listings_cta_accounts': 'Bağlı hesabları idarə et',
   'listings_load_error': 'Elanlar yüklənə bilmədi.',
   'listing_external_badge': 'Xarici',
   'listing_external_no_link': 'Bu elan üçün mənbə linki yoxdur.',
@@ -1413,21 +2005,72 @@ const Map<String, String> _az = {
   'listing_not_found': 'Elan tapılmadı.',
   'listing_load_error': 'Elan yüklənə bilmədi.',
   'listings_tab_portfolio': 'Portfel',
+  'listings_tab_owned': 'Mənim elanlarım',
+  'listings_tab_market': 'Bazar axını',
+  'listings_subtitle_owned': 'Ofis portfeli və rəsmi platforma sinxronu',
+  'listings_subtitle_market': 'Yalnız təsdiqlənmiş / rəsmi axın məlumatları',
+  'listings_section_office': 'Ofis portfeli',
+  'listings_section_connected': 'Bağlı platformalar',
+  'listings_badge_owned': 'Ofis',
+  'listings_badge_market': 'Bazar axını',
+  'listings_badge_not_inventory':
+      'Birinci tərəf inventar deyil; ümumi bazar məlumatları.',
+  'listings_sync_line': '{0} · {1}',
+  'listings_market_disabled_title': 'Bazar axını söndürülüb',
+  'listings_market_disabled_sub':
+      'Rəsmi bazar məlumat mənbəyi aktivləşdirildikdə görünür. Qeyri-rəsmi və ya çıxarılmış məlumatlar göstərilmir.',
+  'listings_empty_market': 'Bazar axınında element yoxdur',
+  'listings_empty_market_sub':
+      'Rəsmi idxal və ya axınlar yeniləndikdə elanlar görünür.',
   'listings_tab_my_external': 'Mənim elanlarım',
-  'my_external_listings_title': 'Xarici elanlar',
+  'my_external_listings_title': 'Mənim xarici elanlarım',
   'my_external_listings_hero_sub':
       'Bağlı hesablardan sinxronlaşdırılmış elanlar. Mənbəni açmaq üçün karta toxunun.',
   'my_external_listings_empty_title': 'Sinxron elan yoxdur',
   'my_external_listings_empty_sub':
-      'Bağlı hesablardan gələn elanlar burada görünür. Parametrlərdə əlaqə əlavə edin.',
+      'Bağlı hesablardan gələn elanlar burada görünür. Parametrlər → Bağlı hesablardan əlaqə əlavə edin.',
   'my_external_listings_connect_cta': 'Bağlı hesabları idarə et',
   'my_external_listings_load_error': 'Xarici elanlar yüklənmədi.',
   'my_external_listings_settings_sub':
       'Sinxronlaşdırılmış elanlara baxın və süzün',
+  'integration_connections_read_only_notice':
+      'Platforma əlaqələri ofis administratoru tərəfindən idarə olunur.',
+  'settings_section_platform_integrations_manager':
+      'Elanlar və platforma əlaqələri',
+  'settings_platform_connections_tile': 'Platforma əlaqələri (admin)',
+  'settings_platform_connections_tile_sub':
+      'Sahibinden, Emlakjet, Hepsiemlak — bağla, sinxronlaşdır, idxal et',
   'integration_filter_all': 'Hamısı',
   'title_tasks': 'Tapşırıqlar',
   'task': 'Tapşırıq',
   'empty_tasks': 'Hələ tapşırıq yoxdur',
+  'empty_tasks_sub':
+      'Heç nə diqqətdən qaçmasın deyə izləmələr və xatırlatmalar əlavə edin.',
+  'empty_tasks_cta': 'Yeni tapşırıq',
+  'empty_calls_title': 'Hələ zəng qeydə alınmayıb',
+  'empty_calls_sub':
+      'Telefon və tətbiqdaxili zənglər burada görünür. İlk qeyd üçün zəng başladın.',
+  'empty_calls_cta': 'Zəng et və qeyd et',
+  'empty_followup_title': 'Canlandırılacaq lead yoxdur',
+  'empty_followup_sub':
+      'Müştərilər səssizləşdikdə burada prioritetləşdirilir.',
+  'empty_followup_cta': 'Zəng başlat',
+  'empty_my_listings_title': 'İdxal edilmiş elan yoxdur',
+  'empty_my_listings_sub':
+      'Mağaza ixracını (CSV/JSON/Excel) toplu idxal edin və ya menecer idxal ekranını açın.',
+  'empty_my_listings_cta_import': 'Mağaza toplu idxalı',
+  'empty_my_listings_cta_accounts': 'Bağlı hesablar',
+  'empty_reports_title': 'Hesabatlar yüklənir',
+  'empty_reports_sub':
+      'Zəng xülasələri və sövdələşmələr olduqda metrikalar görünəcək.',
+  'empty_reports_cta': 'Məsləhətçiləri aç',
+  'empty_import_history_title': 'İdxal tarixçəsi yoxdur',
+  'empty_import_history_sub':
+      'Toplu və ya fayl işləri başladanda burada izlənir.',
+  'empty_import_history_cta': 'Mağaza idxalı',
+  'empty_intel_reports_title': 'Arxivdə hesabat yoxdur',
+  'empty_intel_reports_sub':
+      'Axion təhlilindən PDF-lər yaradıldıqda burada siyahılanacaq.',
   'title_notifications': 'Bildirişlər',
   'empty_notifications_title': 'Hələ bildiriş yoxdur',
   'empty_notifications_subtitle':
@@ -1441,7 +2084,7 @@ const Map<String, String> _az = {
   'notifications': 'Bildirişlər',
   'title_admin_consultants': 'Məsləhətçilər',
   'admin_consultants_placeholder':
-      'Məsləhətçi siyahısı və komanda təyinatları burada.',
+      'Məsləhətçi siyahısı və komanda təyinatları burada görünəcək. İlk versiyada mövcud istifadəçilər üçün rolları və komandaları idarə edə bilərsiniz.',
   'search_consultants': 'Məsləhətçi axtar (ad, e-poçt)',
   'title_admin_teams': 'Komandalar',
   'action_add_team': 'Yeni komanda',
@@ -1463,7 +2106,7 @@ const Map<String, String> _az = {
   'access_denied': 'Bu səhifəyə giriş hüququnuz yoxdur.',
   'filter_all_teams': 'Bütün komandalar',
   'consultant_invite_info':
-      'Bu şəxs bu e-poçtla daxil olub Məsləhətçi rolunu seçəcək.',
+      'Bu şəxs bu e-poçtla daxil olub Məsləhətçi rolunu seçərək sistemə qoşulacaq.',
   'action_add_consultant': 'Yeni məsləhətçi',
   'label_role': 'Rol',
   'empty_consultants': 'Məsləhətçi tapılmadı.',
@@ -1479,6 +2122,45 @@ const Map<String, String> _az = {
   'consultant_invite_saved':
       'Dəvət saxlanıldı; bu e-poçtla girişdə rol və komanda təyin olunacaq.',
   'manager_updated': 'Menecer yeniləndi.',
+  'onboarding_skip': 'Keç',
+  'onboarding_next': 'İrəli',
+  'onboarding_finish': 'Girişə keç',
+  'onboarding_persona_required':
+      'Davam etmək üçün Menecer və ya Məsləhətçi seçin.',
+  'onboarding_page_of': '{0} / {1}',
+  'onboarding_welcome_title': 'Axion CRM-ə xoş gəlmisiniz',
+  'onboarding_welcome_subtitle':
+      'Daşınmaz əmlak əməliyyatlarınız tək platformada: menecer komanda mərkəzi və məsləhətçi saha paneli eyni ekosistemdə.',
+  'onboarding_welcome_highlights':
+      'Menecer paneli|Məsləhətçi paneli|Tək hesab',
+  'onboarding_platform_title': 'Hər cihazda eyni hesab',
+  'onboarding_platform_subtitle':
+      'iPhone, iPad və Mac-də tək sessiya — ofisdə masaüstü, sahədə mobil.',
+  'onboarding_platform_highlights': 'iOS|macOS|Sinxron',
+  'onboarding_manager_title': 'Menecer: komanda və görünürlük',
+  'onboarding_manager_subtitle':
+      'Komandanızı Komanda Mərkəzi, War Room, Zəng Mərkəzi və Hesabatlarla izləyin.',
+  'onboarding_manager_highlights':
+      'Komanda Mərkəzi|War Room|Zəng Mərkəzi|Hesabatlar',
+  'onboarding_consultant_title': 'Məsləhətçi: Günüm və saha axını',
+  'onboarding_consultant_subtitle':
+      'Günə «Günüm» ilə başlayın; müştərilər, elanlar, izləmələr və tapşırıqlar tək yerdə.',
+  'onboarding_consultant_highlights':
+      'Günüm|Müştərilərim|Elanlar|İzləmə|Tapşırıqlarım',
+  'onboarding_calls_title': 'Ağıllı zənglər və görüşlər',
+  'onboarding_calls_subtitle':
+      'Zənglərim və görüş xülasələri; menecerlər üçün Zəng Mərkəzi.',
+  'onboarding_calls_highlights':
+      'Ağıllı görüş|Zənglərim|Görüş xülasəsi|Zəng Mərkəzi',
+  'onboarding_market_title': 'Bazar, elanlar və içgörü',
+  'onboarding_market_subtitle':
+      'Elan portfeli, regional içgörü və analitik hesabatlar.',
+  'onboarding_market_highlights': 'Elanlar|Regional içgörü|Analitika|İdxal',
+  'onboarding_office_title': 'Ofis, mesajlar və hazırsınız',
+  'onboarding_office_subtitle':
+      'Ofis yaradın və ya qoşulun; Mesaj Mərkəzi ilə komanda uyğunluğu. Giriş növünüzü seçin.',
+  'onboarding_office_highlights':
+      'Ofis masası|Mesaj Mərkəzi|Sinxron|Giriş növü',
   'data_updating': 'Məlumatlar yenilənir…',
   'retry': 'Yenidən cəhd et',
   'go_home': 'Ana səhifə',
@@ -1487,6 +2169,7 @@ const Map<String, String> _az = {
 // Dutch
 const Map<String, String> _nl = {
   'app_title': 'Axion CRM',
+  'brand_tagline': 'Maak van elke lead een actie.',
   'widget_error': 'Widgetfout',
   'loading': 'Laden...',
   'error_generic': 'Er is iets misgegaan.',
@@ -1500,6 +2183,21 @@ const Map<String, String> _nl = {
   'section_account': 'Account en aanmelding',
   'section_appearance': 'Weergave',
   'section_notifications': 'Meldingen',
+  'notifications_main': 'Meldingen',
+  'notifications_main_sub': 'Push- en in-app-meldingen',
+  'haptic_feedback': 'Haptische feedback',
+  'haptic_feedback_sub': 'Tactiele feedback op knoppen en gebaren',
+  'sound_effects': 'Geluidseffecten',
+  'sound_effects_sub': 'Meldings- en bevestigingsgeluiden',
+  'notification_sound_style': 'Meldingsgeluid',
+  'notification_sound_chime': 'Zachte bel',
+  'notification_sound_chime_sub': 'Zachte tweetonige bel',
+  'notification_sound_sparkle': 'Sprankel',
+  'notification_sound_sparkle_sub': 'Stijgend arpeggio — helder en modern',
+  'notification_sound_bell': 'Kantoorbel',
+  'notification_sound_bell_sub': 'Rustige, professionele bel',
+  'sound_preview': 'Voorbeeld',
+  'load_failed': 'Laden mislukt',
   'section_language': 'Taal',
   'language_turkish': 'Turks',
   'language_english': 'Engels',
@@ -1514,12 +2212,15 @@ const Map<String, String> _nl = {
   'compact_dashboard': 'Compact dashboard',
   'compact_dashboard_sub': 'Strakkere KPI\'s en panelen',
   'power_saver': 'Energiebesparing',
-  'power_saver_sub': 'Minder animaties, spaart batterij',
+  'power_saver_sub': 'Vermindert zware animaties',
+  'settings_advanced_title': 'Geavanceerde functies',
+  'settings_advanced_sub':
+      'Beheer schermen, gespreksstroom en integraties',
   'push_notifications': 'Pushmeldingen',
   'push_notifications_sub': 'Directe meldingen via FCM',
   'nav_dashboard': 'Overzicht',
   'nav_customers': 'Klanten',
-  'nav_listings': 'Annonces',
+  'nav_listings': 'Advertenties',
   'nav_tasks': 'Taken',
   'nav_more': 'Meer',
   'title_customers': 'Klanten',
@@ -1527,13 +2228,15 @@ const Map<String, String> _nl = {
   'bulk_campaign': 'Bulkcampagne',
   'add_to_follow_up': 'Toevoegen aan opvolging',
   'search_customers': 'Zoeken (naam, telefoon, e-mail)',
-  'empty_customers_title': 'Klantenlijst',
+  'empty_customers_title': 'Nog geen klanten',
   'empty_customers_subtitle':
-      'Nog geen klanten. Ze verschijnen hier wanneer u gesprekssamenvattingen opslaat.',
+      'Voeg een klant toe of bewaar een gesprekssamenvatting — uw klantenbestand groeit hier.',
+  'empty_customers_cta': 'Voeg uw eerste klant toe',
   'empty_search_title': 'Geen resultaten',
   'empty_search_subtitle': 'Geen klanten gevonden voor „{0}".',
   'customer_list_load_error': 'Klantenlijst kon niet worden geladen.',
   'add_customer': 'Klant toevoegen',
+  'empty_state_empower': 'Voeg uw eerste record toe en start het systeem',
   'title_bulk_campaign': 'Bulkcampagne',
   'segment_header': 'Klantsegment',
   'segment_count': '{0} personen geselecteerd',
@@ -1544,37 +2247,90 @@ const Map<String, String> _nl = {
   'ai_suggesting': 'Bezig met voorstellen...',
   'ai_suggest_ready': 'AI-voorstel gereed.',
   'ai_suggest_error': 'Voorstel mislukt: {0}',
-  'message_hint': 'Schrijf uw campagnbericht of vraag een AI-voorstel.',
+  'message_hint': 'Schrijf uw campagnebericht of vraag een AI-voorstel.',
   'whatsapp': 'WhatsApp',
   'sms': 'SMS',
-  'title_listings': 'Annonceportfolio',
-  'listing': 'Annonce',
-  'empty_listings': 'Nog geen annonces',
+  'title_listings': 'Advertentieportfolio',
+  'listing': 'Advertentie',
+  'empty_listings': 'Uw portfolio is leeg',
   'empty_listings_sub':
-      'Kantoor- (listings) en externe (external_listings) annonces zijn leeg. Voeg gegevens toe in Firestore.',
-  'listings_load_error': 'Annonces konden niet worden geladen.',
+      'Importeer advertenties of synchroniseer vanaf gekoppelde platforms.',
+  'empty_listings_cta_import': 'Advertenties importeren',
+  'empty_listings_cta_accounts': 'Gekoppelde accounts beheren',
+  'listings_load_error': 'Advertenties konden niet worden geladen.',
   'listing_external_badge': 'Extern',
-  'listing_external_no_link': 'Geen bronlink voor deze annonce.',
+  'listing_external_no_link': 'Geen bronlink voor deze advertentie.',
   'listing_external_open_failed': 'Kon de link niet openen.',
-  'listing_not_found': 'Annonce niet gevonden.',
-  'listing_load_error': 'Annonce kon niet worden geladen.',
+  'listing_not_found': 'Advertentie niet gevonden.',
+  'listing_load_error': 'Advertentie kon niet worden geladen.',
   'listings_tab_portfolio': 'Portfolio',
+  'listings_tab_owned': 'Mijn advertenties',
+  'listings_tab_market': 'Marktfeed',
+  'listings_subtitle_owned': 'Kantoorportfolio en officiële platformsync',
+  'listings_subtitle_market': 'Alleen goedgekeurde / officiële feedgegevens',
+  'listings_section_office': 'Kantoorportfolio',
+  'listings_section_connected': 'Gekoppelde platforms',
+  'listings_badge_owned': 'Kantoor',
+  'listings_badge_market': 'Marktfeed',
+  'listings_badge_not_inventory':
+      'Geen eigen voorraad; algemene marktgegevens.',
+  'listings_sync_line': '{0} · {1}',
+  'listings_market_disabled_title': 'Marktfeed uitgeschakeld',
+  'listings_market_disabled_sub':
+      'Verschijnt wanneer een officiële marktgegevensbron is ingeschakeld. Onofficiële of gescrapete gegevens worden niet getoond.',
+  'listings_empty_market': 'Geen items in de marktfeed',
+  'listings_empty_market_sub':
+      'Advertenties verschijnen wanneer officiële imports of feeds worden bijgewerkt.',
   'listings_tab_my_external': 'Mijn advertenties',
-  'my_external_listings_title': 'Externe advertenties',
+  'my_external_listings_title': 'Mijn externe advertenties',
   'my_external_listings_hero_sub':
       'Advertenties gesynchroniseerd van gekoppelde accounts. Tik op een kaart om de bron te openen.',
   'my_external_listings_empty_title': 'Geen gesynchroniseerde advertenties',
   'my_external_listings_empty_sub':
-      'Advertenties van gekoppelde accounts verschijnen hier. Voeg een koppeling toe in Instellingen.',
+      'Advertenties van gekoppelde accounts verschijnen hier. Voeg een koppeling toe in Instellingen → Gekoppelde accounts.',
   'my_external_listings_connect_cta': 'Gekoppelde accounts beheren',
   'my_external_listings_load_error':
       'Externe advertenties konden niet worden geladen.',
   'my_external_listings_settings_sub':
       'Gesynchroniseerde advertenties bekijken en filteren',
+  'integration_connections_read_only_notice':
+      'Platformkoppelingen worden beheerd door uw kantoorbeheerder.',
+  'settings_section_platform_integrations_manager':
+      'Advertenties en platformkoppelingen',
+  'settings_platform_connections_tile': 'Platformkoppelingen (beheerder)',
+  'settings_platform_connections_tile_sub':
+      'Sahibinden, Emlakjet, Hepsiemlak — koppelen, synchroniseren, importeren',
   'integration_filter_all': 'Alle',
   'title_tasks': 'Taken',
   'task': 'Taak',
   'empty_tasks': 'Nog geen taken',
+  'empty_tasks_sub':
+      'Voeg opvolgingen en herinneringen toe zodat niets door de mazen glipt.',
+  'empty_tasks_cta': 'Nieuwe taak',
+  'empty_calls_title': 'Nog geen oproepen geregistreerd',
+  'empty_calls_sub':
+      'Telefoon- en in-app-oproepen verschijnen hier. Start een oproep om uw eerste vermelding te maken.',
+  'empty_calls_cta': 'Bellen en registreren',
+  'empty_followup_title': 'Geen leads om te heractiveren',
+  'empty_followup_sub':
+      'Wanneer klanten stil worden, krijgen ze hier prioriteit.',
+  'empty_followup_cta': 'Een oproep starten',
+  'empty_my_listings_title': 'Geen geïmporteerde advertenties',
+  'empty_my_listings_sub':
+      'Importeer in bulk een winkelexport (CSV/JSON/Excel) of open het importscherm van de beheerder.',
+  'empty_my_listings_cta_import': 'Bulkimport winkel',
+  'empty_my_listings_cta_accounts': 'Gekoppelde accounts',
+  'empty_reports_title': 'Rapporten worden geladen',
+  'empty_reports_sub':
+      'Statistieken verschijnen zodra gesprekssamenvattingen en deals bestaan.',
+  'empty_reports_cta': 'Consultants openen',
+  'empty_import_history_title': 'Geen importgeschiedenis',
+  'empty_import_history_sub':
+      'Wanneer u bulk- of bestandstaken start, worden ze hier gevolgd.',
+  'empty_import_history_cta': 'Winkelimport',
+  'empty_intel_reports_title': 'Geen rapporten in archief',
+  'empty_intel_reports_sub':
+      'PDF\'s uit de Axion-analyse worden hier vermeld zodra ze zijn gegenereerd.',
   'title_notifications': 'Meldingen',
   'empty_notifications_title': 'Nog geen meldingen',
   'empty_notifications_subtitle':
@@ -1587,7 +2343,8 @@ const Map<String, String> _nl = {
   'today_brief': 'Voorgestelde acties in de lijst',
   'notifications': 'Meldingen',
   'title_admin_consultants': 'Consultants',
-  'admin_consultants_placeholder': 'Consultantlijst en teamtoewijzingen hier.',
+  'admin_consultants_placeholder':
+      'Consultantlijst en teamtoewijzingen verschijnen hier. In de eerste versie kunt u rollen en teams voor bestaande gebruikers beheren.',
   'search_consultants': 'Consultants zoeken (naam, e-mail)',
   'title_admin_teams': 'Teams',
   'action_add_team': 'Nieuw team',
@@ -1602,13 +2359,14 @@ const Map<String, String> _nl = {
   'action_add_member': 'Lid toevoegen',
   'empty_team_members': 'Nog geen leden in dit team.',
   'action_remove_from_team': 'Uit team verwijderen',
-  'confirm_remove_from_team': 'Dit lid uit het team verwijderen?',
+  'confirm_remove_from_team':
+      'Weet u zeker dat u dit lid uit het team wilt verwijderen?',
   'member_removed': 'Lid uit team verwijderd.',
   'no_consultants_to_add': 'Geen consultants meer om toe te voegen.',
   'access_denied': 'U heeft geen toegang tot deze pagina.',
   'filter_all_teams': 'Alle teams',
   'consultant_invite_info':
-      'Deze persoon meldt zich aan met dit e-mailadres en kiest de rol Consultant.',
+      'Deze persoon meldt zich aan met dit e-mailadres en sluit zich aan bij het systeem door de rol Consultant te kiezen.',
   'action_add_consultant': 'Nieuwe consultant',
   'label_role': 'Rol',
   'empty_consultants': 'Geen consultants gevonden.',
@@ -1622,8 +2380,48 @@ const Map<String, String> _nl = {
   'label_email': 'E-mail',
   'saved_success': 'Opgeslagen.',
   'consultant_invite_saved':
-      'Uitnodiging opgeslagen; rol en team worden bij aanmelding toegewezen.',
+      'Uitnodiging opgeslagen; rol en team worden toegewezen bij aanmelding met dit e-mailadres.',
   'manager_updated': 'Manager bijgewerkt.',
+  'onboarding_skip': 'Overslaan',
+  'onboarding_next': 'Volgende',
+  'onboarding_finish': 'Naar aanmelden',
+  'onboarding_persona_required':
+      'Selecteer Manager of Consultant om door te gaan.',
+  'onboarding_page_of': '{0} / {1}',
+  'onboarding_welcome_title': 'Welkom bij Axion CRM',
+  'onboarding_welcome_subtitle':
+      'Uw vastgoedactiviteiten op één platform: commandocentrum van de manager en veldpaneel van de consultant in hetzelfde ecosysteem.',
+  'onboarding_welcome_highlights':
+      'Managerpaneel|Consultantpaneel|Eén account',
+  'onboarding_platform_title': 'Hetzelfde account op elk apparaat',
+  'onboarding_platform_subtitle':
+      'Eén sessie op iPhone, iPad en Mac — desktop op kantoor, mobiel in het veld.',
+  'onboarding_platform_highlights': 'iOS|macOS|Synchronisatie',
+  'onboarding_manager_title': 'Manager: regie en overzicht',
+  'onboarding_manager_subtitle':
+      'Volg uw team met het Commandocentrum, War Room, Callcenter en Rapporten.',
+  'onboarding_manager_highlights':
+      'Commandocentrum|War Room|Callcenter|Rapporten',
+  'onboarding_consultant_title': 'Consultant: Mijn dag en veldstroom',
+  'onboarding_consultant_subtitle':
+      'Begin de dag met Mijn dag; klanten, advertenties, opvolgingen en taken op één plek.',
+  'onboarding_consultant_highlights':
+      'Mijn dag|Mijn klanten|Advertenties|Opvolging|Mijn taken',
+  'onboarding_calls_title': 'Slimme gesprekken en afspraken',
+  'onboarding_calls_subtitle':
+      'Mijn oproepen en gesprekssamenvattingen; Callcenter voor managers.',
+  'onboarding_calls_highlights':
+      'Slim gesprek|Mijn oproepen|Gesprekssamenvatting|Callcenter',
+  'onboarding_market_title': 'Markt, advertenties en inzicht',
+  'onboarding_market_subtitle':
+      'Advertentieportfolio, regionaal inzicht en analyserapporten.',
+  'onboarding_market_highlights':
+      'Advertenties|Regionaal inzicht|Analyse|Import',
+  'onboarding_office_title': 'Kantoor, berichten en u bent klaar',
+  'onboarding_office_subtitle':
+      'Maak of word lid van een kantoor; teamafstemming via het Berichtencentrum. Kies hoe u zich aanmeldt.',
+  'onboarding_office_highlights':
+      'Kantoorbalie|Berichtencentrum|Synchronisatie|Aanmeldtype',
   'data_updating': 'Gegevens bijwerken…',
   'retry': 'Opnieuw proberen',
   'go_home': 'Naar start',
@@ -1632,6 +2430,7 @@ const Map<String, String> _nl = {
 // Portuguese
 const Map<String, String> _pt = {
   'app_title': 'Axion CRM',
+  'brand_tagline': 'Transforme cada lead em ação.',
   'widget_error': 'Erro do widget',
   'loading': 'A carregar...',
   'error_generic': 'Ocorreu um erro.',
@@ -1645,6 +2444,21 @@ const Map<String, String> _pt = {
   'section_account': 'Conta e início de sessão',
   'section_appearance': 'Aparência',
   'section_notifications': 'Notificações',
+  'notifications_main': 'Notificações',
+  'notifications_main_sub': 'Alertas push e na aplicação',
+  'haptic_feedback': 'Feedback tátil',
+  'haptic_feedback_sub': 'Resposta tátil em botões e gestos',
+  'sound_effects': 'Efeitos sonoros',
+  'sound_effects_sub': 'Sons de notificação e confirmação',
+  'notification_sound_style': 'Som de notificação',
+  'notification_sound_chime': 'Sino suave',
+  'notification_sound_chime_sub': 'Sino suave de dois tons',
+  'notification_sound_sparkle': 'Brilho',
+  'notification_sound_sparkle_sub': 'Arpejo ascendente — brilhante e moderno',
+  'notification_sound_bell': 'Sino de escritório',
+  'notification_sound_bell_sub': 'Sino calmo e profissional',
+  'sound_preview': 'Pré-visualizar',
+  'load_failed': 'Não foi possível carregar',
   'section_language': 'Idioma',
   'language_turkish': 'Turco',
   'language_english': 'Inglês',
@@ -1659,7 +2473,10 @@ const Map<String, String> _pt = {
   'compact_dashboard': 'Painel compacto',
   'compact_dashboard_sub': 'KPIs e painéis mais compactos',
   'power_saver': 'Poupança de energia',
-  'power_saver_sub': 'Reduz animações, poupa bateria',
+  'power_saver_sub': 'Reduz animações pesadas',
+  'settings_advanced_title': 'Funcionalidades avançadas',
+  'settings_advanced_sub':
+      'Gerir ecrãs, fluxo de chamadas e integrações',
   'push_notifications': 'Notificações push',
   'push_notifications_sub': 'Notificações instantâneas via FCM',
   'nav_dashboard': 'Resumo',
@@ -1672,13 +2489,15 @@ const Map<String, String> _pt = {
   'bulk_campaign': 'Campanha em massa',
   'add_to_follow_up': 'Adicionar ao seguimento',
   'search_customers': 'Pesquisar (nome, telefone, e-mail)',
-  'empty_customers_title': 'Lista de clientes',
+  'empty_customers_title': 'Ainda sem clientes',
   'empty_customers_subtitle':
-      'Ainda sem clientes. Aparecerão ao guardar resumos de chamadas.',
+      'Adicione um cliente ou guarde um resumo de chamada — a sua carteira cresce aqui.',
+  'empty_customers_cta': 'Adicione o seu primeiro cliente',
   'empty_search_title': 'Sem resultados',
   'empty_search_subtitle': 'Nenhum cliente corresponde a «{0}».',
   'customer_list_load_error': 'Não foi possível carregar a lista de clientes.',
   'add_customer': 'Adicionar cliente',
+  'empty_state_empower': 'Adicione o seu primeiro registo e inicie o sistema',
   'title_bulk_campaign': 'Campanha em massa',
   'segment_header': 'Segmento de clientes',
   'segment_count': '{0} pessoas alvo',
@@ -1694,9 +2513,11 @@ const Map<String, String> _pt = {
   'sms': 'SMS',
   'title_listings': 'Portfólio de anúncios',
   'listing': 'Anúncio',
-  'empty_listings': 'Ainda sem anúncios',
+  'empty_listings': 'O seu portfólio está vazio',
   'empty_listings_sub':
-      'Anúncios de escritório (listings) e externos (external_listings) vazios. Adicione dados no Firestore.',
+      'Importe anúncios ou sincronize a partir de plataformas conectadas.',
+  'empty_listings_cta_import': 'Importar anúncios',
+  'empty_listings_cta_accounts': 'Gerir contas conectadas',
   'listings_load_error': 'Não foi possível carregar os anúncios.',
   'listing_external_badge': 'Externo',
   'listing_external_no_link': 'Sem link de origem para este anúncio.',
@@ -1704,21 +2525,73 @@ const Map<String, String> _pt = {
   'listing_not_found': 'Anúncio não encontrado.',
   'listing_load_error': 'Não foi possível carregar o anúncio.',
   'listings_tab_portfolio': 'Portfólio',
+  'listings_tab_owned': 'Meus anúncios',
+  'listings_tab_market': 'Feed de mercado',
+  'listings_subtitle_owned':
+      'Portfólio de escritório e sincronização oficial das plataformas',
+  'listings_subtitle_market': 'Apenas dados de feed aprovados / oficiais',
+  'listings_section_office': 'Portfólio de escritório',
+  'listings_section_connected': 'Plataformas conectadas',
+  'listings_badge_owned': 'Escritório',
+  'listings_badge_market': 'Feed de mercado',
+  'listings_badge_not_inventory':
+      'Não é inventário próprio; dados gerais de mercado.',
+  'listings_sync_line': '{0} · {1}',
+  'listings_market_disabled_title': 'Feed de mercado desativado',
+  'listings_market_disabled_sub':
+      'Aparece quando uma fonte de dados de mercado oficial é ativada. Dados não oficiais ou extraídos não são apresentados.',
+  'listings_empty_market': 'Sem itens no feed de mercado',
+  'listings_empty_market_sub':
+      'Os anúncios aparecem quando as importações ou feeds oficiais são atualizados.',
   'listings_tab_my_external': 'Meus anúncios',
-  'my_external_listings_title': 'Anúncios externos',
+  'my_external_listings_title': 'Os meus anúncios externos',
   'my_external_listings_hero_sub':
       'Anúncios sincronizados de contas conectadas. Toque num cartão para abrir a origem.',
   'my_external_listings_empty_title': 'Sem anúncios sincronizados',
   'my_external_listings_empty_sub':
-      'Anúncios de contas conectadas aparecem aqui. Adicione uma ligação em Definições.',
+      'Anúncios de contas conectadas aparecem aqui. Adicione uma ligação em Definições → Contas conectadas.',
   'my_external_listings_connect_cta': 'Gerir contas conectadas',
   'my_external_listings_load_error':
       'Não foi possível carregar anúncios externos.',
   'my_external_listings_settings_sub': 'Ver e filtrar anúncios sincronizados',
+  'integration_connections_read_only_notice':
+      'As ligações de plataforma são geridas pelo administrador do seu escritório.',
+  'settings_section_platform_integrations_manager':
+      'Anúncios e ligações de plataforma',
+  'settings_platform_connections_tile': 'Ligações de plataforma (admin)',
+  'settings_platform_connections_tile_sub':
+      'Sahibinden, Emlakjet, Hepsiemlak — ligar, sincronizar, importar',
   'integration_filter_all': 'Todos',
   'title_tasks': 'Tarefas',
   'task': 'Tarefa',
   'empty_tasks': 'Ainda sem tarefas',
+  'empty_tasks_sub':
+      'Adicione seguimentos e lembretes para que nada escape.',
+  'empty_tasks_cta': 'Nova tarefa',
+  'empty_calls_title': 'Ainda sem chamadas registadas',
+  'empty_calls_sub':
+      'As chamadas telefónicas e na aplicação aparecem aqui. Inicie uma chamada para criar o seu primeiro registo.',
+  'empty_calls_cta': 'Ligar e registar',
+  'empty_followup_title': 'Sem leads para reativar',
+  'empty_followup_sub':
+      'Quando os clientes ficam em silêncio, são priorizados aqui.',
+  'empty_followup_cta': 'Iniciar uma chamada',
+  'empty_my_listings_title': 'Sem anúncios importados',
+  'empty_my_listings_sub':
+      'Importe em massa uma exportação de loja (CSV/JSON/Excel) ou abra o ecrã de importação do gestor.',
+  'empty_my_listings_cta_import': 'Importação em massa da loja',
+  'empty_my_listings_cta_accounts': 'Contas conectadas',
+  'empty_reports_title': 'A carregar relatórios',
+  'empty_reports_sub':
+      'As métricas aparecerão quando existirem resumos de chamadas e negócios.',
+  'empty_reports_cta': 'Abrir consultores',
+  'empty_import_history_title': 'Sem histórico de importação',
+  'empty_import_history_sub':
+      'Quando inicia trabalhos em massa ou de ficheiro, são acompanhados aqui.',
+  'empty_import_history_cta': 'Importação da loja',
+  'empty_intel_reports_title': 'Sem relatórios no arquivo',
+  'empty_intel_reports_sub':
+      'Os PDFs da análise Axion serão listados aqui quando forem gerados.',
   'title_notifications': 'Notificações',
   'empty_notifications_title': 'Ainda sem notificações',
   'empty_notifications_subtitle':
@@ -1732,7 +2605,7 @@ const Map<String, String> _pt = {
   'notifications': 'Notificações',
   'title_admin_consultants': 'Consultores',
   'admin_consultants_placeholder':
-      'Lista de consultores e atribuições de equipa aqui.',
+      'A lista de consultores e as atribuições de equipa aparecerão aqui. Na primeira versão, pode gerir papéis e equipas para utilizadores existentes.',
   'search_consultants': 'Pesquisar consultores (nome, e-mail)',
   'title_admin_teams': 'Equipas',
   'action_add_team': 'Nova equipa',
@@ -1747,13 +2620,14 @@ const Map<String, String> _pt = {
   'action_add_member': 'Adicionar membro',
   'empty_team_members': 'Ainda sem membros nesta equipa.',
   'action_remove_from_team': 'Remover da equipa',
-  'confirm_remove_from_team': 'Remover este membro da equipa?',
+  'confirm_remove_from_team':
+      'Tem a certeza de que quer remover este membro da equipa?',
   'member_removed': 'Membro removido da equipa.',
   'no_consultants_to_add': 'Não há mais consultores a adicionar.',
   'access_denied': 'Não tem acesso a esta página.',
   'filter_all_teams': 'Todas as equipas',
   'consultant_invite_info':
-      'Esta pessoa iniciará sessão com este e-mail e escolherá o papel de Consultor.',
+      'Esta pessoa iniciará sessão com este e-mail e juntar-se-á ao sistema escolhendo o papel de Consultor.',
   'action_add_consultant': 'Novo consultor',
   'label_role': 'Papel',
   'empty_consultants': 'Nenhum consultor encontrado.',
@@ -1767,8 +2641,48 @@ const Map<String, String> _pt = {
   'label_email': 'E-mail',
   'saved_success': 'Guardado.',
   'consultant_invite_saved':
-      'Convite guardado; papel e equipa serão atribuídos ao iniciar sessão.',
+      'Convite guardado; papel e equipa serão atribuídos ao iniciar sessão com este e-mail.',
   'manager_updated': 'Gestor atualizado.',
+  'onboarding_skip': 'Ignorar',
+  'onboarding_next': 'Seguinte',
+  'onboarding_finish': 'Ir para início de sessão',
+  'onboarding_persona_required':
+      'Selecione Gestor ou Consultor para continuar.',
+  'onboarding_page_of': '{0} / {1}',
+  'onboarding_welcome_title': 'Bem-vindo ao Axion CRM',
+  'onboarding_welcome_subtitle':
+      'As suas operações imobiliárias numa só plataforma: centro de comando do gestor e painel de campo do consultor no mesmo ecossistema.',
+  'onboarding_welcome_highlights':
+      'Painel do gestor|Painel do consultor|Uma conta',
+  'onboarding_platform_title': 'A mesma conta em todos os dispositivos',
+  'onboarding_platform_subtitle':
+      'Uma sessão no iPhone, iPad e Mac — desktop no escritório, móvel no terreno.',
+  'onboarding_platform_highlights': 'iOS|macOS|Sincronização',
+  'onboarding_manager_title': 'Gestor: comando e visibilidade',
+  'onboarding_manager_subtitle':
+      'Acompanhe a sua equipa com o Centro de Comando, War Room, Central de Chamadas e Relatórios.',
+  'onboarding_manager_highlights':
+      'Centro de Comando|War Room|Central de Chamadas|Relatórios',
+  'onboarding_consultant_title': 'Consultor: O Meu Dia e fluxo de campo',
+  'onboarding_consultant_subtitle':
+      'Comece o dia com O Meu Dia; clientes, anúncios, seguimentos e tarefas num só lugar.',
+  'onboarding_consultant_highlights':
+      'O Meu Dia|Os meus clientes|Anúncios|Seguimento|As minhas tarefas',
+  'onboarding_calls_title': 'Chamadas e reuniões inteligentes',
+  'onboarding_calls_subtitle':
+      'As minhas chamadas e resumos de reuniões; Central de Chamadas para gestores.',
+  'onboarding_calls_highlights':
+      'Reunião inteligente|As minhas chamadas|Resumo de reunião|Central de Chamadas',
+  'onboarding_market_title': 'Mercado, anúncios e insights',
+  'onboarding_market_subtitle':
+      'Portfólio de anúncios, insight regional e relatórios analíticos.',
+  'onboarding_market_highlights':
+      'Anúncios|Insight regional|Análise|Importação',
+  'onboarding_office_title': 'Escritório, mensagens e está pronto',
+  'onboarding_office_subtitle':
+      'Crie ou junte-se a um escritório; alinhamento da equipa via Central de Mensagens. Escolha como inicia sessão.',
+  'onboarding_office_highlights':
+      'Balcão do escritório|Central de Mensagens|Sincronização|Tipo de início de sessão',
   'data_updating': 'A atualizar dados…',
   'retry': 'Tentar novamente',
   'go_home': 'Início',
