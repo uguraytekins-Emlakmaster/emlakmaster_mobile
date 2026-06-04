@@ -5,7 +5,6 @@ import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/services/auth_session_coordinator.dart';
 import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_bootstrap_skeleton.dart';
 import 'package:emlakmaster_mobile/core/performance/startup_perf_markers.dart';
 import 'package:emlakmaster_mobile/core/widgets/startup_recovery_scaffold.dart';
@@ -321,9 +320,8 @@ class _ShellRouterGatePendingState
         onSecondary: () => AuthLogoutCoordinator.signOut(ref),
       );
     }
-    return ColoredBox(
-      color: AppThemeExtension.of(context).background,
-      child: const SizedBox.expand(),
-    );
+    // Nötr boş gövde yerine markalı iskelet: açık temada "beyaz ekran" algısı
+    // yerine kasıtlı bir "alan hazırlanıyor" yüklemesi gösterilir.
+    return const ShellBootstrapSkeleton();
   }
 }
