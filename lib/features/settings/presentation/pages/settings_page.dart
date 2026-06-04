@@ -855,7 +855,7 @@ class SettingsPage extends ConsumerWidget {
             _sectionCard(
               context,
               children: const [
-                PortivoProductIdentityCard(),
+                AxionProductIdentityCard(),
               ],
             ),
             if (canSwitchRole || kDebugMode) ...[

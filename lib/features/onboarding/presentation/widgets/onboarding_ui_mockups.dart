@@ -222,7 +222,7 @@ class _WelcomeScene extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Portivo CRM',
+          'Axion CRM',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: ext.textPrimary,

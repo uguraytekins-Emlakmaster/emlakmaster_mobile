@@ -53,7 +53,8 @@ class AppLocalizations {
 
   static final Map<String, Map<String, String>> _values = {
     'tr': {
-      'app_title': 'Portivo CRM',
+      'app_title': 'Axion CRM',
+      'brand_tagline': 'Her müşteriyi aksiyona dönüştür',
       'widget_error': 'Widget hatası',
       'loading': 'Yükleniyor...',
       'error_generic': 'Bir hata oluştu.',
@@ -292,7 +293,7 @@ class AppLocalizations {
       'onboarding_persona_required':
           'Devam etmek için Yönetici veya Danışman seçin.',
       'onboarding_page_of': '{0} / {1}',
-      'onboarding_welcome_title': 'Portivo CRM\'e hoş geldiniz',
+      'onboarding_welcome_title': 'Axion CRM\'e hoş geldiniz',
       'onboarding_welcome_subtitle':
           'Komuta masası ve saha paneli aynı ekosistemde — veriler dolu, ekip senkron, tek hesap.',
       'onboarding_welcome_highlights':
@@ -332,7 +333,8 @@ class AppLocalizations {
       'go_home': 'Ana akışa dön',
     },
     'en': {
-      'app_title': 'Portivo CRM',
+      'app_title': 'Axion CRM',
+      'brand_tagline': 'Turn every lead into action.',
       'widget_error': 'Widget error',
       'loading': 'Loading...',
       'error_generic': 'Something went wrong.',
@@ -496,7 +498,7 @@ class AppLocalizations {
       'empty_import_history_cta': 'Store import',
       'empty_intel_reports_title': 'No reports in archive',
       'empty_intel_reports_sub':
-          'PDFs from Portivo analysis will list here when generated.',
+          'PDFs from Axion analysis will list here when generated.',
 
       'title_notifications': 'Notifications',
       'empty_notifications_title': 'No notifications yet',
@@ -559,7 +561,7 @@ class AppLocalizations {
       'onboarding_persona_required':
           'Select Manager or Consultant to continue.',
       'onboarding_page_of': '{0} / {1}',
-      'onboarding_welcome_title': 'Welcome to Portivo CRM',
+      'onboarding_welcome_title': 'Welcome to Axion CRM',
       'onboarding_welcome_subtitle':
           'Your real estate operations in one platform: manager command center and consultant field panel in the same ecosystem.',
       'onboarding_welcome_highlights':
@@ -611,7 +613,7 @@ class AppLocalizations {
 
 // German
 const Map<String, String> _de = {
-  'app_title': 'Portivo CRM',
+  'app_title': 'Axion CRM',
   'widget_error': 'Widget-Fehler',
   'loading': 'Laden...',
   'error_generic': 'Ein Fehler ist aufgetreten.',
@@ -758,7 +760,7 @@ const Map<String, String> _de = {
 
 // French
 const Map<String, String> _fr = {
-  'app_title': 'Portivo CRM',
+  'app_title': 'Axion CRM',
   'widget_error': 'Erreur widget',
   'loading': 'Chargement...',
   'error_generic': 'Une erreur s\'est produite.',
@@ -905,7 +907,7 @@ const Map<String, String> _fr = {
 
 // Spanish
 const Map<String, String> _es = {
-  'app_title': 'Portivo CRM',
+  'app_title': 'Axion CRM',
   'widget_error': 'Error del widget',
   'loading': 'Cargando...',
   'error_generic': 'Algo salió mal.',
@@ -1051,7 +1053,7 @@ const Map<String, String> _es = {
 
 // Arabic
 const Map<String, String> _ar = {
-  'app_title': 'Portivo CRM',
+  'app_title': 'Axion CRM',
   'widget_error': 'خطأ في العنصر',
   'loading': 'جاري التحميل...',
   'error_generic': 'حدث خطأ ما.',
@@ -1193,7 +1195,7 @@ const Map<String, String> _ar = {
 
 // Russian
 const Map<String, String> _ru = {
-  'app_title': 'Portivo CRM',
+  'app_title': 'Axion CRM',
   'widget_error': 'Ошибка виджета',
   'loading': 'Загрузка...',
   'error_generic': 'Произошла ошибка.',
@@ -1338,7 +1340,7 @@ const Map<String, String> _ru = {
 
 // Azerbaijani
 const Map<String, String> _az = {
-  'app_title': 'Portivo CRM',
+  'app_title': 'Axion CRM',
   'widget_error': 'Vidjet xətası',
   'loading': 'Yüklənir...',
   'error_generic': 'Xəta baş verdi.',
@@ -1484,7 +1486,7 @@ const Map<String, String> _az = {
 
 // Dutch
 const Map<String, String> _nl = {
-  'app_title': 'Portivo CRM',
+  'app_title': 'Axion CRM',
   'widget_error': 'Widgetfout',
   'loading': 'Laden...',
   'error_generic': 'Er is iets misgegaan.',
@@ -1629,7 +1631,7 @@ const Map<String, String> _nl = {
 
 // Portuguese
 const Map<String, String> _pt = {
-  'app_title': 'Portivo CRM',
+  'app_title': 'Axion CRM',
   'widget_error': 'Erro do widget',
   'loading': 'A carregar...',
   'error_generic': 'Ocorreu um erro.',

@@ -56,7 +56,7 @@ class RegionDeepLinkBootstrap {
     router.go(path);
   }
 
-  /// Giriş tamamlanınca [PortivoApp] içinden çağırın.
+  /// Giriş tamamlanınca [AxionApp] içinden çağırın.
   static Future<void> consumePendingAfterAuth(WidgetRef ref) async {
     final pending = await PendingDeepLinkStore.consume();
     if (pending == null || pending.isEmpty) return;

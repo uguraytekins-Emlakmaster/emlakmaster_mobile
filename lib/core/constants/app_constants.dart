@@ -1,9 +1,9 @@
-/// Portivo CRM – uygulama sabitleri. Magic string kullanmayın.
+/// Axion CRM – uygulama sabitleri. Magic string kullanmayın.
 abstract final class AppConstants {
   AppConstants._();
 
-  static const String appName = 'Portivo CRM';
-  static const String appShortName = 'Portivo';
+  static const String appName = 'Axion CRM';
+  static const String appShortName = 'Axion';
 
   /// Uygulama sürümü (pubspec ile senkron tutulur)
   static const String appVersion = '1.0.1+2';

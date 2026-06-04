@@ -143,7 +143,7 @@ class _RainbowCardInnerRow extends StatelessWidget {
         SizedBox(height: narrow ? DesignTokens.space2 : DesignTokens.space3),
         if (narrow) ...[
           Text(
-            'Portivo Intelligence',
+            'Axion Intelligence',
             style: theme.textTheme.titleSmall?.copyWith(
               color: ext.accent,
               fontWeight: FontWeight.w800,
@@ -164,7 +164,7 @@ class _RainbowCardInnerRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Portivo Intelligence',
+                  'Axion Intelligence',
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: ext.accent,
                     fontWeight: FontWeight.w800,

@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "=== Portivo CRM — profile performans ==="
+echo "=== Axion CRM — profile performans ==="
 echo "1. Uygulama profile modda açılacak (macOS)."
 echo "2. DevTools → Performance → Record"
 echo "3. Sekmeler: Özet → Çağrılar → Müşteriler → Görevler → İlanlar"

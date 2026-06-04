@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'models/rainbow_intel_models.dart';
 
-/// Portivo CRM Yatırım İçgörüsü — skor motoru (saf Dart, Isolate uyumlu).
+/// Axion CRM Yatırım İçgörüsü — skor motoru (saf Dart, Isolate uyumlu).
 abstract final class RainbowScoreEngine {
   RainbowScoreEngine._();
 

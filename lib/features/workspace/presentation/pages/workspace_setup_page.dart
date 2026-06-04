@@ -63,7 +63,7 @@ class _WorkspaceSetupPageState extends State<WorkspaceSetupPage> {
                     const SizedBox(width: 48),
                   Expanded(
                     child: Text(
-                      'Portivo CRM',
+                      'Axion CRM',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: ext.foregroundMuted,

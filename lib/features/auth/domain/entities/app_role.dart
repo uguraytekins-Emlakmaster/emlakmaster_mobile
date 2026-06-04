@@ -1,4 +1,4 @@
-/// Portivo CRM kullanıcı rolleri.
+/// Axion CRM kullanıcı rolleri.
 /// Yetki kontrolleri UI, veri ve security rules seviyesinde bu enum üzerinden yapılır.
 /// (Enum zaten == ve hashCode sağlar; Equatable kullanılmaz)
 enum AppRole {

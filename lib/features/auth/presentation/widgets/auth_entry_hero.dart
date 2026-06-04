@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart';
@@ -24,9 +25,9 @@ class AuthEntryHero extends StatelessWidget {
             ? ext.brandPrimary
             : Color.lerp(ext.brandPrimary, ext.info, 0.45)!;
 
-    final title = persona?.loginTitle ?? 'Portivo CRM';
-    final subtitle = persona?.loginSubtitle ??
-        'Gayrimenkul operasyonunu tek akışta yönetin';
+    final title = persona?.loginTitle ?? 'Axion CRM';
+    final subtitle =
+        persona?.loginSubtitle ?? AppLocalizations.of(context).t('brand_tagline');
 
     return Column(
       children: [

@@ -288,7 +288,7 @@ class _RainbowAnalyticsCenterPageState
                             style: TextStyle(
                                 color: ext.textPrimary,
                                 fontWeight: FontWeight.w700)),
-                        Text('Portivo motoru',
+                        Text('Axion motoru',
                             style: TextStyle(
                                 color: ext.textTertiary, fontSize: 11)),
                       ],

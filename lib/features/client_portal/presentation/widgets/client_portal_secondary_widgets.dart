@@ -13,7 +13,7 @@ abstract final class ClientPortalContactActions {
     AppFeedback.lightImpact();
     await _open(
       Uri.parse(
-        'https://wa.me/?text=${Uri.encodeComponent('Merhaba, Portivo CRM müşterisiyim. Görüşmek istiyorum.')}',
+        'https://wa.me/?text=${Uri.encodeComponent('Merhaba, Axion CRM müşterisiyim. Görüşmek istiyorum.')}',
       ),
     );
   }
@@ -29,7 +29,7 @@ abstract final class ClientPortalContactActions {
       Uri(
         scheme: 'mailto',
         path: 'info@example.com',
-        queryParameters: {'subject': 'Portivo CRM müşteri'},
+        queryParameters: {'subject': 'Axion CRM müşteri'},
       ),
     );
   }

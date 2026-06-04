@@ -94,7 +94,7 @@ abstract final class ClientPortalActions {
       listing.location,
       listing.priceLabel,
       listing.features,
-      '(Önizleme portföy — Portivo CRM)',
+      '(Önizleme portföy — Axion CRM)',
     ].join('\n');
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;

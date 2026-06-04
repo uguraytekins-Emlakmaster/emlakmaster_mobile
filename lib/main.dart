@@ -165,19 +165,19 @@ Future<void> _runApp() async {
   runApp(
     ProviderScope(
       observers: kDebugMode ? [DebugRiverpodObserver()] : null,
-      child: const PortivoApp(),
+      child: const AxionApp(),
     ),
   );
 }
 
-class PortivoApp extends ConsumerStatefulWidget {
-  const PortivoApp({super.key});
+class AxionApp extends ConsumerStatefulWidget {
+  const AxionApp({super.key});
 
   @override
-  ConsumerState<PortivoApp> createState() => _PortivoAppState();
+  ConsumerState<AxionApp> createState() => _AxionAppState();
 }
 
-class _PortivoAppState extends ConsumerState<PortivoApp> {
+class _AxionAppState extends ConsumerState<AxionApp> {
   static bool _deferredInitDone = false;
   ProviderSubscription<AsyncValue<User?>>? _authUserSub;
   ProviderSubscription<AsyncValue<UserDoc?>>? _userDocSub;
@@ -191,7 +191,7 @@ class _PortivoAppState extends ConsumerState<PortivoApp> {
   @override
   void initState() {
     super.initState();
-    AppLogger.state('[startup] PortivoApp.initState');
+    AppLogger.state('[startup] AxionApp.initState');
     AppLifecyclePowerService.instance.ensureObserved();
     _bindStartupLogging();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -266,7 +266,7 @@ class _PortivoAppState extends ConsumerState<PortivoApp> {
 
   @override
   void dispose() {
-    AppLogger.state('[startup] PortivoApp.dispose');
+    AppLogger.state('[startup] AxionApp.dispose');
     _authUserSub?.close();
     _userDocSub?.close();
     _roleSub?.close();
@@ -434,7 +434,7 @@ class _PortivoAppState extends ConsumerState<PortivoApp> {
     final themeMode = ref.watch(themeModeProvider);
     final userTextScale = ref.watch(textScaleProvider);
     return MaterialApp.router(
-      title: 'Portivo CRM',
+      title: 'Axion CRM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
