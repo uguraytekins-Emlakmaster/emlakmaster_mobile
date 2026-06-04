@@ -321,7 +321,7 @@ class _AxionAppState extends ConsumerState<AxionApp> {
       return;
     }
     _userDocSub = ref.listenManual(userDocStreamProvider(uid), (prev, next) {
-      final doc = next.asData?.value;
+      final doc = next.valueOrNull;
       final officeId = doc?.officeId;
       final role = doc?.role;
       final shortUid = uid.length > 8 ? uid.substring(0, 8) : uid;

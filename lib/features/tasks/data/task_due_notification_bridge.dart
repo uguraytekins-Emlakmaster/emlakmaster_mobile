@@ -46,7 +46,7 @@ class TaskDueNotificationBridge {
       _notifiedTaskIds.clear();
       _primed = false;
 
-      final uid = next.asData?.value?.uid;
+      final uid = next.valueOrNull?.uid;
       if (uid == null || uid.isEmpty) return;
 
       _tasksSub = ref.listenManual(
@@ -59,7 +59,7 @@ class TaskDueNotificationBridge {
   static Future<void> _onTasks(
     AsyncValue<List<QueryDocumentSnapshot<Map<String, dynamic>>>> next,
   ) async {
-    final docs = next.asData?.value;
+    final docs = next.valueOrNull;
     if (docs == null) return;
 
     if (!_primed) {

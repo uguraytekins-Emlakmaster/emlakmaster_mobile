@@ -45,7 +45,7 @@ class ExecutionReminderNotificationBridge {
       _deliveredKeys.clear();
       _primed = false;
 
-      final uid = next.asData?.value?.uid;
+      final uid = next.valueOrNull?.uid;
       if (uid == null || uid.isEmpty) return;
 
       final role = ref.read(displayRoleOrNullProvider) ?? AppRole.guest;
@@ -68,7 +68,7 @@ class ExecutionReminderNotificationBridge {
   static Future<void> _onReminders(
     AsyncValue<List<ExecutionReminderItem>> next,
   ) async {
-    final items = next.asData?.value;
+    final items = next.valueOrNull;
     if (items == null) return;
 
     if (!_primed) {
