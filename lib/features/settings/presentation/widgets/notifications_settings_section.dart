@@ -287,7 +287,7 @@ class _NotificationsSettingsSectionState
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Text(
-            'Bildirim türleri',
+            l10n.t('notif_categories_header'),
             style: theme.textTheme.labelSmall?.copyWith(
               color: ext.textTertiary,
               fontWeight: FontWeight.w700,
@@ -297,7 +297,7 @@ class _NotificationsSettingsSectionState
         ),
         _catTile(
           icon: Icons.task_alt_rounded,
-          title: 'Görevler & hatırlatmalar',
+          title: l10n.t('notif_cat_tasks'),
           value: _catTasks,
           onChanged: (v) async {
             await SettingsService.instance.setNotifCategoryTasks(v);
@@ -306,7 +306,7 @@ class _NotificationsSettingsSectionState
         ),
         _catTile(
           icon: Icons.call_rounded,
-          title: 'Çağrılar',
+          title: l10n.t('notif_cat_calls'),
           value: _catCalls,
           onChanged: (v) async {
             await SettingsService.instance.setNotifCategoryCalls(v);
@@ -315,7 +315,7 @@ class _NotificationsSettingsSectionState
         ),
         _catTile(
           icon: Icons.chat_bubble_rounded,
-          title: 'Mesajlar',
+          title: l10n.t('notif_cat_messages'),
           value: _catMessages,
           onChanged: (v) async {
             await SettingsService.instance.setNotifCategoryMessages(v);
@@ -324,7 +324,7 @@ class _NotificationsSettingsSectionState
         ),
         _catTile(
           icon: Icons.campaign_rounded,
-          title: 'Kampanya & duyurular',
+          title: l10n.t('notif_cat_marketing'),
           value: _catMarketing,
           onChanged: (v) async {
             await SettingsService.instance.setNotifCategoryMarketing(v);
@@ -334,9 +334,9 @@ class _NotificationsSettingsSectionState
         Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.45)),
         SwitchListTile(
           secondary: Icon(Icons.bedtime_rounded, color: ext.accent),
-          title: Text('Sessiz saatler', style: TextStyle(color: onSurface)),
+          title: Text(l10n.t('notif_quiet_hours'), style: TextStyle(color: onSurface)),
           subtitle: Text(
-            'Bu aralıkta uygulama içi bildirim/uyarı susturulur.',
+            l10n.t('notif_quiet_hours_sub'),
             style: TextStyle(color: onSurfaceVariant, fontSize: 12),
           ),
           value: _quietEnabled,
@@ -352,12 +352,12 @@ class _NotificationsSettingsSectionState
             child: Row(
               children: [
                 Expanded(
-                  child: _timeChip('Başlangıç', _fmtMin(_quietStartMin),
+                  child: _timeChip(l10n.t('time_start'), _fmtMin(_quietStartMin),
                       () => _pickQuietTime(isStart: true)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _timeChip('Bitiş', _fmtMin(_quietEndMin),
+                  child: _timeChip(l10n.t('time_end'), _fmtMin(_quietEndMin),
                       () => _pickQuietTime(isStart: false)),
                 ),
               ],

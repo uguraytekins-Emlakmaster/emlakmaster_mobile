@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -43,12 +44,14 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
     final doc = ref.read(userDocStreamProvider(user.uid)).valueOrNull;
     final oid = doc?.officeId;
     if (oid == null || oid.isEmpty) {
-      setState(() => _error = 'Önce bir ofise bağlı olmalısınız.');
+      setState(() =>
+          _error = AppLocalizations.of(context).t('office_invite_need_office'));
       return;
     }
     final maxUses = int.tryParse(_maxUsesController.text.trim()) ?? 5;
     if (maxUses < 1) {
-      setState(() => _error = 'Kullanım sayısı en az 1 olmalı.');
+      setState(() =>
+          _error = AppLocalizations.of(context).t('office_invite_min_uses'));
       return;
     }
     AppFeedback.mediumImpact();
@@ -83,24 +86,25 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: ext.background,
       appBar: emlakAppBar(
         context,
         backgroundColor: ext.background,
         foregroundColor: ext.foreground,
-        title: const Text('Davet oluştur'),
+        title: Text(l10n.t('office_invite_create_title')),
       ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
             Text(
-              'Davet kodu ile ekip üyeleri ofise katılır. Kodu güvenli kanallarla paylaşın.',
+              l10n.t('office_invite_desc'),
               style: TextStyle(color: ext.foregroundSecondary, height: 1.45, fontSize: 14),
             ),
             const SizedBox(height: 24),
-            Text('Atanacak rol', style: TextStyle(color: ext.foregroundSecondary, fontSize: 13)),
+            Text(l10n.t('office_invite_role_label'), style: TextStyle(color: ext.foregroundSecondary, fontSize: 13)),
             const SizedBox(height: 8),
             DropdownButtonFormField<OfficeRole>(
               // ignore: deprecated_member_use
@@ -114,10 +118,10 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                 ),
               ),
-              items: const [
-                DropdownMenuItem(value: OfficeRole.consultant, child: Text('Danışman')),
-                DropdownMenuItem(value: OfficeRole.manager, child: Text('Yönetici')),
-                DropdownMenuItem(value: OfficeRole.admin, child: Text('Admin')),
+              items: [
+                DropdownMenuItem(value: OfficeRole.consultant, child: Text(l10n.t('office_role_consultant'))),
+                DropdownMenuItem(value: OfficeRole.manager, child: Text(l10n.t('office_role_manager'))),
+                DropdownMenuItem(value: OfficeRole.admin, child: Text(l10n.t('office_role_admin'))),
               ],
               onChanged: (v) {
                 if (v != null) setState(() => _role = v);
@@ -129,7 +133,7 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
               keyboardType: TextInputType.number,
               style: TextStyle(color: ext.foreground),
               decoration: InputDecoration(
-                labelText: 'Maks. kullanım',
+                labelText: l10n.t('office_invite_max_uses'),
                 labelStyle: TextStyle(color: ext.foregroundSecondary),
                 filled: true,
                 fillColor: ext.surfaceElevated,
@@ -151,7 +155,7 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
             if (_createdCode != null) ...[
               const SizedBox(height: 16),
               SelectableText(
-                'Davet kodu: $_createdCode',
+                l10n.tArgs('office_invite_code_result', [_createdCode!]),
                 style: TextStyle(
                   color: ext.success.withValues(alpha: 0.95),
                   fontSize: 18,
@@ -177,7 +181,7 @@ class _CreateOfficeInvitePageState extends ConsumerState<CreateOfficeInvitePage>
                         color: ext.onBrand,
                       ),
                     )
-                  : const Text('Davet kodu üret'),
+                  : Text(l10n.t('office_invite_generate')),
             ),
           ],
         ),

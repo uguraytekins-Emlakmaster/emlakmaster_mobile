@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/services/login_entry_store.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
@@ -95,7 +96,7 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
         setState(() {
           _submitting = false;
           _checkedInvite = true;
-          _error = 'Davet uygulanamadı. Rolü elle seçebilirsiniz.';
+          _error = AppLocalizations.of(context).t('role_invite_failed');
         });
       }
     }
@@ -134,26 +135,26 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
       if (mounted) {
         setState(() {
           _submitting = false;
-          _error = 'Rol kaydedilemedi. Tekrar deneyin.';
+          _error = AppLocalizations.of(context).t('role_save_failed');
         });
       }
     }
   }
 
-  static String _subtitleForRole(AppRole role) {
+  static String _subtitleForRole(AppLocalizations l10n, AppRole role) {
     switch (role) {
       case AppRole.superAdmin:
-        return 'Kurulum yöneticisi, tüm sistem';
+        return l10n.t('role_sub_super_admin');
       case AppRole.brokerOwner:
-        return 'Şirket sahibi, tam yetki';
+        return l10n.t('role_sub_broker_owner');
       case AppRole.generalManager:
-        return 'Genel yönetim ve strateji';
+        return l10n.t('role_sub_general_manager');
       case AppRole.officeManager:
-        return 'Ofis ve ekip yönetimi';
+        return l10n.t('role_sub_office_manager');
       case AppRole.teamLead:
-        return 'Ekip liderliği ve koordinasyon';
+        return l10n.t('role_sub_team_lead');
       case AppRole.agent:
-        return 'Müşteri, ilan ve görüşme operasyonu';
+        return l10n.t('role_sub_agent');
       default:
         return role.label;
     }
@@ -261,6 +262,7 @@ class _PathPickerBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
@@ -274,7 +276,7 @@ class _PathPickerBody extends StatelessWidget {
                 ),
                 const SizedBox(height: DesignTokens.space6),
                 Text(
-                  'Hoş geldiniz',
+                  l10n.t('role_welcome'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: ext.textPrimary,
                         fontWeight: FontWeight.w800,
@@ -284,7 +286,7 @@ class _PathPickerBody extends StatelessWidget {
                 ),
                 const SizedBox(height: DesignTokens.space2),
                 Text(
-                  'Önce giriş türünüzü seçin; ardından size uygun rolü belirleyeceğiz.',
+                  l10n.t('role_welcome_sub'),
                   style: TextStyle(
                     color: ext.textSecondary,
                     fontSize: DesignTokens.fontSizeMd,
@@ -335,12 +337,13 @@ class _RoleListBody extends StatelessWidget {
   final String? error;
   final VoidCallback onBack;
   final void Function(AppRole role) onRoleSelected;
-  final String Function(AppRole role) subtitleForRole;
+  final String Function(AppLocalizations l10n, AppRole role) subtitleForRole;
   final IconData Function(AppRole role) iconForRole;
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final accent = persona == LoginEntryPersona.manager
         ? ext.brandPrimary
         : Color.lerp(ext.brandPrimary, ext.info, 0.45)!;
@@ -365,7 +368,7 @@ class _RoleListBody extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    persona.rolePathTitle,
+                    l10n.t(persona.rolePathTitleKey),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: ext.textPrimary,
                           fontWeight: FontWeight.w800,
@@ -393,7 +396,7 @@ class _RoleListBody extends StatelessWidget {
                     border: Border.all(color: accent.withValues(alpha: 0.35)),
                   ),
                   child: Text(
-                    persona.rolePathSubtitle,
+                    l10n.t(persona.rolePathSubtitleKey),
                     style: TextStyle(
                       color: accent,
                       fontSize: DesignTokens.fontSizeSm,
@@ -404,8 +407,8 @@ class _RoleListBody extends StatelessWidget {
                 const SizedBox(height: DesignTokens.space2),
                 Text(
                   managerViaOffice
-                      ? 'Yöneticilik için kendi ofisinizi oluşturun ya da bir ofis davetini kullanın. Aşağıdan başlayın; sonraki adımda ofisinizi kurarak ofis sahibi (broker) olursunuz.'
-                      : 'Size en yakın rolü seçin. Panel ve yetkiler buna göre açılır.',
+                      ? l10n.t('role_manager_via_office')
+                      : l10n.t('role_pick_closest'),
                   style: TextStyle(
                     color: ext.textSecondary,
                     fontSize: DesignTokens.fontSizeSm,
@@ -426,11 +429,11 @@ class _RoleListBody extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _RoleCard(
                     label: managerViaOffice
-                        ? 'Başla ve ofisini oluştur'
+                        ? l10n.t('role_start_create_office')
                         : role.label,
                     subtitle: managerViaOffice
-                        ? 'Sonraki adımda ofisinizi kurun; ofis sahibi (broker) olursunuz.'
-                        : subtitleForRole(role),
+                        ? l10n.t('role_start_create_office_sub')
+                        : subtitleForRole(l10n, role),
                     icon: managerViaOffice
                         ? Icons.add_business_rounded
                         : iconForRole(role),

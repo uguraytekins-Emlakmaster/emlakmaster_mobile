@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -68,8 +69,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   void _goNextStep() {
     if (_step == 0) {
+      final l10n = AppLocalizations.of(context);
       if (_persona == null) {
-        setState(() => _errorMessage = 'Lütfen Yönetici veya Danışman olarak kayıt olun.');
+        setState(() => _errorMessage = l10n.t('auth_register_select_persona'));
         return;
       }
       final nameOk = _nameController.text.trim().isEmpty ||
@@ -77,11 +79,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       final email = _emailController.text.trim();
       final emailOk = email.contains('@') && email.length >= 5;
       if (!nameOk) {
-        setState(() => _errorMessage = 'Ad en az 2 karakter olmalı.');
+        setState(() => _errorMessage = l10n.t('auth_name_min'));
         return;
       }
       if (!emailOk) {
-        setState(() => _errorMessage = 'Geçerli bir e-posta girin.');
+        setState(() => _errorMessage = l10n.t('acct_err_email_invalid'));
         return;
       }
       setState(() {
@@ -122,31 +124,31 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       LoginAttemptGuard.recordFailure();
       setState(() {
         _isLoading = false;
-        _errorMessage = _registerErrorMessage(e);
+        _errorMessage = _registerErrorMessage(AppLocalizations.of(context), e);
       });
     }
   }
 
-  static String _registerErrorMessage(Object e) {
+  static String _registerErrorMessage(AppLocalizations l10n, Object e) {
     if (e is FirebaseAuthException) {
       switch (e.code) {
         case 'email-already-in-use':
-          return 'Bu e-posta ile zaten bir hesap var. Giriş yapın veya şifre sıfırlayın.';
+          return l10n.t('auth_reg_email_in_use');
         case 'invalid-email':
-          return 'Geçerli bir e-posta adresi girin.';
+          return l10n.t('auth_reset_invalid_email');
         case 'weak-password':
-          return 'Şifre çok zayıf. En az 8 karakter ve harf + rakam kullanın.';
+          return l10n.t('auth_reg_weak_password');
         case 'operation-not-allowed':
-          return 'E-posta ile kayıt şu an kapalı. Yönetici ile iletişime geçin.';
+          return l10n.t('auth_reg_disabled');
         case 'network-request-failed':
-          return 'İnternet bağlantınızı kontrol edin.';
+          return l10n.t('auth_check_internet');
         case 'too-many-requests':
-          return 'Çok fazla deneme. Biraz bekleyip tekrar deneyin.';
+          return l10n.t('auth_too_many_requests');
         default:
-          return 'Kayıt tamamlanamadı (${e.code}). Tekrar deneyin.';
+          return l10n.tArgs('auth_reg_failed_code', [e.code]);
       }
     }
-    return 'Kayıt tamamlanamadı. Bilgilerinizi kontrol edin.';
+    return l10n.t('auth_reg_failed_generic');
   }
 
   Future<void> _applySocialAuthResult(
@@ -204,7 +206,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             const Duration(seconds: 90),
             onTimeout: () => throw FirebaseAuthException(
               code: 'timeout',
-              message: 'Facebook oturumu zaman aşımına uğradı.',
+              message: AppLocalizations.of(context).t('auth_reg_fb_timeout'),
             ),
           );
       if (!mounted) return;
@@ -219,38 +221,39 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       LoginAttemptGuard.recordFailure();
       setState(() {
         _isLoading = false;
-        _errorMessage = _facebookErr(e);
+        _errorMessage = _facebookErr(AppLocalizations.of(context), e);
       });
     }
   }
 
-  static String _facebookErr(Object e) {
+  static String _facebookErr(AppLocalizations l10n, Object e) {
     if (e is FirebaseAuthException) {
       switch (e.code) {
         case 'account-exists-with-different-credential':
-          return 'Bu e-posta başka bir yöntemle kayıtlı. O yöntemle giriş deneyin.';
+          return l10n.t('auth_reg_fb_account_exists');
         case 'invalid-credential':
-          return e.message ?? 'Facebook oturumu doğrulanamadı.';
+          return e.message ?? l10n.t('auth_fb_invalid_credential');
         case 'facebook-login-failed':
-          return e.message ?? 'Facebook oturumu açılamadı.';
+          return e.message ?? l10n.t('auth_reg_fb_failed');
         case 'timeout':
-          return e.message ?? 'Zaman aşımı. Tekrar deneyin.';
+          return e.message ?? l10n.t('auth_timeout_short');
         case 'network-request-failed':
-          return 'Ağ hatası. Bağlantınızı kontrol edin.';
+          return l10n.t('auth_network_error');
         default:
-          return 'Facebook ile devam edilemedi (${e.code}).';
+          return l10n.tArgs('auth_reg_fb_failed_code', [e.code]);
       }
     }
     if (e is PlatformException) {
       final c = e.code.toLowerCase();
       if (c.contains('cancel')) return '';
-      return 'Facebook hatası (${e.code}).';
+      return l10n.tArgs('auth_fb_error_code', [e.code]);
     }
-    return 'Facebook ile kayıt başarısız.';
+    return l10n.t('auth_reg_fb_failed_generic');
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppThemeExtension.of(context).background,
       body: SafeArea(
@@ -317,7 +320,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     Text(
-                      _step == 0 ? 'Profil' : 'Güvenlik',
+                      _step == 0
+                          ? l10n.t('auth_step_profile')
+                          : l10n.t('auth_step_security'),
                       style: TextStyle(
                         color: AppThemeExtension.of(context).textTertiary,
                         fontSize: 11,
@@ -328,7 +333,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     Text(
-                      'Hesap oluştur',
+                      l10n.t('auth_create_account'),
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 color: AppThemeExtension.of(context).textPrimary,
@@ -339,7 +344,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     Text(
-                      'Bilgilerinizi girin; ardından rolünüzü seçerek panele geçin.',
+                      l10n.t('auth_create_account_sub'),
                       style: TextStyle(
                         color: AppThemeExtension.of(context).textSecondary.withValues(alpha: 0.95),
                         fontSize: DesignTokens.fontSizeSm,
@@ -381,7 +386,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           const SizedBox(width: DesignTokens.space2),
                           Expanded(
                             child: Text(
-                              'Davet e-postanız kayıtlıysa rol ve ekip otomatik atanır.',
+                              l10n.t('auth_invite_hint'),
                               style: TextStyle(
                                 color: AppThemeExtension.of(context).textSecondary,
                                 fontSize: DesignTokens.fontSizeSm - 1,
@@ -401,13 +406,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       cursorColor: AppThemeExtension.of(context).accent,
                       onTapOutside: (_) => _unfocus(),
                       decoration: AuthFieldDecoration.build(context,
-                        label: 'Ad Soyad',
-                        hint: 'Opsiyonel',
+                        label: l10n.t('auth_full_name'),
+                        hint: l10n.t('optional'),
                         prefix: const Icon(Icons.person_outline_rounded),
                       ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
-                        if (v.trim().length < 2) return 'En az 2 karakter';
+                        if (v.trim().length < 2) return l10n.t('auth_min_2_chars');
                         return null;
                       },
                     ),
@@ -421,17 +426,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       cursorColor: AppThemeExtension.of(context).accent,
                       onTapOutside: (_) => _unfocus(),
                       decoration: AuthFieldDecoration.build(context,
-                        label: 'E-posta',
-                        hint: 'ornek@firma.com',
+                        label: l10n.t('label_email'),
+                        hint: l10n.t('auth_email_hint'),
                         prefix: const Icon(Icons.email_outlined),
                       ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
-                          return 'E-posta gerekli';
+                          return l10n.t('auth_email_required');
                         }
                         final t = v.trim();
                         if (!t.contains('@') || t.length < 5) {
-                          return 'Geçerli bir e-posta girin';
+                          return l10n.t('auth_email_invalid');
                         }
                         return null;
                       },
@@ -454,8 +459,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       cursorColor: AppThemeExtension.of(context).accent,
                       onTapOutside: (_) => _unfocus(),
                       decoration: AuthFieldDecoration.build(context,
-                        label: 'Şifre',
-                        hint: 'En az 8 karakter',
+                        label: l10n.t('auth_password_label'),
+                        hint: l10n.t('auth_min_8_chars'),
                         prefix: const Icon(Icons.lock_outline_rounded),
                         suffix: IconButton(
                           icon: Icon(
@@ -468,12 +473,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Şifre gerekli';
-                        if (v.length < 8) return 'En az 8 karakter';
+                        if (v == null || v.isEmpty) return l10n.t('auth_password_required');
+                        if (v.length < 8) return l10n.t('auth_min_8_chars');
                         final hasLetter = RegExp(r'[A-Za-z]').hasMatch(v);
                         final hasDigit = RegExp(r'[0-9]').hasMatch(v);
                         if (!hasLetter || !hasDigit) {
-                          return 'Harf ve rakam içermeli';
+                          return l10n.t('auth_password_letter_digit');
                         }
                         return null;
                       },
@@ -487,7 +492,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       cursorColor: AppThemeExtension.of(context).accent,
                       onTapOutside: (_) => _unfocus(),
                       decoration: AuthFieldDecoration.build(context,
-                        label: 'Şifre tekrar',
+                        label: l10n.t('auth_password_confirm_label'),
                         prefix: const Icon(Icons.lock_person_outlined),
                         suffix: IconButton(
                           icon: Icon(
@@ -501,10 +506,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       ),
                       validator: (v) {
                         if (v == null || v.isEmpty) {
-                          return 'Şifreyi tekrar girin';
+                          return l10n.t('auth_password_confirm_required');
                         }
                         if (v != _passwordController.text) {
-                          return 'Şifreler eşleşmiyor';
+                          return l10n.t('auth_passwords_mismatch');
                         }
                         return null;
                       },
@@ -545,7 +550,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ],
                     const SizedBox(height: DesignTokens.space6),
                     Semantics(
-                      label: _step == 0 ? 'Devam' : 'Kayıt ol',
+                      label: _step == 0
+                          ? l10n.t('auth_continue')
+                          : l10n.t('auth_register_cta'),
                       button: true,
                       child: FilledButton(
                         onPressed: _isLoading
@@ -572,7 +579,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                 ),
                               )
                             : Text(
-                                _step == 0 ? 'Devam' : 'Kayıt ol',
+                                _step == 0
+                                    ? l10n.t('auth_continue')
+                                    : l10n.t('auth_register_cta'),
                                 style: const TextStyle(fontWeight: FontWeight.w700),
                               ),
                       ),
@@ -588,7 +597,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            'veya',
+                            l10n.t('auth_or'),
                             style: TextStyle(
                               color: AppThemeExtension.of(context).textTertiary,
                               fontSize: DesignTokens.fontSizeSm,
@@ -606,7 +615,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       onPressed: _isLoading ? null : _googleKayit,
                       icon: Icon(Icons.g_mobiledata,
                           size: 22, color: AppThemeExtension.of(context).textSecondary),
-                      label: const Text('Google ile devam et'),
+                      label: Text(l10n.t('auth_google_continue')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppThemeExtension.of(context).textPrimary,
                         side: BorderSide(color: AppThemeExtension.of(context).border),
@@ -624,7 +633,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         onPressed: _isLoading ? null : _facebookKayit,
                         icon: const Icon(Icons.facebook_rounded,
                             size: 18, color: Color(0xFF1877F2)),
-                        label: const Text('Facebook ile devam et'),
+                        label: Text(l10n.t('auth_facebook_continue')),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppThemeExtension.of(context).textPrimary,
                           side: BorderSide(color: AppThemeExtension.of(context).border),
@@ -640,7 +649,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ],
                     const SizedBox(height: DesignTokens.space3),
                     Text(
-                      'Kayıt olarak hizmet şartlarını ve veri işleme bilgilendirmesini kabul etmiş olursunuz.',
+                      l10n.t('auth_terms_notice'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppThemeExtension.of(context).textTertiary,
@@ -653,7 +662,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Zaten hesabınız var mı? ',
+                          l10n.t('auth_have_account'),
                           style: TextStyle(
                             color: AppThemeExtension.of(context).textSecondary,
                             fontSize: DesignTokens.fontSizeMd,
@@ -667,9 +676,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
-                            'Giriş yap',
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                          child: Text(
+                            l10n.t('auth_login_cta'),
+                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
                       ],

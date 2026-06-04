@@ -25,9 +25,12 @@ class AuthEntryHero extends StatelessWidget {
             ? ext.brandPrimary
             : Color.lerp(ext.brandPrimary, ext.info, 0.45)!;
 
-    final title = persona?.loginTitle ?? 'Axion CRM';
-    final subtitle =
-        persona?.loginSubtitle ?? AppLocalizations.of(context).t('brand_tagline');
+    final l10n = AppLocalizations.of(context);
+    final title =
+        persona == null ? 'Axion CRM' : l10n.t(persona!.loginTitleKey);
+    final subtitle = persona == null
+        ? l10n.t('brand_tagline')
+        : l10n.t(persona!.loginSubtitleKey);
 
     return Column(
       children: [

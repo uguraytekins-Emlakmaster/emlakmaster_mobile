@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -15,6 +16,7 @@ class OfficeGatePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: ext.background,
       body: SafeArea(
@@ -23,16 +25,15 @@ class OfficeGatePage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const PremiumPageHeader(
-                title: 'Ofisinize bağlanın',
-                subtitle:
-                    'Axion CRM çok ofisli çalışır. Yeni ofis kurun veya davet koduyla katılın.',
+              PremiumPageHeader(
+                title: l10n.t('office_gate_title'),
+                subtitle: l10n.t('office_gate_sub'),
               ),
               const SizedBox(height: 32),
               _Tile(
                 icon: Icons.add_business_rounded,
-                title: 'Ofis oluştur',
-                subtitle: 'Bu ofisin sahibi siz olursunuz.',
+                title: l10n.t('office_create'),
+                subtitle: l10n.t('office_create_sub'),
                 onTap: () {
                   AppFeedback.selectionClick();
                   context.push(AppRouter.routeOfficeCreate);
@@ -41,8 +42,8 @@ class OfficeGatePage extends ConsumerWidget {
               const SizedBox(height: 12),
               _Tile(
                 icon: Icons.vpn_key_rounded,
-                title: 'Davet koduyla katıl',
-                subtitle: 'Yöneticinizden aldığınız kodu girin.',
+                title: l10n.t('office_join'),
+                subtitle: l10n.t('office_join_sub'),
                 onTap: () {
                   AppFeedback.selectionClick();
                   context.push(AppRouter.routeOfficeJoin);
@@ -55,7 +56,7 @@ class OfficeGatePage extends ConsumerWidget {
                   await AuthLogoutCoordinator.signOut(ref);
                 },
                 child: Text(
-                  'Çıkış yap',
+                  l10n.t('settings_logout'),
                   style:
                       TextStyle(color: ext.foregroundSecondary, fontSize: 13),
                 ),

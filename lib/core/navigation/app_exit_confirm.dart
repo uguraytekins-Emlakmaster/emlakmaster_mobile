@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/widgets/premium_bottom_sheet_shell.dart';
@@ -11,9 +12,10 @@ Future<bool> showAppExitConfirmation(BuildContext context) async {
     maxHeightFactor: 0.38,
     builder: (ctx) {
       final ext = AppThemeExtension.of(ctx);
+      final l10n = AppLocalizations.of(ctx);
       return PremiumScrollableBottomSheetShell(
-        title: 'Uygulamadan çıkılsın mı?',
-        subtitle: 'Geri tuşuna tekrar basarak çıkabilirsiniz.',
+        title: l10n.t('exit_app_title'),
+        subtitle: l10n.t('exit_app_subtitle'),
         bottomActions: Row(
           children: [
             Expanded(
@@ -22,7 +24,7 @@ Future<bool> showAppExitConfirmation(BuildContext context) async {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, 48),
                 ),
-                child: const Text('Kal'),
+                child: Text(l10n.t('action_stay')),
               ),
             ),
             const SizedBox(width: DesignTokens.space2),
@@ -34,7 +36,7 @@ Future<bool> showAppExitConfirmation(BuildContext context) async {
                   foregroundColor: ext.onBrand,
                   minimumSize: const Size(0, 48),
                 ),
-                child: const Text('Çık'),
+                child: Text(l10n.t('action_exit')),
               ),
             ),
           ],

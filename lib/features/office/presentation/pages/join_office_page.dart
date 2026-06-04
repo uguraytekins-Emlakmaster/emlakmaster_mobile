@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -62,13 +63,14 @@ class _JoinOfficePageState extends State<JoinOfficePage> {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: ext.background,
       appBar: emlakAppBar(
         context,
         backgroundColor: ext.background,
         foregroundColor: ext.foreground,
-        title: const Text('Davet kodu'),
+        title: Text(l10n.t('office_invite_code')),
       ),
       body: SafeArea(
         child: Padding(
@@ -79,7 +81,7 @@ class _JoinOfficePageState extends State<JoinOfficePage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Yöneticinizin paylaştığı kodu girin. Kod büyük/küçük harf duyarsızdır.',
+                  l10n.t('office_join_desc'),
                   style: TextStyle(
                     color: ext.foregroundSecondary,
                     fontSize: 14,
@@ -98,13 +100,13 @@ class _JoinOfficePageState extends State<JoinOfficePage> {
                   ),
                   cursorColor: ext.accent,
                   decoration: AuthFieldDecoration.build(context,
-                    label: 'Davet kodu',
+                    label: l10n.t('office_invite_code'),
                     hint: 'XXXXXXXX',
                     prefix: const Icon(Icons.tag_rounded),
                   ),
                   validator: (v) {
                     if (v == null || v.trim().length < 4) {
-                      return 'Geçerli bir kod girin';
+                      return l10n.t('office_code_invalid');
                     }
                     return null;
                   },
@@ -140,7 +142,7 @@ class _JoinOfficePageState extends State<JoinOfficePage> {
                             color: ext.onBrand,
                           ),
                         )
-                      : const Text('Ofise katıl', style: TextStyle(fontWeight: FontWeight.w700)),
+                      : Text(l10n.t('office_join_cta'), style: const TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ],
             ),

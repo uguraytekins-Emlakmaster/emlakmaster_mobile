@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -18,23 +19,35 @@ class AccountSecurityActions {
 
   /// Şifre değiştirme: mevcut şifre ile reauth + yeni şifre.
   static Future<void> showChangePassword(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     await _showFormSheet(
       context,
-      title: 'Şifre değiştir',
-      subtitle: 'Güvenlik için önce mevcut şifrenizi doğrulayın.',
+      title: l10n.t('acct_change_password_title'),
+      subtitle: l10n.t('acct_change_password_sub'),
       icon: Icons.lock_reset_rounded,
-      fields: const [
-        _FormField(key: 'current', label: 'Mevcut şifre', obscure: true),
-        _FormField(key: 'next', label: 'Yeni şifre (en az 6 karakter)', obscure: true),
-        _FormField(key: 'confirm', label: 'Yeni şifre (tekrar)', obscure: true),
+      fields: [
+        _FormField(
+            key: 'current',
+            label: l10n.t('acct_field_current_password'),
+            obscure: true),
+        _FormField(
+            key: 'next',
+            label: l10n.t('acct_field_new_password'),
+            obscure: true),
+        _FormField(
+            key: 'confirm',
+            label: l10n.t('acct_field_new_password_confirm'),
+            obscure: true),
       ],
-      submitLabel: 'Şifreyi güncelle',
+      submitLabel: l10n.t('acct_update_password_cta'),
       validate: (values) {
-        if ((values['current'] ?? '').isEmpty) return 'Mevcut şifre gerekli.';
+        if ((values['current'] ?? '').isEmpty) {
+          return l10n.t('acct_err_current_password_required');
+        }
         final next = values['next'] ?? '';
-        if (next.length < 6) return 'Yeni şifre en az 6 karakter olmalı.';
+        if (next.length < 6) return l10n.t('acct_err_password_min');
         if (next != (values['confirm'] ?? '')) {
-          return 'Yeni şifreler eşleşmiyor.';
+          return l10n.t('acct_err_passwords_mismatch');
         }
         return null;
       },
@@ -43,29 +56,36 @@ class AccountSecurityActions {
             .reauthenticateWithPassword(values['current']!);
         await AuthService.instance.updatePassword(values['next']!);
       },
-      successMessage: 'Şifreniz güncellendi.',
+      successMessage: l10n.t('acct_password_updated'),
     );
   }
 
   /// E-posta değiştirme: reauth + yeni adrese doğrulama bağlantısı.
   static Future<void> showChangeEmail(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     await _showFormSheet(
       context,
-      title: 'E-posta değiştir',
-      subtitle:
-          'Yeni adrese doğrulama bağlantısı gönderilir; onayladığınızda e-posta güncellenir.',
+      title: l10n.t('acct_change_email_title'),
+      subtitle: l10n.t('acct_change_email_sub'),
       icon: Icons.alternate_email_rounded,
-      fields: const [
-        _FormField(key: 'current', label: 'Mevcut şifre', obscure: true),
+      fields: [
         _FormField(
-            key: 'email', label: 'Yeni e-posta', keyboard: TextInputType.emailAddress),
+            key: 'current',
+            label: l10n.t('acct_field_current_password'),
+            obscure: true),
+        _FormField(
+            key: 'email',
+            label: l10n.t('acct_field_new_email'),
+            keyboard: TextInputType.emailAddress),
       ],
-      submitLabel: 'Doğrulama gönder',
+      submitLabel: l10n.t('acct_send_verification_cta'),
       validate: (values) {
-        if ((values['current'] ?? '').isEmpty) return 'Mevcut şifre gerekli.';
+        if ((values['current'] ?? '').isEmpty) {
+          return l10n.t('acct_err_current_password_required');
+        }
         final email = (values['email'] ?? '').trim();
         if (!email.contains('@') || !email.contains('.')) {
-          return 'Geçerli bir e-posta girin.';
+          return l10n.t('acct_err_email_invalid');
         }
         return null;
       },
@@ -75,18 +95,17 @@ class AccountSecurityActions {
         await AuthService.instance
             .sendEmailUpdateVerification(values['email']!.trim());
       },
-      successMessage:
-          'Doğrulama bağlantısı yeni adresinize gönderildi. Onayladıktan sonra e-postanız güncellenecek.',
+      successMessage: l10n.t('acct_email_verification_sent'),
     );
   }
 
   /// Şifre sıfırlama e-postası (mevcut hesap adresine).
   static Future<void> sendPasswordReset(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     try {
       await AuthService.instance.sendPasswordResetForCurrentUser();
       if (context.mounted) {
-        AppToaster.success(
-            context, 'Şifre sıfırlama bağlantısı e-postanıza gönderildi.');
+        AppToaster.success(context, l10n.t('acct_password_reset_sent'));
       }
     } catch (e) {
       if (context.mounted) {
@@ -99,26 +118,24 @@ class AccountSecurityActions {
   /// Hesabı kalıcı sil: güçlü onay + reauth (şifre hesapları) + Auth silme +
   /// en iyi çaba Firestore temizliği. Mağaza (Apple) zorunluluğu.
   static Future<void> showDeleteAccount(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         final ext = AppThemeExtension.of(ctx);
         return AlertDialog(
           backgroundColor: ext.surfaceElevated,
-          title: const Text('Hesabı kalıcı olarak sil'),
-          content: const Text(
-            'Bu işlem geri alınamaz. Hesabınız ve oturum erişiminiz kalıcı olarak '
-            'silinir. Devam etmek istiyor musunuz?',
-          ),
+          title: Text(l10n.t('acct_delete_confirm_title')),
+          content: Text(l10n.t('acct_delete_confirm_body')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Vazgeç'),
+              child: Text(l10n.t('action_dismiss')),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: ext.danger),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Devam et'),
+              child: Text(l10n.t('action_continue')),
             ),
           ],
         );
@@ -130,23 +147,27 @@ class AccountSecurityActions {
     if (isPassword) {
       await _showFormSheet(
         context,
-        title: 'Hesabı sil',
-        subtitle: 'Güvenlik için şifrenizi doğrulayın. Bu işlem geri alınamaz.',
+        title: l10n.t('acct_delete_title'),
+        subtitle: l10n.t('acct_delete_sub'),
         icon: Icons.delete_forever_rounded,
         danger: true,
-        fields: const [
-          _FormField(key: 'current', label: 'Mevcut şifre', obscure: true),
+        fields: [
+          _FormField(
+              key: 'current',
+              label: l10n.t('acct_field_current_password'),
+              obscure: true),
         ],
-        submitLabel: 'Hesabımı kalıcı sil',
-        validate: (values) =>
-            (values['current'] ?? '').isEmpty ? 'Şifre gerekli.' : null,
+        submitLabel: l10n.t('acct_delete_cta'),
+        validate: (values) => (values['current'] ?? '').isEmpty
+            ? l10n.t('acct_err_password_required')
+            : null,
         action: (values) async {
           await AuthService.instance
               .reauthenticateWithPassword(values['current']!);
           await _purgeUserDocsBestEffort();
           await AuthService.instance.deleteCurrentUser();
         },
-        successMessage: 'Hesabınız silindi.',
+        successMessage: l10n.t('acct_deleted'),
       );
     } else {
       // OAuth (Google/Facebook) hesapları: parola yok. Doğrudan silmeyi dene;
@@ -155,14 +176,14 @@ class AccountSecurityActions {
         await _purgeUserDocsBestEffort();
         await AuthService.instance.deleteCurrentUser();
         if (context.mounted) {
-          AppToaster.success(context, 'Hesabınız silindi.');
+          AppToaster.success(context, l10n.t('acct_deleted'));
         }
       } on FirebaseAuthException catch (e) {
         if (!context.mounted) return;
         if (e.code == 'requires-recent-login') {
           AppToaster.warning(
             context,
-            'Güvenlik için lütfen çıkış yapıp tekrar giriş yapın, ardından silmeyi yeniden deneyin.',
+            l10n.t('acct_delete_requires_recent_login'),
           );
         } else {
           AppToaster.error(
@@ -349,7 +370,7 @@ class _AccountFormSheetState extends State<_AccountFormSheet> {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Kapat',
+                      tooltip: AppLocalizations.of(context).t('action_close'),
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close_rounded),
                     ),

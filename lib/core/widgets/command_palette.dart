@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/app_destinations.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_navigator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -68,6 +69,7 @@ class _CommandPaletteContentState
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final premium = PremiumThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
     final filteredActions =
         filterDestinations(appDestinationsFor(role), _query);
@@ -97,15 +99,15 @@ class _CommandPaletteContentState
                   color: premium.champagneGold,
                 ),
                 const SizedBox(width: DesignTokens.space3),
-                const Expanded(
+                Expanded(
                   child: PremiumSheetHeader(
                     compact: true,
-                    title: 'Hızlı Erişim',
-                    subtitle: 'Alan, sayfa ya da müşteri arayın',
+                    title: l10n.t('cmd_quick_access_title'),
+                    subtitle: l10n.t('cmd_quick_access_subtitle'),
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Kapat',
+                  tooltip: l10n.t('action_close'),
                   style: IconButton.styleFrom(
                     foregroundColor: ext.textTertiary,
                   ),
@@ -122,7 +124,7 @@ class _CommandPaletteContentState
               controller: _controller,
               focusNode: _focusNode,
               decoration: InputDecoration(
-                hintText: 'Alan, sayfa ya da müşteri ara...',
+                hintText: l10n.t('cmd_search_hint'),
                 hintStyle: AppTypography.body(context)
                     .copyWith(color: ext.foregroundMuted),
                 prefixIcon: Icon(
@@ -162,7 +164,7 @@ class _CommandPaletteContentState
                   const EdgeInsets.symmetric(horizontal: DesignTokens.space5),
               children: [
                 if (filteredActions.isNotEmpty) ...[
-                  Text('Alanlar',
+                  Text(l10n.t('cmd_section_areas'),
                       style: AppTypography.sectionLabel(context)
                           .copyWith(color: ext.foregroundMuted)),
                   const SizedBox(height: DesignTokens.space2),
@@ -175,7 +177,7 @@ class _CommandPaletteContentState
                 ],
                 if (_query.length >= 2 &&
                     FeaturePermission.canViewAllCustomers(role)) ...[
-                  Text('Müşteriler',
+                  Text(l10n.t('cmd_section_customers'),
                       style: AppTypography.sectionLabel(context)
                           .copyWith(color: ext.foregroundMuted)),
                   const SizedBox(height: DesignTokens.space2),
@@ -225,7 +227,7 @@ class _CommandPaletteContentState
                         return Padding(
                           padding: const EdgeInsets.all(DesignTokens.space4),
                           child: Text(
-                            'Eşleşen müşteri yok',
+                            l10n.t('cmd_no_customer_match'),
                             style: AppTypography.body(context)
                                 .copyWith(color: ext.textTertiary),
                           ),
@@ -237,7 +239,7 @@ class _CommandPaletteContentState
                           final data = d.data();
                           final name = data['fullName'] as String? ??
                               data['customerIntent'] as String? ??
-                              'İsimsiz';
+                              l10n.t('customer_unnamed');
                           return _ActionTile(
                             icon: Icons.person_rounded,
                             label: name,

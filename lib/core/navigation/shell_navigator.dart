@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/app_destinations.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -71,7 +72,9 @@ abstract final class ShellNavigator {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message ?? 'Bu alana erişim yetkiniz bulunmuyor.'),
+          content: Text(
+            message ?? AppLocalizations.of(context).t('access_denied_area'),
+          ),
         ),
       );
   }

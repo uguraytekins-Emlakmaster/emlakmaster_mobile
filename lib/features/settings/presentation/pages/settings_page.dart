@@ -90,11 +90,11 @@ class SettingsPage extends ConsumerWidget {
               id: TourTargetId.settingsHeader,
               child: PremiumPageHeader(
                 title: l10n.t('title_settings'),
-                subtitle: 'Sisteminizi dilediğiniz gibi yönetin.',
+                subtitle: l10n.t('settings_subtitle'),
               ),
             ),
-            const PremiumSectionHeader(
-              label: 'Hesap Alanı',
+            PremiumSectionHeader(
+              label: l10n.t('settings_section_account_area'),
               icon: Icons.person_rounded,
             ),
             _sectionCard(
@@ -107,13 +107,14 @@ class SettingsPage extends ConsumerWidget {
                       fallbackText: user.displayName ?? user.email ?? '',
                     ),
                     title: Text(
-                      user.email ?? 'Giriş yapılmış',
+                      user.email ?? l10n.t('settings_logged_in'),
                       style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
-                      'Rol: ${override?.label ?? role.label}',
+                      l10n.tArgs('settings_role_prefix',
+                          [override?.label ?? role.label]),
                       style: TextStyle(
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.7),
@@ -180,7 +181,7 @@ class SettingsPage extends ConsumerWidget {
                   ListTile(
                     leading: Icon(Icons.logout_rounded,
                         color: AppThemeExtension.of(context).danger),
-                    title: Text('Çıkış yap',
+                    title: Text(l10n.t('settings_logout'),
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     onTap: () async {
                       final ok = await showDialog<bool>(
@@ -189,19 +190,18 @@ class SettingsPage extends ConsumerWidget {
                           final dExt = AppThemeExtension.of(ctx);
                           return AlertDialog(
                             backgroundColor: dExt.surfaceElevated,
-                            title: const Text('Çıkış yap'),
-                            content: const Text(
-                                'Oturumunuzu kapatmak istediğinize emin misiniz?'),
+                            title: Text(l10n.t('settings_logout')),
+                            content: Text(l10n.t('settings_logout_confirm')),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx, false),
-                                child: const Text('Vazgeç'),
+                                child: Text(l10n.t('action_dismiss')),
                               ),
                               FilledButton(
                                 style: FilledButton.styleFrom(
                                     backgroundColor: dExt.danger),
                                 onPressed: () => Navigator.pop(ctx, true),
-                                child: const Text('Çıkış yap'),
+                                child: Text(l10n.t('settings_logout')),
                               ),
                             ],
                           );
@@ -222,8 +222,8 @@ class SettingsPage extends ConsumerWidget {
             ),
             if (user != null) ...[
               const SizedBox(height: DesignTokens.space6),
-              const _SectionHeader(
-                title: 'Hesap Güvenliği',
+              _SectionHeader(
+                title: l10n.t('settings_section_security'),
                 icon: Icons.shield_rounded,
               ),
               _sectionCard(
@@ -233,7 +233,7 @@ class SettingsPage extends ConsumerWidget {
                     ListTile(
                       leading: Icon(Icons.lock_reset_rounded,
                           color: AppThemeExtension.of(context).accent),
-                      title: Text('Şifre değiştir',
+                      title: Text(l10n.t('acct_change_password_title'),
                           style: TextStyle(color: theme.colorScheme.onSurface)),
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () =>
@@ -245,7 +245,7 @@ class SettingsPage extends ConsumerWidget {
                     ListTile(
                       leading: Icon(Icons.alternate_email_rounded,
                           color: AppThemeExtension.of(context).accent),
-                      title: Text('E-posta değiştir',
+                      title: Text(l10n.t('acct_change_email_title'),
                           style: TextStyle(color: theme.colorScheme.onSurface)),
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () =>
@@ -257,10 +257,10 @@ class SettingsPage extends ConsumerWidget {
                     ListTile(
                       leading: Icon(Icons.mark_email_read_rounded,
                           color: AppThemeExtension.of(context).accent),
-                      title: Text('Şifre sıfırlama bağlantısı gönder',
+                      title: Text(l10n.t('settings_send_password_reset'),
                           style: TextStyle(color: theme.colorScheme.onSurface)),
                       subtitle: Text(
-                        'Hesap e-postanıza güvenli sıfırlama bağlantısı yollar.',
+                        l10n.t('settings_send_password_reset_sub'),
                         style: TextStyle(
                             color: theme.colorScheme.onSurface
                                 .withValues(alpha: 0.65),
@@ -276,12 +276,12 @@ class SettingsPage extends ConsumerWidget {
                   ListTile(
                     leading: Icon(Icons.delete_forever_rounded,
                         color: AppThemeExtension.of(context).danger),
-                    title: Text('Hesabı kalıcı olarak sil',
+                    title: Text(l10n.t('acct_delete_confirm_title'),
                         style: TextStyle(
                             color: AppThemeExtension.of(context).danger,
                             fontWeight: FontWeight.w600)),
                     subtitle: Text(
-                      'Hesabınızı ve erişiminizi geri alınamaz şekilde kaldırır.',
+                      l10n.t('settings_delete_account_sub'),
                       style: TextStyle(
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.65),
@@ -294,8 +294,8 @@ class SettingsPage extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-              title: 'Plan & Üyelik',
+            _SectionHeader(
+              title: l10n.t('settings_section_plan'),
               icon: Icons.workspace_premium_rounded,
             ),
             _sectionCard(
@@ -307,7 +307,9 @@ class SettingsPage extends ConsumerWidget {
                     color: AppThemeExtension.of(context).accent,
                   ),
                   title: Text(
-                    usage.isPro ? 'PRO üyelik açık' : 'Temel Plan',
+                    usage.isPro
+                        ? l10n.t('settings_plan_pro_active')
+                        : l10n.t('settings_plan_basic'),
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
@@ -315,8 +317,8 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   subtitle: Text(
                     usage.isPro
-                        ? 'Sınırsız akıllı öneri ve gelişmiş içgörüler hazır.'
-                        : 'Arama ve müşteri akışı sınırsız. Akıllı öneriler ayda 20 hakla devam eder.',
+                        ? l10n.t('settings_plan_pro_sub')
+                        : l10n.t('settings_plan_basic_sub'),
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 12,
@@ -353,7 +355,7 @@ class SettingsPage extends ConsumerWidget {
                                     theme.dividerColor.withValues(alpha: 0.5)),
                           ),
                           child: Text(
-                            'Temel',
+                            l10n.t('settings_plan_basic_badge'),
                             style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.75),
@@ -377,11 +379,11 @@ class SettingsPage extends ConsumerWidget {
                       color: AppThemeExtension.of(context).accent,
                     ),
                     title: Text(
-                      'Pro\u2019yu keşfet',
+                      l10n.t('settings_discover_pro'),
                       style: TextStyle(color: theme.colorScheme.onSurface),
                     ),
                     subtitle: Text(
-                      'Sınırsız akıllı öneri, daha derin müşteri içgörüsü ve daha güçlü satış yönlendirmesi.',
+                      l10n.t('settings_discover_pro_sub'),
                       style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -398,7 +400,7 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(title: 'Çağrılar', icon: Icons.call_rounded),
+            _SectionHeader(title: l10n.t('notif_cat_calls'), icon: Icons.call_rounded),
             _sectionCard(
               context,
               children: [
@@ -410,7 +412,7 @@ class SettingsPage extends ConsumerWidget {
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500)),
                   subtitle: Text(
-                    'Danışman alanındaki çağrılar, toplu mesaj ve Android telefon geçmişi eşlemesi.',
+                    l10n.t('settings_calls_sub'),
                     style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -493,7 +495,7 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.translate_rounded,
                       color: AppThemeExtension.of(context).accent, size: 22),
-                  title: Text('Dil',
+                  title: Text(l10n.t('section_language'),
                       style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500)),
@@ -512,8 +514,9 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'İlanlar & Ofis', icon: Icons.apartment_rounded),
+            _SectionHeader(
+                title: l10n.t('settings_section_listings_office'),
+                icon: Icons.apartment_rounded),
             _sectionCard(
               context,
               children: [
@@ -525,7 +528,7 @@ class SettingsPage extends ConsumerWidget {
             _SectionHeader(
               title: canManagePlatformIntegrations
                   ? l10n.t('settings_section_platform_integrations_manager')
-                  : 'Eşleştirme & Entegrasyonlar',
+                  : l10n.t('settings_section_integrations'),
               icon: Icons.hub_rounded,
             ),
             flagsAsync.when(
@@ -586,9 +589,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.auto_fix_high_outlined,
                             color: theme.colorScheme.primary),
-                        title: const Text('Kanal kurulum akışı'),
+                        title: Text(l10n.t('settings_channel_setup')),
                         subtitle: Text(
-                          'Resmi entegrasyon hazırlığı, aktarım anahtarı ve toplu veri akışı',
+                          l10n.t('settings_channel_setup_sub'),
                           style: TextStyle(
                             color: theme.colorScheme.onSurface
                                 .withValues(alpha: 0.65),
@@ -604,9 +607,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.upload_file_outlined,
                             color: theme.colorScheme.primary),
-                        title: const Text('Toplu ilan aktarımı'),
+                        title: Text(l10n.t('settings_bulk_import')),
                         subtitle: Text(
-                          'Bağlantı, dosya ve aktarım geçmişi',
+                          l10n.t('settings_bulk_import_sub'),
                           style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.65),
@@ -618,9 +621,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.history_rounded,
                             color: theme.colorScheme.primary),
-                        title: const Text('Aktarım geçmişi'),
+                        title: Text(l10n.t('settings_import_history')),
                         subtitle: Text(
-                          'Görev durumu ve işlem kayıtları',
+                          l10n.t('settings_import_history_sub'),
                           style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.65),
@@ -651,7 +654,7 @@ class SettingsPage extends ConsumerWidget {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                       child: Text(
-                        'Harici platformlar kapalı. Açmak için Gelişmiş özellikler bölümünü kullanın.',
+                        l10n.t('settings_external_disabled'),
                         style: TextStyle(
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.7),
@@ -666,8 +669,9 @@ class SettingsPage extends ConsumerWidget {
               error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Yatırım & Piyasa', icon: Icons.show_chart_rounded),
+            _SectionHeader(
+                title: l10n.t('settings_section_investment'),
+                icon: Icons.show_chart_rounded),
             _sectionCard(
               context,
               children: const [
@@ -676,18 +680,19 @@ class SettingsPage extends ConsumerWidget {
             ),
             if (!isAdmin || preferConsultant == true) ...[
               const SizedBox(height: DesignTokens.space6),
-              const _SectionHeader(
-                  title: 'Yardım & Tur', icon: Icons.school_rounded),
+              _SectionHeader(
+                  title: l10n.t('settings_section_help_tour'),
+                  icon: Icons.school_rounded),
               _sectionCard(
                 context,
                 children: [
                   ListTile(
                     leading: Icon(Icons.replay_rounded,
                         color: AppThemeExtension.of(context).accent),
-                    title: Text('Turu tekrar göster',
+                    title: Text(l10n.t('settings_replay_tour'),
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text(
-                      'Tüm ana ekranları gezen tanıtım turunu yeniden başlatır.',
+                      l10n.t('settings_replay_tour_sub_consultant'),
                       style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.65),
@@ -699,7 +704,7 @@ class SettingsPage extends ConsumerWidget {
                       ref.read(consultantTourReplayProvider.notifier).state++;
                       AppToaster.info(
                         context,
-                        'Tanıtım turu yeniden başlatıldı.',
+                        l10n.t('settings_tour_restarted'),
                       );
                     },
                   ),
@@ -708,19 +713,19 @@ class SettingsPage extends ConsumerWidget {
             ],
             if (isAdmin && preferConsultant != true) ...[
               const SizedBox(height: DesignTokens.space6),
-              const _SectionHeader(
-                  title: 'Yardım & Tur', icon: Icons.school_rounded),
+              _SectionHeader(
+                  title: l10n.t('settings_section_help_tour'),
+                  icon: Icons.school_rounded),
               _sectionCard(
                 context,
                 children: [
                   ListTile(
                     leading: Icon(Icons.replay_rounded,
                         color: AppThemeExtension.of(context).accent),
-                    title: Text('Turu tekrar göster',
+                    title: Text(l10n.t('settings_replay_tour'),
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text(
-                      'Yönetici panelinin tüm ana ekranlarını gezen tanıtım '
-                      'turunu yeniden başlatır.',
+                      l10n.t('settings_replay_tour_sub_manager'),
                       style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.65),
@@ -732,7 +737,7 @@ class SettingsPage extends ConsumerWidget {
                       ref.read(managerTourReplayProvider.notifier).state++;
                       AppToaster.info(
                         context,
-                        'Tanıtım turu yeniden başlatıldı.',
+                        l10n.t('settings_tour_restarted'),
                       );
                     },
                   ),
@@ -746,15 +751,16 @@ class SettingsPage extends ConsumerWidget {
               l10n: l10n,
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Yasal & Destek', icon: Icons.gavel_rounded),
+            _SectionHeader(
+                title: l10n.t('settings_section_legal'),
+                icon: Icons.gavel_rounded),
             _sectionCard(
               context,
               children: [
                 ListTile(
                   leading: Icon(Icons.privacy_tip_outlined,
                       color: AppThemeExtension.of(context).accent),
-                  title: Text('Gizlilik Politikası',
+                  title: Text(l10n.t('settings_privacy_policy'),
                       style: TextStyle(color: theme.colorScheme.onSurface)),
                   trailing: Icon(
                       LegalLinks.hasPrivacyPolicy
@@ -778,7 +784,7 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.description_outlined,
                       color: AppThemeExtension.of(context).accent),
-                  title: Text('Kullanım Şartları',
+                  title: Text(l10n.t('settings_terms'),
                       style: TextStyle(color: theme.colorScheme.onSurface)),
                   trailing: Icon(
                       LegalLinks.hasTermsOfService
@@ -803,7 +809,7 @@ class SettingsPage extends ConsumerWidget {
                   ListTile(
                     leading: Icon(Icons.support_agent_rounded,
                         color: AppThemeExtension.of(context).accent),
-                    title: Text('Destek ile iletişim',
+                    title: Text(l10n.t('settings_contact_support'),
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     subtitle: Text(
                       LegalLinks.supportEmail,
@@ -824,7 +830,7 @@ class SettingsPage extends ConsumerWidget {
                   ListTile(
                     leading: Icon(Icons.help_outline_rounded,
                         color: AppThemeExtension.of(context).accent),
-                    title: Text('Yardım merkezi',
+                    title: Text(l10n.t('settings_help_center'),
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: const Icon(Icons.open_in_new_rounded, size: 18),
                     onTap: () => _launchExternalUrl(
@@ -837,21 +843,22 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.workspaces_outline,
                       color: AppThemeExtension.of(context).accent),
-                  title: Text('Açık kaynak lisansları',
+                  title: Text(l10n.t('settings_open_source'),
                       style: TextStyle(color: theme.colorScheme.onSurface)),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => showLicensePage(
                     context: context,
                     applicationName: AppConstants.appName,
-                    applicationVersion:
-                        'Sürüm ${AppConstants.appVersion.split('+').first}',
+                    applicationVersion: l10n.tArgs('settings_version',
+                        [AppConstants.appVersion.split('+').first]),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Hakkında', icon: Icons.info_outline_rounded),
+            _SectionHeader(
+                title: l10n.t('settings_section_about'),
+                icon: Icons.info_outline_rounded),
             _sectionCard(
               context,
               children: const [
@@ -971,11 +978,11 @@ class SettingsPage extends ConsumerWidget {
                       child: PremiumSheetHeader(
                         compact: true,
                         title: l10n.t('section_language'),
-                        subtitle: 'Uygulama dili',
+                        subtitle: l10n.t('settings_app_language_sub'),
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Kapat',
+                      tooltip: l10n.t('action_close'),
                       style: IconButton.styleFrom(
                         foregroundColor: ext.textTertiary,
                       ),
@@ -1045,7 +1052,8 @@ class SettingsPage extends ConsumerWidget {
     if (uri == null) return;
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      AppToaster.error(context, 'Bağlantı açılamadı.');
+      AppToaster.error(
+          context, AppLocalizations.of(context).t('listing_external_open_failed'));
     }
   }
 
@@ -1057,7 +1065,8 @@ class SettingsPage extends ConsumerWidget {
     );
     final ok = await launchUrl(uri);
     if (!ok && context.mounted) {
-      AppToaster.error(context, 'E-posta uygulaması açılamadı.');
+      AppToaster.error(
+          context, AppLocalizations.of(context).t('email_app_open_failed'));
     }
   }
 
@@ -1123,12 +1132,11 @@ class _SettingsAdvancedSection extends ConsumerWidget {
             ),
             children: [
               _AdvancedFlagGroup(
-                label: 'Ürün görünümü',
+                label: l10n.t('settings_adv_group_product'),
                 children: [
                   _SettingSwitch(
-                    title: 'Odaklı V1 (önerilen)',
-                    subtitle:
-                        'Komuta Odası ve Ekonomi sekmeleri gizlenir; çekirdek akış kalır.',
+                    title: l10n.t('settings_flag_lean_title'),
+                    subtitle: l10n.t('settings_flag_lean_sub'),
                     icon: Icons.bolt_outlined,
                     value: flags[AppConstants.keyV1LeanProduct] ?? true,
                     onChanged: (v) => ref
@@ -1136,8 +1144,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyV1LeanProduct, v),
                   ),
                   _SettingSwitch(
-                    title: 'KPI çubuğu',
-                    subtitle: 'Özet ekranın üstündeki hızlı göstergeler',
+                    title: l10n.t('settings_flag_kpi_title'),
+                    subtitle: l10n.t('settings_flag_kpi_sub'),
                     icon: Icons.bar_chart_rounded,
                     value: flags[AppConstants.keyFeatureKpiBar] ?? true,
                     onChanged: (v) => ref
@@ -1146,7 +1154,7 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                   ),
                   _SettingSwitch(
                     title: ProductLabels.warRoom,
-                    subtitle: 'Ofis ritmi, hedefler ve öncelikli alanlar',
+                    subtitle: l10n.t('settings_flag_warroom_sub'),
                     icon: Icons.military_tech_rounded,
                     value: flags[AppConstants.keyFeatureWarRoom] ?? true,
                     onChanged: (v) => ref
@@ -1155,7 +1163,7 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                   ),
                   _SettingSwitch(
                     title: ProductLabels.callCenter,
-                    subtitle: 'Tüm çağrılar ve operasyon görünümü',
+                    subtitle: l10n.t('settings_flag_callcenter_sub'),
                     icon: Icons.call_merge_rounded,
                     value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
                     onChanged: (v) => ref
@@ -1163,8 +1171,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureCommandCenter, v),
                   ),
                   _SettingSwitch(
-                    title: 'Günlük özet',
-                    subtitle: 'Günün özeti paneli',
+                    title: l10n.t('settings_flag_dailybrief_title'),
+                    subtitle: l10n.t('settings_flag_dailybrief_sub'),
                     icon: Icons.today_rounded,
                     value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
                     onChanged: (v) => ref
@@ -1172,8 +1180,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureDailyBrief, v),
                   ),
                   _SettingSwitch(
-                    title: 'Pipeline',
-                    subtitle: 'Kanban ve aşama takibi',
+                    title: l10n.t('settings_flag_pipeline_title'),
+                    subtitle: l10n.t('settings_flag_pipeline_sub'),
                     icon: Icons.account_tree_rounded,
                     value: flags[AppConstants.keyFeaturePipeline] ?? true,
                     onChanged: (v) => ref
@@ -1181,8 +1189,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeaturePipeline, v),
                   ),
                   _SettingSwitch(
-                    title: 'Yatırımcı istihbaratı',
-                    subtitle: 'Fırsat radarı ve yatırım panelleri',
+                    title: l10n.t('settings_flag_investor_title'),
+                    subtitle: l10n.t('settings_flag_investor_sub'),
                     icon: Icons.savings_rounded,
                     value: flags[AppConstants.keyFeatureInvestorIntelligence] ??
                         true,
@@ -1192,8 +1200,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                             AppConstants.keyFeatureInvestorIntelligence, v),
                   ),
                   _SettingSwitch(
-                    title: 'Görevler',
-                    subtitle: 'Takip ve hatırlatmalar',
+                    title: l10n.t('settings_flag_tasks_title'),
+                    subtitle: l10n.t('settings_flag_tasks_sub'),
                     icon: Icons.task_alt_rounded,
                     value: flags[AppConstants.keyFeatureTasks] ?? true,
                     onChanged: (v) => ref
@@ -1201,8 +1209,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureTasks, v),
                   ),
                   _SettingSwitch(
-                    title: 'Bildirim merkezi',
-                    subtitle: 'Tüm bildirimler tek ekranda',
+                    title: l10n.t('settings_flag_notif_center_title'),
+                    subtitle: l10n.t('settings_flag_notif_center_sub'),
                     icon: Icons.notifications_rounded,
                     value: flags[AppConstants.keyFeatureNotificationsCenter] ??
                         true,
@@ -1213,11 +1221,11 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                 ],
               ),
               _AdvancedFlagGroup(
-                label: 'Çağrı & kayıt',
+                label: l10n.t('settings_adv_group_calls'),
                 children: [
                   _SettingSwitch(
-                    title: 'Sesli müşteri akışı',
-                    subtitle: 'Eller serbest kullanım ve sesli yönlendirme',
+                    title: l10n.t('settings_flag_voice_title'),
+                    subtitle: l10n.t('settings_flag_voice_sub'),
                     icon: Icons.mic_rounded,
                     value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
                     onChanged: (v) => ref
@@ -1225,8 +1233,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureVoiceCrm, v),
                   ),
                   _SettingSwitch(
-                    title: 'Çağrı özeti',
-                    subtitle: 'Arama sonrası akıllı özet',
+                    title: l10n.t('settings_flag_callsummary_title'),
+                    subtitle: l10n.t('settings_flag_callsummary_sub'),
                     icon: Icons.summarize_rounded,
                     value: flags[AppConstants.keyFeatureCallSummary] ?? true,
                     onChanged: (v) => ref
@@ -1234,8 +1242,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureCallSummary, v),
                   ),
                   _SettingSwitch(
-                    title: 'Rehbere / uygulamaya kaydet',
-                    subtitle: 'Arama sonrası rehber ve müşteri kaydı',
+                    title: l10n.t('settings_flag_contactsave_title'),
+                    subtitle: l10n.t('settings_flag_contactsave_sub'),
                     icon: Icons.contact_phone_rounded,
                     value: flags[AppConstants.keyFeatureContactSave] ?? true,
                     onChanged: (v) => ref
@@ -1245,11 +1253,11 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                 ],
               ),
               _AdvancedFlagGroup(
-                label: 'Entegrasyon & piyasa',
+                label: l10n.t('settings_adv_group_integration'),
                 children: [
                   _SettingSwitch(
-                    title: 'Market Pulse',
-                    subtitle: 'Son ilanlar ve harici kaynaklar',
+                    title: l10n.t('settings_flag_marketpulse_title'),
+                    subtitle: l10n.t('settings_flag_marketpulse_sub'),
                     icon: Icons.trending_up_rounded,
                     value: flags[AppConstants.keyFeatureMarketPulse] ?? true,
                     onChanged: (v) => ref
@@ -1257,8 +1265,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureMarketPulse, v),
                   ),
                   _SettingSwitch(
-                    title: 'Portföy eşleştirme',
-                    subtitle: 'Müşteri–ilan eşleşme önerisi',
+                    title: l10n.t('settings_flag_portfolio_title'),
+                    subtitle: l10n.t('settings_flag_portfolio_sub'),
                     icon: Icons.auto_awesome_rounded,
                     value: flags[AppConstants.keyFeaturePortfolioMatch] ?? true,
                     onChanged: (v) => ref
@@ -1266,9 +1274,8 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeaturePortfolioMatch, v),
                   ),
                   _SettingSwitch(
-                    title: 'Harici platform entegrasyonları',
-                    subtitle:
-                        'Sahibinden / Hepsiemlak / Emlakjet bağlı hesaplar',
+                    title: l10n.t('settings_flag_external_title'),
+                    subtitle: l10n.t('settings_flag_external_sub'),
                     icon: Icons.hub_rounded,
                     value: flags[AppConstants.keyFeatureExternalIntegrations] ??
                         true,
@@ -1283,10 +1290,10 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                   height: 1, color: theme.dividerColor.withValues(alpha: 0.35)),
               ListTile(
                 leading: Icon(Icons.restart_alt_rounded, color: ext.accent),
-                title: Text('Varsayılanlara sıfırla',
+                title: Text(l10n.t('settings_reset_defaults'),
                     style: AppTypography.bodyStrong(context)),
                 subtitle: Text(
-                  'Tüm gelişmiş özellik anahtarlarını fabrika ayarına döndürür.',
+                  l10n.t('settings_reset_defaults_sub'),
                   style: AppTypography.meta(context),
                 ),
                 onTap: () async {
@@ -1296,17 +1303,16 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                       final dExt = AppThemeExtension.of(dctx);
                       return AlertDialog(
                         backgroundColor: dExt.surfaceElevated,
-                        title: const Text('Varsayılanlara sıfırla'),
-                        content: const Text(
-                            'Tüm gelişmiş özellik anahtarları varsayılan değerlerine dönecek. Devam edilsin mi?'),
+                        title: Text(l10n.t('settings_reset_defaults')),
+                        content: Text(l10n.t('settings_reset_defaults_confirm')),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(dctx, false),
-                            child: const Text('Vazgeç'),
+                            child: Text(l10n.t('action_dismiss')),
                           ),
                           FilledButton(
                             onPressed: () => Navigator.pop(dctx, true),
-                            child: const Text('Sıfırla'),
+                            child: Text(l10n.t('action_reset')),
                           ),
                         ],
                       );
@@ -1318,7 +1324,7 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                       .resetToDefaults();
                   if (context.mounted) {
                     AppToaster.success(
-                        context, 'Gelişmiş ayarlar varsayılana döndürüldü.');
+                        context, l10n.t('settings_reset_done'));
                   }
                 },
               ),
@@ -1395,6 +1401,7 @@ class _FavoriteInvestRegionTileState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final ids = _options.map((e) => e.key).toSet();
     final raw = _value ?? AppConstants.defaultFavoriteInvestRegionId;
     final v =
@@ -1403,12 +1410,12 @@ class _FavoriteInvestRegionTileState
       leading: Icon(Icons.location_city_rounded,
           color: AppThemeExtension.of(context).accent, size: 22),
       title: Text(
-        'Fırsat Endeksi bölgesi',
+        l10n.t('settings_invest_region_title'),
         style: TextStyle(
             color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
-        'Diyarbakır ilçeleri için: Komuta Merkezi yatırım iştahı özeti bu ilçeye göre hesaplanır.',
+        l10n.t('settings_invest_region_sub'),
         style: TextStyle(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
           fontSize: 11,
@@ -1486,11 +1493,12 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
       if (!mounted) return;
       if (result != null && result.downloadUrl.isNotEmpty) {
         ref.invalidate(userDocStreamProvider(widget.userId));
-        AppToaster.success(context, 'Profil fotoğrafı güncellendi.');
+        AppToaster.success(
+            context, AppLocalizations.of(context).t('settings_avatar_updated'));
       } else {
         AppToaster.warning(
           context,
-          'Profil fotoğrafı yüklenemedi. Mevcut fotoğrafınız korundu.',
+          AppLocalizations.of(context).t('settings_avatar_upload_failed'),
         );
       }
     } catch (e) {
@@ -1509,7 +1517,8 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
     try {
       await ProfileAvatarService.instance.deleteAvatar(uid: widget.userId);
       if (mounted) {
-        AppToaster.success(context, 'Profil fotoğrafı kaldırıldı.');
+        AppToaster.success(
+            context, AppLocalizations.of(context).t('settings_avatar_removed'));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -1529,6 +1538,7 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
           orElse: () => true,
         );
     final showChecking = storageAsync.isLoading;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Column(
@@ -1541,7 +1551,7 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Profil fotoğrafı',
+                  l10n.t('settings_avatar_title'),
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
@@ -1550,12 +1560,14 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
               ),
               TextButton(
                 onPressed: canPickPhoto ? _pickAndUpload : null,
-                child: Text(_loading ? 'Yükleniyor…' : 'Fotoğraf seç'),
+                child: Text(_loading
+                    ? l10n.t('photo_uploading')
+                    : l10n.t('photo_pick')),
               ),
               const SizedBox(width: 4),
               TextButton(
                 onPressed: _loading ? null : _removeAvatar,
-                child: const Text('Kaldır'),
+                child: Text(l10n.t('action_remove')),
               ),
             ],
           ),
@@ -1564,7 +1576,7 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
             Padding(
               padding: const EdgeInsets.only(left: 28),
               child: Text(
-                'Depolama durumu kontrol ediliyor…',
+                l10n.t('settings_storage_checking'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -1693,6 +1705,7 @@ class _TextScaleControl extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final scale = ref.watch(textScaleProvider);
     final pct = (scale * 100).round();
     return Padding(
@@ -1705,7 +1718,7 @@ class _TextScaleControl extends ConsumerWidget {
               Icon(Icons.format_size_rounded, color: ext.accent, size: 22),
               const SizedBox(width: 12),
               Expanded(
-                child: Text('Yazı boyutu',
+                child: Text(l10n.t('settings_text_size'),
                     style: AppTypography.bodyStrong(context)),
               ),
               Text('%$pct', style: AppTypography.meta(context)),
@@ -1721,7 +1734,7 @@ class _TextScaleControl extends ConsumerWidget {
             onChanged: (v) => ref.read(textScaleProvider.notifier).setScale(v),
           ),
           Text(
-            'Uygulama genelinde metin boyutunu ayarlar.',
+            l10n.t('settings_text_size_sub'),
             style: AppTypography.meta(context),
           ),
         ],

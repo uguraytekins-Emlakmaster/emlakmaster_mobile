@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/coach_mark_tour.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/manager_tour_providers.dart';
@@ -57,7 +58,7 @@ class _ManagerTourHostState extends ConsumerState<ManagerTourHost> {
     int tabIndexForKey(String key) => nav.tabIndexFor?.call(key) ?? -1;
     CoachMarkTour.show(
       context,
-      steps: buildManagerTourSteps(tabIndexForKey),
+      steps: buildManagerTourSteps(AppLocalizations.of(context), tabIndexForKey),
       goToTab: (pageIndex) => nav.goToTab(pageIndex),
       onCompleted: () {
         OnboardingStore.instance.setManagerTourCompleted();

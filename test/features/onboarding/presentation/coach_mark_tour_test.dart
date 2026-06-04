@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/coach_mark_tour.dart';
@@ -232,7 +233,8 @@ void main() {
   });
 
   test('kapsamlı tur adım listesi tüm ana ekranları içerir', () {
-    final steps = buildConsultantTourSteps();
+    final steps =
+        buildConsultantTourSteps(AppLocalizations(const Locale('tr')));
     final ids = steps.map((s) => s.targetId).toSet();
     expect(steps.length, greaterThanOrEqualTo(6));
     expect(ids, contains(TourTargetId.gunumCommandDeck));

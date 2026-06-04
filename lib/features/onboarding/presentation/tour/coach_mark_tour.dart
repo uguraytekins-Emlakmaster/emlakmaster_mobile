@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -198,6 +199,7 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final premium = PremiumThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final accent = premium.champagneGold;
     final rect = _targetRect;
     final spotlight = rect?.inflate(_spotlightPad);
@@ -229,7 +231,7 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
                 padding: const EdgeInsets.only(right: 8, top: 4),
                 child: Semantics(
                   button: true,
-                  label: 'Turu atla',
+                  label: l10n.t('tour_skip_label'),
                   child: TextButton.icon(
                     onPressed: _finish,
                     style: TextButton.styleFrom(
@@ -242,9 +244,9 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
                       ),
                     ),
                     icon: const Icon(Icons.close_rounded, size: 18),
-                    label: const Text(
-                      'Atla',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    label: Text(
+                      l10n.t('onboarding_skip'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -264,6 +266,7 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
     Color accent,
   ) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final step = widget.steps[_index];
     final isLast = _isLastShowable;
     final stepNo = _shownCount > 0 ? _shownCount : 1;
@@ -293,7 +296,7 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'TUR · ADIM $stepNo',
+              l10n.tArgs('tour_step_counter', ['$stepNo']),
               style: TextStyle(
                 color: accent.withValues(alpha: 0.9),
                 fontSize: 11,
@@ -343,23 +346,25 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
               children: [
                 Semantics(
                   button: true,
-                  label: 'Turu atla',
+                  label: l10n.t('tour_skip_label'),
                   child: TextButton(
                     onPressed: _finish,
                     style: TextButton.styleFrom(
                       foregroundColor: ext.textSecondary,
                       minimumSize: const Size(64, 44),
                     ),
-                    child: const Text(
-                      'Atla',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    child: Text(
+                      l10n.t('onboarding_skip'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
                 const Spacer(),
                 Semantics(
                   button: true,
-                  label: isLast ? 'Turu bitir' : 'Sonraki adım',
+                  label: isLast
+                      ? l10n.t('tour_finish_label')
+                      : l10n.t('tour_next_label'),
                   child: FilledButton(
                     onPressed: isLast ? _finish : _next,
                     style: FilledButton.styleFrom(
@@ -372,7 +377,7 @@ class _CoachMarkOverlayState extends State<_CoachMarkOverlay> {
                       ),
                     ),
                     child: Text(
-                      isLast ? 'Bitir' : 'İleri',
+                      isLast ? l10n.t('tour_finish') : l10n.t('onboarding_next'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,

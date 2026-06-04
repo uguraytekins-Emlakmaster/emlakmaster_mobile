@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/coach_mark_tour.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_providers.dart';
@@ -53,7 +54,7 @@ class _ConsultantTourHostState extends ConsumerState<ConsultantTourHost> {
     if (!mounted) return;
     CoachMarkTour.show(
       context,
-      steps: buildConsultantTourSteps(),
+      steps: buildConsultantTourSteps(AppLocalizations.of(context)),
       goToTab: (pageIndex) =>
           ConsultantShellNav.maybeOf(context)?.goToTab(pageIndex),
       onCompleted: () {
