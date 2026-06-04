@@ -94,13 +94,20 @@ class _RoleBasedShellSelectorState
 
   void _trackLoadingReason(String reason) {
     if (_loadingReason == reason) return;
-    _recoveryTimer?.cancel();
+    final wasLoading = _loadingReason != null;
     _loadingReason = reason;
-    _showRecovery = false;
     AppLogger.state('[startup][RoleShell] loading reason=$reason');
+    // Zaten yükleniyorduk ve sayaç çalışıyorsa, sebep değişimi (ör. "user doc
+    // bootstrap" → "display role") SÜREYİ SIFIRLAMAZ. Aksi halde salınan/akan
+    // sebepler 8sn'lik kurtarmayı sonsuza dek erteleyip kalıcı iskelet (açık
+    // temada beyaz algılanan) ekrana yol açabilirdi — anayasa: asla sonsuz yük.
+    if (wasLoading && _recoveryTimer != null) return;
+    _recoveryTimer?.cancel();
+    _showRecovery = false;
     _recoveryTimer = Timer(_recoveryDelay, () {
-      if (!mounted || _loadingReason != reason) return;
-      AppLogger.w('[startup][RoleShell] recovery fallback armed: $reason');
+      if (!mounted || _loadingReason == null) return;
+      AppLogger.w(
+          '[startup][RoleShell] recovery fallback armed: $_loadingReason');
       setState(() => _showRecovery = true);
     });
   }
@@ -241,11 +248,79 @@ class _ShellRoleErrorScreen extends ConsumerWidget {
 }
 
 /// Router rol/ofis kapısına yönlendirirken tam ekran spinner göstermez.
-class _ShellRouterGatePending extends StatelessWidget {
+///
+/// Normal akışta router birkaç on ms içinde rol/ofis kapısına (gate/recovery)
+/// yönlendirir ve bu widget unmount olur. Ancak release zamanlaması / router
+/// redirect yarışı nedeniyle kapı durumu (`needsRoleSelection` /
+/// `needsOfficeSetup` / `needsOfficeRecovery`) sürer ve `/` üzerinde takılı
+/// kalırsa, bu nötr gövde sonsuza dek BOŞ/BEYAZ kalmamalıdır (anayasa:
+/// error-resilience — asla kalıcı boş ekran, asla sonsuz bekleme).
+/// Bu yüzden kısa nötr gösterimden sonra görünür bir kurtarma + "Tekrar dene"
+/// sunulur; yeniden deneme kapı/rol grafiğini tazeleyerek router'ı çözmeye iter.
+class _ShellRouterGatePending extends ConsumerStatefulWidget {
   const _ShellRouterGatePending();
 
   @override
+  ConsumerState<_ShellRouterGatePending> createState() =>
+      _ShellRouterGatePendingState();
+}
+
+class _ShellRouterGatePendingState
+    extends ConsumerState<_ShellRouterGatePending> {
+  static const _recoveryDelay = Duration(seconds: 8);
+
+  Timer? _timer;
+  bool _showRecovery = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _armTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _armTimer() {
+    _timer?.cancel();
+    _timer = Timer(_recoveryDelay, () {
+      if (!mounted || _showRecovery) return;
+      AppLogger.w(
+          '[startup][RoleShell] router gate pending timeout; recovery escape');
+      setState(() => _showRecovery = true);
+    });
+  }
+
+  void _retry() {
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid;
+    AppLogger.state('[startup][RoleShell] gate-pending retry uid=${uid ?? "-"}');
+    if (uid != null && uid.isNotEmpty) {
+      ref.invalidate(userDocStreamProvider(uid));
+    }
+    ref.invalidate(primaryMembershipProvider);
+    ref.invalidate(officeAccessStateProvider);
+    ref.invalidate(currentRoleProvider);
+    ref.invalidate(displayRoleProvider);
+    setState(() => _showRecovery = false);
+    _armTimer();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_showRecovery) {
+      return StartupRecoveryScaffold(
+        title: 'Alan hazırlanıyor',
+        message:
+            'Hesap ve ofis bilginiz beklenenden uzun sürdü. Uygulama açık; '
+            'alanı yeniden kurmayı deneyebilir ya da oturumu tazeleyebilirsiniz.',
+        onPrimary: _retry,
+        secondaryLabel: 'Çıkış yap',
+        onSecondary: () => AuthLogoutCoordinator.signOut(ref),
+      );
+    }
     return ColoredBox(
       color: AppThemeExtension.of(context).background,
       child: const SizedBox.expand(),
