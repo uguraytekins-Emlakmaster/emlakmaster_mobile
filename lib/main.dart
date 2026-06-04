@@ -26,6 +26,7 @@ import 'package:emlakmaster_mobile/core/performance/startup_perf_markers.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
+import 'package:emlakmaster_mobile/core/widgets/startup_recovery_scaffold.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -450,7 +451,6 @@ class _PortivoAppState extends ConsumerState<PortivoApp> {
       builder: (context, child) {
         // Router henüz sayfa vermeden veya tema geç uygulanınca beyaz ekran olmasın.
         final ext = AppThemeExtension.of(context);
-        final scheme = Theme.of(context).colorScheme;
         final isRtl = locale.languageCode == 'ar';
         final content = child != null && isRtl
             ? Directionality(textDirection: TextDirection.rtl, child: child)
@@ -505,27 +505,10 @@ class _PortivoAppState extends ConsumerState<PortivoApp> {
                   // Çıkış sonrası redirect fırtınasında tam ekran spinner donmayı önle.
                   const SizedBox.shrink()
                 else
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const BrandEmblem(
-                          variant: BrandEmblemVariant.full,
-                          size: 120,
-                        ),
-                        const SizedBox(height: 28),
-                        SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: scheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Router henüz sayfa vermeden gösterilen açılış yükleyicisi.
+                  // Süresiz spinner YASAK (anayasa: error-resilience): uzun sürerse
+                  // [_RootStartupLoader] görünür bir kurtarma/yeniden dene sunar.
+                  const _RootStartupLoader(),
                 const Positioned(
                   top: 0,
                   left: 0,
@@ -562,4 +545,90 @@ class _PortivoAppState extends ConsumerState<PortivoApp> {
 
 class _OpenCommandPaletteIntent extends Intent {
   const _OpenCommandPaletteIntent();
+}
+
+/// Router ilk sayfayı vermeden gösterilen açılış yükleyicisi.
+///
+/// Anayasa error-resilience: **asla süresiz spinner**. Normal akışta router
+/// birkaç yüz ms içinde bir sayfa (login/home) üretir ve bu widget unmount olur.
+/// Beklenmedik bir durumda (ör. cihaza özgü ilk-kare/başlatma takılması) içerik
+/// gelmezse, kullanıcı sonsuza dek dönen amblemde KALMAZ — görünür bir kurtarma
+/// ekranı + "Tekrar dene" sunulur; yeniden deneme Firebase çekirdeğini ve auth
+/// akışını tazeler, böylece router hazır olunca yönlendirir.
+class _RootStartupLoader extends ConsumerStatefulWidget {
+  const _RootStartupLoader();
+
+  @override
+  ConsumerState<_RootStartupLoader> createState() => _RootStartupLoaderState();
+}
+
+class _RootStartupLoaderState extends ConsumerState<_RootStartupLoader> {
+  static const Duration _timeout = Duration(seconds: 12);
+
+  Timer? _timer;
+  bool _showRecovery = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _armTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _armTimer() {
+    _timer?.cancel();
+    _timer = Timer(_timeout, () {
+      if (!mounted || _showRecovery) return;
+      AppLogger.w('[startup] root loader timeout; showing recovery escape');
+      setState(() => _showRecovery = true);
+    });
+  }
+
+  void _retry() {
+    AppLogger.state('[startup] root loader retry requested');
+    FirebaseCoreBootstrap.instance.scheduleBackgroundInit();
+    ref.invalidate(currentUserProvider);
+    setState(() => _showRecovery = false);
+    _armTimer();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showRecovery) {
+      return StartupRecoveryScaffold(
+        title: 'Başlatma uzadı',
+        message:
+            'Uygulama hazırlanırken beklenenden uzun sürdü. Bağlantınızı '
+            'kontrol edip yeniden deneyebilirsiniz.',
+        onPrimary: _retry,
+      );
+    }
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const BrandEmblem(
+            variant: BrandEmblemVariant.full,
+            size: 120,
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: scheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
