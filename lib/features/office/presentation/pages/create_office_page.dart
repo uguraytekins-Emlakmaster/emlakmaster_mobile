@@ -51,9 +51,16 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
         officeName: _nameController.text,
       );
       if (!mounted) return;
+      final uid = user.uid;
+      // userDocStreamProvider'ı da invalidate et — bu olmadan router redirect
+      // users.officeId == null görüp office-gate'e geri gönderiyordu (beyaz/spinner).
+      // Invalidation sonrası needsOfficeSetupProvider değişir ve router'ın
+      // refreshListenable'ı otomatik olarak home'a yönlendirir.
+      ref.invalidate(userDocStreamProvider(uid));
       ref.invalidate(primaryMembershipProvider);
       ref.invalidate(officeAccessStateProvider);
       ref.invalidate(currentOfficeProvider);
+      ref.invalidate(currentRoleProvider);
       if (OfficeSetupService.usedDevFallbackOnLastCreate) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -63,6 +70,10 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
           ),
         );
       }
+      // Router'ın refreshListenable'ı stream değişimini otomatik algılar.
+      // Manuel context.go yerine güvenli geçiş için kısa bekleme + fallback.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return;
       context.go(AppRouter.routeHome);
     } on OfficeException catch (e) {
       if (!mounted) return;
