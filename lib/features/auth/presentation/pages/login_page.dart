@@ -1,24 +1,34 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/services/auth_firestore_gate.dart';
+import '../../../../core/services/auth_session_coordinator.dart';
+import '../../../../core/services/firebase_core_bootstrap.dart';
+import '../../../../core/services/logout_flow_tracer.dart';
 import '../../../../core/services/login_attempt_guard.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/facebook_auth_service.dart';
 import '../../../../core/services/google_auth_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../domain/auth_result.dart';
+import '../providers/auth_provider.dart';
 import '../utils/auth_result_ui.dart';
 import '../../../../core/theme/app_theme_extension.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../utils/auth_error_messages.dart';
 import '../../../../core/services/login_entry_store.dart';
+import '../../../../core/services/onboarding_store.dart';
 import '../../domain/login_entry_persona.dart';
 import '../widgets/auth_entry_hero.dart';
 import '../widgets/auth_entry_persona_selector.dart';
@@ -50,11 +60,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   /// Gerçek hata kodu (Firebase vb.); kullanıcı "bilgiler doğru" dediğinde teşhis için gösterilir.
   String? _errorDetail;
+  String? _googleStatusHint;
 
   @override
   void initState() {
     super.initState();
-    _loadPersona();
+    LogoutFlowTracer.step('LOGIN_RECOVERY', 'LoginPage.initState');
+    _persona = LoginEntryStore.instance.personaSync;
+    _personaReady = true;
+    if (_persona == null) {
+      unawaited(_loadPersona());
+    }
+    unawaited(
+      FirebaseCoreBootstrap.instance.ensureReady().catchError((_) {}),
+    );
   }
 
   Future<void> _loadPersona() async {
@@ -85,7 +104,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _errorDetail = null;
     });
     if (_persona == null) {
-      setState(() => _errorMessage = 'Lütfen Yönetici veya Danışman girişini seçin.');
+      setState(() => _errorMessage =
+          AppLocalizations.of(context).t('auth_select_persona'));
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -120,7 +140,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ? '${e.code}${e.message != null && e.message!.isNotEmpty ? ': ${e.message}' : ''}'
           : '${e.runtimeType}: ${e.toString().length > 80 ? '${e.toString().substring(0, 80)}…' : e}';
       setState(() {
-        _errorMessage = userFriendlyAuthError(e);
+        _errorMessage = userFriendlyAuthError(AppLocalizations.of(context), e);
         _errorDetail = detail;
       });
     } finally {
@@ -164,15 +184,77 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (r is AuthSuccess) {
       LoginAttemptGuard.clear();
       await AnalyticsService.instance.logLogin(method: analyticsMethod);
+      if (mounted) {
+        await _navigateAfterAuthSuccess(r.credential);
+      }
     } else if (r.shouldRecordLoginFailure) {
       LoginAttemptGuard.recordFailure();
     }
   }
 
+  Future<void> _navigateAfterAuthSuccess(UserCredential cred) async {
+    if (cred.user == null && FirebaseAuth.instance.currentUser == null) return;
+    await _navigateAfterAuthSession();
+  }
+
+  Future<void> _navigateAfterAuthSession() async {
+    if (Firebase.apps.isEmpty) {
+      try {
+        await FirebaseCoreBootstrap.instance.ensureReady();
+      } catch (_) {
+        return;
+      }
+    }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || !mounted) return;
+
+    await AuthFirestoreGate.ensureReadableUid(user.uid, forceRefresh: true);
+    AuthSessionCoordinator.prepareForLogin(ref, user.uid);
+
+    for (var i = 0; i < 30; i++) {
+      if (ref.read(currentUserProvider).valueOrNull != null) break;
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      if (!mounted) return;
+    }
+
+    if (!mounted) return;
+    ref.read(AppRouter.goRouterProvider).refresh();
+
+    final path = GoRouter.of(context).state.uri.path;
+    if (path != AppRouter.routeLogin &&
+        path != AppRouter.routeRegister &&
+        path != AppRouter.routeOnboarding) {
+      return;
+    }
+
+    final needsRole = ref.read(needsRoleSelectionProvider);
+    final needsOffice = ref.read(needsOfficeSetupProvider);
+    final needsRecovery = ref.read(needsOfficeRecoveryProvider);
+
+    if (needsRole) {
+      if (!OnboardingStore.instance.workspaceSetupCompletedSync) {
+        context.go(AppRouter.routeWorkspaceSetup);
+      } else {
+        context.go(AppRouter.routeRoleSelection);
+      }
+      return;
+    }
+    if (needsOffice) {
+      context.go(AppRouter.routeOfficeGate);
+      return;
+    }
+    if (needsRecovery) {
+      context.go(AppRouter.routeOfficeRecovery);
+      return;
+    }
+    context.go(AppRouter.routeHome);
+  }
+
   Future<void> _googleIleGiris() async {
     if (_busy != _BusyKind.none) return;
     if (_persona == null) {
-      setState(() => _errorMessage = 'Lütfen Yönetici veya Danışman girişini seçin.');
+      setState(() => _errorMessage =
+          AppLocalizations.of(context).t('auth_select_persona'));
       return;
     }
     final blocked = LoginAttemptGuard.assertCanAttempt();
@@ -184,25 +266,49 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() {
       _errorMessage = null;
       _errorDetail = null;
+      _googleStatusHint = AppLocalizations.of(context).t('auth_google_preparing');
       _busy = _BusyKind.google;
     });
+    unawaited(
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        if (!mounted || _busy != _BusyKind.google) return;
+        setState(() => _googleStatusHint =
+            AppLocalizations.of(context).t('auth_google_opening'));
+      }),
+    );
     try {
       final r = await GoogleAuthService.instance.signInWithGoogleTyped();
       if (!mounted) return;
       await _applyTypedAuthResult(r, analyticsMethod: 'google');
       setState(() {
-        _errorMessage = r.loginBannerMessage;
-        _errorDetail = r is AuthFailure ? r.debugDetail : null;
+        _errorMessage = r.loginBannerMessage ??
+            (r is AuthCancelled
+                ? AppLocalizations.of(context).t('auth_google_incomplete')
+                : null);
+        _errorDetail = switch (r) {
+          AuthFailure(:final debugDetail) => debugDetail,
+          AuthCancelled() => 'cancelled',
+          _ => null,
+        };
+        _googleStatusHint = null;
       });
     } finally {
-      if (mounted) setState(() => _busy = _BusyKind.none);
+      if (mounted) {
+        setState(() {
+          _busy = _BusyKind.none;
+          if (_googleStatusHint != null && _errorMessage == null) {
+            _googleStatusHint = null;
+          }
+        });
+      }
     }
   }
 
   Future<void> _facebookIleGiris() async {
     if (_busy != _BusyKind.none) return;
     if (_persona == null) {
-      setState(() => _errorMessage = 'Lütfen Yönetici veya Danışman girişini seçin.');
+      setState(() => _errorMessage =
+          AppLocalizations.of(context).t('auth_select_persona'));
       return;
     }
     final blocked = LoginAttemptGuard.assertCanAttempt();
@@ -223,8 +329,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             const Duration(seconds: 90),
             onTimeout: () => throw FirebaseAuthException(
               code: 'timeout',
-              message:
-                  'Facebook girişi zaman aşımına uğradı. Ağı kontrol edip tekrar deneyin.',
+              message: AppLocalizations.of(context).t('auth_fb_timeout'),
             ),
           );
       if (!mounted) return;
@@ -233,7 +338,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       LoginAttemptGuard.recordFailure();
-      final msg = _facebookSignInErrorMessage(e);
+      final msg = _facebookSignInErrorMessage(AppLocalizations.of(context), e);
       setState(() {
         _errorMessage = msg.isEmpty ? null : msg;
       });
@@ -242,21 +347,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
-  static String _facebookSignInErrorMessage(Object e) {
+  static String _facebookSignInErrorMessage(AppLocalizations l10n, Object e) {
     if (e is FirebaseAuthException) {
       switch (e.code) {
         case 'account-exists-with-different-credential':
-          return 'Bu e-posta başka bir yöntemle kayıtlı. O yöntemle giriş yapın.';
+          return l10n.t('auth_fb_account_exists');
         case 'invalid-credential':
-          return e.message ?? 'Facebook oturumu doğrulanamadı.';
+          return e.message ?? l10n.t('auth_fb_invalid_credential');
         case 'facebook-login-failed':
-          return e.message ?? 'Facebook ile giriş yapılamadı.';
+          return e.message ?? l10n.t('auth_fb_failed');
         case 'timeout':
-          return e.message ?? 'Bağlantı zaman aşımı. Tekrar deneyin.';
+          return e.message ?? l10n.t('auth_timeout_retry');
         case 'network-request-failed':
-          return 'İnternet bağlantısı yok veya zayıf.';
+          return l10n.t('auth_no_internet');
         default:
-          return 'Facebook ile giriş yapılamadı (${e.code}). Tekrar deneyin.';
+          return l10n.tArgs('auth_fb_failed_code', [e.code]);
       }
     }
     if (e is PlatformException) {
@@ -266,17 +371,59 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return '';
       }
       if (c.contains('network') || m.contains('network')) {
-        return 'Ağ hatası. Bağlantınızı kontrol edin.';
+        return l10n.t('auth_network_error');
       }
-      return 'Facebook girişi başarısız (${e.code}). Tekrar deneyin.';
+      return l10n.tArgs('auth_fb_failed_code2', [e.code]);
     }
-    return 'Facebook ile giriş başarısız. Tekrar deneyin.';
+    return l10n.t('auth_fb_failed_generic');
+  }
+
+  void _resetLocalInteractionState() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (_busy == _BusyKind.none &&
+        _errorMessage == null &&
+        _googleStatusHint == null) {
+      return;
+    }
+    if (!mounted) return;
+    LogoutFlowTracer.step(
+      'LOGIN_RECOVERY',
+      'reset busy=$_busy errors=${_errorMessage != null}',
+    );
+    setState(() {
+      _busy = _BusyKind.none;
+      _errorMessage = null;
+      _errorDetail = null;
+      _googleStatusHint = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<User?>>(
+      currentUserProvider,
+      (previous, next) {
+        final hadUser = previous?.valueOrNull != null;
+        final noUser = next.valueOrNull == null;
+        if (hadUser && noUser) {
+          _resetLocalInteractionState();
+        }
+      },
+    );
+    ref.listen<int>(
+      authPresentationEpochProvider,
+      (previous, next) {
+        if (previous != next) {
+          _resetLocalInteractionState();
+        }
+      },
+    );
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     if (!_personaReady) {
+      if (LogoutFlowTracer.isActive) {
+        LogoutFlowTracer.step('LOGIN_RECOVERY', 'LoginPage waiting persona');
+      }
       return AuthPageShell(
         child: Center(
           child: Padding(
@@ -285,6 +432,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         ),
       );
+    }
+    if (LogoutFlowTracer.isActive) {
+      LogoutFlowTracer.step('LOGIN_RECOVERY', 'LoginPage interactive busy=$_busy');
     }
     return AuthPageShell(
       persona: _persona,
@@ -311,16 +461,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               onTapOutside: (_) => _unfocusKeyboard(),
               decoration: AuthFieldDecoration.build(
                 context,
-                label: 'E-posta',
-                hint: 'ornek@firma.com',
+                label: l10n.t('label_email'),
+                hint: l10n.t('auth_email_hint'),
                 prefix: const Icon(Icons.email_outlined),
               ),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) {
-                  return 'E-posta gerekli';
+                  return l10n.t('auth_email_required');
                 }
                 if (!v.contains('@')) {
-                  return 'Geçerli bir e-posta girin';
+                  return l10n.t('auth_email_invalid');
                 }
                 return null;
               },
@@ -335,7 +485,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               onTapOutside: (_) => _unfocusKeyboard(),
               decoration: AuthFieldDecoration.build(
                 context,
-                label: 'Şifre',
+                label: l10n.t('auth_password_label'),
                 prefix: const Icon(Icons.lock_outline_rounded),
                 suffix: IconButton(
                   icon: Icon(
@@ -348,7 +498,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Şifre gerekli';
+                if (v == null || v.isEmpty) return l10n.t('auth_password_required');
                 return null;
               },
               onFieldSubmitted: (_) => _submit(),
@@ -362,7 +512,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   foregroundColor: ext.accent,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
-                child: const Text('Şifremi unuttum'),
+                child: Text(l10n.t('auth_forgot_password')),
               ),
             ),
             if (_errorMessage != null) ...[
@@ -397,7 +547,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     if (_errorDetail != null && _errorDetail!.isNotEmpty) ...[
                       const SizedBox(height: DesignTokens.space2),
                       Text(
-                        'Hata kodu: $_errorDetail',
+                        l10n.tArgs('auth_error_code', [_errorDetail!]),
                         style: TextStyle(
                           color: ext.textSecondary,
                           fontSize: DesignTokens.fontSizeSm - 2,
@@ -412,7 +562,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             const SizedBox(height: DesignTokens.space6),
             Semantics(
               button: true,
-              label: 'Giriş yap',
+              label: l10n.t('auth_login_cta'),
               child: FilledButton(
                 onPressed: _anyBusy ? null : _submit,
                 style: FilledButton.styleFrom(
@@ -431,8 +581,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: ext.onBrand),
                       )
-                    : const Text('Giriş yap',
-                        style: TextStyle(fontWeight: FontWeight.w700)),
+                    : Text(l10n.t('auth_login_cta'),
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
             const SizedBox(height: DesignTokens.space4),
@@ -451,8 +601,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       size: 22, color: ext.textSecondary),
               label: Text(
                 _busy == _BusyKind.google
-                    ? 'Google ile bağlanılıyor…'
-                    : 'Google ile Giriş Yap',
+                    ? l10n.t('auth_google_connecting')
+                    : l10n.t('auth_login_google'),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: ext.textPrimary,
@@ -464,13 +614,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ),
               ),
             ),
+            if (_busy == _BusyKind.google && _googleStatusHint != null) ...[
+              const SizedBox(height: DesignTokens.space2),
+              Text(
+                _googleStatusHint!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ext.textSecondary,
+                  fontSize: DesignTokens.fontSizeSm,
+                ),
+              ),
+              const SizedBox(height: DesignTokens.space1),
+              Text(
+                l10n.t('auth_google_browser_hint'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: ext.textSecondary.withValues(alpha: 0.85),
+                  fontSize: DesignTokens.fontSizeSm - 1,
+                ),
+              ),
+            ],
             if (AppConstants.showFacebookLogin) ...[
               const SizedBox(height: DesignTokens.space3),
               OutlinedButton.icon(
                 onPressed: _anyBusy ? null : _facebookIleGiris,
                 icon: const Icon(Icons.facebook_rounded,
                     size: 18, color: Color(0xFF1877F2)),
-                label: const Text('Facebook ile Giriş Yap'),
+                label: Text(l10n.t('auth_login_facebook')),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: ext.textPrimary,
                   side: BorderSide(color: ext.border),
@@ -487,7 +657,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Hesabınız yok mu?',
+                  l10n.t('auth_no_account'),
                   style: TextStyle(
                     color: ext.textSecondary,
                     fontSize: DesignTokens.fontSizeMd,
@@ -503,9 +673,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     minimumSize: const Size(0, 0),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: const Text(
-                    'Kayıt ol',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.t('auth_register_cta'),
+                    style: const TextStyle(
                         fontWeight: FontWeight.w800, letterSpacing: 0.2),
                   ),
                 ),
@@ -570,47 +740,50 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = _passwordResetUserFriendlyError(e);
+        _errorMessage =
+            _passwordResetUserFriendlyError(AppLocalizations.of(context), e);
       });
     }
   }
 
   /// Şifre sıfırlama için Firebase Auth hata kodlarını kullanıcı mesajına çevirir.
-  static String _passwordResetUserFriendlyError(dynamic e) {
+  static String _passwordResetUserFriendlyError(
+      AppLocalizations l10n, dynamic e) {
     if (e is FirebaseAuthException) {
       switch (e.code) {
         case 'invalid-email':
-          return 'Geçerli bir e-posta adresi girin.';
+          return l10n.t('auth_reset_invalid_email');
         case 'user-not-found':
-          return 'Bu e-posta adresiyle kayıtlı hesap bulunamadı.';
+          return l10n.t('auth_reset_user_not_found');
         case 'too-many-requests':
-          return 'Çok fazla deneme. Biraz bekleyip tekrar deneyin.';
+          return l10n.t('auth_too_many_requests');
         case 'network-request-failed':
-          return 'İnternet bağlantınızı kontrol edin ve tekrar deneyin.';
+          return l10n.t('auth_check_internet_retry');
         case 'operation-not-allowed':
-          return 'Şifre sıfırlama şu an etkin değil. Lütfen yönetici ile iletişime geçin.';
+          return l10n.t('auth_reset_not_allowed');
         case 'invalid-recipient':
         case 'invalid-sender':
-          return 'E-posta yapılandırması hatalı. Lütfen yönetici ile iletişime geçin.';
+          return l10n.t('auth_reset_email_config');
         default:
-          return 'Bağlantı gönderilemedi (${e.code}). E-posta adresinizi kontrol edin veya daha sonra tekrar deneyin.';
+          return l10n.tArgs('auth_reset_failed_code', [e.code]);
       }
     }
     final s = e.toString().toLowerCase();
     if (s.contains('user-not-found')) {
-      return 'Bu e-posta adresiyle kayıtlı hesap bulunamadı.';
+      return l10n.t('auth_reset_user_not_found');
     }
-    if (s.contains('invalid-email')) return 'Geçersiz e-posta adresi.';
+    if (s.contains('invalid-email')) return l10n.t('auth_reset_invalid_email2');
     if (s.contains('too-many-requests')) {
-      return 'Çok fazla deneme. Biraz bekleyip tekrar deneyin.';
+      return l10n.t('auth_too_many_requests');
     }
-    if (s.contains('network')) return 'İnternet bağlantınızı kontrol edin.';
-    return 'Bağlantı gönderilemedi. E-posta adresinizi kontrol edin veya daha sonra tekrar deneyin.';
+    if (s.contains('network')) return l10n.t('auth_check_internet');
+    return l10n.t('auth_reset_failed_generic');
   }
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
       borderSide: BorderSide(color: ext.border),
@@ -638,7 +811,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                       size: 52, color: ext.success.withValues(alpha: 0.95)),
                   const SizedBox(height: DesignTokens.space4),
                   Text(
-                    'Bağlantı gönderildi',
+                    l10n.t('auth_reset_sent_title'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: ext.textPrimary,
                           fontWeight: FontWeight.w800,
@@ -647,7 +820,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                   ),
                   const SizedBox(height: DesignTokens.space2),
                   Text(
-                    'Gelen kutunuzu ve spam klasörünü kontrol edin. E-posta birkaç dakika sürebilir.',
+                    l10n.t('auth_reset_sent_body'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: ext.textSecondary,
@@ -668,8 +841,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                             BorderRadius.circular(DesignTokens.radiusMd),
                       ),
                     ),
-                    child: const Text('Tamam',
-                        style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: Text(l10n.t('action_ok'),
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ],
               )
@@ -680,7 +853,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Şifremi unuttum',
+                      l10n.t('auth_forgot_password'),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: ext.textPrimary,
                             fontWeight: FontWeight.w700,
@@ -688,7 +861,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                     ),
                     const SizedBox(height: DesignTokens.space2),
                     Text(
-                      'Kayıtlı e-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.',
+                      l10n.t('auth_forgot_password_sub'),
                       style: TextStyle(
                           color: ext.textSecondary,
                           fontSize: DesignTokens.fontSizeSm),
@@ -703,8 +876,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                       onTapOutside: (_) =>
                           FocusManager.instance.primaryFocus?.unfocus(),
                       decoration: InputDecoration(
-                        labelText: 'E-posta',
-                        hintText: 'ornek@firma.com',
+                        labelText: l10n.t('label_email'),
+                        hintText: l10n.t('auth_email_hint'),
                         labelStyle: TextStyle(color: ext.textTertiary),
                         hintStyle: TextStyle(color: ext.textPassive),
                         prefixIcon:
@@ -721,10 +894,10 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                       ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
-                          return 'E-posta gerekli';
+                          return l10n.t('auth_email_required');
                         }
                         if (!v.contains('@')) {
-                          return 'Geçerli bir e-posta girin';
+                          return l10n.t('auth_email_invalid');
                         }
                         return null;
                       },
@@ -742,7 +915,7 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                     const SizedBox(height: DesignTokens.space6),
                     Semantics(
                       button: true,
-                      label: 'Şifre sıfırlama bağlantısı gönder',
+                      label: l10n.t('auth_send_reset_link'),
                       child: FilledButton(
                         onPressed: _isLoading ? null : _sendReset,
                         style: FilledButton.styleFrom(
@@ -762,8 +935,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2, color: ext.onBrand),
                               )
-                            : const Text('Sıfırlama bağlantısı gönder',
-                                style: TextStyle(fontWeight: FontWeight.w600)),
+                            : Text(l10n.t('auth_send_reset_link_short'),
+                                style: const TextStyle(fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],

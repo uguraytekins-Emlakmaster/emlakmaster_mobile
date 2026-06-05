@@ -37,7 +37,7 @@ void main() {
 
     StartupPerfMarkers.once('run_app');
     await tester.pumpWidget(
-      const ProviderScope(child: EmlakMasterApp()),
+      const ProviderScope(child: AxionApp()),
     );
     await tester.pump();
     StartupPerfMarkers.once('first_frame');

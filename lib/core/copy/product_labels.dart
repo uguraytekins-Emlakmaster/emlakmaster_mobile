@@ -35,6 +35,7 @@ abstract final class ProductLabels {
   static const String messageCenter = 'Mesaj Merkezi';
 
   static const String virtualTour = 'Sanal Tur';
+  static const String requestCenter = 'Talep Merkezi';
   static const String profile = 'Profil';
 
   static const String activeView = 'Açık alan';

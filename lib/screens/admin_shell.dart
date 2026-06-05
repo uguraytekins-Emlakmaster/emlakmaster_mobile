@@ -15,6 +15,7 @@ import 'package:emlakmaster_mobile/core/performance/startup_shell_chrome.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
+import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/manager_tour_host.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:emlakmaster_mobile/screens/admin_pages.dart';
 import 'package:emlakmaster_mobile/screens/admin_shell_nav.dart';
@@ -67,12 +68,16 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
   Widget build(BuildContext context) {
     final flags = ref.watch(featureFlagsProvider).valueOrNull;
     final lean = flags?[AppConstants.keyV1LeanProduct] ?? true;
-    final warRoom = (flags?[AppConstants.keyFeatureWarRoom] ?? true) && !lean;
+    final roleAsync = ref.watch(displayRoleProvider);
+    final showWarRoom = (flags?[AppConstants.keyFeatureWarRoom] ?? true) &&
+        roleAsync.maybeWhen(
+          data: (r) => FeaturePermission.canViewWarRoom(r),
+          orElse: () => false,
+        );
     final commandCenterFlag =
         flags?[AppConstants.keyFeatureCommandCenter] ?? true;
 
     /// [CommandCenterPage] ile aynı kural: yalnızca global çağrı görünümü (broker_owner / super_admin).
-    final roleAsync = ref.watch(displayRoleProvider);
     final showCommandCenter = commandCenterFlag &&
         roleAsync.maybeWhen(
           data: (r) => FeaturePermission.canViewAllCalls(r),
@@ -94,7 +99,7 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
         ),
         page: MessageCenterPage(),
       ),
-      if (warRoom)
+      if (showWarRoom)
         const _AdminShellTabEntry(
           id: _AdminShellTab.warRoom,
           navItem: AdaptiveNavItem(
@@ -144,6 +149,9 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
     final reportsPageIndex = tabIds.indexOf(_AdminShellTab.reports);
     final economyPageIndex = tabIds.indexOf(_AdminShellTab.economy);
 
+    final tabKeys = tabIds.map((id) => id.name).toList(growable: false);
+    int tabIndexForKey(String key) => tabKeys.indexOf(key);
+
     final shortcutMap = <MainShellShortcut, int>{
       MainShellShortcut.openHomeTab: 0,
       MainShellShortcut.openMessageCenterTab: messagesIndex,
@@ -163,7 +171,7 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
     );
     if (kDebugMode) {
       AppLogger.state(
-        '[startup][AdminShell] tabs=${navItems.length} lean=$lean warRoom=$warRoom '
+        '[startup][AdminShell] tabs=${navItems.length} lean=$lean warRoom=$showWarRoom '
         'commandCenter=$showCommandCenter economy=$showEconomyTab ids=$tabIds',
       );
     }
@@ -195,18 +203,21 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
         Expanded(
           child: AdminShellNav(
             goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
-            child: AdaptiveShellScaffold(
-              key: _shellKey,
-              navItems: navItems,
-              pages: pages,
-              tabIds: tabIds,
-              title: ProductLabels.managerWorkspace,
-              onIndexChanged: (i) {
-                if (_shellPageIndex.value != i) {
-                  _shellPageIndex.value = i;
-                }
-              },
-              shortcutMap: shortcutMap,
+            tabIndexFor: tabIndexForKey,
+            child: ManagerTourHost(
+              child: AdaptiveShellScaffold(
+                key: _shellKey,
+                navItems: navItems,
+                pages: pages,
+                tabIds: tabIds,
+                title: ProductLabels.managerWorkspace,
+                onIndexChanged: (i) {
+                  if (_shellPageIndex.value != i) {
+                    _shellPageIndex.value = i;
+                  }
+                },
+                shortcutMap: shortcutMap,
+              ),
             ),
           ),
         ),

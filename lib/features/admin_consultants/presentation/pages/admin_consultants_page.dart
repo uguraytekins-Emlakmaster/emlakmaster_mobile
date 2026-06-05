@@ -1,19 +1,20 @@
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
-import 'package:emlakmaster_mobile/core/models/team_doc.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
+import 'package:emlakmaster_mobile/features/admin_kadro/presentation/admin_kadro_tokens.dart';
+import 'package:emlakmaster_mobile/features/admin_consultants/presentation/providers/admin_consultants_providers.dart';
+import 'package:emlakmaster_mobile/features/admin_kadro/presentation/widgets/kadro_command_surface.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
-import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
-import 'package:emlakmaster_mobile/features/admin_consultants/presentation/providers/admin_consultants_providers.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-/// Admin → Danışman Yönetimi: consultant-tier listesi, filtreler (rol/ekip), düzenleme ve yeni danışman bilgisi.
+
+/// Admin → Kadro: danışman roster, filtreler, ekip yönetimi girişi (Screen 12).
 class AdminConsultantsPage extends ConsumerWidget {
   const AdminConsultantsPage({super.key});
 
@@ -24,62 +25,61 @@ class AdminConsultantsPage extends ConsumerWidget {
       final l10n = AppLocalizations.of(context);
       return PremiumShellBackdrop(
         child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: emlakAppBar(
-          context,
           backgroundColor: Colors.transparent,
-          foregroundColor: AppThemeExtension.of(context).textPrimary,
-          title: Text(l10n.t('title_admin_consultants')),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              l10n.t('access_denied'),
-              style: TextStyle(
-                color: AppThemeExtension.of(context).textSecondary,
-                fontSize: DesignTokens.fontSizeSm,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                l10n.t('access_denied'),
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).textSecondary,
+                  fontSize: DesignTokens.fontSizeSm,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
           ),
         ),
-      ),
       );
     }
 
     final l10n = AppLocalizations.of(context);
+    final canEditTeamRole = FeaturePermission.canManageTeams(currentRole);
+    final canInvite = FeaturePermission.canInviteAgents(currentRole);
 
     return PremiumShellBackdrop(
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: emlakAppBar(
-        context,
         backgroundColor: Colors.transparent,
-        foregroundColor: AppThemeExtension.of(context).textPrimary,
-        title: Text(l10n.t('title_admin_consultants')),
-        actions: [
-          if (FeaturePermission.canInviteAgents(currentRole))
-            IconButton(
-              icon: const Icon(Icons.person_add_rounded),
-              onPressed: () => _showAddConsultantDialog(context, ref),
-              tooltip: l10n.t('action_add_consultant'),
+        body: ShellScreenReadyListener(
+          screenName: 'admin_consultants',
+          provider: adminConsultantsListProvider,
+          itemCount: (v) => (v as List).length,
+          child: KadroCommandSurface(
+            canEditTeamRole: canEditTeamRole,
+            onEditConsultant: (ctx, user) => _showEditConsultantDialog(
+              ctx,
+              ref,
+              user,
             ),
-        ],
-      ),
-      body: ShellScreenReadyListener(
-        screenName: 'admin_consultants',
-        provider: adminConsultantsListProvider,
-        itemCount: (v) => (v as List).length,
-        child: _AdminConsultantsBody(
-          canEditTeamRole: FeaturePermission.canManageTeams(currentRole),
+            headerActions: [
+              if (canInvite)
+                IconButton(
+                  icon: const Icon(Icons.person_add_rounded),
+                  iconSize: AdminKadroTokens.rowTitleSize + 8,
+                  tooltip: l10n.t('action_add_consultant'),
+                  onPressed: () => _showAddConsultantDialog(context, ref),
+                ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
-  static Future<void> _showAddConsultantDialog(BuildContext context, WidgetRef ref) async {
+  static Future<void> _showAddConsultantDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final l10n = AppLocalizations.of(context);
     String fullName = '';
     String email = '';
@@ -96,7 +96,12 @@ class AdminConsultantsPage extends ConsumerWidget {
           builder: (ctx, setState) {
             return AlertDialog(
               backgroundColor: AppThemeExtension.of(context).surface,
-              title: Text(l10n.t('action_add_consultant'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
+              title: Text(
+                l10n.t('action_add_consultant'),
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).textPrimary,
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -105,25 +110,29 @@ class AdminConsultantsPage extends ConsumerWidget {
                     TextField(
                       decoration: InputDecoration(
                         labelText: l10n.t('full_name'),
-                        labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
+                        labelStyle: TextStyle(
+                          color: AppThemeExtension.of(context).textSecondary,
+                        ),
                         border: const OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).accent)),
                       ),
-                      style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textPrimary,
+                      ),
                       onChanged: (v) => fullName = v.trim(),
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     TextField(
                       decoration: InputDecoration(
                         labelText: l10n.t('label_email'),
-                        labelStyle: TextStyle(color: AppThemeExtension.of(context).textSecondary),
+                        labelStyle: TextStyle(
+                          color: AppThemeExtension.of(context).textSecondary,
+                        ),
                         border: const OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).accent)),
                       ),
                       keyboardType: TextInputType.emailAddress,
-                      style: TextStyle(color: AppThemeExtension.of(context).textPrimary),
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textPrimary,
+                      ),
                       onChanged: (v) => email = v.trim(),
                     ),
                     const SizedBox(height: DesignTokens.space4),
@@ -132,11 +141,20 @@ class AdminConsultantsPage extends ConsumerWidget {
                       decoration: InputDecoration(
                         labelText: l10n.t('label_role'),
                         border: const OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                       ),
                       dropdownColor: AppThemeExtension.of(context).surface,
                       items: [AppRole.agent, AppRole.teamLead, AppRole.officeManager]
-                          .map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: TextStyle(color: AppThemeExtension.of(context).textPrimary))))
+                          .map(
+                            (r) => DropdownMenuItem(
+                              value: r.id,
+                              child: Text(
+                                r.label,
+                                style: TextStyle(
+                                  color: AppThemeExtension.of(context).textPrimary,
+                                ),
+                              ),
+                            ),
+                          )
                           .toList(),
                       onChanged: (v) => setState(() => inviteRole = v ?? inviteRole),
                     ),
@@ -147,26 +165,31 @@ class AdminConsultantsPage extends ConsumerWidget {
                         decoration: InputDecoration(
                           labelText: l10n.t('label_team'),
                           border: const OutlineInputBorder(),
-                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                         ),
                         dropdownColor: AppThemeExtension.of(context).surface,
                         items: teams
-                            .map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: TextStyle(color: AppThemeExtension.of(context).textPrimary))))
+                            .map(
+                              (t) => DropdownMenuItem(
+                                value: t.id,
+                                child: Text(
+                                  t.name,
+                                  style: TextStyle(
+                                    color:
+                                        AppThemeExtension.of(context).textPrimary,
+                                  ),
+                                ),
+                              ),
+                            )
                             .toList(),
                         onChanged: (v) => setState(() => teamId = v),
                       ),
                     ],
                     const SizedBox(height: DesignTokens.space4),
-                    Container(
-                      padding: const EdgeInsets.all(DesignTokens.space3),
-                      decoration: BoxDecoration(
-                        color: AppThemeExtension.of(context).accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                        border: Border.all(color: AppThemeExtension.of(context).border),
-                      ),
-                      child: Text(
-                        l10n.t('consultant_invite_info'),
-                        style: TextStyle(color: AppThemeExtension.of(context).textSecondary, fontSize: DesignTokens.fontSizeSm),
+                    Text(
+                      l10n.t('consultant_invite_info'),
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textSecondary,
+                        fontSize: DesignTokens.fontSizeSm,
                       ),
                     ),
                   ],
@@ -175,16 +198,14 @@ class AdminConsultantsPage extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary)),
+                  child: Text(l10n.t('cancel')),
                 ),
                 FilledButton(
                   onPressed: () async {
                     if (email.trim().isEmpty) return;
-                    final createdBy = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
-                    if (createdBy.isEmpty) {
-                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(l10n.t('error_generic'))));
-                      return;
-                    }
+                    final createdBy =
+                        ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+                    if (createdBy.isEmpty) return;
                     try {
                       await FirestoreService.createInvite(
                         email: email.trim(),
@@ -203,10 +224,13 @@ class AdminConsultantsPage extends ConsumerWidget {
                         );
                       }
                     } catch (e) {
-                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('${l10n.t('error_generic')} $e')));
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text(l10n.t('error_generic'))),
+                        );
+                      }
                     }
                   },
-                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
                   child: Text(l10n.t('save')),
                 ),
               ],
@@ -216,308 +240,27 @@ class AdminConsultantsPage extends ConsumerWidget {
       },
     );
   }
-}
 
-class _AdminConsultantsBody extends ConsumerStatefulWidget {
-  const _AdminConsultantsBody({required this.canEditTeamRole});
+  static Future<void> showEditConsultantDialog(
+    BuildContext context,
+    WidgetRef ref,
+    UserDoc u,
+  ) =>
+      _showEditConsultantDialog(context, ref, u);
 
-  final bool canEditTeamRole;
-
-  @override
-  ConsumerState<_AdminConsultantsBody> createState() => _AdminConsultantsBodyState();
-}
-
-class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
-  String _search = '';
-  String? _filterRole;
-  String? _filterTeamId;
-
-  List<UserDoc> _filteredList(List<UserDoc> source) {
-    var list = source;
-    if (_search.isNotEmpty) {
-      list = list.where((u) {
-        final name = (u.name ?? '').toLowerCase();
-        final em = (u.email ?? '').toLowerCase();
-        return name.contains(_search) || em.contains(_search);
-      }).toList();
-    }
-    if (_filterRole != null && _filterRole!.isNotEmpty) {
-      list = list.where((u) => u.role == _filterRole).toList();
-    }
-    if (_filterTeamId != null && _filterTeamId!.isNotEmpty) {
-      list = list.where((u) => u.teamId == _filterTeamId).toList();
-    }
-    return list;
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  static Future<void> _showEditConsultantDialog(
+    BuildContext context,
+    WidgetRef ref,
+    UserDoc u,
+  ) async {
     final l10n = AppLocalizations.of(context);
-    final teamsAsync = ref.watch(adminConsultantsTeamsProvider);
-    final consultantsAsync = ref.watch(adminConsultantsListProvider);
-    final teams = teamsAsync.valueOrNull ?? [];
-    final teamNames = {for (final t in teams) t.id: t.name};
+    final teams = await ref.read(adminConsultantsTeamsProvider.future);
+    if (!context.mounted) return;
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(DesignTokens.space4, DesignTokens.space4, DesignTokens.space4, DesignTokens.space2),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: l10n.t('search_consultants'),
-              hintStyle: TextStyle(color: AppThemeExtension.of(context).textPassive, fontSize: DesignTokens.fontSizeSm),
-              prefixIcon: Icon(Icons.search_rounded, color: AppThemeExtension.of(context).textTertiary),
-              filled: true,
-              fillColor: AppThemeExtension.of(context).surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                borderSide: BorderSide(color: AppThemeExtension.of(context).border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                borderSide: BorderSide(color: AppThemeExtension.of(context).border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                borderSide: BorderSide(color: AppThemeExtension.of(context).accent),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.space3, vertical: DesignTokens.space2),
-            ),
-            style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontSize: DesignTokens.fontSizeSm),
-            onChanged: (value) => setState(() => _search = value.trim().toLowerCase()),
-          ),
-        ),
-        consultantsAsync.when(
-          loading: () => const Expanded(
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (e, _) => Expanded(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    e.toString(),
-                    style: TextStyle(
-                      color: AppThemeExtension.of(context).textSecondary,
-                      fontSize: DesignTokens.fontSizeSm,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: DesignTokens.space3),
-                  TextButton(
-                    onPressed: () {
-                      ref.invalidate(adminConsultantsListProvider);
-                      ref.invalidate(adminConsultantsTeamsProvider);
-                    },
-                    child: Text(l10n.t('retry')),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          data: (consultants) {
-            return Expanded(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String?>(
-                              value: _filterRole,
-                              isExpanded: true,
-                              hint: Text(
-                                l10n.t('label_role'),
-                                style: TextStyle(
-                                  color: AppThemeExtension.of(context).textTertiary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              dropdownColor: AppThemeExtension.of(context).surface,
-                              items: [
-                                DropdownMenuItem<String?>(
-                                  child: Text(
-                                    l10n.t('filter_role_all'),
-                                    style: TextStyle(
-                                      color: AppThemeExtension.of(context).textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                ...AppRole.values
-                                    .where((r) => r.isManagerTier || r == AppRole.agent)
-                                    .map(
-                                      (r) => DropdownMenuItem(
-                                        value: r.id,
-                                        child: Text(
-                                          r.label,
-                                          style: TextStyle(
-                                            color: AppThemeExtension.of(context).textPrimary,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                              ],
-                              onChanged: (v) => setState(() => _filterRole = v),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: DesignTokens.space3),
-                        if (teams.isNotEmpty)
-                          Expanded(
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String?>(
-                                value: _filterTeamId,
-                                isExpanded: true,
-                                hint: Text(
-                                  l10n.t('label_team'),
-                                  style: TextStyle(
-                                    color: AppThemeExtension.of(context).textTertiary,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                dropdownColor: AppThemeExtension.of(context).surface,
-                                items: [
-                                  DropdownMenuItem<String?>(
-                                    child: Text(
-                                      l10n.t('filter_team_all'),
-                                      style: TextStyle(
-                                        color: AppThemeExtension.of(context).textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                  ...teams.map(
-                                    (t) => DropdownMenuItem(
-                                      value: t.id,
-                                      child: Text(
-                                        t.name,
-                                        style: TextStyle(
-                                          color: AppThemeExtension.of(context).textPrimary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (v) => setState(() => _filterTeamId = v),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: DesignTokens.space2),
-                  Expanded(
-                    child: Builder(
-                      builder: (context) {
-                        final list = _filteredList(consultants);
-                        if (list.isEmpty) {
-                          return Center(
-                            child: Text(
-                              l10n.t('empty_consultants'),
-                              style: TextStyle(
-                                color: AppThemeExtension.of(context).textSecondary,
-                                fontSize: DesignTokens.fontSizeSm,
-                              ),
-                            ),
-                          );
-                        }
-                        return ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(
-                            DesignTokens.space4,
-                            0,
-                            DesignTokens.space4,
-                            DesignTokens.space4,
-                          ),
-                          itemCount: list.length,
-                          itemBuilder: (context, index) {
-                            final u = list[index];
-                            final teamName = u.teamId != null
-                                ? (teamNames[u.teamId] ?? u.teamId)
-                                : '—';
-                            final roleLabel =
-                                AppRole.fromFirestoreRole(u.role).label;
-                            return Card(
-                              margin: const EdgeInsets.only(
-                                bottom: DesignTokens.space3,
-                              ),
-                              color: AppThemeExtension.of(context).surface,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  DesignTokens.radiusLg,
-                                ),
-                              ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: DesignTokens.space4,
-                                  vertical: DesignTokens.space2,
-                                ),
-                                leading: CircleAvatar(
-                                  backgroundColor: AppThemeExtension.of(context)
-                                      .accent
-                                      .withValues(alpha: 0.2),
-                                  child: Icon(
-                                    Icons.person_rounded,
-                                    color: AppThemeExtension.of(context).accent,
-                                  ),
-                                ),
-                                title: Text(
-                                  u.name ?? u.email ?? u.uid,
-                                  style: TextStyle(
-                                    color: AppThemeExtension.of(context).textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                subtitle: Text(
-                                  '${u.email ?? '—'} · $roleLabel · ${l10n.t('label_team')}: $teamName${u.isActive ? '' : ' · Pasif'}',
-                                  style: TextStyle(
-                                    color: AppThemeExtension.of(context).textSecondary,
-                                    fontSize: DesignTokens.fontSizeSm,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                trailing: widget.canEditTeamRole
-                                    ? IconButton(
-                                        icon: Icon(
-                                          Icons.edit_rounded,
-                                          color: AppThemeExtension.of(context).accent,
-                                          size: 20,
-                                        ),
-                                        onPressed: () => _showEditConsultantDialog(
-                                          context,
-                                          u,
-                                          teams,
-                                        ),
-                                        tooltip: l10n.t('edit_consultant'),
-                                      )
-                                    : null,
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Future<void> _showEditConsultantDialog(BuildContext context, UserDoc u, List<TeamDoc> teams) async {
-    final l10n = AppLocalizations.of(context);
     String role = u.role;
     String? teamId = u.teamId;
-    bool isActive = u.isActive;
+    var isActive = u.isActive;
 
-    if (!context.mounted) return;
     await showDialog<void>(
       context: context,
       builder: (ctx) {
@@ -525,24 +268,45 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
           builder: (ctx, setState) {
             return AlertDialog(
               backgroundColor: AppThemeExtension.of(context).surface,
-              title: Text(l10n.t('edit_consultant'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
+              title: Text(
+                l10n.t('edit_consultant'),
+                style: TextStyle(
+                  color: AppThemeExtension.of(context).textPrimary,
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(u.name ?? u.email ?? u.uid, style: TextStyle(color: AppThemeExtension.of(context).textPrimary, fontWeight: FontWeight.w600)),
+                    Text(
+                      u.name ?? u.email ?? u.uid,
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: DesignTokens.space4),
                     DropdownButtonFormField<String>(
                       initialValue: role,
                       decoration: InputDecoration(
                         labelText: l10n.t('label_role'),
                         border: const OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                       ),
                       dropdownColor: AppThemeExtension.of(context).surface,
-                      items: [AppRole.agent, AppRole.teamLead, AppRole.officeManager, AppRole.generalManager, AppRole.brokerOwner]
-                          .map((r) => DropdownMenuItem(value: r.id, child: Text(r.label, style: TextStyle(color: AppThemeExtension.of(context).textPrimary))))
+                      items: [
+                        AppRole.agent,
+                        AppRole.teamLead,
+                        AppRole.officeManager,
+                        AppRole.generalManager,
+                        AppRole.brokerOwner,
+                      ]
+                          .map(
+                            (r) => DropdownMenuItem(
+                              value: r.id,
+                              child: Text(r.label),
+                            ),
+                          )
                           .toList(),
                       onChanged: (v) => setState(() => role = v ?? role),
                     ),
@@ -552,41 +316,61 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                       decoration: InputDecoration(
                         labelText: l10n.t('label_team'),
                         border: const OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppThemeExtension.of(context).border)),
                       ),
                       dropdownColor: AppThemeExtension.of(context).surface,
                       items: [
-                        DropdownMenuItem<String?>(child: Text(l10n.t('filter_team_all'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary))),
-                        ...teams.map((t) => DropdownMenuItem(value: t.id, child: Text(t.name, style: TextStyle(color: AppThemeExtension.of(context).textPrimary)))),
+                        DropdownMenuItem<String?>(
+                          child: Text(l10n.t('filter_team_all')),
+                        ),
+                        ...teams.map(
+                          (t) => DropdownMenuItem(
+                            value: t.id,
+                            child: Text(t.name),
+                          ),
+                        ),
                       ],
                       onChanged: (v) => setState(() => teamId = v),
                     ),
                     const SizedBox(height: DesignTokens.space4),
                     Row(
                       children: [
-                        Text(l10n.t('is_active'), style: TextStyle(color: AppThemeExtension.of(context).textPrimary)),
+                        Text(l10n.t('is_active')),
                         const SizedBox(width: DesignTokens.space2),
-                        Switch(value: isActive, onChanged: (v) => setState(() => isActive = v), activeThumbColor: AppThemeExtension.of(context).accent),
+                        Switch(
+                          value: isActive,
+                          onChanged: (v) => setState(() => isActive = v),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: DesignTokens.space3),
                     Text(
                       l10n.t('password_reset_info'),
-                      style: TextStyle(color: AppThemeExtension.of(context).textTertiary, fontSize: DesignTokens.fontSizeXs),
+                      style: TextStyle(
+                        color: AppThemeExtension.of(context).textTertiary,
+                        fontSize: DesignTokens.fontSizeXs,
+                      ),
                     ),
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.t('cancel'), style: TextStyle(color: AppThemeExtension.of(context).textSecondary))),
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(l10n.t('cancel')),
+                ),
                 FilledButton(
                   onPressed: () async {
                     try {
-                      final managerId = teamId != null && teams.any((t) => t.id == teamId) ? teams.firstWhere((t) => t.id == teamId).managerId : null;
+                      final managerId = teamId != null &&
+                              teams.any((t) => t.id == teamId)
+                          ? teams.firstWhere((t) => t.id == teamId).managerId
+                          : null;
                       final oldTeamId = u.teamId;
                       if (oldTeamId != teamId) {
                         if (oldTeamId != null && oldTeamId.isNotEmpty) {
-                          await FirestoreService.removeAgentFromTeam(u.uid, oldTeamId);
+                          await FirestoreService.removeAgentFromTeam(
+                            u.uid,
+                            oldTeamId,
+                          );
                         }
                         await UserRepository.setUserDoc(
                           uid: u.uid,
@@ -599,7 +383,10 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                         );
                         final newTeamId = teamId;
                         if (newTeamId != null && newTeamId.isNotEmpty) {
-                          await FirestoreService.assignAgentToTeam(u.uid, newTeamId);
+                          await FirestoreService.assignAgentToTeam(
+                            u.uid,
+                            newTeamId,
+                          );
                         }
                       } else {
                         await UserRepository.setUserDoc(
@@ -622,10 +409,13 @@ class _AdminConsultantsBodyState extends ConsumerState<_AdminConsultantsBody> {
                         );
                       }
                     } catch (e) {
-                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('${l10n.t('error_generic')} $e')));
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text(l10n.t('error_generic'))),
+                        );
+                      }
                     }
                   },
-                  style: FilledButton.styleFrom(backgroundColor: AppThemeExtension.of(context).accent),
                   child: Text(l10n.t('save')),
                 ),
               ],

@@ -7,7 +7,10 @@ import 'package:emlakmaster_mobile/features/auth/presentation/widgets/auth_entry
 import 'package:emlakmaster_mobile/features/onboarding/domain/onboarding_slide_model.dart';
 import 'package:flutter/material.dart';
 
-/// Slayt görseli — canlı, kodla çizilmiş ürün önizlemesi (PNG kullanılmaz).
+/// Slayt görseli — [assetPath] verilirse gerçek ekran görüntüsü (tema duyarlı),
+/// yoksa veya görsel yüklenemezse güvenli şekilde kodla çizilmiş ürün
+/// önizlemesine (mockup) düşer. Böylece PNG'ler henüz eklenmemişken bile
+/// uygulama derlenir ve sorunsuz çalışır.
 class OnboardingSlideVisual extends StatelessWidget {
   const OnboardingSlideVisual({
     super.key,
@@ -19,14 +22,36 @@ class OnboardingSlideVisual extends StatelessWidget {
 
   final OnboardingVisualKind kind;
   final Color accent;
+
+  /// Gerçek ekran görüntüsü için temel yol (örn. `assets/onboarding/consultant`).
+  /// Çalışma anında tema parlaklığına göre `_light.png` / `_dark.png` eklenir.
   final String? assetPath;
   final List<String> legacyAssetPaths;
 
+  /// Tema parlaklığına göre çözülmüş PNG yolu (örn. `..._dark.png`).
+  String? _resolveThemedPath(BuildContext context) {
+    final base = assetPath;
+    if (base == null || base.isEmpty) return null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final suffix = isDark ? '_dark' : '_light';
+    return '$base$suffix.png';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _OnboardingDeviceFrame(
+    final mockup = _OnboardingDeviceFrame(
       accent: accent,
       child: _buildScene(context),
+    );
+
+    final themedPath = _resolveThemedPath(context);
+    if (themedPath == null) return mockup;
+
+    // Gerçek ekran görüntüsü; yükleme/format hatasında mockup'a düşer.
+    return _OnboardingScreenshotFrame(
+      accent: accent,
+      assetPath: themedPath,
+      fallback: mockup,
     );
   }
 
@@ -122,6 +147,56 @@ class _OnboardingDeviceFrame extends StatelessWidget {
   }
 }
 
+/// Gerçek ekran görüntüsünü premium cihaz çerçevesi içinde gösterir.
+/// PNG bulunamaz / bozuksa [fallback] (kod mockup) gösterilir.
+class _OnboardingScreenshotFrame extends StatelessWidget {
+  const _OnboardingScreenshotFrame({
+    required this.accent,
+    required this.assetPath,
+    required this.fallback,
+  });
+
+  final Color accent;
+  final String assetPath;
+  final Widget fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+        border: Border.all(color: accent.withValues(alpha: 0.45), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.22),
+            blurRadius: 32,
+            spreadRadius: -4,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        color: ext.surface,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(DesignTokens.radius2xl - 2),
+        child: Image.asset(
+          assetPath,
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) => fallback,
+        ),
+      ),
+    );
+  }
+}
+
 // ——— Scenes ———
 
 class _WelcomeScene extends StatelessWidget {
@@ -147,7 +222,7 @@ class _WelcomeScene extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'EmlakMaster',
+          'Axion CRM',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: ext.textPrimary,

@@ -1,0 +1,54 @@
+---
+description: Firestore query discipline, pagination, listeners, and cost control
+globs: EmlakMaster_Proje/emlakmaster_mobile/lib/**/{data,repositories,providers,services}/**
+alwaysApply: false
+---
+
+# Firestore Scalability Rules — Emlak Master
+
+Firestore is **production infrastructure**. Optimize for latency, cost, and listener hygiene.
+
+## Forbidden
+
+- N+1 reads (fetch doc per row in a loop without batching)
+- Client-side filtering of large collections when a indexed query suffices
+- Full collection loads without pagination limits
+- Duplicate subscriptions to the same query/path
+- Oversized documents or unbounded array fields in hot paths
+- Nested `StreamBuilder` + Firestore listeners (use `StreamProvider` once)
+- Unindexed query assumptions (verify indexes / `firestore.indexes.json`)
+- Unsafe write patterns (no server timestamps where ordering matters, blind overwrites)
+
+## Required
+
+- **Pagination:** cursors, `limit`, "load more" — see existing list patterns
+- **Minimal payloads:** select fields needed; avoid reading full docs for list rows
+- **Listener ownership:** one provider owns the stream; dispose when screen unmounts (`ShellLazyTab`)
+- **Batched writes** when updating multiple docs safely
+- **Server timestamps** for `createdAt` / `updatedAt` ordering
+- **Stale-while-revalidate:** `*DisplayProvider` keeps last good data while refreshing
+
+## Duplicate fetch prevention
+
+- Before adding a new `StreamProvider`, search for existing providers on the same collection
+- Prefer extending display providers over parallel streams
+- Invalidate deliberately (`ref.invalidate`) — not poll loops
+
+## Query discipline checklist
+
+1. Is there an index? 2. Is `limit` set? 3. Is scope filtered by `officeId` / `advisorId` / role? 4. Can list rows use denormalized snapshot DTOs?
+
+## Cost control
+
+- Avoid listeners on high-churn collections for static UI chrome
+- Debounce search-triggered queries
+- Do not refetch on every `build`
+
+## Offline / resilience
+
+- Surface offline state honestly (`SyncStatusBanner`, premium empty/error states)
+- Retry with backoff; no infinite retry loops
+
+## Verification
+
+After provider/repository changes: `flutter test` (especially `*display_provider*`, Firestore mock tests) and review listener count on tab switch (passive tab must not hold active listeners).

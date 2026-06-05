@@ -1,5 +1,22 @@
 import 'entities/app_role.dart';
 
+/// Self-service kayıtta manuel **seçilebilir** roller (ofis-öncesi başlangıç rolü).
+///
+/// GÜVENLİK: Yönetici/admin kademesi (broker_owner, general_manager,
+/// office_manager, team_lead) self-service ile ATANAMAZ. Yönetici olmak için:
+/// - kendi ofisini OLUŞTUR (→ broker_owner), ya da
+/// - bir ofis DAVETİNİ kabul et (→ manager/admin/consultant).
+/// Bu akışlar yetkiyi sunucu tarafında doğrular.
+///
+/// Tek istisna: sistemde hiç kullanıcı yoksa ([isFoundingUser]) kurucu, ilk
+/// sahibi/super_admin'i bootstrap edebilir.
+List<AppRole> selfServiceSelectableRoles({required bool isFoundingUser}) {
+  if (isFoundingUser) {
+    return AppRole.values.where((r) => r != AppRole.guest).toList();
+  }
+  return const [AppRole.agent];
+}
+
 /// İlk giriş / giriş ekranında kullanıcının seçtiği operasyon yolu.
 enum LoginEntryPersona {
   manager,
@@ -26,7 +43,6 @@ enum LoginEntryPersona {
     AppRole.generalManager,
     AppRole.officeManager,
     AppRole.teamLead,
-    AppRole.operations,
   };
 
   bool matchesRole(AppRole role) {
@@ -50,39 +66,40 @@ enum LoginEntryPersona {
     return all;
   }
 
-  String get loginTitle {
+  /// Yerelleştirme anahtarları (AppLocalizations.t ile çözülür).
+  String get loginTitleKey {
     switch (this) {
       case LoginEntryPersona.manager:
-        return 'Yönetici girişi';
+        return 'persona_manager_login_title';
       case LoginEntryPersona.consultant:
-        return 'Danışman girişi';
+        return 'persona_consultant_login_title';
     }
   }
 
-  String get loginSubtitle {
+  String get loginSubtitleKey {
     switch (this) {
       case LoginEntryPersona.manager:
-        return 'Komuta masası, ekip ve çağrı merkezi tek akışta';
+        return 'persona_manager_login_subtitle';
       case LoginEntryPersona.consultant:
-        return 'Müşteri, ilan ve görüşme operasyonunuz tek yerde';
+        return 'persona_consultant_login_subtitle';
     }
   }
 
-  String get rolePathTitle {
+  String get rolePathTitleKey {
     switch (this) {
       case LoginEntryPersona.manager:
-        return 'Yönetici olarak devam';
+        return 'persona_manager_role_title';
       case LoginEntryPersona.consultant:
-        return 'Danışman olarak devam';
+        return 'persona_consultant_role_title';
     }
   }
 
-  String get rolePathSubtitle {
+  String get rolePathSubtitleKey {
     switch (this) {
       case LoginEntryPersona.manager:
-        return 'Ofis, ekip liderliği ve operasyon yetkileri';
+        return 'persona_manager_role_subtitle';
       case LoginEntryPersona.consultant:
-        return 'Saha danışmanı ve portföy odaklı panel';
+        return 'persona_consultant_role_subtitle';
     }
   }
 }

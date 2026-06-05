@@ -1,6 +1,8 @@
 import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
 import 'package:emlakmaster_mobile/core/dev/dev_office_fallback.dart';
+import 'package:emlakmaster_mobile/core/services/firebase_core_bootstrap.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/auth_service.dart';
@@ -16,15 +18,58 @@ import '../../data/user_repository.dart';
 import '../../domain/entities/app_role.dart';
 
 /// Mevcut Firebase Auth kullanıcısı. null = çıkış yapılmış.
+///
+/// [FirebaseCoreBootstrap.ensureReady] tamamlanana kadar stream başlamaz — [core/no-app] önlenir.
 final currentUserProvider = StreamProvider<User?>((ref) {
-  return AuthService.instance.authStateChanges;
+  return _authStateChangesAfterBootstrap();
 });
+
+Stream<User?> _authStateChangesAfterBootstrap() async* {
+  await FirebaseCoreBootstrap.instance.ensureReady();
+  yield* AuthService.instance.authStateChanges;
+}
+
+/// GoRouter redirect — çıkışta stream gecikirken canlı Firebase oturumu esas alınır.
+User? resolveRouterAuthUser({
+  required User? streamUser,
+  required User? liveFirebaseUser,
+  required bool firebaseReady,
+}) {
+  if (firebaseReady) {
+    if (liveFirebaseUser != null) return liveFirebaseUser;
+    // Çıkış yapıldı: stream henüz null emit etmemiş olsa bile korumalı rotaya izin verme.
+    return null;
+  }
+  return streamUser;
+}
+
+/// GoRouter redirect — stream gecikmesinde canlı oturum; Firebase hazır değilse null.
+User? readRouterAuthUser(Ref ref) {
+  final firebaseReady = Firebase.apps.isNotEmpty;
+  return resolveRouterAuthUser(
+    streamUser: ref.read(currentUserProvider).valueOrNull,
+    liveFirebaseUser:
+        firebaseReady ? FirebaseAuth.instance.currentUser : null,
+    firebaseReady: firebaseReady,
+  );
+}
 
 /// users/{uid} stream. Rol değişikliklerini canlı dinler.
 final userDocStreamProvider =
     StreamProvider.autoDispose.family<UserDoc?, String>((ref, uid) {
+  ref.watch(authSessionEpochProvider);
+  if (!_userDocStreamUidAllowed(uid)) {
+    return Stream<UserDoc?>.value(null);
+  }
   return UserRepository.userDocStreamHydrated(uid);
 });
+
+bool _userDocStreamUidAllowed(String uid) {
+  if (uid.isEmpty || Firebase.apps.isEmpty) return true;
+  final live = FirebaseAuth.instance.currentUser?.uid;
+  if (live == null) return false;
+  return live == uid;
+}
 
 /// İlk girişte users doc yoksa rol seçim ekranı gösterilir; doc burada oluşturulur (ensureUserDoc artık otomatik çağrılmaz).
 final ensureUserDocProvider =
@@ -46,20 +91,31 @@ final ensureUserDocProvider =
 /// Durum [deriveOfficeAccessState] ile birleştirilir; rol için [currentRoleProvider].
 final primaryMembershipProvider =
     StreamProvider.autoDispose<OfficeMembership?>((ref) {
+  ref.watch(authSessionEpochProvider);
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) {
     return Stream<OfficeMembership?>.value(null);
   }
-  return UserRepository.userDocStream(user.uid).asyncExpand((doc) {
-    if (DevOfficeFallback.isActive) {
-      return Stream<OfficeMembership?>.value(
-        DevOfficeFallback.syntheticMembership(user.uid),
-      );
-    }
-    final oid = doc?.officeId;
-    return OfficeMembershipRepository.watchPrimaryMembershipForUser(
-        user.uid, oid);
-  });
+  if (isDevMode && DevOfficeFallback.isActive) {
+    return Stream<OfficeMembership?>.value(
+      DevOfficeFallback.syntheticMembership(user.uid),
+    );
+  }
+  final docAsync = ref.watch(userDocStreamProvider(user.uid));
+  if (docAsync.isLoading) {
+    return const Stream<OfficeMembership?>.empty();
+  }
+  if (docAsync.hasError) {
+    return Stream<OfficeMembership?>.error(
+      docAsync.error!,
+      docAsync.stackTrace ?? StackTrace.current,
+    );
+  }
+  final oid = docAsync.valueOrNull?.officeId;
+  return OfficeMembershipRepository.watchPrimaryMembershipForUser(
+    user.uid,
+    oid,
+  );
 });
 
 /// Ofis erişim durumu (routing / shell).
@@ -101,6 +157,7 @@ final officeAccessStateProvider =
 /// Phase 1.3: `officeId` + geçerli iş akışı için [OfficeMembership.role] tek doğruluk kaynağıdır.
 /// `users.role` yalnızca ofis öncesi veya üyelik yüklenirken legacy fallback’tür.
 final currentRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
+  ref.watch(authSessionEpochProvider);
   final user = ref.watch(currentUserProvider).valueOrNull;
   if (user == null) return const AsyncValue.data(AppRole.guest);
   final docAsync = ref.watch(userDocStreamProvider(user.uid));
@@ -261,6 +318,18 @@ final currentRoleOrNullProvider = Provider<AppRole?>((ref) {
   return asyncRole.valueOrNull;
 });
 
+/// Gerçek (global) super_admin tespiti — `users.role` esas alınır, ofis üyelik
+/// rolü veya override DEĞİL. "Tüm ofisler" kapısı ve güvenlik kararları için.
+final isSuperAdminProvider = Provider.autoDispose<bool>((ref) {
+  final uid =
+      ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid)) ?? '';
+  if (uid.isEmpty) return false;
+  final role = ref.watch(
+    userDocStreamProvider(uid).select((a) => a.valueOrNull?.role),
+  );
+  return AppRole.fromFirestoreRole(role) == AppRole.superAdmin;
+});
+
 /// Yönetici modu: superAdmin/broker test için geçici rol değiştirme. null = gerçek rol kullan.
 final overrideRoleProvider = StateProvider<AppRole?>((ref) => null);
 
@@ -275,6 +344,12 @@ final displayRoleProvider = Provider<AsyncValue<AppRole>>((ref) {
 final displayRoleOrNullProvider = Provider<AppRole?>((ref) {
   return ref.watch(displayRoleProvider).valueOrNull;
 });
+
+/// Çıkış sonrası login ekranını taze state ile yeniden kurmak için artan sayaç.
+final authPresentationEpochProvider = StateProvider<int>((ref) => 0);
+
+/// Oturum değişiminde (çıkış / farklı hesap girişi) rol stream'lerini yeniden kurar.
+final authSessionEpochProvider = StateProvider<int>((ref) => 0);
 
 /// Firestore rolüne göre; platform bağlantısı / içe aktarma motoru yönetimi (override ile büyütülmez).
 final canManagePlatformIntegrationsProvider = Provider<bool>((ref) {

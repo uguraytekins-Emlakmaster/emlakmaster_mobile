@@ -1,212 +1,31 @@
-import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/external_integrations/presentation/platform_setup_wizard_args.dart';
-import 'package:emlakmaster_mobile/features/external_integrations/presentation/providers/connected_platforms_providers.dart';
-import 'package:emlakmaster_mobile/features/external_integrations/presentation/widgets/connected_platform_card.dart';
-import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
+import 'package:emlakmaster_mobile/features/admin_baglantilar/presentation/widgets/baglantilar_command_surface.dart';
+import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
-/// Phase 1.4 — Bağlı platformlar: premium hub (mock veri; API sonra).
-class ConnectedPlatformsPage extends ConsumerWidget {
+/// Bağlantılar — platform durumu ve ofis entegrasyon kontrol yüzeyi (Screen 18).
+/// Rota kimliği korunur: `/settings/connected-accounts` (manager-tier guard router'da).
+class ConnectedPlatformsPage extends ConsumerStatefulWidget {
   const ConnectedPlatformsPage({super.key});
 
-  void _toast(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(fontSize: 13)),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
+  @override
+  ConsumerState<ConnectedPlatformsPage> createState() =>
+      _ConnectedPlatformsPageState();
+}
+
+class _ConnectedPlatformsPageState extends ConsumerState<ConnectedPlatformsPage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ext = AppThemeExtension.of(context);
-    final platforms = ref.watch(platformListProvider);
-    final canManage = ref.watch(canManagePlatformIntegrationsProvider);
-
-    return Scaffold(
-      backgroundColor: ext.background,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
-                child: Row(
-                  children: [
-                    const PremiumNavLeading(),
-                    Expanded(
-                      child: Text(
-                        'Bağlı platformlar',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: ext.foreground,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.4,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Resmi OAuth ve canlı API bağlantıları henüz üretimde değil. '
-                      'Kurulum sihirbazı ile ofis bilgilerinizi kaydedin; «Bağlı» yalnızca gerçek doğrulama sonrası anlam kazanır. '
-                      'Mağaza ilanları için toplu dosya içe aktarma önerilir.',
-                      style: TextStyle(
-                        color: ext.foregroundSecondary,
-                        fontSize: 13,
-                        height: 1.45,
-                      ),
-                    ),
-                    if (canManage) ...[
-                      const SizedBox(height: 10),
-                      FilledButton.icon(
-                        onPressed: () {
-                          AppFeedback.selectionClick();
-                          context.push(
-                            AppRouter.routePlatformSetupWizard,
-                            extra: const PlatformSetupWizardArgs(),
-                          );
-                        },
-                        icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
-                        label: const Text('Platform kurulum sihirbazı'),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () {
-                        AppFeedback.selectionClick();
-                        context.push(AppRouter.routeImportHub);
-                      },
-                      icon: const Icon(Icons.upload_file_rounded, size: 18),
-                      label: const Text(
-                        'Mağaza içe aktarma',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        AppFeedback.selectionClick();
-                        context.push(AppRouter.routeMyListings);
-                      },
-                      icon: const Icon(Icons.library_add_check_rounded, size: 18),
-                      label: const Text(
-                        'İçe aktarılanlar',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        AppFeedback.selectionClick();
-                        context.push(AppRouter.routeMyExternalListings);
-                      },
-                      icon: const Icon(Icons.home_work_outlined, size: 18),
-                      label: const Text(
-                        'Harici ilanlarım',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final p = platforms[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: ConnectedPlatformCard(
-                        platform: p,
-                        onConnect: () {
-                          AppFeedback.selectionClick();
-                          context.push(
-                            AppRouter.routePlatformSetupWizard,
-                            extra: PlatformSetupWizardArgs(initialPlatform: p.id),
-                          );
-                        },
-                        onReconnect: () {
-                          AppFeedback.selectionClick();
-                          context.push(
-                            AppRouter.routePlatformSetupWizard,
-                            extra: PlatformSetupWizardArgs(initialPlatform: p.id, editMode: true),
-                          );
-                        },
-                        onSync: () => _toast(
-                          context,
-                          '${p.name}: senkron isteği gönderildi (demo).',
-                        ),
-                        onDisconnect: () => _toast(
-                          context,
-                          '${p.name}: bağlantı kaldırma onaylandı (demo).',
-                        ),
-                      ),
-                    );
-                  },
-                  childCount: platforms.length,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: ext.surfaceElevated,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                    border: Border.all(color: ext.border.withValues(alpha: 0.4)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.info_outline_rounded, size: 20, color: ext.foregroundMuted),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Veriler şu an örnek senaryodur. Üretimde bağlantı durumu sunucu ve '
-                          'tarayıcı uzantısı ile senkronize edilecektir.',
-                          style: TextStyle(color: ext.foregroundSecondary, fontSize: 11, height: 1.35),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+  Widget build(BuildContext context) {
+    super.build(context);
+    return const PremiumShellBackdrop(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: BaglantilarCommandSurface(),
         ),
       ),
     );

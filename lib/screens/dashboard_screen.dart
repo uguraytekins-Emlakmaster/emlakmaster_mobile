@@ -1,17 +1,25 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
+import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/execution_reminders_providers.dart';
+import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/admin_command_tokens.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/providers/admin_office_health_provider.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/widgets/admin_command_chrome.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/widgets/admin_command_quick_routes.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/widgets/admin_command_skeleton.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/admin_command/widgets/admin_command_urgent_section.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_dashboard_alerts_provider.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_dashboard_intelligence_summary_provider.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/broker_smart_task_suggestions_provider.dart';
+import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/execution_reminders_providers.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/providers/manager_escalations_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_dashboard_reminder.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/manager_escalations_card.dart';
-import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broker_dashboard_intelligence_summary_card.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/manager_revenue_summary_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/broker_dashboard_alerts_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/smart_task_suggestions_card.dart';
@@ -31,8 +39,11 @@ import 'package:emlakmaster_mobile/widgets/bento_analytics.dart';
 import 'package:emlakmaster_mobile/widgets/bento_saha_radar.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
+import 'package:emlakmaster_mobile/widgets/dashboard_notifications_sheet.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
+import 'package:emlakmaster_mobile/widgets/revenue_leak_tracker.dart';
+import 'package:emlakmaster_mobile/widgets/session_avatar_button.dart';
 import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
 import 'package:emlakmaster_mobile/features/daily_brief/presentation/widgets/daily_brief_panel.dart';
 import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
@@ -41,13 +52,12 @@ import 'package:emlakmaster_mobile/features/missed_opportunities/presentation/wi
 import 'package:emlakmaster_mobile/features/opportunity_radar/presentation/widgets/opportunity_radar_widget.dart';
 import 'package:emlakmaster_mobile/features/region_demand_map/presentation/widgets/region_demand_map_panel.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
-import 'package:emlakmaster_mobile/widgets/top_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Yönetici / broker **Dashboard** — danışman paneliyle aynı sistem:
-/// **Hero** (ofis kimliği) → **Operational** (KPI, komuta, sıcak/kaçırılan, günlük özet) → **Insight** (pipeline, ekonomi, ticker, harita, analitik).
+/// Yönetici / broker **Komuta Merkezi** — executive command layer.
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
@@ -57,6 +67,8 @@ class DashboardPage extends ConsumerWidget {
             .valueOrNull?[AppConstants.keyV1LeanProduct] ??
         true;
     ref.invalidate(externalListingsStreamProvider);
+    ref.invalidate(adminCommandSnapshotProvider);
+    ref.invalidate(brokerDashboardIntelligenceSummaryProvider);
     if (!lean) {
       ref.invalidate(marketHeatmapProvider);
       ref.invalidate(discoveryItemsProvider);
@@ -73,11 +85,87 @@ class DashboardPage extends ConsumerWidget {
     await Future.delayed(const Duration(milliseconds: 600));
   }
 
+  List<Widget> _executiveChromeSlivers(
+    WidgetRef ref,
+    BuildContext context,
+  ) {
+    final uid =
+        ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
+    final intelAsync = ref.watch(brokerDashboardIntelligenceSummaryProvider);
+    final snapshotAsync = ref.watch(adminCommandSnapshotProvider);
+
+    final headerActions = [
+      const SessionAvatarButton(size: AdminCommandTokens.headerAvatarSize),
+      IconButton(
+        tooltip: 'Bildirimler',
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: AdminCommandTokens.headerActionTap,
+          minHeight: AdminCommandTokens.headerActionTap,
+        ),
+        icon: Icon(
+          Icons.notifications_outlined,
+          color: AppThemeExtension.of(context).textSecondary,
+          size: AdminCommandTokens.headerActionIconSize,
+        ),
+        onPressed: uid.isEmpty
+            ? null
+            : () => showDashboardNotificationsSheet(context, uid: uid),
+      ),
+    ];
+
+    return [
+      SliverToBoxAdapter(
+        child: TourTarget(
+          id: TourTargetId.managerCommandDeck,
+          child: PremiumAdminCommandHeader(
+            title: ProductLabels.managerHome,
+            subtitle: 'Ofis sağlığı · ekip aktivitesi · operasyon kontrolü',
+            actions: headerActions,
+          ),
+        ),
+      ),
+      const SliverToBoxAdapter(child: RevenueLeakTracker()),
+      snapshotAsync.when(
+        loading: () => const AdminCommandSkeleton(),
+        error: (_, __) => SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: EmptyState(
+              compact: true,
+              grouped: true,
+              icon: Icons.cloud_off_outlined,
+              title: 'Komuta özeti yüklenemedi',
+              subtitle: 'Bağlantınızı kontrol edip tekrar deneyin.',
+              actionLabel: 'Tekrar dene',
+              onAction: () {
+                ref.invalidate(adminCommandSnapshotProvider);
+              },
+            ),
+          ),
+        ),
+        data: (snapshot) => SliverList(
+          delegate: SliverChildListDelegate([
+            PremiumAdminHealthStrip(summary: snapshot.health),
+            intelAsync.maybeWhen(
+              data: (lines) => PremiumAdminIntelLines(
+                recentLine: lines.recentLine,
+                criticalLine: lines.criticalLine,
+              ),
+              orElse: () => const SizedBox.shrink(),
+            ),
+            PremiumAdminUrgentSection(items: snapshot.urgentItems),
+            const PremiumAdminQuickRoutes(),
+          ]),
+        ),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     try {
       final premium = PremiumThemeExtension.of(context);
-      // Granular select: tam Map değişince değil, ilgili bayraklar değişince yeniden çiz.
       final compact = ref.watch(
         featureFlagsProvider.select(
           (a) => a.valueOrNull?[AppConstants.keyCompactDashboard] ?? false,
@@ -118,11 +206,8 @@ class DashboardPage extends ConsumerWidget {
       final gapOp = compact
           ? DashboardLayoutTokens.gapOperationalTight
           : DashboardLayoutTokens.gapOperational;
-      final gapHero =
-          compact ? 8.0 : DashboardLayoutTokens.gapHeroToOperational.toDouble();
       final gapInsight = DashboardLayoutTokens.gapInsightSection.toDouble();
       const h = DashboardLayoutTokens.horizontalPadding;
-      // [px] ile aynı genişlik: iç içe [LayoutBuilder] (SovereignArc + burası) layout assert.
       final bentoInsightContentW = MediaQuery.sizeOf(context).width - 2 * h;
       final stackBentoRadarRow = bentoInsightContentW < 520;
       final bentoSiblingGap =
@@ -133,143 +218,123 @@ class DashboardPage extends ConsumerWidget {
             child: child,
           );
 
-      // Kabuk zaten [Scaffold] + alt nav; iç içe ikinci [Scaffold] bazı cihazlarda
-      // PageView gövdesinde boyama/hit-test sapmalarına yol açabiliyor.
       final content = PremiumShellBackdrop(
         child: Material(
-        color: Colors.transparent,
-        child: SafeArea(
-          child: SovereignArcWatermark(
-            child: RepaintBoundary(
-              child: ColoredBox(
-                color: Colors.transparent,
+          color: Colors.transparent,
+          child: SafeArea(
+            child: SovereignArcWatermark(
+              child: RepaintBoundary(
                 child: RefreshIndicator(
                   onRefresh: () => _onRefresh(ref),
                   color: premium.champagneGold,
                   backgroundColor: premium.glassSurface,
-                  child: SingleChildScrollView(
+                  child: CustomScrollView(
+                    cacheExtent: 360,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.only(bottom: scrollBottomPad),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // —— Layer 1: Hero — ofis kimliği, uyarı şeridi ——
-                        const DashboardTopAppBar(),
-                        SizedBox(height: gapHero),
-                        DeferredMountSection.dashboardOperational(
+                    slivers: [
+                      ..._executiveChromeSlivers(ref, context),
+                      SliverToBoxAdapter(
+                        child: DeferredMountSection.dashboardPrimary(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              px(
-                                const RepaintBoundary(
-                                  child: BrokerDashboardIntelligenceSummaryCard(),
+                              const TourTarget(
+                                id: TourTargetId.managerOperations,
+                                child: PremiumAdminSectionLabel(
+                                  label: 'Operasyonel müdahale',
+                                  secondary:
+                                      'Gerçek kuyruklar ve ekip sinyalleri',
                                 ),
                               ),
-                              SizedBox(height: gapOp * 0.85),
-                            ],
-                          ),
-                        ),
-                        DeferredMountSection.dashboardPrimary(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              px(const AiUsageIndicator(compact: true)),
-                              SizedBox(height: gapOp * 0.85),
-                              px(const ManagerRevenueSummaryCard()),
-                              SizedBox(height: gapOp * 0.85),
-                              px(const ManagerEscalationsCard()),
-                              SizedBox(height: gapOp * 0.85),
-                              px(const PostCallCaptureDashboardReminder()),
-                              SizedBox(height: gapOp * 0.85),
-                              px(const BrokerDashboardAlertsCard()),
-                              SizedBox(height: gapOp * 0.85),
-                              px(const SmartTaskSuggestionsCard()),
-                              SizedBox(height: gapOp * 0.85),
-                              px(const ExecutionRemindersCard(
-                                  surface: ExecutionReminderSurface.broker)),
-                              if (kpiBar) ...[
-                                SizedBox(height: gapOp),
-                                px(
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'Ofis momentumu',
-                                      style:
-                                          AppTypography.sectionLabel(context),
+                              px(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    const AiUsageIndicator(compact: true),
+                                    SizedBox(height: gapOp * 0.85),
+                                    const ManagerRevenueSummaryCard(),
+                                    SizedBox(height: gapOp * 0.85),
+                                    const ManagerEscalationsCard(),
+                                    SizedBox(height: gapOp * 0.85),
+                                    const PostCallCaptureDashboardReminder(),
+                                    SizedBox(height: gapOp * 0.85),
+                                    const BrokerDashboardAlertsCard(),
+                                    SizedBox(height: gapOp * 0.85),
+                                    const SmartTaskSuggestionsCard(),
+                                    SizedBox(height: gapOp * 0.85),
+                                    const ExecutionRemindersCard(
+                                      surface: ExecutionReminderSurface.broker,
                                     ),
+                                  ],
+                                ),
+                              ),
+                              if (kpiBar) ...[
+                                TourTarget(
+                                  id: TourTargetId.managerOfficeMomentum,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      const PremiumAdminSectionLabel(
+                                        label: 'Ofis momentumu',
+                                      ),
+                                      px(const DashboardKpiSection()),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: DesignTokens.space2),
-                                px(const DashboardKpiSection()),
+                                SizedBox(height: gapOp * 0.75),
                               ],
-                              if (kpiBar) SizedBox(height: gapOp),
+                              const PremiumAdminSectionLabel(label: 'Çağrı sinyalleri'),
                               px(const PriorityCallSignalsCard()),
+                              SizedBox(height: gapOp * 0.75),
                             ],
                           ),
                         ),
-                        DeferredMountSection.dashboardSecondary(
+                      ),
+                      SliverToBoxAdapter(
+                        child: DeferredMountSection.dashboardSecondary(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               if (analyticsEnabled) ...[
-                                SizedBox(height: gapOp),
+                                const PremiumAdminSectionLabel(
+                                  label: 'İçgörü ve analitik',
+                                ),
                                 px(
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'İçgörü ve analitik',
-                                      style:
-                                          AppTypography.sectionLabel(context),
-                                    ),
+                                  RainbowAnalyticsCenterCard(
+                                    paddedContentWidth: bentoInsightContentW,
                                   ),
                                 ),
-                                const SizedBox(height: DesignTokens.space2),
-                                px(RainbowAnalyticsCenterCard(
-                                  paddedContentWidth: bentoInsightContentW,
-                                )),
+                                SizedBox(height: gapOp * 0.75),
                               ],
-                              SizedBox(height: gapOp),
-                              px(
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    'Bağlantı ve sistem',
-                                    style:
-                                        AppTypography.sectionLabel(context),
-                                  ),
-                                ),
+                              const PremiumAdminSectionLabel(
+                                label: 'Bağlantı ve sistem',
                               ),
-                              const SizedBox(height: DesignTokens.space2),
                               px(const ManagerPlatformConnectionsSummaryCard()),
                               if (lean) ...[
                                 SizedBox(height: gapOp * 0.75),
-                                px(
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'Operasyonel odak',
-                                      style:
-                                          AppTypography.sectionLabel(context),
-                                    ),
-                                  ),
+                                const PremiumAdminSectionLabel(
+                                  label: 'Operasyonel odak',
+                                  secondary: 'Lean görünüm',
                                 ),
-                                const SizedBox(height: DesignTokens.space2),
                                 px(const LeanAdminTodayFocusCard()),
                                 px(const LeanAdminOfficePulseCard()),
                               ],
                               if (!lean) ...[
+                                SizedBox(height: gapOp),
                                 px(const HotLeadRadarPanel()),
                                 SizedBox(height: gapOp),
                                 px(const MissedOpportunitiesPanel()),
                                 SizedBox(height: gapOp),
+                                if (dailyBrief) px(const DailyBriefPanel()),
                               ],
-                              if (dailyBrief) px(const DailyBriefPanel()),
                             ],
                           ),
                         ),
-                        if (!lean)
-                          DeferredMountSection.dashboardInsight(
+                      ),
+                      if (!lean)
+                        SliverToBoxAdapter(
+                          child: DeferredMountSection.dashboardInsight(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -290,11 +355,13 @@ class DashboardPage extends ConsumerWidget {
                                   Column(
                                     children: [
                                       const RepaintBoundary(
-                                          child: BentoPowerAnalytics()),
+                                        child: BentoPowerAnalytics(),
+                                      ),
                                       SizedBox(
-                                          height: compact
-                                              ? DesignTokens.space4
-                                              : DesignTokens.space6),
+                                        height: compact
+                                            ? DesignTokens.space4
+                                            : DesignTokens.space6,
+                                      ),
                                       if (stackBentoRadarRow)
                                         Column(
                                           crossAxisAlignment:
@@ -305,9 +372,10 @@ class DashboardPage extends ConsumerWidget {
                                                   bentoInsightContentW,
                                             ),
                                             SizedBox(
-                                                height: compact
-                                                    ? DesignTokens.space3
-                                                    : DesignTokens.space4),
+                                              height: compact
+                                                  ? DesignTokens.space3
+                                                  : DesignTokens.space4,
+                                            ),
                                             const BentoAiNews(),
                                           ],
                                         )
@@ -325,8 +393,7 @@ class DashboardPage extends ConsumerWidget {
                                               ),
                                             ),
                                             SizedBox(width: bentoSiblingGap),
-                                            const Expanded(
-                                                child: BentoAiNews()),
+                                            const Expanded(child: BentoAiNews()),
                                           ],
                                         ),
                                     ],
@@ -335,16 +402,19 @@ class DashboardPage extends ConsumerWidget {
                               ],
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                      SliverPadding(
+                        padding: EdgeInsets.only(bottom: scrollBottomPad),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
+
       return WelcomePatronOverlay(
         child: ShellScreenReadyListener(
           screenName: 'admin_dashboard',

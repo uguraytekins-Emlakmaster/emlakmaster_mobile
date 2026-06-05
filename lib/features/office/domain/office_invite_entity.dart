@@ -14,6 +14,7 @@ class OfficeInvite {
     required this.usedCount,
     required this.roleToAssign,
     this.isActive = true,
+    this.createdAt,
   });
 
   final String id;
@@ -26,6 +27,9 @@ class OfficeInvite {
   final int usedCount;
   final OfficeRole roleToAssign;
   final bool isActive;
+
+  /// Firestore'da `createdAt` (serverTimestamp) — yalnızca okuma için.
+  final DateTime? createdAt;
 
   bool get isExpired {
     if (expiresAt == null) return false;
@@ -66,6 +70,7 @@ class OfficeInvite {
       usedCount: (data['usedCount'] as num?)?.toInt() ?? 0,
       roleToAssign: role,
       isActive: data['isActive'] as bool? ?? true,
+      createdAt: _ts(data['createdAt']),
     );
   }
 

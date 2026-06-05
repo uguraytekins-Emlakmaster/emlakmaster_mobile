@@ -13,12 +13,14 @@ service firebase.storage {
       return d != null && d.role == 'super_admin';
     }
 
-    function isManagerTierUserDoc() {
+    // GLOBAL (platform-wide) showcase asset yöneticisi: süper admin veya broker/owner.
+    // listing_display TÜM kiracılar (ofisler) tarafından paylaşılan global bir yoldur;
+    // ofis kademesi roller (office_manager/team_lead/manager/admin) buraya YAZAMAZ —
+    // aksi halde A ofisinin yöneticisi tüm uygulamanın global markasını ezebilirdi.
+    // Ofis bazlı logo için /offices/{officeId}/logo kullanılır.
+    function isGlobalShowcaseManager() {
       let d = userDocData();
-      return d != null && d.role in [
-        'super_admin', 'broker_owner', 'broker', 'general_manager', 'office_manager',
-        'team_lead', 'manager', 'admin', 'owner'
-      ];
+      return d != null && d.role in ['super_admin', 'broker_owner', 'broker'];
     }
 
     function membershipData(officeId) {
@@ -89,14 +91,16 @@ service firebase.storage {
       allow delete: if request.auth != null && (canManageOfficeFiles(officeId) || isSuperAdminUser());
     }
 
-    // --- Global vitrin logosu (app_settings listing_display) — yalnızca yönetici tier ---
+    // --- Global vitrin logosu (app_settings listing_display) — yalnızca platform sahibi ---
+    // Bu yol global/paylaşımlıdır; yazma/silme yalnızca super_admin veya broker/owner.
+    // (Ofis yöneticileri kendi ofis logolarını /offices/{officeId}/logo altında yönetir.)
     match /listing_display/{allPaths=**} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
-        && isManagerTierUserDoc()
+        && isGlobalShowcaseManager()
         && request.resource.size < 2 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null && isManagerTierUserDoc();
+      allow delete: if request.auth != null && isGlobalShowcaseManager();
     }
 
     // Eski yol: kullanıcı başına import (devre dışı — yeni yüklemeler ofis altında)

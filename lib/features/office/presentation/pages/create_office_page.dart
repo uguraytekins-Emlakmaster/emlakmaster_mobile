@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -50,17 +51,28 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
         officeName: _nameController.text,
       );
       if (!mounted) return;
+      final uid = user.uid;
+      // userDocStreamProvider'ı da invalidate et — bu olmadan router redirect
+      // users.officeId == null görüp office-gate'e geri gönderiyordu (beyaz/spinner).
+      // Invalidation sonrası needsOfficeSetupProvider değişir ve router'ın
+      // refreshListenable'ı otomatik olarak home'a yönlendirir.
+      ref.invalidate(userDocStreamProvider(uid));
       ref.invalidate(primaryMembershipProvider);
       ref.invalidate(officeAccessStateProvider);
       ref.invalidate(currentOfficeProvider);
+      ref.invalidate(currentRoleProvider);
       if (OfficeSetupService.usedDevFallbackOnLastCreate) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Geçici olarak yerel modda devam ediliyor'),
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context).t('office_local_mode_notice')),
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
+      // userDocStreamProvider invalidation needsOfficeSetup'ı anında false
+      // yapar (doc==null → false); router refreshListenable bunu yakalar ve
+      // /office-create'den home'a otomatik yönlendirir. context.go güvenlik ağı.
       context.go(AppRouter.routeHome);
     } on OfficeException catch (e) {
       if (!mounted) return;
@@ -80,13 +92,14 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: ext.background,
       appBar: emlakAppBar(
         context,
         backgroundColor: ext.background,
         foregroundColor: ext.foreground,
-        title: const Text('Ofis oluştur'),
+        title: Text(l10n.t('office_create')),
       ),
       body: SafeArea(
         child: Column(
@@ -102,7 +115,7 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Ofis adı',
+                        l10n.t('office_name_label'),
                         style: TextStyle(
                           color: ext.foregroundSecondary,
                           fontSize: 13,
@@ -115,14 +128,14 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
                         style: TextStyle(color: ext.foreground),
                         cursorColor: ext.accent,
                         decoration: AuthFieldDecoration.build(context,
-                          label: 'Ofis adı',
-                          hint: 'Örn. Rainbow Gayrimenkul Merkez',
+                          label: l10n.t('office_name_label'),
+                          hint: l10n.t('office_name_hint'),
                           prefix: const Icon(Icons.business_outlined),
                         ),
                         validator: (v) {
                           if (isDevMode) return null;
                           if (v == null || v.trim().length < 2) {
-                            return 'En az 2 karakter girin';
+                            return l10n.t('office_name_min');
                           }
                           return null;
                         },
@@ -164,7 +177,7 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
                           color: ext.onBrand,
                         ),
                       )
-                    : const Text('Ofisi oluştur', style: TextStyle(fontWeight: FontWeight.w700)),
+                    : Text(l10n.t('office_create_cta'), style: const TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
           ],

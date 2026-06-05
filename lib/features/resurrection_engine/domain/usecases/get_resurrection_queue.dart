@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/domain/entities/resurrection_segment.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 
@@ -23,6 +24,7 @@ class GetResurrectionQueue {
       } else {
         continue;
       }
+      final heat = computeCustomerHeat(c);
       items.add(ResurrectionQueueItem(
         customerId: c.id,
         customerName: c.fullName,
@@ -30,7 +32,11 @@ class GetResurrectionQueue {
         segment: segment,
         daysSilent: days,
         suggestedMessagePlaceholder: suggestedMessagePlaceholder,
-        suggestedListingIds: [],
+        lastInteractionAt: last,
+        nextSuggestedAction: c.nextSuggestedAction,
+        lastCallSummary: c.lastCallSummary,
+        heatLevel: heat.heatLevel,
+        heatScore: heat.heatScore,
       ));
     }
     items.sort((a, b) => (b.daysSilent ?? 0).compareTo(a.daysSilent ?? 0));

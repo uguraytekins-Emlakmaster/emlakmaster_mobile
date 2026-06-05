@@ -24,9 +24,12 @@ class ShellTabBackBinding extends StatefulWidget {
 }
 
 class ShellTabBackBindingState extends State<ShellTabBackBinding> {
+  ShellTabBackHostState? _host;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _host = ShellTabBackHost.maybeOf(context);
     _publish();
   }
 
@@ -38,7 +41,7 @@ class ShellTabBackBindingState extends State<ShellTabBackBinding> {
 
   @override
   void dispose() {
-    ShellTabBackHost.maybeOf(context)?.detachBinding(this);
+    _host?.detachBinding(this);
     super.dispose();
   }
 
@@ -61,13 +64,22 @@ class ShellTabBackBindingState extends State<ShellTabBackBinding> {
     return false;
   }
 
+  /// Yalnızca gerçek bir [EditableText] (klavye) odaktayken true.
+  ///
+  /// `primaryFocus.hasFocus`, metin alanı olmasa bile rotanın FocusScope'u
+  /// odakta olduğu için neredeyse her zaman true döner; sadece `hasFocus`
+  /// kontrolü geri basışını sessizce yutar. Bu yüzden odağın bir
+  /// [EditableText] olup olmadığını doğrularız.
   bool _dismissKeyboard() {
     final focus = FocusManager.instance.primaryFocus;
-    if (focus != null && focus.hasFocus) {
-      focus.unfocus();
-      return true;
+    if (focus == null || !focus.hasFocus) return false;
+    final ctx = focus.context;
+    if (ctx == null ||
+        ctx.findAncestorWidgetOfExactType<EditableText>() == null) {
+      return false;
     }
-    return false;
+    focus.unfocus();
+    return true;
   }
 
   @override

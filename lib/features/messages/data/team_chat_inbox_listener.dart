@@ -66,8 +66,9 @@ class TeamChatInboxListener {
       return;
     }
 
-    final enabled = await SettingsService.instance.getNotificationsEnabled();
-    if (!enabled) return;
+    final allowed =
+        await SettingsService.instance.isNotificationAllowed('messages');
+    if (!allowed) return;
 
     for (final item in items) {
       if (_deliveredIds.contains(item.id)) continue;

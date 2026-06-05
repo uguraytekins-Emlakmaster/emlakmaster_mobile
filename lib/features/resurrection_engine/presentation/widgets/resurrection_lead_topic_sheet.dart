@@ -48,7 +48,7 @@ void showResurrectionLeadTopicSheet(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  Icons.auto_awesome_outlined,
+                  Icons.notes_outlined,
                   size: DesignTokens.iconLg,
                   color: ext.accent.withValues(alpha: 0.5),
                 ),
@@ -82,7 +82,7 @@ void showResurrectionLeadTopicSheet(
             ],
             const SizedBox(height: DesignTokens.space5),
             Text(
-              'Önerilen mesaj taslağı',
+              'Şablon mesaj (AI üretimi değil)',
               style: AppTypography.cardHeading(context).copyWith(
                 fontSize: DesignTokens.fontSizeSm,
                 color: fg,

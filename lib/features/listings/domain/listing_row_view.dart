@@ -37,6 +37,8 @@ class ListingRowView {
     this.openInBrowserUrl,
     this.detailListingId,
     this.integrationDocId,
+    this.listingType,
+    this.platformStatus,
   });
 
   /// Firestore doküman veya sentetik anahtar.
@@ -74,6 +76,12 @@ class ListingRowView {
 
   /// `integration_listings` doküman id (debug / gelecek kullanım).
   final String? integrationDocId;
+
+  /// Satılık / kiralık vb. — kaynak dokümanda varsa.
+  final String? listingType;
+
+  /// Platform yayın durumu (`status` alanı) — varsa.
+  final String? platformStatus;
 }
 
 /// "Benim İlanlarım" / pazar sekmesi içinde görsel ayrım.

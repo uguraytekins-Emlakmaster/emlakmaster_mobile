@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/widgets/premium/premium_bottom_nav_dock.dart';
 import 'package:flutter/material.dart';
 
 import 'design_tokens.dart';
@@ -46,8 +47,6 @@ abstract final class DashboardLayoutTokens {
   }
 
   static double contentScrollBottomInset(BuildContext context) {
-    final bottomSafe = MediaQuery.paddingOf(context).bottom;
-    // Yüzen premium alt dock + nefes payı
-    return DesignTokens.space6 + 76 + bottomSafe;
+    return PremiumBottomNavDock.reservedHeight(context) + DesignTokens.space4;
   }
 }

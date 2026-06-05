@@ -11,5 +11,7 @@ class MainFlutterWindow: NSWindow {
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     super.awakeFromNib()
+    self.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
   }
 }

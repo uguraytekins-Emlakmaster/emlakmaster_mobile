@@ -250,3 +250,6 @@ exports.generateBulkCampaignMessage = aiCallables.generateBulkCampaignMessage;
 // Ekip sohbeti — yeni mesajda FCM
 const teamChatPush = require("./teamChatPush");
 exports.onTeamChatMessageCreated = teamChatPush.onTeamChatMessageCreated;
+
+const accountDeletion = require("./accountDeletion");
+exports.onUserAccountDeleted = accountDeletion.onUserAccountDeleted;

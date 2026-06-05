@@ -549,7 +549,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Positioned.fill(child: _CallSessionBackdrop()),
+          const Positioned.fill(child: _CallSessionBackdrop()),
           if (_isDialMode) _buildDialMode(bottomInset),
           if (!_isDialMode)
             _InCallSessionBody(

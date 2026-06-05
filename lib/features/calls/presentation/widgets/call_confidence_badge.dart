@@ -25,7 +25,7 @@ class CallConfidenceBadge extends StatelessWidget {
     final ext = AppThemeExtension.of(context);
     final label = CallConfidenceLabels.label(kind);
     final color = switch (kind) {
-      CallConfidenceKind.emlakMasterOriginated => ext.success,
+      CallConfidenceKind.axionOriginated => ext.success,
       CallConfidenceKind.manualRecord => ext.textTertiary,
       CallConfidenceKind.callbackPending => ext.warning,
       CallConfidenceKind.deviceLog => ext.info,

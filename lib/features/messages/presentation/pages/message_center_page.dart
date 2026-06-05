@@ -1,24 +1,30 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
+import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
+import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_repository.dart';
-import 'package:emlakmaster_mobile/features/messages/domain/team_channel_entity.dart';
-import 'package:emlakmaster_mobile/features/messages/domain/team_channel_id.dart';
-import 'package:emlakmaster_mobile/features/messages/domain/team_channel_type.dart';
-import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/consultant_messages_tokens.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/models/message_conversation_row_snapshot.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_inbox_providers.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_providers.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/utils/message_conversation_list_filter.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/widgets/consultant_messages_chrome.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/widgets/message_conversation_card.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/widgets/message_external_preview_sheet.dart';
+import 'package:emlakmaster_mobile/features/messages/presentation/widgets/message_list_skeleton.dart';
 import 'package:emlakmaster_mobile/features/messages/presentation/widgets/team_general_channel_bootstrap.dart';
-import 'package:emlakmaster_mobile/features/office/domain/office_role.dart';
+import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
+import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
-import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
-import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-/// Mesaj merkezi — ofis ekibi ile anlık sohbet; harici platformlar sonra eklenecek.
+
+/// Mesaj Merkezi — ekip sohbeti canlı; harici kanallar önizleme (sahte gönderim yok).
 class MessageCenterPage extends ConsumerStatefulWidget {
   const MessageCenterPage({super.key});
 
@@ -31,364 +37,451 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
   @override
   bool get wantKeepAlive => true;
 
+  MessagePlatformFilter _platformFilter = MessagePlatformFilter.all;
+  String _searchQuery = '';
+  bool _bannerDismissed = false;
+  int _retryKey = 0;
+  late final DebouncedSearchController _debouncedSearch;
+
+  @override
+  void initState() {
+    super.initState();
+    _debouncedSearch = DebouncedSearchController(
+      onQueryChanged: (q) {
+        if (_searchQuery != q) setState(() => _searchQuery = q);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _debouncedSearch.dispose();
+    super.dispose();
+  }
+
+  double _dockBottomReserve(BuildContext context) {
+    final ts = MediaQuery.textScalerOf(context);
+    final ratio =
+        ts.scale(DesignTokens.fontSizeBase) / DesignTokens.fontSizeBase;
+    return 112 * ratio.clamp(1.0, 1.38);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final officeId = ref.watch(teamChatOfficeIdProvider);
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
+    final canManage = ref.watch(canManagePlatformIntegrationsProvider);
+    final dockReserve = _dockBottomReserve(context);
 
     if (officeId == null || uid == null) {
       return TeamGeneralChannelBootstrap(
         child: PremiumShellBackdrop(
           child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _header(context, ext),
-              Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      'Ekip mesajlaşması için önce bir ofise bağlanmanız gerekir.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: ext.foregroundSecondary, height: 1.4),
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+              child: CustomScrollView(
+                slivers: [
+                  const SliverToBoxAdapter(
+                    child: PremiumMessagesPageHeader(
+                      title: 'Mesaj Merkezi',
+                      subtitle: 'Çok kanallı iletişim · müşteri mesajları',
+                      showPreviewBadge: false,
                     ),
                   ),
-                ),
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        ConsultantMessagesTokens.horizontal,
+                        24,
+                        ConsultantMessagesTokens.horizontal,
+                        dockReserve,
+                      ),
+                      child: const EmptyState(
+                        premiumVisual: true,
+                        grouped: true,
+                        icon: Icons.domain_outlined,
+                        title: 'Ofis bağlantısı gerekli',
+                        subtitle:
+                            'Ekip mesajlaşması için önce bir ofise bağlanmanız gerekir.',
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
-      ),
       );
     }
 
     final channelsAsync = ref.watch(teamChannelsProvider);
     final membersAsync = ref.watch(officeTeamMemberProfilesProvider);
+    final inboxAsync = ref.watch(teamChatInboxProvider(uid));
 
     return ShellScreenReadyListener(
       screenName: 'messages',
       provider: teamChannelsProvider,
       itemCount: (v) => (v as List).length,
       child: TeamGeneralChannelBootstrap(
-      child: PremiumShellBackdrop(
-      child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(
-              child: PremiumPageHeader(
-                title: ProductLabels.messageCenter,
-                subtitle: 'Tüm platformlardan gelen mesajlar tek yerde.',
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    PremiumStatusPill(
-                      label: 'Canlı sohbet',
-                      color: ext.success,
-                    ),
-                    const SizedBox(width: 8),
-                    const PremiumStatusPill(
-                      label: 'Önizleme: harici kanallar',
-                      outlined: true,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 12, 20, 12),
-                child: PremiumInfoBanner(
-                  message:
-                      'Ofis ekibinizle anlık mesajlaşın. WhatsApp / Instagram entegrasyonu hazırlık aşamasında — şu an yalnızca ekip sohbeti canlıdır.',
-                  icon: Icons.groups_rounded,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: channelsAsync.when(
-                data: (channels) {
-                  final total = channels.length + 1;
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: PremiumMetricCard(
-                            icon: Icons.forum_outlined,
-                            label: 'Toplam konuşma',
-                            value: '$total',
-                          ),
+        child: PremiumShellBackdrop(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+              child: Builder(
+                key: ValueKey('messages_$_retryKey'),
+                builder: (context) {
+                  if (channelsAsync.isLoading && !channelsAsync.hasValue) {
+                    return CustomScrollView(
+                      slivers: [
+                        ..._headerSlivers(
+                          premium: premium,
+                          canManage: canManage,
+                          officeId: officeId,
                         ),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: PremiumMetricCard(
-                            icon: Icons.mark_chat_unread_outlined,
-                            label: 'Okunmamış',
-                            value: '—',
+                        const SliverToBoxAdapter(child: MessageListSkeleton()),
+                      ],
+                    );
+                  }
+
+                  if (channelsAsync.hasError && !channelsAsync.hasValue) {
+                    return CustomScrollView(
+                      slivers: [
+                        ..._headerSlivers(
+                          premium: premium,
+                          canManage: canManage,
+                          officeId: officeId,
+                        ),
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: _MessagesErrorState(
+                            onRetry: () {
+                              ref.invalidate(teamChannelsProvider);
+                              setState(() => _retryKey++);
+                            },
                           ),
                         ),
                       ],
-                    ),
+                    );
+                  }
+
+                  final channels = channelsAsync.valueOrNull ?? [];
+                  final members = membersAsync.valueOrNull ?? [];
+                  final inbox = inboxAsync.valueOrNull ?? [];
+                  final allItems = buildTeamConversationItems(
+                    officeId: officeId,
+                    currentUserId: uid,
+                    channels: channels,
+                    members: members,
+                    inbox: inbox,
+                  );
+                  final summary = computeMessageListSummary(
+                    items: allItems,
+                    inbox: inbox,
+                  );
+
+                  if (_platformFilter.isExternalOnly) {
+                    return _externalFilterBody(
+                      context,
+                      filter: _platformFilter,
+                      canManage: canManage,
+                      dockReserve: dockReserve,
+                      premium: premium,
+                      officeId: officeId,
+                    );
+                  }
+
+                  final filtered =
+                      filterTeamConversations(allItems, _searchQuery);
+
+                  return CustomScrollView(
+                    cacheExtent: 320,
+                    slivers: [
+                      ..._headerSlivers(
+                        premium: premium,
+                        canManage: canManage,
+                        officeId: officeId,
+                        summary: summary,
+                        showTeamBanner: !_bannerDismissed,
+                      ),
+                      if (filtered.isEmpty)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              ConsultantMessagesTokens.horizontal,
+                              16,
+                              ConsultantMessagesTokens.horizontal,
+                              dockReserve,
+                            ),
+                            child: EmptyState(
+                              premiumVisual: true,
+                              grouped: true,
+                              icon: Icons.forum_outlined,
+                              title: _searchQuery.isNotEmpty
+                                  ? 'Sonuç yok'
+                                  : 'Henüz mesaj yok',
+                              subtitle: _searchQuery.isNotEmpty
+                                  ? 'Aramayı değiştirin veya filtreyi sıfırlayın.'
+                                  : 'Ekip üyeleriyle sohbet başlatın; mesajlar burada görünür.',
+                              actionLabel: _searchQuery.isNotEmpty
+                                  ? 'Filtreyi sıfırla'
+                                  : null,
+                              onAction: _searchQuery.isNotEmpty
+                                  ? _resetFilters
+                                  : null,
+                              outlinedActionLabel:
+                                  _searchQuery.isEmpty ? 'Çağrılarım' : null,
+                              onOutlinedAction: _searchQuery.isEmpty
+                                  ? () => ConsultantShellNav.goToCallsTab(
+                                        context,
+                                      )
+                                  : null,
+                            ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(
+                            ConsultantMessagesTokens.horizontal,
+                            0,
+                            ConsultantMessagesTokens.horizontal,
+                            dockReserve,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final item = filtered[index];
+                                final snapshot =
+                                    MessageConversationRowSnapshot.fromItem(
+                                  item,
+                                );
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: RepaintBoundary(
+                                    child: MessageConversationCard(
+                                      item: item,
+                                      snapshot: snapshot,
+                                      onTap: () => _openConversation(
+                                        context,
+                                        ref,
+                                        item: item,
+                                        officeId: officeId,
+                                        currentUserId: uid,
+                                        members: members,
+                                      ),
+                                      onOpen: () => _openConversation(
+                                        context,
+                                        ref,
+                                        item: item,
+                                        officeId: officeId,
+                                        currentUserId: uid,
+                                        members: members,
+                                      ),
+                                      onCall: () => _MessagesActions.call(
+                                        context,
+                                        item,
+                                      ),
+                                      onWhatsApp: () =>
+                                          _MessagesActions.whatsApp(
+                                        context,
+                                        item,
+                                      ),
+                                      onMarkRead: () =>
+                                          _MessagesActions.markRead(context),
+                                    ),
+                                  ),
+                                );
+                              },
+                              childCount: filtered.length,
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
               ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                child: Text(
-                  'GENEL',
-                  style: TextStyle(
-                    color: ext.foregroundMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _ConversationRow(
-                  title: 'Genel sohbet',
-                  subtitle: 'Tüm ofis',
-                  preview: 'Ofis duyuruları ve hızlı koordinasyon',
-                  icon: Icons.campaign_rounded,
-                  onTap: () => _openChannel(
-                    context,
-                    ref,
-                    officeId: officeId,
-                    channelId: kTeamGeneralChannelId,
-                    title: 'Genel sohbet',
-                    subtitle: 'Tüm ofis',
-                    ensure: () => TeamChatRepository.ensureGeneralChannel(officeId),
-                  ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                child: Text(
-                  'EKİP ÜYELERİ',
-                  style: TextStyle(
-                    color: ext.foregroundMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-              ),
-            ),
-            membersAsync.when(
-              loading: () => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-              error: (e, _) => SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text('Ekip listesi yüklenemedi: $e',
-                      style: TextStyle(color: ext.danger)),
-                ),
-              ),
-              data: (members) {
-                if (members.isEmpty) {
-                  return SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        'Aktif başka ekip üyesi yok.',
-                        style: TextStyle(color: ext.foregroundMuted, fontSize: 13),
-                      ),
-                    ),
-                  );
-                }
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final profile = members[index];
-                      final roleLabel = _officeRoleLabel(profile.membership.role);
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: _ConversationRow(
-                          title: profile.displayName,
-                          subtitle: roleLabel,
-                          preview: 'Birebir mesaj başlat',
-                          icon: Icons.person_rounded,
-                          imageUrl: profile.avatarUrl,
-                          onTap: () => _openDirect(
-                            context,
-                            ref,
-                            officeId: officeId,
-                            currentUserId: uid,
-                            otherUserId: profile.membership.userId,
-                            title: profile.displayName,
-                            subtitle: roleLabel,
-                          ),
-                        ),
-                      );
-                    },
-                    childCount: members.length,
-                  ),
-                );
-              },
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Text(
-                  'SON KONUŞMALAR',
-                  style: TextStyle(
-                    color: ext.foregroundMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-              ),
-            ),
-            channelsAsync.when(
-              loading: () => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-              error: (e, _) => SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text('Konuşmalar yüklenemedi: $e',
-                      style: TextStyle(color: ext.danger)),
-                ),
-              ),
-              data: (channels) {
-                final direct = channels
-                    .where((c) => c.type == TeamChannelType.direct)
-                    .where((c) => (c.lastMessageText ?? '').isNotEmpty)
-                    .toList();
-                if (direct.isEmpty) {
-                  return SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                      child: Text(
-                        'Henüz birebir mesaj yok.',
-                        style: TextStyle(color: ext.foregroundMuted, fontSize: 13),
-                      ),
-                    ),
-                  );
-                }
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final channel = direct[index];
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        child: _ChannelRow(
-                          channel: channel,
-                          currentUserId: uid,
-                          membersAsync: membersAsync,
-                          onTap: () => _openExistingChannel(
-                            context,
-                            channel: channel,
-                            currentUserId: uid,
-                            membersAsync: membersAsync,
-                          ),
-                        ),
-                      );
-                    },
-                    childCount: direct.length,
-                  ),
-                );
-              },
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-                    onTap: () => showPremiumComingSoon(
-                      context,
-                      title: 'Harici platform mesajları',
-                      message:
-                          'Sahibinden ve diğer kanalların senkronu hazırlanıyor. Ekip sohbeti yukarıdaki kanallardan anlık çalışır.',
-                    ),
-                    child: const _InfoBanner(
-                      icon: Icons.hub_outlined,
-                      muted: true,
-                      text:
-                          'Sahibinden ve diğer platform mesajları sonraki aşamada buraya eklenecek. Dokunun.',
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-    ),
-    ),
-    );
-  }
-
-  Widget _header(BuildContext context, AppThemeExtension ext) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
-      child: Row(
-        children: [
-          const PremiumNavLeading(),
-          Expanded(
-            child: Text(
-              ProductLabels.messageCenter,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: ext.foreground,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  static Future<void> _openChannel(
+  List<Widget> _headerSlivers({
+    required PremiumThemeExtension premium,
+    required bool canManage,
+    required String officeId,
+    MessageListSummary? summary,
+    bool showTeamBanner = true,
+  }) {
+    return [
+      SliverToBoxAdapter(
+        child: TourTarget(
+          id: TourTargetId.messagesHeader,
+          child: PremiumMessagesPageHeader(
+            title: 'Mesaj Merkezi',
+            subtitle: 'Çok kanallı iletişim · müşteri mesajları',
+            actions: [
+              if (canManage)
+                IconButton(
+                  tooltip: 'Kanal ayarları',
+                  onPressed: () {
+                    AppFeedback.lightImpact();
+                    context.push(AppRouter.routeConnectedAccounts);
+                  },
+                  icon: Icon(
+                    Icons.hub_outlined,
+                    color: premium.champagneGold,
+                    size: 22,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      if (showTeamBanner)
+        SliverToBoxAdapter(
+          child: PremiumMessagesStatusBanner(
+            message:
+                'Önizleme modu — ekip sohbeti canlıdır. WhatsApp / Instagram / E-posta gönderimi için kanal bağlantısı gerekir.',
+            icon: Icons.info_outline_rounded,
+            onDismiss: () => setState(() => _bannerDismissed = true),
+            actionLabel: canManage ? 'Kanal bağla' : null,
+            onAction: canManage
+                ? () => context.push(AppRouter.routeConnectedAccounts)
+                : null,
+          ),
+        ),
+      if (summary != null)
+        SliverToBoxAdapter(
+          child: PremiumMessagesSummaryStrip(summary: summary),
+        ),
+      SliverToBoxAdapter(
+        child: PremiumMessageSearchRow(
+          controller: _debouncedSearch.controller,
+          hintText: 'Kişi veya mesaj ara',
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: PremiumMessageFilterStrip(
+          selected: _platformFilter,
+          onSelected: (f) => setState(() => _platformFilter = f),
+        ),
+      ),
+    ];
+  }
+
+  Widget _externalFilterBody(
+    BuildContext context, {
+    required MessagePlatformFilter filter,
+    required bool canManage,
+    required double dockReserve,
+    required PremiumThemeExtension premium,
+    required String officeId,
+  }) {
+    return CustomScrollView(
+      slivers: [
+        ..._headerSlivers(
+          premium: premium,
+          canManage: canManage,
+          officeId: officeId,
+          summary: MessageListSummary.empty,
+          showTeamBanner: false,
+        ),
+        SliverToBoxAdapter(
+          child: PremiumMessagesStatusBanner(
+            message:
+                'Kanal bağlantısı gerekli — ${filter.label} mesajları bu kanal bağlandığında görünecek.',
+            icon: Icons.link_off_rounded,
+            actionLabel: canManage ? 'Kanal bağla' : 'Önizleme',
+            onAction: canManage
+                ? () => context.push(AppRouter.routeConnectedAccounts)
+                : () => showMessageExternalPreviewSheet(
+                      context,
+                      filter: filter,
+                    ),
+          ),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              ConsultantMessagesTokens.horizontal,
+              8,
+              ConsultantMessagesTokens.horizontal,
+              dockReserve,
+            ),
+            child: EmptyState(
+              premiumVisual: true,
+              grouped: true,
+              icon: Icons.chat_outlined,
+              title: 'Henüz mesaj yok',
+              subtitle:
+                  'Kanal bağlantısı kurulduğunda ${filter.label} mesajları burada görünür.',
+              actionLabel: canManage ? 'Kanal bağla' : null,
+              onAction: canManage
+                  ? () => context.push(AppRouter.routeConnectedAccounts)
+                  : null,
+              outlinedActionLabel: 'Müşterilerim',
+              onOutlinedAction: () =>
+                  ConsultantShellNav.goToCustomersTab(context),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _resetFilters() {
+    _debouncedSearch.controller.clear();
+    setState(() {
+      _searchQuery = '';
+      _platformFilter = MessagePlatformFilter.all;
+    });
+  }
+
+  static Future<void> _openConversation(
     BuildContext context,
     WidgetRef ref, {
+    required MessageConversationListItem item,
     required String officeId,
-    required String channelId,
-    required String title,
-    required String subtitle,
-    required Future<void> Function() ensure,
+    required String currentUserId,
+    required List<TeamMemberProfile> members,
   }) async {
+    if (!item.isTeamLive || item.channelId == null) return;
     AppFeedback.lightImpact();
     try {
-      await ensure();
+      if (item.kind == MessageConversationKind.general) {
+        await TeamChatRepository.ensureGeneralChannel(officeId);
+      } else if (item.kind == MessageConversationKind.memberStart &&
+          item.otherUserId != null) {
+        await TeamChatRepository.ensureDirectChannel(
+          officeId: officeId,
+          currentUserId: currentUserId,
+          otherUserId: item.otherUserId!,
+        );
+      }
       if (!context.mounted) return;
+      var title = item.title;
+      var subtitle = item.subtitle;
+      if (item.kind == MessageConversationKind.direct &&
+          item.otherUserId != null) {
+        final match = members
+            .where((m) => m.membership.userId == item.otherUserId)
+            .firstOrNull;
+        if (match != null) {
+          title = match.displayName;
+          subtitle = officeRoleLabel(match.membership.role);
+        }
+      }
       context.push(
         AppRouter.routeMessageThread,
         extra: <String, dynamic>{
           'officeId': officeId,
-          'channelId': channelId,
+          'channelId': item.channelId,
           'title': title,
           'subtitle': subtitle,
         },
@@ -396,80 +489,75 @@ class _MessageCenterPageState extends ConsumerState<MessageCenterPage>
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sohbet açılamadı: $e')),
+          const SnackBar(
+            content: Text('Sohbet açılamadı. Lütfen tekrar deneyin.'),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
   }
+}
 
-  static Future<void> _openDirect(
-    BuildContext context,
-    WidgetRef ref, {
-    required String officeId,
-    required String currentUserId,
-    required String otherUserId,
-    required String title,
-    required String subtitle,
-  }) async {
-    await _openChannel(
-      context,
-      ref,
-      officeId: officeId,
-      channelId: teamDirectChannelId(currentUserId, otherUserId),
-      title: title,
-      subtitle: subtitle,
-      ensure: () => TeamChatRepository.ensureDirectChannel(
-        officeId: officeId,
-        currentUserId: currentUserId,
-        otherUserId: otherUserId,
+class _MessagesErrorState extends StatelessWidget {
+  const _MessagesErrorState({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.space6),
+        child: EmptyState(
+          compact: true,
+          grouped: true,
+          icon: Icons.cloud_off_outlined,
+          title: 'Mesajlar yüklenemedi',
+          subtitle: 'Bağlantınızı kontrol edip tekrar deneyin.',
+          actionLabel: 'Tekrar dene',
+          onAction: onRetry,
+        ),
       ),
-    );
-  }
-
-  static void _openExistingChannel(
-    BuildContext context, {
-    required TeamChannel channel,
-    required String currentUserId,
-    required AsyncValue<List<TeamMemberProfile>> membersAsync,
-  }) {
-    AppFeedback.lightImpact();
-    final otherId = channel.participantIds
-        .where((id) => id != currentUserId)
-        .cast<String?>()
-        .firstOrNull;
-    var title = channel.title ?? 'Sohbet';
-    var subtitle = 'Birebir';
-    if (otherId != null && membersAsync.hasValue) {
-      final match = membersAsync.value!
-          .where((p) => p.membership.userId == otherId)
-          .firstOrNull;
-      if (match != null) {
-        title = match.displayName;
-        subtitle = _officeRoleLabel(match.membership.role);
-      }
-    }
-    context.push(
-      AppRouter.routeMessageThread,
-      extra: <String, dynamic>{
-        'officeId': channel.officeId,
-        'channelId': channel.id,
-        'title': title,
-        'subtitle': subtitle,
-      },
     );
   }
 }
 
-String _officeRoleLabel(OfficeRole role) {
-  switch (role) {
-    case OfficeRole.owner:
-      return 'Sahip';
-    case OfficeRole.admin:
-      return 'Yönetici';
-    case OfficeRole.manager:
-      return 'Müdür';
-    case OfficeRole.consultant:
-      return 'Danışman';
+abstract final class _MessagesActions {
+  static void call(BuildContext context, MessageConversationListItem item) {
+    AppFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Ekip üyesi araması için telefon bilgisi profilde tanımlı değil. Çağrılarım üzerinden müşteri arayın.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  static void whatsApp(BuildContext context, MessageConversationListItem item) {
+    AppFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Mesaj gönderimi için kanal bağlantısı gerekli. Ekip sohbeti Tümü sekmesinde canlıdır.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  static void markRead(BuildContext context) {
+    AppFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Okundu işaretleme yakında. Bildirimler gelmeye devam edebilir.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }
 
@@ -478,175 +566,5 @@ extension _FirstOrNull<E> on Iterable<E> {
     final it = iterator;
     if (it.moveNext()) return it.current;
     return null;
-  }
-}
-
-class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({
-    required this.icon,
-    required this.text,
-    this.muted = false,
-  });
-
-  final IconData icon;
-  final String text;
-  final bool muted;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Container(
-      padding: const EdgeInsets.all(DesignTokens.space4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        color: muted ? ext.surface : ext.surfaceElevated,
-        border: Border.all(color: ext.border.withValues(alpha: 0.55)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: ext.foregroundMuted, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: ext.foregroundSecondary,
-                height: 1.4,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConversationRow extends StatelessWidget {
-  const _ConversationRow({
-    required this.title,
-    required this.subtitle,
-    required this.preview,
-    required this.icon,
-    required this.onTap,
-    this.imageUrl,
-  });
-
-  final String title;
-  final String subtitle;
-  final String preview;
-  final IconData icon;
-  final VoidCallback onTap;
-  final String? imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    final scheme = Theme.of(context).colorScheme;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-            color: ext.surfaceElevated,
-            border: Border.all(color: ext.border.withValues(alpha: 0.45)),
-          ),
-          padding: const EdgeInsets.all(DesignTokens.space4),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: scheme.primary.withValues(alpha: 0.15),
-                backgroundImage:
-                    imageUrl != null && imageUrl!.isNotEmpty ? NetworkImage(imageUrl!) : null,
-                child: imageUrl == null || imageUrl!.isEmpty
-                    ? Icon(icon, color: scheme.primary)
-                    : null,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: ext.foreground,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      subtitle,
-                      style: TextStyle(color: ext.foregroundMuted, fontSize: 12),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      preview,
-                      style: TextStyle(
-                        color: ext.foregroundSecondary,
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: ext.foregroundMuted),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChannelRow extends StatelessWidget {
-  const _ChannelRow({
-    required this.channel,
-    required this.currentUserId,
-    required this.membersAsync,
-    required this.onTap,
-  });
-
-  final TeamChannel channel;
-  final String currentUserId;
-  final AsyncValue<List<TeamMemberProfile>> membersAsync;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final otherId = channel.participantIds
-        .where((id) => id != currentUserId)
-        .cast<String?>()
-        .firstOrNull;
-    var title = 'Sohbet';
-    var subtitle = '';
-    if (otherId != null && membersAsync.hasValue) {
-      final match = membersAsync.value!
-          .where((p) => p.membership.userId == otherId)
-          .firstOrNull;
-      if (match != null) {
-        title = match.displayName;
-        subtitle = _officeRoleLabel(match.membership.role);
-      }
-    }
-    final preview = channel.lastMessageText ?? '';
-    return _ConversationRow(
-      title: title,
-      subtitle: subtitle,
-      preview: preview.isEmpty ? 'Mesaj yok' : preview,
-      icon: Icons.chat_bubble_outline_rounded,
-      onTap: onTap,
-    );
   }
 }

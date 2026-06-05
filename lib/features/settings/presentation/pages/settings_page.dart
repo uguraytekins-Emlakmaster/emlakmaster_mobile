@@ -1,5 +1,11 @@
+import 'dart:async';
+
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/config/legal_links.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/pages/legal_document_page.dart';
+import 'package:emlakmaster_mobile/features/settings/presentation/widgets/account_security_actions.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
@@ -9,14 +15,18 @@ import 'package:emlakmaster_mobile/core/providers/firebase_storage_availability_
 import 'package:emlakmaster_mobile/core/providers/settings_provider.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_storage_availability.dart';
 import 'package:emlakmaster_mobile/core/widgets/app_toaster.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/providers/investment_opportunity_providers.dart';
 import 'package:emlakmaster_mobile/features/market_settings/domain/entities/market_settings_entity.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
+import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
+import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_providers.dart';
+import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/manager_tour_providers.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
@@ -55,8 +65,6 @@ class SettingsPage extends ConsumerWidget {
     final override = ref.watch(overrideRoleProvider);
     final preferConsultant = ref.watch(preferredConsultantPanelProvider);
     final isAdmin = FeaturePermission.seesAdminPanel(realRole);
-    final canBecomeAdmin = user != null &&
-        (realRole == AppRole.agent || realRole == AppRole.guest);
     final canManagePlatformIntegrations =
         ref.watch(canManagePlatformIntegrationsProvider);
     final flagsAsync = ref.watch(featureFlagsProvider);
@@ -78,12 +86,15 @@ class SettingsPage extends ConsumerWidget {
             DesignTokens.space8,
           ),
           children: [
-            PremiumPageHeader(
-              title: l10n.t('title_settings'),
-              subtitle: 'Sisteminizi dilediğiniz gibi yönetin.',
+            TourTarget(
+              id: TourTargetId.settingsHeader,
+              child: PremiumPageHeader(
+                title: l10n.t('title_settings'),
+                subtitle: l10n.t('settings_subtitle'),
+              ),
             ),
-            const PremiumSectionHeader(
-              label: 'Hesap Alanı',
+            PremiumSectionHeader(
+              label: l10n.t('settings_section_account_area'),
               icon: Icons.person_rounded,
             ),
             _sectionCard(
@@ -96,13 +107,14 @@ class SettingsPage extends ConsumerWidget {
                       fallbackText: user.displayName ?? user.email ?? '',
                     ),
                     title: Text(
-                      user.email ?? 'Giriş yapılmış',
+                      user.email ?? l10n.t('settings_logged_in'),
                       style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
-                      'Rol: ${override?.label ?? role.label}',
+                      l10n.tArgs('settings_role_prefix',
+                          [override?.label ?? role.label]),
                       style: TextStyle(
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.7),
@@ -122,56 +134,6 @@ class SettingsPage extends ConsumerWidget {
                       height: 1,
                       color: theme.dividerColor.withValues(alpha: 0.5)),
                   _AvatarSettingsRow(userId: user.uid),
-                ],
-                if (canBecomeAdmin) ...[
-                  Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.5)),
-                  ListTile(
-                    leading: Icon(Icons.admin_panel_settings_rounded,
-                        color: AppThemeExtension.of(context).accent),
-                    title: Text('Yönetim yetkisini aç',
-                        style: TextStyle(color: theme.colorScheme.onSurface)),
-                    subtitle: Text(
-                      'Rolünüz yönetim alanını açacak şekilde güncellenir.',
-                      style: TextStyle(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.7),
-                          fontSize: 11),
-                    ),
-                    onTap: () async {
-                      try {
-                        await UserRepository.setUserDoc(
-                          uid: user.uid,
-                          role: 'broker_owner',
-                          name: user.displayName,
-                          email: user.email,
-                        );
-                        ref.invalidate(userDocStreamProvider(user.uid));
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                  'Yönetim yetkisi açıldı. Alan yenileniyor...'),
-                              backgroundColor:
-                                  AppThemeExtension.of(context).accent,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(userFacingErrorMessage(e,
-                                  context: 'settings_admin_role')),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
                 ],
                 if (isAdmin) ...[
                   Divider(
@@ -219,16 +181,121 @@ class SettingsPage extends ConsumerWidget {
                   ListTile(
                     leading: Icon(Icons.logout_rounded,
                         color: AppThemeExtension.of(context).danger),
-                    title: Text('Çıkış yap',
+                    title: Text(l10n.t('settings_logout'),
                         style: TextStyle(color: theme.colorScheme.onSurface)),
-                    onTap: () => AuthService.instance.signOut(),
+                    onTap: () async {
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) {
+                          final dExt = AppThemeExtension.of(ctx);
+                          return AlertDialog(
+                            backgroundColor: dExt.surfaceElevated,
+                            title: Text(l10n.t('settings_logout')),
+                            content: Text(l10n.t('settings_logout_confirm')),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: Text(l10n.t('action_dismiss')),
+                              ),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                    backgroundColor: dExt.danger),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: Text(l10n.t('settings_logout')),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (ok != true) return;
+                      LogoutFlowTracer.step('LOGOUT_FLOW', 'tap settings');
+                      unawaited(
+                        AuthLogoutCoordinator.signOut(
+                          ref,
+                          source: 'settings',
+                        ),
+                      );
+                    },
                   ),
                 ],
               ],
             ),
+            if (user != null) ...[
+              const SizedBox(height: DesignTokens.space6),
+              _SectionHeader(
+                title: l10n.t('settings_section_security'),
+                icon: Icons.shield_rounded,
+              ),
+              _sectionCard(
+                context,
+                children: [
+                  if (AuthService.instance.isPasswordProvider) ...[
+                    ListTile(
+                      leading: Icon(Icons.lock_reset_rounded,
+                          color: AppThemeExtension.of(context).accent),
+                      title: Text(l10n.t('acct_change_password_title'),
+                          style: TextStyle(color: theme.colorScheme.onSurface)),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () =>
+                          AccountSecurityActions.showChangePassword(context),
+                    ),
+                    Divider(
+                        height: 1,
+                        color: theme.dividerColor.withValues(alpha: 0.5)),
+                    ListTile(
+                      leading: Icon(Icons.alternate_email_rounded,
+                          color: AppThemeExtension.of(context).accent),
+                      title: Text(l10n.t('acct_change_email_title'),
+                          style: TextStyle(color: theme.colorScheme.onSurface)),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () =>
+                          AccountSecurityActions.showChangeEmail(context),
+                    ),
+                    Divider(
+                        height: 1,
+                        color: theme.dividerColor.withValues(alpha: 0.5)),
+                    ListTile(
+                      leading: Icon(Icons.mark_email_read_rounded,
+                          color: AppThemeExtension.of(context).accent),
+                      title: Text(l10n.t('settings_send_password_reset'),
+                          style: TextStyle(color: theme.colorScheme.onSurface)),
+                      subtitle: Text(
+                        l10n.t('settings_send_password_reset_sub'),
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.65),
+                            fontSize: 11),
+                      ),
+                      onTap: () =>
+                          AccountSecurityActions.sendPasswordReset(context),
+                    ),
+                    Divider(
+                        height: 1,
+                        color: theme.dividerColor.withValues(alpha: 0.5)),
+                  ],
+                  ListTile(
+                    leading: Icon(Icons.delete_forever_rounded,
+                        color: AppThemeExtension.of(context).danger),
+                    title: Text(l10n.t('acct_delete_confirm_title'),
+                        style: TextStyle(
+                            color: AppThemeExtension.of(context).danger,
+                            fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      l10n.t('settings_delete_account_sub'),
+                      style: TextStyle(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.65),
+                          fontSize: 11),
+                    ),
+                    onTap: () =>
+                        AccountSecurityActions.showDeleteAccount(context),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-              title: 'Plan & Üyelik',
+            _SectionHeader(
+              title: l10n.t('settings_section_plan'),
               icon: Icons.workspace_premium_rounded,
             ),
             _sectionCard(
@@ -240,7 +307,9 @@ class SettingsPage extends ConsumerWidget {
                     color: AppThemeExtension.of(context).accent,
                   ),
                   title: Text(
-                    usage.isPro ? 'PRO üyelik açık' : 'Temel Plan',
+                    usage.isPro
+                        ? l10n.t('settings_plan_pro_active')
+                        : l10n.t('settings_plan_basic'),
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
@@ -248,8 +317,8 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   subtitle: Text(
                     usage.isPro
-                        ? 'Sınırsız akıllı öneri ve gelişmiş içgörüler hazır.'
-                        : 'Arama ve müşteri akışı sınırsız. Akıllı öneriler ayda 20 hakla devam eder.',
+                        ? l10n.t('settings_plan_pro_sub')
+                        : l10n.t('settings_plan_basic_sub'),
                     style: TextStyle(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 12,
@@ -286,7 +355,7 @@ class SettingsPage extends ConsumerWidget {
                                     theme.dividerColor.withValues(alpha: 0.5)),
                           ),
                           child: Text(
-                            'Temel',
+                            l10n.t('settings_plan_basic_badge'),
                             style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.75),
@@ -310,11 +379,11 @@ class SettingsPage extends ConsumerWidget {
                       color: AppThemeExtension.of(context).accent,
                     ),
                     title: Text(
-                      'Pro\u2019yu keşfet',
+                      l10n.t('settings_discover_pro'),
                       style: TextStyle(color: theme.colorScheme.onSurface),
                     ),
                     subtitle: Text(
-                      'Sınırsız akıllı öneri, daha derin müşteri içgörüsü ve daha güçlü satış yönlendirmesi.',
+                      l10n.t('settings_discover_pro_sub'),
                       style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -331,8 +400,7 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Çağrılar', icon: Icons.call_rounded),
+            _SectionHeader(title: l10n.t('notif_cat_calls'), icon: Icons.call_rounded),
             _sectionCard(
               context,
               children: [
@@ -344,7 +412,7 @@ class SettingsPage extends ConsumerWidget {
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500)),
                   subtitle: Text(
-                    'Danışman alanındaki çağrılar, toplu mesaj ve Android telefon geçmişi eşlemesi.',
+                    l10n.t('settings_calls_sub'),
                     style: TextStyle(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -398,6 +466,10 @@ class SettingsPage extends ConsumerWidget {
                         .read(featureFlagsProvider.notifier)
                         .setFlag(AppConstants.keyPowerSaver, v),
                   ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.45)),
+                  const _TextScaleControl(),
                 ],
               ),
               loading: () => _sectionCard(
@@ -423,7 +495,7 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.translate_rounded,
                       color: AppThemeExtension.of(context).accent, size: 22),
-                  title: Text('Dil',
+                  title: Text(l10n.t('section_language'),
                       style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500)),
@@ -442,8 +514,9 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'İlanlar & Ofis', icon: Icons.apartment_rounded),
+            _SectionHeader(
+                title: l10n.t('settings_section_listings_office'),
+                icon: Icons.apartment_rounded),
             _sectionCard(
               context,
               children: [
@@ -455,7 +528,7 @@ class SettingsPage extends ConsumerWidget {
             _SectionHeader(
               title: canManagePlatformIntegrations
                   ? l10n.t('settings_section_platform_integrations_manager')
-                  : 'Eşleştirme & Entegrasyonlar',
+                  : l10n.t('settings_section_integrations'),
               icon: Icons.hub_rounded,
             ),
             flagsAsync.when(
@@ -516,9 +589,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.auto_fix_high_outlined,
                             color: theme.colorScheme.primary),
-                        title: const Text('Kanal kurulum akışı'),
+                        title: Text(l10n.t('settings_channel_setup')),
                         subtitle: Text(
-                          'Resmi entegrasyon hazırlığı, aktarım anahtarı ve toplu veri akışı',
+                          l10n.t('settings_channel_setup_sub'),
                           style: TextStyle(
                             color: theme.colorScheme.onSurface
                                 .withValues(alpha: 0.65),
@@ -534,9 +607,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.upload_file_outlined,
                             color: theme.colorScheme.primary),
-                        title: const Text('Toplu ilan aktarımı'),
+                        title: Text(l10n.t('settings_bulk_import')),
                         subtitle: Text(
-                          'Bağlantı, dosya ve aktarım geçmişi',
+                          l10n.t('settings_bulk_import_sub'),
                           style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.65),
@@ -548,9 +621,9 @@ class SettingsPage extends ConsumerWidget {
                       ListTile(
                         leading: Icon(Icons.history_rounded,
                             color: theme.colorScheme.primary),
-                        title: const Text('Aktarım geçmişi'),
+                        title: Text(l10n.t('settings_import_history')),
                         subtitle: Text(
-                          'Görev durumu ve işlem kayıtları',
+                          l10n.t('settings_import_history_sub'),
                           style: TextStyle(
                               color: theme.colorScheme.onSurface
                                   .withValues(alpha: 0.65),
@@ -581,7 +654,7 @@ class SettingsPage extends ConsumerWidget {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                       child: Text(
-                        'Harici platformlar kapalı. Açmak için Gelişmiş özellikler bölümünü kullanın.',
+                        l10n.t('settings_external_disabled'),
                         style: TextStyle(
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.7),
@@ -596,26 +669,200 @@ class SettingsPage extends ConsumerWidget {
               error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Yatırım & Piyasa', icon: Icons.show_chart_rounded),
+            _SectionHeader(
+                title: l10n.t('settings_section_investment'),
+                icon: Icons.show_chart_rounded),
             _sectionCard(
               context,
               children: const [
                 _FavoriteInvestRegionTile(),
               ],
             ),
+            if (!isAdmin || preferConsultant == true) ...[
+              const SizedBox(height: DesignTokens.space6),
+              _SectionHeader(
+                  title: l10n.t('settings_section_help_tour'),
+                  icon: Icons.school_rounded),
+              _sectionCard(
+                context,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.replay_rounded,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text(l10n.t('settings_replay_tour'),
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    subtitle: Text(
+                      l10n.t('settings_replay_tour_sub_consultant'),
+                      style: TextStyle(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                        fontSize: 11,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      ref.read(consultantTourReplayProvider.notifier).state++;
+                      AppToaster.info(
+                        context,
+                        l10n.t('settings_tour_restarted'),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+            if (isAdmin && preferConsultant != true) ...[
+              const SizedBox(height: DesignTokens.space6),
+              _SectionHeader(
+                  title: l10n.t('settings_section_help_tour'),
+                  icon: Icons.school_rounded),
+              _sectionCard(
+                context,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.replay_rounded,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text(l10n.t('settings_replay_tour'),
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    subtitle: Text(
+                      l10n.t('settings_replay_tour_sub_manager'),
+                      style: TextStyle(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                        fontSize: 11,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      ref.read(managerTourReplayProvider.notifier).state++;
+                      AppToaster.info(
+                        context,
+                        l10n.t('settings_tour_restarted'),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: DesignTokens.space6),
             _SettingsAdvancedSection(
-              sectionCard: (children) => _sectionCard(context, children: children),
+              sectionCard: (children) =>
+                  _sectionCard(context, children: children),
               l10n: l10n,
             ),
             const SizedBox(height: DesignTokens.space6),
-            const _SectionHeader(
-                title: 'Hakkında', icon: Icons.info_outline_rounded),
+            _SectionHeader(
+                title: l10n.t('settings_section_legal'),
+                icon: Icons.gavel_rounded),
+            _sectionCard(
+              context,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.privacy_tip_outlined,
+                      color: AppThemeExtension.of(context).accent),
+                  title: Text(l10n.t('settings_privacy_policy'),
+                      style: TextStyle(color: theme.colorScheme.onSurface)),
+                  trailing: Icon(
+                      LegalLinks.hasPrivacyPolicy
+                          ? Icons.open_in_new_rounded
+                          : Icons.chevron_right_rounded,
+                      size: 18),
+                  onTap: () {
+                    if (LegalLinks.hasPrivacyPolicy) {
+                      _launchExternalUrl(context, LegalLinks.privacyPolicyUrl);
+                    } else {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            const LegalDocumentPage(kind: LegalDocKind.privacy),
+                      ));
+                    }
+                  },
+                ),
+                Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.5)),
+                ListTile(
+                  leading: Icon(Icons.description_outlined,
+                      color: AppThemeExtension.of(context).accent),
+                  title: Text(l10n.t('settings_terms'),
+                      style: TextStyle(color: theme.colorScheme.onSurface)),
+                  trailing: Icon(
+                      LegalLinks.hasTermsOfService
+                          ? Icons.open_in_new_rounded
+                          : Icons.chevron_right_rounded,
+                      size: 18),
+                  onTap: () {
+                    if (LegalLinks.hasTermsOfService) {
+                      _launchExternalUrl(context, LegalLinks.termsOfServiceUrl);
+                    } else {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            const LegalDocumentPage(kind: LegalDocKind.terms),
+                      ));
+                    }
+                  },
+                ),
+                Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.5)),
+                if (LegalLinks.hasSupportEmail) ...[
+                  ListTile(
+                    leading: Icon(Icons.support_agent_rounded,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text(l10n.t('settings_contact_support'),
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    subtitle: Text(
+                      LegalLinks.supportEmail,
+                      style: TextStyle(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.65),
+                          fontSize: 11),
+                    ),
+                    trailing: const Icon(Icons.mail_outline_rounded, size: 18),
+                    onTap: () =>
+                        _launchSupportEmail(context, LegalLinks.supportEmail),
+                  ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.5)),
+                ],
+                if (LegalLinks.hasSupportWebsite) ...[
+                  ListTile(
+                    leading: Icon(Icons.help_outline_rounded,
+                        color: AppThemeExtension.of(context).accent),
+                    title: Text(l10n.t('settings_help_center'),
+                        style: TextStyle(color: theme.colorScheme.onSurface)),
+                    trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                    onTap: () => _launchExternalUrl(
+                        context, LegalLinks.supportWebsiteUrl),
+                  ),
+                  Divider(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.5)),
+                ],
+                ListTile(
+                  leading: Icon(Icons.workspaces_outline,
+                      color: AppThemeExtension.of(context).accent),
+                  title: Text(l10n.t('settings_open_source'),
+                      style: TextStyle(color: theme.colorScheme.onSurface)),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => showLicensePage(
+                    context: context,
+                    applicationName: AppConstants.appName,
+                    applicationVersion: l10n.tArgs('settings_version',
+                        [AppConstants.appVersion.split('+').first]),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.space6),
+            _SectionHeader(
+                title: l10n.t('settings_section_about'),
+                icon: Icons.info_outline_rounded),
             _sectionCard(
               context,
               children: const [
-                EmlakMasterProductIdentityCard(),
+                AxionProductIdentityCard(),
               ],
             ),
             if (canSwitchRole || kDebugMode) ...[
@@ -731,11 +978,11 @@ class SettingsPage extends ConsumerWidget {
                       child: PremiumSheetHeader(
                         compact: true,
                         title: l10n.t('section_language'),
-                        subtitle: 'Uygulama dili',
+                        subtitle: l10n.t('settings_app_language_sub'),
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Kapat',
+                      tooltip: l10n.t('action_close'),
                       style: IconButton.styleFrom(
                         foregroundColor: ext.textTertiary,
                       ),
@@ -800,6 +1047,29 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
+  Future<void> _launchExternalUrl(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      AppToaster.error(
+          context, AppLocalizations.of(context).t('listing_external_open_failed'));
+    }
+  }
+
+  Future<void> _launchSupportEmail(BuildContext context, String email) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: email.trim(),
+      query: 'subject=${Uri.encodeComponent('${AppConstants.appName} Destek')}',
+    );
+    final ok = await launchUrl(uri);
+    if (!ok && context.mounted) {
+      AppToaster.error(
+          context, AppLocalizations.of(context).t('email_app_open_failed'));
+    }
+  }
+
   void _showRoleSwitcher(
       BuildContext context, WidgetRef ref, AppRole? currentOverride) {
     showTestRoleSwitchSheet(context, ref, currentOverride);
@@ -856,171 +1126,208 @@ class _SettingsAdvancedSection extends ConsumerWidget {
               l10n.t('settings_advanced_title'),
               style: AppTypography.bodyStrong(context),
             ),
+            subtitle: Text(
+              l10n.t('settings_advanced_sub'),
+              style: AppTypography.meta(context),
+            ),
+            children: [
+              _AdvancedFlagGroup(
+                label: l10n.t('settings_adv_group_product'),
+                children: [
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_lean_title'),
+                    subtitle: l10n.t('settings_flag_lean_sub'),
+                    icon: Icons.bolt_outlined,
+                    value: flags[AppConstants.keyV1LeanProduct] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyV1LeanProduct, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_kpi_title'),
+                    subtitle: l10n.t('settings_flag_kpi_sub'),
+                    icon: Icons.bar_chart_rounded,
+                    value: flags[AppConstants.keyFeatureKpiBar] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureKpiBar, v),
+                  ),
+                  _SettingSwitch(
+                    title: ProductLabels.warRoom,
+                    subtitle: l10n.t('settings_flag_warroom_sub'),
+                    icon: Icons.military_tech_rounded,
+                    value: flags[AppConstants.keyFeatureWarRoom] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureWarRoom, v),
+                  ),
+                  _SettingSwitch(
+                    title: ProductLabels.callCenter,
+                    subtitle: l10n.t('settings_flag_callcenter_sub'),
+                    icon: Icons.call_merge_rounded,
+                    value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureCommandCenter, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_dailybrief_title'),
+                    subtitle: l10n.t('settings_flag_dailybrief_sub'),
+                    icon: Icons.today_rounded,
+                    value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureDailyBrief, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_pipeline_title'),
+                    subtitle: l10n.t('settings_flag_pipeline_sub'),
+                    icon: Icons.account_tree_rounded,
+                    value: flags[AppConstants.keyFeaturePipeline] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeaturePipeline, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_investor_title'),
+                    subtitle: l10n.t('settings_flag_investor_sub'),
+                    icon: Icons.savings_rounded,
+                    value: flags[AppConstants.keyFeatureInvestorIntelligence] ??
+                        true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(
+                            AppConstants.keyFeatureInvestorIntelligence, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_tasks_title'),
+                    subtitle: l10n.t('settings_flag_tasks_sub'),
+                    icon: Icons.task_alt_rounded,
+                    value: flags[AppConstants.keyFeatureTasks] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureTasks, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_notif_center_title'),
+                    subtitle: l10n.t('settings_flag_notif_center_sub'),
+                    icon: Icons.notifications_rounded,
+                    value: flags[AppConstants.keyFeatureNotificationsCenter] ??
+                        true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureNotificationsCenter, v),
+                  ),
+                ],
+              ),
+              _AdvancedFlagGroup(
+                label: l10n.t('settings_adv_group_calls'),
+                children: [
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_voice_title'),
+                    subtitle: l10n.t('settings_flag_voice_sub'),
+                    icon: Icons.mic_rounded,
+                    value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureVoiceCrm, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_callsummary_title'),
+                    subtitle: l10n.t('settings_flag_callsummary_sub'),
+                    icon: Icons.summarize_rounded,
+                    value: flags[AppConstants.keyFeatureCallSummary] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureCallSummary, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_contactsave_title'),
+                    subtitle: l10n.t('settings_flag_contactsave_sub'),
+                    icon: Icons.contact_phone_rounded,
+                    value: flags[AppConstants.keyFeatureContactSave] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureContactSave, v),
+                  ),
+                ],
+              ),
+              _AdvancedFlagGroup(
+                label: l10n.t('settings_adv_group_integration'),
+                children: [
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_marketpulse_title'),
+                    subtitle: l10n.t('settings_flag_marketpulse_sub'),
+                    icon: Icons.trending_up_rounded,
+                    value: flags[AppConstants.keyFeatureMarketPulse] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeatureMarketPulse, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_portfolio_title'),
+                    subtitle: l10n.t('settings_flag_portfolio_sub'),
+                    icon: Icons.auto_awesome_rounded,
+                    value: flags[AppConstants.keyFeaturePortfolioMatch] ?? true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(AppConstants.keyFeaturePortfolioMatch, v),
+                  ),
+                  _SettingSwitch(
+                    title: l10n.t('settings_flag_external_title'),
+                    subtitle: l10n.t('settings_flag_external_sub'),
+                    icon: Icons.hub_rounded,
+                    value: flags[AppConstants.keyFeatureExternalIntegrations] ??
+                        true,
+                    onChanged: (v) => ref
+                        .read(featureFlagsProvider.notifier)
+                        .setFlag(
+                            AppConstants.keyFeatureExternalIntegrations, v),
+                  ),
+                ],
+              ),
+              Divider(
+                  height: 1, color: theme.dividerColor.withValues(alpha: 0.35)),
+              ListTile(
+                leading: Icon(Icons.restart_alt_rounded, color: ext.accent),
+                title: Text(l10n.t('settings_reset_defaults'),
+                    style: AppTypography.bodyStrong(context)),
                 subtitle: Text(
-                  l10n.t('settings_advanced_sub'),
+                  l10n.t('settings_reset_defaults_sub'),
                   style: AppTypography.meta(context),
                 ),
-                children: [
-                  _AdvancedFlagGroup(
-                    label: 'Ürün görünümü',
-                    children: [
-                      _SettingSwitch(
-                        title: 'Odaklı V1 (önerilen)',
-                        subtitle:
-                            'Komuta Odası ve Ekonomi sekmeleri gizlenir; çekirdek akış kalır.',
-                        icon: Icons.bolt_outlined,
-                        value: flags[AppConstants.keyV1LeanProduct] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyV1LeanProduct, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'KPI çubuğu',
-                        subtitle: 'Özet ekranın üstündeki hızlı göstergeler',
-                        icon: Icons.bar_chart_rounded,
-                        value: flags[AppConstants.keyFeatureKpiBar] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureKpiBar, v),
-                      ),
-                      _SettingSwitch(
-                        title: ProductLabels.warRoom,
-                        subtitle: 'Ofis ritmi, hedefler ve öncelikli alanlar',
-                        icon: Icons.military_tech_rounded,
-                        value: flags[AppConstants.keyFeatureWarRoom] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureWarRoom, v),
-                      ),
-                      _SettingSwitch(
-                        title: ProductLabels.callCenter,
-                        subtitle: 'Tüm çağrılar ve operasyon görünümü',
-                        icon: Icons.call_merge_rounded,
-                        value: flags[AppConstants.keyFeatureCommandCenter] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureCommandCenter, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Günlük özet',
-                        subtitle: 'Günün özeti paneli',
-                        icon: Icons.today_rounded,
-                        value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureDailyBrief, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Pipeline',
-                        subtitle: 'Kanban ve aşama takibi',
-                        icon: Icons.account_tree_rounded,
-                        value: flags[AppConstants.keyFeaturePipeline] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeaturePipeline, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Yatırımcı istihbaratı',
-                        subtitle: 'Fırsat radarı ve yatırım panelleri',
-                        icon: Icons.savings_rounded,
-                        value: flags[AppConstants.keyFeatureInvestorIntelligence] ??
-                            true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(
-                                AppConstants.keyFeatureInvestorIntelligence, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Görevler',
-                        subtitle: 'Takip ve hatırlatmalar',
-                        icon: Icons.task_alt_rounded,
-                        value: flags[AppConstants.keyFeatureTasks] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureTasks, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Bildirim merkezi',
-                        subtitle: 'Tüm bildirimler tek ekranda',
-                        icon: Icons.notifications_rounded,
-                        value:
-                            flags[AppConstants.keyFeatureNotificationsCenter] ??
-                                true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(
-                                AppConstants.keyFeatureNotificationsCenter, v),
-                      ),
-                    ],
-                  ),
-                  _AdvancedFlagGroup(
-                    label: 'Çağrı & kayıt',
-                    children: [
-                      _SettingSwitch(
-                        title: 'Sesli müşteri akışı',
-                        subtitle: 'Eller serbest kullanım ve sesli yönlendirme',
-                        icon: Icons.mic_rounded,
-                        value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureVoiceCrm, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Çağrı özeti',
-                        subtitle: 'Arama sonrası akıllı özet',
-                        icon: Icons.summarize_rounded,
-                        value: flags[AppConstants.keyFeatureCallSummary] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureCallSummary, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Rehbere / uygulamaya kaydet',
-                        subtitle: 'Arama sonrası rehber ve müşteri kaydı',
-                        icon: Icons.contact_phone_rounded,
-                        value: flags[AppConstants.keyFeatureContactSave] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureContactSave, v),
-                      ),
-                    ],
-                  ),
-                  _AdvancedFlagGroup(
-                    label: 'Entegrasyon & piyasa',
-                    children: [
-                      _SettingSwitch(
-                        title: 'Market Pulse',
-                        subtitle: 'Son ilanlar ve harici kaynaklar',
-                        icon: Icons.trending_up_rounded,
-                        value: flags[AppConstants.keyFeatureMarketPulse] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeatureMarketPulse, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Portföy eşleştirme',
-                        subtitle: 'Müşteri–ilan eşleşme önerisi',
-                        icon: Icons.auto_awesome_rounded,
-                        value:
-                            flags[AppConstants.keyFeaturePortfolioMatch] ?? true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(AppConstants.keyFeaturePortfolioMatch, v),
-                      ),
-                      _SettingSwitch(
-                        title: 'Harici platform entegrasyonları',
-                        subtitle:
-                            'Sahibinden / Hepsiemlak / Emlakjet bağlı hesaplar',
-                        icon: Icons.hub_rounded,
-                        value: flags[AppConstants.keyFeatureExternalIntegrations] ??
-                            true,
-                        onChanged: (v) => ref
-                            .read(featureFlagsProvider.notifier)
-                            .setFlag(
-                                AppConstants.keyFeatureExternalIntegrations, v),
-                      ),
-                    ],
-                  ),
+                onTap: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (dctx) {
+                      final dExt = AppThemeExtension.of(dctx);
+                      return AlertDialog(
+                        backgroundColor: dExt.surfaceElevated,
+                        title: Text(l10n.t('settings_reset_defaults')),
+                        content: Text(l10n.t('settings_reset_defaults_confirm')),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dctx, false),
+                            child: Text(l10n.t('action_dismiss')),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(dctx, true),
+                            child: Text(l10n.t('action_reset')),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  if (ok != true) return;
+                  await ref
+                      .read(featureFlagsProvider.notifier)
+                      .resetToDefaults();
+                  if (context.mounted) {
+                    AppToaster.success(
+                        context, l10n.t('settings_reset_done'));
+                  }
+                },
+              ),
             ],
           ),
         ),
@@ -1073,11 +1380,12 @@ class _FavoriteInvestRegionTileState
     extends ConsumerState<_FavoriteInvestRegionTile> {
   String? _value;
 
-  static const _options = <MapEntry<String, String>>[
-    MapEntry(MarketSettingsEntity.regionKayapinar, 'Kayapınar'),
-    MapEntry(MarketSettingsEntity.regionBaglar, 'Bağlar'),
-    MapEntry(MarketSettingsEntity.regionYenisehir, 'Yenişehir'),
-  ];
+  /// Seçenekler veri modelinden türetilir (tek kaynak): baz m² fiyat verisi olan
+  /// bölgeler. Model yeni bölge kazandığında bu liste otomatik güncellenir.
+  static List<MapEntry<String, String>> get _options =>
+      MarketSettingsEntity.defaultDiyarbakirRegions
+          .map((r) => MapEntry(r.regionId, r.regionName))
+          .toList();
 
   @override
   void initState() {
@@ -1093,6 +1401,7 @@ class _FavoriteInvestRegionTileState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final ids = _options.map((e) => e.key).toSet();
     final raw = _value ?? AppConstants.defaultFavoriteInvestRegionId;
     final v =
@@ -1101,12 +1410,12 @@ class _FavoriteInvestRegionTileState
       leading: Icon(Icons.location_city_rounded,
           color: AppThemeExtension.of(context).accent, size: 22),
       title: Text(
-        'Fırsat Endeksi bölgesi',
+        l10n.t('settings_invest_region_title'),
         style: TextStyle(
             color: theme.colorScheme.onSurface, fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
-        'Komuta Merkezi içindeki yatırım iştahı özeti bu ilçeye göre hesaplanır.',
+        l10n.t('settings_invest_region_sub'),
         style: TextStyle(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
           fontSize: 11,
@@ -1184,11 +1493,12 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
       if (!mounted) return;
       if (result != null && result.downloadUrl.isNotEmpty) {
         ref.invalidate(userDocStreamProvider(widget.userId));
-        AppToaster.success(context, 'Profil fotoğrafı güncellendi.');
+        AppToaster.success(
+            context, AppLocalizations.of(context).t('settings_avatar_updated'));
       } else {
         AppToaster.warning(
           context,
-          'Profil fotoğrafı yüklenemedi. Mevcut fotoğrafınız korundu.',
+          AppLocalizations.of(context).t('settings_avatar_upload_failed'),
         );
       }
     } catch (e) {
@@ -1207,7 +1517,8 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
     try {
       await ProfileAvatarService.instance.deleteAvatar(uid: widget.userId);
       if (mounted) {
-        AppToaster.success(context, 'Profil fotoğrafı kaldırıldı.');
+        AppToaster.success(
+            context, AppLocalizations.of(context).t('settings_avatar_removed'));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -1227,6 +1538,7 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
           orElse: () => true,
         );
     final showChecking = storageAsync.isLoading;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Column(
@@ -1239,7 +1551,7 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Profil fotoğrafı',
+                  l10n.t('settings_avatar_title'),
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
@@ -1248,12 +1560,14 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
               ),
               TextButton(
                 onPressed: canPickPhoto ? _pickAndUpload : null,
-                child: Text(_loading ? 'Yükleniyor…' : 'Fotoğraf seç'),
+                child: Text(_loading
+                    ? l10n.t('photo_uploading')
+                    : l10n.t('photo_pick')),
               ),
               const SizedBox(width: 4),
               TextButton(
                 onPressed: _loading ? null : _removeAvatar,
-                child: const Text('Kaldır'),
+                child: Text(l10n.t('action_remove')),
               ),
             ],
           ),
@@ -1262,7 +1576,7 @@ class _AvatarSettingsRowState extends ConsumerState<_AvatarSettingsRow> {
             Padding(
               padding: const EdgeInsets.only(left: 28),
               child: Text(
-                'Depolama durumu kontrol ediliyor…',
+                l10n.t('settings_storage_checking'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -1380,6 +1694,51 @@ class _SettingSwitch extends StatelessWidget {
       value: value,
       activeThumbColor: AppThemeExtension.of(context).accent,
       onChanged: (v) => onChanged(v),
+    );
+  }
+}
+
+/// Erişilebilirlik: uygulama geneli metin ölçeği (0.85–1.30).
+class _TextScaleControl extends ConsumerWidget {
+  const _TextScaleControl();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
+    final scale = ref.watch(textScaleProvider);
+    final pct = (scale * 100).round();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.format_size_rounded, color: ext.accent, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(l10n.t('settings_text_size'),
+                    style: AppTypography.bodyStrong(context)),
+              ),
+              Text('%$pct', style: AppTypography.meta(context)),
+            ],
+          ),
+          Slider(
+            value: scale,
+            min: AppConstants.minTextScale,
+            max: AppConstants.maxTextScale,
+            divisions: 9,
+            activeColor: ext.accent,
+            label: '%$pct',
+            onChanged: (v) => ref.read(textScaleProvider.notifier).setScale(v),
+          ),
+          Text(
+            l10n.t('settings_text_size_sub'),
+            style: AppTypography.meta(context),
+          ),
+        ],
+      ),
     );
   }
 }

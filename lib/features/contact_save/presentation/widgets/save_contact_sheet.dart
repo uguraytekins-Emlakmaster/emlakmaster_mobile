@@ -1,4 +1,6 @@
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/navigation/sheet_back_behavior.dart';
+import 'package:emlakmaster_mobile/core/voice/voice_input_platform.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -11,6 +13,7 @@ import 'package:emlakmaster_mobile/features/contact_save/domain/contact_save_req
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/features/contact_save/domain/extract_contact_from_voice.dart'
     show logVoiceContactParseDebug, parseVoiceContact;
+import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -279,6 +282,12 @@ class _SaveContactSheetContentState
     );
   }
 
+  bool get _voiceInputEnabled {
+    if (!voiceInputPlatformSupported) return false;
+    final flags = ref.watch(featureFlagsProvider).valueOrNull;
+    return flags?[AppConstants.keyFeatureVoiceCrm] ?? true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
@@ -324,56 +333,62 @@ class _SaveContactSheetContentState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: ext.surfaceElevated,
-                borderRadius: BorderRadius.circular(DesignTokens.radiusControl),
-                border: Border.all(color: ext.border.withValues(alpha: 0.55)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(DesignTokens.space4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Sesli giriş',
-                      style: AppTypography.cardHeading(context).copyWith(
-                        fontSize: DesignTokens.fontSizeMd,
+            if (_voiceInputEnabled) ...[
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: ext.surfaceElevated,
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusControl),
+                  border:
+                      Border.all(color: ext.border.withValues(alpha: 0.55)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(DesignTokens.space4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Sesli giriş',
+                        style: AppTypography.cardHeading(context).copyWith(
+                          fontSize: DesignTokens.fontSizeMd,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: DesignTokens.space2),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Basılı tutun; ad ve telefonu söyleyin',
-                            style: AppTypography.body(context).copyWith(
-                              fontSize: DesignTokens.fontSizeSm,
-                              height: 1.35,
+                      const SizedBox(height: DesignTokens.space2),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Basılı tutun; ad ve telefonu söyleyin',
+                              style: AppTypography.body(context).copyWith(
+                                fontSize: DesignTokens.fontSizeSm,
+                                height: 1.35,
+                              ),
                             ),
                           ),
-                        ),
-                        PushToTalkButton(
-                          size: 48,
-                          onSpeechResult: _onSpeechResult,
-                          onPhaseChanged: (phase) {
-                            if (mounted) setState(() => _voiceStatus = phase);
-                          },
+                          PushToTalkButton(
+                            size: 48,
+                            onSpeechResult: _onSpeechResult,
+                            onPhaseChanged: (phase) {
+                              if (mounted) {
+                                setState(() => _voiceStatus = phase);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      if (_voiceStatus.isNotEmpty) ...[
+                        const SizedBox(height: DesignTokens.space2),
+                        Text(
+                          _voiceStatus,
+                          style: AppTypography.meta(context),
                         ),
                       ],
-                    ),
-                    if (_voiceStatus.isNotEmpty) ...[
-                      const SizedBox(height: DesignTokens.space2),
-                      Text(
-                        _voiceStatus,
-                        style: AppTypography.meta(context),
-                      ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: DesignTokens.space5),
+              const SizedBox(height: DesignTokens.space5),
+            ],
             TextField(
               controller: _nameController,
               onChanged: (_) {

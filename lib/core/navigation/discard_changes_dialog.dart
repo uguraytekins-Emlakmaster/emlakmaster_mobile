@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -11,9 +12,10 @@ Future<bool?> showDiscardChangesDialog(BuildContext context) {
     maxHeightFactor: 0.42,
     builder: (ctx) {
       final ext = AppThemeExtension.of(ctx);
+      final l10n = AppLocalizations.of(ctx);
       return PremiumScrollableBottomSheetShell(
-        title: 'Çıkmak istiyor musunuz?',
-        subtitle: 'Kaydedilmemiş değişiklikler kaybolacak.',
+        title: l10n.t('discard_changes_title'),
+        subtitle: l10n.t('discard_changes_subtitle'),
         bottomActions: Row(
           children: [
             Expanded(
@@ -23,7 +25,7 @@ Future<bool?> showDiscardChangesDialog(BuildContext context) {
                   minimumSize: const Size(0, 48),
                   foregroundColor: ext.textPrimary,
                 ),
-                child: const Text('Devam et'),
+                child: Text(l10n.t('action_continue')),
               ),
             ),
             const SizedBox(width: DesignTokens.space2),
@@ -36,7 +38,7 @@ Future<bool?> showDiscardChangesDialog(BuildContext context) {
                   minimumSize: const Size(0, 48),
                 ),
                 child: Text(
-                  'Çık',
+                  l10n.t('action_exit'),
                   style: AppTypography.bodyStrong(ctx).copyWith(
                     color: ext.onBrand,
                   ),

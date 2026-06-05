@@ -1,5 +1,5 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'dart:async' show unawaited;
+import 'dart:async' show Timer, unawaited;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,10 +12,12 @@ import '../deep_linking/pending_deep_link_store.dart';
 import '../router/fast_page_transitions.dart';
 import '../services/analytics_service.dart';
 import '../services/onboarding_store.dart';
+import '../services/logout_flow_tracer.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/role_selection_page.dart';
 import '../../screens/onboarding_page.dart';
+import '../../features/auth/domain/entities/app_role.dart';
 import '../../features/auth/domain/permissions/feature_permission.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/calls/call_screen.dart';
@@ -51,6 +53,9 @@ import '../../features/office/presentation/pages/office_recovery_page.dart';
 import '../../features/admin_consultants/presentation/pages/admin_consultants_page.dart';
 import '../../features/admin_teams/presentation/pages/admin_team_detail_page.dart';
 import '../../features/admin_teams/presentation/pages/admin_teams_page.dart';
+import '../../features/admin_islem_kayitlari/presentation/pages/admin_audit_page.dart';
+import '../../features/admin_uyelikler/presentation/pages/admin_uyelikler_page.dart';
+import '../../screens/command_center_shell_entry_page.dart';
 import '../intelligence/region_heatmap_defaults.dart';
 
 /// go_router ile merkezi routing. Login router içinde; beyaz ekran önlenir.
@@ -80,17 +85,23 @@ class AppRouter {
   static const String routeMessageCenter = '/messages';
   static const String routeMessageThread = '/messages/thread';
 
-  static bool _isStaffOnlyPath(String path) {
-    return path == routeCall ||
-        path.startsWith('$routeCall/') ||
-        path == routeCommandCenter ||
+  /// Yalnızca yönetici (isManagerTier) erişebilen yönetim panelleri ve /admin/*
+  /// rotaları. Router seviyesinde derinlemesine savunma — sayfa içi guard'larla
+  /// aynı tier yüklemini kullanır; danışman/agent bu alanlara giremez.
+  static bool isManagerOnlyPath(String path) {
+    return path == routeCommandCenter ||
         path == routeWarRoom ||
         path == routeBrokerCommand ||
-        path == routePipeline ||
-        path == routeResurrection ||
-        path == routeNotifications ||
-        path.startsWith('/customer/') ||
         path.startsWith('/admin/');
+  }
+
+  /// Yönetici-yalnız rota guard'ı (SAF, test edilebilir). [role] yönetici tier
+  /// değilse ve [path] yönetici-yalnız bir rota ise [routeHome] döndürür; aksi
+  /// halde null (yönlendirme yok). Gerçek rol (override DEĞİL) geçilmelidir.
+  static String? managerOnlyGuard(AppRole? role, String path) {
+    if (role == null) return null;
+    if (isManagerOnlyPath(path) && !role.isManagerTier) return routeHome;
+    return null;
   }
 
   static String _userFriendlyErrorMessage(Object? error) {
@@ -147,6 +158,8 @@ class AppRouter {
   static const String routeAdminConsultants = '/admin/consultants';
   static const String routeAdminTeams = '/admin/teams';
   static const String routeAdminTeamDetail = '/admin/teams/:teamId';
+  static const String routeAdminAudit = '/admin/audit';
+  static const String routeAdminMemberships = '/admin/memberships';
 
   static String adminTeamDetailPath(String teamId) =>
       '/admin/teams/${Uri.encodeComponent(teamId)}';
@@ -170,8 +183,14 @@ class AppRouter {
       observers: [_AnalyticsRouteObserver()],
       redirect: (context, state) {
         try {
-          final user = ref.read(currentUserProvider).valueOrNull;
+          final user = readRouterAuthUser(ref);
           final path = state.uri.path;
+          if (LogoutFlowTracer.isActive) {
+            LogoutFlowTracer.step(
+              'ROUTER_REDIRECT',
+              'eval path=$path user=${user?.uid ?? "null"}',
+            );
+          }
           final needsRole = ref.read(needsRoleSelectionProvider);
           final needsOffice = ref.read(needsOfficeSetupProvider);
           final needsOfficeRecovery = ref.read(needsOfficeRecoveryProvider);
@@ -247,6 +266,11 @@ class AppRouter {
                   !FeaturePermission.canManagePlatformIntegrations(role)) {
                 return routeHome;
               }
+              // Yönetici paneli rotaları (Komuta Merkezi / War Room / Broker
+              // Command / /admin/*) yalnızca isManagerTier içindir. Gerçek rol
+              // (override DEĞİL) esas alınır; agent buradan home'a döner.
+              final managerGuard = managerOnlyGuard(role, path);
+              if (managerGuard != null) return managerGuard;
             }
           }
           if (user != null &&
@@ -283,13 +307,6 @@ class AppRouter {
             }
             return routeLogin;
           }
-          final role = ref.read(displayRoleOrNullProvider);
-          if (user != null &&
-              role != null &&
-              role.isClientTier &&
-              _isStaffOnlyPath(path)) {
-            return routeHome;
-          }
           return null;
         } catch (e, st) {
           AppLogger.e('GoRouter redirect', e, st);
@@ -310,11 +327,14 @@ class AppRouter {
         ),
         GoRoute(
           path: routeLogin,
-          pageBuilder: (context, state) => NoTransitionPage(
-            key: state.pageKey,
-            name: state.matchedLocation,
-            child: const LoginPage(),
-          ),
+          pageBuilder: (context, state) {
+            final epoch = ref.read(authPresentationEpochProvider);
+            return NoTransitionPage(
+              key: ValueKey('login-route-$epoch'),
+              name: state.matchedLocation,
+              child: LoginPage(key: ValueKey('login-page-$epoch')),
+            );
+          },
         ),
         GoRoute(
           path: routeRegister,
@@ -476,7 +496,7 @@ class AppRouter {
           pageBuilder: (context, state) => fastFadePage<void>(
             key: state.pageKey,
             name: state.matchedLocation,
-            child: const LazyCommandCenterPage(),
+            child: const CommandCenterShellEntryPage(),
           ),
         ),
         GoRoute(
@@ -660,21 +680,51 @@ class AppRouter {
             );
           },
         ),
+        GoRoute(
+          path: routeAdminAudit,
+          pageBuilder: (context, state) => fastFadePage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const AdminAuditPage(),
+          ),
+        ),
+        GoRoute(
+          path: routeAdminMemberships,
+          pageBuilder: (context, state) => fastFadePage<void>(
+            key: state.pageKey,
+            name: state.matchedLocation,
+            child: const AdminUyeliklerPage(),
+          ),
+        ),
       ],
     );
   }
 
   static final goRouterProvider = Provider<GoRouter>((ref) {
     final refresh = ValueNotifier(0);
-    // Redirect kararları currentUser + role/doc durumuna bağlı.
-    // Role yüklenirken (users/{uid} doc yokken) `needsRoleSelectionProvider` değişir;
-    // bu değişim için refresh tetiklenmezse yanlış route'ta kalınabiliyor.
-    ref.listen(currentUserProvider, (_, __) => refresh.value++);
-    ref.listen(needsRoleSelectionProvider, (_, __) => refresh.value++);
-    ref.listen(needsOfficeSetupProvider, (_, __) => refresh.value++);
-    ref.listen(needsOfficeRecoveryProvider, (_, __) => refresh.value++);
-    ref.listen(primaryMembershipProvider, (_, __) => refresh.value++);
-    ref.listen(officeAccessStateProvider, (_, __) => refresh.value++);
+    Timer? refreshDebounce;
+
+    void scheduleRouterRefresh(String reason) {
+      refreshDebounce?.cancel();
+      refreshDebounce = Timer(const Duration(milliseconds: 24), () {
+        refresh.value++;
+        if (LogoutFlowTracer.isActive) {
+          LogoutFlowTracer.step(
+            'ROUTER_REDIRECT',
+            'refresh reason=$reason tick=${refresh.value}',
+          );
+        }
+      });
+    }
+
+    ref.onDispose(() => refreshDebounce?.cancel());
+
+    ref.listen(currentUserProvider, (_, __) => scheduleRouterRefresh('currentUser'));
+    ref.listen(needsRoleSelectionProvider, (_, __) => scheduleRouterRefresh('needsRole'));
+    ref.listen(needsOfficeSetupProvider, (_, __) => scheduleRouterRefresh('needsOffice'));
+    ref.listen(needsOfficeRecoveryProvider, (_, __) => scheduleRouterRefresh('needsRecovery'));
+    ref.listen(primaryMembershipProvider, (_, __) => scheduleRouterRefresh('membership'));
+    ref.listen(officeAccessStateProvider, (_, __) => scheduleRouterRefresh('officeAccess'));
     return AppRouter.create(ref, refresh);
   });
 }

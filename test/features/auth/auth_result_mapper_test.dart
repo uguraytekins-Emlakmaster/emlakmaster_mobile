@@ -2,9 +2,25 @@ import 'package:emlakmaster_mobile/features/auth/domain/auth_failure_kind.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/auth_result.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/auth_result_mapper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('AuthResultMapper.fromPlatformException', () {
+    test('maps sign_in_failed to providerMisconfigured', () {
+      expect(
+        AuthResultMapper.fromPlatformException(
+          PlatformException(code: 'sign_in_failed', message: 'com.google.GIDSignIn'),
+        ),
+        isA<AuthFailure>().having(
+          (f) => f.kind,
+          'kind',
+          AuthFailureKind.providerMisconfigured,
+        ),
+      );
+    });
+  });
+
   group('AuthResultMapper.fromFirebaseAuth', () {
     test('maps invalid-credential to invalidCredential', () {
       expect(

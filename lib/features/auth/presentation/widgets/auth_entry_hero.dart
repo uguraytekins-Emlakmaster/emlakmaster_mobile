@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart';
@@ -24,9 +25,12 @@ class AuthEntryHero extends StatelessWidget {
             ? ext.brandPrimary
             : Color.lerp(ext.brandPrimary, ext.info, 0.45)!;
 
-    final title = persona?.loginTitle ?? 'EmlakMaster';
-    final subtitle = persona?.loginSubtitle ??
-        'Gayrimenkul operasyonunu tek akışta yönetin';
+    final l10n = AppLocalizations.of(context);
+    final title =
+        persona == null ? 'Axion CRM' : l10n.t(persona!.loginTitleKey);
+    final subtitle = persona == null
+        ? l10n.t('brand_tagline')
+        : l10n.t(persona!.loginSubtitleKey);
 
     return Column(
       children: [

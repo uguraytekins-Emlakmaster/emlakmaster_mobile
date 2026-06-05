@@ -1,7 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:flutter/material.dart';
 
-/// Phase 2 — obsidian → navy gradient shell backdrop behind tab content.
+/// Obsidian → navy gradient shell backdrop behind tab content.
 class PremiumShellBackdrop extends StatelessWidget {
   const PremiumShellBackdrop({
     super.key,

@@ -77,13 +77,13 @@ void main() {
       );
     });
 
-    test('reliable handoff shows emlak master badge', () {
+    test('reliable handoff shows axion originated badge', () {
       expect(
         CallConfidenceLabels.resolveForRecord(
           startedFromScreen: 'consultant_calls',
           outcome: QuickCallOutcome.reached,
         ),
-        CallConfidenceKind.emlakMasterOriginated,
+        CallConfidenceKind.axionOriginated,
       );
     });
 

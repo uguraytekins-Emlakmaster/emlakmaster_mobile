@@ -39,10 +39,10 @@ class SettingsService {
     return _prefs!;
   }
 
-  /// Tema modu: 0=system, 1=light, 2=dark. Varsayılan 2 (koyu).
+  /// Tema modu: 0=system, 1=light, 2=dark. Varsayılan 0 (Sistem — OS'u takip eder).
   Future<int> getThemeModeIndex() async {
     final prefs = await _storage;
-    return prefs.getInt(AppConstants.keyThemeMode) ?? 2;
+    return prefs.getInt(AppConstants.keyThemeMode) ?? 0;
   }
 
   Future<void> setThemeModeIndex(int index) async {
@@ -171,5 +171,110 @@ class SettingsService {
   Future<void> setFavoriteInvestRegionId(String regionId) async {
     final prefs = await _storage;
     await prefs.setString(AppConstants.keyFavoriteInvestRegion, regionId);
+  }
+
+  // ---------- Erişilebilirlik: metin ölçeği ----------
+
+  /// Kullanıcı metin ölçeği (0.85–1.30). Varsayılan 1.0.
+  Future<double> getTextScale() async {
+    final prefs = await _storage;
+    final raw = prefs.getDouble(AppConstants.keyTextScale) ??
+        AppConstants.defaultTextScale;
+    return raw.clamp(AppConstants.minTextScale, AppConstants.maxTextScale);
+  }
+
+  Future<void> setTextScale(double value) async {
+    final prefs = await _storage;
+    final clamped =
+        value.clamp(AppConstants.minTextScale, AppConstants.maxTextScale);
+    await prefs.setDouble(AppConstants.keyTextScale, clamped);
+  }
+
+  // ---------- Kategori bazlı bildirim tercihleri ----------
+
+  Future<bool> getNotifCategoryTasks() async =>
+      (await _storage).getBool(AppConstants.keyNotifCategoryTasks) ?? true;
+  Future<void> setNotifCategoryTasks(bool v) async =>
+      (await _storage).setBool(AppConstants.keyNotifCategoryTasks, v);
+
+  Future<bool> getNotifCategoryCalls() async =>
+      (await _storage).getBool(AppConstants.keyNotifCategoryCalls) ?? true;
+  Future<void> setNotifCategoryCalls(bool v) async =>
+      (await _storage).setBool(AppConstants.keyNotifCategoryCalls, v);
+
+  Future<bool> getNotifCategoryMessages() async =>
+      (await _storage).getBool(AppConstants.keyNotifCategoryMessages) ?? true;
+  Future<void> setNotifCategoryMessages(bool v) async =>
+      (await _storage).setBool(AppConstants.keyNotifCategoryMessages, v);
+
+  /// Pazarlama bildirimleri varsayılan KAPALI (kullanıcı açıkça açar).
+  Future<bool> getNotifCategoryMarketing() async =>
+      (await _storage).getBool(AppConstants.keyNotifCategoryMarketing) ?? false;
+  Future<void> setNotifCategoryMarketing(bool v) async =>
+      (await _storage).setBool(AppConstants.keyNotifCategoryMarketing, v);
+
+  // ---------- Sessiz saatler ----------
+
+  Future<bool> getQuietHoursEnabled() async =>
+      (await _storage).getBool(AppConstants.keyQuietHoursEnabled) ?? false;
+  Future<void> setQuietHoursEnabled(bool v) async =>
+      (await _storage).setBool(AppConstants.keyQuietHoursEnabled, v);
+
+  Future<int> getQuietHoursStartMin() async =>
+      (await _storage).getInt(AppConstants.keyQuietHoursStartMin) ??
+      AppConstants.defaultQuietHoursStartMin;
+  Future<void> setQuietHoursStartMin(int minuteOfDay) async =>
+      (await _storage).setInt(AppConstants.keyQuietHoursStartMin, minuteOfDay);
+
+  Future<int> getQuietHoursEndMin() async =>
+      (await _storage).getInt(AppConstants.keyQuietHoursEndMin) ??
+      AppConstants.defaultQuietHoursEndMin;
+  Future<void> setQuietHoursEndMin(int minuteOfDay) async =>
+      (await _storage).setInt(AppConstants.keyQuietHoursEndMin, minuteOfDay);
+
+  /// Verilen an sessiz saat aralığında mı? Gece yarısını geçen aralıkları da
+  /// (ör. 22:00–08:00) doğru değerlendirir.
+  bool isWithinQuietHours({
+    required bool enabled,
+    required int startMin,
+    required int endMin,
+    required DateTime at,
+  }) {
+    if (!enabled) return false;
+    if (startMin == endMin) return false; // boş aralık
+    final nowMin = at.hour * 60 + at.minute;
+    if (startMin < endMin) {
+      return nowMin >= startMin && nowMin < endMin;
+    }
+    // Gece yarısını aşan aralık (ör. 22:00–08:00).
+    return nowMin >= startMin || nowMin < endMin;
+  }
+
+  /// Bildirim kategorisi: 'tasks' | 'calls' | 'messages' | 'marketing'.
+  /// Ana bildirim kapalıysa, kategori kapalıysa veya sessiz saatlerdeyse `false`.
+  Future<bool> isNotificationAllowed(String category, {DateTime? at}) async {
+    if (!await getNotificationsEnabled()) return false;
+
+    final now = at ?? DateTime.now();
+    final quiet = isWithinQuietHours(
+      enabled: await getQuietHoursEnabled(),
+      startMin: await getQuietHoursStartMin(),
+      endMin: await getQuietHoursEndMin(),
+      at: now,
+    );
+    if (quiet) return false;
+
+    switch (category) {
+      case 'tasks':
+        return getNotifCategoryTasks();
+      case 'calls':
+        return getNotifCategoryCalls();
+      case 'messages':
+        return getNotifCategoryMessages();
+      case 'marketing':
+        return getNotifCategoryMarketing();
+      default:
+        return true;
+    }
   }
 }

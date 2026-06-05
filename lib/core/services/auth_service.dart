@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import 'facebook_auth_service.dart';
+import 'firebase_core_bootstrap.dart';
 import 'google_auth_service.dart';
+import 'logout_flow_tracer.dart';
 import 'user_bootstrap_orchestrator.dart';
 import '../logging/app_logger.dart';
 
@@ -23,6 +28,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    await FirebaseCoreBootstrap.instance.ensureReady();
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
@@ -42,6 +48,7 @@ class AuthService {
     required String password,
     String? displayName,
   }) async {
+    await FirebaseCoreBootstrap.instance.ensureReady();
     final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
       email: email.trim(),
       password: password,
@@ -67,6 +74,7 @@ class AuthService {
   Future<void> sendPasswordResetEmail({required String email}) async {
     final trimmed = email.trim();
     try {
+      await FirebaseCoreBootstrap.instance.ensureReady();
       await FirebaseAuth.instance.sendPasswordResetEmail(email: trimmed);
       if (kDebugMode) {
         AppLogger.d('AuthService: password reset email sent to $trimmed');
@@ -83,16 +91,116 @@ class AuthService {
     }
   }
 
+  bool _signOutInProgress = false;
+
   /// Çıkış: Firebase + sosyal oturumlar (sonraki girişte hesap seçici açılır).
   Future<void> signOut() async {
-    await FirebaseAuth.instance.signOut();
+    if (_signOutInProgress) return;
+    _signOutInProgress = true;
     try {
-      await GoogleAuthService.instance.signOut();
-    } catch (_) {/* Google oturumu yoksa veya ağ yoksa yine de çıkış tamam */}
+      LogoutFlowTracer.step('LOGOUT_FLOW', 'FirebaseCoreBootstrap.ensureReady');
+      if (Firebase.apps.isEmpty) {
+        await LogoutFlowTracer.watch(
+          'firebase_bootstrap',
+          FirebaseCoreBootstrap.instance.ensureReady(),
+        );
+      }
+      LogoutFlowTracer.step('LOGOUT_FLOW', 'FirebaseAuth.signOut start');
+      await LogoutFlowTracer.watch(
+        'firebase_auth_sign_out',
+        FirebaseAuth.instance.signOut(),
+      );
+      LogoutFlowTracer.step('LOGOUT_FLOW', 'FirebaseAuth.signOut end');
+      unawaited(_signOutSocialSessions());
+      if (kDebugMode) AppLogger.d('AuthService: signOut');
+    } finally {
+      _signOutInProgress = false;
+    }
+  }
+
+  /// Geçerli oturumun sağlayıcı kimlikleri (ör. 'password', 'google.com').
+  List<String> get providerIds =>
+      currentUser?.providerData.map((p) => p.providerId).toList() ??
+      const <String>[];
+
+  /// E-posta/şifre ile açılmış bir hesap mı (şifre değiştirme bunu gerektirir).
+  bool get isPasswordProvider => providerIds.contains('password');
+
+  /// Hassas işlemler (şifre/e-posta değiştirme, hesap silme) öncesi yeniden
+  /// kimlik doğrulama. Firebase, son girişten uzun süre geçtiyse bunu ister.
+  Future<void> reauthenticateWithPassword(String currentPassword) async {
+    final user = currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'no-current-user',
+        message: 'Oturum bulunamadı.',
+      );
+    }
+    final cred =
+        EmailAuthProvider.credential(email: email, password: currentPassword);
+    await user.reauthenticateWithCredential(cred);
+  }
+
+  /// Yeni şifre belirler. Çağrıdan önce [reauthenticateWithPassword] gerekebilir.
+  Future<void> updatePassword(String newPassword) async {
+    final user = currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+          code: 'no-current-user', message: 'Oturum bulunamadı.');
+    }
+    await user.updatePassword(newPassword);
+  }
+
+  /// Yeni e-postaya doğrulama bağlantısı gönderir; kullanıcı onaylayınca e-posta
+  /// güncellenir (Firebase `verifyBeforeUpdateEmail`). Reauth gerekebilir.
+  Future<void> sendEmailUpdateVerification(String newEmail) async {
+    final user = currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+          code: 'no-current-user', message: 'Oturum bulunamadı.');
+    }
+    await user.verifyBeforeUpdateEmail(newEmail.trim());
+  }
+
+  /// Mevcut kullanıcı için şifre sıfırlama e-postası gönderir.
+  Future<void> sendPasswordResetForCurrentUser() async {
+    final email = currentUser?.email;
+    if (email == null || email.isEmpty) {
+      throw FirebaseAuthException(
+          code: 'no-email', message: 'Hesaba bağlı e-posta yok.');
+    }
+    await sendPasswordResetEmail(email: email);
+  }
+
+  /// Firebase Auth hesabını siler. Reauth gerekebilir (`requires-recent-login`).
+  /// Firestore kullanıcı verisi temizliği çağıran tarafça yapılır.
+  Future<void> deleteCurrentUser() async {
+    final user = currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+          code: 'no-current-user', message: 'Oturum bulunamadı.');
+    }
+    await user.delete();
+    if (kDebugMode) AppLogger.d('AuthService: account deleted');
+  }
+
+  Future<void> _signOutSocialSessions() async {
+    LogoutFlowTracer.step('LOGOUT_FLOW', 'social signOut start');
     try {
-      await FacebookAuthService.instance.signOut();
-    } catch (_) {/* Facebook oturumu yoksa veya ağ yoksa yine de çıkış tamam */}
-    if (kDebugMode) AppLogger.d('AuthService: signOut');
+      await GoogleAuthService.instance.signOut().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {
+          LogoutFlowTracer.step('LOGOUT_FLOW', 'Google signOut timeout');
+        },
+      );
+    } catch (_) {}
+    try {
+      await FacebookAuthService.instance.signOut().timeout(
+        const Duration(seconds: 1),
+      );
+    } catch (_) {}
+    LogoutFlowTracer.step('LOGOUT_FLOW', 'social signOut end');
   }
 
   /// Session restore: authStateChanges stream ile otomatik; ek işlem gerekmez.

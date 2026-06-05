@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../constants/app_constants.dart';
 import '../services/settings_service.dart';
 
 /// Başlangıçta main() içinde yüklenen tema indeksi (flash önlemek için).
-final initialThemeModeIndexProvider = Provider<int>((ref) => 2);
+/// Varsayılan 0 = Sistem (OS görünümünü takip eder).
+final initialThemeModeIndexProvider = Provider<int>((ref) => 0);
 
 /// Başlangıçta yüklenen dil kodu (tr/en).
 final initialLocaleProvider = FutureProvider<Locale>((ref) async {
@@ -59,11 +61,39 @@ class ThemeModeIndexNotifier extends StateNotifier<int> {
   }
 }
 
-/// [MaterialApp.themeMode] ile uyum için; şu an her zaman koyu.
+/// [MaterialApp.themeMode] kaynağı. Ayarlar → Görünüm → Tema'dan
+/// (sistem/açık/koyu) değiştirilir ve diske kaydedilir; varsayılan Sistem.
 final themeModeProvider = Provider<ThemeMode>((ref) {
   final index = ref.watch(themeModeIndexProvider);
   return themeModeFromIndex(index);
 });
+
+/// Erişilebilirlik metin ölçeği (0.85–1.30). MaterialApp builder'ında uygulanır.
+final textScaleProvider =
+    StateNotifierProvider<TextScaleNotifier, double>((ref) {
+  return TextScaleNotifier();
+});
+
+class TextScaleNotifier extends StateNotifier<double> {
+  TextScaleNotifier() : super(AppConstants.defaultTextScale) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      state = await SettingsService.instance.getTextScale();
+    } catch (_) {
+      state = AppConstants.defaultTextScale;
+    }
+  }
+
+  Future<void> setScale(double value) async {
+    final clamped =
+        value.clamp(AppConstants.minTextScale, AppConstants.maxTextScale);
+    await SettingsService.instance.setTextScale(clamped);
+    state = clamped;
+  }
+}
 
 /// Bildirimler açık mı. İlk yüklemede Storage'dan okunur.
 final notificationsEnabledProvider =

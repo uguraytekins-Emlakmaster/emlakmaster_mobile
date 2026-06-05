@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
+import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
@@ -32,9 +35,6 @@ class _AccountSessionSheet extends ConsumerWidget {
   const _AccountSessionSheet();
 
   static String _activePanelLabel(WidgetRef ref, AppRole role) {
-    if (FeaturePermission.seesClientPanel(role)) {
-      return ProductLabels.clientWorkspace;
-    }
     if (!FeaturePermission.seesAdminPanel(role)) {
       return ProductLabels.consultantWorkspace;
     }
@@ -64,7 +64,6 @@ class _AccountSessionSheet extends ConsumerWidget {
         : ref.watch(
             userDocStreamProvider(uid).select((a) => a.valueOrNull?.avatarUrl));
     final isAdmin = FeaturePermission.seesAdminPanel(role);
-    final isClient = FeaturePermission.seesClientPanel(role);
     final versionLabel = AppConstants.appVersion.split('+').first;
 
     return PremiumScrollableBottomSheetShell(
@@ -154,14 +153,12 @@ class _AccountSessionSheet extends ConsumerWidget {
               label: 'Profili aç',
               onTap: () => _goAccountTab(context, ref),
             ),
-            if (!isClient) ...[
-              const SizedBox(height: DesignTokens.space2),
-              _SheetAction(
-                icon: Icons.settings_outlined,
-                label: 'Ayarlar',
-                onTap: () => _goAccountTab(context, ref),
-              ),
-            ],
+            const SizedBox(height: DesignTokens.space2),
+            _SheetAction(
+              icon: Icons.settings_outlined,
+              label: 'Ayarlar',
+              onTap: () => _goAccountTab(context, ref),
+            ),
             if (isAdmin) ...[
               const SizedBox(height: DesignTokens.space2),
               _SheetAction(
@@ -189,8 +186,15 @@ class _AccountSessionSheet extends ConsumerWidget {
               label: 'Çıkış yap',
               danger: true,
               onTap: () {
+                LogoutFlowTracer.step('LOGOUT_FLOW', 'tap account_sheet');
                 Navigator.of(context).pop();
-                AuthService.instance.signOut();
+                unawaited(
+                  AuthLogoutCoordinator.signOut(
+                    ref,
+                    dismissOverlayFirst: true,
+                    source: 'account_sheet',
+                  ),
+                );
               },
             ),
             const SizedBox(height: DesignTokens.space6),

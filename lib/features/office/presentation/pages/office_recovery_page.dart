@@ -1,5 +1,6 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
-import 'package:emlakmaster_mobile/core/services/auth_service.dart';
+import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -16,6 +17,7 @@ class OfficeRecoveryPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final access = ref.watch(officeAccessStateProvider);
     final user = ref.watch(currentUserProvider).valueOrNull;
     final doc = user != null ? ref.watch(userDocStreamProvider(user.uid)).valueOrNull : null;
@@ -29,7 +31,7 @@ class OfficeRecoveryPage extends ConsumerWidget {
           child: access.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => _RecoveryBody(
-              title: 'Bağlantı sorunu',
+              title: l10n.t('office_recovery_conn_title'),
               message: officeErrorUserMessage(e),
               ext: ext,
               child: _RecoveryActions(
@@ -40,13 +42,12 @@ class OfficeRecoveryPage extends ConsumerWidget {
                   }
                 },
                 onSignOut: () async {
-                  await AuthService.instance.signOut();
-                  if (context.mounted) context.go(AppRouter.routeLogin);
+                  await AuthLogoutCoordinator.signOut(ref);
                 },
               ),
             ),
             data: (state) {
-              final (title, subtitle, chip) = _copyForState(state);
+              final (title, subtitle, chip) = _copyForState(l10n, state);
               return _RecoveryBody(
                 title: title,
                 message: subtitle,
@@ -60,8 +61,7 @@ class OfficeRecoveryPage extends ConsumerWidget {
                     }
                   },
                   onSignOut: () async {
-                    await AuthService.instance.signOut();
-                    if (context.mounted) context.go(AppRouter.routeLogin);
+                    await AuthLogoutCoordinator.signOut(ref);
                   },
                   extra: state == OfficeAccessState.membershipMissing ||
                           state == OfficeAccessState.inconsistentPointer
@@ -99,43 +99,43 @@ class OfficeRecoveryPage extends ConsumerWidget {
   }
 }
 
-(String, String, String) _copyForState(OfficeAccessState state) {
+(String, String, String) _copyForState(
+    AppLocalizations l10n, OfficeAccessState state) {
   switch (state) {
     case OfficeAccessState.membershipMissing:
       return (
-        'Üyelik doğrulanamadı',
-        'Hesabınız bir ofise bağlı görünüyor ancak üyelik kaydı bulunamadı. '
-            'Yöneticinizle iletişime geçin veya geçersiz bağlantıyı sıfırlayın.',
-        'Eksik üyelik',
+        l10n.t('office_state_missing_title'),
+        l10n.t('office_state_missing_body'),
+        l10n.t('office_state_missing_chip'),
       );
     case OfficeAccessState.inconsistentPointer:
       return (
-        'Ofis bilgisi uyumsuz',
-        'Kullanıcı kaydı ile üyelik ofisi eşleşmiyor. Kurtarma veya yönetici desteği gerekir.',
-        'Uyumsuz',
+        l10n.t('office_state_inconsistent_title'),
+        l10n.t('office_state_inconsistent_body'),
+        l10n.t('office_state_inconsistent_chip'),
       );
     case OfficeAccessState.invitedOnly:
       return (
-        'Davet bekleniyor',
-        'Üyeliğiniz henüz tamamlanmadı. Yöneticinizin davetini onaylaması veya yeni kod göndermesi gerekir.',
-        'Davetli',
+        l10n.t('office_state_invited_title'),
+        l10n.t('office_state_invited_body'),
+        l10n.t('office_state_invited_chip'),
       );
     case OfficeAccessState.suspended:
       return (
-        'Hesap askıda',
-        'Bu ofiste erişiminiz geçici olarak durduruldu. Ayrıntı için ofis yöneticinize yazın.',
-        'Askıda',
+        l10n.t('office_state_suspended_title'),
+        l10n.t('office_state_suspended_body'),
+        l10n.t('office_state_suspended_chip'),
       );
     case OfficeAccessState.removed:
       return (
-        'Üyelik sonlandı',
-        'Bu ofisten çıkarıldınız. Yeniden katılmak için davet kodu alın veya başka bir ofis seçin.',
-        'Kaldırıldı',
+        l10n.t('office_state_removed_title'),
+        l10n.t('office_state_removed_body'),
+        l10n.t('office_state_removed_chip'),
       );
     default:
       return (
-        'Ofis durumu',
-        'Hesabınızı doğruluyoruz…',
+        l10n.t('office_state_default_title'),
+        l10n.t('office_state_default_body'),
         '—',
       );
   }
@@ -222,6 +222,7 @@ class _RecoveryActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -229,7 +230,7 @@ class _RecoveryActions extends StatelessWidget {
         FilledButton.icon(
           onPressed: onRetry,
           icon: const Icon(Icons.refresh_rounded, size: 20),
-          label: const Text('Yeniden doğrula'),
+          label: Text(l10n.t('office_revalidate')),
           style: FilledButton.styleFrom(
             backgroundColor: ext.accent,
             foregroundColor: ext.onBrand,
@@ -240,7 +241,7 @@ class _RecoveryActions extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: () => context.push(AppRouter.routeOfficeJoin),
           icon: const Icon(Icons.vpn_key_rounded, size: 20),
-          label: const Text('Davet koduyla katıl'),
+          label: Text(l10n.t('office_join')),
           style: OutlinedButton.styleFrom(
             foregroundColor: ext.foreground,
             side: BorderSide(color: ext.foregroundSecondary.withValues(alpha: 0.4)),
@@ -251,7 +252,7 @@ class _RecoveryActions extends StatelessWidget {
         TextButton(
           onPressed: onSignOut,
           child: Text(
-            'Çıkış yap',
+            l10n.t('settings_logout'),
             style: TextStyle(color: ext.foregroundSecondary, fontSize: 13),
           ),
         ),
@@ -269,6 +270,7 @@ class _RepairTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     if (officeId == null || onRepair == null) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -281,7 +283,7 @@ class _RepairTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Geçersiz ofis bağlantısını sıfırla',
+                l10n.t('office_repair_title'),
                 style: TextStyle(
                   color: ext.foreground,
                   fontWeight: FontWeight.w700,
@@ -290,13 +292,13 @@ class _RepairTile extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Üyelik kaydı yoksa, kullanıcı kaydındaki ofis işaretçisini temizleyerek yeniden ofis oluşturabilir veya davetle katılabilirsiniz.',
+                l10n.t('office_repair_body'),
                 style: TextStyle(color: ext.foregroundSecondary, fontSize: 13, height: 1.4),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: onRepair,
-                child: const Text('Bağlantıyı sıfırla ve ofis seç'),
+                child: Text(l10n.t('office_repair_cta')),
               ),
             ],
           ),

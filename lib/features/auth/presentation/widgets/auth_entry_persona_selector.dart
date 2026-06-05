@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/login_entry_persona.dart';
@@ -20,12 +21,13 @@ class AuthEntryPersonaSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!compact) ...[
           Text(
-            'Nasıl giriş yapıyorsunuz?',
+            l10n.t('persona_selector_title'),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: ext.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -35,7 +37,7 @@ class AuthEntryPersonaSelector extends StatelessWidget {
           ),
           const SizedBox(height: DesignTokens.space2),
           Text(
-            'Panel ve yetkiler seçiminize göre şekillenir.',
+            l10n.t('persona_selector_sub'),
             style: TextStyle(
               color: ext.textSecondary,
               fontSize: DesignTokens.fontSizeSm,
@@ -92,6 +94,7 @@ class _PersonaTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final accent = _accentFor(ext, persona);
     final icon = persona == LoginEntryPersona.manager
         ? Icons.dashboard_customize_rounded
@@ -100,7 +103,7 @@ class _PersonaTile extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: persona.loginTitle,
+      label: l10n.t(persona.loginTitleKey),
       child: AnimatedContainer(
         duration: DesignTokens.durationNormal,
         curve: Curves.easeOutCubic,
@@ -184,8 +187,8 @@ class _PersonaTile extends StatelessWidget {
                   SizedBox(height: compact ? DesignTokens.space2 : DesignTokens.space3),
                   Text(
                     persona == LoginEntryPersona.manager
-                        ? 'Yönetici'
-                        : 'Danışman',
+                        ? l10n.t('persona_manager_short')
+                        : l10n.t('persona_consultant_short'),
                     style: TextStyle(
                       color: ext.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -197,8 +200,8 @@ class _PersonaTile extends StatelessWidget {
                     const SizedBox(height: DesignTokens.space1),
                     Text(
                       persona == LoginEntryPersona.manager
-                          ? 'Komuta & ekip'
-                          : 'Saha & portföy',
+                          ? l10n.t('persona_manager_tagline')
+                          : l10n.t('persona_consultant_tagline'),
                       style: TextStyle(
                         color: ext.textSecondary,
                         fontSize: DesignTokens.fontSizeXs,

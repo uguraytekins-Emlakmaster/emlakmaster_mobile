@@ -10,10 +10,15 @@
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
     <application
-        android:label="EmlakMaster"
+        android:label="Axion CRM"
         android:usesCleartextTraffic="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Force Skia renderer on Android (disable Impeller) to avoid device-specific
+             GPU splash hangs in release builds. iOS/macOS Impeller is left enabled. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

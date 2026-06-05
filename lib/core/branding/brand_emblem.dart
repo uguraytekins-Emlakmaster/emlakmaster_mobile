@@ -4,7 +4,7 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
-/// Emlak Master marka amblemi — yalnızca marka anlarında; fonksiyon ikonu değildir.
+/// Axion CRM marka amblemi — yalnızca marka anlarında; fonksiyon ikonu değildir.
 ///
 /// [BrandEmblemVariant.full]: açılış / kimlik yüzeyleri
 /// [BrandEmblemVariant.mini]: ayarlar, kompakt kahraman
@@ -113,8 +113,8 @@ class _EmblemFallback extends StatelessWidget {
 }
 
 /// Ayarlar / Hakkında: ürün kimliği — amblem + isim + sürüm.
-class EmlakMasterProductIdentityCard extends StatelessWidget {
-  const EmlakMasterProductIdentityCard({super.key});
+class AxionProductIdentityCard extends StatelessWidget {
+  const AxionProductIdentityCard({super.key});
 
   @override
   Widget build(BuildContext context) {

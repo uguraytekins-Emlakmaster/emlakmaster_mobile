@@ -714,7 +714,6 @@ class _PipelineCard extends ConsumerWidget {
     return GestureDetector(
       onLongPress: onMoveStage,
       child: PremiumCard(
-      goldBorder: false,
       padding: const EdgeInsets.all(DesignTokens.space4),
       onTap: onTap,
       child: Column(

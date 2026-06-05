@@ -11,11 +11,32 @@ service cloud.firestore {
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
-    // Yönetici: users.role belirtilen rollerden biri ise tüm veriyi görebilir.
+    // Yönetici (legacy/açık): users.role belirtilen rollerden biri.
     // Doküman yoksa veya role yoksa u.data/role null olur; null in [...] false döner, hata vermez.
-    function isManager() {
+    function isManagerByUserRole() {
       let u = get(/databases/$(database)/documents/users/$(request.auth.uid));
       return u != null && u.data != null && u.data.role in ['super_admin', 'broker_owner', 'broker', 'general_manager', 'office_manager', 'team_lead', 'manager', 'admin', 'owner'];
+    }
+    // Yönetici (üyelik tabanlı — tek yetki kaynağı): role_source_of_truth.dart'a göre
+    // ofis + AKTİF üyelik varken yetki kaynağı `office_memberships.role`'dir; `users.role`
+    // legacy/gecikmeli olabilir. Bu yüzden kullanıcı KENDİ ofisinde aktif manager-tier
+    // (owner/admin/manager — danışman HARİÇ) üyeliğe sahipse yönetici kabul edilir.
+    // Self-escalation riski yok: üyelik dokümanı create/update kurallarıyla korunur
+    // (owner yalnızca kendi oluşturduğu ofiste; admin/manager yalnızca geçerli davetle;
+    // self-update owner'a yükseltemez). Bu helper yalnızca mevcut üyeliği OKUR.
+    function isManagerBySelfMembership() {
+      let oid = userOfficeId(request.auth.uid);
+      let m = officeMembershipDoc(request.auth.uid, oid);
+      return oid is string && oid.size() > 0
+        && m != null && m.data != null
+        && m.data.status == 'active'
+        && m.data.role in ['owner', 'admin', 'manager'];
+    }
+    // Merkezi yönetici kontrolü: users.role manager-tier VEYA kendi ofisinde aktif
+    // manager-tier üyelik. isManager() kullanan TÜM koleksiyonlar tutarlı şekilde,
+    // users.role stale 'agent' kalsa bile gerçek owner/admin/manager'ı tanır.
+    function isManager() {
+      return isManagerByUserRole() || isManagerBySelfMembership();
     }
     // Veri izolasyonu: danışman sadece kendi atanmış müşteri/çağrılarını görür; yönetici hepsini.
     function isOwnAgentData(agentIdField) {
@@ -72,12 +93,49 @@ service cloud.firestore {
     function officeMembershipDoc(uid, officeId) {
       return get(/databases/$(database)/documents/office_memberships/$(officeMembershipId(uid, officeId)));
     }
+    /// Commit SONRASI üyelik (aynı batch/transaction'da oluşturulan üyeliği de görür).
+    function officeMembershipDocAfter(uid, officeId) {
+      return getAfter(/databases/$(database)/documents/office_memberships/$(officeMembershipId(uid, officeId)));
+    }
     function officeRoleToUserRole(r) {
       return r == 'owner' ? 'broker_owner'
         : r == 'admin' ? 'office_manager'
         : r == 'manager' ? 'team_lead'
         : r == 'consultant' ? 'agent'
         : '';
+    }
+    /// Ofis (commit SONRASI durum) bu kullanıcı tarafından mı oluşturulmuş?
+    /// getAfter() aynı batch'te oluşturulan ofisi de görür → createOfficeAsOwner çalışır;
+    /// başkasının (mevcut) ofisine owner üyeliği eklemeye çalışınca createdBy != uid → reddedilir.
+    function officeCreatedBySelfAfter(officeId) {
+      let o = getAfter(/databases/$(database)/documents/offices/$(officeId));
+      return o != null && o.data != null
+        && o.data.get('createdBy', '') == request.auth.uid;
+    }
+    /// Non-owner üyelik (admin/manager/consultant) yalnızca GEÇERLİ bir ofis davetiyle
+    /// (office_invites) oluşturulabilir. Üyelik dokümanı `inviteId` ile daveti referanslar;
+    /// davet aktif olmalı, aynı ofise ait olmalı, rol eşleşmeli ve limit dolmamalı olmalı.
+    function validOfficeInviteForMembership() {
+      let invId = request.resource.data.get('inviteId', '');
+      let inv = invId == '' ? null
+        : get(/databases/$(database)/documents/office_invites/$(invId));
+      return invId is string && invId.size() > 0
+        && inv != null && inv.data != null
+        && inv.data.get('isActive', false) == true
+        && inv.data.get('officeId', '') == request.resource.data.officeId
+        && inv.data.get('roleToAssign', '') == request.resource.data.role
+        && inv.data.get('usedCount', 0) < inv.data.get('maxUses', 0);
+    }
+    /// users.create sırasında ayrıcalıklı rol yalnızca bu kullanıcının e-postasına ait
+    /// bekleyen bir yönetici daveti (invites/{email}) varsa atanabilir. Davet dokümanı
+    /// e-posta ile anahtarlanır; oluşturma `isManager()` ile korunur (yetki yükseltme önlenir).
+    function pendingEmailInviteGrants(role) {
+      let email = request.auth.token.get('email', '');
+      let inv = email == '' ? null
+        : get(/databases/$(database)/documents/invites/$(email));
+      return email != '' && inv != null && inv.data != null
+        && inv.data.get('email', '') == email
+        && inv.data.get('role', '') == role;
     }
     function isActiveOfficeMember(officeId) {
       let m = officeMembershipDoc(request.auth.uid, officeId);
@@ -140,7 +198,10 @@ service cloud.firestore {
     function userOfficeJoinAllowed() {
       let oid = request.resource.data.officeId;
       let old = resource.data.get('officeId', '');
-      let m = officeMembershipDoc(request.auth.uid, oid);
+      // getAfter: createOfficeAsOwner / joinOfficeWithInviteCode aynı batch'te üyeliği
+      // oluşturur; rol senkronu o üyeliğe bağlanır. Üyelik create kuralı (owner = ofis
+      // sahipliği, non-owner = geçerli davet) zaten yetki yükseltmeyi engeller.
+      let m = officeMembershipDocAfter(request.auth.uid, oid);
       return isOwner(request.auth.uid)
         && (old == '' || old == null)
         && oid is string && oid.size() > 0
@@ -210,6 +271,16 @@ service cloud.firestore {
         && sameOfficeAsAssignedAgent(userId)
         && isOfficeManagerForIntelligence(oid);
     }
+    /// Aynı ofisteki HERHANGİ bir aktif üye, ofis arkadaşının `users` profilini OKUYABİLİR
+    /// (isim/avatar/rol gösterimi: danışman → yönetici adı, ekip sohbeti katılımcı adları,
+    /// hero kart yönetici bilgisi). Çapraz ofis kapalı: hedef kullanıcının `officeId`'si
+    /// okuyucununkiyle aynı olmalı. Tek-doküman `get()` ile değerlendirilir (liste değil).
+    function canReadOfficeColleagueUser(userId) {
+      let oid = userOfficeId(request.auth.uid);
+      return oid is string && oid.size() > 0
+        && isActiveOfficeMember(oid)
+        && userOfficeId(userId) == oid;
+    }
     /// Ofis içi istihbarat: atanmış danışman aynı ofiste + okuyucu aktif üye + yönetici (users.role veya üyelik).
     function canAccessCustomerOfficeWide() {
       let agentId = resource.data.get('assignedAgentId', '');
@@ -257,6 +328,16 @@ service cloud.firestore {
         || canAccessAgentDocOfficeWide(agentId)
         || isSuperAdminUser();
     }
+    /// Çağrı dokümanı ofis-geneli okuma: çağrının officeId'si okuyucunun ofisiyle
+    /// aynı VE okuyucu ofis yöneticisi (users.role veya aktif üyelik). Çok-ofiste
+    /// `where('officeId'==oid)` sorgusu bu dalla güvenli `list` olur.
+    function canReadCallOfficeWide(callOfficeId) {
+      let oid = userOfficeId(request.auth.uid);
+      return callOfficeId is string && callOfficeId.size() > 0
+        && oid is string && oid.size() > 0
+        && callOfficeId == oid
+        && isOfficeManagerForIntelligence(oid);
+    }
     function advisorIdFieldMatchesOnCreate(advisorId) {
       return advisorId == request.auth.uid
         || canAccessAgentDocOfficeWide(advisorId)
@@ -281,10 +362,18 @@ service cloud.firestore {
         request.auth.uid == userId
         || isManager()
         || canReadColleagueUserForOfficeIntelligence(userId)
+        || canReadOfficeColleagueUser(userId)
       );
+      // Self-create yalnızca güvenli rol (agent/guest) ile; ayrıcalıklı rol ancak
+      // e-postaya ait bekleyen yönetici daveti (invites/{email}) ile atanabilir.
+      // Yeni bir kurulumda ilk super_admin Konsol/Admin SDK ile çekirdeklenir.
       allow create: if isOwner(userId)
         && request.resource.data.uid == userId
-        && request.resource.data.keys().hasAll(['uid', 'role']);
+        && request.resource.data.keys().hasAll(['uid', 'role'])
+        && (
+          request.resource.data.role in ['agent', 'guest']
+          || pendingEmailInviteGrants(request.resource.data.role)
+        );
       allow update: if isManager()
         || (isOwner(userId) && userOwnerUpdatePreservesPrivileges() && userPreservesOfficeId())
         || (isOwner(userId) && userOfficeJoinAllowed())
@@ -378,7 +467,15 @@ service cloud.firestore {
         && membershipId == officeMembershipId(request.resource.data.userId, request.resource.data.officeId)
         && request.resource.data.keys().hasAll(['userId', 'officeId', 'role', 'status'])
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.role in ['owner', 'admin', 'manager', 'consultant'];
+        && request.resource.data.role in ['owner', 'admin', 'manager', 'consultant']
+        // Yetki yükseltmeye karşı: owner üyeliği yalnızca KENDİ oluşturduğun ofise
+        // (createOfficeAsOwner), non-owner üyelik ise yalnızca GEÇERLİ bir ofis davetiyle
+        // (joinOfficeWithInviteCode) eklenebilir. Davetsiz manager/admin/consultant reddedilir.
+        && (
+          request.resource.data.role == 'owner'
+            ? officeCreatedBySelfAfter(request.resource.data.officeId)
+            : validOfficeInviteForMembership()
+        );
       allow update: if isManager()
         || (canManageOfficeMembers(resource.data.officeId)
             && request.resource.data.userId == resource.data.userId
@@ -443,11 +540,16 @@ service cloud.firestore {
     // Çapraz ofis okuma/yazma: isManager() blanket kaldırıldı; office boundary zorunlu.
     // -------------------------------------------------------------------------
     match /customers/{customerId} {
-      allow read: if isSignedIn() && (
-        resource.data.assignedAgentId == request.auth.uid
-        || canAccessCustomerOfficeWide()
-        || isSuperAdminUser()
-      );
+      // [GEÇİCİ-İZİNLİ — ofis-scope refactor bekliyor] Okuma giriş yapmışlara açık.
+      // Tenant izolasyonu kuralda hazır (assignedAgentId/ofis-geneli/super_admin: aşağıdaki
+      // create/update'te kullanılır) ANCAK uygulamadaki bazı OKUMA sorguları henüz
+      // tenant-kısıtlı DEĞİL: `customersStream()` (filtresiz; resurrection/kampanya/komut
+      // paleti) ve `recentLeadsStream()` (War Room Lead Pulse, filtresiz orderBy). Bu liste
+      // sorguları officeId-scope'a alınmadan ve paylaşılan cross-rol provider'lar (resurrection
+      // kuyruğu) ofis-bilinçli yapılmadan okumayı kilitlersek yönetici paneli kırılır
+      // (fd5f837 regresyonu). Yazma izolasyonu KORUNUYOR. TODO(security): global müşteri
+      // okuyucularını officeWideCustomersStream / agent-scope'a taşı, sonra burayı kısıtla.
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && (
         request.resource.data.assignedAgentId == request.auth.uid
         || canCreateCustomerAsOfficeManager()
@@ -464,9 +566,23 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     // calls: danışman sadece kendi agentId'li çağrıları görür; yönetici hepsini
     // -------------------------------------------------------------------------
+    // Uygulama yapılandırması: yalnızca super_admin (örn. süper admin "tüm ofisler"
+    // kapı kodu hash'i). İstemcideki kod yalnızca UX kapısıdır; asıl yetki burada.
+    match /app_config/{docId} {
+      allow read: if isSignedIn() && isSuperAdminUser();
+      allow write: if isSignedIn() && isSuperAdminUser();
+    }
+
     match /calls/{docId} {
-      allow read: if isSignedIn()
-        && canAccessAgentOwnedDoc(resource.data.agentId);
+      // [GEÇİCİ-İZİNLİ — ofis-scope refactor bekliyor] Okuma giriş yapmışlara açık.
+      // Yazma izolasyonu (agent-owned / ofis) KORUNUYOR. Uygulamadaki okuma sorguları
+      // tenant-kısıtlı yapılamıyor: `callsStream()` (filtresiz, War Room canlı çağrı sayısı
+      // + gelir motoru), `callsCountStream()`/`todayCallsCountStream()` (filtresiz/sadece
+      // tarih), `callsByCustomerStream()` (where customerId — agentId değil), consultant
+      // akışı `callsByAdvisorStream()` (where advisorId; kural agentId'ye göre). Bunlar
+      // officeId-scope'a/agentId-scope'a alınana + officeId backfill yapılana kadar okuma
+      // açık kalır. TODO(security): çağrı okuyucularını officeId/agentId-scope'a taşı.
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && canCreateAgentOwnedDoc(request.resource.data.agentId);
       allow update: if isSignedIn()
@@ -476,8 +592,10 @@ service cloud.firestore {
     }
 
     match /deals/{docId} {
-      allow read: if isSignedIn()
-        && canAccessAgentOwnedDoc(resource.data.agentId);
+      // [GEÇİCİ-İZİNLİ — ofis-scope refactor bekliyor] Okuma giriş yapmışlara açık.
+      // Yazma izolasyonu KORUNUYOR. Okuma sorguları filtresiz sayım/örnek: `dealsCountStream`
+      // (War Room + bento), `dealsSampleStream` (Raporlar). officeId-scope + backfill gerekir.
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && canCreateAgentOwnedDoc(request.resource.data.agentId);
       allow update: if isSignedIn()
@@ -488,10 +606,10 @@ service cloud.firestore {
 
     // agentId veya assignedAgentId (AI Call Brain / haftalık sorgu ile uyumlu)
     match /call_summaries/{docId} {
-      allow read: if isSignedIn() && (
-        canAccessAgentOwnedDoc(resource.data.get('agentId', ''))
-        || canAccessAgentOwnedDoc(resource.data.get('assignedAgentId', ''))
-      );
+      // [GEÇİCİ-İZİNLİ — ofis-scope refactor bekliyor] Okuma giriş yapmışlara açık.
+      // Yazma izolasyonu KORUNUYOR. Okuma sorguları: where callId / where customerId /
+      // filtresiz örnek (Raporlar) — agent/ofis ile kanıtlanamaz. officeId-scope + backfill gerekir.
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && (
         canCreateAgentOwnedDoc(request.resource.data.get('agentId', ''))
         || canCreateAgentOwnedDoc(request.resource.data.get('assignedAgentId', ''))
@@ -513,9 +631,22 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // listing_metrics/{listingId}: ilan istihbarat skorları (momentum / fiyat pozisyonu).
+    // Türetilmiş kaynak `listings`'tir ve listings giriş yapmışlara açık okunur; ilan
+    // detayında IntelligenceFirestore.listingScoresStream tek doküman okur. Kiracı-özel
+    // (müşteri/çağrı) veri DEĞİL. Yazma yalnız backend/Admin SDK — kapalı. Daha önce kök
+    // catch-all'a bağlıydı; catch-all artık deny olduğu için açık kural gerekli.
+    match /listing_metrics/{listingId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
     match /app_settings/{docId} {
       allow read: if isSignedIn();
-      // Uygulama ayarları sadece yönetici tarafından güncellenebilir.
+      // Uygulama ayarları yalnızca yönetici tarafından güncellenebilir.
+      // isManager() artık membership-farkında: users.role legacy 'agent' kalsa bile
+      // kendi ofisinde aktif owner/admin/manager üyeliği olan yönetici kabul edilir
+      // (rol kaynağı = office_memberships). Danışman/üyeliksiz agent yine reddedilir.
       allow write: if isSignedIn() && isManager();
     }
     match /external_listings/{docId} {
@@ -571,9 +702,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // teams: ekipler sadece yönetici tarafından okunur/yazılır.
+    // teams: yazma yalnız yönetici. [GEÇİCİ-İZİNLİ] Okuma giriş yapmışlara açık:
+    // teams dokümanlarında `officeId` yok ve onboarding'de (role_selection) danışman
+    // `teamDocStream(teamId)` okuyor; member-scope kural kanıtlanamadığından okuma kilidi
+    // danışman akışını kırardı. TODO(security): teams'e officeId ekle ve ofis-scope'la.
     match /teams/{teamId} {
-      allow read, write: if isSignedIn() && isManager();
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isManager();
     }
 
     // invites: davetler. Yönetici oluşturur/okur/siler; kullanıcı sadece kendi email'ine ait daveti okuyabilir (ilk girişte uygulama için).
@@ -585,8 +720,11 @@ service cloud.firestore {
 
     // notes: danışman sadece kendi eklediği notlara (advisorId == uid) veya yönetici hepsine
     match /notes/{noteId} {
-      allow read: if isSignedIn()
-        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      // [GEÇİCİ-İZİNLİ — ofis-scope refactor bekliyor] Okuma giriş yapmışlara açık.
+      // Yazma izolasyonu (advisorId) KORUNUYOR. Okuma tamamen where customerId
+      // (`notesByCustomerStream`, `countRecentNotesForCustomer`) — agentId ile kanıtlanamaz.
+      // notes dokümanlarında officeId yok; izolasyon officeId backfill + scope sorgu gerektirir.
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
       allow update: if isSignedIn()
@@ -596,8 +734,11 @@ service cloud.firestore {
 
     // tasks: danışman kendi görevleri (advisorId)
     match /tasks/{taskId} {
-      allow read: if isSignedIn()
-        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      // [GEÇİCİ-İZİNLİ — ofis-scope refactor bekliyor] Okuma giriş yapmışlara açık.
+      // Yazma izolasyonu (advisorId) KORUNUYOR. Okuma: where advisorId (kendi, çalışır) +
+      // `openTasksCountStream` (where done — yönetici panosu) + `countOpenTasksForCustomer`
+      // (where customerId). Son ikisi tenant-kısıtlı yapılamıyor. TODO(security): officeId-scope.
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
       allow update: if isSignedIn()
@@ -608,8 +749,10 @@ service cloud.firestore {
 
     // visits: danışman sadece kendi advisorId'li kayıtları görür/oluşturur/günceller; yönetici hepsini.
     match /visits/{visitId} {
-      allow read: if isSignedIn()
-        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      // [GEÇİCİ-İZİNLİ — ofis-scope refactor bekliyor] Okuma giriş yapmışlara açık.
+      // Yazma izolasyonu KORUNUYOR. Okuma where customerId (`visitsByCustomerStream`) —
+      // officeId yok; izolasyon backfill + scope sorgu gerektirir.
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
       allow update: if isSignedIn()
@@ -620,8 +763,10 @@ service cloud.firestore {
 
     // offers: danışman sadece kendi advisorId'li teklifleri görür/oluşturur/günceller; yönetici hepsini.
     match /offers/{offerId} {
-      allow read: if isSignedIn()
-        && canAccessAgentOwnedDoc(resource.data.advisorId);
+      // [GEÇİCİ-İZİNLİ — ofis-scope refactor bekliyor] Okuma giriş yapmışlara açık.
+      // Yazma izolasyonu KORUNUYOR. Okuma where customerId (`offersByCustomerStream`) —
+      // officeId yok; izolasyon backfill + scope sorgu gerektirir.
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && advisorIdFieldMatchesOnCreate(request.resource.data.advisorId);
       allow update: if isSignedIn()
@@ -687,10 +832,18 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Diğer koleksiyonlar: sadece giriş zorunlu; yazma varsayılan kapalı (yukarıda tanımlanmayanlar)
+    // GÜVENLİK: Kök CATCH-ALL artık VARSAYILAN-RED (deny-by-default).
+    // Eskiden `allow read: if isSignedIn();` idi; bu, oturum açmış HERKESE açıkça
+    // tanımlanmamış HER yolu OKUTUYOR ve dahası, yukarıdaki tüm tenant-izolasyon
+    // kurallarını OR ile geçersiz kılıyordu (ölü kurallar). Artık deny olduğu için:
+    //   • Tanımsız her koleksiyon fail-closed (yeni koleksiyon = bilinçli açık kural).
+    //   • users / office_memberships / offices / invites / integration_listings /
+    //     external_connections / audit_logs / app_config / pipeline_items / notifications
+    //     izolasyon kuralları ARTIK ETKİN → çapraz-ofis okuma kapandı.
+    // Uygulamanın okuduğu TÜM koleksiyonların yukarıda açık read kuralı vardır
+    // (CRM transaksiyon koleksiyonları sorgu-şekli nedeniyle geçici olarak isSignedIn).
     match /{document=**} {
-      allow read: if isSignedIn();
-      allow write: if false;
+      allow read, write: if false;
     }
   }
 }

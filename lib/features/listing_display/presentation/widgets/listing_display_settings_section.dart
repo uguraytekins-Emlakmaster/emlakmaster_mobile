@@ -520,8 +520,21 @@ class _ListingDisplaySettingsSectionState
 
   Future<void> _saveCompanyName(
       WidgetRef ref, ListingDisplaySettingsEntity settings, String name) async {
-    await ListingDisplaySettingsRepository.set(
-        settings.copyWith(companyName: name.trim()));
+    final trimmed = name.trim();
+    // onTapOutside her odak kaybında tetiklenir; değişiklik yoksa yazma yapma.
+    if (trimmed == settings.companyName.trim()) return;
+    try {
+      await ListingDisplaySettingsRepository.set(
+          settings.copyWith(companyName: trimmed));
+      if (mounted) AppToaster.success(context, 'Firma adı kaydedildi.');
+    } catch (e) {
+      if (mounted) {
+        AppToaster.error(
+          context,
+          userFacingErrorMessage(e, context: 'listing_display_company_name'),
+        );
+      }
+    }
   }
 
   void _showCityPicker(BuildContext context, WidgetRef ref,
@@ -535,12 +548,19 @@ class _ListingDisplaySettingsSectionState
         child: _CityPickerSheetContent(
           settings: settings,
           onSelected: (code, name) async {
-            await ListingDisplaySettingsRepository.set(settings.copyWith(
-              cityCode: code,
-              cityName: name,
-              clearDistrict: true,
-            ));
-            if (ctx.mounted) Navigator.pop(ctx);
+            try {
+              await ListingDisplaySettingsRepository.set(settings.copyWith(
+                cityCode: code,
+                cityName: name,
+                clearDistrict: true,
+              ));
+              if (ctx.mounted) Navigator.pop(ctx);
+            } catch (e) {
+              if (ctx.mounted) {
+                AppToaster.error(ctx,
+                    userFacingErrorMessage(e, context: 'listing_display_city'));
+              }
+            }
           },
         ),
       ),
@@ -560,15 +580,33 @@ class _ListingDisplaySettingsSectionState
           settings: settings,
           districts: districts,
           onClearDistrict: () async {
-            await ListingDisplaySettingsRepository.set(
-                settings.copyWith(clearDistrict: true));
-            if (ctx.mounted) Navigator.pop(ctx);
+            try {
+              await ListingDisplaySettingsRepository.set(
+                  settings.copyWith(clearDistrict: true));
+              if (ctx.mounted) Navigator.pop(ctx);
+            } catch (e) {
+              if (ctx.mounted) {
+                AppToaster.error(
+                    ctx,
+                    userFacingErrorMessage(e,
+                        context: 'listing_display_district'));
+              }
+            }
           },
           onSelectDistrict: (d) async {
-            await ListingDisplaySettingsRepository.set(
-              settings.copyWith(districtName: d, districtCode: d),
-            );
-            if (ctx.mounted) Navigator.pop(ctx);
+            try {
+              await ListingDisplaySettingsRepository.set(
+                settings.copyWith(districtName: d, districtCode: d),
+              );
+              if (ctx.mounted) Navigator.pop(ctx);
+            } catch (e) {
+              if (ctx.mounted) {
+                AppToaster.error(
+                    ctx,
+                    userFacingErrorMessage(e,
+                        context: 'listing_display_district'));
+              }
+            }
           },
         ),
       ),

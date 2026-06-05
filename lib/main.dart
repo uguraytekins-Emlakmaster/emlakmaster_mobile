@@ -16,6 +16,7 @@ import 'package:emlakmaster_mobile/core/services/push_notification_service.dart'
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/core/services/login_entry_store.dart';
 import 'package:emlakmaster_mobile/core/services/onboarding_store.dart';
+import 'package:emlakmaster_mobile/core/services/startup_role_cache.dart';
 import 'package:emlakmaster_mobile/core/cache/app_cache_service.dart';
 import 'package:emlakmaster_mobile/core/services/call_record_sync_orchestrator.dart';
 import 'package:emlakmaster_mobile/core/services/sync_manager.dart';
@@ -25,6 +26,7 @@ import 'package:emlakmaster_mobile/core/performance/startup_perf_markers.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/widgets/command_palette.dart';
+import 'package:emlakmaster_mobile/core/widgets/startup_recovery_scaffold.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -36,7 +38,8 @@ import 'package:emlakmaster_mobile/features/messages/data/team_chat_inbox_listen
 import 'package:emlakmaster_mobile/features/messages/data/team_chat_local_notifications.dart';
 import 'package:emlakmaster_mobile/core/notifications/crm_push_navigation.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_access_state.dart';
-import 'package:emlakmaster_mobile/firebase_options.dart';
+import 'package:emlakmaster_mobile/core/services/firebase_core_bootstrap.dart';
+import 'package:emlakmaster_mobile/core/services/logout_flow_tracer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -45,9 +48,7 @@ import 'package:flutter/foundation.dart'
         debugPrint,
         kDebugMode,
         kIsWeb,
-        kReleaseMode,
-        defaultTargetPlatform,
-        TargetPlatform;
+        kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -79,43 +80,28 @@ Future<void> main() async {
     };
 
     try {
-      // Firebase + yerel onboarding bayrakları paralel; takılırsa kısa sürede runApp ile devam.
-      await Future.wait<void>([
-        _initFirebaseIfNeeded().timeout(
-          const Duration(seconds: 4),
-          onTimeout: () {
-            if (kDebugMode) {
-              debugPrint(
-                'Firebase: 4s içinde hazır değil; arayüz açılıyor, init arka planda sürebilir.',
-              );
-            }
-          },
-        ),
-        () async {
-          try {
-            await Future.wait([
-              OnboardingStore.instance.warmUp(),
-              LoginEntryStore.instance.warmUp(),
-            ]).timeout(
-              const Duration(milliseconds: 900),
-              onTimeout: () {
-                if (kDebugMode) {
-                  debugPrint(
-                    'OnboardingStore/LoginEntryStore: warmUp zaman aşımı; redirect varsayılanları kullanılacak.',
-                  );
-                }
-                return <void>[];
-              },
+      // Yerel bayraklar hızlı; Firebase UI'yi bloklamaz — arka planda başlar.
+      await Future.wait([
+        OnboardingStore.instance.warmUp(),
+        LoginEntryStore.instance.warmUp(),
+        StartupRoleCache.instance.warmUp(),
+      ]).timeout(
+        const Duration(milliseconds: 350),
+        onTimeout: () {
+          if (kDebugMode) {
+            debugPrint(
+              'Startup prefs warmUp: 350ms zaman aşımı; varsayılanlar kullanılacak.',
             );
-          } catch (e, st) {
-            AppLogger.e('OnboardingStore warmUp (bootstrap)', e, st);
           }
-        }(),
-      ]);
-      AppLogger.state('[startup] bootstrap parallel init done');
+          return <void>[];
+        },
+      );
+      FirebaseCoreBootstrap.instance.scheduleBackgroundInit();
+      AppLogger.state('[startup] bootstrap prefs done; firebase background');
       StartupPerfMarkers.once('bootstrap_parallel_done');
     } catch (e, st) {
-      AppLogger.e('Bootstrap paralel init', e, st);
+      AppLogger.e('Bootstrap prefs init', e, st);
+      FirebaseCoreBootstrap.instance.scheduleBackgroundInit();
     }
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
@@ -139,88 +125,6 @@ Future<void> main() async {
       } catch (_) {}
     }
   });
-}
-
-Future<void> _initializeFirebaseWithRetry(
-  Future<FirebaseApp> Function() initCall,
-) async {
-  const int maxAttempts = 5;
-  for (int i = 0; i < maxAttempts; i++) {
-    try {
-      await initCall();
-      return;
-    } on FirebaseException catch (e) {
-      final isDuplicate = e.code == 'duplicate-app';
-      final isNotInitialized = e.code == 'not-initialized';
-      if (isDuplicate) return;
-      if (!isNotInitialized || i == maxAttempts - 1) rethrow;
-      await Future<void>.delayed(Duration(milliseconds: 100 * (i + 1)));
-    }
-  }
-}
-
-/// [runApp] öncesi: Firebase yoksa kur; ağ takılırsa üst katman [timeout] ile sınırlanır.
-Future<void> _initFirebaseIfNeeded() async {
-  if (Firebase.apps.isNotEmpty) return;
-
-  final isAppleNative = !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS);
-
-  if (isAppleNative) {
-    try {
-      await _initializeFirebaseWithRetry(() => Firebase.initializeApp());
-    } catch (e, st) {
-      AppLogger.e('Firebase init error (plist first)', e, st);
-    }
-
-    if (Firebase.apps.isEmpty) {
-      try {
-        await _initializeFirebaseWithRetry(
-          () => Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          ),
-        );
-      } on FirebaseException catch (e) {
-        if (e.code == 'duplicate-app') {
-          if (kDebugMode) {
-            debugPrint('Firebase: [DEFAULT] zaten mevcut, devam ediliyor.');
-          }
-        } else {
-          AppLogger.e(
-              'Firebase init error (options after plist)', e, e.stackTrace);
-        }
-      } catch (e, st) {
-        AppLogger.e('Firebase init error (options after plist)', e, st);
-      }
-    }
-  } else {
-    try {
-      await _initializeFirebaseWithRetry(
-        () => Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        ),
-      );
-    } on FirebaseException catch (e) {
-      if (e.code == 'duplicate-app') {
-        if (kDebugMode) {
-          debugPrint('Firebase: [DEFAULT] zaten mevcut, devam ediliyor.');
-        }
-      } else {
-        AppLogger.e('Firebase init error (options)', e, e.stackTrace);
-      }
-    } catch (e, st) {
-      AppLogger.e('Firebase init error (options)', e, st);
-    }
-
-    if (Firebase.apps.isEmpty) {
-      try {
-        await _initializeFirebaseWithRetry(() => Firebase.initializeApp());
-      } catch (e, st) {
-        AppLogger.e('Firebase init error (default fallback)', e, st);
-      }
-    }
-  }
 }
 
 Future<void> _runApp() async {
@@ -261,19 +165,19 @@ Future<void> _runApp() async {
   runApp(
     ProviderScope(
       observers: kDebugMode ? [DebugRiverpodObserver()] : null,
-      child: const EmlakMasterApp(),
+      child: const AxionApp(),
     ),
   );
 }
 
-class EmlakMasterApp extends ConsumerStatefulWidget {
-  const EmlakMasterApp({super.key});
+class AxionApp extends ConsumerStatefulWidget {
+  const AxionApp({super.key});
 
   @override
-  ConsumerState<EmlakMasterApp> createState() => _EmlakMasterAppState();
+  ConsumerState<AxionApp> createState() => _AxionAppState();
 }
 
-class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
+class _AxionAppState extends ConsumerState<AxionApp> {
   static bool _deferredInitDone = false;
   ProviderSubscription<AsyncValue<User?>>? _authUserSub;
   ProviderSubscription<AsyncValue<UserDoc?>>? _userDocSub;
@@ -287,7 +191,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
   @override
   void initState() {
     super.initState();
-    AppLogger.state('[startup] EmlakMasterApp.initState');
+    AppLogger.state('[startup] AxionApp.initState');
     AppLifecyclePowerService.instance.ensureObserved();
     _bindStartupLogging();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -327,7 +231,14 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     // build() içinde ref.listen kullanmak her yeniden çizimde ek yük / çift dinleyici riski taşır.
     _authUserSub = ref.listenManual(currentUserProvider, (prev, next) {
       try {
+        final prevUid = prev?.valueOrNull?.uid;
         final uid = next.valueOrNull?.uid;
+        if (LogoutFlowTracer.isActive) {
+          LogoutFlowTracer.step(
+            'AUTH_STATE',
+            'currentUserProvider ${prevUid ?? "-"} -> ${uid ?? "-"}',
+          );
+        }
         if (AppLogger.verboseDiagnosticsEnabled) {
           AppLogger.state(
             '[startup] currentUserProvider ${_describeAsync(next)} uid=${uid ?? "-"}',
@@ -355,7 +266,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
 
   @override
   void dispose() {
-    AppLogger.state('[startup] EmlakMasterApp.dispose');
+    AppLogger.state('[startup] AxionApp.dispose');
     _authUserSub?.close();
     _userDocSub?.close();
     _roleSub?.close();
@@ -410,7 +321,7 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
       return;
     }
     _userDocSub = ref.listenManual(userDocStreamProvider(uid), (prev, next) {
-      final doc = next.asData?.value;
+      final doc = next.valueOrNull;
       final officeId = doc?.officeId;
       final role = doc?.role;
       final shortUid = uid.length > 8 ? uid.substring(0, 8) : uid;
@@ -494,8 +405,10 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     }
     try {
       if (!_isFlutterTest) {
-        CallRecordSyncOrchestrator.instance.start();
-        AppLogger.state('[startup] CallRecordSyncOrchestrator.start done');
+        Future<void>.delayed(const Duration(seconds: 4), () {
+          CallRecordSyncOrchestrator.instance.start();
+          AppLogger.state('[startup] CallRecordSyncOrchestrator.start (deferred)');
+        });
       }
     } catch (e, st) {
       AppLogger.e('CallRecordSyncOrchestrator start error', e, st);
@@ -519,8 +432,9 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
     final router = ref.watch(AppRouter.goRouterProvider);
     final locale = ref.watch(localeProvider).valueOrNull ?? const Locale('tr');
     final themeMode = ref.watch(themeModeProvider);
+    final userTextScale = ref.watch(textScaleProvider);
     return MaterialApp.router(
-      title: 'EmlakMaster',
+      title: 'Axion CRM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
@@ -537,7 +451,6 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
       builder: (context, child) {
         // Router henüz sayfa vermeden veya tema geç uygulanınca beyaz ekran olmasın.
         final ext = AppThemeExtension.of(context);
-        final scheme = Theme.of(context).colorScheme;
         final isRtl = locale.languageCode == 'ar';
         final content = child != null && isRtl
             ? Directionality(textDirection: TextDirection.rtl, child: child)
@@ -547,7 +460,17 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
           AppLogger.state(
             '[startup] router child ${content != null ? "mounted" : "null"}',
           );
+          if (LogoutFlowTracer.isActive) {
+            LogoutFlowTracer.step(
+              'ROUTER_REDIRECT',
+              'materialApp child=${content != null ? "set" : "null"}',
+            );
+          }
         }
+
+        final signedOut = !kIsWeb &&
+            Firebase.apps.isNotEmpty &&
+            FirebaseAuth.instance.currentUser == null;
 
         final shell = Shortcuts(
           shortcuts: const <ShortcutActivator, Intent>{
@@ -578,35 +501,22 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
                 ColoredBox(color: ext.background),
                 if (content != null)
                   content
+                else if (signedOut)
+                  // Çıkış sonrası redirect fırtınasında tam ekran spinner donmayı önle.
+                  const SizedBox.shrink()
                 else
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const BrandEmblem(
-                          variant: BrandEmblemVariant.full,
-                          size: 120,
-                        ),
-                        const SizedBox(height: 28),
-                        SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: scheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Router henüz sayfa vermeden gösterilen açılış yükleyicisi.
+                  // Süresiz spinner YASAK (anayasa: error-resilience): uzun sürerse
+                  // [_RootStartupLoader] görünür bir kurtarma/yeniden dene sunar.
+                  const _RootStartupLoader(),
                 const Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
                   child: ConnectivityBanner(),
                 ),
-                if (!kReleaseMode && isDevMode) const DevModeBadge(),
+                if (!kReleaseMode && isDevMode && showDevUiOverlays)
+                  const DevModeBadge(),
               ],
             ),
           ),
@@ -615,7 +525,19 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
         // [child] = router/Navigator subtree (içinde [Overlay]). Bu builder içindeki
         // [Stack] kardeşleri (ör. [DevModeBadge]) Navigator dışında kalır; [Tooltip]
         // veya kök [Overlay] ekleme — "No Overlay widget found" / RawTooltip kırılır.
-        return shell;
+        //
+        // Erişilebilirlik: kullanıcı metin ölçeğini sistem ölçeğiyle birleştir,
+        // taşmayı önlemek için 0.85–1.30 arasına sıkıştır (bkz. AppConstants).
+        final media = MediaQuery.of(context);
+        final systemFactor = media.textScaler.scale(1.0);
+        final effectiveFactor =
+            (systemFactor * userTextScale).clamp(0.85, 1.30);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: TextScaler.linear(effectiveFactor),
+          ),
+          child: shell,
+        );
       },
     );
   }
@@ -623,4 +545,90 @@ class _EmlakMasterAppState extends ConsumerState<EmlakMasterApp> {
 
 class _OpenCommandPaletteIntent extends Intent {
   const _OpenCommandPaletteIntent();
+}
+
+/// Router ilk sayfayı vermeden gösterilen açılış yükleyicisi.
+///
+/// Anayasa error-resilience: **asla süresiz spinner**. Normal akışta router
+/// birkaç yüz ms içinde bir sayfa (login/home) üretir ve bu widget unmount olur.
+/// Beklenmedik bir durumda (ör. cihaza özgü ilk-kare/başlatma takılması) içerik
+/// gelmezse, kullanıcı sonsuza dek dönen amblemde KALMAZ — görünür bir kurtarma
+/// ekranı + "Tekrar dene" sunulur; yeniden deneme Firebase çekirdeğini ve auth
+/// akışını tazeler, böylece router hazır olunca yönlendirir.
+class _RootStartupLoader extends ConsumerStatefulWidget {
+  const _RootStartupLoader();
+
+  @override
+  ConsumerState<_RootStartupLoader> createState() => _RootStartupLoaderState();
+}
+
+class _RootStartupLoaderState extends ConsumerState<_RootStartupLoader> {
+  static const Duration _timeout = Duration(seconds: 12);
+
+  Timer? _timer;
+  bool _showRecovery = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _armTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _armTimer() {
+    _timer?.cancel();
+    _timer = Timer(_timeout, () {
+      if (!mounted || _showRecovery) return;
+      AppLogger.w('[startup] root loader timeout; showing recovery escape');
+      setState(() => _showRecovery = true);
+    });
+  }
+
+  void _retry() {
+    AppLogger.state('[startup] root loader retry requested');
+    FirebaseCoreBootstrap.instance.scheduleBackgroundInit();
+    ref.invalidate(currentUserProvider);
+    setState(() => _showRecovery = false);
+    _armTimer();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showRecovery) {
+      return StartupRecoveryScaffold(
+        title: 'Başlatma uzadı',
+        message:
+            'Uygulama hazırlanırken beklenenden uzun sürdü. Bağlantınızı '
+            'kontrol edip yeniden deneyebilirsiniz.',
+        onPrimary: _retry,
+      );
+    }
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const BrandEmblem(
+            variant: BrandEmblemVariant.full,
+            size: 120,
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: scheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

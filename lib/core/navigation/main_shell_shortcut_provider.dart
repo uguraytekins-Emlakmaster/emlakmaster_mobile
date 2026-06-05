@@ -12,6 +12,7 @@ enum MainShellShortcut {
   openFavoritesTab,
   openMessagesTab,
   openVirtualTourTab,
+  openRequestsTab,
   openAccountTab,
 }
 
@@ -44,6 +45,10 @@ class MainShellShortcutQueueNotifier
       ...state,
       MainShellShortcutCommand(id: _nextId++, shortcut: shortcut),
     ];
+  }
+
+  void clear() {
+    state = [];
   }
 
   MainShellShortcutCommand? takeFirstMatching(

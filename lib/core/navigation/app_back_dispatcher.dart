@@ -15,6 +15,24 @@ class AppBackDispatcher {
     }
   }
 
+  /// Yalnızca gerçek bir metin girişi (klavye) odaktaysa true.
+  ///
+  /// `primaryFocus.hasFocus`, metin alanı olmasa bile rotanın FocusScope'u
+  /// odakta olduğu için neredeyse her zaman true döner; bu yüzden geri
+  /// basışını yutmamak için odağın bir [EditableText] olup olmadığını
+  /// kontrol ederiz.
+  static bool _dismissKeyboardIfOpen() {
+    final focus = FocusManager.instance.primaryFocus;
+    if (focus == null || !focus.hasFocus) return false;
+    final ctx = focus.context;
+    if (ctx == null ||
+        ctx.findAncestorWidgetOfExactType<EditableText>() == null) {
+      return false;
+    }
+    focus.unfocus();
+    return true;
+  }
+
   /// go_router veya üstüne eklenen [Navigator.push] rotası kapatılabilir mi?
   static bool canPopRoute(BuildContext context) {
     if (_routerCanPop(context)) return true;
@@ -43,9 +61,7 @@ class AppBackDispatcher {
   }) async {
     AppFeedback.lightImpact();
 
-    final focus = FocusManager.instance.primaryFocus;
-    if (focus != null && focus.hasFocus) {
-      focus.unfocus();
+    if (_dismissKeyboardIfOpen()) {
       return true;
     }
 
@@ -70,9 +86,7 @@ class AppBackDispatcher {
     required bool Function() tryPopTab,
     required VoidCallback onExitApp,
   }) async {
-    final focus = FocusManager.instance.primaryFocus;
-    if (focus != null && focus.hasFocus) {
-      focus.unfocus();
+    if (_dismissKeyboardIfOpen()) {
       return true;
     }
 

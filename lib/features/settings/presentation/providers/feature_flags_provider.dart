@@ -82,6 +82,21 @@ class FeatureFlagsNotifier
     if (v != null) return v;
     return _defaultFeatureFlag(key);
   }
+
+  /// Tüm özellik bayraklarını fabrika varsayılanlarına döndürür (kurtarma).
+  Future<void> resetToDefaults() async {
+    for (final key in _allKeys) {
+      final def = _defaultFeatureFlag(key);
+      if (key == AppConstants.keyPowerSaver) {
+        await SettingsService.instance.setPowerSaverEnabled(def);
+        AppLifecyclePowerService.powerSaverEnabled = def;
+      } else {
+        await SettingsService.instance.setFeatureFlag(key, def);
+      }
+    }
+    state = AsyncValue.data(_defaultFlagsMap());
+    await AppFeedback.syncFromSettings();
+  }
 }
 
 Map<String, bool> _defaultFlagsMap() {

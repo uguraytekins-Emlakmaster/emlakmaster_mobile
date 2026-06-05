@@ -6,6 +6,58 @@ import 'auth_result.dart';
 
 /// Firebase / platform hatalarını [AuthFailure]'a çevirir.
 abstract final class AuthResultMapper {
+  static AuthFailure fromPlatformException(PlatformException e, {String? context}) {
+    final code = e.code.toLowerCase();
+    final message = (e.message ?? '').toLowerCase();
+    final detail = '${e.code}${e.message != null && e.message!.isNotEmpty ? ': ${e.message}' : ''}';
+    if (code.contains('keychain') || message.contains('keychain')) {
+      return AuthFailure(
+        kind: AuthFailureKind.providerMisconfigured,
+        userMessage:
+            'Google oturumu macOS anahtar zincirine yazılamadı. Uygulamayı tamamen kapatıp yeniden derleyin (hot reload yetmez). Sorun sürerse Xcode imzalama / Keychain Sharing ayarını kontrol edin.',
+        debugDetail: detail,
+        cause: e,
+      );
+    }
+    if (code.contains('sign_in_canceled') || code.contains('cancel')) {
+      return const AuthFailure(
+        kind: AuthFailureKind.userCancelled,
+        userMessage: '',
+        debugDetail: 'cancelled',
+      );
+    }
+    if (code.contains('sign_in_failed') || code.contains('sign_in_required')) {
+      return AuthFailure(
+        kind: AuthFailureKind.providerMisconfigured,
+        userMessage:
+            'Google girişi tamamlanamadı. Tarayıcıda hesabı seçtikten sonra uygulamaya dönün. '
+            'macOS’ta uygulamayı tamamen kapatıp `./scripts/run_with_shield.sh -d macos` ile yeniden derleyin.',
+        debugDetail: detail,
+        cause: e,
+      );
+    }
+    return AuthFailure(
+      kind: AuthFailureKind.unknownError,
+      userMessage: e.message ?? context ?? 'Google girişi tamamlanamadı.',
+      debugDetail: detail,
+      cause: e,
+    );
+  }
+
+  static AuthFailure fromFirebaseCore(FirebaseException e, {String? context}) {
+    final detail =
+        '${e.code}${e.message != null && e.message!.isNotEmpty ? ': ${e.message}' : ''}';
+    final isTimeout = e.code == 'timeout';
+    return AuthFailure(
+      kind: isTimeout ? AuthFailureKind.networkError : AuthFailureKind.unknownError,
+      userMessage: e.message ??
+          (context ??
+              'Bağlantı hazırlanamadı. Lütfen tekrar deneyin.'),
+      debugDetail: detail,
+      cause: e,
+    );
+  }
+
   static AuthFailure fromFirebaseAuth(FirebaseAuthException e, {String? context}) {
     final detail = '${e.code}${e.message != null && e.message!.isNotEmpty ? ': ${e.message}' : ''}';
     switch (e.code) {

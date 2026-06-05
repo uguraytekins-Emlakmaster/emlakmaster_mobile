@@ -11,4 +11,8 @@ PRODUCT_NAME = emlakmaster_mobile
 PRODUCT_BUNDLE_IDENTIFIER = com.uguraytekin.emlakmastermobile
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 Emlak Master. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Axion CRM. All rights reserved.
+
+// Privacy — Xcode merge yedegi (Runner/Info.plist ile birlikte)
+INFOPLIST_KEY_NSMicrophoneUsageDescription = Axion CRM, sesli arama, sesli not ve görüşme destek özellikleri için mikrofona erişim isteyebilir.
+INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = Axion CRM, sesli arama ve sesli müşteri notu özelliklerini kullanabilmeniz için konuşma tanıma iznine ihtiyaç duyar.

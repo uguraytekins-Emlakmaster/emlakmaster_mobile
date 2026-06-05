@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/logging/app_logger.dart';
+import '../../../core/services/auth_firestore_gate.dart';
 
 /// Firestore users/{uid} yapısı. role: super_admin | broker | office_manager | team_lead | agent | operations | investor
 class UserDoc {
@@ -73,31 +75,83 @@ class UserRepository {
 
   /// users/{uid} dokümanını getirir. Yoksa null.
   static Future<UserDoc?> getUserDoc(String uid) async {
-    try {
-      final ref = _store.collection(_usersCol).doc(uid);
-      final snap = await ref.get();
-      if (!snap.exists || snap.data() == null) return null;
-      return UserDoc.fromFirestore(uid, snap.data());
-    } catch (e, st) {
-      if (kDebugMode) AppLogger.e('UserRepository.getUserDoc', e, st);
-      rethrow;
+    if (!AuthFirestoreGate.liveUidMatches(uid)) {
+      await AuthFirestoreGate.ensureReadableUid(uid);
+      if (!AuthFirestoreGate.liveUidMatches(uid)) {
+        if (kDebugMode) {
+          AppLogger.w(
+            'UserRepository.getUserDoc skipped — auth uid mismatch for $uid',
+          );
+        }
+        return null;
+      }
     }
+
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        if (attempt > 0) {
+          await FirebaseAuth.instance.currentUser?.getIdToken(true);
+          await AuthFirestoreGate.ensureReadableUid(uid, forceRefresh: true);
+        }
+        final ref = _store.collection(_usersCol).doc(uid);
+        final snap = await ref.get();
+        if (!snap.exists || snap.data() == null) return null;
+        return UserDoc.fromFirestore(uid, snap.data());
+      } on FirebaseException catch (e, st) {
+        if (e.code == 'permission-denied' && attempt < 2) {
+          if (kDebugMode) {
+            AppLogger.d(
+              'UserRepository.getUserDoc permission-denied retry ${attempt + 1} uid=$uid',
+              e,
+              st,
+            );
+          }
+          await Future<void>.delayed(Duration(milliseconds: 120 * (attempt + 1)));
+          continue;
+        }
+        if (kDebugMode) AppLogger.e('UserRepository.getUserDoc', e, st);
+        rethrow;
+      } catch (e, st) {
+        if (kDebugMode) AppLogger.e('UserRepository.getUserDoc', e, st);
+        rethrow;
+      }
+    }
+    return null;
   }
 
   /// users/{uid} stream (rol değişikliklerini dinlemek için).
-  /// İlk abonelikte geçici ağ/kural gecikmesi olabilir; bir kez yeniden dener.
   static Stream<UserDoc?> userDocStream(String uid) {
-    return _store.collection(_usersCol).doc(uid).snapshots().map((snap) {
-      if (!snap.exists || snap.data() == null) return null;
-      return UserDoc.fromFirestore(uid, snap.data());
-    }).handleError((Object e, StackTrace st) {
-      if (kDebugMode) AppLogger.e('UserRepository.userDocStream($uid)', e, st);
-      Error.throwWithStackTrace(e, st);
-    });
+    return Stream.fromFuture(AuthFirestoreGate.ensureReadableUid(uid)).asyncExpand(
+      (_) {
+        if (!AuthFirestoreGate.liveUidMatches(uid)) {
+          return Stream<UserDoc?>.value(null);
+        }
+        return _store.collection(_usersCol).doc(uid).snapshots().map((snap) {
+          if (!snap.exists || snap.data() == null) return null;
+          return UserDoc.fromFirestore(uid, snap.data());
+        }).handleError((Object e, StackTrace st) {
+          if (kDebugMode) {
+            AppLogger.e('UserRepository.userDocStream($uid)', e, st);
+          }
+          Error.throwWithStackTrace(e, st);
+        });
+      },
+    );
   }
 
   /// Tek seferlik `get` + canlı stream — bootstrap “Panel hazırlanıyor” süresini kısaltır.
   static Stream<UserDoc?> userDocStreamHydrated(String uid) async* {
+    await AuthFirestoreGate.ensureReadableUid(uid);
+    if (!AuthFirestoreGate.liveUidMatches(uid)) {
+      if (kDebugMode) {
+        AppLogger.w(
+          'UserRepository.userDocStreamHydrated aborted — auth uid mismatch for $uid',
+        );
+      }
+      yield null;
+      return;
+    }
+
     try {
       yield await getUserDoc(uid);
     } catch (e, st) {

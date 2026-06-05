@@ -2,6 +2,7 @@ import 'dart:async' show Timer, unawaited;
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
+import 'package:emlakmaster_mobile/core/voice/voice_input_platform.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/voice_crm/data/turkish_speech_locale.dart';
@@ -153,6 +154,10 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
   bool _outcomeDelivered = false;
   final _PttInst _inst = _PttInst();
 
+  /// İzin/STT yalnızca kullanıcı mikrofona bastığında istenir (uygulama açılışında değil).
+  bool _speechEngineTouched = false;
+  Future<bool>? _initFuture;
+
   /// kDebugMode altında mikrofon altı etiket
   String _debugUiLabel = 'idle';
 
@@ -189,12 +194,6 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
   Duration get _iosRetryExtraBackoff =>
       _isIOS ? const Duration(milliseconds: 220) : Duration.zero;
 
-  @override
-  void initState() {
-    super.initState();
-    _initSpeech();
-  }
-
   void _log(String message) {
     if (kDebugMode) debugPrint('[PushToTalk] $message');
     AppLogger.d('[PushToTalk] $message');
@@ -205,9 +204,21 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
     if (kDebugMode && mounted) setState(() {});
   }
 
-  Future<void> _initSpeech() async {
-    _log('inst init START');
+  Future<bool> _ensureSpeechInitialized() {
+    if (_available) return Future<bool>.value(true);
+    return _initFuture ??= _initSpeech();
+  }
+
+  Future<bool> _initSpeech() async {
+    if (!voiceInputPlatformSupported) {
+      _log('init skipped: unsupported platform');
+      _available = false;
+      if (mounted) setState(() {});
+      return false;
+    }
+    _log('lazy init START');
     try {
+      _speechEngineTouched = true;
       _available = await _speech.initialize(
         onStatus: _onStatus,
         onError: _onError,
@@ -216,12 +227,32 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
         _localeId = await resolveTurkishLocaleId(_speech);
         _localeIsTurkish = isTurkishLocaleId(_localeId);
         _log('init OK locale=$_localeId turkish=$_localeIsTurkish');
+      } else {
+        _log('init: speech engine unavailable');
       }
       if (mounted) setState(() {});
+      return _available;
     } catch (e, st) {
       AppLogger.w('PushToTalk init', e, st);
-      if (mounted) setState(() => _available = false);
+      _available = false;
+      if (mounted) setState(() {});
+      return false;
+    } finally {
+      _initFuture = null;
     }
+  }
+
+  void _notifyVoiceUnavailable() {
+    _emitPhase('');
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Sesli giriş kullanılamıyor. Ayarlardan mikrofon ve konuşma tanıma iznini kontrol edin.',
+        ),
+      ),
+    );
   }
 
   void _emitPhase(String label) {
@@ -430,7 +461,13 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
   }
 
   Future<void> _startListening() async {
-    if (!_available || _phase != _PttPhase.idle) return;
+    if (_phase != _PttPhase.idle) return;
+    final ready = await _ensureSpeechInitialized();
+    if (!ready || !_available) {
+      _log('start blocked: speech not ready');
+      _notifyVoiceUnavailable();
+      return;
+    }
     await _ensureReadyBeforeListen(reason: 'tap_down');
 
     _inst.reset();
@@ -754,7 +791,9 @@ class _PushToTalkButtonState extends State<PushToTalkButton> {
     _graceAfterTapUpTimer?.cancel();
     _stallWatchdogTimer?.cancel();
     _autoRetryMaxTimer?.cancel();
-    unawaited(_speech.cancel());
+    if (_speechEngineTouched) {
+      unawaited(_speech.cancel());
+    }
     super.dispose();
   }
 

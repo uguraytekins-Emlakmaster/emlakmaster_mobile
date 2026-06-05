@@ -12,7 +12,7 @@ plugins {
 android {
     namespace = "com.example.emlakmaster_mobile"
     compileSdk = 36
-    ndkVersion = "25.1.8937393"
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         coreLibraryDesugaringEnabled true

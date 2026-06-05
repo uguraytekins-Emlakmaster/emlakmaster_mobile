@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/logging/app_logger.dart';
+import '../../../core/services/auth_firestore_gate.dart';
 import '../domain/office_membership_entity.dart';
 
 class OfficeMembershipRepository {
@@ -22,9 +23,16 @@ class OfficeMembershipRepository {
       return Stream<OfficeMembership?>.value(null);
     }
     final docId = OfficeMembership.compositeId(userId, officeIdFromUserDoc);
-    return _db.collection(_col).doc(docId).snapshots().map((s) {
-      if (!s.exists) return null;
-      return OfficeMembership.fromFirestore(s.id, s.data());
+    return Stream.fromFuture(
+      AuthFirestoreGate.ensureReadableUid(userId),
+    ).asyncExpand((_) {
+      if (!AuthFirestoreGate.liveUidMatches(userId)) {
+        return Stream<OfficeMembership?>.value(null);
+      }
+      return _db.collection(_col).doc(docId).snapshots().map((s) {
+        if (!s.exists) return null;
+        return OfficeMembership.fromFirestore(s.id, s.data());
+      });
     });
   }
 

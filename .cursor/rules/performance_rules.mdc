@@ -1,0 +1,71 @@
+---
+description: Emlak Master performance, battery, loading, media, and rebuild discipline
+globs: EmlakMaster_Proje/emlakmaster_mobile/lib/**
+alwaysApply: false
+---
+
+# Performance Rules — Emlak Master
+
+Complements `emlakmaster_mobile/.cursor/rules/emlakmaster-performance.mdc` (shell/list contract). This file is the master performance law.
+
+## Performance law — app must feel INSTANT
+
+### Forbidden
+
+- Heavy `BackdropFilter` in **scrolling lists** or per-row blur
+- Blur spam, expensive per-row effects, oversized shadows everywhere
+- Infinite shimmer loops, animation spam, fake animations that hurt FPS
+- Polling loops, periodic refresh spam, orphan timers, zombie listeners
+- Giant rebuild zones, deeply nested `StreamBuilder`s, duplicate listeners
+- Synchronous heavy parsing on UI thread, layout thrashing
+- Full-res images in lists, unbounded list rendering
+- Rebuilding whole screens for tiny state changes, repeated duplicate fetches
+
+### Required
+
+- `const` constructors, widget decomposition, lightweight widgets
+- Scoped providers, memoized `ref.watch(...select(...))`
+- `ListView.builder`, `SliverList`, lazy/progressive rendering
+- Cache-first and stale-while-revalidate where safe (`*DisplayProvider` pattern)
+- `RepaintBoundary` on heavy subtrees; isolated expensive work
+- Minimal repaint regions; `DeferredMountSection` for dashboard deferral
+
+## Battery discipline
+
+**Forbidden:** unnecessary background work, always-on listeners, aggressive refresh, location polling without need, wake lock misuse.
+**Required:** lifecycle-aware observers, pause inactive listeners, throttled refresh, immediate disposal (`Controller`, `Timer`, `StreamSubscription`).
+
+## Network discipline
+
+**Forbidden:** duplicate Firestore reads, duplicate API requests, eager full dataset loads, wasteful retries, oversized media downloads.
+**Required:** pagination, cache-first, incremental loading, retry with backoff, offline awareness.
+
+## Loading discipline
+
+**Forbidden:** blank screens, infinite loaders, blocking whole app unnecessarily.
+**Required:** skeleton loaders, partial rendering, progressive loading, timeout fallback, cached instant render when possible.
+
+## Media discipline
+
+**Required:** thumbnails, `CachedNetworkImage` + `memCacheWidth`, lazy loading, compressed uploads, placeholders, graceful fallback.
+
+## Animation constraints
+
+Respect `AppLifecyclePowerService.shouldReduceMotion`. Prefer 180–280ms easeOutCubic (`PremiumMotionTokens`). No decorative motion on lists.
+
+## Memory discipline
+
+- Pasif shell sekmeleri: `ShellLazyTab` (unmount — streams stop)
+- Do **not** keep all tabs alive in `IndexedStack` without lazy policy
+- Avoid retaining large in-memory caches without bounds
+
+## Shell-specific (emlakmaster_mobile)
+
+- Search: `DebouncedSearchController` (~280ms)
+- Row data: `*RowSnapshotsProvider` / DTO — no per-row `ref.watch` in lists
+- Streams: `StreamProvider` + `select`, not nested `StreamBuilder`
+- Ready metrics: `ShellScreenReadyListener` + `logShellScreenReady`
+
+## Verification
+
+After perf-sensitive changes: `flutter analyze`, `flutter test`, and manual scroll/FPS check on small iPhone + macOS.

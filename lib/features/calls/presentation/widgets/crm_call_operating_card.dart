@@ -1,5 +1,7 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/consultant_calls_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/utils/call_surface_card_rhythm.dart';
 import 'package:flutter/material.dart';
 
@@ -42,13 +44,18 @@ class CrmCallOperatingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final premium = PremiumThemeExtension.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final base = _rhythmBase(ext, rhythm);
     final cardFill =
         selected ? Color.lerp(base, ext.accent, 0.034)! : base;
-    final borderColor = selected
-        ? ext.accent.withValues(alpha: 0.30)
-        : ext.border.withValues(alpha: isDark ? 0.52 : 0.82);
+    final borderColor = dense
+        ? (selected
+            ? premium.champagneGold.withValues(alpha: 0.45)
+            : premium.champagneGold.withValues(alpha: 0.22))
+        : (selected
+            ? ext.accent.withValues(alpha: 0.30)
+            : ext.border.withValues(alpha: isDark ? 0.52 : 0.82));
     final railColor = rhythm == CallSurfaceCardRhythm.callbackQueue
         ? ext.accent
         : rhythm == CallSurfaceCardRhythm.attention
@@ -82,18 +89,20 @@ class CrmCallOperatingCard extends StatelessWidget {
     return Card(
       margin: margin ??
           EdgeInsets.fromLTRB(
+            dense ? ConsultantCallsTokens.horizontal : 0,
             0,
-            0,
-            0,
-            dense ? DesignTokens.space1 + 2 : DesignTokens.space2 + 2,
+            dense ? ConsultantCallsTokens.horizontal : 0,
+            dense ? ConsultantCallsTokens.blockGap : DesignTokens.space2 + 2,
           ),
       clipBehavior: clipBehavior,
-      elevation: isDark ? 0 : (selected ? 0 : 1),
+      elevation: dense || isDark ? 0 : (selected ? 0 : 1),
       shadowColor: ext.shadowColor.withValues(alpha: isDark ? 0.36 : 0.10),
       color: cardFill,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusCardSecondary),
-        side: BorderSide(color: borderColor),
+        borderRadius: BorderRadius.circular(
+          dense ? DesignTokens.radiusLg : DesignTokens.radiusCardSecondary,
+        ),
+        side: BorderSide(color: borderColor, width: dense ? 1.1 : 1),
       ),
       child: inner,
     );

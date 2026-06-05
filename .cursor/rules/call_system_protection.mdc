@@ -1,0 +1,57 @@
+---
+description: STRICT protected call-system infrastructure — changes require extra care
+globs: EmlakMaster_Proje/emlakmaster_mobile/lib/**/{calls,crm_customers}/**
+alwaysApply: false
+---
+
+# Call System Protection — SACRED INFRASTRUCTURE
+
+The call system is **core business infrastructure**. Treat every change as high-risk unless explicitly scoped to UI-only with zero logic diff.
+
+## DO NOT BREAK
+
+- `startCrmOutboundCall` and outbound call initiation pipeline
+- `OutboundSystemHandoffPage` (`outbound_system_handoff_page.dart`)
+- Post-call capture flow (`PostCallCaptureStrip`, `PostCallWizardScreen`, `post_call_wizard.dart`)
+- Return prompt (`CallReturnPromptHost`)
+- Callback queue and CRM call drafts / draft recovery
+- Confidence badges and call memory hints
+- Manager/customer call strips (`customer_crm_call_strip`, command center chrome)
+- Consultant call workflows (`consultant_calls_page.dart`, `call_screen.dart`)
+- Device call log sync semantics (honest platform limits on iOS)
+- Post-call AI enrichment wiring (providers/services — not cosmetic-only)
+
+## UI changes in call screens
+
+Allowed **only** when:
+
+- Providers, repositories, Firestore paths, and navigation contracts are **unchanged**
+- Call state machine, handoff, and post-call wizard steps are **unchanged**
+- No new listeners, timers, or duplicate fetches introduced
+- All CTAs remain wired (dial, handoff, post-call, return, history)
+
+## Forbidden without explicit user approval
+
+- Refactoring call initiation or post-call state machines
+- Changing route paths for `/call`, `/call/summary`, `/consultant/calls`
+- Modifying `startCrmOutboundCall` signature or side effects
+- Removing recovery/draft/return prompt behavior
+- Faking call log capabilities on unsupported platforms
+
+## Required verification after any call-area touch
+
+```bash
+flutter analyze
+flutter test
+```
+
+Manual QA: start call → active call UI → end call → post-call wizard → draft recovery → return prompt → calls list refresh.
+
+## Related protected files (non-exhaustive)
+
+- `lib/features/calls/**`
+- `lib/features/crm_customers/presentation/widgets/customer_crm_call_strip.dart`
+- `lib/widgets/premium/premium_call_center_chrome.dart`
+- `lib/features/manager_command_center/**` (call center views)
+
+If UI rebuild touches these files, state **preserved call flows** explicitly in the delivery summary.

@@ -20,6 +20,23 @@
       "collectionGroup": "calls",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "officeId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "calls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "officeId", "order": "ASCENDING" },
+        { "fieldPath": "outcome", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "calls",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "customerId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]

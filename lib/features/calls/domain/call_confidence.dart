@@ -3,7 +3,7 @@ import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart
 
 /// Çağrı kaynağı güven göstergesi — görsel, abartısız.
 enum CallConfidenceKind {
-  emlakMasterOriginated,
+  axionOriginated,
   manualRecord,
   callbackPending,
   deviceLog,
@@ -14,7 +14,7 @@ abstract final class CallConfidenceLabels {
 
   static String label(CallConfidenceKind kind) {
     return switch (kind) {
-      CallConfidenceKind.emlakMasterOriginated => 'Emlak Master\'dan arandı',
+      CallConfidenceKind.axionOriginated => 'Axion CRM\'den arandı',
       CallConfidenceKind.manualRecord => 'Manuel kayıt',
       CallConfidenceKind.callbackPending => 'Geri arama bekliyor',
       CallConfidenceKind.deviceLog => 'Cihaz kaydı',
@@ -27,7 +27,7 @@ abstract final class CallConfidenceLabels {
       return CallConfidenceKind.deviceLog;
     }
     if (s.isEmpty || s == 'unknown') return CallConfidenceKind.manualRecord;
-    return CallConfidenceKind.emlakMasterOriginated;
+    return CallConfidenceKind.axionOriginated;
   }
 
   /// Kart rozeti — yalnızca anlamlı olduğunda; hafıza ipucu ile çift göstermez.
@@ -51,7 +51,7 @@ abstract final class CallConfidenceLabels {
     }
 
     if (CallSessionReliability.isReliableHandoffSource(screen)) {
-      return CallConfidenceKind.emlakMasterOriginated;
+      return CallConfidenceKind.axionOriginated;
     }
 
     if (screen.isEmpty || screen == 'unknown') {

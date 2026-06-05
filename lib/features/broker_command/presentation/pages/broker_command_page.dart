@@ -28,7 +28,8 @@ class BrokerCommandPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roleAsync = ref.watch(displayRoleProvider);
+    // Gerçek rol (override DEĞİL) ile yetki kontrolü.
+    final roleAsync = ref.watch(currentRoleProvider);
     return roleAsync.when(
       loading: () {
         final premium = PremiumThemeExtension.of(context);

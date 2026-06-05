@@ -13,6 +13,7 @@ class OfficeMembership {
     this.permissions,
     this.joinedAt,
     required this.status,
+    this.inviteId,
   });
 
   final String id;
@@ -23,6 +24,10 @@ class OfficeMembership {
   final DateTime? joinedAt;
   final MembershipStatus status;
 
+  /// Davetle katılımda (`joinOfficeWithInviteCode`) kullanılan `office_invites` doküman
+  /// kimliği. Firestore kuralları non-owner üyeliği bu referans üzerinden doğrular.
+  final String? inviteId;
+
   static String compositeId(String userId, String officeId) => '${userId}_$officeId';
 
   Map<String, dynamic> toFirestoreCreate() {
@@ -32,6 +37,7 @@ class OfficeMembership {
       'role': role.name,
       if (permissions != null) 'permissions': permissions,
       'status': status.name,
+      if (inviteId != null && inviteId!.isNotEmpty) 'inviteId': inviteId,
       'joinedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
