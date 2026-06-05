@@ -70,10 +70,9 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
           ),
         );
       }
-      // Router'ın refreshListenable'ı stream değişimini otomatik algılar.
-      // Manuel context.go yerine güvenli geçiş için kısa bekleme + fallback.
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-      if (!mounted) return;
+      // userDocStreamProvider invalidation needsOfficeSetup'ı anında false
+      // yapar (doc==null → false); router refreshListenable bunu yakalar ve
+      // /office-create'den home'a otomatik yönlendirir. context.go güvenlik ağı.
       context.go(AppRouter.routeHome);
     } on OfficeException catch (e) {
       if (!mounted) return;

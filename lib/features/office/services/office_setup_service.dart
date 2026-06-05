@@ -80,7 +80,13 @@ class OfficeSetupService {
     );
 
     try {
-      await batch.commit();
+      await batch.commit().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw OfficeException(
+          OfficeErrorCode.network,
+          'İşlem zaman aşımına uğradı. Bağlantınızı kontrol edip tekrar deneyin.',
+        ),
+      );
     } catch (e, st) {
       AppLogger.e('OFFICE CREATE ERROR', e, st);
       if (isDevMode) {
@@ -89,6 +95,7 @@ class OfficeSetupService {
         return kLocalDevOfficeId;
       }
       if (kDebugMode) AppLogger.e('OfficeSetupService.createOfficeAsOwner', e, st);
+      if (e is OfficeException) rethrow;
       throw OfficeException(OfficeErrorCode.network, 'Ofis oluşturulamadı. Bağlantınızı kontrol edin.', e);
     }
     return officeId;
