@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'auth_failure_kind.dart';
@@ -27,18 +28,20 @@ abstract final class AuthResultMapper {
       );
     }
     if (code.contains('sign_in_failed') || code.contains('sign_in_required')) {
+      final isMac = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
       return AuthFailure(
         kind: AuthFailureKind.providerMisconfigured,
-        userMessage:
-            'Google girişi tamamlanamadı. Tarayıcıda hesabı seçtikten sonra uygulamaya dönün. '
-            'macOS’ta uygulamayı tamamen kapatıp `./scripts/run_with_shield.sh -d macos` ile yeniden derleyin.',
+        userMessage: isMac
+            ? 'Google girisi tamamlanamadi. Tarayicida hesabi sectikten sonra uygulamaya donun. '
+                'macOS\'ta uygulamayi tamamen kapatip `./scripts/run_with_shield.sh -d macos` ile yeniden derleyin.'
+            : 'Google ile giris yapilamadi. Lutfen tekrar deneyin.',
         debugDetail: detail,
         cause: e,
       );
     }
     return AuthFailure(
       kind: AuthFailureKind.unknownError,
-      userMessage: e.message ?? context ?? 'Google girişi tamamlanamadı.',
+      userMessage: e.message ?? context ?? 'Google girisi tamamlanamadi.',
       debugDetail: detail,
       cause: e,
     );
@@ -52,7 +55,7 @@ abstract final class AuthResultMapper {
       kind: isTimeout ? AuthFailureKind.networkError : AuthFailureKind.unknownError,
       userMessage: e.message ??
           (context ??
-              'Bağlantı hazırlanamadı. Lütfen tekrar deneyin.'),
+              'Baglanti hazirlanamadi. Lutfen tekrar deneyin.'),
       debugDetail: detail,
       cause: e,
     );
