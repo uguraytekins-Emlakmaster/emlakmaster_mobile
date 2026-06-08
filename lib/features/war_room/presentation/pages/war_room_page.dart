@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/shell_screen_ready_tracker.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -33,13 +34,13 @@ class WarRoomPage extends ConsumerWidget {
           ),
         );
       },
-      error: (_, __) => const UnauthorizedScreen(
-        message: 'Yetki bilgisi alınamadı.',
+      error: (_, __) => UnauthorizedScreen(
+        message: AppLocalizations.of(context).t('war_room_role_error'),
       ),
       data: (role) {
         if (!FeaturePermission.canViewWarRoom(role)) {
-          return const UnauthorizedScreen(
-            message: 'Bu alan yalnızca yönetim ve operasyon ekipleri içindir.',
+          return UnauthorizedScreen(
+            message: AppLocalizations.of(context).t('war_room_no_access'),
           );
         }
         return const _WarRoomBody();

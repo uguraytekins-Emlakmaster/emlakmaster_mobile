@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/consultant_customers_tokens.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/workspace/customer_workspace_types.dart';
@@ -144,12 +145,13 @@ class CustomerWorkspaceSummaryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final cells = <(String, String, Color)>[
-      ('${summary.active}', 'Aktif', ext.accent),
-      ('${summary.hot}', 'Sıcak', ext.danger),
-      ('${summary.needsContact}', 'Temas', ext.warning),
-      ('${summary.partial}', 'Kısmi', ext.textTertiary),
-      ('${summary.today}', 'Bugün', ext.success),
+      ('${summary.active}', l10n.t('ws_active'), ext.accent),
+      ('${summary.hot}', l10n.t('customers_hot'), ext.danger),
+      ('${summary.needsContact}', l10n.t('customers_sum_contact'), ext.warning),
+      ('${summary.partial}', l10n.t('ws_partial'), ext.textTertiary),
+      ('${summary.today}', l10n.t('ws_today'), ext.success),
     ];
 
     return Padding(
@@ -226,6 +228,7 @@ class CustomerWorkspaceFilterStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: 32,
       child: ListView.separated(
@@ -260,7 +263,7 @@ class CustomerWorkspaceFilterStrip extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  filter.label,
+                  l10n.t(filter.labelKey),
                   style: TextStyle(
                     color: isSelected ? ext.accent : ext.textSecondary,
                     fontSize: 11,

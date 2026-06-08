@@ -108,7 +108,7 @@ void main() {
     await _pumpFrame(
       tester,
       captureKey: key,
-      height: 320,
+      height: 360,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -177,7 +177,7 @@ void main() {
     await _pumpFrame(
       tester,
       captureKey: key,
-      height: 480,
+      height: 520,
       child: const Column(
         children: [
           PremiumMessagesPageHeader(

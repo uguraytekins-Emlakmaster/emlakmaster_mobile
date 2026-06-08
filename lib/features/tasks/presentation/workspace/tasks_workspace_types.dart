@@ -26,6 +26,18 @@ extension TasksWorkspaceFilterLabel on TasksWorkspaceFilter {
         TasksWorkspaceFilter.matched => 'Müşteri bağlı',
         TasksWorkspaceFilter.priority => 'Öncelikli',
       };
+
+  /// Localization key — resolve at the widget layer via AppLocalizations.t().
+  String get labelKey => switch (this) {
+        TasksWorkspaceFilter.all => 'ws_all',
+        TasksWorkspaceFilter.overdue => 'tasks_overdue',
+        TasksWorkspaceFilter.today => 'ws_today',
+        TasksWorkspaceFilter.active => 'ws_active',
+        TasksWorkspaceFilter.completed => 'tasks_completed',
+        TasksWorkspaceFilter.partial => 'ws_partial',
+        TasksWorkspaceFilter.matched => 'tasks_filter_matched',
+        TasksWorkspaceFilter.priority => 'tasks_priority',
+      };
 }
 
 enum TaskTone { overdue, today, upcoming, completed, partial, matched, neutral }

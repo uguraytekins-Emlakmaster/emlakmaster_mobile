@@ -26,6 +26,18 @@ extension CallsWorkspaceFilterLabel on CallsWorkspaceFilter {
         CallsWorkspaceFilter.outgoing => 'Giden',
         CallsWorkspaceFilter.incoming => 'Gelen',
       };
+
+  /// Localization key — resolve at the widget layer via AppLocalizations.t().
+  String get labelKey => switch (this) {
+        CallsWorkspaceFilter.all => 'ws_all',
+        CallsWorkspaceFilter.today => 'ws_today',
+        CallsWorkspaceFilter.callback => 'calls_filter_callback',
+        CallsWorkspaceFilter.matched => 'calls_filter_matched',
+        CallsWorkspaceFilter.partial => 'ws_partial',
+        CallsWorkspaceFilter.unanswered => 'calls_filter_unanswered',
+        CallsWorkspaceFilter.outgoing => 'calls_filter_outgoing',
+        CallsWorkspaceFilter.incoming => 'calls_filter_incoming',
+      };
 }
 
 /// Renk tonu — widget katmanında tema rengine eşlenir.

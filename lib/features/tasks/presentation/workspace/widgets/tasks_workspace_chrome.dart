@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/consultant_tasks_tokens.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/workspace/tasks_workspace_types.dart';
@@ -173,13 +174,14 @@ class TasksWorkspaceSummaryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final cells = <(String, String, Color)>[
-      ('${summary.active}', 'Aktif', ext.accent),
-      ('${summary.overdue}', 'Geciken', ext.danger),
-      ('${summary.today}', 'Bugün', ext.warning),
-      ('${summary.matched}', 'Müşteri', ext.success),
+      ('${summary.active}', l10n.t('ws_active'), ext.accent),
+      ('${summary.overdue}', l10n.t('tasks_overdue'), ext.danger),
+      ('${summary.today}', l10n.t('ws_today'), ext.warning),
+      ('${summary.matched}', l10n.t('tasks_sum_customer'), ext.success),
       if (summary.partial > 0)
-        ('${summary.partial}', 'Kısmi', ext.textTertiary),
+        ('${summary.partial}', l10n.t('ws_partial'), ext.textTertiary),
     ];
 
     return Padding(
@@ -262,15 +264,17 @@ class TasksWorkspaceSearchRow extends StatelessWidget {
     super.key,
     required this.controller,
     required this.focusNode,
-    this.hintText = 'Görev başlığı veya müşteri ara…',
+    this.hintText,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
-  final String hintText;
+  final String? hintText;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedHint =
+        hintText ?? AppLocalizations.of(context).t('tasks_search_hint');
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         ConsultantTasksTokens.horizontal,
@@ -286,7 +290,7 @@ class TasksWorkspaceSearchRow extends StatelessWidget {
           child: PremiumSearchBar(
             controller: controller,
             focusNode: focusNode,
-            hintText: hintText,
+            hintText: resolvedHint,
             compact: true,
           ),
         ),
@@ -310,6 +314,7 @@ class TasksWorkspaceFilterStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: ConsultantTasksTokens.filterStripHeight + 8,
       child: ListView.separated(
@@ -342,7 +347,7 @@ class TasksWorkspaceFilterStrip extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  f.label,
+                  l10n.t(f.labelKey),
                   style: TextStyle(
                     color: isSelected ? ext.accent : ext.textSecondary,
                     fontSize: 11.5,

@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/consultant_calls_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/workspace/calls_workspace_types.dart';
@@ -24,6 +25,7 @@ class CallsWorkspaceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final tone = callToneColor(ext, row.tone);
     final compact = MediaQuery.sizeOf(context).width < 360;
 
@@ -153,13 +155,13 @@ class CallsWorkspaceRow extends StatelessWidget {
                           if (row.isMatched)
                             _MicroTag(
                               icon: Icons.link_rounded,
-                              label: 'Müşteri',
+                              label: l10n.t('tasks_sum_customer'),
                               color: ext.success,
                             ),
                           if (row.needsCallback)
                             _MicroTag(
                               icon: Icons.replay_rounded,
-                              label: 'Geri dön',
+                              label: l10n.t('calls_filter_callback'),
                               color: ext.warning,
                             ),
                           if (row.isPartial && row.partialNote.isNotEmpty)
@@ -193,7 +195,7 @@ class CallsWorkspaceRow extends StatelessWidget {
                 const SizedBox(width: 4),
                 if (!compact && onCall != null)
                   IconButton(
-                    tooltip: 'Ara',
+                    tooltip: l10n.t('row_call'),
                     constraints: const BoxConstraints(
                       minWidth: ConsultantCallsTokens.trailingRailWidth,
                       minHeight: ConsultantCallsTokens.trailingRailWidth,
@@ -207,7 +209,7 @@ class CallsWorkspaceRow extends StatelessWidget {
                     ),
                   ),
                 PopupMenuButton<CallRowMenu>(
-                  tooltip: 'Aksiyonlar',
+                  tooltip: l10n.t('row_actions'),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: ConsultantCallsTokens.trailingRailWidth,
@@ -220,39 +222,39 @@ class CallsWorkspaceRow extends StatelessWidget {
                   ),
                   onSelected: onMenu,
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: CallRowMenu.open,
-                      child: Text('Aç'),
+                      child: Text(l10n.t('row_open')),
                     ),
                     if (onCall != null)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: CallRowMenu.call,
-                        child: Text('Ara'),
+                        child: Text(l10n.t('row_call')),
                       ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: CallRowMenu.message,
-                      child: Text('Mesaj'),
+                      child: Text(l10n.t('row_message')),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: CallRowMenu.whatsapp,
-                      child: Text('WhatsApp'),
+                      child: Text(l10n.t('whatsapp')),
                     ),
                     if (row.customerId != null && row.customerId!.isNotEmpty)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: CallRowMenu.customer,
-                        child: Text('Müşteriye git'),
+                        child: Text(l10n.t('row_go_customer')),
                       ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: CallRowMenu.followUp,
-                      child: Text('Takibe ekle'),
+                      child: Text(l10n.t('row_add_followup')),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: CallRowMenu.tasks,
-                      child: Text('Görevlere git'),
+                      child: Text(l10n.t('row_go_tasks')),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: CallRowMenu.detail,
-                      child: Text('Detay'),
+                      child: Text(l10n.t('row_detail')),
                     ),
                   ],
                 ),

@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/consultant_customers_tokens.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/workspace/customer_workspace_types.dart';
@@ -25,6 +26,7 @@ class CustomerWorkspaceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final tone = customerToneColor(ext, row.tone);
 
     return RepaintBoundary(
@@ -108,7 +110,7 @@ class CustomerWorkspaceRow extends StatelessWidget {
                           if (row.needsContact)
                             _MicroTag(
                               icon: Icons.schedule_rounded,
-                              label: 'Temas gerekli',
+                              label: l10n.t('customers_needs_contact'),
                               color: ext.warning,
                             ),
                           if (row.isPartial && row.partialNote.isNotEmpty) ...[
@@ -144,9 +146,9 @@ class CustomerWorkspaceRow extends StatelessWidget {
                     icon: Icons.call_rounded,
                     color: ext.success,
                     onTap: onCall!,
-                    tooltip: 'Ara',
+                    tooltip: l10n.t('row_call'),
                   ),
-                _menu(context, ext),
+                _menu(context, ext, l10n),
               ],
             ),
           ),
@@ -155,40 +157,46 @@ class CustomerWorkspaceRow extends StatelessWidget {
     );
   }
 
-  Widget _menu(BuildContext context, AppThemeExtension ext) {
+  Widget _menu(BuildContext context, AppThemeExtension ext,
+      AppLocalizations l10n) {
     return PopupMenuButton<CustomerRowMenu>(
-      tooltip: 'Aksiyonlar',
+      tooltip: l10n.t('row_actions'),
       icon: Icon(Icons.more_vert_rounded,
           color: ext.textTertiary,
           size: ConsultantCustomersTokens.actionIconSize),
       onSelected: onMenu,
       itemBuilder: (context) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: CustomerRowMenu.open,
-          child: _MenuRow(icon: Icons.open_in_new_rounded, label: 'Aç'),
+          child:
+              _MenuRow(icon: Icons.open_in_new_rounded, label: l10n.t('row_open')),
         ),
         if (row.callablePhone)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: CustomerRowMenu.call,
-            child: _MenuRow(icon: Icons.call_rounded, label: 'Ara'),
+            child: _MenuRow(icon: Icons.call_rounded, label: l10n.t('row_call')),
           ),
         if (row.callablePhone)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: CustomerRowMenu.message,
-            child: _MenuRow(icon: Icons.sms_rounded, label: 'Mesaj'),
+            child:
+                _MenuRow(icon: Icons.sms_rounded, label: l10n.t('row_message')),
           ),
         if (row.callablePhone)
-          const PopupMenuItem(
+          PopupMenuItem(
             value: CustomerRowMenu.whatsapp,
-            child: _MenuRow(icon: Icons.chat_rounded, label: 'WhatsApp'),
+            child:
+                _MenuRow(icon: Icons.chat_rounded, label: l10n.t('whatsapp')),
           ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: CustomerRowMenu.followUp,
-          child: _MenuRow(icon: Icons.playlist_add_rounded, label: 'Takibe ekle'),
+          child: _MenuRow(
+              icon: Icons.playlist_add_rounded, label: l10n.t('row_add_followup')),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: CustomerRowMenu.tasks,
-          child: _MenuRow(icon: Icons.task_alt_rounded, label: 'Görevlere git'),
+          child: _MenuRow(
+              icon: Icons.task_alt_rounded, label: l10n.t('row_go_tasks')),
         ),
       ],
     );

@@ -69,12 +69,13 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final uid =
         ref.watch(currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''));
     if (uid.isEmpty) {
       return Center(
         child: Text(
-          'Oturum açık değil.',
+          l10n.t('not_signed_in'),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       );
@@ -101,10 +102,10 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
               ),
               error: (_, __) => CustomScrollView(
                 slivers: [
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: TasksWorkspaceHeader(
-                      title: 'Görevlerim',
-                      subtitle: 'Görev durumu ve sonraki adımlar',
+                      title: l10n.t('title_tasks'),
+                      subtitle: l10n.t('tasks_subtitle'),
                     ),
                   ),
                   SliverFillRemaining(
@@ -115,9 +116,9 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
                         grouped: true,
                         premiumVisual: true,
                         icon: Icons.cloud_off_rounded,
-                        title: 'Görevler yüklenemedi',
-                        subtitle: 'Bağlantınızı kontrol edip tekrar deneyin.',
-                        actionLabel: 'Yeniden dene',
+                        title: l10n.t('tasks_load_error'),
+                        subtitle: l10n.t('conn_retry_sub'),
+                        actionLabel: l10n.t('retry'),
                         onAction: () => TasksWorkspaceActions.refresh(ref, uid),
                       ),
                     ),
@@ -143,6 +144,7 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
     String uid,
   ) {
     final reserve = _dockBottomReserve(context);
+    final l10n = AppLocalizations.of(context);
     final visible = snapshot.rows
         .where((r) => !_deletingIds.contains(r.id))
         .toList(growable: false);
@@ -151,13 +153,13 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
       child: TourTarget(
         id: TourTargetId.tasksHeader,
         child: TasksWorkspaceHeader(
-          title: 'Görevlerim',
-          subtitle: 'Görev durumu ve sonraki adımlar',
+          title: l10n.t('title_tasks'),
+          subtitle: l10n.t('tasks_subtitle'),
           dateChipLabel: snapshot.dateChipLabel,
           coverageNote: snapshot.coverageNote,
           actions: [
             IconButton(
-              tooltip: 'Yenile',
+              tooltip: l10n.t('refresh'),
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               onPressed: () => TasksWorkspaceActions.refresh(ref, uid),
               icon: Icon(
@@ -246,8 +248,8 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
           child: TasksWorkspaceInlineNote(
             icon: Icons.filter_alt_off_rounded,
             message: _query.isNotEmpty
-                ? 'Aramaya uyan görev bulunamadı.'
-                : 'Bu görünümde görev yok.',
+                ? l10n.t('tasks_none_match')
+                : l10n.t('tasks_none_in_view'),
           ),
         ),
       );
@@ -267,7 +269,7 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
           slivers.add(
             SliverToBoxAdapter(
               child: TasksWorkspaceSectionHeader(
-                label: 'Gecikenler',
+                label: l10n.t('tasks_section_overdue'),
                 secondary: '${lane.length}',
               ),
             ),
@@ -297,7 +299,7 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
           slivers.add(
             SliverToBoxAdapter(
               child: TasksWorkspaceSectionHeader(
-                label: 'Hızlı kapatılabilir',
+                label: l10n.t('tasks_section_quick'),
                 secondary: '${lane.length}',
               ),
             ),
@@ -316,7 +318,7 @@ class _TasksWorkspaceSurfaceState extends ConsumerState<TasksWorkspaceSurface> {
       slivers.add(
         SliverToBoxAdapter(
           child: TasksWorkspaceSectionHeader(
-            label: 'Görev listesi',
+            label: l10n.t('tasks_section_list'),
             secondary: '${mainRows.length}',
           ),
         ),
@@ -400,7 +402,7 @@ class _AddTaskDock extends StatelessWidget {
             },
             icon: Icon(Icons.add_rounded, color: ext.onBrand, size: 20),
             label: Text(
-              'Yeni görev',
+              AppLocalizations.of(context).t('empty_tasks_cta'),
               style: TextStyle(
                 color: ext.onBrand,
                 fontWeight: FontWeight.w700,

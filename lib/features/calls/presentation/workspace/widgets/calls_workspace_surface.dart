@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
@@ -82,6 +83,7 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(callsWorkspaceSnapshotProvider);
     ref.listen(callsWorkspaceSnapshotProvider, (_, next) {
       final snap = next.valueOrNull;
@@ -98,10 +100,10 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
         ),
         error: (_, __) => CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: CallsWorkspaceHeader(
-                title: 'Çağrılarım',
-                subtitle: 'Son aramalar ve geri dönüş aksiyonları',
+                title: l10n.t('title_calls'),
+                subtitle: l10n.t('calls_subtitle'),
               ),
             ),
             SliverFillRemaining(
@@ -112,9 +114,9 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
                   grouped: true,
                   premiumVisual: true,
                   icon: Icons.cloud_off_rounded,
-                  title: 'Çağrılar yüklenemedi',
-                  subtitle: 'Bağlantınızı kontrol edip tekrar deneyin.',
-                  actionLabel: 'Yeniden dene',
+                  title: l10n.t('calls_load_error'),
+                  subtitle: l10n.t('conn_retry_sub'),
+                  actionLabel: l10n.t('retry'),
                   onAction: () => CallsWorkspaceActions.refresh(ref),
                 ),
               ),
@@ -128,18 +130,19 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
 
   Widget _buildData(BuildContext context, CallsWorkspaceSnapshot snapshot) {
     final reserve = _dockBottomReserve(context);
+    final l10n = AppLocalizations.of(context);
 
     final header = SliverToBoxAdapter(
       child: TourTarget(
         id: TourTargetId.callsHeader,
         child: CallsWorkspaceHeader(
-          title: 'Çağrılarım',
-          subtitle: 'Son aramalar ve geri dönüş aksiyonları',
+          title: l10n.t('title_calls'),
+          subtitle: l10n.t('calls_subtitle'),
           dateChipLabel: snapshot.dateChipLabel,
           coverageNote: snapshot.coverageNote,
           actions: [
             IconButton(
-              tooltip: 'Yenile',
+              tooltip: l10n.t('refresh'),
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               onPressed: () => CallsWorkspaceActions.refresh(ref),
               icon: Icon(
@@ -177,14 +180,11 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
                     premiumVisual: true,
                     grouped: true,
                     icon: Icons.call_outlined,
-                    title: 'Henüz çağrı kaydı yok',
-                    subtitle:
-                        'CRM içi görüşmeler ve tamamlanan kayıtlar burada '
-                        'görünür. iOS’ta sistem arama günlüğü okunamaz; '
-                        'Android’de isteğe bağlı içe aktarım yapabilirsiniz.',
+                    title: l10n.t('empty_calls_title'),
+                    subtitle: l10n.t('calls_empty_platform_sub'),
                     actionLabel: io.Platform.isAndroid
-                        ? 'Telefon geçmişini içe aktar'
-                        : 'Yenile',
+                        ? l10n.t('calls_import_phone_history')
+                        : l10n.t('refresh'),
                     onAction: io.Platform.isAndroid
                         ? _syncDevice
                         : () => CallsWorkspaceActions.refresh(ref),
@@ -233,7 +233,7 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
         child: PremiumCallSearchRow(
           controller: _search.controller,
           focusNode: _searchFocus,
-          hintText: 'İsim, telefon veya sonuç ara…',
+          hintText: l10n.t('calls_search_hint'),
           showMic: false,
         ),
       ),
@@ -255,8 +255,8 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
           child: CallsWorkspaceInlineNote(
             icon: Icons.filter_alt_off_rounded,
             message: _query.isNotEmpty
-                ? 'Aramaya uyan çağrı bulunamadı.'
-                : 'Bu görünümde çağrı yok.',
+                ? l10n.t('calls_none_match')
+                : l10n.t('calls_none_in_view'),
           ),
         ),
       );
@@ -275,7 +275,7 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
           slivers.add(
             SliverToBoxAdapter(
               child: CallsWorkspaceSectionHeader(
-                label: 'Geri dönülmesi gerekenler',
+                label: l10n.t('calls_section_callback'),
                 secondary: '${laneRows.length}',
               ),
             ),
@@ -290,7 +290,7 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
         slivers.add(
           SliverToBoxAdapter(
             child: CallsWorkspaceSectionHeader(
-              label: 'Son aramalar',
+              label: l10n.t('calls_section_recent'),
               secondary: '${mainRows.length}',
             ),
           ),
@@ -305,7 +305,7 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
         slivers.add(
           SliverToBoxAdapter(
             child: CallsWorkspaceSectionHeader(
-              label: 'Son aramalar',
+              label: l10n.t('calls_section_recent'),
               secondary: '${filtered.length}',
             ),
           ),
@@ -339,7 +339,7 @@ class _CallsWorkspaceSurfaceState extends ConsumerState<CallsWorkspaceSurface> {
                   onPressed: () =>
                       CallsWorkspaceActions.loadMore(ref, snapshot.uid),
                   icon: const Icon(Icons.expand_more_rounded, size: 18),
-                  label: const Text('Daha fazla çağrı yükle'),
+                  label: Text(l10n.t('calls_load_more')),
                 ),
               ),
             ),

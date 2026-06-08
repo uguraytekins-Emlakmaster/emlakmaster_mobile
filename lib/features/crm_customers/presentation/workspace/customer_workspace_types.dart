@@ -33,6 +33,18 @@ extension CustomerWorkspaceFilterLabel on CustomerWorkspaceFilter {
         CustomerWorkspaceFilter.needsContact => 'Temas gerekli',
         CustomerWorkspaceFilter.partial => 'Kısmi',
       };
+
+  /// Localization key — resolve at the widget layer via AppLocalizations.t().
+  String get labelKey => switch (this) {
+        CustomerWorkspaceFilter.all => 'ws_all',
+        CustomerWorkspaceFilter.hot => 'customers_hot',
+        CustomerWorkspaceFilter.warm => 'customers_warm',
+        CustomerWorkspaceFilter.cold => 'customers_cold',
+        CustomerWorkspaceFilter.today => 'ws_today',
+        CustomerWorkspaceFilter.fresh => 'customers_fresh',
+        CustomerWorkspaceFilter.needsContact => 'customers_needs_contact',
+        CustomerWorkspaceFilter.partial => 'ws_partial',
+      };
 }
 
 /// Renk tonu — widget katmanında tema rengine eşlenir.

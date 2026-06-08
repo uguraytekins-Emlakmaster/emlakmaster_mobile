@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/consultant_tasks_tokens.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/workspace/tasks_workspace_types.dart';
@@ -32,6 +33,7 @@ class TasksWorkspaceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final tone = taskToneColor(ext, row.tone);
     final compact = MediaQuery.sizeOf(context).width < 360;
 
@@ -179,7 +181,7 @@ class TasksWorkspaceRow extends StatelessWidget {
                   ),
                 ),
                 PopupMenuButton<TaskRowMenu>(
-                  tooltip: 'Aksiyonlar',
+                  tooltip: l10n.t('row_actions'),
                   padding: EdgeInsets.zero,
                   icon: Icon(
                     Icons.more_vert_rounded,
@@ -188,32 +190,32 @@ class TasksWorkspaceRow extends StatelessWidget {
                   ),
                   onSelected: onMenu,
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: TaskRowMenu.open,
-                      child: Text('Aç'),
+                      child: Text(l10n.t('row_open')),
                     ),
                     if (!row.done)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: TaskRowMenu.complete,
-                        child: Text('Tamamla'),
+                        child: Text(l10n.t('row_complete')),
                       ),
                     if (row.customerId != null && row.customerId!.isNotEmpty)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: TaskRowMenu.customer,
-                        child: Text('Müşteriye git'),
+                        child: Text(l10n.t('row_go_customer')),
                       ),
                     if (!row.done)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: TaskRowMenu.postpone,
-                        child: Text('Ertele'),
+                        child: Text(l10n.t('row_postpone')),
                       ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: TaskRowMenu.followUp,
-                      child: Text('Takibe git'),
+                      child: Text(l10n.t('row_go_followup')),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: TaskRowMenu.detail,
-                      child: Text('Detay'),
+                      child: Text(l10n.t('row_detail')),
                     ),
                   ],
                 ),

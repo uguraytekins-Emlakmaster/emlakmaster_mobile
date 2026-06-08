@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
@@ -67,6 +68,7 @@ class _CustomerWorkspaceSurfaceState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final snapshotAsync = ref.watch(customerWorkspaceSnapshotProvider);
     ref.listen(customerWorkspaceSnapshotProvider, (_, next) {
       final snap = next.valueOrNull;
@@ -83,10 +85,10 @@ class _CustomerWorkspaceSurfaceState
         ),
         error: (_, __) => CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: CustomerWorkspaceHeader(
-                title: 'Müşterilerim',
-                subtitle: 'Müşteri durumu ve sonraki adımlar',
+                title: l10n.t('title_customers'),
+                subtitle: l10n.t('customers_subtitle'),
               ),
             ),
             SliverFillRemaining(
@@ -97,9 +99,9 @@ class _CustomerWorkspaceSurfaceState
                   grouped: true,
                   premiumVisual: true,
                   icon: Icons.cloud_off_rounded,
-                  title: 'Müşteriler yüklenemedi',
-                  subtitle: 'Bağlantınızı kontrol edip tekrar deneyin.',
-                  actionLabel: 'Yeniden dene',
+                  title: l10n.t('customers_load_error'),
+                  subtitle: l10n.t('conn_retry_sub'),
+                  actionLabel: l10n.t('retry'),
                   onAction: () => CustomerWorkspaceActions.refresh(ref),
                 ),
               ),
@@ -113,17 +115,18 @@ class _CustomerWorkspaceSurfaceState
 
   Widget _buildData(BuildContext context, CustomerWorkspaceSnapshot snapshot) {
     final reserve = _dockBottomReserve(context);
+    final l10n = AppLocalizations.of(context);
 
     final header = SliverToBoxAdapter(
       child: TourTarget(
         id: TourTargetId.customersHeader,
         child: CustomerWorkspaceHeader(
-          title: 'Müşterilerim',
-          subtitle: 'Müşteri durumu ve sonraki adımlar',
+          title: l10n.t('title_customers'),
+          subtitle: l10n.t('customers_subtitle'),
           coverageNote: snapshot.coverageNote,
           actions: [
             IconButton(
-              tooltip: 'Müşteri ekle',
+              tooltip: l10n.t('add_customer'),
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               onPressed: () => CustomerWorkspaceActions.addCustomer(context,
                   source: 'crm_header'),
@@ -155,11 +158,9 @@ class _CustomerWorkspaceSurfaceState
                     premiumVisual: true,
                     grouped: true,
                     icon: Icons.hub_outlined,
-                    title: 'Müşteri portföyünü burada kur',
-                    subtitle:
-                        'İlk kişiyle CRM canlanır; arama, teklif ve takip burada '
-                        'başlar. Uydurma kayıt gösterilmez.',
-                    actionLabel: 'Müşteri ekle',
+                    title: l10n.t('customers_empty_title'),
+                    subtitle: l10n.t('customers_empty_sub'),
+                    actionLabel: l10n.t('add_customer'),
                     onAction: () => CustomerWorkspaceActions.addCustomer(
                       context,
                       source: 'crm_empty',
@@ -187,7 +188,7 @@ class _CustomerWorkspaceSurfaceState
       SliverToBoxAdapter(
         child: PremiumCustomerSearchRow(
           controller: _search.controller,
-          hintText: 'İsim, telefon veya e-posta ara…',
+          hintText: l10n.t('customers_search_hint'),
         ),
       ),
       const SliverToBoxAdapter(child: SizedBox(height: 6)),
@@ -208,8 +209,8 @@ class _CustomerWorkspaceSurfaceState
           child: CustomerWorkspaceInlineNote(
             icon: Icons.filter_alt_off_rounded,
             message: _query.isNotEmpty
-                ? 'Aramaya uyan müşteri bulunamadı.'
-                : 'Bu görünümde müşteri yok.',
+                ? l10n.t('customers_none_match')
+                : l10n.t('customers_none_in_view'),
           ),
         ),
       );
@@ -217,7 +218,7 @@ class _CustomerWorkspaceSurfaceState
       slivers.add(
         SliverToBoxAdapter(
           child: CustomerWorkspaceSectionHeader(
-            label: 'Öncelik sırası',
+            label: l10n.t('customers_section_priority'),
             secondary: '${filtered.length}',
           ),
         ),
@@ -258,7 +259,7 @@ class _CustomerWorkspaceSurfaceState
                   onPressed: () =>
                       CustomerWorkspaceActions.loadMore(ref, snapshot.uid),
                   icon: const Icon(Icons.expand_more_rounded, size: 18),
-                  label: const Text('Daha fazla müşteri yükle'),
+                  label: Text(l10n.t('customers_load_more')),
                 ),
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/consultant_calls_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/workspace/calls_workspace_types.dart';
@@ -178,13 +179,14 @@ class CallsWorkspaceSummaryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final cells = <(String, String, Color)>[
-      ('${summary.today}', 'Bugün', ext.accent),
-      ('${summary.callback}', 'Geri dön', ext.warning),
-      ('${summary.matched}', 'Eşleşen', ext.success),
-      ('${summary.partial}', 'Kısmi', ext.textTertiary),
+      ('${summary.today}', l10n.t('ws_today'), ext.accent),
+      ('${summary.callback}', l10n.t('calls_filter_callback'), ext.warning),
+      ('${summary.matched}', l10n.t('calls_filter_matched'), ext.success),
+      ('${summary.partial}', l10n.t('ws_partial'), ext.textTertiary),
       if (summary.unanswered > 0)
-        ('${summary.unanswered}', 'Cevapsız', ext.danger),
+        ('${summary.unanswered}', l10n.t('calls_filter_unanswered'), ext.danger),
     ];
 
     return Padding(
@@ -281,6 +283,7 @@ class CallsWorkspaceFilterStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: ConsultantCallsTokens.quickFilterHeight + 4,
       child: ListView.separated(
@@ -313,7 +316,7 @@ class CallsWorkspaceFilterStrip extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  f.label,
+                  l10n.t(f.labelKey),
                   style: TextStyle(
                     color: isSelected ? ext.accent : ext.textSecondary,
                     fontSize: 11.5,
