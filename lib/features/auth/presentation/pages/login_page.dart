@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart'
+    show kDebugMode, kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,6 +58,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _personaReady = false;
 
   bool get _anyBusy => _busy != _BusyKind.none;
+
+  /// Google girişinde "Dock'ta Safari/Chrome penceresine bakın" ipucu yalnızca
+  /// harici tarayıcı penceresi açan masaüstü/web akışında geçerlidir.
+  /// Android/iOS native hesap seçici kullanır → ipucu gizlenir.
+  bool get _googleHintIsRelevant {
+    if (kIsWeb) return true;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+        return true;
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+      case TargetPlatform.fuchsia:
+        return false;
+    }
+  }
 
   /// Gerçek hata kodu (Firebase vb.); kullanıcı "bilgiler doğru" dediğinde teşhis için gösterilir.
   String? _errorDetail;
@@ -654,15 +672,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   fontSize: DesignTokens.fontSizeSm,
                 ),
               ),
-              const SizedBox(height: DesignTokens.space1),
-              Text(
-                l10n.t('auth_google_browser_hint'),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: ext.textSecondary.withValues(alpha: 0.85),
-                  fontSize: DesignTokens.fontSizeSm - 1,
+              // "Tarayıcı/Dock" ipucu yalnızca harici tarayıcı penceresi
+              // açılan masaüstünde (web/macOS/Windows/Linux) anlamlıdır.
+              // Android/iOS'ta Google girişi native hesap seçici ile akar;
+              // bu platformlarda Dock/Safari ipucu yanıltıcıdır → gizle.
+              if (_googleHintIsRelevant) ...[
+                const SizedBox(height: DesignTokens.space1),
+                Text(
+                  l10n.t('auth_google_browser_hint'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: ext.textSecondary.withValues(alpha: 0.85),
+                    fontSize: DesignTokens.fontSizeSm - 1,
+                  ),
                 ),
-              ),
+              ],
             ],
             if (AppConstants.showFacebookLogin) ...[
               const SizedBox(height: DesignTokens.space3),
