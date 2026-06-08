@@ -62,6 +62,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   String? _errorDetail;
   String? _googleStatusHint;
 
+  /// Giriş spinner'ı için güvenlik bekçisi: hiçbir giriş yöntemi sınırsız
+  /// dönmemeli (anayasa: error-resilience — asla sonsuz yükleme). Auth/Firestore
+  /// beklenenden uzun sürerse spinner sıfırlanır ve "tekrar dene" mesajı gösterilir.
+  Timer? _busyWatchdog;
+  static const Duration _busyWatchdogTimeout = Duration(seconds: 25);
+
+  void _armBusyWatchdog() {
+    _busyWatchdog?.cancel();
+    _busyWatchdog = Timer(_busyWatchdogTimeout, () {
+      if (!mounted || _busy == _BusyKind.none) return;
+      setState(() {
+        _busy = _BusyKind.none;
+        _googleStatusHint = null;
+        _errorMessage = AppLocalizations.of(context).t('auth_login_timeout');
+      });
+    });
+  }
+
+  void _cancelBusyWatchdog() {
+    _busyWatchdog?.cancel();
+    _busyWatchdog = null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -92,6 +115,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   void dispose() {
+    _busyWatchdog?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -116,6 +140,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
     AppFeedback.mediumImpact();
     setState(() => _busy = _BusyKind.email);
+    _armBusyWatchdog();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     try {
@@ -144,6 +169,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         _errorDetail = detail;
       });
     } finally {
+      _cancelBusyWatchdog();
       if (mounted) setState(() => _busy = _BusyKind.none);
     }
   }
@@ -269,6 +295,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _googleStatusHint = AppLocalizations.of(context).t('auth_google_preparing');
       _busy = _BusyKind.google;
     });
+    _armBusyWatchdog();
     unawaited(
       Future<void>.delayed(const Duration(seconds: 2), () {
         if (!mounted || _busy != _BusyKind.google) return;
@@ -293,6 +320,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         _googleStatusHint = null;
       });
     } finally {
+      _cancelBusyWatchdog();
       if (mounted) {
         setState(() {
           _busy = _BusyKind.none;
@@ -322,6 +350,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _errorDetail = null;
       _busy = _BusyKind.facebook;
     });
+    _armBusyWatchdog();
     try {
       await FacebookAuthService.instance
           .signInWithFacebookForFirebase()
@@ -343,6 +372,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         _errorMessage = msg.isEmpty ? null : msg;
       });
     } finally {
+      _cancelBusyWatchdog();
       if (mounted) setState(() => _busy = _BusyKind.none);
     }
   }

@@ -201,9 +201,11 @@ class UserRepository {
     String? name,
     String? email,
   }) async {
+    // Best-effort profil senkronu: giriş akışını ASLA bloklamamalı/koparmamalı.
+    // Firestore get/set kısa timeout ile sınırlanır; hata yutulur (rethrow YOK).
     try {
       final ref = _store.collection(_usersCol).doc(uid);
-      final snap = await ref.get();
+      final snap = await ref.get().timeout(const Duration(seconds: 4));
       if (!snap.exists) return;
       final data = snap.data();
       if (data == null) return;
@@ -224,11 +226,14 @@ class UserRepository {
       }
       if (patch.isEmpty) return;
       patch['updatedAt'] = FieldValue.serverTimestamp();
-      await ref.set(patch, SetOptions(merge: true));
+      await ref.set(patch, SetOptions(merge: true)).timeout(
+            const Duration(seconds: 4),
+          );
       if (kDebugMode) AppLogger.d('UserRepository.mergeProfileIfDocExists: $uid');
     } catch (e, st) {
       if (kDebugMode) AppLogger.e('UserRepository.mergeProfileIfDocExists', e, st);
-      rethrow;
+      // Profil senkronu kritik değil; sessizce geç. Bir sonraki etkileşimde
+      // yeniden denenir.
     }
   }
 
