@@ -9,6 +9,14 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// key.properties dosyası varsa release imzası için oku (git'e eklenmez).
+// Yoksa debug anahtarı kullanılır (yerel test için yeterli).
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.example.emlakmaster_mobile"
     compileSdk = 36
@@ -24,7 +32,22 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            release {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
     defaultConfig {
+        // TODO(store-release): com.example.* Google Play'de yayımlanamaz.
+        // Firebase Console'da yeni Android uygulaması ekle, yeni applicationId
+        // belirle (ör. com.axioncrm.mobile), yeni google-services.json indir,
+        // sonra bu satırı güncelle.
         applicationId = "com.example.emlakmaster_mobile"
         minSdk = 24
         targetSdk = 36
@@ -34,6 +57,14 @@ android {
 
     buildTypes {
         release {
+            // key.properties mevcutsa üretim keystore'u kullan, yoksa debug.
+            signingConfig = keystorePropertiesFile.exists()
+                ? signingConfigs.release
+                : signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+        }
+        debug {
             signingConfig = signingConfigs.debug
         }
     }

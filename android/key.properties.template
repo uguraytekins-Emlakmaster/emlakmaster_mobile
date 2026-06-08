@@ -1,0 +1,14 @@
+# Axion CRM — Android Release Signing
+# Bu dosyayı kopyala: cp key.properties.template key.properties
+# key.properties git'e eklenmez (android/.gitignore tarafından korunur).
+#
+# Keystore oluşturmak için:
+#   keytool -genkey -v -keystore ~/axioncrm-release.jks \
+#     -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 \
+#     -alias axioncrm
+#
+# Ardından bu dosyayı doldurup android/ klasörüne koy:
+storePassword=KEYSTORE_SIFRENIZI_GIRIN
+keyPassword=KEY_SIFRENIZI_GIRIN
+keyAlias=axioncrm
+storeFile=../axioncrm-release.jks
