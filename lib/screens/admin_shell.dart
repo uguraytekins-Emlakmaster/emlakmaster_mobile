@@ -1,6 +1,6 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
@@ -66,6 +66,7 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final flags = ref.watch(featureFlagsProvider).valueOrNull;
     final lean = flags?[AppConstants.keyV1LeanProduct] ?? true;
     final roleAsync = ref.watch(displayRoleProvider);
@@ -85,55 +86,56 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
         );
     final showEconomyTab = !lean;
     final entries = <_AdminShellTabEntry>[
-      const _AdminShellTabEntry(
+      _AdminShellTabEntry(
         id: _AdminShellTab.dashboard,
-        navItem:
-            AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.managerHome),
-        page: DashboardPage(),
+        navItem: AdaptiveNavItem(
+            Icons.dashboard_rounded, l10n.t('nav_home_manager')),
+        page: const DashboardPage(),
       ),
-      const _AdminShellTabEntry(
+      _AdminShellTabEntry(
         id: _AdminShellTab.messages,
         navItem: AdaptiveNavItem(
           Icons.forum_rounded,
-          ProductLabels.messageCenter,
+          l10n.t('nav_messages'),
         ),
-        page: MessageCenterPage(),
+        page: const MessageCenterPage(),
       ),
       if (showWarRoom)
-        const _AdminShellTabEntry(
+        _AdminShellTabEntry(
           id: _AdminShellTab.warRoom,
           navItem: AdaptiveNavItem(
             Icons.military_tech_rounded,
-            ProductLabels.warRoom,
+            l10n.t('nav_war_room'),
           ),
-          page: WarRoomPage(),
+          page: const WarRoomPage(),
         ),
       if (showCommandCenter)
-        const _AdminShellTabEntry(
+        _AdminShellTabEntry(
           id: _AdminShellTab.commandCenter,
           navItem: AdaptiveNavItem(
             Icons.call_rounded,
-            ProductLabels.callCenter,
+            l10n.t('nav_call_center'),
           ),
-          page: CommandCenterPage(),
+          page: const CommandCenterPage(),
         ),
       if (showEconomyTab)
-        const _AdminShellTabEntry(
+        _AdminShellTabEntry(
           id: _AdminShellTab.economy,
-          navItem: AdaptiveNavItem(Icons.trending_up_rounded, 'Ekonomi'),
-          page: AdminEconomyPage(),
+          navItem:
+              AdaptiveNavItem(Icons.trending_up_rounded, l10n.t('nav_economy')),
+          page: const AdminEconomyPage(),
         ),
-      const _AdminShellTabEntry(
+      _AdminShellTabEntry(
         id: _AdminShellTab.reports,
         navItem:
-            AdaptiveNavItem(Icons.analytics_rounded, ProductLabels.reports),
-        page: AdminReportsPage(),
+            AdaptiveNavItem(Icons.analytics_rounded, l10n.t('nav_reports')),
+        page: const AdminReportsPage(),
       ),
-      const _AdminShellTabEntry(
+      _AdminShellTabEntry(
         id: _AdminShellTab.settings,
         navItem:
-            AdaptiveNavItem(Icons.settings_rounded, ProductLabels.settings),
-        page: SettingsPage(),
+            AdaptiveNavItem(Icons.settings_rounded, l10n.t('nav_settings')),
+        page: const SettingsPage(),
       ),
     ];
     final navItems =
@@ -210,7 +212,7 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
                 navItems: navItems,
                 pages: pages,
                 tabIds: tabIds,
-                title: ProductLabels.managerWorkspace,
+                title: l10n.t('workspace_manager'),
                 onIndexChanged: (i) {
                   if (_shellPageIndex.value != i) {
                     _shellPageIndex.value = i;

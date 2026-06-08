@@ -1,5 +1,5 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
@@ -26,32 +26,33 @@ class _ConsultantMoreSheetBody extends StatelessWidget {
     _MoreDestination(
       pageIndex: 1,
       icon: Icons.forum_rounded,
-      label: ProductLabels.messageCenter,
-      subtitle: 'Ekip sohbeti ve bildirimler',
+      labelKey: 'nav_messages',
+      subtitleKey: 'more_messages_sub',
     ),
     _MoreDestination(
       pageIndex: 4,
       icon: Icons.home_work_rounded,
-      label: ProductLabels.listings,
-      subtitle: 'Portföy ve ilan yönetimi',
+      labelKey: 'nav_listings',
+      subtitleKey: 'more_listings_sub',
     ),
     _MoreDestination(
       pageIndex: 5,
       icon: Icons.replay_rounded,
-      label: ProductLabels.followUp,
-      subtitle: 'Takip ve yeniden temas',
+      labelKey: 'nav_followup',
+      subtitleKey: 'more_followup_sub',
     ),
     _MoreDestination(
       pageIndex: 7,
       icon: Icons.settings_rounded,
-      label: ProductLabels.settings,
-      subtitle: 'Hesap ve uygulama ayarları',
+      labelKey: 'nav_settings',
+      subtitleKey: 'more_settings_sub',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Padding(
@@ -67,7 +68,7 @@ class _ConsultantMoreSheetBody extends StatelessWidget {
         children: [
           const PremiumBottomSheetHandle(),
           Text(
-            ProductLabels.consultantMore,
+            l10n.t('nav_more'),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: ext.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -76,7 +77,7 @@ class _ConsultantMoreSheetBody extends StatelessWidget {
           ),
           const SizedBox(height: DesignTokens.space1),
           Text(
-            'Diğer çalışma alanları',
+            l10n.t('more_subtitle'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: ext.textSecondary,
                   fontWeight: FontWeight.w500,
@@ -108,14 +109,14 @@ class _MoreDestination {
   const _MoreDestination({
     required this.pageIndex,
     required this.icon,
-    required this.label,
-    required this.subtitle,
+    required this.labelKey,
+    required this.subtitleKey,
   });
 
   final int pageIndex;
   final IconData icon;
-  final String label;
-  final String subtitle;
+  final String labelKey;
+  final String subtitleKey;
 }
 
 class _MoreTile extends StatelessWidget {
@@ -131,6 +132,7 @@ class _MoreTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final premium = PremiumThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -164,7 +166,7 @@ class _MoreTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      destination.label,
+                      l10n.t(destination.labelKey),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: ext.textPrimary,
                             fontWeight: FontWeight.w600,
@@ -172,7 +174,7 @@ class _MoreTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      destination.subtitle,
+                      l10n.t(destination.subtitleKey),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: ext.textSecondary,
                             height: 1.3,

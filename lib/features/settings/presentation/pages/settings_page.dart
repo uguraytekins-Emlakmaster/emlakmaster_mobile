@@ -6,7 +6,6 @@ import 'package:emlakmaster_mobile/core/config/legal_links.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/legal_document_page.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/widgets/account_security_actions.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
@@ -146,7 +145,7 @@ class SettingsPage extends ConsumerWidget {
                           ? AppThemeExtension.of(context).accent
                           : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
-                    title: Text(ProductLabels.managerWorkspace,
+                    title: Text(l10n.t('workspace_manager'),
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: preferConsultant != true
                         ? Icon(Icons.check_rounded,
@@ -163,7 +162,7 @@ class SettingsPage extends ConsumerWidget {
                           ? AppThemeExtension.of(context).accent
                           : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
-                    title: Text(ProductLabels.consultantWorkspace,
+                    title: Text(l10n.t('workspace_consultant'),
                         style: TextStyle(color: theme.colorScheme.onSurface)),
                     trailing: preferConsultant == true
                         ? Icon(Icons.check_rounded,
@@ -407,7 +406,7 @@ class SettingsPage extends ConsumerWidget {
                 ListTile(
                   leading: Icon(Icons.call_made_rounded,
                       color: AppThemeExtension.of(context).accent, size: 22),
-                  title: Text(ProductLabels.myCalls,
+                  title: Text(l10n.t('nav_calls'),
                       style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500)),
@@ -1153,7 +1152,7 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureKpiBar, v),
                   ),
                   _SettingSwitch(
-                    title: ProductLabels.warRoom,
+                    title: l10n.t('nav_war_room'),
                     subtitle: l10n.t('settings_flag_warroom_sub'),
                     icon: Icons.military_tech_rounded,
                     value: flags[AppConstants.keyFeatureWarRoom] ?? true,
@@ -1162,7 +1161,7 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureWarRoom, v),
                   ),
                   _SettingSwitch(
-                    title: ProductLabels.callCenter,
+                    title: l10n.t('nav_call_center'),
                     subtitle: l10n.t('settings_flag_callcenter_sub'),
                     icon: Icons.call_merge_rounded,
                     value: flags[AppConstants.keyFeatureCommandCenter] ?? true,

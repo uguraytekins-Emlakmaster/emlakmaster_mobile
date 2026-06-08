@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_return_prompt_host.dart';
@@ -27,15 +27,15 @@ class ConsultantShellPage extends StatefulWidget {
   @override
   State<ConsultantShellPage> createState() => _ConsultantShellPageState();
 
-  /// Alt menüde görünen 5 öğe.
-  static const List<AdaptiveNavItem> _navItems = [
-    AdaptiveNavItem(
-        Icons.space_dashboard_rounded, ProductLabels.consultantHome),
-    AdaptiveNavItem(Icons.call_rounded, ProductLabels.myCalls),
-    AdaptiveNavItem(Icons.people_rounded, ProductLabels.myCustomers),
-    AdaptiveNavItem(Icons.task_alt_rounded, ProductLabels.myTasks),
-    AdaptiveNavItem(Icons.apps_rounded, ProductLabels.consultantMore),
-  ];
+  /// Alt menüde görünen 5 öğe (yerelleştirilmiş).
+  static List<AdaptiveNavItem> _navItems(AppLocalizations l10n) => [
+        AdaptiveNavItem(
+            Icons.space_dashboard_rounded, l10n.t('nav_home_consultant')),
+        AdaptiveNavItem(Icons.call_rounded, l10n.t('nav_calls')),
+        AdaptiveNavItem(Icons.people_rounded, l10n.t('nav_customers')),
+        AdaptiveNavItem(Icons.task_alt_rounded, l10n.t('nav_tasks')),
+        AdaptiveNavItem(Icons.apps_rounded, l10n.t('nav_more')),
+      ];
 
   /// Alt menü → [pages] indeksi. Son öğe [kShellNavMoreMenu].
   static const List<int> _navPageIndices = [
@@ -89,6 +89,7 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ConsultantShellNav(
       goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
       child: ConsultantTourHost(
@@ -114,7 +115,7 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
             Expanded(
               child: AdaptiveShellScaffold(
                 key: _shellKey,
-                navItems: ConsultantShellPage._navItems,
+                navItems: ConsultantShellPage._navItems(l10n),
                 pages: ConsultantShellPage._pages,
                 navPageIndices: ConsultantShellPage._navPageIndices,
                 onIndexChanged: (i) {
@@ -124,7 +125,7 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
                 },
                 onMoreNavTap: _openMoreSheet,
                 tabIds: ConsultantShellPage._tabIds,
-                title: ProductLabels.consultantWorkspace,
+                title: l10n.t('workspace_consultant'),
                 shortcutMap: const {
                   MainShellShortcut.openHomeTab: 0,
                   MainShellShortcut.openMessageCenterTab: 1,
