@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/navigation/shell_tab_back_binding.dart';
 import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.dart';
@@ -157,10 +157,11 @@ class _FollowUpWorkspaceSurfaceState
                     title: 'Takip bekleyen müşteri yok',
                     subtitle:
                         '7+ gün sessiz müşteri yok. Yeni temaslar burada görünür.',
-                    actionLabel: ProductLabels.myCustomers,
+                    actionLabel: AppLocalizations.of(context).t('nav_customers'),
                     onAction: () =>
                         ConsultantShellNav.goToCustomersTab(context),
-                    outlinedActionLabel: ProductLabels.myTasks,
+                    outlinedActionLabel:
+                        AppLocalizations.of(context).t('nav_tasks'),
                     onOutlinedAction: () =>
                         ConsultantShellNav.goToTasksTab(context),
                   ),

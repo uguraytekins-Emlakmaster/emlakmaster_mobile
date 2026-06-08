@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -62,29 +62,29 @@ class AppDestination {
 }
 
 /// [role] için ulaşılabilir hedefler — yalnızca gerçek + yetki dahilindekiler.
-List<AppDestination> appDestinationsFor(AppRole role) {
+List<AppDestination> appDestinationsFor(AppRole role, AppLocalizations l10n) {
   final isAdmin = FeaturePermission.seesAdminPanel(role);
 
   final out = <AppDestination>[
     AppDestination.shortcut(
       id: 'home',
-      label: _homeLabel(role),
+      label: _homeLabel(role, l10n),
       icon: Icons.dashboard_rounded,
       shortcut: MainShellShortcut.openHomeTab,
     ),
   ];
 
   if (isAdmin) {
-    out.addAll(const [
+    out.addAll([
       AppDestination.route(
         id: 'office_admin',
-        label: ProductLabels.officeDesk,
+        label: l10n.t('office_desk'),
         icon: Icons.groups_rounded,
         route: AppRouter.routeOfficeAdmin,
       ),
       AppDestination.route(
         id: 'office_invite',
-        label: ProductLabels.officeInvite,
+        label: l10n.t('office_invite'),
         icon: Icons.vpn_key_outlined,
         route: AppRouter.routeOfficeInviteCreate,
       ),
@@ -92,73 +92,73 @@ List<AppDestination> appDestinationsFor(AppRole role) {
     // Komuta Merkezi / Komuta Odası admin kabuğunda gerçek sekmedir → shell-aware
     // kısayol (standalone push yarı-mount riski yok). Yalnızca yetki varsa.
     if (FeaturePermission.canViewAllCalls(role)) {
-      out.add(const AppDestination.shortcut(
+      out.add(AppDestination.shortcut(
         id: 'command_center',
-        label: ProductLabels.callCenter,
+        label: l10n.t('nav_call_center'),
         icon: Icons.call_rounded,
         shortcut: MainShellShortcut.openCallsTab,
       ));
     }
     if (FeaturePermission.canViewWarRoom(role)) {
-      out.add(const AppDestination.shortcut(
+      out.add(AppDestination.shortcut(
         id: 'war_room',
-        label: ProductLabels.warRoom,
+        label: l10n.t('nav_war_room'),
         icon: Icons.military_tech_rounded,
         shortcut: MainShellShortcut.openListingsTab,
       ));
     }
-    out.add(const AppDestination.route(
+    out.add(AppDestination.route(
       id: 'operations_deck',
-      label: ProductLabels.operationsDeck,
+      label: l10n.t('ops_deck'),
       icon: Icons.business_center_rounded,
       route: AppRouter.routeBrokerCommand,
     ));
   } else {
     // Danışman kabuğu sekmeleri.
-    out.addAll(const [
+    out.addAll([
       AppDestination.shortcut(
         id: 'my_calls',
-        label: ProductLabels.myCalls,
+        label: l10n.t('nav_calls'),
         icon: Icons.call_rounded,
         shortcut: MainShellShortcut.openCallsTab,
       ),
       AppDestination.shortcut(
         id: 'my_customers',
-        label: ProductLabels.myCustomers,
+        label: l10n.t('nav_customers'),
         icon: Icons.people_rounded,
         shortcut: MainShellShortcut.openCustomersTab,
       ),
       AppDestination.shortcut(
         id: 'listings',
-        label: ProductLabels.listings,
+        label: l10n.t('nav_listings'),
         icon: Icons.home_work_rounded,
         shortcut: MainShellShortcut.openListingsTab,
       ),
       AppDestination.shortcut(
         id: 'follow_up',
-        label: ProductLabels.followUp,
+        label: l10n.t('nav_followup'),
         icon: Icons.replay_rounded,
         shortcut: MainShellShortcut.openFollowUpTab,
       ),
       AppDestination.shortcut(
         id: 'my_tasks',
-        label: ProductLabels.myTasks,
+        label: l10n.t('nav_tasks'),
         icon: Icons.task_alt_rounded,
         shortcut: MainShellShortcut.openTasksTab,
       ),
     ]);
   }
 
-  out.add(const AppDestination.shortcut(
+  out.add(AppDestination.shortcut(
     id: 'message_center',
-    label: ProductLabels.messageCenter,
+    label: l10n.t('nav_messages'),
     icon: Icons.forum_rounded,
     shortcut: MainShellShortcut.openMessageCenterTab,
   ));
 
-  out.add(const AppDestination.shortcut(
+  out.add(AppDestination.shortcut(
     id: 'settings',
-    label: ProductLabels.settings,
+    label: l10n.t('nav_settings'),
     icon: Icons.settings_rounded,
     shortcut: MainShellShortcut.openAccountTab,
   ));
@@ -178,7 +178,7 @@ List<AppDestination> filterDestinations(
       .toList(growable: false);
 }
 
-String _homeLabel(AppRole role) {
-  if (FeaturePermission.seesAdminPanel(role)) return ProductLabels.managerHome;
-  return ProductLabels.consultantHome;
+String _homeLabel(AppRole role, AppLocalizations l10n) {
+  if (FeaturePermission.seesAdminPanel(role)) return l10n.t('nav_home_manager');
+  return l10n.t('nav_home_consultant');
 }

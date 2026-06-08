@@ -1,6 +1,6 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
@@ -40,12 +40,13 @@ class PremiumAdminQuickRoutes extends ConsumerWidget {
     final commandCenter =
         (flags?[AppConstants.keyFeatureCommandCenter] ?? true) &&
             FeaturePermission.canViewAllCalls(role);
+    final l10n = AppLocalizations.of(context);
 
     final tiles = <AdminCommandRouteTile>[
       if (commandCenter)
         AdminCommandRouteTile(
           icon: Icons.phone_in_talk_rounded,
-          title: ProductLabels.callCenter,
+          title: l10n.t('nav_call_center'),
           subtitle: 'Ofis çağrı akışı ve kayıtlar',
           onTap: () {
             AppFeedback.selectionClick();
@@ -55,7 +56,7 @@ class PremiumAdminQuickRoutes extends ConsumerWidget {
       if (warRoom)
         AdminCommandRouteTile(
           icon: Icons.military_tech_rounded,
-          title: ProductLabels.warRoom,
+          title: l10n.t('nav_war_room'),
           subtitle: 'Canlı fırsat ve ekip nabzı',
           onTap: () {
             AppFeedback.selectionClick();
@@ -64,7 +65,7 @@ class PremiumAdminQuickRoutes extends ConsumerWidget {
         ),
       AdminCommandRouteTile(
         icon: Icons.analytics_rounded,
-        title: ProductLabels.reports,
+        title: l10n.t('nav_reports'),
         subtitle: 'Kadro, performans ve içgörüler',
         onTap: () {
           AppFeedback.selectionClick();

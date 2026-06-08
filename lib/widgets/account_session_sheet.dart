@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_logout_coordinator.dart';
@@ -34,13 +34,14 @@ Future<void> showAccountSessionSheet(
 class _AccountSessionSheet extends ConsumerWidget {
   const _AccountSessionSheet();
 
-  static String _activePanelLabel(WidgetRef ref, AppRole role) {
+  static String _activePanelLabel(
+      WidgetRef ref, AppRole role, AppLocalizations l10n) {
     if (!FeaturePermission.seesAdminPanel(role)) {
-      return ProductLabels.consultantWorkspace;
+      return l10n.t('workspace_consultant');
     }
     final prefer = ref.watch(preferredConsultantPanelProvider);
-    if (prefer == true) return ProductLabels.consultantWorkspace;
-    return ProductLabels.managerWorkspace;
+    if (prefer == true) return l10n.t('workspace_consultant');
+    return l10n.t('workspace_manager');
   }
 
   void _goAccountTab(BuildContext context, WidgetRef ref) {
@@ -53,6 +54,7 @@ class _AccountSessionSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final user = ref.watch(currentUserProvider).valueOrNull;
     final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
     final uid = user?.uid ?? '';
@@ -117,7 +119,7 @@ class _AccountSessionSheet extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              ProductLabels.activeView,
+                              l10n.t('active_view'),
                               style: TextStyle(
                                 color: ext.textTertiary,
                                 fontSize: 11,
@@ -127,7 +129,7 @@ class _AccountSessionSheet extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              _activePanelLabel(ref, role),
+                              _activePanelLabel(ref, role, l10n),
                               style: TextStyle(
                                 color: ext.textPrimary,
                                 fontSize: 13,
@@ -150,21 +152,21 @@ class _AccountSessionSheet extends ConsumerWidget {
             const SizedBox(height: DesignTokens.space3),
             _SheetAction(
               icon: Icons.person_outline_rounded,
-              label: 'Profili aç',
+              label: l10n.t('menu_open_profile'),
               onTap: () => _goAccountTab(context, ref),
             ),
             const SizedBox(height: DesignTokens.space2),
             _SheetAction(
               icon: Icons.settings_outlined,
-              label: 'Ayarlar',
+              label: l10n.t('nav_settings'),
               onTap: () => _goAccountTab(context, ref),
             ),
             if (isAdmin) ...[
               const SizedBox(height: DesignTokens.space2),
               _SheetAction(
                 icon: Icons.swap_horiz_rounded,
-                label: ProductLabels.switchWorkspace,
-                subtitle: _activePanelLabel(ref, role),
+                label: l10n.t('switch_workspace'),
+                subtitle: _activePanelLabel(ref, role, l10n),
                 onTap: () {
                   Navigator.of(context).pop();
                   _showPanelPickSheet(context, ref);
@@ -174,7 +176,7 @@ class _AccountSessionSheet extends ConsumerWidget {
             const SizedBox(height: DesignTokens.space2),
             _SheetAction(
               icon: Icons.notifications_outlined,
-              label: 'Bildirimler',
+              label: l10n.t('notifications'),
               onTap: () {
                 Navigator.of(context).pop();
                 context.push(AppRouter.routeNotifications);
@@ -183,7 +185,7 @@ class _AccountSessionSheet extends ConsumerWidget {
             const SizedBox(height: DesignTokens.space2),
             _SheetAction(
               icon: Icons.logout_rounded,
-              label: 'Çıkış yap',
+              label: l10n.t('settings_logout'),
               danger: true,
               onTap: () {
                 LogoutFlowTracer.step('LOGOUT_FLOW', 'tap account_sheet');
@@ -202,7 +204,7 @@ class _AccountSessionSheet extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Sürüm $versionLabel',
+                  l10n.tArgs('version_label', [versionLabel]),
                   style: TextStyle(
                     color: ext.textTertiary,
                     fontSize: 11,
@@ -237,17 +239,18 @@ class _AccountSessionSheet extends ConsumerWidget {
 void _showPanelPickSheet(BuildContext context, WidgetRef ref) {
   final premium = PremiumThemeExtension.of(context);
   final prefer = ref.read(preferredConsultantPanelProvider);
+  final l10n = AppLocalizations.of(context);
   showPremiumScrollableBottomSheet<void>(
     context: context,
     maxHeightFactor: 0.45,
     builder: (ctx) => PremiumScrollableBottomSheetShell(
-      title: 'Panel seçin',
+      title: l10n.t('menu_pick_panel'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
             _SheetAction(
               icon: Icons.dashboard_rounded,
-              label: ProductLabels.managerWorkspace,
+              label: l10n.t('workspace_manager'),
               trailing: prefer != true
                   ? Icon(Icons.check_rounded, color: premium.champagneGold, size: 20)
                   : null,
@@ -260,7 +263,7 @@ void _showPanelPickSheet(BuildContext context, WidgetRef ref) {
             const SizedBox(height: DesignTokens.space2),
             _SheetAction(
               icon: Icons.person_rounded,
-              label: ProductLabels.consultantWorkspace,
+              label: l10n.t('workspace_consultant'),
               trailing: prefer == true
                   ? Icon(Icons.check_rounded, color: premium.champagneGold, size: 20)
                   : null,

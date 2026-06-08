@@ -1,5 +1,5 @@
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -119,7 +119,7 @@ class DashboardPage extends ConsumerWidget {
         child: TourTarget(
           id: TourTargetId.managerCommandDeck,
           child: PremiumAdminCommandHeader(
-            title: ProductLabels.managerHome,
+            title: AppLocalizations.of(context).t('nav_home_manager'),
             subtitle: 'Ofis sağlığı · ekip aktivitesi · operasyon kontrolü',
             actions: headerActions,
           ),

@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -59,7 +59,7 @@ class OpportunityRadarWidget extends ConsumerWidget {
                 ),
                 onPressed: () => context.push(AppRouter.routeWarRoom),
                 child: Text(
-                  ProductLabels.warRoom,
+                  AppLocalizations.of(context).t('nav_war_room'),
                   style: TextStyle(color: ext.accent, fontSize: 12),
                 ),
               ),

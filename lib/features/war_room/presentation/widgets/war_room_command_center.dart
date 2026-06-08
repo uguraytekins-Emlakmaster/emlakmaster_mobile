@@ -1,4 +1,3 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -53,7 +52,7 @@ class WarRoomCommandCenter extends ConsumerWidget {
                       size: 18,
                       color: AppThemeExtension.of(context).accent),
                   label: Text(
-                    ProductLabels.callCenter,
+                    AppLocalizations.of(context).t('nav_call_center'),
                     style: TextStyle(
                       color: AppThemeExtension.of(context).accent,
                       fontSize: 12,

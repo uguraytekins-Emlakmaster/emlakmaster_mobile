@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -636,10 +636,11 @@ class WarRoomSecondaryRoutes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
+    final l10n = AppLocalizations.of(context);
     final tiles = <({IconData icon, String title, String subtitle, VoidCallback onTap})>[
       (
         icon: Icons.phone_in_talk_rounded,
-        title: ProductLabels.callCenter,
+        title: l10n.t('nav_call_center'),
         subtitle: 'Kaçırılan ve canlı çağrılar',
         onTap: () {
           AppFeedback.selectionClick();
@@ -648,7 +649,7 @@ class WarRoomSecondaryRoutes extends StatelessWidget {
       ),
       (
         icon: Icons.analytics_rounded,
-        title: ProductLabels.reports,
+        title: l10n.t('nav_reports'),
         subtitle: 'Kadro ve performans',
         onTap: () {
           AppFeedback.selectionClick();

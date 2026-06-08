@@ -1,5 +1,5 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -16,6 +16,7 @@ class ConsultantDashboardQuickNavGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     void goTab(MainShellShortcut shortcut) {
       AppFeedback.selectionClick();
       ref.read(mainShellShortcutProvider.notifier).enqueue(shortcut);
@@ -29,25 +30,25 @@ class ConsultantDashboardQuickNavGrid extends ConsumerWidget {
           children: [
             ConsultantDashboardQuickNavTile(
               icon: Icons.people_alt_rounded,
-              label: ProductLabels.myCustomers,
+              label: l10n.t('nav_customers'),
               onTap: () => goTab(MainShellShortcut.openCustomersTab),
             ),
             _NavDivider(),
             ConsultantDashboardQuickNavTile(
               icon: Icons.task_alt_rounded,
-              label: ProductLabels.myTasks,
+              label: l10n.t('nav_tasks'),
               onTap: () => goTab(MainShellShortcut.openTasksTab),
             ),
             _NavDivider(),
             ConsultantDashboardQuickNavTile(
               icon: Icons.home_work_outlined,
-              label: ProductLabels.listings,
+              label: l10n.t('nav_listings'),
               onTap: () => goTab(MainShellShortcut.openListingsTab),
             ),
             _NavDivider(),
             ConsultantDashboardQuickNavTile(
               icon: Icons.forum_outlined,
-              label: ProductLabels.messageCenter,
+              label: l10n.t('nav_messages'),
               onTap: () => goTab(MainShellShortcut.openMessageCenterTab),
             ),
           ],

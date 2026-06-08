@@ -1,5 +1,5 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -151,7 +151,7 @@ class ConsultantDashboardQuickStatsCard extends ConsumerWidget {
             } else {
               showPremiumActionFeedback(
                 context,
-                title: ProductLabels.followUp,
+                title: AppLocalizations.of(context).t('nav_followup'),
                 message:
                     'Şu an yeniden temas bekleyen müşteri yok. Yeni takip kayıtları burada görünecek.',
               );
@@ -198,7 +198,7 @@ class ConsultantDashboardQuickStatsCard extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            ProductLabels.followUp,
+                            AppLocalizations.of(context).t('nav_followup'),
                             style: AppTypography.cardHeading(context).copyWith(
                               fontSize: compact
                                   ? DesignTokens.fontSizeMd

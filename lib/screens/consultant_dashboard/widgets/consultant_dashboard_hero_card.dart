@@ -1,4 +1,3 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
@@ -112,7 +111,7 @@ class ConsultantDashboardHeroCard extends ConsumerWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            ProductLabels.consultantHome,
+                            AppLocalizations.of(context).t('nav_home_consultant'),
                             style: AppTypography.pageHeading(context).copyWith(
                               fontSize: DesignTokens.fontSizeXl,
                               fontWeight: FontWeight.w800,

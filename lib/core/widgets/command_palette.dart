@@ -72,7 +72,7 @@ class _CommandPaletteContentState
     final l10n = AppLocalizations.of(context);
     final role = ref.watch(displayRoleOrNullProvider) ?? AppRole.guest;
     final filteredActions =
-        filterDestinations(appDestinationsFor(role), _query);
+        filterDestinations(appDestinationsFor(role, l10n), _query);
 
     void onActionTap(AppDestination destination) {
       ShellNavigator.openDestination(context, destination);

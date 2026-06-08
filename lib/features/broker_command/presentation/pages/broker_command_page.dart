@@ -1,4 +1,4 @@
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -80,7 +80,7 @@ class _BrokerCommandBody extends StatelessWidget {
       appBar: emlakAppBar(
         context,
         title: Text(
-          ProductLabels.operationsDeck,
+          AppLocalizations.of(context).t('ops_deck'),
           style: TextStyle(color: ext.textPrimary, fontWeight: FontWeight.w700),
         ),
         backgroundColor: Colors.transparent,

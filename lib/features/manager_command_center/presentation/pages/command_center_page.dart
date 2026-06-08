@@ -1,5 +1,5 @@
 
-import 'package:emlakmaster_mobile/core/copy/product_labels.dart';
+import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -384,7 +384,7 @@ class _CommandCenterBodyState extends ConsumerState<_CommandCenterBody> {
                   id: TourTargetId.managerCommandCenter,
                   child: PremiumCallCenterPageHeader(
                 compact: true,
-                title: ProductLabels.callRecords,
+                title: AppLocalizations.of(context).t('call_records'),
                 subtitle: ref.watch(superAdminAllOfficesGateProvider)
                     ? 'Tüm ofisler · süper admin'
                     : 'CRM çağrı merkezi',
