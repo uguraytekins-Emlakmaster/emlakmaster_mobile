@@ -1,4 +1,4 @@
-package com.example.emlakmaster_mobile
+package com.axioncrm.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

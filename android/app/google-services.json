@@ -7,6 +7,42 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:572835725773:android:ea905ae6d6d0eb4592c484",
+        "android_client_info": {
+          "package_name": "com.axioncrm.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "572835725773-m7hqe81ad42nnk5dv6k7gq0oup7pksj1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsQl8NkdQ22MiX2Xx5IxgNzYixrj2EqbQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "572835725773-m7hqe81ad42nnk5dv6k7gq0oup7pksj1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "572835725773-8s71g3li2ful895gppeb6bvlbck09hkd.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.emlakmasterMobile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:572835725773:android:27252e78a15a8fda92c484",
         "android_client_info": {
           "package_name": "com.example.emlakmaster_mobile"
