@@ -267,13 +267,17 @@ class UserRepository {
   }
 
   /// Koleksiyonda hiç kullanıcı var mı? (İlk admin tespiti için.)
+  ///
+  /// Kurallar yönetici olmayanların `users` koleksiyonunu listelemesine izin
+  /// vermez (PERMISSION_DENIED). Hata = "kullanıcılar var" varsayılır; aksi
+  /// halde her davetiz kullanıcıya kurucu super_admin rolü önerilirdi.
   static Future<bool> hasAnyUser() async {
     try {
       final snap = await _store.collection(_usersCol).limit(1).get();
       return snap.docs.isNotEmpty;
     } catch (e, st) {
       if (kDebugMode) AppLogger.e('UserRepository.hasAnyUser', e, st);
-      return false;
+      return true;
     }
   }
 }

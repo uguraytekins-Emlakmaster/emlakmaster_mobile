@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/branding/brand_emblem.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/services/login_entry_store.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
+import 'package:emlakmaster_mobile/core/models/invite_doc.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
@@ -63,7 +64,13 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
       if (mounted) setState(() => _checkedInvite = true);
       return;
     }
-    final invite = await FirestoreService.getInviteByEmail(user.email!);
+    // Davet sorgusu hiçbir koşulda bu sayfayı kilitleyemez: hata = davet yok.
+    InviteDoc? invite;
+    try {
+      invite = await FirestoreService.getInviteByEmail(user.email!);
+    } catch (_) {
+      invite = null;
+    }
     if (invite == null) {
       if (mounted) setState(() => _checkedInvite = true);
       return;

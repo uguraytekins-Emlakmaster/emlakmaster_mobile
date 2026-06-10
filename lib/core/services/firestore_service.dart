@@ -305,18 +305,28 @@ class FirestoreService {
   }
 
   /// E-posta ile bekleyen davet arar (ilk girişte kullanıcı doc oluşturulurken).
+  ///
+  /// Davet dokümanı yoksa Firestore kuralı `resource.data.email` kontrolünde
+  /// PERMISSION_DENIED döndürür (NOT_FOUND yerine). Bu beklenen bir durumdur:
+  /// davetsiz kullanıcı = davet yok. Hata yutulup null dönülür; aksi halde
+  /// rol seçimi sayfası sonsuz yükleme ekranında kalır.
   static Future<InviteDoc?> getInviteByEmail(String email) async {
     await ensureInitialized();
     if (!_initialized || email.trim().isEmpty) return null;
     final normalized = email.trim().toLowerCase();
     // E-posta ile anahtarlanmış doküman (kural-doğrulanabilir). Eski rastgele-id
     // davetler bu şemada bulunmaz; yöneticinin daveti yeniden oluşturması gerekir.
-    final doc = await FirebaseFirestore.instance
-        .collection(AppConstants.colInvites)
-        .doc(normalized)
-        .get();
-    if (!doc.exists) return null;
-    return InviteDoc.fromFirestore(doc.id, doc.data());
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection(AppConstants.colInvites)
+          .doc(normalized)
+          .get();
+      if (!doc.exists) return null;
+      return InviteDoc.fromFirestore(doc.id, doc.data());
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') return null;
+      rethrow;
+    }
   }
 
   /// Daveti siler (kullanıldıktan sonra veya iptal için).

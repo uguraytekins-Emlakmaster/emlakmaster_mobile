@@ -714,7 +714,14 @@ service cloud.firestore {
     // invites: davetler. Yönetici oluşturur/okur/siler; kullanıcı sadece kendi email'ine ait daveti okuyabilir (ilk girişte uygulama için).
     match /invites/{inviteId} {
       allow create: if isSignedIn() && isManager();
-      allow read: if isSignedIn() && (isManager() || resource.data.email == request.auth.token.email);
+      // resource == null: doküman yoksa get NOT_FOUND dönsün (PERMISSION_DENIED
+      // değil) — ilk girişte davet kontrolü davetsiz kullanıcıyı kilitlemesin.
+      allow get: if isSignedIn() && (
+        resource == null
+        || isManager()
+        || resource.data.email == request.auth.token.email
+      );
+      allow list: if isSignedIn() && isManager();
       allow update, delete: if isSignedIn() && isManager();
     }
 
