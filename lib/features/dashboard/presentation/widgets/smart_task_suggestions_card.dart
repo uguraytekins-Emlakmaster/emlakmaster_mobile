@@ -12,6 +12,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
+final DateFormat _dueDateFormat = DateFormat('d MMM HH:mm', 'tr_TR');
+
 /// Akıllı görev önerileri — yalnızca onayla Firestore’a yazılır (v1 güvenli mod).
 class SmartTaskSuggestionsCard extends ConsumerWidget {
   const SmartTaskSuggestionsCard({super.key});
@@ -155,7 +157,7 @@ class _SuggestionRowState extends ConsumerState<_SuggestionRow> {
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
     final s = widget.suggestion;
-    final dueStr = DateFormat('d MMM HH:mm', 'tr_TR').format(s.suggestedDueAt);
+    final dueStr = _dueDateFormat.format(s.suggestedDueAt);
     final urgColor = switch (s.urgency) {
       TaskSuggestionUrgency.high => ext.danger,
       TaskSuggestionUrgency.medium => ext.warning,

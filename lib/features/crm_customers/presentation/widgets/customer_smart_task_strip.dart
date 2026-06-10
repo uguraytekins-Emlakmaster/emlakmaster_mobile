@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 
+final DateFormat _dueDateFormat = DateFormat('d MMM HH:mm', 'tr_TR');
+
 /// Yönetici müşteri detayında: tek birincil görev önerisi (onaylı yazım).
 class CustomerSmartTaskStrip extends ConsumerStatefulWidget {
   const CustomerSmartTaskStrip({super.key, required this.customerId});
@@ -79,7 +81,7 @@ class _CustomerSmartTaskStripState extends ConsumerState<CustomerSmartTaskStrip>
     return async.when(
       data: (s) {
         if (s == null) return const SizedBox.shrink();
-        final dueStr = DateFormat('d MMM HH:mm', 'tr_TR').format(s.suggestedDueAt);
+        final dueStr = _dueDateFormat.format(s.suggestedDueAt);
         return Padding(
           padding: const EdgeInsets.only(bottom: DesignTokens.space4),
           child: Container(
