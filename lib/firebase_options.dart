@@ -35,7 +35,8 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAsQl8NkdQ22MiX2Xx5IxgNzYixrj2EqbQ',
-    appId: '1:572835725773:android:27252e78a15a8fda92c484',
+    // com.axioncrm.mobile uygulamasının Firebase App ID'si (google-services.json ile eşleşmeli).
+    appId: '1:572835725773:android:ea905ae6d6d0eb4592c484',
     messagingSenderId: '572835725773',
     projectId: 'emlak-master',
     storageBucket: 'emlak-master.firebasestorage.app',
