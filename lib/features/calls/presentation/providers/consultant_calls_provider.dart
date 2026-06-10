@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/models/consultant_calls_stream_bundle.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
@@ -87,13 +87,13 @@ final consultantCallsStreamProvider = StreamProvider.autoDispose<
   }
 
   void onAdvisorError(Object e, StackTrace st) {
-    debugPrint('[consultantCallsStreamProvider] advisor: $e');
+    if (kDebugMode) debugPrint('[consultantCallsStreamProvider] advisor: $e');
     lastAdvisor = null;
     mergeAndEmit();
   }
 
   void onAgentError(Object e, StackTrace st) {
-    debugPrint('[consultantCallsStreamProvider] agent: $e');
+    if (kDebugMode) debugPrint('[consultantCallsStreamProvider] agent: $e');
     lastAgent = null;
     mergeAndEmit();
   }

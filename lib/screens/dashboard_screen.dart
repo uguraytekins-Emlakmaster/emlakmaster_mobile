@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
+
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
@@ -423,8 +425,10 @@ class DashboardPage extends ConsumerWidget {
         ),
       );
     } catch (e, st) {
-      debugPrint('DashboardPage build error: $e');
-      debugPrint(st.toString());
+      if (kDebugMode) {
+        debugPrint('DashboardPage build error: $e');
+        debugPrint(st.toString());
+      }
       final ext = AppThemeExtension.of(context);
       return Material(
         color: ext.background,

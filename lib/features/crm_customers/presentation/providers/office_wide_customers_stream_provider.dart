@@ -60,9 +60,14 @@ Stream<List<CustomerEntity>> officeWideCustomersStream(String officeId) {
       for (var i = 0; i < chunks.length; i++) {
         final ci = i;
         final chunk = chunks[i];
+        // Ölçeklenebilirlik: chunk başına sınır — büyük ofislerde tüm koleksiyonun
+        // ana izolata akmasını engeller. Mevcut composite index'i kullanır:
+        // customers(assignedAgentId ASC, createdAt DESC).
         final sub = FirebaseFirestore.instance
             .collection(AppConstants.colCustomers)
             .where('assignedAgentId', whereIn: chunk)
+            .orderBy('createdAt', descending: true)
+            .limit(200)
             .snapshots()
             .listen(
           (snap) {

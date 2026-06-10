@@ -81,9 +81,13 @@ class ListingsPortfolioStream {
 
       final fs = FirebaseFirestore.instance;
 
+      // Ölçeklenebilirlik: sınırsız snapshot büyük envanterlerde tüm koleksiyonu
+      // indirir; composite index gerektirmemek için orderBy'sız limit kullanılır
+      // (sıralama zaten istemci tarafında lastSyncedAt ile yapılıyor).
       subOwner = fs
           .collection(AppConstants.colListings)
           .where('ownerUserId', isEqualTo: uid)
+          .limit(300)
           .snapshots()
           .listen(
             (s) {
@@ -102,6 +106,7 @@ class ListingsPortfolioStream {
         subOffice = fs
             .collection(AppConstants.colListings)
             .where('officeId', isEqualTo: oid)
+            .limit(300)
             .snapshots()
             .listen(
               (s) {

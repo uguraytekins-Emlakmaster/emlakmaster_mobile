@@ -17,6 +17,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
+/// Liste kartlarında her rebuild'de yeniden kurulmasın diye modül seviyesinde.
+final NumberFormat _listingPriceFormat =
+    NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0);
 /// İçe aktarılan ilanlar — gerçek veri (yerel motor, Phase 1.5).
 class MyListingsPage extends ConsumerStatefulWidget {
   const MyListingsPage({
@@ -551,7 +555,6 @@ class _ListingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final priceFmt = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0);
     return Material(
       color: AppThemeExtension.of(context).card,
       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -622,7 +625,7 @@ class _ListingCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    priceFmt.format(listing.price),
+                    _listingPriceFormat.format(listing.price),
                     style: TextStyle(
                       color: AppThemeExtension.of(context).accent,
                       fontWeight: FontWeight.w800,
@@ -694,7 +697,6 @@ class _DuplicateGroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final priceFmt = NumberFormat.currency(locale: 'tr_TR', symbol: '₺', decimalDigits: 0);
     final first = listings.first;
     return Material(
       color: AppThemeExtension.of(context).surfaceElevated,
@@ -708,7 +710,7 @@ class _DuplicateGroupTile extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w700, color: AppThemeExtension.of(context).textPrimary),
         ),
         subtitle: Text(
-          '${priceFmt.format(first.price)} · ${listings.length} kayıt',
+          '${_listingPriceFormat.format(first.price)} · ${listings.length} kayıt',
           style: TextStyle(fontSize: 12, color: AppThemeExtension.of(context).textSecondary),
         ),
         children: [
@@ -716,7 +718,7 @@ class _DuplicateGroupTile extends StatelessWidget {
             ListTile(
               leading: _PlatformBadge(label: l.platformId),
               title: Text(l.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-              subtitle: Text(priceFmt.format(l.price)),
+              subtitle: Text(_listingPriceFormat.format(l.price)),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

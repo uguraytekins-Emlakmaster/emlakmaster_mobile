@@ -117,6 +117,7 @@ class SyncedListingCard extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: img,
                         fit: BoxFit.cover,
+                        memCacheWidth: 800,
                         placeholder: (_, __) => LayoutBuilder(
                           builder: (context, c) => ShimmerPlaceholder(
                             width: c.maxWidth,

@@ -196,7 +196,10 @@ class _Avatar extends StatelessWidget {
       backgroundColor: emphasize
           ? premium.champagneGold.withValues(alpha: 0.15)
           : ext.surfaceElevated,
-      backgroundImage: url != null && url.isNotEmpty ? NetworkImage(url) : null,
+      // ~44px avatar: kaynak görseli tam çözünürlükte decode etmemek için küçült.
+      backgroundImage: url != null && url.isNotEmpty
+          ? ResizeImage(NetworkImage(url), width: 132)
+          : null,
       child: url == null || url.isEmpty
           ? Icon(
               emphasize ? Icons.campaign_rounded : Icons.person_rounded,

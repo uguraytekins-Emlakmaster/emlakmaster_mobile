@@ -74,6 +74,7 @@ class ProfileAvatar extends StatelessWidget {
             imageUrl: imageUrl!,
             width: size - 4,
             height: size - 4,
+            memCacheWidth: ((size - 4) * 3).round(),
             fit: BoxFit.cover,
             placeholder: (context, url) => SkeletonLoader(
               width: size - 4,

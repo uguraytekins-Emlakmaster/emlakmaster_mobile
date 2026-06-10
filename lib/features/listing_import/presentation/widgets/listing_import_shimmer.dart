@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
@@ -15,11 +16,26 @@ class _ListingImportShimmerState extends State<ListingImportShimmer>
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    AppLifecyclePowerService.isInBackground.addListener(_syncAnimationState);
+    _syncAnimationState();
+  }
+
+  void _syncAnimationState() {
+    if (AppLifecyclePowerService.shouldReduceMotion) {
+      _c.stop();
+      _c.value = 0.5;
+    } else if (!_c.isAnimating) {
+      _c.repeat();
+    }
   }
 
   @override
   void dispose() {
+    AppLifecyclePowerService.isInBackground.removeListener(_syncAnimationState);
     _c.dispose();
     super.dispose();
   }

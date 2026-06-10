@@ -351,6 +351,7 @@ class _Thumb extends StatelessWidget {
             imageUrl: listing.imageUrl!,
             width: 64,
             height: 64,
+            memCacheWidth: 192,
             fit: BoxFit.cover,
             placeholder: (_, __) => ShimmerPlaceholder(
               width: 64,

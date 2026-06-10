@@ -44,7 +44,7 @@ final customerListForAgentProvider =
       }
     },
     onError: (Object e, StackTrace st) {
-      debugPrint('[customerListForAgentProvider] $e');
+      if (!kReleaseMode) debugPrint('[customerListForAgentProvider] $e');
       if (!kReleaseMode && isDevMode) {
         controller.add(
           CustomerListPageData(

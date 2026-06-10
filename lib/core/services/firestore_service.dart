@@ -9,6 +9,7 @@ import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/models/invite_doc.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
+import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 
 /// Cache-first Firestore: önce önbellek (persistence), arayüz takılmaz.
@@ -131,7 +132,12 @@ class FirestoreService {
       yield* const Stream.empty();
       return;
     }
-    yield* FirebaseFirestore.instance.collection('listings').snapshots();
+    // Güvenlik sınırı: sınırsız global dinleyici büyük koleksiyonlarda tüm
+    // veriyi indirir (ölçeklenebilirlik kuralı).
+    yield* FirebaseFirestore.instance
+        .collection('listings')
+        .limit(500)
+        .snapshots();
   }
 
   /// Tek ilan dokümanı (detay sayfası için).
@@ -152,7 +158,10 @@ class FirestoreService {
       yield* const Stream.empty();
       return;
     }
-    yield* FirebaseFirestore.instance.collection('agents').snapshots();
+    yield* FirebaseFirestore.instance
+        .collection('agents')
+        .limit(500)
+        .snapshots();
   }
 
   /// Tek bir agent dokümanını dinlemek için (konum, durum vb.)
@@ -1270,6 +1279,37 @@ class FirestoreService {
         .get();
   }
 
+  /// KPI sayaç yenileme aralığı: aggregate count sorgusu ile periyodik tazeleme.
+  /// Tam koleksiyon listener'ına göre ağ/batarya/okuma maliyeti dramatik düşük
+  /// (count() sunucuda sayar; dokümanlar istemciye inmez).
+  static const Duration _countRefreshInterval = Duration(minutes: 2);
+
+  /// Aggregate count() tabanlı sayaç stream'i.
+  /// - İlk değeri hemen verir, sonra ön plandayken periyodik tazeler.
+  /// - Arka planda sorgu atmaz (batarya disiplini).
+  /// - Hata durumunda son değeri korur, sonraki turda yeniden dener.
+  static Stream<int> _aggregateCountStream(
+    Query<Map<String, dynamic>> Function() queryBuilder,
+  ) async* {
+    var hasEmitted = false;
+    while (true) {
+      if (!AppLifecyclePowerService.isInBackground.value) {
+        try {
+          final snap = await queryBuilder().count().get();
+          yield snap.count ?? 0;
+          hasEmitted = true;
+        } catch (e) {
+          AppLogger.w('[firestore] aggregate count failed: $e');
+          if (!hasEmitted) {
+            yield 0;
+            hasEmitted = true;
+          }
+        }
+      }
+      await Future<void>.delayed(_countRefreshInterval);
+    }
+  }
+
   /// calls koleksiyonundaki döküman sayısı (Call Traffic için).
   static Stream<int> callsCountStream() async* {
     await ensureInitialized();
@@ -1277,10 +1317,9 @@ class FirestoreService {
       yield 0;
       return;
     }
-    yield* FirebaseFirestore.instance
-        .collection('calls')
-        .snapshots()
-        .map((s) => s.docs.length);
+    yield* _aggregateCountStream(
+      () => FirebaseFirestore.instance.collection('calls'),
+    );
   }
 
   /// Bugünkü çağrı sayısı (createdAt >= bugün 00:00). KPI "Çağrı" chip'i için anlamlı.
@@ -1290,14 +1329,15 @@ class FirestoreService {
       yield 0;
       return;
     }
-    final startOfToday =
-        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    final startTs = Timestamp.fromDate(startOfToday);
-    yield* FirebaseFirestore.instance
-        .collection(AppConstants.colCalls)
-        .where('createdAt', isGreaterThanOrEqualTo: startTs)
-        .snapshots()
-        .map((s) => s.docs.length);
+    // Sorgu her tazelemede yeniden kurulur: gece yarısı geçişinde "bugün"
+    // otomatik güncellenir (eski sürümde gün sabitti).
+    yield* _aggregateCountStream(() {
+      final now = DateTime.now();
+      final startTs = Timestamp.fromDate(DateTime(now.year, now.month, now.day));
+      return FirebaseFirestore.instance
+          .collection(AppConstants.colCalls)
+          .where('createdAt', isGreaterThanOrEqualTo: startTs);
+    });
   }
 
   /// Açık görev sayısı (done == false). KPI "Follow-up" için.
@@ -1307,11 +1347,11 @@ class FirestoreService {
       yield 0;
       return;
     }
-    yield* FirebaseFirestore.instance
-        .collection(AppConstants.colTasks)
-        .where('done', isEqualTo: false)
-        .snapshots()
-        .map((s) => s.docs.length);
+    yield* _aggregateCountStream(
+      () => FirebaseFirestore.instance
+          .collection(AppConstants.colTasks)
+          .where('done', isEqualTo: false),
+    );
   }
 
   /// deals koleksiyonundaki döküman sayısı (Deal Volume için).
@@ -1321,10 +1361,9 @@ class FirestoreService {
       yield 0;
       return;
     }
-    yield* FirebaseFirestore.instance
-        .collection('deals')
-        .snapshots()
-        .map((s) => s.docs.length);
+    yield* _aggregateCountStream(
+      () => FirebaseFirestore.instance.collection('deals'),
+    );
   }
 
   /// Raporlar ekranı: en az bir çağrı özeti var mı (örnek, limit 1).
