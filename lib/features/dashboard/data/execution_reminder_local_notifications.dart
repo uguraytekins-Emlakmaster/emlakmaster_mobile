@@ -15,6 +15,8 @@ class ExecutionReminderLocalNotifications {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
+  static const String _channelId = 'execution_reminders_v2';
+
   bool _initialized = false;
   void Function(String customerId)? onTapCustomer;
 
@@ -39,16 +41,19 @@ class ExecutionReminderLocalNotifications {
     );
 
     if (defaultTargetPlatform == TargetPlatform.android) {
+      // v2: özel Axion alçalan motif (kanal sesi oluşturulurken atanır).
       const channel = AndroidNotificationChannel(
-        'execution_reminders',
+        _channelId,
         'İcra hatırlatıcıları',
         description: 'Bugün yapılması gereken müşteri adımları',
         importance: Importance.high,
+        sound: RawResourceAndroidNotificationSound('axion_reminder_tone'),
       );
-      await _plugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      // Eski (varsayılan sesli) kanal kalıntısını temizle.
+      await android?.deleteNotificationChannel('execution_reminders');
+      await android?.createNotificationChannel(channel);
     }
 
     _initialized = true;
@@ -68,7 +73,7 @@ class ExecutionReminderLocalNotifications {
     });
 
     const androidDetails = AndroidNotificationDetails(
-      'execution_reminders',
+      _channelId,
       'İcra hatırlatıcıları',
       channelDescription: 'Bugün yapılması gereken müşteri adımları',
       importance: Importance.high,

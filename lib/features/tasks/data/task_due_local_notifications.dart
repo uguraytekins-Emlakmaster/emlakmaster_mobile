@@ -14,6 +14,8 @@ class TaskDueLocalNotifications {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
+  static const String _channelId = 'task_due_v2';
+
   bool _initialized = false;
   void Function(String taskId, String? customerId)? onTap;
 
@@ -32,15 +34,18 @@ class TaskDueLocalNotifications {
       onDidReceiveNotificationResponse: _onResponse,
     );
     if (defaultTargetPlatform == TargetPlatform.android) {
+      // v2: özel Axion marimba tonu (kanal sesi oluşturulurken atanır).
       const channel = AndroidNotificationChannel(
-        'task_due',
+        _channelId,
         'Görev hatırlatıcıları',
         description: 'Vadesi gelen veya geçen görevler',
+        sound: RawResourceAndroidNotificationSound('axion_task_tone'),
       );
-      await _plugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      // Eski (varsayılan sesli) kanal kalıntısını temizle.
+      await android?.deleteNotificationChannel('task_due');
+      await android?.createNotificationChannel(channel);
     }
     _initialized = true;
   }
@@ -64,7 +69,7 @@ class TaskDueLocalNotifications {
       body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'task_due',
+          _channelId,
           'Görev hatırlatıcıları',
           channelDescription: 'Vadesi gelen veya geçen görevler',
         ),

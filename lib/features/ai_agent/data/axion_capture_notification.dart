@@ -31,7 +31,9 @@ class AxionCaptureNotification {
   AxionCaptureNotification._();
   static final AxionCaptureNotification instance = AxionCaptureNotification._();
 
-  static const String channelId = 'axion_capture';
+  // v2: özel Axion zil sesi (kanal sesi yalnızca oluşturulurken atanabilir).
+  static const String channelId = 'axion_capture_v2';
+  static const String statusChannelId = 'axion_capture_status';
   static const String _payloadType = 'axion_capture';
   static const String actionSaveNamed = 'axion_save_named';
   static const String actionSaveInput = 'axion_save_input';
@@ -53,23 +55,47 @@ class AxionCaptureNotification {
   /// onların payload tiplerini kendi public callback'lerine iletir.
   Future<void> ensureInitialized() async {
     if (_initialized || !_supported) return;
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     await _plugin.initialize(
-      const InitializationSettings(android: android),
+      const InitializationSettings(android: initSettings),
       onDidReceiveNotificationResponse: _onForegroundResponse,
       onDidReceiveBackgroundNotificationResponse:
           axionCaptureNotificationBackgroundHandler,
     );
+    // Özel Axion imza sesi: yükselen iki cam nota (res/raw/axion_capture_chime).
     const channel = AndroidNotificationChannel(
       channelId,
       'Kayıtsız numara uyarıları',
       description: 'Çağrı sonrası hızlı müşteri kaydı önerileri',
       importance: Importance.high,
+      sound: RawResourceAndroidNotificationSound('axion_capture_chime'),
     );
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+    // Onay/teslim bildirimleri için sessiz kanal (Android 8+ ses kanal
+    // seviyesindedir; aynı kanalda playSound:false yok sayılır).
+    const statusChannel = AndroidNotificationChannel(
+      statusChannelId,
+      'Kayıt durumu',
+      description: 'Hızlı kayıt onay ve durum bildirimleri',
+      importance: Importance.low,
+      playSound: false,
+      enableVibration: false,
+    );
+    // FCM push'ları için varsayılan kanal (AndroidManifest meta-data bu
+    // kanalı işaret eder) — imza sesiyle.
+    const pushChannel = AndroidNotificationChannel(
+      'axion_push_v1',
+      'Genel bildirimler',
+      description: 'CRM güncellemeleri ve önemli uyarılar',
+      importance: Importance.high,
+      sound: RawResourceAndroidNotificationSound('axion_capture_chime'),
+    );
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    // Eski (varsayılan sesli) kanal kalıntısını temizle.
+    await android?.deleteNotificationChannel('axion_capture');
+    await android?.createNotificationChannel(channel);
+    await android?.createNotificationChannel(statusChannel);
+    await android?.createNotificationChannel(pushChannel);
     _initialized = true;
   }
 
@@ -132,9 +158,9 @@ class AxionCaptureNotification {
       body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          channelId,
-          'Kayıtsız numara uyarıları',
-          channelDescription: 'Çağrı sonrası hızlı müşteri kaydı önerileri',
+          statusChannelId,
+          'Kayıt durumu',
+          channelDescription: 'Hızlı kayıt onay ve durum bildirimleri',
           importance: Importance.low,
           priority: Priority.low,
           playSound: false,
