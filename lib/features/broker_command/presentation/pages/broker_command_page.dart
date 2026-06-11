@@ -5,13 +5,8 @@ import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/daily_brief/presentation/widgets/daily_brief_panel.dart';
-import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
 import 'package:emlakmaster_mobile/features/hot_lead_radar/presentation/widgets/hot_lead_radar_panel.dart';
-import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
-import 'package:emlakmaster_mobile/features/missed_opportunities/presentation/widgets/missed_opportunities_panel.dart';
 import 'package:emlakmaster_mobile/features/opportunity_radar/presentation/widgets/opportunity_radar_widget.dart';
-import 'package:emlakmaster_mobile/features/region_demand_map/presentation/widgets/region_demand_map_panel.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
@@ -155,24 +150,14 @@ class _BrokerCommandBody extends StatelessWidget {
               paddedContentWidth: paddedContentW,
             )),
             const SizedBox(height: gapOp),
-            px(const MarketPulsePanel()),
-            const SizedBox(height: gapOp),
             px(const HotLeadRadarPanel()),
-            const SizedBox(height: gapOp),
-            px(const MissedOpportunitiesPanel()),
-            const SizedBox(height: gapOp),
-            px(const DailyBriefPanel()),
             SizedBox(height: gapInsight),
             // —— Insight ——
-            px(const DiscoveryPanel()),
-            SizedBox(height: gapInsight),
             const FinanceBar(),
             SizedBox(height: gapInsight),
             px(const MasterTicker()),
             SizedBox(height: gapInsight),
             px(const OpportunityRadarWidget()),
-            SizedBox(height: gapInsight),
-            px(const RegionDemandMapPanel()),
             SizedBox(height: gapInsight),
             px(
               DecoratedBox(

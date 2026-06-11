@@ -1,8 +1,7 @@
 import 'package:emlakmaster_mobile/core/intelligence/intelligence_score_models.dart';
 import 'package:emlakmaster_mobile/features/market_settings/domain/entities/market_settings_entity.dart';
 
-/// Firestore / arka plan henüz veri üretmediyse gösterilecek varsayılan Diyarbakır üçlüsü
-/// ([BackgroundIntelligenceService._computeAndWriteHeatmap] ile uyumlu).
+/// Firestore / istemci rollup henüz veri üretmediyse gösterilecek varsayılan Diyarbakır üçlüsü.
 List<RegionHeatmapScore> get marketPulseDefaultRegionScores => const [
       RegionHeatmapScore(
         regionId: MarketSettingsEntity.regionKayapinar,

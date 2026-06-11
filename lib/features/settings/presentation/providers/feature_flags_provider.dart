@@ -5,11 +5,8 @@ import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final _allKeys = [
-  AppConstants.keyFeatureVoiceCrm,
   AppConstants.keyFeatureContactSave,
   AppConstants.keyFeatureWarRoom,
-  AppConstants.keyFeatureMarketPulse,
-  AppConstants.keyFeatureDailyBrief,
   AppConstants.keyFeaturePipeline,
   AppConstants.keyFeatureCommandCenter,
   AppConstants.keyFeatureInvestorIntelligence,
@@ -18,7 +15,6 @@ final _allKeys = [
   AppConstants.keyFeaturePushNotifications,
   AppConstants.keyFeatureKpiBar,
   AppConstants.keyFeaturePortfolioMatch,
-  AppConstants.keyFeatureCallSummary,
   AppConstants.keyFeatureTasks,
   AppConstants.keyFeatureNotificationsCenter,
   AppConstants.keyCompactDashboard,

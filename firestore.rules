@@ -589,16 +589,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // listing_metrics/{listingId}: ilan istihbarat skorları (momentum / fiyat pozisyonu).
-    // Türetilmiş kaynak `listings`'tir ve listings giriş yapmışlara açık okunur; ilan
-    // detayında IntelligenceFirestore.listingScoresStream tek doküman okur. Kiracı-özel
-    // (müşteri/çağrı) veri DEĞİL. Yazma yalnız backend/Admin SDK — kapalı. Daha önce kök
-    // catch-all'a bağlıydı; catch-all artık deny olduğu için açık kural gerekli.
-    match /listing_metrics/{listingId} {
-      allow read: if isSignedIn();
-      allow write: if false;
-    }
-
     match /app_settings/{docId} {
       allow read: if isSignedIn();
       // Uygulama ayarları yalnızca yönetici tarafından güncellenebilir.
@@ -644,10 +634,6 @@ service cloud.firestore {
       allow read: if isSignedIn()
         && (resource.data.officeId == userOfficeId(request.auth.uid) || isManager());
       allow create, update, delete: if false;
-    }
-    match /news/{docId} {
-      allow read: if isSignedIn();
-      allow write: if false;
     }
     match /office_activity/{docId} {
       allow read: if isSignedIn();

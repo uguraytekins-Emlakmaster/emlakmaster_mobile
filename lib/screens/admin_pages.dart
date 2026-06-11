@@ -1,7 +1,6 @@
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
-import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
@@ -34,8 +33,6 @@ class AdminEconomyPage extends StatelessWidget {
             const MasterTicker(),
             const SizedBox(height: DesignTokens.space6),
             const FinanceBar(),
-            const SizedBox(height: DesignTokens.space6),
-            const MarketPulsePanel(),
             const SizedBox(height: DesignTokens.space6),
             Padding(
               padding:

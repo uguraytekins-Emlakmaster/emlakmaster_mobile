@@ -85,16 +85,10 @@ class SettingsService {
     await prefs.setBool(key, value);
   }
 
-  Future<bool> getVoiceCrmEnabled() =>
-      getFeatureFlag(AppConstants.keyFeatureVoiceCrm);
   Future<bool> getContactSaveEnabled() =>
       getFeatureFlag(AppConstants.keyFeatureContactSave);
   Future<bool> getWarRoomEnabled() =>
       getFeatureFlag(AppConstants.keyFeatureWarRoom);
-  Future<bool> getMarketPulseEnabled() =>
-      getFeatureFlag(AppConstants.keyFeatureMarketPulse);
-  Future<bool> getDailyBriefEnabled() =>
-      getFeatureFlag(AppConstants.keyFeatureDailyBrief);
   Future<bool> getPipelineEnabled() =>
       getFeatureFlag(AppConstants.keyFeaturePipeline);
   Future<bool> getCommandCenterEnabled() =>
@@ -111,8 +105,6 @@ class SettingsService {
       getFeatureFlag(AppConstants.keyFeatureKpiBar);
   Future<bool> getPortfolioMatchEnabled() =>
       getFeatureFlag(AppConstants.keyFeaturePortfolioMatch);
-  Future<bool> getCallSummaryEnabled() =>
-      getFeatureFlag(AppConstants.keyFeatureCallSummary);
   Future<bool> getTasksEnabled() =>
       getFeatureFlag(AppConstants.keyFeatureTasks);
   Future<bool> getNotificationsCenterEnabled() =>

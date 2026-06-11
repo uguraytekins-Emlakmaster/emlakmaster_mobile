@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/app_localizations.dart';
-import '../../../../core/services/campaign_ai_service.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../shared/widgets/emlak_app_bar.dart';
 import '../../../../core/utils/sms_launcher.dart';
@@ -11,7 +10,7 @@ import '../../../../core/utils/whatsapp_launcher.dart';
 import '../../../../core/widgets/app_toaster.dart';
 import '../providers/bulk_campaign_providers.dart';
 
-/// Toplu kampanya / filtre ekranı – müşteri segmentasyonu + AI metin önerisi iskeleti.
+/// Toplu kampanya / filtre ekranı – müşteri segmentasyonu + manuel mesaj metni.
 class BulkCampaignPage extends ConsumerWidget {
   const BulkCampaignPage({super.key});
 
@@ -47,9 +46,9 @@ class BulkCampaignPage extends ConsumerWidget {
               const SizedBox(height: DesignTokens.space4),
               const _SegmentFiltersCard(),
               const SizedBox(height: DesignTokens.space6),
-              const _AiMessageHeader(),
+              const _MessageHeader(),
               const SizedBox(height: DesignTokens.space3),
-              _AiMessageComposer(initialValue: message),
+              _MessageComposer(initialValue: message),
               if (segmentAsync.isLoading) ...[
                 const SizedBox(height: DesignTokens.space4),
                 const Center(
@@ -342,127 +341,44 @@ class _SegmentFiltersCardState extends ConsumerState<_SegmentFiltersCard> {
   }
 }
 
-class _AiMessageHeader extends StatelessWidget {
-  const _AiMessageHeader();
+class _MessageHeader extends StatelessWidget {
+  const _MessageHeader();
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(Icons.auto_awesome_rounded, color: AppThemeExtension.of(context).accent, size: 22),
+        Icon(Icons.edit_note_rounded, color: AppThemeExtension.of(context).accent, size: 22),
         const SizedBox(width: DesignTokens.space2),
         Text(
-          AppLocalizations.of(context).t('ai_message_header'),
+          AppLocalizations.of(context).t('message_text'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: AppThemeExtension.of(context).textPrimary,
                 fontWeight: FontWeight.w600,
               ),
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.space3,
-            vertical: DesignTokens.space1,
-          ),
-          decoration: BoxDecoration(
-            color: AppThemeExtension.of(context).surface,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: AppThemeExtension.of(context).border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.science_rounded, size: 14, color: AppThemeExtension.of(context).textTertiary),
-              const SizedBox(width: DesignTokens.space1),
-              Text(
-                'Beta · iskelet',
-                style: TextStyle(
-                  color: AppThemeExtension.of(context).textTertiary,
-                  fontSize: DesignTokens.fontSizeXs,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
         ),
       ],
     );
   }
 }
 
-class _AiMessageComposer extends ConsumerStatefulWidget {
-  const _AiMessageComposer({required this.initialValue});
+class _MessageComposer extends ConsumerStatefulWidget {
+  const _MessageComposer({required this.initialValue});
 
   final String initialValue;
 
   @override
-  ConsumerState<_AiMessageComposer> createState() => _AiMessageComposerState();
+  ConsumerState<_MessageComposer> createState() => _MessageComposerState();
 }
 
-class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
+class _MessageComposerState extends ConsumerState<_MessageComposer> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.initialValue);
-
-  bool _loading = false;
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  Future<void> _onSuggestPressed() async {
-    if (_loading) return;
-    setState(() => _loading = true);
-    try {
-      final segment = ref.read(bulkCampaignSegmentProvider).valueOrNull;
-      if (segment == null || segment.activePhonesCount == 0) {
-        if (mounted) {
-          AppToaster.warning(context, 'Önce filtrelerle bir hedef kitle oluştur.');
-        }
-        return;
-      }
-      final sample = segment.customers.take(5).map((c) {
-        return {
-          'fullName': c.fullName,
-          'primaryPhone': c.primaryPhone,
-          'budgetMin': c.budgetMin,
-          'budgetMax': c.budgetMax,
-          'regions': c.regionPreferences,
-          'leadTemperature': c.leadTemperature,
-          'lastInteractionAt': c.lastInteractionAt?.toIso8601String(),
-        };
-      }).toList();
-      final suggestion = await CampaignAiService.suggestMessageForSegment(
-        currentMessage: _controller.text,
-        totalCustomers: segment.customers.length,
-        phoneCount: segment.activePhonesCount,
-        sampleCustomers: sample,
-      );
-      if (!mounted) return;
-      setState(() {
-        _controller.text = suggestion;
-        _controller.selection = TextSelection.fromPosition(
-          TextPosition(offset: _controller.text.length),
-        );
-      });
-      if (mounted) {
-        ref.read(bulkCampaignMessageProvider.notifier).setMessage(suggestion);
-        AppToaster.success(
-          context,
-          AppLocalizations.of(context).t('ai_suggest_ready'),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        AppToaster.error(
-          context,
-          AppLocalizations.of(context).tArgs('ai_suggest_error', [e.toString().split('\n').first]),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
   }
 
   @override
@@ -477,57 +393,6 @@ class _AiMessageComposerState extends ConsumerState<_AiMessageComposer> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              DesignTokens.space4,
-              DesignTokens.space4,
-              DesignTokens.space4,
-              DesignTokens.space2,
-            ),
-            child: Row(
-              children: [
-                Text(
-                  AppLocalizations.of(context).t('message_text'),
-                  style: TextStyle(
-                    color: AppThemeExtension.of(context).textSecondary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: DesignTokens.fontSizeSm,
-                  ),
-                ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: _loading ? null : _onSuggestPressed,
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppThemeExtension.of(context).accent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: DesignTokens.space3,
-                      vertical: DesignTokens.space1,
-                    ),
-                  ),
-                  icon: _loading
-                      ? SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppThemeExtension.of(context).accent,
-                          ),
-                        )
-                      : const Icon(Icons.bolt_rounded, size: 18),
-                  label: Text(
-                    _loading
-                        ? AppLocalizations.of(context).t('ai_suggesting')
-                        : AppLocalizations.of(context).t('ai_suggest'),
-                    style: const TextStyle(
-                      fontSize: DesignTokens.fontSizeXs,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: AppThemeExtension.of(context).border),
           Padding(
             padding: const EdgeInsets.all(DesignTokens.space4),
             child: Consumer(

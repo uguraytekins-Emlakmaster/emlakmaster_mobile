@@ -592,29 +592,6 @@ class FirestoreService {
     await ref.set(data, SetOptions(merge: true));
   }
 
-  /// Çağrı sonrası AI / sezgisel zenginleştirme (deterministik sinyalleri değiştirmez).
-  static Future<void> mergePostCallAiEnrichment(
-    String customerId,
-    Map<String, dynamic> enrichmentPayload,
-  ) async {
-    await ensureInitialized();
-    _requireFirestoreReady();
-    if (customerId.isEmpty) return;
-    final ref = FirebaseFirestore.instance
-        .collection(AppConstants.colCustomers)
-        .doc(customerId);
-    await ref.set(
-      {
-        'lastCallAiEnrichment': {
-          ...enrichmentPayload,
-          'enrichedAt': FieldValue.serverTimestamp(),
-        },
-        'updatedAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
-  }
-
   /// Son görüşme transkript meta verisi (STT hazırlığı). `saveCallExtractionToCustomer` ile çakışmaz; merge.
   /// [snapshot] tam metin içeriyorsa Firestore belge boyutunu göz önünde bulundurun (büyük metinler için alt koleksiyon sonrası).
   static Future<void> mergeCustomerLastCallTranscript(
@@ -1401,17 +1378,7 @@ class FirestoreService {
     yield* FirebaseFirestore.instance.collection('deals').limit(1).snapshots();
   }
 
-  /// news koleksiyonu (AI News Insight); yoksa boş liste.
-  static Stream<QuerySnapshot<Map<String, dynamic>>> newsStream() async* {
-    await ensureInitialized();
-    if (!_initialized) {
-      yield* const Stream.empty();
-      return;
-    }
-    yield* FirebaseFirestore.instance.collection('news').limit(20).snapshots();
-  }
-
-  // ---------- Call summaries (AI Call Brain) ----------
+  // ---------- Call summaries ----------
   static Stream<QuerySnapshot<Map<String, dynamic>>> callSummariesByCallStream(
       String callId) async* {
     await ensureInitialized();

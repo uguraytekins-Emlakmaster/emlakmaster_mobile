@@ -2,7 +2,6 @@
 library customer_timeline_intelligence;
 
 import 'package:emlakmaster_mobile/features/calls/domain/call_transcript_snapshot.dart';
-import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/crm_intelligence_explanations.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_insight_snapshot.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
@@ -68,10 +67,6 @@ String? _buildRecentLineForEntity(CustomerEntity e) {
   final summary = e.lastCallSummary?.trim();
   if (summary != null && summary.isNotEmpty) {
     return 'Son kayıt: ${_truncate(summary, 100)}';
-  }
-  final ai = savedAiInsightSnippetTr(e.lastCallAiEnrichment);
-  if (ai != null && ai.trim().isNotEmpty) {
-    return 'AI içgörü: ${_truncate(ai.trim(), 90)}';
   }
   final vn = e.voiceNoteSummary?.trim();
   if (vn != null && vn.isNotEmpty) {

@@ -2,7 +2,6 @@ import 'package:emlakmaster_mobile/core/performance/deferred_mount_section.dart'
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/widgets/sync_delayed_customers_dashboard_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/execution_reminders_card.dart';
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/priority_call_signals_card.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/consultant_performance_strip.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/widgets/revenue_intelligence_dashboard_section.dart';
 import 'package:emlakmaster_mobile/screens/consultant_dashboard/consultant_dashboard_tokens.dart';
@@ -22,13 +21,9 @@ class ConsultantDashboardOperationalFeed extends StatelessWidget {
       children: [
         ConsultantDashboardSectionHeader(
           label: 'Operasyon',
-          subtitle: 'AI kullanımı ve günlük momentum',
+          subtitle: 'Günlük momentum',
           icon: Icons.bolt_rounded,
         ),
-        ConsultantDashboardOpsShell(
-          child: AiUsageIndicator(),
-        ),
-        SizedBox(height: ConsultantDashboardTokens.blockGap),
         ConsultantDashboardOpsShell(
           tier: ConsultantDashboardOpsTier.performance,
           child: ConsultantPerformanceStrip(),

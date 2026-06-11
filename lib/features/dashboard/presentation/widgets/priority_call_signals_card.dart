@@ -2,7 +2,6 @@ import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/crm_intelligence_explanations.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
@@ -129,7 +128,6 @@ class _PriorityRow extends StatelessWidget {
     final heat = computeCustomerHeat(customer);
     final nextBest = computeNextBestActionForList(customer);
     final nbaExplain = explainNextBestNarrative(nextBest, heat);
-    final aiSnippet = savedAiInsightSnippetTr(customer.lastCallAiEnrichment);
     final s = customer.lastCallSummarySignals!;
     final badges = <Widget>[];
     if (s.interestLevel == PostCallCrmSignals.interestHigh) {
@@ -182,44 +180,16 @@ class _PriorityRow extends StatelessWidget {
                             ),
                       ),
                       const SizedBox(height: 2),
-                      if (aiSnippet != null) ...[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Icon(
-                                Icons.auto_awesome_rounded,
-                                size: 13,
-                                color: ext.accent.withValues(alpha: 0.88),
-                              ),
+                      Text(
+                        nbaExplain,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: ext.textTertiary,
+                              height: 1.25,
+                              fontWeight: FontWeight.w500,
                             ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                aiSnippet,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: ext.textSecondary,
-                                      height: 1.25,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ] else
-                        Text(
-                          nbaExplain,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: ext.textTertiary,
-                                height: 1.25,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
+                      ),
                     ],
                   ),
                 ),

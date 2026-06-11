@@ -1,7 +1,6 @@
 /// Yönetici taşıması — kural tabanlı; broker uyarılarından daha seçici.
 library manager_escalation;
 
-import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/broker_customer_alert.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
@@ -46,7 +45,6 @@ class ManagerEscalationItem {
     required this.escalationPriority,
     required this.relatedCustomerId,
     required this.customerName,
-    this.aiInsightLineTr,
   });
 
   final EscalationCode code;
@@ -55,7 +53,6 @@ class ManagerEscalationItem {
   final EscalationPriority escalationPriority;
   final String relatedCustomerId;
   final String? customerName;
-  final String? aiInsightLineTr;
 
   String get dedupeKey => '$relatedCustomerId|${code.escalationCode}';
 
@@ -98,7 +95,6 @@ List<ManagerEscalationItem> computeEscalationsForCustomer(CustomerEntity custome
   final brokerAlerts = computeBrokerAlertsForCustomer(customer);
   final out = <ManagerEscalationItem>[];
   final name = customer.fullName;
-  final aiLine = savedAiInsightSnippetTr(customer.lastCallAiEnrichment);
 
   void push(
     EscalationCode code,
@@ -114,7 +110,6 @@ List<ManagerEscalationItem> computeEscalationsForCustomer(CustomerEntity custome
       escalationPriority: p,
       relatedCustomerId: customer.id,
       customerName: name,
-      aiInsightLineTr: aiLine,
     ));
   }
 

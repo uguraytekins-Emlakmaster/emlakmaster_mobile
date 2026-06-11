@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
-import 'package:emlakmaster_mobile/core/intelligence/intelligence_providers.dart';
 import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
@@ -36,23 +35,16 @@ import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/sover
 import 'package:emlakmaster_mobile/features/dashboard/presentation/widgets/welcome_patron_overlay.dart';
 import 'package:emlakmaster_mobile/features/external_listings/presentation/providers/external_listings_provider.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
-import 'package:emlakmaster_mobile/widgets/bento_ai_news.dart';
 import 'package:emlakmaster_mobile/widgets/bento_analytics.dart';
 import 'package:emlakmaster_mobile/widgets/bento_saha_radar.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
 import 'package:emlakmaster_mobile/widgets/dashboard_notifications_sheet.dart';
 import 'package:emlakmaster_mobile/widgets/finance_bar.dart';
 import 'package:emlakmaster_mobile/widgets/master_ticker.dart';
 import 'package:emlakmaster_mobile/widgets/revenue_leak_tracker.dart';
 import 'package:emlakmaster_mobile/widgets/session_avatar_button.dart';
-import 'package:emlakmaster_mobile/features/deal_discovery/presentation/widgets/discovery_panel.dart';
-import 'package:emlakmaster_mobile/features/daily_brief/presentation/widgets/daily_brief_panel.dart';
-import 'package:emlakmaster_mobile/features/market_heatmap/presentation/widgets/market_pulse_panel.dart';
 import 'package:emlakmaster_mobile/features/hot_lead_radar/presentation/widgets/hot_lead_radar_panel.dart';
-import 'package:emlakmaster_mobile/features/missed_opportunities/presentation/widgets/missed_opportunities_panel.dart';
 import 'package:emlakmaster_mobile/features/opportunity_radar/presentation/widgets/opportunity_radar_widget.dart';
-import 'package:emlakmaster_mobile/features/region_demand_map/presentation/widgets/region_demand_map_panel.dart';
 import 'package:emlakmaster_mobile/core/theme/premium/premium_theme_extension.dart';
 import 'package:emlakmaster_mobile/shared/widgets/empty_state.dart';
 import 'package:emlakmaster_mobile/widgets/premium/v2/premium_shell_chrome.dart';
@@ -71,13 +63,6 @@ class DashboardPage extends ConsumerWidget {
     ref.invalidate(externalListingsStreamProvider);
     ref.invalidate(adminCommandSnapshotProvider);
     ref.invalidate(brokerDashboardIntelligenceSummaryProvider);
-    if (!lean) {
-      ref.invalidate(marketHeatmapProvider);
-      ref.invalidate(discoveryItemsProvider);
-      ref.invalidate(dailyBriefProvider);
-      ref.invalidate(missedOpportunitiesProvider);
-    }
-    ref.invalidate(intelligenceRunTriggerProvider);
     ref.invalidate(managerEscalationsProvider);
     ref.invalidate(brokerExecutionRemindersProvider);
     if (lean) {
@@ -183,20 +168,6 @@ class DashboardPage extends ConsumerWidget {
           (a) => a.valueOrNull?[AppConstants.keyFeatureKpiBar] ?? true,
         ),
       );
-      final marketPulse = ref.watch(
-        featureFlagsProvider.select((a) {
-          final m = a.valueOrNull;
-          return (m?[AppConstants.keyFeatureMarketPulse] ?? true) &&
-              !(m?[AppConstants.keyV1LeanProduct] ?? true);
-        }),
-      );
-      final dailyBrief = ref.watch(
-        featureFlagsProvider.select((a) {
-          final m = a.valueOrNull;
-          return (m?[AppConstants.keyFeatureDailyBrief] ?? true) &&
-              !(m?[AppConstants.keyV1LeanProduct] ?? true);
-        }),
-      );
       final analyticsEnabled = ref.watch(
         featureFlagsProvider.select(
           (a) => a.valueOrNull?[AppConstants.keyFeatureAnalytics] ?? true,
@@ -211,9 +182,6 @@ class DashboardPage extends ConsumerWidget {
       final gapInsight = DashboardLayoutTokens.gapInsightSection.toDouble();
       const h = DashboardLayoutTokens.horizontalPadding;
       final bentoInsightContentW = MediaQuery.sizeOf(context).width - 2 * h;
-      final stackBentoRadarRow = bentoInsightContentW < 520;
-      final bentoSiblingGap =
-          compact ? DesignTokens.space4 : DesignTokens.space6;
 
       Widget px(Widget child) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: h),
@@ -252,8 +220,6 @@ class DashboardPage extends ConsumerWidget {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    const AiUsageIndicator(compact: true),
-                                    SizedBox(height: gapOp * 0.85),
                                     const ManagerRevenueSummaryCard(),
                                     SizedBox(height: gapOp * 0.85),
                                     const ManagerEscalationsCard(),
@@ -325,10 +291,6 @@ class DashboardPage extends ConsumerWidget {
                               if (!lean) ...[
                                 SizedBox(height: gapOp),
                                 px(const HotLeadRadarPanel()),
-                                SizedBox(height: gapOp),
-                                px(const MissedOpportunitiesPanel()),
-                                SizedBox(height: gapOp),
-                                if (dailyBrief) px(const DailyBriefPanel()),
                               ],
                             ],
                           ),
@@ -341,17 +303,11 @@ class DashboardPage extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 SizedBox(height: gapInsight),
-                                px(const DiscoveryPanel()),
-                                SizedBox(height: gapInsight),
                                 const FinanceBar(),
                                 SizedBox(height: gapInsight),
-                                if (marketPulse) px(const MarketPulsePanel()),
-                                if (marketPulse) SizedBox(height: gapInsight),
                                 px(const MasterTicker()),
                                 SizedBox(height: gapInsight),
                                 px(const OpportunityRadarWidget()),
-                                SizedBox(height: gapInsight),
-                                px(const RegionDemandMapPanel()),
                                 SizedBox(height: gapInsight),
                                 px(
                                   Column(
@@ -364,40 +320,10 @@ class DashboardPage extends ConsumerWidget {
                                             ? DesignTokens.space4
                                             : DesignTokens.space6,
                                       ),
-                                      if (stackBentoRadarRow)
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.stretch,
-                                          children: [
-                                            BentoSahaRadar(
-                                              outerContentWidth:
-                                                  bentoInsightContentW,
-                                            ),
-                                            SizedBox(
-                                              height: compact
-                                                  ? DesignTokens.space3
-                                                  : DesignTokens.space4,
-                                            ),
-                                            const BentoAiNews(),
-                                          ],
-                                        )
-                                      else
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              child: BentoSahaRadar(
-                                                outerContentWidth:
-                                                    bentoInsightContentW,
-                                                splitWithSibling: true,
-                                                siblingRowGap: bentoSiblingGap,
-                                              ),
-                                            ),
-                                            SizedBox(width: bentoSiblingGap),
-                                            const Expanded(child: BentoAiNews()),
-                                          ],
-                                        ),
+                                      BentoSahaRadar(
+                                        outerContentWidth:
+                                            bentoInsightContentW,
+                                      ),
                                     ],
                                   ),
                                 ),

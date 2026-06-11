@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:emlakmaster_mobile/features/calls/domain/call_transcript_snapshot.dart';
-import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
 
@@ -57,8 +56,6 @@ class CustomerMapper {
       investmentAlertEnabled: data['investment_alert_enabled'] as bool? ?? data['investmentAlertEnabled'] as bool? ?? false,
       lastCallSummarySignals:
           PostCallCrmSignals.tryFromFirestoreMap(data['lastCallSummarySignals']),
-      lastCallAiEnrichment:
-          PostCallAiEnrichment.tryFromFirestoreMap(data['lastCallAiEnrichment']),
       lastCallTranscript:
           CallTranscriptSnapshot.tryFromFirestoreMap(data['lastCallTranscript']),
       createdAt: createdAt,

@@ -1,6 +1,5 @@
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/call_transcript_snapshot.dart';
-import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/domain/entities/resurrection_segment.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/domain/usecases/get_resurrection_queue.dart';
@@ -37,8 +36,6 @@ final resurrectionQueueProvider = StreamProvider<List<ResurrectionQueueItem>>((r
         offersCount: data['offersCount'] as int? ?? 0,
         lastCallSummarySignals:
             PostCallCrmSignals.tryFromFirestoreMap(data['lastCallSummarySignals']),
-        lastCallAiEnrichment:
-            PostCallAiEnrichment.tryFromFirestoreMap(data['lastCallAiEnrichment']),
         lastCallTranscript:
             CallTranscriptSnapshot.tryFromFirestoreMap(data['lastCallTranscript']),
         createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),

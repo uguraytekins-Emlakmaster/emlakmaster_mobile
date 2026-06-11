@@ -1,6 +1,4 @@
-import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/navigation/sheet_back_behavior.dart';
-import 'package:emlakmaster_mobile/core/voice/voice_input_platform.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/app_typography.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
@@ -11,15 +9,10 @@ import 'package:emlakmaster_mobile/features/contact_save/data/contact_permission
 import 'package:emlakmaster_mobile/features/contact_save/data/save_contact_service.dart';
 import 'package:emlakmaster_mobile/features/contact_save/domain/contact_save_request.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
-import 'package:emlakmaster_mobile/features/contact_save/domain/extract_contact_from_voice.dart'
-    show logVoiceContactParseDebug, parseVoiceContact;
-import 'package:emlakmaster_mobile/features/settings/presentation/providers/feature_flags_provider.dart';
-import 'package:emlakmaster_mobile/features/voice_crm/presentation/widgets/push_to_talk_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Rehbere ve uygulamaya kaydet: sesli komut (AI yardımı) + manuel giriş.
-/// Pro: tam AI asistan; Normal: sesli komut ile rehber + uygulama kaydı.
+/// Rehbere ve uygulamaya kaydet: manuel giriş; rehber + uygulama (CRM) kaydı.
 void showSaveContactSheet(
   BuildContext context, {
   String? initialName,
@@ -71,9 +64,6 @@ class _SaveContactSheetContentState
   bool _saveToApp = true;
   bool _saving = false;
   String? _error;
-  String _voiceStatus = '';
-  bool _highlightName = false;
-  bool _highlightPhone = false;
 
   @override
   void initState() {
@@ -149,75 +139,6 @@ class _SaveContactSheetContentState
     );
   }
 
-  void _onSpeechResult(PushToTalkSpeechResult r) {
-    final text = r.text;
-    if (text == null || text.isEmpty) {
-      // İlk boş sonuçta PushToTalk sessizce bir kez yeniden dinler; burada yalnızca ikinci kez boşsa mesaj.
-      if (r.noSpeechAfterRetries && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Sizi duyamadım, tekrar deneyebilirsiniz. İsterseniz alanları elle de doldurabilirsiniz.',
-            ),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-    final parsed = parseVoiceContact(text);
-    logVoiceContactParseDebug(
-      rawText: text,
-      extraction: parsed,
-      shouldReviewStt: r.shouldReview,
-    );
-    if (parsed == null) {
-      setState(() {
-        _noteController.text = text;
-        _highlightName = false;
-        _highlightPhone = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'İsim/telefon çıkarılamadı; metin not alanına yazıldı. Düzenleyebilirsiniz.',
-            ),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-    final contact = parsed.request;
-    final combinedReview = r.shouldReview ||
-        parsed.parseNeedsReview ||
-        parsed.nameMissing ||
-        parsed.phoneMissing;
-    setState(() {
-      _nameController.text = contact.fullName;
-      _phoneController.text = contact.primaryPhone;
-      if (contact.email != null) _emailController.text = contact.email!;
-      if (contact.note != null) _noteController.text = contact.note!;
-      _highlightName = parsed.nameMissing;
-      _highlightPhone = parsed.phoneMissing;
-    });
-    AppFeedback.mediumImpact();
-    if (!mounted) return;
-    final ext = AppThemeExtension.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          combinedReview
-              ? 'Sesli giriş alındı. Eksik veya belirsiz alanları kontrol edin (sarı çerçeve).'
-              : 'Sesli giriş alındı. Gerekirse düzenleyip kaydedin.',
-        ),
-        backgroundColor: ext.accent,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   Future<void> _onSave() async {
     if (!_request.isValid) {
       setState(() => _error = 'İsim ve telefon zorunludur.');
@@ -282,12 +203,6 @@ class _SaveContactSheetContentState
     );
   }
 
-  bool get _voiceInputEnabled {
-    if (!voiceInputPlatformSupported) return false;
-    final flags = ref.watch(featureFlagsProvider).valueOrNull;
-    return flags?[AppConstants.keyFeatureVoiceCrm] ?? true;
-  }
-
   @override
   Widget build(BuildContext context) {
     final ext = AppThemeExtension.of(context);
@@ -296,7 +211,7 @@ class _SaveContactSheetContentState
       child: PremiumScrollableBottomSheetShell(
       title: 'Rehbere ve uygulamaya kaydet',
       subtitle:
-          'Ses veya yazı ile girin. CRM eşlemesi korunur; rehber izni ayrı sorulur.',
+          'Bilgileri girin. CRM eşlemesi korunur; rehber izni ayrı sorulur.',
       bottomActions: SizedBox(
         width: double.infinity,
         child: FilledButton(
@@ -333,74 +248,12 @@ class _SaveContactSheetContentState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-            if (_voiceInputEnabled) ...[
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: ext.surfaceElevated,
-                  borderRadius:
-                      BorderRadius.circular(DesignTokens.radiusControl),
-                  border:
-                      Border.all(color: ext.border.withValues(alpha: 0.55)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(DesignTokens.space4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Sesli giriş',
-                        style: AppTypography.cardHeading(context).copyWith(
-                          fontSize: DesignTokens.fontSizeMd,
-                        ),
-                      ),
-                      const SizedBox(height: DesignTokens.space2),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Basılı tutun; ad ve telefonu söyleyin',
-                              style: AppTypography.body(context).copyWith(
-                                fontSize: DesignTokens.fontSizeSm,
-                                height: 1.35,
-                              ),
-                            ),
-                          ),
-                          PushToTalkButton(
-                            size: 48,
-                            onSpeechResult: _onSpeechResult,
-                            onPhaseChanged: (phase) {
-                              if (mounted) {
-                                setState(() => _voiceStatus = phase);
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                      if (_voiceStatus.isNotEmpty) ...[
-                        const SizedBox(height: DesignTokens.space2),
-                        Text(
-                          _voiceStatus,
-                          style: AppTypography.meta(context),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: DesignTokens.space5),
-            ],
             TextField(
               controller: _nameController,
-              onChanged: (_) {
-                if (_highlightName) setState(() => _highlightName = false);
-              },
               decoration: InputDecoration(
                 labelText: 'İsim',
                 hintText: 'Ad Soyad',
                 labelStyle: TextStyle(color: ext.textSecondary),
-                helperText: _highlightName
-                    ? 'Sesli girişte eksik veya belirsiz — lütfen doğrulayın'
-                    : null,
                 border: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(DesignTokens.radiusControl),
@@ -408,18 +261,12 @@ class _SaveContactSheetContentState
                 enabledBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(DesignTokens.radiusControl),
-                  borderSide: BorderSide(
-                    color: _highlightName ? ext.warning : ext.border,
-                    width: _highlightName ? 1.5 : 1,
-                  ),
+                  borderSide: BorderSide(color: ext.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(DesignTokens.radiusControl),
-                  borderSide: BorderSide(
-                    color: _highlightName ? ext.warning : ext.accent,
-                    width: _highlightName ? 1.5 : 2,
-                  ),
+                  borderSide: BorderSide(color: ext.accent, width: 2),
                 ),
                 filled: true,
                 fillColor: ext.surfaceElevated,
@@ -430,16 +277,10 @@ class _SaveContactSheetContentState
             const SizedBox(height: DesignTokens.space3),
             TextField(
               controller: _phoneController,
-              onChanged: (_) {
-                if (_highlightPhone) setState(() => _highlightPhone = false);
-              },
               decoration: InputDecoration(
                 labelText: 'Telefon',
                 hintText: '05xx xxx xx xx',
                 labelStyle: TextStyle(color: ext.textSecondary),
-                helperText: _highlightPhone
-                    ? 'Numara algılanamadı veya belirsiz — lütfen doğrulayın'
-                    : null,
                 border: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(DesignTokens.radiusControl),
@@ -447,18 +288,12 @@ class _SaveContactSheetContentState
                 enabledBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(DesignTokens.radiusControl),
-                  borderSide: BorderSide(
-                    color: _highlightPhone ? ext.warning : ext.border,
-                    width: _highlightPhone ? 1.5 : 1,
-                  ),
+                  borderSide: BorderSide(color: ext.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(DesignTokens.radiusControl),
-                  borderSide: BorderSide(
-                    color: _highlightPhone ? ext.warning : ext.accent,
-                    width: _highlightPhone ? 1.5 : 2,
-                  ),
+                  borderSide: BorderSide(color: ext.accent, width: 2),
                 ),
                 filled: true,
                 fillColor: ext.surfaceElevated,

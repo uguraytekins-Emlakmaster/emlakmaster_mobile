@@ -1,7 +1,6 @@
 /// Broker / yönetici uyarıları — kural tabanlı, LLM yok.
 library broker_customer_alert;
 
-import 'package:emlakmaster_mobile/features/calls/domain/post_call_ai_enrichment.dart';
 import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/domain/customer_heat_score.dart';
 import 'package:emlakmaster_mobile/shared/models/customer_models.dart';
@@ -48,7 +47,6 @@ class BrokerCustomerAlertItem {
     required this.alertTitleTr,
     required this.alertDescriptionTr,
     required this.priorityLevel,
-    this.aiInsightLineTr,
   });
 
   final String customerId;
@@ -57,8 +55,6 @@ class BrokerCustomerAlertItem {
   final String alertTitleTr;
   final String alertDescriptionTr;
   final BrokerAlertPriority priorityLevel;
-  /// `customers.lastCallAiEnrichment` — liste için önceden üretilmiş kısa satır.
-  final String? aiInsightLineTr;
 
   int get _sortKey {
     switch (priorityLevel) {
@@ -88,7 +84,6 @@ List<BrokerCustomerAlertItem> computeBrokerAlertsForCustomer(CustomerEntity cust
 
   final out = <BrokerCustomerAlertItem>[];
   final name = customer.fullName;
-  final aiLine = savedAiInsightSnippetTr(customer.lastCallAiEnrichment);
 
   void push(
     BrokerAlertCode code,
@@ -104,7 +99,6 @@ List<BrokerCustomerAlertItem> computeBrokerAlertsForCustomer(CustomerEntity cust
       alertTitleTr: title,
       alertDescriptionTr: desc,
       priorityLevel: p,
-      aiInsightLineTr: aiLine,
     ));
   }
 

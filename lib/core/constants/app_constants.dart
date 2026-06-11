@@ -33,7 +33,6 @@ abstract final class AppConstants {
   static const String colCallSummaries = 'call_summaries';
   static const String colCallOutcomes = 'call_outcomes';
   static const String colListings = 'listings';
-  static const String colListingMetrics = 'listing_metrics';
   static const String colOffers = 'offers';
   static const String colVisits = 'visits';
   static const String colTasks = 'tasks';
@@ -49,7 +48,6 @@ abstract final class AppConstants {
   static const String colAuditLogs = 'audit_logs';
   static const String colSystemHealth = 'system_health';
   static const String colAppSettings = 'app_settings';
-  static const String colNews = 'news';
   static const String colOfficeActivity = 'office_activity';
   static const String colDeals = 'deals';
 
@@ -98,11 +96,8 @@ abstract final class AppConstants {
   static const String defaultFavoriteInvestRegionId = 'kayapinar';
 
   /// Özellik bayrakları (ayarlardan aç/kapa) — tüm özellikler tek yerden yönetilir
-  static const String keyFeatureVoiceCrm = 'feature_voice_crm';
   static const String keyFeatureContactSave = 'feature_contact_save';
   static const String keyFeatureWarRoom = 'feature_war_room';
-  static const String keyFeatureMarketPulse = 'feature_market_pulse';
-  static const String keyFeatureDailyBrief = 'feature_daily_brief';
   static const String keyFeaturePipeline = 'feature_pipeline';
   static const String keyFeatureCommandCenter = 'feature_command_center';
   static const String keyFeatureInvestorIntelligence =
@@ -113,7 +108,6 @@ abstract final class AppConstants {
       'feature_push_notifications';
   static const String keyFeatureKpiBar = 'feature_kpi_bar';
   static const String keyFeaturePortfolioMatch = 'feature_portfolio_match';
-  static const String keyFeatureCallSummary = 'feature_call_summary';
   static const String keyFeatureTasks = 'feature_tasks';
   static const String keyFeatureNotificationsCenter =
       'feature_notifications_center';
@@ -176,17 +170,15 @@ abstract final class AppConstants {
   static const String callOutcomeSystemHandoff = 'system_handoff';
 
   /// Intelligence layer: sadece bu eşik ve üzeri ana ekrana düşer (Signal vs Noise).
-  static const double opportunityRadarMinScore = 0.80;
   static const double hotLeadRadarMinScore = 0.80;
 
   /// Diyarbakır piyasa ayarları dokümanı (colAppSettings altında).
   static const String docMarketSettings = 'market_settings';
-  static const String docIntelligenceMeta = 'intelligence_meta';
 
   /// İlan kaynakları & ofis ayarları: şehir, ilçe, şirket adı, logo (colAppSettings altında).
   static const String docListingDisplaySettings = 'listing_display_settings';
 
-  /// Sunucu (Cloud Functions) rollup aktifken istemci demo keşif/heatmap yazımını kapatır — pil + tek doğruluk kaynağı.
+  /// İstemci rollup ayarları (örn. opportunityPriceRatio) — colAppSettings altında.
   static const String docIntelligencePipeline = 'intelligence_pipeline';
 
   /// Blaze olmayan Spark: istemci rollup yazımları `analytics_daily` için (kurallarla eşleşmeli).

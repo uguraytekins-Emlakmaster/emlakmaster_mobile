@@ -11,7 +11,6 @@ import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/services/app_lifecycle_power_service.dart';
-import 'package:emlakmaster_mobile/features/ai_sales_assistant/presentation/widgets/ai_sales_assistant_panel.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/agent_doc_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/outbound_system_handoff_page.dart';
@@ -1045,8 +1044,6 @@ class _InCallSessionBody extends ConsumerWidget {
                   ),
                   const SizedBox(height: DesignTokens.space5),
                   Center(child: _SiriWaveBars(isActive: !isMuted)),
-                  const SizedBox(height: DesignTokens.space6),
-                  AiSalesAssistantPanel(customerId: customerId),
                   const SizedBox(height: DesignTokens.space8),
                 ],
               ),

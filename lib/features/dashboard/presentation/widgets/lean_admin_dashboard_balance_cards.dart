@@ -235,10 +235,10 @@ class LeanAdminOfficePulseCard extends ConsumerWidget {
                           height: 1.25,
                         ),
                   ),
-                  if ((top.aiInsightLineTr ?? top.alertDescriptionTr).trim().isNotEmpty) ...[
+                  if (top.alertDescriptionTr.trim().isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
-                      _truncate((top.aiInsightLineTr ?? top.alertDescriptionTr).trim(), 120),
+                      _truncate(top.alertDescriptionTr.trim(), 120),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: ext.textTertiary,
                             height: 1.35,

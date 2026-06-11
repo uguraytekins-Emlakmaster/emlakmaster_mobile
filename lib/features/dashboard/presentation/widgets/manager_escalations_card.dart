@@ -197,40 +197,10 @@ class _EscalationRowState extends ConsumerState<_EscalationRow> {
                               fontWeight: FontWeight.w600,
                             ),
                       ),
-                      if (e.aiInsightLineTr != null &&
-                          e.aiInsightLineTr!.trim().isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.auto_awesome_rounded,
-                              size: 13,
-                              color: ext.accent.withValues(alpha: 0.88),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                e.aiInsightLineTr!.trim(),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: ext.textSecondary,
-                                      height: 1.3,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                       const SizedBox(height: 2),
                       Text(
                         e.escalationDescriptionTr,
-                        maxLines: e.aiInsightLineTr != null &&
-                                e.aiInsightLineTr!.trim().isNotEmpty
-                            ? 1
-                            : 2,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: ext.textTertiary,

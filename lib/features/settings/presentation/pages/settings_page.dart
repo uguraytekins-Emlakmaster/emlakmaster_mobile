@@ -28,7 +28,6 @@ import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consult
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/manager_tour_providers.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/ai_usage_indicator.dart';
 import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
@@ -363,10 +362,6 @@ class SettingsPage extends ConsumerWidget {
                             ),
                           ),
                         ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: AiUsageIndicator(compact: true),
                 ),
                 if (!usage.isPro) ...[
                   Divider(
@@ -1170,15 +1165,6 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                         .setFlag(AppConstants.keyFeatureCommandCenter, v),
                   ),
                   _SettingSwitch(
-                    title: l10n.t('settings_flag_dailybrief_title'),
-                    subtitle: l10n.t('settings_flag_dailybrief_sub'),
-                    icon: Icons.today_rounded,
-                    value: flags[AppConstants.keyFeatureDailyBrief] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureDailyBrief, v),
-                  ),
-                  _SettingSwitch(
                     title: l10n.t('settings_flag_pipeline_title'),
                     subtitle: l10n.t('settings_flag_pipeline_sub'),
                     icon: Icons.account_tree_rounded,
@@ -1223,24 +1209,6 @@ class _SettingsAdvancedSection extends ConsumerWidget {
                 label: l10n.t('settings_adv_group_calls'),
                 children: [
                   _SettingSwitch(
-                    title: l10n.t('settings_flag_voice_title'),
-                    subtitle: l10n.t('settings_flag_voice_sub'),
-                    icon: Icons.mic_rounded,
-                    value: flags[AppConstants.keyFeatureVoiceCrm] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureVoiceCrm, v),
-                  ),
-                  _SettingSwitch(
-                    title: l10n.t('settings_flag_callsummary_title'),
-                    subtitle: l10n.t('settings_flag_callsummary_sub'),
-                    icon: Icons.summarize_rounded,
-                    value: flags[AppConstants.keyFeatureCallSummary] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureCallSummary, v),
-                  ),
-                  _SettingSwitch(
                     title: l10n.t('settings_flag_contactsave_title'),
                     subtitle: l10n.t('settings_flag_contactsave_sub'),
                     icon: Icons.contact_phone_rounded,
@@ -1254,15 +1222,6 @@ class _SettingsAdvancedSection extends ConsumerWidget {
               _AdvancedFlagGroup(
                 label: l10n.t('settings_adv_group_integration'),
                 children: [
-                  _SettingSwitch(
-                    title: l10n.t('settings_flag_marketpulse_title'),
-                    subtitle: l10n.t('settings_flag_marketpulse_sub'),
-                    icon: Icons.trending_up_rounded,
-                    value: flags[AppConstants.keyFeatureMarketPulse] ?? true,
-                    onChanged: (v) => ref
-                        .read(featureFlagsProvider.notifier)
-                        .setFlag(AppConstants.keyFeatureMarketPulse, v),
-                  ),
                   _SettingSwitch(
                     title: l10n.t('settings_flag_portfolio_title'),
                     subtitle: l10n.t('settings_flag_portfolio_sub'),
