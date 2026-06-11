@@ -775,14 +775,6 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // AI idempotency / kota: yalnız Cloud Functions (Admin SDK); istemci erişimi yok.
-    match /ai_idempotency_cache/{docId} {
-      allow read, write: if false;
-    }
-    match /users/{userId}/_ai_remote_quota/{docId} {
-      allow read, write: if false;
-    }
-
     // GÜVENLİK: Kök CATCH-ALL artık VARSAYILAN-RED (deny-by-default).
     // Eskiden `allow read: if isSignedIn();` idi; bu, oturum açmış HERKESE açıkça
     // tanımlanmamış HER yolu OKUTUYOR ve dahası, yukarıdaki tüm tenant-izolasyon
