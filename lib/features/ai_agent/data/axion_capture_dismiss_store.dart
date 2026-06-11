@@ -13,6 +13,7 @@ class AxionCaptureDismissStore {
   static final AxionCaptureDismissStore instance = AxionCaptureDismissStore._();
 
   static const String _prefsKey = 'axion_capture_dismissed_v1';
+  static const String _stripHiddenKey = 'axion_uncaptured_strip_hidden_until_v1';
   static const Duration snoozeDuration = Duration(hours: 4);
   static const Duration dismissDuration = Duration(days: 30);
 
@@ -74,6 +75,37 @@ class AxionCaptureDismissStore {
   Future<void> clear(String normalizedKey) async {
     final map = await _load();
     if (map.remove(normalizedKey) != null) await _persist();
+  }
+
+  /// "Benim Günüm" kayıtsız numara şeridini gün sonuna kadar gizle (X).
+  /// Ertesi gün şerit güncel durumla geri gelir; veri kaybolmaz.
+  Future<void> hideStripForToday({DateTime? now}) async {
+    try {
+      final at = now ?? DateTime.now();
+      final nextMidnight = DateTime(at.year, at.month, at.day + 1);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_stripHiddenKey, nextMidnight.millisecondsSinceEpoch);
+    } catch (e, st) {
+      AppLogger.e('AxionCaptureDismissStore hideStrip', e, st);
+    }
+  }
+
+  /// Şerit şu anda gizli mi?
+  Future<bool> isStripHidden({DateTime? now}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final until = prefs.getInt(_stripHiddenKey);
+      if (until == null) return false;
+      final at = (now ?? DateTime.now()).millisecondsSinceEpoch;
+      if (at >= until) {
+        await prefs.remove(_stripHiddenKey);
+        return false;
+      }
+      return true;
+    } catch (e, st) {
+      AppLogger.e('AxionCaptureDismissStore isStripHidden', e, st);
+      return false;
+    }
   }
 
   Future<void> _suppress(

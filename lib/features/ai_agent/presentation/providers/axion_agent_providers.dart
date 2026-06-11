@@ -12,6 +12,7 @@ import '../../application/axion_agent_engine.dart';
 import '../../application/uncaptured_number_engine.dart';
 import '../../data/axion_agent_crm_adapter.dart';
 import '../../data/axion_capture_dismiss_store.dart';
+import '../../data/axion_device_contact_directory.dart';
 import '../../domain/axion_agent_models.dart';
 import '../../domain/axion_phone_matcher.dart';
 import '../../domain/axion_uncaptured_number.dart';
@@ -127,10 +128,19 @@ final axionBrokerBriefProvider =
   return engine.generateBrokerBrief(ctx);
 });
 
+/// Cihaz rehberi isimleri (`normalizedKey → isim`).
+///
+/// İzin İSTEMEZ; yalnızca verilmişse sessizce okur. 10 dk önbellekli.
+final axionDeviceContactNamesProvider =
+    FutureProvider.autoDispose<Map<String, String>>((ref) {
+  return AxionDeviceContactDirectory.instance.namesByPhoneKey();
+});
+
 /// CRM'de kayıtlı olmayan numaralar (çağrı geçmişinden, son 14 gün).
 ///
 /// Asıl amaç: yoğunlukta hiçbir numara kaybolmasın. Yalnızca gerçek
-/// çağrı verisi; deterministik gruplama; ağ çağrısı yok.
+/// çağrı verisi; deterministik gruplama; ağ çağrısı yok. Rehberde kayıtlı
+/// isim varsa numarayla birlikte gelir (kayıt formu isimle dolar).
 final axionUncapturedNumbersProvider =
     Provider.autoDispose<List<AxionUncapturedNumber>>((ref) {
   final uid = ref.watch(
@@ -146,6 +156,9 @@ final axionUncapturedNumbersProvider =
       ref.watch(customerListForAgentProvider).valueOrNull?.entities ??
           const [];
 
+  final deviceNames =
+      ref.watch(axionDeviceContactNamesProvider).valueOrNull ?? const {};
+
   final calls = <AxionCallSnapshot>[];
   for (final d in callDocs) {
     final call = AxionAgentCrmAdapter.callFromDoc(d.id, d.data());
@@ -157,7 +170,16 @@ final axionUncapturedNumbersProvider =
     knownPhoneKeys:
         AxionPhoneMatcher.buildKnownSet([for (final c in customers) c.primaryPhone]),
     now: DateTime.now(),
+    fallbackNames: deviceNames,
   );
+});
+
+/// "Benim Günüm" kayıtsız numara şeridi görünür mü? (X ile gün sonuna
+/// kadar kapatılabilir; ertesi gün otomatik geri gelir.)
+final axionUncapturedStripVisibleProvider =
+    FutureProvider.autoDispose<bool>((ref) async {
+  final hidden = await AxionCaptureDismissStore.instance.isStripHidden();
+  return !hidden;
 });
 
 /// Önemli bildirim pop-up'ı adayı: son 24 saatte aranan, kayıtsız,

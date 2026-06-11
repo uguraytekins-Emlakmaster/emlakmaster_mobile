@@ -85,6 +85,7 @@ class DeviceCallLogSyncService {
           timestampMillis: ts,
           durationSeconds: durationSec,
           phoneNumber: number,
+          contactDisplayName: entry.name,
           outcome: isMissed ? 'missed' : 'connected',
         );
         count++;

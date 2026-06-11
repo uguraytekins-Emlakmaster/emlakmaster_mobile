@@ -58,8 +58,22 @@ abstract final class AxionAgentCrmAdapter {
       customerId: CrmCallRecordHelpers.customerIdOf(data),
       phoneNumber:
           data['phoneNumber'] as String? ?? data['phone'] as String?,
+      contactName: _contactNameOf(data),
       isMissedOrNoAnswer: CrmCallRecordHelpers.isMissedOutcome(data),
       at: at,
     );
+  }
+
+  /// Çağrı dokümanındaki rehber/kişi ismi (cihaz senkronundan gelir).
+  static String? _contactNameOf(Map<String, dynamic> data) {
+    for (final key in <String>[
+      'contactDisplayName',
+      'contactName',
+      'callerName',
+    ]) {
+      final v = data[key] as String?;
+      if (v != null && v.trim().isNotEmpty) return v.trim();
+    }
+    return null;
   }
 }

@@ -17,12 +17,15 @@ abstract final class UncapturedNumberEngine {
   static const Duration defaultLookback = Duration(days: 14);
   static const int defaultMaxResults = 10;
 
+  /// [fallbackNames] cihaz rehberinden gelen `normalizedKey → isim`
+  /// haritasıdır; çağrı kaydında isim yoksa buradan tamamlanır.
   static List<AxionUncapturedNumber> detect({
     required List<AxionCallSnapshot> calls,
     required Set<String> knownPhoneKeys,
     required DateTime now,
     Duration lookback = defaultLookback,
     int maxResults = defaultMaxResults,
+    Map<String, String> fallbackNames = const {},
   }) {
     final cutoff = now.subtract(lookback);
     final groups = <String, _NumberGroup>{};
@@ -41,7 +44,7 @@ abstract final class UncapturedNumberEngine {
       g.add(call, raw);
     }
 
-    final result = [for (final g in groups.values) g.build()]
+    final result = [for (final g in groups.values) g.build(fallbackNames)]
       ..sort((a, b) => b.lastCallAt.compareTo(a.lastCallAt));
     if (result.length <= maxResults) return result;
     return result.sublist(0, maxResults);
@@ -57,6 +60,7 @@ class _NumberGroup {
   DateTime? lastCallAt;
   bool lastCallWasMissed = false;
   String displayNumber = '';
+  String? contactName;
   final List<({String id, DateTime at})> _docs = [];
 
   void add(AxionCallSnapshot call, String rawNumber) {
@@ -67,14 +71,17 @@ class _NumberGroup {
       lastCallWasMissed = call.isMissedOrNoAnswer;
       displayNumber = rawNumber;
     }
+    final name = call.contactName?.trim();
+    if (name != null && name.isNotEmpty) contactName = name;
     _docs.add((id: call.id, at: call.at));
   }
 
-  AxionUncapturedNumber build() {
+  AxionUncapturedNumber build(Map<String, String> fallbackNames) {
     _docs.sort((a, b) => b.at.compareTo(a.at));
     return AxionUncapturedNumber(
       normalizedKey: key,
       displayNumber: displayNumber,
+      contactName: contactName ?? fallbackNames[key],
       callCount: callCount,
       missedCount: missedCount,
       lastCallAt: lastCallAt ?? DateTime.fromMillisecondsSinceEpoch(0),

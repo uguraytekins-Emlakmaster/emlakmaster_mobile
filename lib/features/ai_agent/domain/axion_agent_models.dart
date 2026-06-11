@@ -79,6 +79,7 @@ class AxionCallSnapshot {
     required this.id,
     this.customerId,
     this.phoneNumber,
+    this.contactName,
     this.isMissedOrNoAnswer = false,
     required this.at,
   });
@@ -86,6 +87,9 @@ class AxionCallSnapshot {
   final String id;
   final String? customerId;
   final String? phoneNumber;
+
+  /// Cihaz rehberinden / çağrı günlüğünden gelen kayıtlı isim (varsa).
+  final String? contactName;
   final bool isMissedOrNoAnswer;
   final DateTime at;
 }

@@ -10,6 +10,7 @@ void main() {
     required String id,
     String? customerId,
     String? phone,
+    String? contactName,
     bool missed = false,
     Duration ago = const Duration(hours: 1),
   }) {
@@ -17,6 +18,7 @@ void main() {
       id: id,
       customerId: customerId,
       phoneNumber: phone,
+      contactName: contactName,
       isMissedOrNoAnswer: missed,
       at: now.subtract(ago),
     );
@@ -116,6 +118,39 @@ void main() {
         result.first.lastCallAt.isAfter(result.last.lastCallAt),
         isTrue,
       );
+    });
+
+    test('çağrı kaydındaki rehber ismi sonuca taşınır', () {
+      final result = UncapturedNumberEngine.detect(
+        calls: [
+          call(id: 'c1', phone: '0532 111 22 33'),
+          call(id: 'c2', phone: '+905321112233', contactName: 'Ahmet Yılmaz'),
+        ],
+        knownPhoneKeys: const {},
+        now: now,
+      );
+      expect(result, hasLength(1));
+      expect(result.first.contactName, 'Ahmet Yılmaz');
+    });
+
+    test('çağrıda isim yoksa rehber haritasından tamamlanır', () {
+      final result = UncapturedNumberEngine.detect(
+        calls: [call(id: 'c1', phone: '0532 111 22 33')],
+        knownPhoneKeys: const {},
+        now: now,
+        fallbackNames: const {'5321112233': 'Ayşe Demir'},
+      );
+      expect(result, hasLength(1));
+      expect(result.first.contactName, 'Ayşe Demir');
+    });
+
+    test('isim hiçbir kaynakta yoksa null kalır (uydurma yok)', () {
+      final result = UncapturedNumberEngine.detect(
+        calls: [call(id: 'c1', phone: '0532 111 22 33')],
+        knownPhoneKeys: const {},
+        now: now,
+      );
+      expect(result.first.contactName, isNull);
     });
 
     test('deterministik: aynı girdi aynı çıktı', () {

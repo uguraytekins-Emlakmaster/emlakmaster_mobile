@@ -904,6 +904,7 @@ class FirestoreService {
     required int timestampMillis,
     int? durationSeconds,
     String? phoneNumber,
+    String? contactDisplayName,
     String outcome = 'connected',
   }) async {
     await ensureInitialized();
@@ -919,6 +920,8 @@ class FirestoreService {
       'direction': direction,
       if (phoneNumber != null && phoneNumber.isNotEmpty)
         'phoneNumber': phoneNumber,
+      if (contactDisplayName != null && contactDisplayName.trim().isNotEmpty)
+        'contactDisplayName': contactDisplayName.trim(),
       'startedAt': ts,
       'endedAt': ts,
       if (durationSeconds != null) 'durationSec': durationSeconds,

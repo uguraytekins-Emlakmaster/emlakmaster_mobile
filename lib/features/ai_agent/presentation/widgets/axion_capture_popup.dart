@@ -53,8 +53,11 @@ class _AxionCapturePopupDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppThemeExtension.of(context);
     final now = DateTime.now();
+    final contactName = (number.contactName ?? '').trim();
+    final hasName = contactName.isNotEmpty;
 
     final metaParts = <String>[
+      if (hasName) number.displayNumber,
       '${number.callCount} arama',
       if (number.missedCount > 0) '${number.missedCount} cevapsız',
       'son: ${_lastCallLabel(number.lastCallAt, now)}',
@@ -109,7 +112,9 @@ class _AxionCapturePopupDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        number.displayNumber,
+                        hasName ? contactName : number.displayNumber,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: t.textPrimary,
                           fontSize: DesignTokens.fontSizeLg,
@@ -118,6 +123,21 @@ class _AxionCapturePopupDialog extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Kapat',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  onPressed: () => _snooze(context),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 22,
+                    color: t.textSecondary,
                   ),
                 ),
               ],
@@ -194,6 +214,7 @@ class _AxionCapturePopupDialog extends StatelessWidget {
     AppFeedback.selectionClick();
     showSaveContactSheet(
       dialogContext,
+      initialName: number.contactName,
       initialPhone: number.displayNumber,
       source: 'axion_agent_kayitsiz_numara',
       onSavedToApp: (customerId) async {

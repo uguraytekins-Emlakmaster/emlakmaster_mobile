@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../data/axion_capture_dismiss_store.dart';
 import '../../domain/axion_uncaptured_number.dart';
 import '../providers/axion_agent_providers.dart';
 
@@ -28,6 +29,10 @@ class AxionUncapturedNumbersStrip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final numbers = ref.watch(axionUncapturedNumbersProvider);
     if (numbers.isEmpty) return const SizedBox.shrink();
+
+    final visibleToday =
+        ref.watch(axionUncapturedStripVisibleProvider).valueOrNull ?? true;
+    if (!visibleToday) return const SizedBox.shrink();
 
     final t = AppThemeExtension.of(context);
     final visible = numbers.take(_maxVisible).toList(growable: false);
@@ -69,6 +74,26 @@ class AxionUncapturedNumbersStrip extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: DesignTokens.fontSizeXs,
                     color: t.textPassive,
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.space1),
+                IconButton(
+                  tooltip: 'Bugünlük kapat',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                  onPressed: () async {
+                    AppFeedback.selectionClick();
+                    await AxionCaptureDismissStore.instance.hideStripForToday();
+                    ref.invalidate(axionUncapturedStripVisibleProvider);
+                  },
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: t.textSecondary,
                   ),
                 ),
               ],
@@ -116,7 +141,9 @@ class _NumberRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppThemeExtension.of(context);
     final now = DateTime.now();
+    final hasName = (number.contactName ?? '').trim().isNotEmpty;
     final meta = [
+      if (hasName) number.displayNumber,
       '${number.callCount} arama',
       if (number.missedCount > 0) '${number.missedCount} cevapsız',
       _timeLabel(number.lastCallAt, now),
@@ -131,7 +158,9 @@ class _NumberRow extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  number.displayNumber,
+                  hasName ? number.contactName!.trim() : number.displayNumber,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: DesignTokens.fontSizeSm,
                     fontWeight: FontWeight.w700,
@@ -142,6 +171,8 @@ class _NumberRow extends ConsumerWidget {
                 const SizedBox(height: 1),
                 Text(
                   meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: DesignTokens.fontSizeXs,
                     color: t.textSecondary,
@@ -178,6 +209,7 @@ class _NumberRow extends ConsumerWidget {
     AppFeedback.selectionClick();
     showSaveContactSheet(
       context,
+      initialName: number.contactName,
       initialPhone: number.displayNumber,
       source: 'axion_agent_kayitsiz_numara',
       onSavedToApp: (customerId) async {

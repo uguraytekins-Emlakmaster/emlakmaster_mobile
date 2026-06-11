@@ -8,6 +8,7 @@ class AxionUncapturedNumber {
   const AxionUncapturedNumber({
     required this.normalizedKey,
     required this.displayNumber,
+    this.contactName,
     required this.callCount,
     required this.missedCount,
     required this.lastCallAt,
@@ -20,6 +21,10 @@ class AxionUncapturedNumber {
 
   /// Kullanıcıya gösterilecek ham numara (en son görülen biçim).
   final String displayNumber;
+
+  /// Telefon rehberindeki kayıtlı isim (varsa) — kayıt formu bununla
+  /// önceden doldurulur, uydurma isim asla üretilmez.
+  final String? contactName;
 
   /// Pencere içindeki toplam çağrı sayısı.
   final int callCount;
