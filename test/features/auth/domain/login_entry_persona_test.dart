@@ -47,17 +47,16 @@ void main() {
 
     test('filterSelectableRoles keeps only matching roles', () {
       const all = AppRole.values;
-      final managerRoles = LoginEntryPersona.manager.filterSelectableRoles(
-        all,
-        includeSuperAdmin: true,
-      );
-      final consultantRoles = LoginEntryPersona.consultant.filterSelectableRoles(
-        all,
-        includeSuperAdmin: true,
-      );
+      final managerRoles =
+          LoginEntryPersona.manager.filterSelectableRoles(all);
+      final consultantRoles =
+          LoginEntryPersona.consultant.filterSelectableRoles(all);
 
       expect(managerRoles, isNotEmpty);
       expect(consultantRoles, isNotEmpty);
+      // super_admin hiçbir personada görünmez.
+      expect(managerRoles, isNot(contains(AppRole.superAdmin)));
+      expect(consultantRoles, isNot(contains(AppRole.superAdmin)));
       for (final role in managerRoles) {
         expect(LoginEntryPersona.manager.matchesRole(role), isTrue);
       }

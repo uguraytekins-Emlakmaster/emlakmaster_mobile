@@ -30,6 +30,7 @@ import '../../../../core/theme/design_tokens.dart';
 import '../../utils/auth_error_messages.dart';
 import '../../../../core/services/login_entry_store.dart';
 import '../../../../core/services/onboarding_store.dart';
+import '../../../../core/services/startup_role_cache.dart';
 import '../../domain/login_entry_persona.dart';
 import '../widgets/auth_entry_hero.dart';
 import '../widgets/auth_entry_persona_selector.dart';
@@ -86,6 +87,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Timer? _busyWatchdog;
   static const Duration _busyWatchdogTimeout = Duration(seconds: 25);
 
+  /// Oturum kalıcılığı: cihazda önceki oturum varsa Firebase oturumu geri
+  /// yüklenene kadar giriş formu YERİNE bekleme ekranı gösterilir — kullanıcı
+  /// her açılışta yeniden giriş yapmak zorunda kalmaz. Süre dolarsa
+  /// (oturum gerçekten yoksa) form normal şekilde açılır.
+  bool _sessionRestoreExpired = false;
+  Timer? _sessionRestoreTimer;
+  static const Duration _sessionRestoreTimeout = Duration(seconds: 8);
+
+  bool get _hasLiveFirebaseSession =>
+      Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;
+
   void _armBusyWatchdog() {
     _busyWatchdog?.cancel();
     _busyWatchdog = Timer(_busyWatchdogTimeout, () {
@@ -115,6 +127,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     unawaited(
       FirebaseCoreBootstrap.instance.ensureReady().catchError((_) {}),
     );
+    _sessionRestoreTimer = Timer(_sessionRestoreTimeout, () {
+      if (!mounted || _sessionRestoreExpired) return;
+      setState(() => _sessionRestoreExpired = true);
+    });
   }
 
   Future<void> _loadPersona() async {
@@ -134,6 +150,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   void dispose() {
     _busyWatchdog?.cancel();
+    _sessionRestoreTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -477,6 +494,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           child: Padding(
             padding: const EdgeInsets.all(DesignTokens.space8),
             child: CircularProgressIndicator(color: ext.accent),
+          ),
+        ),
+      );
+    }
+    // Oturum kalıcılığı: mevcut/önceki oturum geri yüklenirken giriş formunu
+    // gösterme — router redirect kullanıcıyı otomatik içeri alır. Zaman aşımı
+    // dolarsa (gerçekten oturum yok) form açılır; sonsuz spinner imkânsız.
+    final authLoading = ref.watch(currentUserProvider).isLoading;
+    final waitingSessionRestore = !_sessionRestoreExpired &&
+        _busy == _BusyKind.none &&
+        (_hasLiveFirebaseSession ||
+            (authLoading && StartupRoleCache.instance.hasCachedSession));
+    if (waitingSessionRestore) {
+      return AuthPageShell(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(DesignTokens.space8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: ext.accent),
+                const SizedBox(height: DesignTokens.space4),
+                Text(
+                  l10n.t('loading'),
+                  style: TextStyle(
+                    color: ext.textSecondary,
+                    fontSize: DesignTokens.fontSizeSm,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );

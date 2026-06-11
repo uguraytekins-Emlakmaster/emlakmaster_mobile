@@ -109,10 +109,9 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
     }
   }
 
-  // includeSuperAdmin == sistemde hiç kullanıcı yok (kurucu). Self-service kullanıcı
-  // yönetici/admin rolünü kendi atayamaz; yönetici statüsü ofis oluşturma/davetle gelir.
-  static List<AppRole> _selectableRoles(bool includeSuperAdmin) =>
-      selfServiceSelectableRoles(isFoundingUser: includeSuperAdmin);
+  // Self-service kullanıcı yönetici/admin rolünü kendi atayamaz; yönetici
+  // statüsü ofis oluşturma/davetle gelir. super_admin asla seçilemez.
+  static List<AppRole> _selectableRoles() => selfServiceSelectableRoles();
 
   void _applyPanelPreferenceForRole(AppRole role) {
     ref.read(preferredConsultantPanelProvider.notifier).state =
@@ -189,7 +188,6 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).valueOrNull;
-    final hasAnyUserAsync = ref.watch(hasAnyUserProvider);
     final ext = AppThemeExtension.of(context);
 
     if (user == null || !_pathReady) {
@@ -210,8 +208,7 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
       );
     }
 
-    final includeSuperAdmin = hasAnyUserAsync.valueOrNull == false;
-    final allRoles = _selectableRoles(includeSuperAdmin);
+    final allRoles = _selectableRoles();
 
     return Scaffold(
       backgroundColor: ext.background,
@@ -240,10 +237,7 @@ class _RoleSelectionPageState extends ConsumerState<RoleSelectionPage> {
                 )
               : _RoleListBody(
                   persona: _pathPersona!,
-                  roles: _pathPersona!.filterSelectableRoles(
-                    allRoles,
-                    includeSuperAdmin: includeSuperAdmin,
-                  ),
+                  roles: _pathPersona!.filterSelectableRoles(allRoles),
                   submitting: _submitting,
                   error: _error,
                   onBack: _clearPath,
@@ -570,7 +564,3 @@ class _RoleCard extends StatelessWidget {
     );
   }
 }
-
-final hasAnyUserProvider = FutureProvider.autoDispose<bool>((ref) {
-  return UserRepository.hasAnyUser();
-});

@@ -22,6 +22,15 @@ class StartupRoleCache {
     _loaded = true;
   }
 
+  /// Bu cihazda daha önce başarılı bir oturum vardı mı? (warmUp sonrası)
+  /// Login ekranı bunu "oturum geri yükleniyor" beklemesi için kullanır.
+  bool get hasCachedSession =>
+      _loaded &&
+      _uid != null &&
+      _uid!.isNotEmpty &&
+      _role != null &&
+      _role != AppRole.guest;
+
   AppRole? roleForUser(String uid) {
     if (!_loaded || _uid != uid || _role == null || _role == AppRole.guest) {
       return null;

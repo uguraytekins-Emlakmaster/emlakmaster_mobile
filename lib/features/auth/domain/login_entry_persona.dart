@@ -8,14 +8,9 @@ import 'entities/app_role.dart';
 /// - bir ofis DAVETİNİ kabul et (→ manager/admin/consultant).
 /// Bu akışlar yetkiyi sunucu tarafında doğrular.
 ///
-/// Tek istisna: sistemde hiç kullanıcı yoksa ([isFoundingUser]) kurucu, ilk
-/// sahibi/super_admin'i bootstrap edebilir.
-List<AppRole> selfServiceSelectableRoles({required bool isFoundingUser}) {
-  if (isFoundingUser) {
-    return AppRole.values.where((r) => r != AppRole.guest).toList();
-  }
-  return const [AppRole.agent];
-}
+/// `super_admin` HİÇBİR KOŞULDA kayıt akışından atanamaz — platform sahibi
+/// hesabı yalnızca sunucu tarafında (Firestore) tanımlıdır.
+List<AppRole> selfServiceSelectableRoles() => const [AppRole.agent];
 
 /// İlk giriş / giriş ekranında kullanıcının seçtiği operasyon yolu.
 enum LoginEntryPersona {
@@ -54,12 +49,10 @@ enum LoginEntryPersona {
     }
   }
 
-  List<AppRole> filterSelectableRoles(
-    List<AppRole> all, {
-    required bool includeSuperAdmin,
-  }) {
+  List<AppRole> filterSelectableRoles(List<AppRole> all) {
     final filtered = all.where((r) {
-      if (r == AppRole.superAdmin && !includeSuperAdmin) return false;
+      // super_admin seçim listelerinde asla görünmez.
+      if (r == AppRole.superAdmin) return false;
       return matchesRole(r);
     }).toList();
     if (filtered.isNotEmpty) return filtered;

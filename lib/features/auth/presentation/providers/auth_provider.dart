@@ -72,16 +72,18 @@ bool _userDocStreamUidAllowed(String uid) {
 }
 
 /// İlk girişte users doc yoksa rol seçim ekranı gösterilir; doc burada oluşturulur (ensureUserDoc artık otomatik çağrılmaz).
+///
+/// GÜVENLİK: super_admin bootstrap'ı kaldırıldı — platform sahibi rolü
+/// yalnızca sunucu tarafında (Firestore) tanımlıdır, istemciden atanamaz.
 final ensureUserDocProvider =
     FutureProvider.autoDispose.family<void, String>((ref, uid) async {
   final user = ref.read(currentUserProvider).valueOrNull;
   if (user?.uid != uid) return;
   final existing = await UserRepository.getUserDoc(uid);
   if (existing != null) return;
-  final firstAdmin = !await UserRepository.hasAnyUser();
   await UserRepository.setUserDoc(
     uid: uid,
-    role: firstAdmin ? 'super_admin' : 'agent',
+    role: 'agent',
     name: user!.displayName,
     email: user.email,
   );
