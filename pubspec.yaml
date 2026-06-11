@@ -89,6 +89,7 @@ dependencies:
   audioplayers: ^6.1.0
   share_plus: ^12.0.2
   path_provider: ^2.1.5
+  phone_state: ^3.0.1
   # Facebook girişi kapalıyken flutter_facebook_auth kullanılmamalı: iOS'ta FBSDK açılışta
   # Info.plist'teki sahte token ile SIGABRT üretebilir. Tekrar açmak için paketi ekleyin ve
   # doc/FACEBOOK_SIGNIN_SETUP.md + scripts/configure_facebook_app.sh kullanın.

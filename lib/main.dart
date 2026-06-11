@@ -30,6 +30,7 @@ import 'package:emlakmaster_mobile/core/widgets/startup_recovery_scaffold.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/auth/data/user_repository.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
+import 'package:emlakmaster_mobile/features/ai_agent/data/axion_capture_notification.dart';
 import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_local_notifications.dart';
 import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_notification_bridge.dart';
 import 'package:emlakmaster_mobile/features/tasks/data/task_due_local_notifications.dart';
@@ -207,11 +208,15 @@ class _AxionAppState extends ConsumerState<AxionApp> {
           const Duration(seconds: 2),
           () {
             if (!mounted) return;
-            unawaited(
-              ExecutionReminderLocalNotifications.instance
-                  .ensureInitialized(),
-            );
-            unawaited(TaskDueLocalNotifications.instance.ensureInitialized());
+            // Sıra ÖNEMLİ: plugin yanıt yönlendirmesini en son initialize
+            // eden servis devralır. AxionCaptureNotification en sonda
+            // başlatılır ve diğer payload tiplerini ilgili servislere iletir.
+            unawaited(() async {
+              await ExecutionReminderLocalNotifications.instance
+                  .ensureInitialized();
+              await TaskDueLocalNotifications.instance.ensureInitialized();
+              await AxionCaptureNotification.instance.ensureInitialized();
+            }());
             ExecutionReminderNotificationBridge.attach(ref);
             TaskDueNotificationBridge.attach(ref);
             unawaited(CrmPushNavigation.attach(ref));
