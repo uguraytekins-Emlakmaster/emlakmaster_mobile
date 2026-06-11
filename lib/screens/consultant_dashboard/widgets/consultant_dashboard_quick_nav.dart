@@ -45,12 +45,6 @@ class ConsultantDashboardQuickNavGrid extends ConsumerWidget {
               label: l10n.t('nav_listings'),
               onTap: () => goTab(MainShellShortcut.openListingsTab),
             ),
-            _NavDivider(),
-            ConsultantDashboardQuickNavTile(
-              icon: Icons.forum_outlined,
-              label: l10n.t('nav_messages'),
-              onTap: () => goTab(MainShellShortcut.openMessageCenterTab),
-            ),
           ],
         ),
       ),

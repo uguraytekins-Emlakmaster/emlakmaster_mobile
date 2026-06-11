@@ -24,25 +24,19 @@ class _ConsultantMoreSheetBody extends StatelessWidget {
 
   static const _destinations = <_MoreDestination>[
     _MoreDestination(
-      pageIndex: 1,
-      icon: Icons.forum_rounded,
-      labelKey: 'nav_messages',
-      subtitleKey: 'more_messages_sub',
-    ),
-    _MoreDestination(
-      pageIndex: 4,
+      pageIndex: 3,
       icon: Icons.home_work_rounded,
       labelKey: 'nav_listings',
       subtitleKey: 'more_listings_sub',
     ),
     _MoreDestination(
-      pageIndex: 5,
+      pageIndex: 4,
       icon: Icons.replay_rounded,
       labelKey: 'nav_followup',
       subtitleKey: 'more_followup_sub',
     ),
     _MoreDestination(
-      pageIndex: 7,
+      pageIndex: 6,
       icon: Icons.settings_rounded,
       labelKey: 'nav_settings',
       subtitleKey: 'more_settings_sub',

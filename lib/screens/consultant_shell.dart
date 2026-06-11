@@ -14,7 +14,6 @@ import 'package:emlakmaster_mobile/screens/consultant_resurrection_page.dart';
 import 'package:emlakmaster_mobile/screens/consultant_shell_nav.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/pages/tasks_page.dart';
 import 'package:emlakmaster_mobile/screens/listings_screen.dart';
-import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_host.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
@@ -40,15 +39,14 @@ class ConsultantShellPage extends StatefulWidget {
   /// Alt menü → [pages] indeksi. Son öğe [kShellNavMoreMenu].
   static const List<int> _navPageIndices = [
     0,
+    1,
     2,
-    3,
-    6,
+    5,
     kShellNavMoreMenu,
   ];
 
   static const List<Widget> _pages = [
     ConsultantDashboardPage(),
-    MessageCenterPage(),
     ConsultantCallsPage(),
     CustomerListPage(),
     ListingsPage(),
@@ -59,7 +57,6 @@ class ConsultantShellPage extends StatefulWidget {
 
   static const List<Object> _tabIds = [
     'summary',
-    'messages',
     'calls',
     'customers',
     'listings',
@@ -105,7 +102,7 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
                   ValueListenableBuilder<int>(
                     valueListenable: _shellPageIndex,
                     builder: (context, pageIndex, _) {
-                      if (pageIndex == 2) return const SizedBox.shrink();
+                      if (pageIndex == 1) return const SizedBox.shrink();
                       return const PostCallCaptureShellStrip();
                     },
                   ),
@@ -128,13 +125,12 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
                 title: l10n.t('workspace_consultant'),
                 shortcutMap: const {
                   MainShellShortcut.openHomeTab: 0,
-                  MainShellShortcut.openMessageCenterTab: 1,
-                  MainShellShortcut.openCallsTab: 2,
-                  MainShellShortcut.openCustomersTab: 3,
-                  MainShellShortcut.openListingsTab: 4,
-                  MainShellShortcut.openFollowUpTab: 5,
-                  MainShellShortcut.openTasksTab: 6,
-                  MainShellShortcut.openAccountTab: 7,
+                  MainShellShortcut.openCallsTab: 1,
+                  MainShellShortcut.openCustomersTab: 2,
+                  MainShellShortcut.openListingsTab: 3,
+                  MainShellShortcut.openFollowUpTab: 4,
+                  MainShellShortcut.openTasksTab: 5,
+                  MainShellShortcut.openAccountTab: 6,
                 },
               ),
             ),

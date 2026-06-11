@@ -91,7 +91,6 @@ void main() {
     await _openPalette(tester, role: AppRole.agent);
     expect(find.text(ProductLabels.myCustomers), findsOneWidget);
     expect(find.text(ProductLabels.myCalls), findsOneWidget);
-    expect(find.text(ProductLabels.messageCenter), findsOneWidget);
     // Admin alanı yok (dürüst omission).
     expect(find.text(ProductLabels.officeDesk), findsNothing);
     expect(find.text(ProductLabels.warRoom), findsNothing);

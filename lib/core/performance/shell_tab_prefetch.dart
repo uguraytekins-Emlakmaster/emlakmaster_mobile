@@ -3,7 +3,6 @@ import 'package:emlakmaster_mobile/features/calls/presentation/providers/consult
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/market_feed_rows_display_provider.dart';
 import 'package:emlakmaster_mobile/features/listings/presentation/providers/owned_listing_rows_display_provider.dart';
-import 'package:emlakmaster_mobile/features/messages/presentation/providers/team_chat_providers.dart';
 import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/providers/resurrection_queue_provider.dart';
 import 'package:emlakmaster_mobile/features/tasks/presentation/providers/advisor_tasks_display_provider.dart';
 import 'package:emlakmaster_mobile/screens/providers/consultant_dashboard_kpi_providers.dart';
@@ -20,9 +19,6 @@ void prefetchShellTab(WidgetRef ref, Object? tabId) {
   switch (id) {
     case 'summary':
       ref.read(todayCallsCountProvider);
-      break;
-    case 'messages':
-      ref.read(teamChannelsProvider);
       break;
     case 'calls':
       ref.read(consultantCallsDisplayProvider);

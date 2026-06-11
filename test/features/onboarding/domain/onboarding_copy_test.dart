@@ -6,11 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('buildOnboardingSlides', () {
-    test('returns seven slides with stable analytics ids', () {
+    test('returns six slides with stable analytics ids', () {
       final l10n = AppLocalizations(const Locale('tr'));
       final slides = buildOnboardingSlides(l10n);
 
-      expect(slides, hasLength(7));
+      expect(slides, hasLength(6));
       expect(
         slides.map((s) => s.analyticsId).toList(),
         [
@@ -20,7 +20,6 @@ void main() {
           'consultant_workspace',
           'calls_meetings',
           'market_listings',
-          'office_ready',
         ],
       );
     });

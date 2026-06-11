@@ -83,7 +83,7 @@ void main() {
         routes: [
           GoRoute(
             path: '/onboarding',
-            builder: (_, __) => const OnboardingPage(initialPage: 6),
+            builder: (_, __) => const OnboardingPage(initialPage: 5),
           ),
           GoRoute(
             path: AppRouter.routeLogin,

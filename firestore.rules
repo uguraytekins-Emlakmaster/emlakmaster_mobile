@@ -384,22 +384,6 @@ service cloud.firestore {
             && request.resource.data.uid == resource.data.uid
             && request.resource.data.role == resource.data.role);
       allow delete: if false;
-
-      match /team_chat_inbox/{inboxId} {
-        allow read: if isOwner(userId);
-        allow create: if isSignedIn()
-          && request.resource.data.recipientId == userId
-          && request.resource.data.senderId == request.auth.uid
-          && request.auth.uid != userId
-          && request.resource.data.officeId is string
-          && request.resource.data.channelId is string
-          && request.resource.data.body is string
-          && request.resource.data.body.size() > 0
-          && isActiveOfficeMember(request.resource.data.officeId);
-        allow update: if isOwner(userId)
-          && resource.data.recipientId == userId;
-        allow delete: if isOwner(userId);
-      }
     }
 
     match /offices/{officeId} {
@@ -412,32 +396,6 @@ service cloud.firestore {
             && officeMembershipDoc(request.auth.uid, officeId).data.role in ['owner', 'admin'])
         || (canManageOfficeMembers(officeId) && officeLogoOnlyUpdate());
       allow delete: if false;
-
-      match /team_channels/{channelId} {
-        allow read: if isSignedIn() && isActiveOfficeMember(officeId);
-        allow create: if isSignedIn() && isActiveOfficeMember(officeId)
-          && request.resource.data.officeId == officeId
-          && request.resource.data.type in ['general', 'direct']
-          && (
-            request.resource.data.type == 'general'
-            || (
-              request.resource.data.type == 'direct'
-              && request.auth.uid in request.resource.data.participantIds
-              && request.resource.data.participantIds.size() == 2
-            )
-          );
-        allow update: if isSignedIn() && isActiveOfficeMember(officeId);
-
-        match /messages/{messageId} {
-          allow read: if isSignedIn() && isActiveOfficeMember(officeId);
-          allow create: if isSignedIn() && isActiveOfficeMember(officeId)
-            && request.resource.data.senderId == request.auth.uid
-            && request.resource.data.text is string
-            && request.resource.data.text.size() > 0
-            && request.resource.data.text.size() <= 4000;
-          allow update, delete: if false;
-        }
-      }
 
       match /platform_setups/{platformKey} {
         allow read: if isSignedIn() && (isManager() || isActiveOfficeMember(officeId));

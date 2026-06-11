@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 /// Danışman kabuğunun tüm ana ekranlarını gezen kapsamlı tur adımları.
 /// [tabIndex] değerleri `ConsultantShellPage` `pages` indeksleridir:
-/// 0=Günüm, 1=Mesajlar, 2=Çağrılar, 3=Müşteriler, 6=Görevler, 7=Ayarlar.
+/// 0=Günüm, 1=Çağrılar, 2=Müşteriler, 5=Görevler, 6=Ayarlar.
 /// Hedefi o an ekranda olmayan adımlar tur tarafından zarifçe atlanır.
 List<CoachMarkStep> buildConsultantTourSteps(AppLocalizations l10n) {
   return [
@@ -24,32 +24,25 @@ List<CoachMarkStep> buildConsultantTourSteps(AppLocalizations l10n) {
       body: l10n.t('tour_csl_quick_body'),
     ),
     CoachMarkStep(
-      tabIndex: 3,
+      tabIndex: 2,
       targetId: TourTargetId.customersHeader,
       icon: Icons.people_rounded,
       title: l10n.t('tour_csl_customers_title'),
       body: l10n.t('tour_csl_customers_body'),
     ),
     CoachMarkStep(
-      tabIndex: 2,
+      tabIndex: 1,
       targetId: TourTargetId.callsHeader,
       icon: Icons.call_rounded,
       title: l10n.t('tour_csl_calls_title'),
       body: l10n.t('tour_csl_calls_body'),
     ),
     CoachMarkStep(
-      tabIndex: 6,
+      tabIndex: 5,
       targetId: TourTargetId.tasksHeader,
       icon: Icons.task_alt_rounded,
       title: l10n.t('tour_csl_tasks_title'),
       body: l10n.t('tour_csl_tasks_body'),
-    ),
-    CoachMarkStep(
-      tabIndex: 1,
-      targetId: TourTargetId.messagesHeader,
-      icon: Icons.forum_rounded,
-      title: l10n.t('tour_messages_title'),
-      body: l10n.t('tour_messages_body'),
     ),
     CoachMarkStep(
       targetId: TourTargetId.shellBottomNav,
@@ -58,7 +51,7 @@ List<CoachMarkStep> buildConsultantTourSteps(AppLocalizations l10n) {
       body: l10n.t('tour_csl_nav_body'),
     ),
     CoachMarkStep(
-      tabIndex: 7,
+      tabIndex: 6,
       targetId: TourTargetId.settingsHeader,
       icon: Icons.settings_rounded,
       title: l10n.t('title_settings'),

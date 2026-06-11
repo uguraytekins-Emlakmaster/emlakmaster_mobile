@@ -145,12 +145,11 @@ Widget _auditWithDockHarness() {
       bottomNavigationBar: PremiumBottomNavDock(
         items: const [
           AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.managerHome),
-          AdaptiveNavItem(Icons.forum_rounded, ProductLabels.messageCenter),
           AdaptiveNavItem(Icons.military_tech_rounded, ProductLabels.warRoom),
           AdaptiveNavItem(Icons.call_rounded, ProductLabels.callCenter),
           AdaptiveNavItem(Icons.analytics_rounded, ProductLabels.reports),
         ],
-        selectedIndex: 4,
+        selectedIndex: 3,
         onTap: (_) {},
       ),
     ),
@@ -165,13 +164,11 @@ Widget _realAdminShellHarness() {
     title: ProductLabels.managerWorkspace,
     navItems: const [
       AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.managerHome),
-      AdaptiveNavItem(Icons.forum_rounded, ProductLabels.messageCenter),
       AdaptiveNavItem(Icons.military_tech_rounded, ProductLabels.warRoom),
       AdaptiveNavItem(Icons.call_rounded, ProductLabels.callCenter),
       AdaptiveNavItem(Icons.analytics_rounded, ProductLabels.reports),
     ],
     pages: const [
-      SizedBox.shrink(),
       SizedBox.shrink(),
       SizedBox.shrink(),
       SizedBox.shrink(),
@@ -307,7 +304,7 @@ void main() {
       size: _phoneSize,
     );
 
-    _shellKey.currentState?.jumpToTab(4);
+    _shellKey.currentState?.jumpToTab(3);
     await tester.pumpAndSettle();
 
     expect(find.text('İşlem Kayıtları'), findsOneWidget);

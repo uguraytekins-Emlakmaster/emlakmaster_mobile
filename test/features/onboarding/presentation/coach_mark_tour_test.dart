@@ -241,7 +241,6 @@ void main() {
     expect(ids, contains(TourTargetId.customersHeader));
     expect(ids, contains(TourTargetId.callsHeader));
     expect(ids, contains(TourTargetId.tasksHeader));
-    expect(ids, contains(TourTargetId.messagesHeader));
     expect(ids, contains(TourTargetId.settingsHeader));
   });
 }

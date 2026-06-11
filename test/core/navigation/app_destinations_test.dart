@@ -30,7 +30,6 @@ void main() {
         'listings',
         'follow_up',
         'my_tasks',
-        'message_center',
         'settings',
       }));
       // Admin-only ve müşteri-only alanlar YOK.
@@ -49,7 +48,6 @@ void main() {
         'command_center',
         'war_room',
         'operations_deck',
-        'message_center',
         'settings',
       }));
       // Danışman/müşteri sekmeleri YOK.

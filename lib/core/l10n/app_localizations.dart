@@ -389,12 +389,6 @@ class AppLocalizations {
       'onboarding_market_subtitle':
           'İlan portföyü, bölge içgörüsü ve analitik raporlar.',
       'onboarding_market_highlights': 'İlanlar|Bölge içgörüsü|Analitik|İçe aktarma',
-      'onboarding_office_title': 'Ofis, mesajlar ve hazırsınız',
-      'onboarding_office_subtitle':
-          'Ofis oluşturun veya katılın; Mesaj Merkezi ile ekip uyumu. Giriş türünüzü seçin.',
-      'onboarding_office_highlights':
-          'Ofis masası|Mesaj Merkezi|Senkron|Giriş türü',
-
       // === Navigation actions ===
       'exit_app_title': 'Uygulamadan çıkılsın mı?',
       'exit_app_subtitle': 'Geri tuşuna tekrar basarak çıkabilirsiniz.',
@@ -459,7 +453,6 @@ class AppLocalizations {
       'nav_home_consultant': 'Günüm',
       'nav_home_manager': 'Komuta Merkezi',
       'nav_calls': 'Çağrılarım',
-      'nav_messages': 'Mesaj Merkezi',
       'nav_followup': 'Takip',
       'nav_settings': 'Ayarlar',
       'nav_war_room': 'Komuta Odası',
@@ -469,7 +462,6 @@ class AppLocalizations {
       'workspace_manager': 'Yönetici Paneli',
       'workspace_consultant': 'Danışman Paneli',
       'more_subtitle': 'Diğer çalışma alanları',
-      'more_messages_sub': 'Ekip sohbeti ve bildirimler',
       'more_listings_sub': 'Portföy ve ilan yönetimi',
       'more_followup_sub': 'Takip ve yeniden temas',
       'more_settings_sub': 'Hesap ve uygulama ayarları',
@@ -787,9 +779,6 @@ class AppLocalizations {
       'tour_csl_tasks_title': 'Görevlerim',
       'tour_csl_tasks_body':
           'Geciken ve bugünkü görevlerin önceliklenmiş halde. Yeni görev ekleyip müşteriye bağlayabilirsin.',
-      'tour_messages_title': 'Mesaj Merkezi',
-      'tour_messages_body':
-          'Ekip sohbeti canlı; harici kanallar bağlandığında müşteri mesajları da burada toplanır.',
       'tour_csl_nav_title': 'Alt menü',
       'tour_csl_nav_body':
           'Bölümler arasında buradan geçersin. "Daha Fazla" altında ilan portföyü, takip ve ayarlar yer alır.',
@@ -815,7 +804,7 @@ class AppLocalizations {
           'Yönetici raporları ve içgörü yüzeyleri tek navigasyon altında toplanır; performansı buradan derinlemesine incelersin.',
       'tour_mgr_nav_title': 'Panel menüsü',
       'tour_mgr_nav_body':
-          'Bölümler arasında buradan geçersin: Komuta Merkezi, Mesaj Merkezi, raporlar ve ayarlar tek dokunuş uzağında.',
+          'Bölümler arasında buradan geçersin: Komuta Merkezi, raporlar ve ayarlar tek dokunuş uzağında.',
       'tour_mgr_settings_body': 'Tema, dil ve gelişmiş panel ayarları burada.',
 
       // Common empty / error
@@ -1149,12 +1138,6 @@ class AppLocalizations {
           'Listing portfolio, regional insight, and analytics reports.',
       'onboarding_market_highlights':
           'Listings|Regional insight|Analytics|Import',
-      'onboarding_office_title': 'Office, messages, and you are set',
-      'onboarding_office_subtitle':
-          'Create or join an office; team alignment via Message Center. Choose how you sign in.',
-      'onboarding_office_highlights':
-          'Office desk|Message Center|Sync|Sign-in type',
-
       // === Navigation actions ===
       'exit_app_title': 'Exit application?',
       'exit_app_subtitle': 'Press back again to exit.',
@@ -1221,7 +1204,6 @@ class AppLocalizations {
       'nav_home_consultant': 'My Day',
       'nav_home_manager': 'Command Center',
       'nav_calls': 'My Calls',
-      'nav_messages': 'Message Center',
       'nav_followup': 'Follow-up',
       'nav_settings': 'Settings',
       'nav_war_room': 'War Room',
@@ -1231,7 +1213,6 @@ class AppLocalizations {
       'workspace_manager': 'Manager Panel',
       'workspace_consultant': 'Consultant Panel',
       'more_subtitle': 'Other workspaces',
-      'more_messages_sub': 'Team chat and notifications',
       'more_listings_sub': 'Portfolio and listing management',
       'more_followup_sub': 'Follow-up and re-contact',
       'more_settings_sub': 'Account and app settings',
@@ -1547,9 +1528,6 @@ class AppLocalizations {
       'tour_csl_tasks_title': 'My Tasks',
       'tour_csl_tasks_body':
           'Overdue and today\'s tasks are prioritized here. Add tasks and link them to customers.',
-      'tour_messages_title': 'Message Center',
-      'tour_messages_body':
-          'Team chat is live; when external channels connect, customer messages collect here too.',
       'tour_csl_nav_title': 'Bottom menu',
       'tour_csl_nav_body':
           'Navigate between sections here. Under "More" you\'ll find listings, follow-ups, and settings.',
@@ -1574,7 +1552,7 @@ class AppLocalizations {
           'Manager reports and insight surfaces are under one navigation; deep-dive into performance here.',
       'tour_mgr_nav_title': 'Panel menu',
       'tour_mgr_nav_body':
-          'Navigate between sections: Command Center, Message Center, reports, and settings are one tap away.',
+          'Navigate between sections: Command Center, reports, and settings are one tap away.',
       'tour_mgr_settings_body': 'Theme, language, and advanced panel settings are here.',
 
       'data_updating': 'Updating data…',
@@ -1914,11 +1892,6 @@ const Map<String, String> _de = {
       'Anzeigen-Portfolio, regionale Insights und Analyseberichte.',
   'onboarding_market_highlights':
       'Anzeigen|Regionale Insights|Analytik|Import',
-  'onboarding_office_title': 'Büro, Nachrichten und fertig',
-  'onboarding_office_subtitle':
-      'Büro erstellen oder beitreten; Teamabstimmung über das Nachrichtenzentrum. Wählen Sie Ihre Anmeldeart.',
-  'onboarding_office_highlights':
-      'Bürotisch|Nachrichtenzentrum|Synchronisierung|Anmeldeart',
   // === Navigation actions ===
   'exit_app_title': 'App beenden?',
   'exit_app_subtitle': 'Drücken Sie erneut Zurück, um zu beenden.',
@@ -1977,7 +1950,6 @@ const Map<String, String> _de = {
   'nav_home_consultant': 'Mein Tag',
   'nav_home_manager': 'Kommandozentrale',
   'nav_calls': 'Meine Anrufe',
-  'nav_messages': 'Nachrichtenzentrale',
   'nav_followup': 'Nachfassen',
   'nav_settings': 'Einstellungen',
   'nav_war_room': 'Einsatzzentrale',
@@ -1987,7 +1959,6 @@ const Map<String, String> _de = {
   'workspace_manager': 'Manager-Panel',
   'workspace_consultant': 'Berater-Panel',
   'more_subtitle': 'Weitere Arbeitsbereiche',
-  'more_messages_sub': 'Team-Chat und Benachrichtigungen',
   'more_listings_sub': 'Portfolio- und Angebotsverwaltung',
   'more_followup_sub': 'Nachfassen und erneuter Kontakt',
   'more_settings_sub': 'Konto- und App-Einstellungen',
@@ -2267,8 +2238,6 @@ const Map<String, String> _de = {
   'tour_csl_calls_body': 'Letzte Anrufe, ausstehende Rückrufe und Schnellwahl hier. Tippen für Anruf.',
   'tour_csl_tasks_title': 'Meine Aufgaben',
   'tour_csl_tasks_body': 'Überfällige und heutige Aufgaben priorisiert. Aufgaben hinzufügen und Kunden verknüpfen.',
-  'tour_messages_title': 'Nachrichtenzentrum',
-  'tour_messages_body': 'Team-Chat ist live; externe Kanäle sammeln Kundennachrichten hier, wenn verbunden.',
   'tour_csl_nav_title': 'Unteres Menü',
   'tour_csl_nav_body': 'Zwischen Bereichen navigieren. Unter "Mehr" finden Sie Angebote, Nachverfolgung und Einstellungen.',
   'tour_csl_settings_body': 'Design, Sprache und Planeinstellungen hier. Tour jederzeit über "Tour wiederholen" neu starten.',
@@ -2285,7 +2254,7 @@ const Map<String, String> _de = {
   'tour_mgr_reports_title': 'Berichte',
   'tour_mgr_reports_body': 'Manager-Berichte und Einblicksflächen unter einer Navigation; Performance tief analysieren.',
   'tour_mgr_nav_title': 'Panel-Menü',
-  'tour_mgr_nav_body': 'Zwischen Bereichen navigieren: Kommandozentrale, Nachrichtenzentrum, Berichte und Einstellungen.',
+  'tour_mgr_nav_body': 'Zwischen Bereichen navigieren: Kommandozentrale, Berichte und Einstellungen.',
   'tour_mgr_settings_body': 'Design, Sprache und erweiterte Panel-Einstellungen hier.',
 
   'data_updating': 'Daten werden aktualisiert…',
@@ -2615,11 +2584,6 @@ const Map<String, String> _fr = {
       'Portefeuille d\'annonces, analyses régionales et rapports analytiques.',
   'onboarding_market_highlights':
       'Annonces|Analyse régionale|Analytique|Import',
-  'onboarding_office_title': 'Bureau, messages et c\'est prêt',
-  'onboarding_office_subtitle':
-      'Créez ou rejoignez un bureau ; alignement de l\'équipe via le Centre de messages. Choisissez votre type de connexion.',
-  'onboarding_office_highlights':
-      'Bureau|Centre de messages|Synchronisation|Type de connexion',
   'exit_app_title': 'Quitter l\'application ?',
   'exit_app_subtitle': 'Appuyez à nouveau sur Retour pour quitter.',
   'action_stay': 'Rester',
@@ -2677,7 +2641,6 @@ const Map<String, String> _fr = {
   'nav_home_consultant': 'Ma journée',
   'nav_home_manager': 'Centre de commande',
   'nav_calls': 'Mes appels',
-  'nav_messages': 'Centre de messages',
   'nav_followup': 'Suivi',
   'nav_settings': 'Paramètres',
   'nav_war_room': 'Salle de crise',
@@ -2687,7 +2650,6 @@ const Map<String, String> _fr = {
   'workspace_manager': 'Panneau gestionnaire',
   'workspace_consultant': 'Panneau conseiller',
   'more_subtitle': 'Autres espaces de travail',
-  'more_messages_sub': 'Chat d\'équipe et notifications',
   'more_listings_sub': 'Gestion du portefeuille et des annonces',
   'more_followup_sub': 'Suivi et reprise de contact',
   'more_settings_sub': 'Paramètres du compte et de l\'application',
@@ -2967,8 +2929,6 @@ const Map<String, String> _fr = {
   'tour_csl_calls_body': 'Appels récents, rappels en attente et numérotation rapide ici.',
   'tour_csl_tasks_title': 'Mes tâches',
   'tour_csl_tasks_body': 'Tâches en retard et du jour priorisées. Ajoutez des tâches et liez-les aux clients.',
-  'tour_messages_title': 'Centre de messages',
-  'tour_messages_body': 'Chat d\'équipe en direct ; les canaux externes collectent les messages clients ici.',
   'tour_csl_nav_title': 'Menu du bas',
   'tour_csl_nav_body': 'Naviguez entre les sections. Sous "Plus" vous trouverez annonces, suivi et paramètres.',
   'tour_csl_settings_body': 'Thème, langue et plan ici. Redémarrez cette visite via "Rejouer la visite".',
@@ -2985,7 +2945,7 @@ const Map<String, String> _fr = {
   'tour_mgr_reports_title': 'Rapports',
   'tour_mgr_reports_body': 'Rapports manager et surfaces d\'insight sous une navigation ; analysez en profondeur.',
   'tour_mgr_nav_title': 'Menu du panel',
-  'tour_mgr_nav_body': 'Naviguez entre : Centre de commande, Centre de messages, rapports et paramètres.',
+  'tour_mgr_nav_body': 'Naviguez entre : Centre de commande, rapports et paramètres.',
   'tour_mgr_settings_body': 'Thème, langue et paramètres avancés du panel ici.',
 
   'data_updating': 'Mise à jour des données…',
@@ -3313,11 +3273,6 @@ const Map<String, String> _es = {
       'Portafolio de anuncios, análisis regional e informes analíticos.',
   'onboarding_market_highlights':
       'Anuncios|Análisis regional|Analítica|Importación',
-  'onboarding_office_title': 'Oficina, mensajes y listo',
-  'onboarding_office_subtitle':
-      'Crea o únete a una oficina; alineación del equipo vía Centro de mensajes. Elige cómo iniciar sesión.',
-  'onboarding_office_highlights':
-      'Mesa de oficina|Centro de mensajes|Sincronización|Tipo de inicio de sesión',
   'exit_app_title': '¿Salir de la aplicación?',
   'exit_app_subtitle': 'Presione Atrás de nuevo para salir.',
   'action_stay': 'Quedarme',
@@ -3375,7 +3330,6 @@ const Map<String, String> _es = {
   'nav_home_consultant': 'Mi día',
   'nav_home_manager': 'Centro de mando',
   'nav_calls': 'Mis llamadas',
-  'nav_messages': 'Centro de mensajes',
   'nav_followup': 'Seguimiento',
   'nav_settings': 'Ajustes',
   'nav_war_room': 'Sala de mando',
@@ -3385,7 +3339,6 @@ const Map<String, String> _es = {
   'workspace_manager': 'Panel de gerente',
   'workspace_consultant': 'Panel de asesor',
   'more_subtitle': 'Otros espacios de trabajo',
-  'more_messages_sub': 'Chat de equipo y notificaciones',
   'more_listings_sub': 'Gestión de cartera y anuncios',
   'more_followup_sub': 'Seguimiento y nuevo contacto',
   'more_settings_sub': 'Ajustes de cuenta y aplicación',
@@ -3665,8 +3618,6 @@ const Map<String, String> _es = {
   'tour_csl_calls_body': 'Llamadas recientes, devoluciones pendientes y marcación rápida aquí.',
   'tour_csl_tasks_title': 'Mis tareas',
   'tour_csl_tasks_body': 'Tareas vencidas y de hoy priorizadas. Añade tareas y vincúlalas a clientes.',
-  'tour_messages_title': 'Centro de mensajes',
-  'tour_messages_body': 'Chat de equipo en vivo; los canales externos recopilan mensajes de clientes aquí.',
   'tour_csl_nav_title': 'Menú inferior',
   'tour_csl_nav_body': 'Navega entre secciones. Bajo "Más" encontrarás listados, seguimiento y configuración.',
   'tour_csl_settings_body': 'Tema, idioma y plan aquí. Reinicia este tour vía "Repetir el tour".',
@@ -3683,7 +3634,7 @@ const Map<String, String> _es = {
   'tour_mgr_reports_title': 'Informes',
   'tour_mgr_reports_body': 'Informes de gerente e insights bajo una navegación; analiza el rendimiento en profundidad.',
   'tour_mgr_nav_title': 'Menú del panel',
-  'tour_mgr_nav_body': 'Navega entre: Centro de mando, Centro de mensajes, informes y configuración.',
+  'tour_mgr_nav_body': 'Navega entre: Centro de mando, informes y configuración.',
   'tour_mgr_settings_body': 'Tema, idioma y configuración avanzada del panel aquí.',
 
   'data_updating': 'Actualizando datos…',
@@ -3994,11 +3945,6 @@ const Map<String, String> _ar = {
   'onboarding_market_subtitle':
       'محفظة الإعلانات والرؤى الإقليمية وتقارير التحليلات.',
   'onboarding_market_highlights': 'الإعلانات|رؤى إقليمية|التحليلات|الاستيراد',
-  'onboarding_office_title': 'المكتب والرسائل وأنت جاهز',
-  'onboarding_office_subtitle':
-      'أنشئ مكتباً أو انضم إليه؛ مواءمة الفريق عبر مركز الرسائل. اختر طريقة تسجيل الدخول.',
-  'onboarding_office_highlights':
-      'مكتب العمل|مركز الرسائل|المزامنة|نوع تسجيل الدخول',
   'exit_app_title': 'الخروج من التطبيق؟',
   'exit_app_subtitle': 'اضغط رجوع مرة أخرى للخروج.',
   'action_stay': 'البقاء',
@@ -4056,7 +4002,6 @@ const Map<String, String> _ar = {
   'nav_home_consultant': 'يومي',
   'nav_home_manager': 'مركز القيادة',
   'nav_calls': 'مكالماتي',
-  'nav_messages': 'مركز الرسائل',
   'nav_followup': 'المتابعة',
   'nav_settings': 'الإعدادات',
   'nav_war_room': 'غرفة العمليات',
@@ -4066,7 +4011,6 @@ const Map<String, String> _ar = {
   'workspace_manager': 'لوحة المدير',
   'workspace_consultant': 'لوحة المستشار',
   'more_subtitle': 'مساحات عمل أخرى',
-  'more_messages_sub': 'دردشة الفريق والإشعارات',
   'more_listings_sub': 'إدارة المحفظة والإعلانات',
   'more_followup_sub': 'المتابعة وإعادة التواصل',
   'more_settings_sub': 'إعدادات الحساب والتطبيق',
@@ -4346,8 +4290,6 @@ const Map<String, String> _ar = {
   'tour_csl_calls_body': 'المكالمات الأخيرة والمكالمات المعلقة والاتصال السريع هنا.',
   'tour_csl_tasks_title': 'مهامي',
   'tour_csl_tasks_body': 'المهام المتأخرة ومهام اليوم ذات الأولوية. أضف مهاماً وربطها بالعملاء.',
-  'tour_messages_title': 'مركز الرسائل',
-  'tour_messages_body': 'دردشة الفريق مباشرة؛ تتجمع رسائل العملاء هنا عند الاتصال بالقنوات الخارجية.',
   'tour_csl_nav_title': 'القائمة السفلية',
   'tour_csl_nav_body': 'تنقل بين الأقسام. تحت "المزيد" ستجد العقارات والمتابعة والإعدادات.',
   'tour_csl_settings_body': 'المظهر واللغة والخطة هنا. أعد تشغيل هذه الجولة عبر "إعادة الجولة".',
@@ -4364,7 +4306,7 @@ const Map<String, String> _ar = {
   'tour_mgr_reports_title': 'التقارير',
   'tour_mgr_reports_body': 'تقارير المدير وأسطح الرؤى تحت تنقل واحد؛ حلل الأداء بعمق.',
   'tour_mgr_nav_title': 'قائمة اللوحة',
-  'tour_mgr_nav_body': 'تنقل بين: مركز القيادة ومركز الرسائل والتقارير والإعدادات.',
+  'tour_mgr_nav_body': 'تنقل بين: مركز القيادة والتقارير والإعدادات.',
   'tour_mgr_settings_body': 'المظهر واللغة وإعدادات اللوحة المتقدمة هنا.',
 
   'data_updating': 'جاري تحديث البيانات…',
@@ -4690,11 +4632,6 @@ const Map<String, String> _ru = {
       'Портфель объявлений, региональная аналитика и отчёты.',
   'onboarding_market_highlights':
       'Объявления|Региональная аналитика|Аналитика|Импорт',
-  'onboarding_office_title': 'Офис, сообщения — и всё готово',
-  'onboarding_office_subtitle':
-      'Создайте офис или присоединитесь к нему; согласование команды через Центр сообщений. Выберите способ входа.',
-  'onboarding_office_highlights':
-      'Стол офиса|Центр сообщений|Синхронизация|Тип входа',
   'exit_app_title': 'Выйти из приложения?',
   'exit_app_subtitle': 'Нажмите «Назад» ещё раз для выхода.',
   'action_stay': 'Остаться',
@@ -4752,7 +4689,6 @@ const Map<String, String> _ru = {
   'nav_home_consultant': 'Мой день',
   'nav_home_manager': 'Командный центр',
   'nav_calls': 'Мои звонки',
-  'nav_messages': 'Центр сообщений',
   'nav_followup': 'Повторный контакт',
   'nav_settings': 'Настройки',
   'nav_war_room': 'Ситуационный центр',
@@ -4762,7 +4698,6 @@ const Map<String, String> _ru = {
   'workspace_manager': 'Панель менеджера',
   'workspace_consultant': 'Панель консультанта',
   'more_subtitle': 'Другие рабочие области',
-  'more_messages_sub': 'Командный чат и уведомления',
   'more_listings_sub': 'Управление портфелем и объявлениями',
   'more_followup_sub': 'Повторный контакт и отслеживание',
   'more_settings_sub': 'Настройки аккаунта и приложения',
@@ -5042,8 +4977,6 @@ const Map<String, String> _ru = {
   'tour_csl_calls_body': 'Последние звонки, ожидающие обратного звонка и быстрый набор здесь.',
   'tour_csl_tasks_title': 'Мои задачи',
   'tour_csl_tasks_body': 'Просроченные и сегодняшние задачи приоритизированы. Добавляйте задачи и связывайте с клиентами.',
-  'tour_messages_title': 'Центр сообщений',
-  'tour_messages_body': 'Живой чат команды; сообщения клиентов собираются здесь при подключении внешних каналов.',
   'tour_csl_nav_title': 'Нижнее меню',
   'tour_csl_nav_body': 'Переходите между разделами. Под «Ещё» найдёте объекты, отслеживание и настройки.',
   'tour_csl_settings_body': 'Тема, язык и тариф здесь. Перезапустите тур через «Повторить тур».',
@@ -5060,7 +4993,7 @@ const Map<String, String> _ru = {
   'tour_mgr_reports_title': 'Отчёты',
   'tour_mgr_reports_body': 'Отчёты менеджера и аналитика под единой навигацией; глубокий анализ производительности.',
   'tour_mgr_nav_title': 'Меню панели',
-  'tour_mgr_nav_body': 'Переходите между: Командным центром, Центром сообщений, Отчётами и Настройками.',
+  'tour_mgr_nav_body': 'Переходите между: Командным центром, Отчётами и Настройками.',
   'tour_mgr_settings_body': 'Тема, язык и расширенные настройки панели здесь.',
 
   'data_updating': 'Обновление данных…',
@@ -5385,11 +5318,6 @@ const Map<String, String> _az = {
   'onboarding_market_subtitle':
       'Elan portfeli, regional içgörü və analitik hesabatlar.',
   'onboarding_market_highlights': 'Elanlar|Regional içgörü|Analitika|İdxal',
-  'onboarding_office_title': 'Ofis, mesajlar və hazırsınız',
-  'onboarding_office_subtitle':
-      'Ofis yaradın və ya qoşulun; Mesaj Mərkəzi ilə komanda uyğunluğu. Giriş növünüzü seçin.',
-  'onboarding_office_highlights':
-      'Ofis masası|Mesaj Mərkəzi|Sinxron|Giriş növü',
   'exit_app_title': 'Tətbiqdən çıxılsın mı?',
   'exit_app_subtitle': 'Çıxmaq üçün Geri düyməsinə yenidən basın.',
   'action_stay': 'Qal',
@@ -5447,7 +5375,6 @@ const Map<String, String> _az = {
   'nav_home_consultant': 'Günüm',
   'nav_home_manager': 'Komanda Mərkəzi',
   'nav_calls': 'Zənglərim',
-  'nav_messages': 'Mesaj Mərkəzi',
   'nav_followup': 'İzləmə',
   'nav_settings': 'Tənzimləmələr',
   'nav_war_room': 'Əməliyyat Otağı',
@@ -5457,7 +5384,6 @@ const Map<String, String> _az = {
   'workspace_manager': 'Menecer Paneli',
   'workspace_consultant': 'Məsləhətçi Paneli',
   'more_subtitle': 'Digər iş sahələri',
-  'more_messages_sub': 'Komanda söhbəti və bildirişlər',
   'more_listings_sub': 'Portfel və elan idarəetməsi',
   'more_followup_sub': 'İzləmə və yenidən əlaqə',
   'more_settings_sub': 'Hesab və tətbiq tənzimləmələri',
@@ -5737,8 +5663,6 @@ const Map<String, String> _az = {
   'tour_csl_calls_body': 'Son zənglər, gözləyən cavab zəngləri və sürətli zəng buradadır.',
   'tour_csl_tasks_title': 'Tapşırıqlarım',
   'tour_csl_tasks_body': 'Vaxtı keçmiş və bugünkü tapşırıqlar prioritetləndirilmiş. Tapşırıqlar əlavə edin, müştərilərlə əlaqələndirin.',
-  'tour_messages_title': 'Mesaj mərkəzi',
-  'tour_messages_body': 'Canlı komanda söhbəti; xarici kanallar qoşulduqda müştəri mesajları buraya toplanır.',
   'tour_csl_nav_title': 'Alt menyu',
   'tour_csl_nav_body': 'Bölmələr arasında keçin. "Daha çox" altında elanlar, izlənmə və tənzimləmə tapacaqsınız.',
   'tour_csl_settings_body': 'Tema, dil və plan buradadır. Bu turu "Turu təkrar et" vasitəsilə yenidən başladın.',
@@ -5755,7 +5679,7 @@ const Map<String, String> _az = {
   'tour_mgr_reports_title': 'Hesabatlar',
   'tour_mgr_reports_body': 'Menecer hesabatları və analitika vahid naviqasiya altında; performansı dərindən təhlil edin.',
   'tour_mgr_nav_title': 'Panel menyusu',
-  'tour_mgr_nav_body': 'Arasında keçin: Komanda mərkəzi, Mesaj mərkəzi, Hesabatlar və Tənzimləmə.',
+  'tour_mgr_nav_body': 'Arasında keçin: Komanda mərkəzi, Hesabatlar və Tənzimləmə.',
   'tour_mgr_settings_body': 'Tema, dil və qabaqcıl panel tənzimləmələri buradadır.',
 
   'data_updating': 'Məlumatlar yenilənir…',
@@ -6082,11 +6006,6 @@ const Map<String, String> _nl = {
       'Advertentieportfolio, regionaal inzicht en analyserapporten.',
   'onboarding_market_highlights':
       'Advertenties|Regionaal inzicht|Analyse|Import',
-  'onboarding_office_title': 'Kantoor, berichten en u bent klaar',
-  'onboarding_office_subtitle':
-      'Maak of word lid van een kantoor; teamafstemming via het Berichtencentrum. Kies hoe u zich aanmeldt.',
-  'onboarding_office_highlights':
-      'Kantoorbalie|Berichtencentrum|Synchronisatie|Aanmeldtype',
   'exit_app_title': 'App afsluiten?',
   'exit_app_subtitle': 'Druk nogmaals op Terug om af te sluiten.',
   'action_stay': 'Blijven',
@@ -6144,7 +6063,6 @@ const Map<String, String> _nl = {
   'nav_home_consultant': 'Mijn dag',
   'nav_home_manager': 'Commandocentrum',
   'nav_calls': 'Mijn oproepen',
-  'nav_messages': 'Berichtencentrum',
   'nav_followup': 'Opvolging',
   'nav_settings': 'Instellingen',
   'nav_war_room': 'Commandokamer',
@@ -6154,7 +6072,6 @@ const Map<String, String> _nl = {
   'workspace_manager': 'Managerpaneel',
   'workspace_consultant': 'Adviseurspaneel',
   'more_subtitle': 'Andere werkruimten',
-  'more_messages_sub': 'Teamchat en meldingen',
   'more_listings_sub': 'Portefeuille- en advertentiebeheer',
   'more_followup_sub': 'Opvolging en heraanknopen',
   'more_settings_sub': 'Account- en app-instellingen',
@@ -6434,8 +6351,6 @@ const Map<String, String> _nl = {
   'tour_csl_calls_body': 'Recente gesprekken, openstaande terugbelverzoeken en snel bellen hier.',
   'tour_csl_tasks_title': 'Mijn taken',
   'tour_csl_tasks_body': 'Verlopen en dagelijkse taken geprioriteerd. Voeg taken toe en koppel ze aan klanten.',
-  'tour_messages_title': 'Berichtencentrum',
-  'tour_messages_body': 'Live teamchat; externe kanalen verzamelen klantberichten hier.',
   'tour_csl_nav_title': 'Onderste menu',
   'tour_csl_nav_body': 'Navigeer tussen secties. Onder "Meer" vindt u vermeldingen, tracking en instellingen.',
   'tour_csl_settings_body': 'Thema, taal en plan hier. Herstart deze rondleiding via "Rondleiding herspelen".',
@@ -6452,7 +6367,7 @@ const Map<String, String> _nl = {
   'tour_mgr_reports_title': 'Rapporten',
   'tour_mgr_reports_body': 'Managerrapporten en inzichten onder één navigatie; analyseer prestaties diepgaand.',
   'tour_mgr_nav_title': 'Dashboardmenu',
-  'tour_mgr_nav_body': 'Navigeer tussen: Commandocentrum, Berichtencentrum, Rapporten en Instellingen.',
+  'tour_mgr_nav_body': 'Navigeer tussen: Commandocentrum, Rapporten en Instellingen.',
   'tour_mgr_settings_body': 'Thema, taal en geavanceerde dashboardinstellingen hier.',
 
   'data_updating': 'Gegevens bijwerken…',
@@ -6779,11 +6694,6 @@ const Map<String, String> _pt = {
       'Portfólio de anúncios, insight regional e relatórios analíticos.',
   'onboarding_market_highlights':
       'Anúncios|Insight regional|Análise|Importação',
-  'onboarding_office_title': 'Escritório, mensagens e está pronto',
-  'onboarding_office_subtitle':
-      'Crie ou junte-se a um escritório; alinhamento da equipa via Central de Mensagens. Escolha como inicia sessão.',
-  'onboarding_office_highlights':
-      'Balcão do escritório|Central de Mensagens|Sincronização|Tipo de início de sessão',
   'exit_app_title': 'Sair da aplicação?',
   'exit_app_subtitle': 'Prima Voltar novamente para sair.',
   'action_stay': 'Ficar',
@@ -6841,7 +6751,6 @@ const Map<String, String> _pt = {
   'nav_home_consultant': 'Meu dia',
   'nav_home_manager': 'Centro de comando',
   'nav_calls': 'Minhas chamadas',
-  'nav_messages': 'Central de mensagens',
   'nav_followup': 'Acompanhamento',
   'nav_settings': 'Configurações',
   'nav_war_room': 'Sala de operações',
@@ -6851,7 +6760,6 @@ const Map<String, String> _pt = {
   'workspace_manager': 'Painel do gestor',
   'workspace_consultant': 'Painel do consultor',
   'more_subtitle': 'Outros espaços de trabalho',
-  'more_messages_sub': 'Chat da equipe e notificações',
   'more_listings_sub': 'Gestão de portfólio e anúncios',
   'more_followup_sub': 'Acompanhamento e novo contato',
   'more_settings_sub': 'Configurações de conta e aplicativo',
@@ -7131,8 +7039,6 @@ const Map<String, String> _pt = {
   'tour_csl_calls_body': 'Chamadas recentes, devoluções pendentes e marcação rápida aqui.',
   'tour_csl_tasks_title': 'As minhas tarefas',
   'tour_csl_tasks_body': 'Tarefas em atraso e de hoje priorizadas. Adicione tarefas e ligue-as a clientes.',
-  'tour_messages_title': 'Centro de mensagens',
-  'tour_messages_body': 'Chat de equipa em direto; canais externos recolhem mensagens de clientes aqui.',
   'tour_csl_nav_title': 'Menu inferior',
   'tour_csl_nav_body': 'Navegue entre secções. Em "Mais" encontrará anúncios, acompanhamento e definições.',
   'tour_csl_settings_body': 'Tema, idioma e plano aqui. Reinicie este tour via "Repetir tour".',
@@ -7149,7 +7055,7 @@ const Map<String, String> _pt = {
   'tour_mgr_reports_title': 'Relatórios',
   'tour_mgr_reports_body': 'Relatórios de gestor e insights sob uma navegação; analise o desempenho em profundidade.',
   'tour_mgr_nav_title': 'Menu do painel',
-  'tour_mgr_nav_body': 'Navegue entre: Centro de comando, Centro de mensagens, Relatórios e Definições.',
+  'tour_mgr_nav_body': 'Navegue entre: Centro de comando, Relatórios e Definições.',
   'tour_mgr_settings_body': 'Tema, idioma e definições avançadas do painel aqui.',
 
   'data_updating': 'A atualizar dados…',

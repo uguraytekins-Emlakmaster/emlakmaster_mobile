@@ -149,10 +149,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   Color _accentForSlide(OnboardingSlideModel slide, AppThemeExtension ext) {
     if (slide.accent != null) return slide.accent!;
-    if (_persona == LoginEntryPersona.consultant &&
-        slide.visual == OnboardingVisualKind.messagesOfficeReady) {
-      return Color.lerp(ext.brandPrimary, ext.info, 0.45)!;
-    }
     return ext.brandPrimary;
   }
 

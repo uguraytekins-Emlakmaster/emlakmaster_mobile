@@ -6,15 +6,12 @@ import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/push_notification_service.dart';
 import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:emlakmaster_mobile/features/messages/data/team_chat_presence.dart';
-import 'package:emlakmaster_mobile/features/messages/data/team_chat_push_navigation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// CRM FCM payload tipleri — Cloud Functions / Admin SDK ile uyumlu.
 abstract final class CrmPushPayloadType {
-  static const String teamChat = 'team_chat';
   static const String executionReminder = 'execution_reminder';
   static const String taskDue = 'task_due';
   static const String customer = 'customer';
@@ -47,17 +44,6 @@ class CrmPushNavigation {
   }
 
   static void _onForeground(WidgetRef ref, RemoteMessage message) {
-    final team = TeamChatPushNavigation.parsePayload(message.data);
-    if (team != null) {
-      if (TeamChatPresence.isViewing(
-        officeId: team.officeId,
-        channelId: team.channelId,
-      )) {
-        return;
-      }
-      unawaited(AppFeedback.playNotification());
-      return;
-    }
     unawaited(AppFeedback.playNotification());
   }
 
@@ -70,12 +56,6 @@ class CrmPushNavigation {
     if (!enabled) return;
 
     final data = message.data;
-    final team = TeamChatPushNavigation.parsePayload(data);
-    if (team != null) {
-      await TeamChatPushNavigation.openFromPayload(ref, team);
-      return;
-    }
-
     final router = ref.read(AppRouter.goRouterProvider);
     final type = data['type'] as String? ?? '';
 

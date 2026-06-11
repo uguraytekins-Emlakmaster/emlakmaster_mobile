@@ -65,8 +65,6 @@ class OnboardingSlideVisual extends StatelessWidget {
         _ConsultantGunumScene(accent: accent),
       OnboardingVisualKind.callsAndMeetings => _CallsScene(accent: accent),
       OnboardingVisualKind.marketAndListings => _MarketScene(accent: accent),
-      OnboardingVisualKind.messagesOfficeReady =>
-        _OfficeMessagesScene(accent: accent),
     };
   }
 }
@@ -586,88 +584,6 @@ class _MarketScene extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OfficeMessagesScene extends StatelessWidget {
-  const _OfficeMessagesScene({required this.accent});
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const _MockStatusBar(),
-        Row(
-          children: [
-            Expanded(
-              child: _FeatureTile(
-                icon: Icons.apartment_rounded,
-                label: ProductLabels.officeDesk,
-                accent: accent,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _FeatureTile(
-                icon: Icons.forum_rounded,
-                label: ProductLabels.messageCenter,
-                accent: accent,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: _cardDecoration(ext, accent),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ProductLabels.messageCenter,
-                  style: TextStyle(
-                    color: ext.textPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                _MessageBubble(
-                  isMe: false,
-                  text: 'İlanınız güncel mi?',
-                  name: 'Ayşe',
-                  accent: accent,
-                ),
-                _MessageBubble(
-                  isMe: true,
-                  text: 'Yarın gösterebilirim.',
-                  accent: accent,
-                ),
-                const Spacer(),
-                Text(
-                  'Ekip senkron · 3 okunmamış',
-                  style: TextStyle(
-                    color: ext.textSecondary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        _MockPrimaryButton(
-          label: 'Rolünü seç ve başla',
-          accent: accent,
-          icon: Icons.rocket_launch_rounded,
         ),
       ],
     );
@@ -1503,98 +1419,6 @@ class _ListingCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({
-    required this.isMe,
-    required this.text,
-    required this.accent,
-    this.name,
-  });
-
-  final bool isMe;
-  final String text;
-  final Color accent;
-  final String? name;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        constraints: const BoxConstraints(maxWidth: 200),
-        decoration: BoxDecoration(
-          color: isMe
-              ? accent.withValues(alpha: 0.25)
-              : ext.card.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(10),
-            topRight: const Radius.circular(10),
-            bottomLeft: Radius.circular(isMe ? 10 : 2),
-            bottomRight: Radius.circular(isMe ? 2 : 10),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (name != null)
-              Text(
-                name!,
-                style: TextStyle(
-                  color: accent,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            Text(
-              text,
-              style: TextStyle(color: ext.textPrimary, fontSize: 10),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FeatureTile extends StatelessWidget {
-  const _FeatureTile({
-    required this.icon,
-    required this.label,
-    required this.accent,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: _cardDecoration(ext, accent),
-      child: Column(
-        children: [
-          Icon(icon, color: accent, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: ext.textPrimary,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -8,7 +8,6 @@ enum OnboardingVisualKind {
   consultantWorkspace,
   callsAndMeetings,
   marketAndListings,
-  messagesOfficeReady,
 }
 
 /// İlk açılış tanıtım slaytı verisi.

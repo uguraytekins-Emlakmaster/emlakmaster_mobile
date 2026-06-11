@@ -58,15 +58,6 @@ List<OnboardingSlideModel> buildOnboardingSlides(AppLocalizations l10n) {
       accent: const Color(0xFFB388FF),
       assetPath: 'assets/onboarding/market',
     ),
-    OnboardingSlideModel(
-      analyticsId: 'office_ready',
-      title: l10n.t('onboarding_office_title'),
-      subtitle: l10n.t('onboarding_office_subtitle'),
-      highlights: _split(l10n.t('onboarding_office_highlights')),
-      visual: OnboardingVisualKind.messagesOfficeReady,
-      accent: const Color(0xFFE8A87C),
-      assetPath: 'assets/onboarding/office',
-    ),
   ];
 }
 

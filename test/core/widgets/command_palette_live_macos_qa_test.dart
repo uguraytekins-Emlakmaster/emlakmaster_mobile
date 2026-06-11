@@ -141,7 +141,6 @@ void main() {
 
     expect(find.text(ProductLabels.myCustomers), findsOneWidget);
     expect(find.text(ProductLabels.myCalls), findsOneWidget);
-    expect(find.text(ProductLabels.messageCenter), findsOneWidget);
     expect(find.text(ProductLabels.officeDesk), findsNothing);
     expect(find.text(ProductLabels.warRoom), findsNothing);
     expect(tester.takeException(), isNull);
@@ -156,7 +155,7 @@ void main() {
     const key = Key('palette_agent_live');
     await _openPalette(tester, captureKey: key, role: AppRole.agent);
 
-    expect(find.text(ProductLabels.messageCenter), findsOneWidget);
+    expect(find.text(ProductLabels.myCustomers), findsOneWidget);
     expect(find.text(ProductLabels.officeDesk), findsNothing);
     expect(tester.takeException(), isNull);
     await _savePng(tester, key, '03_agent_role_live.png');

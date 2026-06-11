@@ -16,7 +16,6 @@ List<CoachMarkStep> buildManagerTourSteps(
   int Function(String tabKey) tabIndexForKey,
 ) {
   final dashboardIndex = tabIndexForKey('dashboard');
-  final messagesIndex = tabIndexForKey('messages');
   final warRoomIndex = tabIndexForKey('warRoom');
   final commandCenterIndex = tabIndexForKey('commandCenter');
   final reportsIndex = tabIndexForKey('reports');
@@ -43,13 +42,6 @@ List<CoachMarkStep> buildManagerTourSteps(
       icon: Icons.bolt_rounded,
       title: l10n.t('tour_mgr_operations_title'),
       body: l10n.t('tour_mgr_operations_body'),
-    ),
-    CoachMarkStep(
-      tabIndex: messagesIndex >= 0 ? messagesIndex : null,
-      targetId: TourTargetId.messagesHeader,
-      icon: Icons.forum_rounded,
-      title: l10n.t('tour_messages_title'),
-      body: l10n.t('tour_messages_body'),
     ),
     if (warRoomIndex >= 0)
       CoachMarkStep(

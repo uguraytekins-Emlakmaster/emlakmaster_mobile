@@ -1,4 +1,4 @@
-/// Takip Merkezi — kompakt executive yoğunluk (İlanlarım / Mesaj Merkezi ile aynı dil).
+/// Takip Merkezi — kompakt executive yoğunluk (İlanlarım ile aynı dil).
 abstract final class ConsultantFollowUpTokens {
   ConsultantFollowUpTokens._();
 

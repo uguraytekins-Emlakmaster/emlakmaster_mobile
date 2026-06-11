@@ -9,7 +9,6 @@ enum TourTargetId {
   customersHeader,
   callsHeader,
   tasksHeader,
-  messagesHeader,
   shellBottomNav,
   settingsHeader,
   // Yönetici / admin kabuğu turu hedefleri.

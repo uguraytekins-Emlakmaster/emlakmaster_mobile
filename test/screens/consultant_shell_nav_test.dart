@@ -12,7 +12,6 @@ void main() {
   ) async {
     const pages = [
       Text('Günüm'),
-      Text('Mesajlar'),
       Text('Çağrılar'),
       Text('Müşteriler'),
       Text('İlanlar'),
@@ -33,11 +32,10 @@ void main() {
               AdaptiveNavItem(Icons.task_alt_rounded, 'Görevler'),
               AdaptiveNavItem(Icons.apps_rounded, ProductLabels.consultantMore),
             ],
-            navPageIndices: const [0, 2, 3, 6, kShellNavMoreMenu],
+            navPageIndices: const [0, 1, 2, 5, kShellNavMoreMenu],
             pages: pages,
             tabIds: const [
               'summary',
-              'messages',
               'calls',
               'customers',
               'listings',
@@ -46,8 +44,7 @@ void main() {
               'settings',
             ],
             shortcutMap: const {
-              MainShellShortcut.openMessageCenterTab: 1,
-              MainShellShortcut.openListingsTab: 4,
+              MainShellShortcut.openAccountTab: 6,
             },
           ),
         ),
@@ -62,10 +59,10 @@ void main() {
     final context = tester.element(find.byType(AdaptiveShellScaffold));
     ProviderScope.containerOf(context)
         .read(mainShellShortcutProvider.notifier)
-        .enqueue(MainShellShortcut.openMessageCenterTab);
+        .enqueue(MainShellShortcut.openAccountTab);
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Mesajlar'), findsOneWidget);
+    expect(find.text('Ayarlar'), findsOneWidget);
   });
 }

@@ -150,13 +150,6 @@ List<AppDestination> appDestinationsFor(AppRole role, AppLocalizations l10n) {
   }
 
   out.add(AppDestination.shortcut(
-    id: 'message_center',
-    label: l10n.t('nav_messages'),
-    icon: Icons.forum_rounded,
-    shortcut: MainShellShortcut.openMessageCenterTab,
-  ));
-
-  out.add(AppDestination.shortcut(
     id: 'settings',
     label: l10n.t('nav_settings'),
     icon: Icons.settings_rounded,

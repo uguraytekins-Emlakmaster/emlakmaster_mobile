@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Ana kabuk içinde bir sonraki karede hedef sekmeye git.
 enum MainShellShortcut {
   openHomeTab,
-  openMessageCenterTab,
   openCallsTab,
   openCustomersTab,
   openListingsTab,

@@ -32,7 +32,6 @@ abstract final class ProductLabels {
 
   static const String favorites = 'Favoriler';
   static const String messages = 'Mesajlar';
-  static const String messageCenter = 'Mesaj Merkezi';
 
   static const String virtualTour = 'Sanal Tur';
   static const String requestCenter = 'Talep Merkezi';

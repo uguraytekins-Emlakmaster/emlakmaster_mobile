@@ -104,12 +104,11 @@ Widget _surfaceWithDock() {
       bottomNavigationBar: PremiumBottomNavDock(
         items: [
           AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.managerHome),
-          AdaptiveNavItem(Icons.forum_rounded, ProductLabels.messageCenter),
           AdaptiveNavItem(Icons.military_tech_rounded, ProductLabels.warRoom),
           AdaptiveNavItem(Icons.call_rounded, ProductLabels.callCenter),
           AdaptiveNavItem(Icons.analytics_rounded, ProductLabels.reports),
         ],
-        selectedIndex: 4,
+        selectedIndex: 3,
         onTap: _noop,
       ),
     ),

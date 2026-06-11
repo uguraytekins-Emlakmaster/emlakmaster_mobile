@@ -14,7 +14,6 @@ import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call
 import 'package:emlakmaster_mobile/core/performance/startup_shell_chrome.dart';
 import 'package:emlakmaster_mobile/shared/widgets/sync_status_banner.dart';
 import 'package:emlakmaster_mobile/screens/dashboard_screen.dart';
-import 'package:emlakmaster_mobile/features/messages/presentation/pages/message_center_page.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/manager_tour_host.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
 import 'package:emlakmaster_mobile/screens/admin_pages.dart';
@@ -26,7 +25,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Yönetici paneli: tam yetki. Nav öğeleri ayarlardaki özellik bayraklarına göre gösterilir.
 enum _AdminShellTab {
   dashboard,
-  messages,
   warRoom,
   commandCenter,
   economy,
@@ -92,14 +90,6 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
             Icons.dashboard_rounded, l10n.t('nav_home_manager')),
         page: const DashboardPage(),
       ),
-      _AdminShellTabEntry(
-        id: _AdminShellTab.messages,
-        navItem: AdaptiveNavItem(
-          Icons.forum_rounded,
-          l10n.t('nav_messages'),
-        ),
-        page: const MessageCenterPage(),
-      ),
       if (showWarRoom)
         _AdminShellTabEntry(
           id: _AdminShellTab.warRoom,
@@ -144,8 +134,6 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
     final tabIds = entries.map((entry) => entry.id).toList(growable: false);
     final settingsIndex =
         tabIds.indexOf(_AdminShellTab.settings).clamp(0, tabIds.length - 1);
-    final messagesIndex =
-        tabIds.indexOf(_AdminShellTab.messages).clamp(0, tabIds.length - 1);
     final commandCenterPageIndex = tabIds.indexOf(_AdminShellTab.commandCenter);
     final warRoomPageIndex = tabIds.indexOf(_AdminShellTab.warRoom);
     final reportsPageIndex = tabIds.indexOf(_AdminShellTab.reports);
@@ -156,7 +144,6 @@ class _AdminShellPageState extends ConsumerState<AdminShellPage> {
 
     final shortcutMap = <MainShellShortcut, int>{
       MainShellShortcut.openHomeTab: 0,
-      MainShellShortcut.openMessageCenterTab: messagesIndex,
       MainShellShortcut.openAccountTab: settingsIndex,
       if (commandCenterPageIndex >= 0)
         MainShellShortcut.openCallsTab: commandCenterPageIndex,

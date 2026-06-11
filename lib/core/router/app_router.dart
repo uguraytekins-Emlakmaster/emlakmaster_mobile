@@ -41,8 +41,6 @@ import '../../features/external_integrations/presentation/pages/my_external_list
 import '../../features/listing_import/presentation/pages/import_history_page.dart';
 import '../../features/listing_import/presentation/pages/import_hub_page.dart';
 import '../../features/listing_import/presentation/pages/my_listings_page.dart';
-import '../../features/messages/presentation/pages/message_center_page.dart';
-import '../../features/messages/presentation/pages/team_thread_page.dart';
 import '../../features/workspace/presentation/pages/workspace_setup_page.dart';
 import '../../features/office/presentation/pages/create_office_invite_page.dart';
 import '../../features/office/presentation/pages/create_office_page.dart';
@@ -80,10 +78,6 @@ class AppRouter {
 
   /// Üye ve davet yönetimi (owner / admin / manager).
   static const String routeOfficeAdmin = '/office/admin';
-
-  /// Birleşik mesaj merkezi (platform API’leri bağlanınca dolar).
-  static const String routeMessageCenter = '/messages';
-  static const String routeMessageThread = '/messages/thread';
 
   /// Yalnızca yönetici (isManagerTier) erişebilen yönetim panelleri ve /admin/*
   /// rotaları. Router seviyesinde derinlemesine savunma — sayfa içi guard'larla
@@ -207,8 +201,6 @@ class AppRouter {
                 routeRoleSelection,
                 routeMyExternalListings,
                 routeMyListings,
-                routeMessageCenter,
-                routeMessageThread,
               };
               if (!allowWhileNeedsRole.contains(path)) {
                 return routeRoleSelection;
@@ -239,8 +231,6 @@ class AppRouter {
               routeOfficeAdmin,
               routeMyExternalListings,
               routeMyListings,
-              routeMessageCenter,
-              routeMessageThread,
             };
             if (!allowWhileRecovery.contains(path)) {
               return routeOfficeRecovery;
@@ -399,32 +389,6 @@ class AppRouter {
             name: state.matchedLocation,
             child: const OfficeAdminPage(),
           ),
-        ),
-        GoRoute(
-          path: routeMessageCenter,
-          pageBuilder: (context, state) => fastFadePage<void>(
-            key: state.pageKey,
-            name: state.matchedLocation,
-            child: const MessageCenterPage(),
-          ),
-        ),
-        GoRoute(
-          path: routeMessageThread,
-          pageBuilder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>? ?? {};
-            final officeId = extra['officeId'] as String? ?? '';
-            final channelId = extra['channelId'] as String? ?? '';
-            return fastFadePage<void>(
-              key: state.pageKey,
-              name: state.matchedLocation,
-              child: TeamThreadPage(
-                officeId: officeId,
-                channelId: channelId,
-                title: extra['title'] as String? ?? 'Sohbet',
-                subtitle: extra['subtitle'] as String? ?? '',
-              ),
-            );
-          },
         ),
         GoRoute(
           path: routeRoleSelection,

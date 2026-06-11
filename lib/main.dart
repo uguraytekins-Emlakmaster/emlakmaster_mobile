@@ -34,8 +34,6 @@ import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_lo
 import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_notification_bridge.dart';
 import 'package:emlakmaster_mobile/features/tasks/data/task_due_local_notifications.dart';
 import 'package:emlakmaster_mobile/features/tasks/data/task_due_notification_bridge.dart';
-import 'package:emlakmaster_mobile/features/messages/data/team_chat_inbox_listener.dart';
-import 'package:emlakmaster_mobile/features/messages/data/team_chat_local_notifications.dart';
 import 'package:emlakmaster_mobile/core/notifications/crm_push_navigation.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_access_state.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_core_bootstrap.dart';
@@ -210,17 +208,10 @@ class _AxionAppState extends ConsumerState<AxionApp> {
           () {
             if (!mounted) return;
             unawaited(
-              TeamChatLocalNotifications.instance.ensureInitialized().then((_) {
-                return TeamChatLocalNotifications.instance
-                    .requestPermissionIfNeeded();
-              }),
-            );
-            unawaited(
               ExecutionReminderLocalNotifications.instance
                   .ensureInitialized(),
             );
             unawaited(TaskDueLocalNotifications.instance.ensureInitialized());
-            TeamChatInboxListener.attach(ref);
             ExecutionReminderNotificationBridge.attach(ref);
             TaskDueNotificationBridge.attach(ref);
             unawaited(CrmPushNavigation.attach(ref));

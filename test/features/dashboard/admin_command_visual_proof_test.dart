@@ -246,7 +246,6 @@ void main() {
         bottomNavigationBar: PremiumBottomNavDock(
           items: const [
             AdaptiveNavItem(Icons.dashboard_rounded, ProductLabels.managerHome),
-            AdaptiveNavItem(Icons.forum_rounded, ProductLabels.messageCenter),
             AdaptiveNavItem(Icons.military_tech_rounded, ProductLabels.warRoom),
             AdaptiveNavItem(Icons.analytics_rounded, ProductLabels.reports),
           ],
