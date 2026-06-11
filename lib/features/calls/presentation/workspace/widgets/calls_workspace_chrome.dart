@@ -3,6 +3,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/consultant_calls_tokens.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/workspace/calls_workspace_types.dart';
+import 'package:emlakmaster_mobile/shared/widgets/dismissible_honesty_note.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_navigation.dart';
 import 'package:flutter/material.dart';
 
@@ -97,7 +98,10 @@ class CallsWorkspaceHeader extends StatelessWidget {
           ),
           if (coverageNote != null && coverageNote!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            _HonestyNote(message: coverageNote!),
+            DismissibleHonestyNote(
+              message: coverageNote!,
+              prefsKey: 'honesty_note_calls_v1',
+            ),
           ],
         ],
       ),
@@ -127,44 +131,6 @@ class _DateChip extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w700,
         ),
-      ),
-    );
-  }
-}
-
-class _HonestyNote extends StatelessWidget {
-  const _HonestyNote({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-      decoration: BoxDecoration(
-        color: ext.surface.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ext.border.withValues(alpha: 0.28)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.shield_outlined, size: 14, color: ext.textTertiary),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: ext.textSecondary,
-                fontSize: 10.5,
-                height: 1.3,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

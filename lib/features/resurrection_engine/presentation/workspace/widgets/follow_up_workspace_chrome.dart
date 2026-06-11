@@ -5,6 +5,7 @@ import 'package:emlakmaster_mobile/features/resurrection_engine/presentation/wor
 import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_surface.dart';
 import 'package:emlakmaster_mobile/widgets/premium/premium_ui_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:emlakmaster_mobile/shared/widgets/dismissible_honesty_note.dart';
 
 Color followUpToneColor(AppThemeExtension ext, FollowUpTone tone) {
   return switch (tone) {
@@ -95,7 +96,10 @@ class FollowUpWorkspaceHeader extends StatelessWidget {
           ),
           if (coverageNote != null && coverageNote!.isNotEmpty) ...[
             const SizedBox(height: 8),
-            _HonestyNote(message: coverageNote!),
+            DismissibleHonestyNote(
+              message: coverageNote!,
+              prefsKey: 'honesty_note_follow_up_v1',
+            ),
           ],
         ],
       ),
@@ -124,43 +128,6 @@ class _DateChip extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w700,
         ),
-      ),
-    );
-  }
-}
-
-class _HonestyNote extends StatelessWidget {
-  const _HonestyNote({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final ext = AppThemeExtension.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-      decoration: BoxDecoration(
-        color: ext.surface.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ext.border.withValues(alpha: 0.28)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.shield_outlined, size: 14, color: ext.textTertiary),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: ext.textSecondary,
-                fontSize: 10.5,
-                height: 1.3,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -69,7 +69,8 @@ class CallsWorkspaceRow extends StatelessWidget {
                       if (compact) ...[
                         Text(
                           row.title,
-                          maxLines: 1,
+                          // İsim/numara yarım kalmasın — gerekirse 2 satıra sarar.
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: ext.textPrimary,
@@ -89,7 +90,8 @@ class CallsWorkspaceRow extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 row.title,
-                                maxLines: 1,
+                                // İsim/numara yarım kalmasın — gerekirse 2 satıra sarar.
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: ext.textPrimary,

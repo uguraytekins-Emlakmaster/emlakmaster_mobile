@@ -235,7 +235,8 @@ class CallRecordPremiumTile extends StatelessWidget {
                           child: Text(
                             title,
                             style: titleStyle,
-                            maxLines: 1,
+                            // İsim/numara yarım kalmasın — gerekirse 2 satıra sarar.
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
