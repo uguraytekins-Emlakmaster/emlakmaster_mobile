@@ -27,8 +27,6 @@ import 'package:emlakmaster_mobile/core/onboarding/tour_target.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_providers.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/manager_tour_providers.dart';
 import 'package:emlakmaster_mobile/features/listing_display/presentation/widgets/listing_display_settings_section.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/providers/usage_providers.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/features/external_integrations/presentation/platform_setup_wizard_args.dart';
@@ -66,7 +64,6 @@ class SettingsPage extends ConsumerWidget {
     final canManagePlatformIntegrations =
         ref.watch(canManagePlatformIntegrationsProvider);
     final flagsAsync = ref.watch(featureFlagsProvider);
-    final usage = ref.watch(usageTrackerProvider);
 
     final l10n = AppLocalizations.of(context);
     final localeState = ref.watch(localeProvider);
@@ -291,108 +288,6 @@ class SettingsPage extends ConsumerWidget {
                 ],
               ),
             ],
-            const SizedBox(height: DesignTokens.space6),
-            _SectionHeader(
-              title: l10n.t('settings_section_plan'),
-              icon: Icons.workspace_premium_rounded,
-            ),
-            _sectionCard(
-              context,
-              children: [
-                ListTile(
-                  leading: Icon(
-                    usage.isPro ? Icons.verified_rounded : Icons.bolt_rounded,
-                    color: AppThemeExtension.of(context).accent,
-                  ),
-                  title: Text(
-                    usage.isPro
-                        ? l10n.t('settings_plan_pro_active')
-                        : l10n.t('settings_plan_basic'),
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: Text(
-                    usage.isPro
-                        ? l10n.t('settings_plan_pro_sub')
-                        : l10n.t('settings_plan_basic_sub'),
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                  trailing: usage.isPro
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppThemeExtension.of(context)
-                                .success
-                                .withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            'PRO',
-                            style: TextStyle(
-                              color: AppThemeExtension.of(context).success,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        )
-                      : Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color:
-                                AppThemeExtension.of(context).surfaceElevated,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                                color:
-                                    theme.dividerColor.withValues(alpha: 0.5)),
-                          ),
-                          child: Text(
-                            l10n.t('settings_plan_basic_badge'),
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.75),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                ),
-                if (!usage.isPro) ...[
-                  Divider(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.5)),
-                  ListTile(
-                    leading: Icon(
-                      Icons.auto_awesome_rounded,
-                      color: AppThemeExtension.of(context).accent,
-                    ),
-                    title: Text(
-                      l10n.t('settings_discover_pro'),
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                    ),
-                    subtitle: Text(
-                      l10n.t('settings_discover_pro_sub'),
-                      style: TextStyle(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                        fontSize: 11,
-                      ),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => showUpgradeBottomSheet(
-                      context,
-                      feature: 'revenue_insights',
-                    ),
-                  ),
-                ],
-              ],
-            ),
             const SizedBox(height: DesignTokens.space6),
             _SectionHeader(title: l10n.t('notif_cat_calls'), icon: Icons.call_rounded),
             _sectionCard(

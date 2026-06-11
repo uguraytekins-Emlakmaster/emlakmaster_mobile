@@ -2,10 +2,8 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:emlakmaster_mobile/core/analytics/analytics_events.dart';
 import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
-import 'package:emlakmaster_mobile/core/services/analytics_service.dart';
 import 'package:emlakmaster_mobile/core/resilience/safe_operation.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -16,8 +14,6 @@ import 'package:emlakmaster_mobile/features/calls/domain/post_call_crm_signals.d
 import 'package:emlakmaster_mobile/features/calls/domain/quick_call_outcome.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/local_call_records_provider.dart';
-import 'package:emlakmaster_mobile/features/monetization/presentation/widgets/upgrade_bottom_sheet.dart';
-import 'package:emlakmaster_mobile/features/monetization/services/usage_service.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_insight_provider.dart';
 import 'package:emlakmaster_mobile/features/crm_customers/presentation/providers/customer_list_stream_provider.dart';
 import 'package:emlakmaster_mobile/features/revenue_engine/presentation/providers/revenue_engine_providers.dart';
@@ -34,7 +30,6 @@ class QuickCaptureSaveResult {
     required this.taskCreated,
     required this.customerLinked,
     required this.detachedCallSummarySaved,
-    required this.aiLimited,
     this.customerId,
     this.firestoreCallId,
     /// Çağrı satırı Firestore’da tamam; müşteri notu veya görev aşaması başarısızsa Türkçe kısa uyarı.
@@ -46,7 +41,6 @@ class QuickCaptureSaveResult {
   final bool taskCreated;
   final bool customerLinked;
   final bool detachedCallSummarySaved;
-  final bool aiLimited;
   final String? customerId;
   final String? firestoreCallId;
   final String? enrichmentWarningTr;
@@ -179,36 +173,11 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
   AppLogger.forensic('quick_capture: hive patchQuickCapture done');
 
   final cid = effective.customerId;
-  var canUseAi = true;
-  if (cid != null && cid.isNotEmpty) {
-    final usageService = ref.read(usageServiceProvider);
-    await usageService.warmUp();
-    canUseAi = usageService.canUseAi();
-    if (canUseAi) {
-      await usageService.incrementAiUsage();
-    } else {
-      AnalyticsService.instance.logEvent(
-        AnalyticsEvents.limitReachedAi,
-        {AnalyticsEvents.paramFeature: 'ai_analysis'},
-      );
-      if (context != null && context.mounted) {
-        await showUpgradeBottomSheet(
-          context,
-          feature: 'ai_analysis',
-        );
-      }
-      if (kDebugMode) {
-        AppLogger.i(
-            '[quick_capture] ai limit reached, save continues without AI');
-      }
-    }
-  }
 
   final signals = _signalsFor(
     outcomeCode: outcomeCode,
     heatBand: heatBand,
     note: trimmed,
-    useAiEnrichment: canUseAi,
   );
 
   var taskCreated = false;
@@ -394,7 +363,7 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     AppLogger.i(
       '[quick_capture] save success local=${effective.localRecordId} '
       'firestore=$canonicalCallId '
-      'taskCreated=$taskCreated aiLimited=${!canUseAi}',
+      'taskCreated=$taskCreated',
     );
   }
   AppLogger.forensic(
@@ -406,7 +375,6 @@ Future<QuickCaptureSaveResult> applyQuickCallCapture({
     taskCreated: taskCreated,
     customerLinked: cid != null && cid.isNotEmpty,
     detachedCallSummarySaved: false,
-    aiLimited: !canUseAi,
     customerId: cid,
     firestoreCallId: canonicalCallId,
     enrichmentWarningTr: warnings.isEmpty ? null : warnings.join('\n'),
@@ -417,7 +385,6 @@ Map<String, dynamic>? _signalsFor({
   required String outcomeCode,
   String? heatBand,
   String? note,
-  required bool useAiEnrichment,
 }) {
   final outcomeLabel = QuickCallOutcome.labelTr(outcomeCode);
   final seed = [
@@ -463,7 +430,7 @@ Map<String, dynamic>? _signalsFor({
       followUpUrgency: signals.followUpUrgency,
     );
   }
-  if (!useAiEnrichment && signals.nextActionHint.isEmpty) {
+  if (signals.nextActionHint.isEmpty) {
     signals = PostCallCrmSignals(
       interestLevel: signals.interestLevel,
       nextActionHint: outcomeLabel,

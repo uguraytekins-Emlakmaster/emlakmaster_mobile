@@ -26,11 +26,6 @@ abstract final class AnalyticsEvents {
   static const String screenContentReady = 'screen_content_ready';
   /// Soğuk açılış kilometre taşı (profile/release; [StartupPerfMarkers]).
   static const String startupMilestone = 'startup_milestone';
-  static const String limitReachedCall = 'limit_reached_call';
-  static const String limitReachedAi = 'limit_reached_ai';
-  static const String upgradeClicked = 'upgrade_clicked';
-  static const String upgradeConverted = 'upgrade_converted';
-
   // —— Yerel çağrı kaydı → Firestore senkron (Hive) ——
   static const String syncSuccess = 'sync_success';
   static const String syncFailure = 'sync_failure';
@@ -47,7 +42,6 @@ abstract final class AnalyticsEvents {
   static const String paramSetting = 'setting';
   static const String paramError = 'error';
   static const String paramResult = 'result';
-  static const String paramFeature = 'feature';
   static const String paramPermanently = 'permanently';
   static const String paramSyncedCount = 'synced_count';
 
