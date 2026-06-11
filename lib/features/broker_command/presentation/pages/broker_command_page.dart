@@ -2,6 +2,7 @@ import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/dashboard_layout_tokens.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/features/ai_agent/presentation/widgets/axion_agent_broker_brief_card.dart';
 import 'package:emlakmaster_mobile/features/analytics/presentation/widgets/rainbow_analytics_center_card.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/permissions/feature_permission.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -149,6 +150,8 @@ class _BrokerCommandBody extends StatelessWidget {
             px(RainbowAnalyticsCenterCard(
               paddedContentWidth: paddedContentW,
             )),
+            const SizedBox(height: gapOp),
+            px(const AxionAgentBrokerBriefCard()),
             const SizedBox(height: gapOp),
             px(const HotLeadRadarPanel()),
             SizedBox(height: gapInsight),
