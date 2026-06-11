@@ -132,6 +132,9 @@ abstract final class AppConstants {
   static const String keyNotifCategoryMessages = 'notif_cat_messages';
   static const String keyNotifCategoryMarketing = 'notif_cat_marketing';
 
+  /// Axion Agent uyarıları (kayıtsız numara pop-up'ı vb.).
+  static const String keyNotifCategoryAgent = 'notif_cat_agent';
+
   /// Sessiz saatler: aralık içindeyken yerel bildirim/uyarı bastırılır.
   static const String keyQuietHoursEnabled = 'quiet_hours_enabled';
   static const String keyQuietHoursStartMin = 'quiet_hours_start_min';

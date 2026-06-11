@@ -199,6 +199,12 @@ class SettingsService {
   Future<void> setNotifCategoryMessages(bool v) async =>
       (await _storage).setBool(AppConstants.keyNotifCategoryMessages, v);
 
+  /// Axion Agent uyarıları (kayıtsız numara pop-up'ı). Varsayılan açık.
+  Future<bool> getNotifCategoryAgent() async =>
+      (await _storage).getBool(AppConstants.keyNotifCategoryAgent) ?? true;
+  Future<void> setNotifCategoryAgent(bool v) async =>
+      (await _storage).setBool(AppConstants.keyNotifCategoryAgent, v);
+
   /// Pazarlama bildirimleri varsayılan KAPALI (kullanıcı açıkça açar).
   Future<bool> getNotifCategoryMarketing() async =>
       (await _storage).getBool(AppConstants.keyNotifCategoryMarketing) ?? false;
@@ -265,6 +271,8 @@ class SettingsService {
         return getNotifCategoryMessages();
       case 'marketing':
         return getNotifCategoryMarketing();
+      case 'agent':
+        return getNotifCategoryAgent();
       default:
         return true;
     }

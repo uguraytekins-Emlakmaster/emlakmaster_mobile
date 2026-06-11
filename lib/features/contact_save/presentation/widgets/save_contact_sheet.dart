@@ -13,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Rehbere ve uygulamaya kaydet: manuel giriş; rehber + uygulama (CRM) kaydı.
+/// [onSavedToApp] CRM kaydı başarıyla oluştuğunda yeni müşteri id'si ile
+/// çağrılır (ör. Axion Agent'ın çağrı dokümanlarını müşteriye bağlaması).
 void showSaveContactSheet(
   BuildContext context, {
   String? initialName,
@@ -20,6 +22,7 @@ void showSaveContactSheet(
   String? initialEmail,
   String? initialNote,
   String source = 'uygulama',
+  ValueChanged<String>? onSavedToApp,
 }) {
   showPremiumScrollableBottomSheet<void>(
     context: context,
@@ -29,6 +32,7 @@ void showSaveContactSheet(
       initialEmail: initialEmail,
       initialNote: initialNote,
       source: source,
+      onSavedToApp: onSavedToApp,
     ),
   );
 }
@@ -40,6 +44,7 @@ class _SaveContactSheetContent extends ConsumerStatefulWidget {
     this.initialEmail,
     this.initialNote,
     this.source = 'uygulama',
+    this.onSavedToApp,
   });
 
   final String? initialName;
@@ -47,6 +52,7 @@ class _SaveContactSheetContent extends ConsumerStatefulWidget {
   final String? initialEmail;
   final String? initialNote;
   final String source;
+  final ValueChanged<String>? onSavedToApp;
 
   @override
   ConsumerState<_SaveContactSheetContent> createState() =>
@@ -152,6 +158,7 @@ class _SaveContactSheetContentState
 
     SaveToDeviceResult deviceResult = SaveToDeviceResult.success;
     bool okApp = false;
+    String? savedCustomerId;
     if (_saveToDevice) {
       deviceResult = await SaveContactService.instance.saveToDevice(_request);
     }
@@ -163,6 +170,7 @@ class _SaveContactSheetContentState
         source: widget.source,
       );
       okApp = id != null;
+      savedCustomerId = id;
     } else if (_saveToApp && agentId.isEmpty) {
       okApp = false;
     }
@@ -185,6 +193,9 @@ class _SaveContactSheetContentState
     }
     if (okApp) {
       ref.invalidate(customerListForAgentProvider);
+      if (savedCustomerId != null && savedCustomerId.isNotEmpty) {
+        widget.onSavedToApp?.call(savedCustomerId);
+      }
     }
     Navigator.of(context).pop();
     AppFeedback.mediumImpact();

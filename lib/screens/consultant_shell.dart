@@ -1,5 +1,6 @@
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
 import 'package:emlakmaster_mobile/core/layout/adaptive_shell_scaffold.dart';
+import 'package:emlakmaster_mobile/features/ai_agent/presentation/widgets/axion_capture_popup_host.dart';
 import 'package:emlakmaster_mobile/core/navigation/main_shell_shortcut_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/call_return_prompt_host.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/widgets/post_call_capture_strip.dart';
@@ -97,6 +98,7 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SyncStatusBanner(compact: true),
+                  const AxionCapturePopupHost(),
                   const CallReturnPromptHost(),
                   const PostCallDraftRecoveryCard(),
                   ValueListenableBuilder<int>(

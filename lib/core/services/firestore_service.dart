@@ -870,6 +870,32 @@ class FirestoreService {
         .get();
   }
 
+  /// Kayıtsız numaradan müşteri oluşturulduktan sonra ilgili çağrı
+  /// dokümanlarını yeni müşteriye bağlar (Axion Agent hızlı kayıt akışı).
+  /// En fazla 20 doküman tek batch'te güncellenir; hata tek tek yutulmaz,
+  /// çağıran taraf kullanıcıya dürüst geri bildirim verir.
+  static Future<void> linkCallsToCustomer({
+    required List<String> callDocIds,
+    required String customerId,
+  }) async {
+    if (callDocIds.isEmpty || customerId.isEmpty) return;
+    await ensureInitialized();
+    _requireFirestoreReady();
+    final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final batch = FirebaseFirestore.instance.batch();
+    for (final id in callDocIds.take(20)) {
+      batch.set(
+        col.doc(id),
+        {
+          'customerId': customerId,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    }
+    await batch.commit();
+  }
+
   /// Cihaz çağrı günlüğünden senkronize edilen kayıt (tekilleştirme için doc id verilir, merge).
   static Future<void> setCallRecordFromDevice({
     required String documentId,

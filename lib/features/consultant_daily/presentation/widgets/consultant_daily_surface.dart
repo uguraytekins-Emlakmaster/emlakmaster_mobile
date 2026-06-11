@@ -4,6 +4,7 @@ import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/ai_agent/presentation/widgets/axion_agent_daily_section.dart';
+import 'package:emlakmaster_mobile/features/ai_agent/presentation/widgets/axion_uncaptured_numbers_strip.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/consultant_daily_actions.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/consultant_daily_tokens.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/providers/consultant_daily_provider.dart';
@@ -146,6 +147,10 @@ class _ConsultantDailySurfaceState
             },
           ),
         ),
+
+        // ——— Kayıtsız numaralar (numara kaçırmama önceliği) ———
+        if (showLanes)
+          const SliverToBoxAdapter(child: AxionUncapturedNumbersStrip()),
 
         if (showLanes) ...[
           // ——— Öncelikli (gerçek baskı) ———

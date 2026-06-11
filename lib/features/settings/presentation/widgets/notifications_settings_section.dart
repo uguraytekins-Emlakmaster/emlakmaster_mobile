@@ -31,6 +31,7 @@ class _NotificationsSettingsSectionState
   bool _catCalls = true;
   bool _catMessages = true;
   bool _catMarketing = false;
+  bool _catAgent = true;
   bool _quietEnabled = false;
   int _quietStartMin = AppConstants.defaultQuietHoursStartMin;
   int _quietEndMin = AppConstants.defaultQuietHoursEndMin;
@@ -58,6 +59,7 @@ class _NotificationsSettingsSectionState
     final calls = await s.getNotifCategoryCalls();
     final messages = await s.getNotifCategoryMessages();
     final marketing = await s.getNotifCategoryMarketing();
+    final agent = await s.getNotifCategoryAgent();
     final quietOn = await s.getQuietHoursEnabled();
     final quietStart = await s.getQuietHoursStartMin();
     final quietEnd = await s.getQuietHoursEndMin();
@@ -67,6 +69,7 @@ class _NotificationsSettingsSectionState
       _catCalls = calls;
       _catMessages = messages;
       _catMarketing = marketing;
+      _catAgent = agent;
       _quietEnabled = quietOn;
       _quietStartMin = quietStart;
       _quietEndMin = quietEnd;
@@ -329,6 +332,15 @@ class _NotificationsSettingsSectionState
           onChanged: (v) async {
             await SettingsService.instance.setNotifCategoryMarketing(v);
             if (mounted) setState(() => _catMarketing = v);
+          },
+        ),
+        _catTile(
+          icon: Icons.auto_awesome_outlined,
+          title: l10n.t('notif_cat_agent'),
+          value: _catAgent,
+          onChanged: (v) async {
+            await SettingsService.instance.setNotifCategoryAgent(v);
+            if (mounted) setState(() => _catAgent = v);
           },
         ),
         Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.45)),

@@ -1,3 +1,4 @@
+import 'package:emlakmaster_mobile/core/services/settings_service.dart';
 import 'package:emlakmaster_mobile/features/auth/domain/entities/app_role.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
@@ -8,8 +9,12 @@ import 'package:emlakmaster_mobile/features/tasks/presentation/providers/advisor
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/axion_agent_engine.dart';
+import '../../application/uncaptured_number_engine.dart';
 import '../../data/axion_agent_crm_adapter.dart';
+import '../../data/axion_capture_dismiss_store.dart';
 import '../../domain/axion_agent_models.dart';
+import '../../domain/axion_phone_matcher.dart';
+import '../../domain/axion_uncaptured_number.dart';
 
 /// Tek motor örneği — önbellek ve denetim kaydı uygulama ömrü boyunca yaşar.
 final axionAgentEngineProvider =
@@ -120,4 +125,59 @@ final axionBrokerBriefProvider =
   if (ctx == null) return null;
   final engine = ref.watch(axionAgentEngineProvider);
   return engine.generateBrokerBrief(ctx);
+});
+
+/// CRM'de kayıtlı olmayan numaralar (çağrı geçmişinden, son 14 gün).
+///
+/// Asıl amaç: yoğunlukta hiçbir numara kaybolmasın. Yalnızca gerçek
+/// çağrı verisi; deterministik gruplama; ağ çağrısı yok.
+final axionUncapturedNumbersProvider =
+    Provider.autoDispose<List<AxionUncapturedNumber>>((ref) {
+  final uid = ref.watch(
+    currentUserProvider.select((a) => a.valueOrNull?.uid ?? ''),
+  );
+  if (uid.isEmpty) return const [];
+
+  final callDocs =
+      ref.watch(consultantCallsStreamProvider).valueOrNull?.docs ?? const [];
+  if (callDocs.isEmpty) return const [];
+
+  final customers =
+      ref.watch(customerListForAgentProvider).valueOrNull?.entities ??
+          const [];
+
+  final calls = <AxionCallSnapshot>[];
+  for (final d in callDocs) {
+    final call = AxionAgentCrmAdapter.callFromDoc(d.id, d.data());
+    if (call != null) calls.add(call);
+  }
+
+  return UncapturedNumberEngine.detect(
+    calls: calls,
+    knownPhoneKeys:
+        AxionPhoneMatcher.buildKnownSet([for (final c in customers) c.primaryPhone]),
+    now: DateTime.now(),
+  );
+});
+
+/// Önemli bildirim pop-up'ı adayı: son 24 saatte aranan, kayıtsız,
+/// snöz/yoksay edilmemiş en güncel numara. Bildirim ayarlarına saygılıdır
+/// (ana anahtar + Axion Agent kategorisi + sessiz saatler).
+final axionCapturePopupCandidateProvider =
+    FutureProvider.autoDispose<AxionUncapturedNumber?>((ref) async {
+  final numbers = ref.watch(axionUncapturedNumbersProvider);
+  if (numbers.isEmpty) return null;
+
+  final allowed = await SettingsService.instance.isNotificationAllowed('agent');
+  if (!allowed) return null;
+
+  final now = DateTime.now();
+  final cutoff = now.subtract(const Duration(hours: 24));
+  for (final n in numbers) {
+    if (n.lastCallAt.isBefore(cutoff)) continue;
+    final suppressed = await AxionCaptureDismissStore.instance
+        .isSuppressed(n.normalizedKey, now: now);
+    if (!suppressed) return n;
+  }
+  return null;
 });
