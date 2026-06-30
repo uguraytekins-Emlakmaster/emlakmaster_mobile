@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show DartPluginRegistrant;
 
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
+import 'package:emlakmaster_mobile/features/calls/application/call_capture_audit_service.dart';
 import 'package:emlakmaster_mobile/features/dashboard/data/execution_reminder_local_notifications.dart';
 import 'package:emlakmaster_mobile/features/tasks/data/task_due_local_notifications.dart';
 import 'package:emlakmaster_mobile/firebase_options.dart';
@@ -147,6 +149,14 @@ class AxionCaptureNotification {
       ),
       payload: payload,
     );
+    unawaited(
+      CallCaptureAuditService.instance.logEvent(
+        event: 'capture_notification_shown',
+        phoneRaw: rawNumber,
+        phoneKey: AxionPhoneMatcher.normalize(rawNumber),
+        extra: {'hasName': hasName},
+      ),
+    );
   }
 
   /// Onay/teslim bildirimi (sessiz).
@@ -265,6 +275,15 @@ Future<void> axionCaptureNotificationBackgroundHandler(
       normalizedKey: key,
       customerId: customerId,
     );
+    unawaited(
+      CallCaptureAuditService.instance.logEvent(
+        event: 'capture_notification_saved_background',
+        advisorId: uid,
+        phoneRaw: number,
+        phoneKey: key,
+        extra: {'customerId': customerId},
+      ),
+    );
     await AxionCaptureNotification.instance
         ._showSilent('Müşteri kaydedildi', '$name · $number CRM\'e eklendi.');
   } catch (e, st) {
@@ -274,6 +293,13 @@ Future<void> axionCaptureNotificationBackgroundHandler(
       await AxionPendingCaptureStore.instance.enqueueSave(
         name: name.isNotEmpty ? name : number,
         phone: number,
+      );
+      unawaited(
+        CallCaptureAuditService.instance.logEvent(
+          event: 'capture_notification_queued_pending',
+          phoneRaw: number,
+          phoneKey: AxionPhoneMatcher.normalize(number),
+        ),
       );
       await AxionCaptureNotification.instance._showSilent(
         'Kayıt bekliyor',

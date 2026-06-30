@@ -28,7 +28,8 @@ class CallRecordKpiStats {
       final data = d.data();
       final direction =
           (data['direction'] as String? ?? 'outgoing').toLowerCase();
-      if (direction == 'incoming') {
+      // Geçiş dönemi uyumluluğu: eski kayıtlar direction='missed' yazmış olabilir.
+      if (direction == 'incoming' || direction == 'missed') {
         incoming++;
       } else {
         outgoing++;

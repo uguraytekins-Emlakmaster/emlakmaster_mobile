@@ -55,6 +55,18 @@
                 <data android:scheme="emlakmaster" android:host="region-insight" />
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".PostCallStateReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".PostCallQuickSaveReceiver"
+            android:enabled="true"
+            android:exported="false" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

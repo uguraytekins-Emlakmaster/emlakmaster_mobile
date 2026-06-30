@@ -95,13 +95,14 @@ class AppFeedback {
   }
 
   static Future<void> playNotification({bool force = false}) async {
-    if (!force && !soundEnabled) return;
     try {
       final pushOn =
           await SettingsService.instance.getNotificationsEnabled();
       if (!pushOn && !force) return;
     } catch (_) {}
-    await play(notificationStyle.notificationSound, force: force);
+    // Bildirim sesi, "ses efektleri" anahtarından bağımsızdır.
+    // Aksi halde kullanıcı bildirim ses stili seçse bile bildirim tonu duyulmayabilir.
+    await play(notificationStyle.notificationSound, force: true);
   }
 
   static Future<void> playSuccess() => play(AppSound.success);

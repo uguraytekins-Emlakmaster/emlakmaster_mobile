@@ -4,7 +4,9 @@ import 'package:emlakmaster_mobile/core/performance/debounced_search_controller.
 import 'package:emlakmaster_mobile/core/phone/outbound_phone_dial.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/ai_agent/presentation/widgets/axion_agent_daily_section.dart';
+import 'package:emlakmaster_mobile/features/ai_agent/presentation/providers/capture_queue_health_provider.dart';
 import 'package:emlakmaster_mobile/features/ai_agent/presentation/widgets/axion_uncaptured_numbers_strip.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/call_capture_health_provider.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/consultant_daily_actions.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/consultant_daily_tokens.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/providers/consultant_daily_provider.dart';
@@ -13,6 +15,7 @@ import 'package:emlakmaster_mobile/features/consultant_daily/presentation/utils/
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/widgets/consultant_daily_chrome.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/widgets/consultant_daily_row.dart';
 import 'package:emlakmaster_mobile/features/consultant_daily/presentation/widgets/consultant_daily_skeleton.dart';
+import 'package:emlakmaster_mobile/features/calls/presentation/providers/call_sync_gap_provider.dart';
 import 'package:emlakmaster_mobile/screens/consultant_dashboard/widgets/consultant_dashboard_quick_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -122,6 +125,10 @@ class _ConsultantDailySurfaceState
         .where((e) => !e.needsAttention)
         .toList(growable: false);
 
+    final gapAsync = ref.watch(callSyncGapProvider);
+    final captureHealth = ref.watch(callCaptureHealthProvider);
+    final queueHealth = ref.watch(captureQueueHealthProvider).valueOrNull;
+
     return CustomScrollView(
       cacheExtent: 380,
       slivers: [
@@ -147,6 +154,38 @@ class _ConsultantDailySurfaceState
             },
           ),
         ),
+        if ((gapAsync.valueOrNull?.hasGap ?? false))
+          SliverToBoxAdapter(
+            child: ConsultantDailyInlineNote(
+              icon: Icons.sync_problem_rounded,
+              message:
+                  'Son 24 saatte ${gapAsync.valueOrNull!.gap} çağrı CRM\'e henüz düşmedi. '
+                  'Çağrılar ekranından senkronu tetikleyin.',
+            ),
+          ),
+        if (captureHealth != null)
+          SliverToBoxAdapter(
+            child: ConsultantDailyInlineNote(
+              icon: captureHealth.scorePct >= 85
+                  ? Icons.verified_rounded
+                  : Icons.warning_amber_rounded,
+              message:
+                  'Yakalama skoru (24s): %${captureHealth.scorePct} '
+                  '· ${captureHealth.linked24h}/${captureHealth.total24h} çağrı müşteriye bağlandı'
+                  '${captureHealth.missedWithoutLink24h > 0 ? ' · ${captureHealth.missedWithoutLink24h} cevapsız açık' : ''}.',
+            ),
+          ),
+        if ((queueHealth?.totalPending ?? 0) > 0)
+          SliverToBoxAdapter(
+            child: ConsultantDailyInlineNote(
+              icon: Icons.cloud_upload_rounded,
+              message:
+                  'Bekleyen işlem: ${(queueHealth?.totalPending ?? 0)} '
+                  '(kayıt: ${queueHealth?.pendingSaves ?? 0}, '
+                  'bağlama: ${queueHealth?.pendingLinks ?? 0}, '
+                  'native aday: ${queueHealth?.nativeCandidates ?? 0}).',
+            ),
+          ),
 
         // ——— Kayıtsız numaralar (numara kaçırmama önceliği) ———
         if (showLanes)

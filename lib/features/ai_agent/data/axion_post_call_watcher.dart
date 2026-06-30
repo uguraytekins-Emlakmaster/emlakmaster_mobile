@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:call_log/call_log.dart';
 import 'package:emlakmaster_mobile/core/platform/io_platform_stub.dart'
     if (dart.library.io) 'dart:io' as io;
 
@@ -12,7 +13,6 @@ import 'package:phone_state/phone_state.dart';
 
 import '../domain/axion_phone_matcher.dart';
 import 'axion_capture_dismiss_store.dart';
-import 'axion_capture_notification.dart';
 import 'axion_device_contact_directory.dart';
 
 /// Çağrı bitişini ANINDA yakalar (Android) ve numara CRM'de kayıtlı
@@ -97,10 +97,31 @@ class AxionPostCallWatcher {
         final hadCall = _sawActiveCall;
         _activeNumber = null;
         _sawActiveCall = false;
-        if (!hadCall || number == null || number.isEmpty) return;
-        unawaited(_handleCallEnded(number));
+        if (!hadCall) return;
+        if (number != null && number.isNotEmpty) {
+          unawaited(_handleCallEnded(number));
+          return;
+        }
+        unawaited(_handleCallEndedFallbackFromLog());
       case PhoneStateStatus.NOTHING:
         break;
+    }
+  }
+
+  Future<void> _handleCallEndedFallbackFromLog() async {
+    try {
+      if (!await DeviceCallLogSyncService.instance.hasCallLogPermission()) return;
+      final fromMs =
+          DateTime.now().subtract(const Duration(minutes: 2)).millisecondsSinceEpoch;
+      final entries = await CallLog.query(dateFrom: fromMs, durationFrom: 0);
+      if (entries.isEmpty) return;
+      final latest = [...entries]
+        ..sort((a, b) => (b.timestamp ?? 0).compareTo(a.timestamp ?? 0));
+      final number = latest.first.number?.trim();
+      if (number == null || number.isEmpty) return;
+      await _handleCallEnded(number);
+    } catch (e, st) {
+      AppLogger.e('AxionPostCallWatcher._handleCallEndedFallbackFromLog', e, st);
     }
   }
 
@@ -148,11 +169,6 @@ class AxionPostCallWatcher {
       final lifecycle = WidgetsBinding.instance.lifecycleState;
       if (lifecycle == AppLifecycleState.resumed) {
         _onForegroundCandidate?.call(rawNumber, contactName);
-      } else {
-        await AxionCaptureNotification.instance.showQuickSave(
-          rawNumber: rawNumber,
-          contactName: contactName,
-        );
       }
     } catch (e, st) {
       AppLogger.e('AxionPostCallWatcher._handleCallEnded', e, st);

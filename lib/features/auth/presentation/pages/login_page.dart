@@ -93,10 +93,51 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   /// (oturum gerçekten yoksa) form normal şekilde açılır.
   bool _sessionRestoreExpired = false;
   Timer? _sessionRestoreTimer;
-  static const Duration _sessionRestoreTimeout = Duration(seconds: 8);
+  static const Duration _sessionRestoreTimeout = Duration(seconds: 20);
+
+  /// Bazı cihazlarda (zayıf şebeke / yavaş GMS) Firebase Auth durumunun Dart'a
+  /// ulaşması 20 sn'yi aşabiliyor. Önceden giriş yapıldığı biliniyorsa
+  /// ([StartupRoleCache.hasCachedSession]) formu göstermek yerine oturumu aktif
+  /// yoklayıp geldiği an içeri alırız; kullanıcı yeniden giriş yapmak zorunda
+  /// kalmaz. Takılma ihtimaline karşı bir süre sonra "elle giriş" çıkışı sunulur.
+  Timer? _sessionPollTimer;
+  Timer? _manualEscapeTimer;
+  bool _showManualEscape = false;
+  bool _forceShowForm = false;
+  static const Duration _manualEscapeDelay = Duration(seconds: 14);
+  static const Duration _sessionPollInterval = Duration(milliseconds: 600);
 
   bool get _hasLiveFirebaseSession =>
       Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;
+
+  /// Önceki başarılı oturum bu cihazda kayıtlı mı?
+  bool get _hasCachedSession => StartupRoleCache.instance.hasCachedSession;
+
+  /// Oturum geri yüklenirken giriş formu yerine bekleme ekranı gösterilsin mi?
+  bool get _waitingSessionRestore {
+    if (_forceShowForm || _busy != _BusyKind.none) return false;
+    // Hiçbir oturum sinyali yoksa (temiz kurulum: cache yok + canlı kullanıcı
+    // yok) bekleme — giriş formu hemen açılır.
+    if (!_hasLiveFirebaseSession && !_hasCachedSession) return false;
+    // Önceden giriş yapıldıysa: süre dolsa bile bekle (oturum geç de gelse gelir).
+    if (_hasCachedSession) return true;
+    // Canlı oturum var ama cache yok: kısa bir süre bekle, dolduysa formu aç.
+    return !_sessionRestoreExpired;
+  }
+
+  /// Firebase oturumu geri geldiğinde router'ı tazeleyip kullanıcıyı içeri alır.
+  void _pollSessionRestore() {
+    if (!mounted) return;
+    if (_busy != _BusyKind.none) return;
+    if (Firebase.apps.isEmpty) return;
+    final restored = FirebaseAuth.instance.currentUser != null ||
+        ref.read(currentUserProvider).valueOrNull != null;
+    if (!restored) return;
+    _sessionPollTimer?.cancel();
+    _manualEscapeTimer?.cancel();
+    // Router redirect'i tetikle: liveFirebaseUser != null → home.
+    ref.read(AppRouter.goRouterProvider).refresh();
+  }
 
   void _armBusyWatchdog() {
     _busyWatchdog?.cancel();
@@ -131,6 +172,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (!mounted || _sessionRestoreExpired) return;
       setState(() => _sessionRestoreExpired = true);
     });
+    // Oturum geri yüklemesini aktif yokla (stream gecikse de currentUser yakala).
+    _sessionPollTimer =
+        Timer.periodic(_sessionPollInterval, (_) => _pollSessionRestore());
+    // Önceki oturum varsa ve restore uzun sürerse elle giriş çıkışı göster.
+    _manualEscapeTimer = Timer(_manualEscapeDelay, () {
+      if (!mounted || !_hasCachedSession) return;
+      if (FirebaseAuth.instance.currentUser != null) return;
+      setState(() => _showManualEscape = true);
+    });
   }
 
   Future<void> _loadPersona() async {
@@ -151,6 +201,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void dispose() {
     _busyWatchdog?.cancel();
     _sessionRestoreTimer?.cancel();
+    _sessionPollTimer?.cancel();
+    _manualEscapeTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -499,14 +551,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
     }
     // Oturum kalıcılığı: mevcut/önceki oturum geri yüklenirken giriş formunu
-    // gösterme — router redirect kullanıcıyı otomatik içeri alır. Zaman aşımı
-    // dolarsa (gerçekten oturum yok) form açılır; sonsuz spinner imkânsız.
-    final authLoading = ref.watch(currentUserProvider).isLoading;
-    final waitingSessionRestore = !_sessionRestoreExpired &&
-        _busy == _BusyKind.none &&
-        (_hasLiveFirebaseSession ||
-            (authLoading && StartupRoleCache.instance.hasCachedSession));
-    if (waitingSessionRestore) {
+    // gösterme — router redirect kullanıcıyı otomatik içeri alır. Önceden giriş
+    // yapıldıysa (cache) yavaş cihazlarda restore 20 sn'yi aşsa bile bekleriz;
+    // kullanıcı yeniden giriş yapmak zorunda kalmaz. Takılma ihtimaline karşı
+    // bir süre sonra "elle giriş" çıkışı sunulur (sonsuz bekleme imkânsız).
+    if (_waitingSessionRestore) {
       return AuthPageShell(
         child: Center(
           child: Padding(
@@ -523,6 +572,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     fontSize: DesignTokens.fontSizeSm,
                   ),
                 ),
+                if (_showManualEscape) ...[
+                  const SizedBox(height: DesignTokens.space6),
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _forceShowForm = true;
+                      _showManualEscape = false;
+                    }),
+                    style: TextButton.styleFrom(foregroundColor: ext.accent),
+                    child: Text(l10n.t('auth_login_cta')),
+                  ),
+                ],
               ],
             ),
           ),

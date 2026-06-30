@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 import 'package:emlakmaster_mobile/core/logging/app_logger.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
+import 'package:emlakmaster_mobile/features/calls/application/call_capture_audit_service.dart';
 import 'package:emlakmaster_mobile/features/calls/presentation/providers/consultant_calls_provider.dart';
 import 'package:emlakmaster_mobile/features/contact_save/presentation/widgets/save_contact_sheet.dart';
 import 'package:flutter/material.dart';
@@ -212,6 +215,13 @@ class _AxionCapturePopupDialog extends StatelessWidget {
   void _save(BuildContext dialogContext) {
     Navigator.of(dialogContext).pop();
     AppFeedback.selectionClick();
+    unawaited(
+      CallCaptureAuditService.instance.logEvent(
+        event: 'capture_popup_save_tap',
+        phoneRaw: number.displayNumber,
+        phoneKey: number.normalizedKey,
+      ),
+    );
     showSaveContactSheet(
       dialogContext,
       initialName: number.contactName,
@@ -235,12 +245,26 @@ class _AxionCapturePopupDialog extends StatelessWidget {
   Future<void> _snooze(BuildContext dialogContext) async {
     Navigator.of(dialogContext).pop();
     await AxionCaptureDismissStore.instance.snooze(number.normalizedKey);
+    unawaited(
+      CallCaptureAuditService.instance.logEvent(
+        event: 'capture_popup_snooze',
+        phoneRaw: number.displayNumber,
+        phoneKey: number.normalizedKey,
+      ),
+    );
     hostRef.invalidate(axionCapturePopupCandidateProvider);
   }
 
   Future<void> _dismiss(BuildContext dialogContext) async {
     Navigator.of(dialogContext).pop();
     await AxionCaptureDismissStore.instance.dismiss(number.normalizedKey);
+    unawaited(
+      CallCaptureAuditService.instance.logEvent(
+        event: 'capture_popup_dismiss',
+        phoneRaw: number.displayNumber,
+        phoneKey: number.normalizedKey,
+      ),
+    );
     hostRef.invalidate(axionCapturePopupCandidateProvider);
   }
 }

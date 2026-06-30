@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "572835725773-82pihq73o2odhabsa051l6ffutg0c85v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.axioncrm.mobile",
+            "certificate_hash": "4f8001e58e5e1dd3df8c7c022a6d41da43dc200d"
+          }
+        },
+        {
           "client_id": "572835725773-m7hqe81ad42nnk5dv6k7gq0oup7pksj1.apps.googleusercontent.com",
           "client_type": 3
         }

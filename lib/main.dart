@@ -79,11 +79,27 @@ Future<void> main() async {
     };
 
     try {
-      // Yerel bayraklar hızlı; Firebase UI'yi bloklamaz — arka planda başlar.
+      // Oturum cache'i (StartupRoleCache) optimistik giriş kararının tek
+      // dayanağı: önceki oturumu olan kullanıcıyı login formuna düşürmeden
+      // doğrudan ana ekrana almak için kullanılır. Throttle'lı cihazlarda
+      // SharedPreferences ilk diskten okuması 350ms'i rahatça aşabildiğinden,
+      // bu okumayı ayrı ve daha cömert bir bütçeyle runApp ÖNCESİ bekliyoruz.
+      // Aksi halde cache "boş" görünür ve dönen kullanıcıya tekrar giriş
+      // ekranı açılır (yaşanan asıl sorun buydu).
+      await StartupRoleCache.instance.warmUp().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {
+          if (kDebugMode) {
+            debugPrint(
+              'StartupRoleCache warmUp: 2s zaman aşımı; cache hazır değil.',
+            );
+          }
+        },
+      );
+      // Diğer yerel bayraklar UI'yi bloklamamalı; kısa bütçeyle arka planda.
       await Future.wait([
         OnboardingStore.instance.warmUp(),
         LoginEntryStore.instance.warmUp(),
-        StartupRoleCache.instance.warmUp(),
       ]).timeout(
         const Duration(milliseconds: 350),
         onTimeout: () {
@@ -193,6 +209,17 @@ class _AxionAppState extends ConsumerState<AxionApp> {
     AppLogger.state('[startup] AxionApp.initState');
     AppLifecyclePowerService.instance.ensureObserved();
     _bindStartupLogging();
+    // Emniyet ağı: oturum cache'i runApp öncesi bütçeyi (2s) aşıp geç
+    // tamamlanırsa, router ilk değerlendirmede cache'i "boş" görüp login
+    // formunu açabilir. warmUp kesin tamamlanınca router'ı tazeleyerek
+    // iyimser girişi (önceki oturum -> ana ekran) gecikmeli de olsa devreye
+    // alıyoruz; böylece kullanıcı yanlışlıkla giriş ekranında kalmaz.
+    StartupRoleCache.instance.warmUp().then((_) {
+      if (!mounted) return;
+      try {
+        ref.read(AppRouter.goRouterProvider).refresh();
+      } catch (_) {}
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       StartupPerfMarkers.once('first_frame');
       _runDeferredInit();

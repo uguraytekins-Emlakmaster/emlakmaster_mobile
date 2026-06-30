@@ -157,6 +157,15 @@ class _RoleBasedShellSelectorState
   Widget build(BuildContext context) {
     final uid = ref.watch(currentUserProvider).valueOrNull?.uid;
     if (uid == null || uid.isEmpty) {
+      // İYİMSER OTURUM: Önceki oturum cache'i varsa ve Firebase henüz kalıcı
+      // kullanıcıyı bildirmediyse (soğuk başlatmada 20-30 sn sürebiliyor), login
+      // formuna düşmeden markalı iskelet göster; restore edince gerçek kabuk
+      // gelir. Sonsuz bekleme imkânsız: iskelet bir süre sonra kurtarma sunar.
+      if (StartupRoleCache.instance.hasCachedSession &&
+          FirebaseAuth.instance.currentUser == null) {
+        _clearLoadingReason();
+        return const _CachedSessionPendingShell();
+      }
       if (LogoutFlowTracer.isActive) {
         LogoutFlowTracer.step('LOGOUT_FLOW', 'RoleShell uid=null shrink');
       }
@@ -214,6 +223,87 @@ class _RoleBasedShellSelectorState
       case ResolvedShellKind.consultant:
         return const ConsultantShellPage();
     }
+  }
+}
+
+/// İyimser oturum bekleme kabuğu: önceki oturum cache'i var, Firebase kalıcı
+/// kullanıcıyı henüz bildirmedi (soğuk başlatmada 20-30 sn sürebiliyor). Login
+/// formuna düşmeden markalı iskelet gösterir. Restore edince [currentUserProvider]
+/// güncellenir, üst seçici gerçek kabuğa geçer. Sonsuz bekleme imkânsız: bir süre
+/// sonra "Tekrar dene / Giriş yap" sunan kurtarma görünür.
+class _CachedSessionPendingShell extends ConsumerStatefulWidget {
+  const _CachedSessionPendingShell();
+
+  @override
+  ConsumerState<_CachedSessionPendingShell> createState() =>
+      _CachedSessionPendingShellState();
+}
+
+class _CachedSessionPendingShellState
+    extends ConsumerState<_CachedSessionPendingShell> {
+  // Bazı MIUI/HyperOS cihazlarda arka plan kısıtlaması nedeniyle Firebase Auth
+  // restore'u 50 sn'yi bulabiliyor; kurtarmayı erken tetiklememek için geniş tut.
+  static const _recoveryDelay = Duration(seconds: 60);
+
+  Timer? _timer;
+  Timer? _poll;
+  bool _showRecovery = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer(_recoveryDelay, () {
+      if (!mounted || _showRecovery) return;
+      AppLogger.w('[startup][RoleShell] cached-session restore timeout');
+      setState(() => _showRecovery = true);
+    });
+    // Firebase kalıcı kullanıcıyı stream'den önce currentUser'a yazabilir;
+    // router'ı tazeleyip kabuğun gerçek oturuma geçmesini hızlandır.
+    _poll = Timer.periodic(const Duration(milliseconds: 700), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      if (FirebaseAuth.instance.currentUser != null) {
+        t.cancel();
+        ref.invalidate(currentUserProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  void _retry() {
+    AppLogger.state('[startup][RoleShell] cached-session retry');
+    FirebaseAuth.instance.currentUser?.reload().ignore();
+    ref.invalidate(currentUserProvider);
+    setState(() => _showRecovery = false);
+    _timer?.cancel();
+    _timer = Timer(_recoveryDelay, () {
+      if (!mounted || _showRecovery) return;
+      setState(() => _showRecovery = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showRecovery) {
+      return StartupRecoveryScaffold(
+        title: 'Oturum hazırlanıyor',
+        message:
+            'Önceki oturumunuz geri yükleniyor ancak beklenenden uzun sürdü. '
+            'Tekrar deneyebilir ya da yeniden giriş yapabilirsiniz.',
+        onPrimary: _retry,
+        secondaryLabel: 'Giriş yap',
+        onSecondary: () => AuthLogoutCoordinator.signOut(ref),
+      );
+    }
+    return const ShellBootstrapSkeleton();
   }
 }
 

@@ -231,7 +231,7 @@ class _NotificationsSettingsSectionState
           }
         },
       ),
-      if (soundOn) ...[
+      if (mainEnabled) ...[
         Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.45)),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),

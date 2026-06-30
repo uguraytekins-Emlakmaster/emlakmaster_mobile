@@ -70,7 +70,9 @@ abstract final class AuthSessionCoordinator {
       await user.reload();
       final after = FirebaseAuth.instance.currentUser;
       if (after == null) {
-        await FirebaseAuth.instance.signOut();
+        // Bazı cihazlarda resume anında kısa süreli null görülebilir.
+        // Burada zorla signOut yapmak kullanıcıyı gereksiz yere login ekranına
+        // düşürebilir; bir sonraki auth event / resume ile kendini toparlar.
         return;
       }
       await after.getIdToken(true);

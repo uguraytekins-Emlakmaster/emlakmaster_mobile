@@ -95,7 +95,7 @@ ConsultantDailySnapshot computeConsultantDailySnapshot({
 
   // ——— Müşteriler: geciken takip / sıcak baskı / kısmi (scoped) ———
   for (final c in customers) {
-    final heat = computeCustomerHeat(c);
+    final heat = computeCustomerHeat(c, nowOverride: ref);
     final name = (c.fullName ?? '').trim().isNotEmpty
         ? c.fullName!.trim()
         : 'İsimsiz müşteri';

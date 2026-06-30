@@ -64,6 +64,7 @@ abstract final class CommandCenterListSlivers {
   }) {
     final kpiSnapshot =
         CallKpiPeriodLogic.snapshotFromDocs(docs, chrome.kpiPeriod);
+    final health = _ManagerCallHealth.fromDocs(docs);
 
     return [
       const SliverToBoxAdapter(child: PostCallCaptureBanner()),
@@ -154,6 +155,9 @@ abstract final class CommandCenterListSlivers {
             snapshot: kpiSnapshot,
           ),
         ),
+      ),
+      SliverToBoxAdapter(
+        child: _ManagerHealthCard(health: health),
       ),
       if (chrome.eksikKayitChipSelected && filtered.isNotEmpty)
         SliverToBoxAdapter(
@@ -679,6 +683,140 @@ abstract final class CommandCenterListSlivers {
           context.go(AppRouter.routeHome);
         },
       ),
+    );
+  }
+}
+
+class _ManagerCallHealth {
+  const _ManagerCallHealth({
+    required this.total,
+    required this.unlinked,
+    required this.slaBreaches,
+  });
+
+  final int total;
+  final int unlinked;
+  final int slaBreaches;
+
+  int get linked => total - unlinked;
+  int get coveragePct => total <= 0 ? 100 : ((linked / total) * 100).round();
+
+  static _ManagerCallHealth fromDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final now = DateTime.now();
+    var unlinked = 0;
+    var slaBreaches = 0;
+    for (final d in docs) {
+      final data = d.data();
+      final customerId = (data['customerId'] as String? ?? '').trim();
+      if (customerId.isEmpty) unlinked++;
+      final isMissed = CrmCallRecordHelpers.isMissedOutcome(data);
+      final created = CrmCallRecordHelpers.createdAtOf(data);
+      final olderThanSla = created != null &&
+          now.difference(created) > const Duration(minutes: 30);
+      if (isMissed && customerId.isEmpty && olderThanSla) {
+        slaBreaches++;
+      }
+    }
+    return _ManagerCallHealth(
+      total: docs.length,
+      unlinked: unlinked,
+      slaBreaches: slaBreaches,
+    );
+  }
+}
+
+class _ManagerHealthCard extends StatelessWidget {
+  const _ManagerHealthCard({required this.health});
+
+  final _ManagerCallHealth health;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        DesignTokens.screenEdgePadding,
+        0,
+        DesignTokens.screenEdgePadding,
+        8,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: ext.surface.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: ext.border.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _HealthCell(
+                label: 'Veri kapsama',
+                value: '%${health.coveragePct}',
+                color: health.coveragePct >= 85 ? ext.success : ext.warning,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _HealthCell(
+                label: 'Bağlanmamış',
+                value: '${health.unlinked}',
+                color: health.unlinked == 0 ? ext.success : ext.warning,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _HealthCell(
+                label: 'SLA ihlali 30dk',
+                value: '${health.slaBreaches}',
+                color: health.slaBreaches == 0 ? ext.success : ext.danger,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HealthCell extends StatelessWidget {
+  const _HealthCell({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = AppThemeExtension.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: ext.textSecondary,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

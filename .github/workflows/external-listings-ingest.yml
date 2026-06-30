@@ -1,6 +1,10 @@
 # Harici ilanlar: Playwright (GitHub runner) → Firestore — ücretli proxy olmadan
 # Önerilen: önce Actions sekmesinden "Run workflow" ile manuel deneyin; secret doğrulansın.
-# Zamanlama: 3 saatte bir (UTC) — kota tasarrufu. Saatlik için cron: '0 * * * *'
+#
+# NOT: Zamanlanmış (cron) tetikleyici geçici olarak DEVRE DIŞI bırakıldı — iş
+# başarısız oluyordu ve her çalıştırmada hata e-postası üretiyordu. Yalnızca
+# manuel çalıştırma (workflow_dispatch) açık. Hata düzeltilince schedule geri
+# eklenebilir (örn. cron: '0 */3 * * *').
 name: External listings ingest (Sahibinden)
 
 on:
@@ -10,8 +14,6 @@ on:
         description: 'Sahibinden il kodu (a24), örn. 21'
         required: false
         default: '21'
-  schedule:
-    - cron: '0 */3 * * *' # Her 3 saatte bir UTC (Türkiye kış: +3)
 
 permissions:
   contents: read

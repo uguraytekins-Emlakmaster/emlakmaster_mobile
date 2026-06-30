@@ -151,13 +151,23 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['csv', 'json', 'txt', 'xlsx', 'xls'],
+      withData: true,
     );
     if (result == null || result.files.isEmpty) return;
 
     final f = result.files.single;
-    final path = f.path;
-    if (path == null) {
-      _snack('Dosya yolu okunamadı.');
+    // macOS App Sandbox: dosyayı path üzerinden okumak güvenlik kapsamı
+    // (security-scoped) nedeniyle başarısız olabilir. Bu yüzden seçicinin
+    // doğrudan verdiği byte'ları kullanırız (withData: true). Byte gelmezse
+    // (ör. büyük dosya) path'ten okumaya düşülür.
+    var bytes = f.bytes;
+    if (bytes == null && f.path != null) {
+      try {
+        bytes = await File(f.path!).readAsBytes();
+      } catch (_) {}
+    }
+    if (bytes == null) {
+      _snack('Dosya içeriği okunamadı. Lütfen tekrar deneyin.');
       return;
     }
 
@@ -165,11 +175,9 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     try {
       final ext = (f.extension ?? 'csv').toLowerCase();
       var mapping = _defaultMapping();
-      final file = File(path);
 
       if (ext == 'csv' || ext == 'txt') {
-        final text =
-            utf8.decode(await file.readAsBytes(), allowMalformed: true);
+        final text = utf8.decode(bytes, allowMalformed: true);
         final rows = const CsvToListConverter(eol: '\n').convert(text);
         if (rows.isNotEmpty) {
           mapping = _mappingFromHeaderRow(rows.first);
@@ -186,7 +194,6 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
           return;
         }
       } else if (ext == 'xlsx' || ext == 'xls') {
-        final bytes = await file.readAsBytes();
         final rows = decodeXlsxBytesToRows(bytes);
         if (rows.isNotEmpty) {
           mapping = _mappingFromHeaderRow(rows.first);
@@ -218,9 +225,10 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
       await ListingImportService.instance.runFileImport(
         uid: uid,
         officeId: _officeId(ref, uid),
-        filePath: path,
+        bytes: bytes,
         extension: ext,
         mapping: mapping,
+        fileName: f.name,
         importMode: _importMode ?? 'skip_duplicates',
         storeSourcePlatform: _storePlatform,
       );
@@ -536,21 +544,27 @@ class _ImportHubPageState extends ConsumerState<ImportHubPage> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['csv', 'json', 'xlsx', 'xls', 'txt'],
+      withData: true,
     );
     if (result == null || result.files.isEmpty) return;
 
     final f = result.files.single;
-    final path = f.path;
-    if (path == null) {
+    // macOS App Sandbox: seçicinin verdiği byte'ları kullan (path okuması
+    // güvenlik kapsamı nedeniyle başarısız olabilir); byte yoksa path'e düş.
+    var bytes = f.bytes;
+    if (bytes == null && f.path != null) {
+      try {
+        bytes = await File(f.path!).readAsBytes();
+      } catch (_) {}
+    }
+    if (bytes == null) {
       if (!mounted) return;
-      _snack('Dosya yolu okunamadı.');
+      _snack('Dosya içeriği okunamadı. Lütfen tekrar deneyin.');
       return;
     }
 
     setState(() => _busy = true);
     try {
-      final file = File(path);
-      final bytes = await file.readAsBytes();
       final ext = (f.extension ?? 'csv').toLowerCase();
       var mapping = _defaultMapping();
 

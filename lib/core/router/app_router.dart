@@ -282,6 +282,20 @@ class AppRouter {
             if (needsOfficeRecovery) return routeOfficeRecovery;
             return routeHome;
           }
+          // İYİMSER OTURUM: Soğuk başlatmada native Firebase Auth kalıcı
+          // kullanıcıyı 20-30 sn gecikmeyle bildirebiliyor. Bu pencerede cihazda
+          // önceki oturum biliniyorsa (cache) kullanıcıyı LOGIN formuna düşürme —
+          // ana ekrana al; kabuk markalı iskelet gösterir, Firebase restore
+          // edince gerçek oturum devralır. Çıkışta cache temizlendiği için bu
+          // yalnızca gerçekten giriş yapmış kullanıcılar için tetiklenir.
+          if (user == null && startupCachedSessionActive(ref)) {
+            if (path == routeLogin ||
+                path == routeOnboarding ||
+                path == routeRegister) {
+              return routeHome;
+            }
+            return null;
+          }
           if (user == null && path == routeOnboarding) return null;
           if (user == null &&
               path == routeLogin &&

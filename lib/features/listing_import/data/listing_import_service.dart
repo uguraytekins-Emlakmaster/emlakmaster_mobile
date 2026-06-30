@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:csv/csv.dart';
 import 'package:emlakmaster_mobile/core/firebase/user_facing_firebase_message.dart';
@@ -186,17 +185,21 @@ class ListingImportService {
   }
 
   /// Dosya (CSV / JSON / XLSX) — mağaza dışa aktarımı için toplu yol (canlı OAuth gerekmez).
+  ///
+  /// [bytes] doğrudan dosya seçiciden gelir ([FilePicker] `withData: true`).
+  /// macOS App Sandbox altında dosyayı path üzerinden ikinci kez okumak güvenlik
+  /// kapsamı (security-scoped) nedeniyle başarısız olabildiğinden, içeriği
+  /// burada path'ten DEĞİL, seçicinin verdiği byte'lardan işliyoruz.
   Future<void> runFileImport({
     required String uid,
     required String officeId,
-    required String filePath,
+    required List<int> bytes,
     required String extension,
     required Map<String, String> mapping,
+    String fileName = 'import',
     String importMode = 'skip_duplicates',
     String? storeSourcePlatform,
   }) async {
-    final file = File(filePath);
-    final bytes = await file.readAsBytes();
     final ext = extension.toLowerCase();
 
     final String importChannel;
@@ -222,7 +225,7 @@ class ListingImportService {
       officeId: officeId,
       sourceType: ImportSourceType.file,
       platformId: taskPlatform,
-      sourceUrl: filePath,
+      sourceUrl: fileName,
       importMode: importMode,
     );
 
@@ -246,7 +249,7 @@ class ListingImportService {
         }
         listings = await _engine.parseFileMock(
           ownerUserId: uid,
-          fileName: filePath,
+          fileName: fileName,
           mapping: mapping,
           rows: rows,
           taskId: taskId,
@@ -258,7 +261,7 @@ class ListingImportService {
         final rows = const CsvToListConverter(eol: '\n').convert(text);
         listings = await _engine.parseFileMock(
           ownerUserId: uid,
-          fileName: filePath,
+          fileName: fileName,
           mapping: mapping,
           rows: rows,
           taskId: taskId,

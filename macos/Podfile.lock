@@ -1221,9 +1221,6 @@ PODS:
     - FlutterMacOS
   - connectivity_plus (0.0.1):
     - FlutterMacOS
-  - CwlCatchException (2.2.1):
-    - CwlCatchExceptionSupport (~> 2.2.1)
-  - CwlCatchExceptionSupport (2.2.1)
   - file_picker (0.0.1):
     - FlutterMacOS
   - file_selector_macos (0.0.1):
@@ -1571,10 +1568,6 @@ PODS:
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - speech_to_text (7.2.0):
-    - CwlCatchException
-    - Flutter
-    - FlutterMacOS
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
@@ -1602,7 +1595,6 @@ DEPENDENCIES:
   - printing (from `Flutter/ephemeral/.symlinks/plugins/printing/macos`)
   - share_plus (from `Flutter/ephemeral/.symlinks/plugins/share_plus/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - speech_to_text (from `Flutter/ephemeral/.symlinks/plugins/speech_to_text/darwin`)
   - sqflite_darwin (from `Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin`)
   - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
 
@@ -1612,8 +1604,6 @@ SPEC REPOS:
     - AppAuth
     - AppCheckCore
     - BoringSSL-GRPC
-    - CwlCatchException
-    - CwlCatchExceptionSupport
     - Firebase
     - FirebaseAnalytics
     - FirebaseAppCheckInterop
@@ -1687,8 +1677,6 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/share_plus/macos
   shared_preferences_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin
-  speech_to_text:
-    :path: Flutter/ephemeral/.symlinks/plugins/speech_to_text/darwin
   sqflite_darwin:
     :path: Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin
   url_launcher_macos:
@@ -1704,8 +1692,6 @@ SPEC CHECKSUMS:
   cloud_firestore: 92bf414ac4a12c1008efa35a70ffe988f90cf740
   cloud_functions: e61f8239495e5e18481935414c015b2eaf85d6d3
   connectivity_plus: 4adf20a405e25b42b9c9f87feff8f4b6fde18a4e
-  CwlCatchException: 7acc161b299a6de7f0a46a6ed741eae2c8b4d75a
-  CwlCatchExceptionSupport: 54ccab8d8c78907b57f99717fb19d4cc3bce02dc
   file_picker: 7584aae6fa07a041af2b36a2655122d42f578c1a
   file_selector_macos: 9e9e068e90ebee155097d00e89ae91edb2374db7
   Firebase: d99ac19b909cd2c548339c2241ecd0d1599ab02e
@@ -1752,7 +1738,6 @@ SPEC CHECKSUMS:
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   share_plus: 510bf0af1a42cd602274b4629920c9649c52f4cc
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
-  speech_to_text: 3b313d98516d3d0406cea424782ec25470c59d19
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   url_launcher_macos: f87a979182d112f911de6820aefddaf56ee9fbfd
 

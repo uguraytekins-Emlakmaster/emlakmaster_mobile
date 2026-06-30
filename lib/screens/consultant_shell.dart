@@ -17,6 +17,7 @@ import 'package:emlakmaster_mobile/features/tasks/presentation/pages/tasks_page.
 import 'package:emlakmaster_mobile/screens/listings_screen.dart';
 import 'package:emlakmaster_mobile/features/onboarding/presentation/tour/consultant_tour_host.dart';
 import 'package:emlakmaster_mobile/features/settings/presentation/pages/settings_page.dart';
+import 'package:emlakmaster_mobile/shared/widgets/required_permissions_gate.dart';
 import 'package:flutter/material.dart';
 
 /// Danışman paneli: 5 birincil sekme + Daha Fazla menüsü.
@@ -91,51 +92,56 @@ class _ConsultantShellPageState extends State<ConsultantShellPage> {
     return ConsultantShellNav(
       goToTab: (i) => _shellKey.currentState?.jumpToTab(i),
       child: ConsultantTourHost(
-        child: Column(
+        child: Stack(
           children: [
-            StartupShellChrome(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SyncStatusBanner(compact: true),
-                  const AxionCapturePopupHost(),
-                  const CallReturnPromptHost(),
-                  const PostCallDraftRecoveryCard(),
-                  ValueListenableBuilder<int>(
-                    valueListenable: _shellPageIndex,
-                    builder: (context, pageIndex, _) {
-                      if (pageIndex == 1) return const SizedBox.shrink();
-                      return const PostCallCaptureShellStrip();
+            Column(
+              children: [
+                StartupShellChrome(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SyncStatusBanner(compact: true),
+                      const AxionCapturePopupHost(),
+                      const CallReturnPromptHost(),
+                      const PostCallDraftRecoveryCard(),
+                      ValueListenableBuilder<int>(
+                        valueListenable: _shellPageIndex,
+                        builder: (context, pageIndex, _) {
+                          if (pageIndex == 1) return const SizedBox.shrink();
+                          return const PostCallCaptureShellStrip();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: AdaptiveShellScaffold(
+                    key: _shellKey,
+                    navItems: ConsultantShellPage._navItems(l10n),
+                    pages: ConsultantShellPage._pages,
+                    navPageIndices: ConsultantShellPage._navPageIndices,
+                    onIndexChanged: (i) {
+                      if (_shellPageIndex.value != i) {
+                        _shellPageIndex.value = i;
+                      }
+                    },
+                    onMoreNavTap: _openMoreSheet,
+                    tabIds: ConsultantShellPage._tabIds,
+                    title: l10n.t('workspace_consultant'),
+                    shortcutMap: const {
+                      MainShellShortcut.openHomeTab: 0,
+                      MainShellShortcut.openCallsTab: 1,
+                      MainShellShortcut.openCustomersTab: 2,
+                      MainShellShortcut.openListingsTab: 3,
+                      MainShellShortcut.openFollowUpTab: 4,
+                      MainShellShortcut.openTasksTab: 5,
+                      MainShellShortcut.openAccountTab: 6,
                     },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Expanded(
-              child: AdaptiveShellScaffold(
-                key: _shellKey,
-                navItems: ConsultantShellPage._navItems(l10n),
-                pages: ConsultantShellPage._pages,
-                navPageIndices: ConsultantShellPage._navPageIndices,
-                onIndexChanged: (i) {
-                  if (_shellPageIndex.value != i) {
-                    _shellPageIndex.value = i;
-                  }
-                },
-                onMoreNavTap: _openMoreSheet,
-                tabIds: ConsultantShellPage._tabIds,
-                title: l10n.t('workspace_consultant'),
-                shortcutMap: const {
-                  MainShellShortcut.openHomeTab: 0,
-                  MainShellShortcut.openCallsTab: 1,
-                  MainShellShortcut.openCustomersTab: 2,
-                  MainShellShortcut.openListingsTab: 3,
-                  MainShellShortcut.openFollowUpTab: 4,
-                  MainShellShortcut.openTasksTab: 5,
-                  MainShellShortcut.openAccountTab: 6,
-                },
-              ),
-            ),
+            const Positioned.fill(child: RequiredPermissionsGate()),
           ],
         ),
       ),

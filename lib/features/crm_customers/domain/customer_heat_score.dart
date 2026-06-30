@@ -47,8 +47,12 @@ class CustomerHeatExtras {
 CustomerHeatSnapshot computeCustomerHeat(
   CustomerEntity customer, {
   CustomerHeatExtras extras = const CustomerHeatExtras(),
+  DateTime? nowOverride,
 }) {
-  final now = DateTime.now();
+  // Determinizm: tazelik pencereleri (güncel kayıt / son temas) duvar saatine
+  // değil, çağıranın referans anına dayanmalı. Aksi halde aynı girdi zamanla
+  // farklı skor üretir (gün ilerledikçe "güncel" müşteri ılığa düşer).
+  final now = nowOverride ?? DateTime.now();
   final reasons = <String>[];
   var raw = 0;
 

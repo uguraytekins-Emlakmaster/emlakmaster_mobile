@@ -30,6 +30,7 @@ abstract final class AppConstants {
   static const String colLeads = 'leads';
   static const String colCalls = 'calls';
   static const String colCallEvents = 'call_events';
+  static const String colCallCaptureAudit = 'call_capture_audit';
   static const String colCallSummaries = 'call_summaries';
   static const String colCallOutcomes = 'call_outcomes';
   static const String colListings = 'listings';

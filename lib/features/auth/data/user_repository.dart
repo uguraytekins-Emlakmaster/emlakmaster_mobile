@@ -139,7 +139,14 @@ class UserRepository {
     );
   }
 
-  /// Tek seferlik `get` + canlı stream — bootstrap “Panel hazırlanıyor” süresini kısaltır.
+  /// Cache-öncelikli ilk boyama + canlı stream — “Panel hazırlanıyor” süresini kısaltır.
+  ///
+  /// PERFORMANS: Önceki sürüm `await getUserDoc()` ile SUNUCUYA giden bloklayan
+  /// bir `.get()` yapıyordu; ilk girişte (yerel cache boş) bu, canlı dinleyiciden
+  /// ÖNCE fazladan bir ağ turu demekti → dashboard'a geçiş gecikiyordu. Artık ilk
+  /// boyama için yalnızca YEREL cache denenir (ağ beklenmez); cache yoksa doğrudan
+  /// canlı dinleyiciye geçilir (snapshot listener zaten ilk anlık görüntüyü
+  /// cache-öncelikli verir) — böylece ilk girişte tek ağ turu kalır.
   static Stream<UserDoc?> userDocStreamHydrated(String uid) async* {
     await AuthFirestoreGate.ensureReadableUid(uid);
     if (!AuthFirestoreGate.liveUidMatches(uid)) {
@@ -152,12 +159,18 @@ class UserRepository {
       return;
     }
 
+    // İlk boyama: yalnızca yerel cache (ağ beklemeden anında). Cache miss
+    // (ilk giriş) sessizce atlanır; canlı dinleyici sunucudan getirir.
     try {
-      yield await getUserDoc(uid);
-    } catch (e, st) {
-      if (kDebugMode) {
-        AppLogger.e('UserRepository.userDocStreamHydrated get($uid)', e, st);
+      final cached = await _store
+          .collection(_usersCol)
+          .doc(uid)
+          .get(const GetOptions(source: Source.cache));
+      if (cached.exists && cached.data() != null) {
+        yield UserDoc.fromFirestore(uid, cached.data());
       }
+    } catch (_) {
+      // Yerel cache yok/erişilemedi — ilk girişte normal; canlı stream devralır.
     }
     yield* userDocStream(uid);
   }

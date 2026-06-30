@@ -1,6 +1,7 @@
 import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
 import 'package:emlakmaster_mobile/core/dev/dev_office_fallback.dart';
 import 'package:emlakmaster_mobile/core/services/firebase_core_bootstrap.dart';
+import 'package:emlakmaster_mobile/core/services/startup_role_cache.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,17 +30,33 @@ Stream<User?> _authStateChangesAfterBootstrap() async* {
   yield* AuthService.instance.authStateChanges;
 }
 
+/// Soğuk başlatmada bazı cihazlarda native Firebase Auth, kalıcı kullanıcıyı
+/// Dart'a 20-30 sn gecikmeyle bildirir ([authStateChanges] önce `null`, sonra
+/// gerçek kullanıcı). Bu pencerede, cihazda önceki başarılı oturum biliniyorsa
+/// ([StartupRoleCache.hasCachedSession]) kullanıcıyı login formuna düşürmek
+/// yerine kabuğa "iyimser" alırız; Firebase restore edince gerçek oturum devralır.
+///
+/// true = "önceki oturum var ama Firebase henüz kullanıcıyı vermedi".
+bool startupCachedSessionActive(Ref ref) {
+  if (Firebase.apps.isEmpty) return false;
+  if (FirebaseAuth.instance.currentUser != null) return false;
+  if (ref.read(currentUserProvider).valueOrNull != null) return false;
+  return StartupRoleCache.instance.hasCachedSession;
+}
+
 /// GoRouter redirect — çıkışta stream gecikirken canlı Firebase oturumu esas alınır.
 User? resolveRouterAuthUser({
   required User? streamUser,
   required User? liveFirebaseUser,
   required bool firebaseReady,
 }) {
-  if (firebaseReady) {
-    if (liveFirebaseUser != null) return liveFirebaseUser;
-    // Çıkış yapıldı: stream henüz null emit etmemiş olsa bile korumalı rotaya izin verme.
-    return null;
-  }
+  // Firebase hazırsa canlı oturum tek doğru kaynaktır: çıkışta `currentUser`
+  // anında null olur, ancak stream kısa süre "bayat" kullanıcıyı taşıyabilir.
+  // Bayat stream'e güvenmek, çıkış yapmış kullanıcıyı uygulamada tutar (güvenlik
+  // regresyonu). Soğuk başlatmada "önceki oturum var ama Firebase henüz
+  // kullanıcıyı vermedi" durumu router'da ayrıca `startupCachedSessionActive`
+  // ile ele alınır; burada gevşetmeye gerek yok.
+  if (firebaseReady) return liveFirebaseUser;
   return streamUser;
 }
 

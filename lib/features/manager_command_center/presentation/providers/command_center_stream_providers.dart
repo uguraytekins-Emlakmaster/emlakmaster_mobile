@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emlakmaster_mobile/core/models/team_doc.dart';
+import 'package:emlakmaster_mobile/core/constants/app_constants.dart';
 import 'package:emlakmaster_mobile/core/services/firestore_service.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/features/manager_command_center/presentation/providers/super_admin_gate_provider.dart';
@@ -27,16 +28,67 @@ class CommandCenterAgentsFilterData {
   );
 }
 
+Future<Map<String, String>> _loadUserNamesByIds(List<String> ids) async {
+  if (ids.isEmpty) return const {};
+  final db = FirebaseFirestore.instance;
+  final out = <String, String>{};
+  // whereIn sınırı için parçalama.
+  for (var i = 0; i < ids.length; i += 10) {
+    final end = (i + 10 < ids.length) ? i + 10 : ids.length;
+    final part = ids.sublist(i, end);
+    final snap = await db
+        .collection(AppConstants.colUsers)
+        .where(FieldPath.documentId, whereIn: part)
+        .get();
+    for (final d in snap.docs) {
+      final data = d.data();
+      out[d.id] = (data['displayName'] as String?) ??
+          (data['name'] as String?) ??
+          (data['fullName'] as String?) ??
+          d.id;
+    }
+  }
+  // Eksik dönenleri id ile doldur.
+  for (final id in ids) {
+    out.putIfAbsent(id, () => id);
+  }
+  return out;
+}
+
 final commandCenterAgentsFilterProvider =
     StreamProvider.autoDispose<CommandCenterAgentsFilterData>((ref) {
-  return FirestoreService.agentsStream().map((snap) {
-    if (snap.docs.isEmpty) return CommandCenterAgentsFilterData.empty;
+  final audience = ref.watch(commandCenterCallsAudienceProvider);
+  if (audience.allOffices) {
+    return FirestoreService.agentsStream().map((snap) {
+      if (snap.docs.isEmpty) return CommandCenterAgentsFilterData.empty;
+      return CommandCenterAgentsFilterData(
+        agentIds: snap.docs.map((d) => d.id).toList(),
+        agentNames: {
+          for (final d in snap.docs)
+            d.id: d.data()['displayName'] as String? ?? d.id,
+        },
+      );
+    });
+  }
+  final oid = audience.officeId;
+  if (oid.isEmpty) return const Stream.empty();
+  return FirebaseFirestore.instance
+      .collection(AppConstants.colOfficeMemberships)
+      .where('officeId', isEqualTo: oid)
+      .where('status', isEqualTo: 'active')
+      .limit(500)
+      .snapshots()
+      .asyncMap((snap) async {
+    final ids = [
+      for (final d in snap.docs)
+        if ((d.data()['userId'] as String? ?? '').trim().isNotEmpty)
+          (d.data()['userId'] as String).trim(),
+    ];
+    if (ids.isEmpty) return CommandCenterAgentsFilterData.empty;
+    final names = await _loadUserNamesByIds(ids);
     return CommandCenterAgentsFilterData(
-      agentIds: snap.docs.map((d) => d.id).toList(),
-      agentNames: {
-        for (final d in snap.docs)
-          d.id: d.data()['displayName'] as String? ?? d.id,
-      },
+      agentIds: ids,
+      agentNames: names,
     );
   });
 });
@@ -49,11 +101,30 @@ enum CommandCenterCallsScope {
 
 final commandCenterAgentNamesProvider =
     StreamProvider.autoDispose<Map<String, String>>((ref) {
-  return FirestoreService.agentsStream().map((snap) {
-    return {
+  final audience = ref.watch(commandCenterCallsAudienceProvider);
+  if (audience.allOffices) {
+    return FirestoreService.agentsStream().map((snap) {
+      return {
+        for (final d in snap.docs)
+          d.id: d.data()['displayName'] as String? ?? d.id,
+      };
+    });
+  }
+  final oid = audience.officeId;
+  if (oid.isEmpty) return const Stream.empty();
+  return FirebaseFirestore.instance
+      .collection(AppConstants.colOfficeMemberships)
+      .where('officeId', isEqualTo: oid)
+      .where('status', isEqualTo: 'active')
+      .limit(500)
+      .snapshots()
+      .asyncMap((snap) async {
+    final ids = [
       for (final d in snap.docs)
-        d.id: d.data()['displayName'] as String? ?? d.id,
-    };
+        if ((d.data()['userId'] as String? ?? '').trim().isNotEmpty)
+          (d.data()['userId'] as String).trim(),
+    ];
+    return _loadUserNamesByIds(ids);
   });
 });
 

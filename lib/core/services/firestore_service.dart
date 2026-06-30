@@ -435,6 +435,13 @@ class FirestoreService {
   /// advisorId → officeId çözümü için hafif önbellek (çağrı yazımında tek okuma).
   static final Map<String, String> _advisorOfficeIdCache = {};
 
+  /// Telefon eşleme anahtarı: yalnızca rakamlar, son 10 hane.
+  static String _phoneKey(String raw) {
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.length <= 10) return digits;
+    return digits.substring(digits.length - 10);
+  }
+
   /// Çağrı dokümanına yazılacak `officeId`'yi çözer.
   ///
   /// [provided] doluysa onu kullanır; aksi halde danışmanın `users/{advisorId}.officeId`
@@ -455,7 +462,24 @@ class FirestoreService {
           .get();
       final oid = (snap.data()?['officeId'] as String? ?? '').trim();
       if (oid.isNotEmpty) _advisorOfficeIdCache[advisorId] = oid;
-      return oid;
+      if (oid.isNotEmpty) return oid;
+
+      // users.officeId boşsa aktif üyelikten kurtarma denemesi (manager görünürlüğü).
+      final membership = await FirebaseFirestore.instance
+          .collection(AppConstants.colOfficeMemberships)
+          .where('userId', isEqualTo: advisorId)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+      if (membership.docs.isNotEmpty) {
+        final recovered = (membership.docs.first.data()['officeId'] as String? ?? '')
+            .trim();
+        if (recovered.isNotEmpty) {
+          _advisorOfficeIdCache[advisorId] = recovered;
+          return recovered;
+        }
+      }
+      return '';
     } catch (_) {
       return '';
     }
@@ -872,8 +896,7 @@ class FirestoreService {
 
   /// Kayıtsız numaradan müşteri oluşturulduktan sonra ilgili çağrı
   /// dokümanlarını yeni müşteriye bağlar (Axion Agent hızlı kayıt akışı).
-  /// En fazla 20 doküman tek batch'te güncellenir; hata tek tek yutulmaz,
-  /// çağıran taraf kullanıcıya dürüst geri bildirim verir.
+  /// Büyük kümeler 400'lük partilerle güncellenir (tek parti sınırına takılmaz).
   static Future<void> linkCallsToCustomer({
     required List<String> callDocIds,
     required String customerId,
@@ -882,18 +905,25 @@ class FirestoreService {
     await ensureInitialized();
     _requireFirestoreReady();
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
-    final batch = FirebaseFirestore.instance.batch();
-    for (final id in callDocIds.take(20)) {
-      batch.set(
-        col.doc(id),
-        {
-          'customerId': customerId,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+    final uniqueIds = <String>{for (final id in callDocIds) if (id.isNotEmpty) id};
+    if (uniqueIds.isEmpty) return;
+    const chunkSize = 400; // Firestore batch sınırı 500
+    final all = uniqueIds.toList(growable: false);
+    for (var i = 0; i < all.length; i += chunkSize) {
+      final end = (i + chunkSize < all.length) ? i + chunkSize : all.length;
+      final batch = FirebaseFirestore.instance.batch();
+      for (final id in all.sublist(i, end)) {
+        batch.set(
+          col.doc(id),
+          {
+            'customerId': customerId,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+      await batch.commit();
     }
-    await batch.commit();
   }
 
   /// Cihaz çağrı günlüğünden senkronize edilen kayıt (tekilleştirme için doc id verilir, merge).
@@ -912,14 +942,26 @@ class FirestoreService {
     final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
     final dt = DateTime.fromMillisecondsSinceEpoch(timestampMillis);
     final ts = Timestamp.fromDate(dt);
+    final normalizedPhone = (phoneNumber ?? '').trim();
+    final phoneKey = normalizedPhone.isNotEmpty ? _phoneKey(normalizedPhone) : '';
+    final dedupedId =
+        normalizedPhone.isNotEmpty
+            ? await findExistingCallInDedupeWindow(
+              advisorId: advisorId,
+              phoneNumber: normalizedPhone,
+              phoneKey: phoneKey,
+              createdAtMs: timestampMillis,
+            )
+            : null;
     final resolvedOfficeId = await _officeIdForAdvisor(advisorId);
-    await col.doc(documentId).set({
+    await col.doc(dedupedId ?? documentId).set({
       'officeId': resolvedOfficeId,
       'advisorId': advisorId,
       'agentId': advisorId,
       'direction': direction,
       if (phoneNumber != null && phoneNumber.isNotEmpty)
         'phoneNumber': phoneNumber,
+      if (phoneKey.isNotEmpty) 'phoneKey': phoneKey,
       if (contactDisplayName != null && contactDisplayName.trim().isNotEmpty)
         'contactDisplayName': contactDisplayName.trim(),
       'startedAt': ts,
@@ -952,6 +994,7 @@ class FirestoreService {
       'agentId': advisorId,
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
       'phoneNumber': phoneNumber,
+      'phoneKey': _phoneKey(phoneNumber),
       'direction': 'outgoing',
       'source': 'system_handoff',
       'startedFromScreen': startedFromScreen,
@@ -1037,6 +1080,7 @@ class FirestoreService {
   static Future<String?> findExistingCallInDedupeWindow({
     required String advisorId,
     required String phoneNumber,
+    String? phoneKey,
     required int createdAtMs,
   }) async {
     try {
@@ -1047,15 +1091,30 @@ class FirestoreService {
           createdAtMs - _callDedupeWindowMs);
       final end = Timestamp.fromMillisecondsSinceEpoch(
           createdAtMs + _callDedupeWindowMs);
-      final q = await col
+      final key = (phoneKey ?? _phoneKey(phoneNumber)).trim();
+      if (key.isNotEmpty) {
+        try {
+          final byKey = await col
+              .where('advisorId', isEqualTo: advisorId)
+              .where('phoneKey', isEqualTo: key)
+              .where('createdAt', isGreaterThanOrEqualTo: start)
+              .where('createdAt', isLessThanOrEqualTo: end)
+              .limit(1)
+              .get();
+          if (byKey.docs.isNotEmpty) return byKey.docs.first.id;
+        } on FirebaseException catch (_) {
+          // İndeks geçiş döneminde eski phoneNumber sorgusuna düş.
+        }
+      }
+      final legacy = await col
           .where('advisorId', isEqualTo: advisorId)
           .where('phoneNumber', isEqualTo: phoneNumber)
           .where('createdAt', isGreaterThanOrEqualTo: start)
           .where('createdAt', isLessThanOrEqualTo: end)
           .limit(1)
           .get();
-      if (q.docs.isEmpty) return null;
-      return q.docs.first.id;
+      if (legacy.docs.isEmpty) return null;
+      return legacy.docs.first.id;
     } on FirebaseException catch (e, st) {
       final msg = e.message?.toLowerCase() ?? '';
       final isIndexIssue = e.code == 'failed-precondition' ||
@@ -1078,6 +1137,149 @@ class FirestoreService {
     }
   }
 
+  /// Son çağrı kayıtlarında telefon anahtarını normalize eder ve düşük riskli
+  /// tekrarları birleştirir (device ↔ handoff kaynak çakışmaları).
+  ///
+  /// Güvenlik:
+  /// - Yalnızca aynı danışman + aynı phoneKey + 45 sn içindeki kayıtlar.
+  /// - En az bir taraf `source=device` olmalı (gerçek farklı aramaları ezmez).
+  /// - Zengin kaydı korur, eksik alanları merge eder, zayıf olanı siler.
+  static Future<int> normalizeAndDeduplicateRecentCallsForAdvisor(
+    String advisorId, {
+    int lookbackDays = 21,
+    int limit = 700,
+  }) async {
+    if (advisorId.isEmpty) return 0;
+    await ensureInitialized();
+    _requireFirestoreReady();
+    final col = FirebaseFirestore.instance.collection(AppConstants.colCalls);
+    final cutoff = Timestamp.fromDate(
+      DateTime.now().subtract(Duration(days: lookbackDays)),
+    );
+    final q = await col
+        .where('advisorId', isEqualTo: advisorId)
+        .where('createdAt', isGreaterThanOrEqualTo: cutoff)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    if (q.docs.isEmpty) return 0;
+
+    final seenByKey = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+    final toDelete = <String>{};
+    final toMerge = <String, Map<String, dynamic>>{};
+    var mergedCount = 0;
+
+    for (final d in q.docs) {
+      final data = d.data();
+      if (toDelete.contains(d.id)) continue;
+      final raw = (data['phoneNumber'] as String? ?? '').trim();
+      if (raw.isEmpty) continue;
+      final phoneKey = _phoneKey(raw);
+      if (phoneKey.isEmpty) continue;
+
+      final created = data['createdAt'];
+      if (created is! Timestamp) continue;
+      final createdMs = created.millisecondsSinceEpoch;
+
+      // phoneKey yoksa set et (okuma/tarama tutarlılığı).
+      if ((data['phoneKey'] as String? ?? '').trim().isEmpty) {
+        toMerge[d.id] = {...(toMerge[d.id] ?? const {}), 'phoneKey': phoneKey};
+      }
+
+      final bucket = createdMs ~/ 45000; // 45 sn penceresi
+      final composite = '$phoneKey|$bucket';
+      final previous = seenByKey[composite];
+      if (previous == null) {
+        seenByKey[composite] = d;
+        continue;
+      }
+      final prevData = previous.data();
+      final prevCreated = prevData['createdAt'];
+      if (prevCreated is! Timestamp) continue;
+      final dt = (prevCreated.millisecondsSinceEpoch - createdMs).abs();
+      if (dt > 45000) continue;
+
+      final aSource = (prevData['source'] as String? ?? '').trim();
+      final bSource = (data['source'] as String? ?? '').trim();
+      final hasDevicePair = aSource == 'device' || bSource == 'device';
+      if (!hasDevicePair) continue;
+
+      final keepFirst = _callRichnessScore(prevData) >= _callRichnessScore(data);
+      final keep = keepFirst ? previous : d;
+      final drop = keepFirst ? d : previous;
+      final keepData = keep.data();
+      final dropData = drop.data();
+      if (drop.id == keep.id) continue;
+
+      final patch = <String, dynamic>{};
+      if ((keepData['customerId'] as String? ?? '').isEmpty &&
+          (dropData['customerId'] as String? ?? '').isNotEmpty) {
+        patch['customerId'] = dropData['customerId'];
+      }
+      if ((keepData['contactDisplayName'] as String? ?? '').trim().isEmpty &&
+          (dropData['contactDisplayName'] as String? ?? '').trim().isNotEmpty) {
+        patch['contactDisplayName'] = dropData['contactDisplayName'];
+      }
+      if ((keepData['quickCaptureNote'] as String? ?? '').trim().isEmpty &&
+          (dropData['quickCaptureNote'] as String? ?? '').trim().isNotEmpty) {
+        patch['quickCaptureNote'] = dropData['quickCaptureNote'];
+      }
+      if ((keepData['quickOutcomeCode'] as String? ?? '').isEmpty &&
+          (dropData['quickOutcomeCode'] as String? ?? '').isNotEmpty) {
+        patch['quickOutcomeCode'] = dropData['quickOutcomeCode'];
+      }
+      if ((keepData['quickOutcomeLabelTr'] as String? ?? '').isEmpty &&
+          (dropData['quickOutcomeLabelTr'] as String? ?? '').isNotEmpty) {
+        patch['quickOutcomeLabelTr'] = dropData['quickOutcomeLabelTr'];
+      }
+      if ((keepData['phoneKey'] as String? ?? '').trim().isEmpty) {
+        patch['phoneKey'] = phoneKey;
+      }
+      if (patch.isNotEmpty) {
+        toMerge[keep.id] = {...(toMerge[keep.id] ?? const {}), ...patch};
+      }
+      toDelete.add(drop.id);
+      mergedCount++;
+      seenByKey[composite] = keep;
+    }
+
+    if (toDelete.isEmpty && toMerge.isEmpty) return 0;
+
+    const chunkSize = 350;
+    final mergeEntries = toMerge.entries.toList(growable: false);
+    final deleteIds = toDelete.toList(growable: false);
+    for (var i = 0; i < mergeEntries.length || i < deleteIds.length; i += chunkSize) {
+      final batch = FirebaseFirestore.instance.batch();
+      final mergeSlice = mergeEntries.skip(i).take(chunkSize);
+      for (final e in mergeSlice) {
+        batch.set(
+          col.doc(e.key),
+          {
+            ...e.value,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+      final deleteSlice = deleteIds.skip(i).take(chunkSize);
+      for (final id in deleteSlice) {
+        batch.delete(col.doc(id));
+      }
+      await batch.commit();
+    }
+    return mergedCount;
+  }
+
+  static int _callRichnessScore(Map<String, dynamic> data) {
+    var s = 0;
+    if ((data['customerId'] as String? ?? '').isNotEmpty) s += 4;
+    if ((data['quickOutcomeCode'] as String? ?? '').isNotEmpty) s += 3;
+    if ((data['quickCaptureNote'] as String? ?? '').trim().isNotEmpty) s += 2;
+    final source = (data['source'] as String? ?? '').trim();
+    if (source.isNotEmpty && source != 'device') s += 1;
+    return s;
+  }
+
   /// Handoff sırasında CRM oturumu oluşturulamadıysa tek `add` ile çağrı + hızlı sonuç (merge yok).
   static Future<String> createCallRecordWithQuickCapture({
     required String advisorId,
@@ -1095,6 +1297,7 @@ class FirestoreService {
     final existingId = await findExistingCallInDedupeWindow(
       advisorId: advisorId,
       phoneNumber: phoneNumber,
+      phoneKey: _phoneKey(phoneNumber),
       createdAtMs: nowMs,
     );
     if (existingId != null) {
@@ -1116,6 +1319,7 @@ class FirestoreService {
       'agentId': advisorId,
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
       'phoneNumber': phoneNumber,
+      'phoneKey': _phoneKey(phoneNumber),
       'direction': 'outgoing',
       'source': 'system_handoff',
       'crmSessionCreationFailed': true,
@@ -1163,6 +1367,7 @@ class FirestoreService {
       'agentId': advisorId,
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
       'phoneNumber': phoneNumber,
+      'phoneKey': _phoneKey(phoneNumber),
       'direction': 'outgoing',
       'source': 'system_handoff',
       'crmSessionCreationFailed': true,
@@ -1248,6 +1453,8 @@ class FirestoreService {
       'direction': direction,
       if (phoneNumber != null && phoneNumber.isNotEmpty)
         'phoneNumber': phoneNumber,
+      if (phoneNumber != null && phoneNumber.isNotEmpty)
+        'phoneKey': _phoneKey(phoneNumber),
       'startedAt': now,
       'endedAt': now,
       if (durationSeconds != null) 'durationSec': durationSeconds,

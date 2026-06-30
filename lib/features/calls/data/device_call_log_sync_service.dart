@@ -66,9 +66,11 @@ class DeviceCallLogSyncService {
         dateFrom: fromMs,
         durationFrom: 0,
       );
+      final ordered = [...entries]
+        ..sort((a, b) => (b.timestamp ?? 0).compareTo(a.timestamp ?? 0));
       int count = 0;
       int taken = 0;
-      for (final entry in entries) {
+      for (final entry in ordered) {
         if (taken >= _maxEntries) break;
         final number = entry.number?.trim();
         if (number == null || number.isEmpty) continue;
@@ -77,7 +79,7 @@ class DeviceCallLogSyncService {
         final durationSec = _parseDuration(entry.duration);
         final direction = _mapCallType(entry.callType);
         final docId = _documentId(ts, number);
-        final isMissed = entry.callType == CallType.missed;
+        final outcome = _mapOutcome(entry.callType);
         await FirestoreService.setCallRecordFromDevice(
           documentId: docId,
           advisorId: advisorId,
@@ -86,7 +88,7 @@ class DeviceCallLogSyncService {
           durationSeconds: durationSec,
           phoneNumber: number,
           contactDisplayName: entry.name,
-          outcome: isMissed ? 'missed' : 'connected',
+          outcome: outcome,
         );
         count++;
         taken++;
@@ -122,9 +124,21 @@ class DeviceCallLogSyncService {
       case CallType.missed:
       case CallType.rejected:
       case CallType.blocked:
-        return 'missed';
+        // Yön her zaman incoming/outgoing olmalı; missed outcome'tur.
+        return 'incoming';
       default:
         return 'outgoing';
+    }
+  }
+
+  String _mapOutcome(CallType? callType) {
+    switch (callType) {
+      case CallType.missed:
+      case CallType.rejected:
+      case CallType.blocked:
+        return 'missed';
+      default:
+        return 'connected';
     }
   }
 
