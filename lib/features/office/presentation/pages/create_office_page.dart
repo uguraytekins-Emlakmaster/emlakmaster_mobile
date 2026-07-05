@@ -1,18 +1,16 @@
 import 'package:emlakmaster_mobile/core/config/dev_mode_config.dart';
 import 'package:emlakmaster_mobile/core/l10n/app_localizations.dart';
-import 'package:emlakmaster_mobile/core/router/app_router.dart';
 import 'package:emlakmaster_mobile/core/services/auth_service.dart';
 import 'package:emlakmaster_mobile/core/theme/app_theme_extension.dart';
-import 'package:emlakmaster_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:emlakmaster_mobile/core/theme/design_tokens.dart';
 import 'package:emlakmaster_mobile/features/auth/presentation/widgets/auth_field_decoration.dart';
 import 'package:emlakmaster_mobile/features/office/domain/office_exception.dart';
+import 'package:emlakmaster_mobile/features/office/presentation/utils/office_setup_navigation.dart';
 import 'package:emlakmaster_mobile/features/office/presentation/utils/office_error_ui.dart';
 import 'package:emlakmaster_mobile/features/office/services/office_setup_service.dart';
 import 'package:emlakmaster_mobile/shared/widgets/emlak_app_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:emlakmaster_mobile/core/feedback/app_feedback.dart';
 class CreateOfficePage extends ConsumerStatefulWidget {
   const CreateOfficePage({super.key});
@@ -51,16 +49,6 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
         officeName: _nameController.text,
       );
       if (!mounted) return;
-      final uid = user.uid;
-      // userDocStreamProvider'ı da invalidate et — bu olmadan router redirect
-      // users.officeId == null görüp office-gate'e geri gönderiyordu (beyaz/spinner).
-      // Invalidation sonrası needsOfficeSetupProvider değişir ve router'ın
-      // refreshListenable'ı otomatik olarak home'a yönlendirir.
-      ref.invalidate(userDocStreamProvider(uid));
-      ref.invalidate(primaryMembershipProvider);
-      ref.invalidate(officeAccessStateProvider);
-      ref.invalidate(currentOfficeProvider);
-      ref.invalidate(currentRoleProvider);
       if (OfficeSetupService.usedDevFallbackOnLastCreate) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -70,10 +58,11 @@ class _CreateOfficePageState extends ConsumerState<CreateOfficePage> {
           ),
         );
       }
-      // userDocStreamProvider invalidation needsOfficeSetup'ı anında false
-      // yapar (doc==null → false); router refreshListenable bunu yakalar ve
-      // /office-create'den home'a otomatik yönlendirir. context.go güvenlik ağı.
-      context.go(AppRouter.routeHome);
+      await OfficeSetupNavigation.refreshGraphAndGoHome(
+        ref,
+        context,
+        uid: user.uid,
+      );
     } on OfficeException catch (e) {
       if (!mounted) return;
       setState(() {

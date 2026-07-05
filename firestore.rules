@@ -579,6 +579,18 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // call_capture_audit: çağrı yakalama akışı (geldi → öneri → kaydet/ertele)
+    // için append-only telemetri izi. Yazma giriş yapmış kullanıcıya açık
+    // (best-effort; kullanıcı akışını bloklamaz), okuma yalnızca yönetici
+    // (tanı/denetim). Güncelleme/silme yok — değişmez iz.
+    match /call_capture_audit/{docId} {
+      allow read: if isSignedIn() && isManager();
+      allow create: if isSignedIn()
+        && request.resource.data.event is string
+        && request.resource.data.event.size() > 0;
+      allow update, delete: if false;
+    }
+
     // -------------------------------------------------------------------------
     // listings: giriş yapmış herkes okuyabilir;
     // oluşturma/güncelleme SADECE yönetici / ofis yetkilisi

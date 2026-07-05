@@ -199,7 +199,13 @@ class OfficeSetupService {
         },
         SetOptions(merge: true),
       );
-    });
+    }).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw OfficeException(
+        OfficeErrorCode.network,
+        'İşlem zaman aşımına uğradı. Bağlantınızı kontrol edip tekrar deneyin.',
+      ),
+    );
   }
 
   /// Owner / admin tarafından davet oluşturma (üye rolü istemci tarafında doğrulanır).
